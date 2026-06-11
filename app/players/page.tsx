@@ -25,6 +25,8 @@ interface Player {
   name: string;
   display_name?: string;
   category?: string;
+  star_rating?: number;
+  season_id?: string;
   team?: string;
   team_name?: string;
   photo_url?: string;
@@ -58,6 +60,36 @@ function PlayersContent() {
   const [sortBy, setSortBy] = useState<string>('points'); // Default sort by points now, fits leaderboards better
   const [teams, setTeams] = useState<string[]>([]);
   const [seasonName, setSeasonName] = useState<string>('');
+
+  // Helper function to get category color styles
+  const getCategoryStyles = (category?: string) => {
+    if (!category) return null;
+    
+    const cat = category.toLowerCase();
+    switch (cat) {
+      case 'red':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'black':
+        return 'bg-gray-900 text-white border-gray-800';
+      case 'blue':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'white':
+        return 'bg-gray-50 text-gray-800 border-gray-300';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
+
+  // Helper function to render category badge
+  const renderCategoryBadge = (player: Player) => {
+    if (!player.category) return null;
+    
+    return (
+      <span className={`inline-block px-2 py-0.5 rounded text-[8px] font-bold font-mono uppercase tracking-wider border ${getCategoryStyles(player.category)}`}>
+        {player.category}
+      </span>
+    );
+  };
 
   useEffect(() => {
     fetchPlayers();
@@ -148,6 +180,8 @@ function PlayersContent() {
             name: p.name,
             display_name: p.display_name,
             category: p.category,
+            star_rating: p.star_rating,
+            season_id: p.season_id,
             team: p.team,
             team_name: p.team_name,
             photo_url: p.photo_url,
@@ -253,7 +287,7 @@ function PlayersContent() {
             </p>
           </div>
           
-          <div className="text-right bg-slate-50 border border-slate-200 px-5 py-2.5 rounded-xl font-mono">
+          <div className="text-center bg-slate-50 border border-slate-200 px-5 py-2.5 rounded-xl font-mono">
             <div className="text-2xl font-black text-amber-600">{players.length}</div>
             <div className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Total Players</div>
           </div>
@@ -291,6 +325,10 @@ function PlayersContent() {
                   className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs font-mono font-bold text-slate-700 bg-slate-50 focus:ring-1 focus:ring-amber-500 focus:outline-none appearance-none"
                 >
                   <option value="all">All Categories</option>
+                  <option value="Red">Red</option>
+                  <option value="Black">Black</option>
+                  <option value="Blue">Blue</option>
+                  <option value="White">White</option>
                   <option value="Legend">Legend</option>
                   <option value="Classic">Classic</option>
                 </select>
@@ -402,15 +440,7 @@ function PlayersContent() {
                       <span className="text-[10px] text-slate-500 font-semibold truncate">
                         {player.team_name || 'Unassigned'}
                       </span>
-                      {player.category && (
-                        <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-bold font-mono uppercase ${
-                          player.category.toLowerCase() === 'legend'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {player.category}
-                        </span>
-                      )}
+                      {renderCategoryBadge(player)}
                     </div>
                   </div>
                   
@@ -493,13 +523,7 @@ function PlayersContent() {
                             </span>
                             {player.category && (
                               <span className="mt-0.5">
-                                <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-bold font-mono uppercase tracking-wider ${
-                                  player.category.toLowerCase() === 'legend'
-                                    ? 'bg-amber-100 text-amber-800 border border-amber-200/20'
-                                    : 'bg-blue-100 text-blue-800 border border-blue-200/20'
-                                }`}>
-                                  {player.category}
-                                </span>
+                                {renderCategoryBadge(player)}
                               </span>
                             )}
                           </div>

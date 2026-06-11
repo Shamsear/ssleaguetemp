@@ -649,33 +649,49 @@ export default function PlayerDetailPage() {
 
                 {/* Rating / Category Badges */}
                 {selectedView === 'season' && selectedSeasonId && (() => {
-                  const getSeasonNumber = (seasonId: string | undefined): number => {
-                    if (!seasonId) return 0;
-                    const match = seasonId.match(/\d+/);
-                    return match ? parseInt(match[0]) : 0;
+                  const isS16OrS17 = (seasonId: string | undefined): boolean => {
+                    if (!seasonId) return false;
+                    return seasonId === 'SSPSLS16' || seasonId === 'SSPSLS17';
                   };
 
-                  const seasonNumber = getSeasonNumber(currentSeasonData.season_id);
-                  const isNewSeason = seasonNumber >= 16;
+                  const getCategoryStyles = (category?: string) => {
+                    if (!category) return 'bg-gray-100 text-gray-700 border-gray-200';
+                    
+                    const cat = category.toLowerCase();
+                    switch (cat) {
+                      case 'red':
+                        return 'bg-red-100 text-red-800 border-red-200';
+                      case 'black':
+                        return 'bg-gray-900 text-white border-gray-800';
+                      case 'blue':
+                        return 'bg-blue-100 text-blue-800 border-blue-200';
+                      case 'white':
+                        return 'bg-gray-50 text-gray-800 border-gray-300';
+                      case 'legend':
+                        return 'bg-amber-100 text-amber-800 border-amber-200';
+                      case 'classic':
+                        return 'bg-blue-100 text-blue-800 border-blue-200';
+                      default:
+                        return 'bg-gray-100 text-gray-700 border-gray-200';
+                    }
+                  };
 
-                  if (isNewSeason && currentSeasonData.star_rating !== undefined && currentSeasonData.star_rating !== null) {
+                  // For S16 and S17, show star rating
+                  if (isS16OrS17(currentSeasonData.season_id) && currentSeasonData.star_rating !== undefined && currentSeasonData.star_rating !== null) {
                     const starRating = currentSeasonData.star_rating;
                     return (
                       <div className="mt-2">
                         <div className="inline-flex items-center gap-1 bg-amber-50 border border-amber-250 text-amber-800 px-3 py-1 rounded-full text-xs font-mono font-bold">
-                          <span>⭐ Rating:</span>
-                          <span>{starRating}</span>
+                          <span>⭐ {starRating} Star</span>
                         </div>
                       </div>
                     );
-                  } else if (!isNewSeason && currentSeasonData.category) {
+                  } 
+                  // For all other seasons, show category if available with color coding
+                  else if (currentSeasonData.category) {
                     return (
                       <div className="mt-2">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider ${
-                          currentSeasonData.category.toLowerCase() === 'legend'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-blue-100 text-blue-800'
-                        }`}>
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider border ${getCategoryStyles(currentSeasonData.category)}`}>
                           {currentSeasonData.category}
                         </span>
                       </div>

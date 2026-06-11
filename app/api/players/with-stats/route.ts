@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     console.log('[Players API] Fetching stats from Neon...');
     let allStats = [];
     try {
-      // Fetch from realplayerstats (seasons 1-15) - no rating
+      // Fetch from realplayerstats (seasons 1-15) - no rating, points as-is
       const oldStats = await sql`
         SELECT 
           player_id,
@@ -56,8 +56,23 @@ export async function GET(request: NextRequest) {
       `;
       console.log(`[Players API] Found old stats for ${oldStats.length} players`);
 
-      // Fetch from player_seasons (season 16+) - has rating (star_rating)
-      const newStats = await sql`
+      // Fetch from player_seasons for S16 & S17 - adjusted points (points - base_points)
+      const s16s17Stats = await sql`
+        SELECT 
+          player_id,
+          COALESCE(SUM(matches_played), 0) as matches_played,
+          COALESCE(SUM(goals_scored), 0) as goals_scored,
+          COALESCE(SUM(clean_sheets), 0) as clean_sheets,
+          COALESCE(AVG(NULLIF(star_rating, 0)), 0) as average_rating,
+          COALESCE(SUM(points - COALESCE(base_points, 0)), 0) as total_points
+        FROM player_seasons
+        WHERE season_id IN ('SSPSLS16', 'SSPSLS17')
+        GROUP BY player_id
+      `;
+      console.log(`[Players API] Found S16/S17 adjusted stats for ${s16s17Stats.length} players`);
+
+      // Fetch from player_seasons for other seasons (S18+) - points as-is
+      const futureStats = await sql`
         SELECT 
           player_id,
           COALESCE(SUM(matches_played), 0) as matches_played,
@@ -66,14 +81,15 @@ export async function GET(request: NextRequest) {
           COALESCE(AVG(NULLIF(star_rating, 0)), 0) as average_rating,
           COALESCE(SUM(points), 0) as total_points
         FROM player_seasons
+        WHERE season_id NOT IN ('SSPSLS16', 'SSPSLS17')
         GROUP BY player_id
       `;
-      console.log(`[Players API] Found new stats for ${newStats.length} players`);
+      console.log(`[Players API] Found future season stats for ${futureStats.length} players`);
 
-      // Combine stats from both tables
+      // Combine stats from all three sources
       const statsMap = new Map();
       
-      // Add old stats (no rating)
+      // Add old stats (S1-S15, no rating)
       oldStats.forEach(stat => {
         statsMap.set(stat.player_id, {
           player_id: stat.player_id,
@@ -85,15 +101,39 @@ export async function GET(request: NextRequest) {
         });
       });
 
-      // Add or merge new stats (with rating)
-      newStats.forEach(stat => {
+      // Add or merge S16/S17 stats (adjusted points)
+      s16s17Stats.forEach(stat => {
         const existing = statsMap.get(stat.player_id);
         if (existing) {
           existing.matches_played += parseInt(stat.matches_played) || 0;
           existing.goals_scored += parseInt(stat.goals_scored) || 0;
           existing.clean_sheets += parseInt(stat.clean_sheets) || 0;
           existing.total_points += parseInt(stat.total_points) || 0;
-          existing.average_rating = parseFloat(stat.average_rating) || 0; // Use rating from new stats
+          existing.average_rating = parseFloat(stat.average_rating) || 0;
+        } else {
+          statsMap.set(stat.player_id, {
+            player_id: stat.player_id,
+            matches_played: parseInt(stat.matches_played) || 0,
+            goals_scored: parseInt(stat.goals_scored) || 0,
+            clean_sheets: parseInt(stat.clean_sheets) || 0,
+            average_rating: parseFloat(stat.average_rating) || 0,
+            total_points: parseInt(stat.total_points) || 0
+          });
+        }
+      });
+
+      // Add or merge future season stats (S18+, points as-is)
+      futureStats.forEach(stat => {
+        const existing = statsMap.get(stat.player_id);
+        if (existing) {
+          existing.matches_played += parseInt(stat.matches_played) || 0;
+          existing.goals_scored += parseInt(stat.goals_scored) || 0;
+          existing.clean_sheets += parseInt(stat.clean_sheets) || 0;
+          existing.total_points += parseInt(stat.total_points) || 0;
+          // Keep existing average_rating if already set, otherwise use new
+          if (!existing.average_rating) {
+            existing.average_rating = parseFloat(stat.average_rating) || 0;
+          }
         } else {
           statsMap.set(stat.player_id, {
             player_id: stat.player_id,
@@ -107,7 +147,7 @@ export async function GET(request: NextRequest) {
       });
 
       allStats = Array.from(statsMap.values());
-      console.log(`[Players API] Combined stats for ${allStats.length} players`);
+      console.log(`[Players API] Combined stats for ${allStats.length} players (S1-S15 + S16-S17 adjusted + S18+)`);
     } catch (statsError) {
       console.log('[Players API] Could not fetch stats:', statsError.message);
       allStats = [];
@@ -157,7 +197,9 @@ export async function GET(request: NextRequest) {
           SELECT DISTINCT ON (player_id) 
             player_id,
             category,
-            team_id
+            team_id,
+            star_rating,
+            season_id
           FROM player_seasons
           WHERE season_id = ${activeSeasonId}
           ORDER BY player_id, created_at DESC
@@ -169,7 +211,9 @@ export async function GET(request: NextRequest) {
           SELECT DISTINCT ON (player_id) 
             player_id,
             category,
-            team_id
+            team_id,
+            star_rating,
+            season_id
           FROM player_seasons
           ORDER BY player_id, season_id DESC, created_at DESC
         `;
@@ -224,6 +268,8 @@ export async function GET(request: NextRequest) {
         name: playerData.name,
         display_name: playerData.display_name || playerData.name,
         category: season?.category || playerData.category || null,
+        star_rating: season?.star_rating || null,
+        season_id: season?.season_id || null,
         team: playerData.team,
         team_name: season?.team_name || playerData.team || null,
         photo_url: playerData.photo_url || null,

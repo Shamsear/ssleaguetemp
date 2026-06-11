@@ -411,8 +411,14 @@ export async function GET(request: NextRequest) {
             id, player_id, player_name, season_id,
             team, team_id, category,
             matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
-            clean_sheets, motm_awards, points,
+            clean_sheets, motm_awards, 
+            CASE 
+              WHEN season_id IN ('SSPSLS16', 'SSPSLS17') 
+              THEN points - COALESCE(base_points, 0)
+              ELSE points
+            END as points,
             base_points,
+            star_rating,
             contract_id, contract_start_season, contract_end_season,
             is_auto_registered, registration_date,
             'modern' as data_source
@@ -428,6 +434,7 @@ export async function GET(request: NextRequest) {
             matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
             clean_sheets, motm_awards, points,
             NULL as base_points,
+            NULL as star_rating,
             NULL as contract_id, NULL as contract_start_season, NULL as contract_end_season,
             NULL as is_auto_registered, NULL as registration_date,
             'historical' as data_source
@@ -457,8 +464,14 @@ export async function GET(request: NextRequest) {
             id, player_id, player_name, season_id,
             team, team_id, category,
             matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
-            clean_sheets, motm_awards, points,
+            clean_sheets, motm_awards, 
+            CASE 
+              WHEN season_id IN ('SSPSLS16', 'SSPSLS17') 
+              THEN points - COALESCE(base_points, 0)
+              ELSE points
+            END as points,
             base_points,
+            star_rating,
             contract_id, contract_start_season, contract_end_season,
             is_auto_registered, registration_date
           FROM player_seasons 
@@ -472,7 +485,8 @@ export async function GET(request: NextRequest) {
             team, team_id, category,
             matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
             clean_sheets, motm_awards, points,
-            NULL as base_points
+            NULL as base_points,
+            NULL as star_rating
           FROM realplayerstats 
           WHERE player_id = ${playerId} AND tournament_id = ${tournamentId}
         `;
