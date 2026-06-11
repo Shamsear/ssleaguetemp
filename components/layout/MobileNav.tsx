@@ -11,6 +11,7 @@ import { useRouter, usePathname } from 'next/navigation';
 export default function MobileNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
+  const [viewportHeight, setViewportHeight] = useState(0);
   const { user } = useAuth();
   const { isRegistered, teamLogo } = useTeamRegistration();
   const { signOut } = useFirebaseAuth();
@@ -24,6 +25,34 @@ export default function MobileNav() {
     }
     return pathname.startsWith(href);
   };
+
+  // Handle viewport height changes (for mobile browser UI)
+  useEffect(() => {
+    const updateViewportHeight = () => {
+      // Use visualViewport if available, otherwise fallback to window.innerHeight
+      const height = window.visualViewport?.height || window.innerHeight;
+      setViewportHeight(height);
+    };
+
+    updateViewportHeight();
+    
+    // Listen to visualViewport resize events
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateViewportHeight);
+      window.visualViewport.addEventListener('scroll', updateViewportHeight);
+    }
+    
+    // Fallback to window resize
+    window.addEventListener('resize', updateViewportHeight);
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', updateViewportHeight);
+        window.visualViewport.removeEventListener('scroll', updateViewportHeight);
+      }
+      window.removeEventListener('resize', updateViewportHeight);
+    };
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({
@@ -190,8 +219,10 @@ export default function MobileNav() {
     <>
       {/* Mobile Navigation Bar */}
       <nav
-        style={{ bottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
-        className="md:hidden fixed left-4 right-4 z-[1001] transition-all duration-300 rounded-2xl border bg-white/85 backdrop-blur-xl border-[#D4AF37]/25 shadow-lg shadow-black/5 shadow-[#D4AF37]/5 px-2 py-1.5"
+        className="md:hidden fixed left-4 right-4 z-[1001] transition-none rounded-2xl border bg-white/85 backdrop-blur-xl border-[#D4AF37]/25 shadow-lg shadow-black/5 shadow-[#D4AF37]/5 px-2 py-1.5"
+        style={{
+          bottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))'
+        }}
       >
         <div className="flex items-center justify-between relative px-2">
           {/* LEFT: Quick Dashboard / Home Link */}
