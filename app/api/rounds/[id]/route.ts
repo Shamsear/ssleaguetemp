@@ -1,0 +1,725 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { neon } from '@neondatabase/serverless';
+import { adminDb } from '@/lib/firebase/admin';
+import { decryptBidData } from '@/lib/encryption';
+import { broadcastSquadUpdate, broadcastWalletUpdate } from '@/lib/realtime/broadcast';
+
+const sql = neon(process.env.NEON_DATABASE_URL!);
+
+// GET single round by ID with players
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const roundId = id; // Round ID is a UUID string, not an integer
+
+    // Fetch round details
+    const rounds = await sql`
+      SELECT * FROM rounds WHERE id = ${roundId} LIMIT 1;
+    `;
+
+    if (rounds.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Round not found' },
+        { status: 404 }
+      );
+    }
+
+    const round = rounds[0];
+
+    // Fetch players for bulk rounds from round_players table with tiebreaker info
+    let roundPlayers = [];
+    if (round.round_type === 'bulk') {
+      roundPlayers = await sql`
+        SELECT 
+          rp.*,
+          COUNT(rb.id) as bid_count,
+          t.id as tiebreaker_id,
+          t.status as tiebreaker_status,
+          t.created_at as tiebreaker_created_at
+        FROM round_players rp
+        LEFT JOIN round_bids rb ON rp.round_id::text = rb.round_id::text AND rp.player_id = rb.player_id
+        LEFT JOIN tiebreakers t ON rp.player_id = t.player_id AND t.round_id::text = ${roundId}
+        WHERE rp.round_id::text = ${roundId}
+        GROUP BY rp.id, t.id, t.status, t.created_at
+        ORDER BY rp.status, rp.player_name
+      `;
+      
+      // For each player with a tiebreaker, fetch tiebreaker details
+      for (let i = 0; i < roundPlayers.length; i++) {
+        if (roundPlayers[i].tiebreaker_id) {
+          const tiebreakerDetails = await sql`
+            SELECT 
+              tt.*
+            FROM team_tiebreakers tt
+            WHERE tt.tiebreaker_id = ${roundPlayers[i].tiebreaker_id}
+            ORDER BY tt.submitted DESC, tt.new_bid_amount DESC NULLS LAST
+          `;
+          
+          const submissions = tiebreakerDetails.map(tb => ({
+            team_id: tb.team_id,
+            team_name: tb.team_name,
+            new_bid_amount: tb.new_bid_amount || 0,
+            submitted: tb.submitted,
+          }));
+          
+          const highestSubmission = submissions[0];
+          
+          roundPlayers[i].tiebreaker = {
+            id: roundPlayers[i].tiebreaker_id,
+            status: roundPlayers[i].tiebreaker_status,
+            created_at: roundPlayers[i].tiebreaker_created_at,
+            team_count: tiebreakerDetails.length,
+            highest_bid: highestSubmission?.new_bid_amount,
+            highest_bidder: highestSubmission?.team_name,
+            submissions,
+          };
+        }
+      }
+    }
+
+    // Fetch bids for this round with player information
+    // ✅ ZERO FIREBASE READS - team_name is denormalized in bids table
+    const bidsRaw = await sql`
+      SELECT 
+        b.*,
+        p.name as player_name,
+        p.position,
+        p.overall_rating
+      FROM bids b
+      LEFT JOIN footballplayers p ON b.player_id = p.id
+      WHERE b.round_id = ${roundId}
+      ORDER BY b.created_at DESC;
+    `;
+
+    // OPTIMIZATION: team_name is now stored directly in bids table
+    
+    // STEP 3: Get won bid purchase prices (batch query)
+    const wonBidPlayerIds = bidsRaw.filter((b: any) => b.status === 'won').map((b: any) => b.player_id);
+    const purchasePrices = new Map<string, number>();
+    
+    if (wonBidPlayerIds.length > 0) {
+      const teamPlayersResult = await sql`
+        SELECT tp.player_id, tp.team_id, tp.purchase_price
+        FROM team_players tp
+        WHERE tp.player_id = ANY(${wonBidPlayerIds})
+        ORDER BY tp.acquired_at DESC
+      `;
+      
+      teamPlayersResult.forEach((tp: any) => {
+        const key = `${tp.player_id}_${tp.team_id}`;
+        if (!purchasePrices.has(key)) {
+          purchasePrices.set(key, tp.purchase_price);
+        }
+      });
+    }
+    
+    // Process all bids
+    const bids = [];
+    for (const bid of bidsRaw) {
+      try {
+        const { amount } = decryptBidData(bid.encrypted_bid_data);
+        
+        let finalAmount = amount;
+        if (bid.status === 'won') {
+          const priceKey = `${bid.player_id}_${bid.team_id}`;
+          finalAmount = purchasePrices.get(priceKey) || amount;
+        }
+        
+        bids.push({
+          ...bid,
+          amount: finalAmount,
+          // Use denormalized team_name from bids table (zero Firebase reads)
+          team_name: bid.team_name || bid.team_id,
+        });
+      } catch (error) {
+        console.error(`Error processing bid ${bid.id}:`, error);
+      }
+    }
+
+    // Calculate bid statistics grouped by player
+    const bidStats = await sql`
+      SELECT 
+        b.player_id,
+        p.name as player_name,
+        p.position,
+        COUNT(*) as bid_count,
+        MAX(b.amount) as highest_bid,
+        MIN(b.amount) as lowest_bid,
+        COUNT(DISTINCT b.team_id) as teams_count
+      FROM bids b
+      LEFT JOIN footballplayers p ON b.player_id = p.id
+      WHERE b.round_id = ${roundId}
+      GROUP BY b.player_id, p.name, p.position
+      ORDER BY highest_bid DESC;
+    `;
+
+    // Fetch synthetic allocations (Phase 3 - teams that got players without bids)
+    const syntheticAllocations = [];
+    if (round.status === 'completed') {
+      const teamPlayersWithoutBids = await sql`
+        SELECT 
+          tp.team_id,
+          tp.player_id,
+          tp.purchase_price as amount,
+          tp.acquired_at as created_at,
+          p.name as player_name,
+          p.position,
+          p.overall_rating,
+          t.id as team_table_id
+        FROM team_players tp
+        JOIN footballplayers p ON tp.player_id = p.id
+        LEFT JOIN teams t ON tp.team_id = t.id AND t.season_id = ${round.season_id}
+        WHERE tp.round_id = ${roundId}
+          AND NOT EXISTS (
+            SELECT 1 FROM bids b 
+            WHERE b.round_id = ${roundId} 
+              AND b.team_id = tp.team_id 
+              AND b.player_id = tp.player_id
+          )
+      `;
+
+      // Fetch team names from Firebase
+      const teamIds = [...new Set(teamPlayersWithoutBids.map((tp: any) => tp.team_id))];
+      const teamNamesMap = new Map<string, string>();
+      
+      await Promise.all(teamIds.map(async (teamId) => {
+        try {
+          const doc = await adminDb.collection('team_seasons').doc(`${teamId}_${round.season_id}`).get();
+          teamNamesMap.set(teamId, doc.exists ? doc.data()?.team_name || teamId : teamId);
+        } catch {
+          teamNamesMap.set(teamId, teamId);
+        }
+      }));
+
+      // Create synthetic bid objects
+      for (const tp of teamPlayersWithoutBids) {
+        syntheticAllocations.push({
+          id: `synthetic_${tp.team_id}_${tp.player_id}`,
+          team_id: tp.team_id,
+          player_id: tp.player_id,
+          amount: tp.amount,
+          player_name: tp.player_name,
+          position: tp.position,
+          overall_rating: tp.overall_rating,
+          team_name: teamNamesMap.get(tp.team_id) || tp.team_id,
+          status: 'won',
+          phase: 'incomplete',
+          created_at: tp.created_at,
+          round_id: roundId,
+          is_synthetic: true,
+        });
+      }
+    }
+
+    // Merge bids with synthetic allocations
+    const allBids = [...bids, ...syntheticAllocations];
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...round,
+        bids: allBids,
+        bidStats,
+        roundPlayers,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error fetching round:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH - Update round
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const roundId = id; // Round ID is a UUID string, not an integer
+    const body = await request.json();
+
+    const {
+      status,
+      start_time,
+      end_time,
+      base_price,
+      duration_seconds,
+      position,
+      position_group,
+    } = body;
+
+    // Build dynamic update query
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (status !== undefined) {
+      updates.push(`status = $${paramCount++}`);
+      values.push(status);
+    }
+    if (start_time !== undefined) {
+      updates.push(`start_time = $${paramCount++}`);
+      values.push(start_time);
+    }
+    if (end_time !== undefined) {
+      updates.push(`end_time = $${paramCount++}`);
+      values.push(end_time);
+    }
+    if (base_price !== undefined) {
+      updates.push(`base_price = $${paramCount++}`);
+      values.push(base_price);
+    }
+    if (duration_seconds !== undefined) {
+      updates.push(`duration_seconds = $${paramCount++}`);
+      values.push(duration_seconds);
+    }
+    if (position !== undefined) {
+      updates.push(`position = $${paramCount++}`);
+      values.push(position);
+    }
+    if (position_group !== undefined) {
+      updates.push(`position_group = $${paramCount++}`);
+      values.push(position_group);
+    }
+
+    if (updates.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'No fields to update' },
+        { status: 400 }
+      );
+    }
+
+    // Execute update using conditional queries
+    let updatedRound;
+    
+    // Build update based on provided fields
+    if (status !== undefined && start_time === undefined && end_time === undefined && 
+        base_price === undefined && duration_seconds === undefined && 
+        position === undefined && position_group === undefined) {
+      updatedRound = await sql`
+        UPDATE rounds 
+        SET status = ${status}, updated_at = NOW()
+        WHERE id = ${roundId}
+        RETURNING *
+      `;
+    } else if (end_time !== undefined) {
+      // Common case: updating end_time
+      updatedRound = await sql`
+        UPDATE rounds 
+        SET end_time = ${end_time}, updated_at = NOW()
+        WHERE id = ${roundId}
+        RETURNING *
+      `;
+    } else {
+      // For complex updates, use individual updates
+      if (status !== undefined) {
+        await sql`UPDATE rounds SET status = ${status} WHERE id = ${roundId}`;
+      }
+      if (start_time !== undefined) {
+        await sql`UPDATE rounds SET start_time = ${start_time} WHERE id = ${roundId}`;
+      }
+      if (base_price !== undefined) {
+        await sql`UPDATE rounds SET base_price = ${base_price} WHERE id = ${roundId}`;
+      }
+      if (duration_seconds !== undefined) {
+        await sql`UPDATE rounds SET duration_seconds = ${duration_seconds} WHERE id = ${roundId}`;
+      }
+      if (position !== undefined) {
+        await sql`UPDATE rounds SET position = ${position} WHERE id = ${roundId}`;
+      }
+      if (position_group !== undefined) {
+        await sql`UPDATE rounds SET position_group = ${position_group} WHERE id = ${roundId}`;
+      }
+      
+      await sql`UPDATE rounds SET updated_at = NOW() WHERE id = ${roundId}`;
+      updatedRound = await sql`SELECT * FROM rounds WHERE id = ${roundId}`;
+    }
+
+    if (updatedRound.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Round not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: updatedRound[0],
+      message: 'Round updated successfully',
+    });
+  } catch (error: any) {
+    console.error('Error updating round:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE round
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const roundId = id; // Round ID is a UUID string, not an integer
+
+    // Check if round exists
+    const rounds = await sql`
+      SELECT status, season_id FROM rounds WHERE id = ${roundId} LIMIT 1;
+    `;
+
+    if (rounds.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Round not found' },
+        { status: 404 }
+      );
+    }
+
+    const round = rounds[0];
+
+    // Don't allow deleting active rounds
+    if (round.status === 'active') {
+      return NextResponse.json(
+        { success: false, error: 'Cannot delete active rounds. Please wait for it to expire or finalize it first.' },
+        { status: 400 }
+      );
+    }
+
+    // If round is completed, reverse the finalization
+    if (round.status === 'completed') {
+      console.log(`🔄 Reversing finalization for round ${roundId}...`);
+      
+      // Get all won bids for this round
+      const wonBids = await sql`
+        SELECT b.id, b.team_id, b.player_id, b.encrypted_bid_data
+        FROM bids b
+        WHERE b.round_id = ${roundId}
+        AND b.status = 'won'
+      `;
+
+      // ALSO get players allocated without bids (random allocations from Phase 3)
+      const randomAllocations = await sql`
+        SELECT tp.team_id, tp.player_id, tp.purchase_price
+        FROM team_players tp
+        WHERE tp.round_id = ${roundId}
+          AND NOT EXISTS (
+            SELECT 1 FROM bids b 
+            WHERE b.round_id = ${roundId} 
+              AND b.team_id = tp.team_id 
+              AND b.player_id = tp.player_id
+          )
+      `;
+
+      console.log(`📊 Found ${wonBids.length} won bids and ${randomAllocations.length} random allocations to reverse`);
+
+      // Process won bids
+      for (const bid of wonBids) {
+        // Get the purchase price from team_players (this is what they actually paid)
+        const purchasePriceResult = await sql`
+          SELECT purchase_price FROM team_players 
+          WHERE player_id = ${bid.player_id} AND team_id = ${bid.team_id}
+        `;
+        
+        // Use purchase_price if available, otherwise decrypt from bid
+        let amount;
+        if (purchasePriceResult.length > 0 && purchasePriceResult[0].purchase_price) {
+          amount = parseInt(purchasePriceResult[0].purchase_price);
+          console.log(`💰 Found purchase price from team_players: £${amount}`);
+        } else {
+          const decrypted = decryptBidData(bid.encrypted_bid_data);
+          amount = decrypted.amount;
+          console.log(`💰 Using bid amount: £${amount}`);
+        }
+        
+        console.log(`💰 Refunding £${amount} for player ${bid.player_id} to team ${bid.team_id}`);
+        
+        
+        // 1. Remove player from team (team_players)
+        await sql`
+          DELETE FROM team_players
+          WHERE player_id = ${bid.player_id}
+          AND team_id = ${bid.team_id}
+        `;
+        console.log(`✅ Removed ${bid.player_id} from team_players`);
+
+        // 2. Reset player status
+        await sql`
+          UPDATE footballplayers
+          SET 
+            is_sold = false,
+            team_id = NULL,
+            acquisition_value = NULL,
+            season_id = NULL,
+            round_id = NULL,
+            status = 'available',
+            contract_id = NULL,
+            contract_start_season = NULL,
+            contract_end_season = NULL,
+            contract_length = NULL,
+            updated_at = NOW()
+          WHERE id = ${bid.player_id}
+        `;
+        console.log(`✅ Reset player ${bid.player_id} status`);
+
+        // 3. Refund team budget (Firebase team_seasons)
+        try {
+          const teamSeasonId = `${bid.team_id}_${round.season_id}`;
+          const teamSeasonRef = adminDb.collection('team_seasons').doc(teamSeasonId);
+          const teamSeasonDoc = await teamSeasonRef.get();
+          
+          if (teamSeasonDoc.exists) {
+            const teamSeasonData = teamSeasonDoc.data();
+            const curr = teamSeasonData?.currency_system || 'single';
+            const currentBudget = curr === 'dual' ? (teamSeasonData?.football_budget || 0) : (teamSeasonData?.budget || 0);
+            const currentSpent = teamSeasonData?.total_spent || 0;
+            const totalSpent = Math.max(0, currentSpent - amount);
+            const playersCount = Math.max(0, (teamSeasonData?.players_count || 0) - 1);
+            
+            console.log(`📊 Team ${bid.team_id} before: budget=£${currentBudget}, spent=£${currentSpent}, players=${teamSeasonData?.players_count || 0}`);
+            
+            // Get player position for position_counts update
+            const playerResult = await sql`SELECT position FROM footballplayers WHERE id = ${bid.player_id}`;
+            const playerPosition = playerResult[0]?.position;
+            
+            const positionCounts = { ...(teamSeasonData?.position_counts || {}) };
+            if (playerPosition) {
+              const currentCount = positionCounts[playerPosition] || 0;
+              positionCounts[playerPosition] = Math.max(0, currentCount - 1);
+              console.log(`📉 Position ${playerPosition}: ${currentCount} → ${positionCounts[playerPosition]}`);
+            }
+            
+            const upd: any = {
+              total_spent: totalSpent,
+              players_count: playersCount,
+              position_counts: positionCounts,
+              updated_at: new Date()
+            };
+            
+            if (curr === 'dual') {
+              upd.football_budget = currentBudget + amount;
+              upd.football_spent = Math.max(0, (teamSeasonData?.football_spent || 0) - amount);
+            } else {
+              upd.budget = currentBudget + amount;
+            }
+            
+            await teamSeasonRef.update(upd);
+            console.log(`✅ Refunded team_seasons ${bid.team_id}: £${amount}`);
+            console.log(`📊 Team ${bid.team_id} after: budget=£${curr === 'dual' ? upd.football_budget : upd.budget}, spent=£${totalSpent}, players=${playersCount}`);
+            console.log(`📋 Position counts:`, positionCounts);
+            
+            // Broadcast squad and wallet updates
+            await broadcastSquadUpdate(round.season_id, bid.team_id, {
+              type: 'player_removed',
+              player_id: bid.player_id,
+              refund: amount,
+            });
+            
+            await broadcastWalletUpdate(round.season_id, bid.team_id, {
+              type: 'refund',
+              new_balance: curr === 'dual' ? upd.football_budget : upd.budget,
+              amount: amount,
+              currency_type: curr === 'dual' ? 'football' : 'single',
+            });
+          }
+        } catch (error) {
+          console.error(`❌ Error refunding team_seasons ${bid.team_id}:`, error);
+        }
+
+        // 4. Refund team budget (SQL teams table)
+        try {
+          await sql`UPDATE teams SET 
+            football_spent = GREATEST(0, football_spent - ${amount}), 
+            football_budget = football_budget + ${amount},
+            football_players_count = GREATEST(0, football_players_count - 1),
+            updated_at = NOW() 
+          WHERE id = ${bid.team_id}
+          AND season_id = ${round.season_id}`;
+          console.log(`✅ Refunded SQL teams table ${bid.team_id}: £${amount}`);
+        } catch (teamUpdateError) {
+          console.error(`❌ Failed to refund SQL teams ${bid.team_id}:`, teamUpdateError);
+        }
+
+        // 5. Delete transaction logs (Firestore)
+        try {
+          const transactionsSnapshot = await adminDb.collection('transactions')
+            .where('metadata.round_id', '==', roundId)
+            .where('metadata.player_id', '==', bid.player_id)
+            .where('team_id', '==', bid.team_id)
+            .where('transaction_type', '==', 'auction_win')
+            .get();
+          
+          const deletePromises = transactionsSnapshot.docs.map(doc => doc.ref.delete());
+          await Promise.all(deletePromises);
+          console.log(`✅ Deleted ${transactionsSnapshot.size} transaction(s) for player ${bid.player_id}`);
+        } catch (error) {
+          console.error(`❌ Error deleting transactions for player ${bid.player_id}:`, error);
+        }
+      }
+
+      // 6. Delete news articles related to this round
+      try {
+        const newsSnapshot = await adminDb.collection('news')
+          .where('metadata.round_id', '==', roundId)
+          .get();
+        
+        const deleteNewsPromises = newsSnapshot.docs.map(doc => doc.ref.delete());
+        await Promise.all(deleteNewsPromises);
+        console.log(`✅ Deleted ${newsSnapshot.size} news article(s) for round ${roundId}`);
+      } catch (error) {
+        console.error(`❌ Error deleting news for round ${roundId}:`, error);
+      }
+
+      // Process random allocations (players without bids)
+      for (const allocation of randomAllocations) {
+        const amount = parseInt(allocation.purchase_price);
+        console.log(`🎲 Reversing random allocation: £${amount} for player ${allocation.player_id} to team ${allocation.team_id}`);
+        
+        // 1. Remove player from team (team_players)
+        await sql`
+          DELETE FROM team_players
+          WHERE player_id = ${allocation.player_id}
+          AND team_id = ${allocation.team_id}
+        `;
+        console.log(`✅ Removed ${allocation.player_id} from team_players`);
+
+        // 2. Reset player status
+        await sql`
+          UPDATE footballplayers
+          SET 
+            is_sold = false,
+            team_id = NULL,
+            acquisition_value = NULL,
+            season_id = NULL,
+            round_id = NULL,
+            status = 'available',
+            contract_id = NULL,
+            contract_start_season = NULL,
+            contract_end_season = NULL,
+            contract_length = NULL,
+            updated_at = NOW()
+          WHERE id = ${allocation.player_id}
+        `;
+        console.log(`✅ Reset player ${allocation.player_id} status`);
+
+        // 3. Refund team budget (Firebase team_seasons)
+        try {
+          const teamSeasonId = `${allocation.team_id}_${round.season_id}`;
+          const teamSeasonRef = adminDb.collection('team_seasons').doc(teamSeasonId);
+          const teamSeasonDoc = await teamSeasonRef.get();
+          
+          if (teamSeasonDoc.exists) {
+            const teamSeasonData = teamSeasonDoc.data();
+            const curr = teamSeasonData?.currency_system || 'single';
+            const currentBudget = curr === 'dual' ? (teamSeasonData?.football_budget || 0) : (teamSeasonData?.budget || 0);
+            const currentSpent = teamSeasonData?.total_spent || 0;
+            const totalSpent = Math.max(0, currentSpent - amount);
+            const playersCount = Math.max(0, (teamSeasonData?.players_count || 0) - 1);
+            
+            console.log(`📊 Team ${allocation.team_id} before: budget=£${currentBudget}, spent=£${currentSpent}, players=${teamSeasonData?.players_count || 0}`);
+            
+            // Get player position for position_counts update
+            const playerResult = await sql`SELECT position FROM footballplayers WHERE id = ${allocation.player_id}`;
+            const playerPosition = playerResult[0]?.position;
+            
+            const positionCounts = { ...(teamSeasonData?.position_counts || {}) };
+            if (playerPosition) {
+              const currentCount = positionCounts[playerPosition] || 0;
+              positionCounts[playerPosition] = Math.max(0, currentCount - 1);
+              console.log(`📉 Position ${playerPosition}: ${currentCount} → ${positionCounts[playerPosition]}`);
+            }
+            
+            const upd: any = {
+              total_spent: totalSpent,
+              players_count: playersCount,
+              position_counts: positionCounts,
+              updated_at: new Date()
+            };
+            
+            if (curr === 'dual') {
+              upd.football_budget = currentBudget + amount;
+              upd.football_spent = Math.max(0, (teamSeasonData?.football_spent || 0) - amount);
+            } else {
+              upd.budget = currentBudget + amount;
+            }
+            
+            await teamSeasonRef.update(upd);
+            console.log(`✅ Refunded team_seasons ${allocation.team_id}: £${amount}`);
+            console.log(`📊 Team ${allocation.team_id} after: budget=£${curr === 'dual' ? upd.football_budget : upd.budget}, spent=£${totalSpent}, players=${playersCount}`);
+            console.log(`📋 Position counts:`, positionCounts);
+            
+            // Broadcast squad and wallet updates
+            await broadcastSquadUpdate(round.season_id, allocation.team_id, {
+              type: 'player_removed',
+              player_id: allocation.player_id,
+              refund: amount,
+            });
+            
+            await broadcastWalletUpdate(round.season_id, allocation.team_id, {
+              type: 'refund',
+              new_balance: curr === 'dual' ? upd.football_budget : upd.budget,
+              amount: amount,
+              currency_type: curr === 'dual' ? 'football' : 'single',
+            });
+          }
+        } catch (error) {
+          console.error(`❌ Error refunding team_seasons ${allocation.team_id}:`, error);
+        }
+
+        // 4. Refund team budget (SQL teams table)
+        try {
+          await sql`UPDATE teams SET 
+            football_spent = GREATEST(0, football_spent - ${amount}), 
+            football_budget = football_budget + ${amount},
+            football_players_count = GREATEST(0, football_players_count - 1),
+            updated_at = NOW() 
+          WHERE id = ${allocation.team_id}
+          AND season_id = ${round.season_id}`;
+          console.log(`✅ Refunded SQL teams table ${allocation.team_id}: £${amount}`);
+        } catch (teamUpdateError) {
+          console.error(`❌ Failed to refund SQL teams ${allocation.team_id}:`, teamUpdateError);
+        }
+
+        // 5. Delete transaction logs (Firestore) - random allocations also create transactions
+        try {
+          const transactionsSnapshot = await adminDb.collection('transactions')
+            .where('metadata.round_id', '==', roundId)
+            .where('metadata.player_id', '==', allocation.player_id)
+            .where('team_id', '==', allocation.team_id)
+            .where('transaction_type', '==', 'auction_win')
+            .get();
+          
+          const deletePromises = transactionsSnapshot.docs.map(doc => doc.ref.delete());
+          await Promise.all(deletePromises);
+          console.log(`✅ Deleted ${transactionsSnapshot.size} transaction(s) for player ${allocation.player_id}`);
+        } catch (error) {
+          console.error(`❌ Error deleting transactions for player ${allocation.player_id}:`, error);
+        }
+      }
+
+      console.log(`✅ Finalization fully reversed for round ${roundId}`);
+    }
+
+    // Delete the round (cascade will delete related bids)
+    await sql`DELETE FROM rounds WHERE id = ${roundId};`;
+
+    return NextResponse.json({
+      success: true,
+      message: 'Round deleted successfully',
+    });
+  } catch (error: any) {
+    console.error('Error deleting round:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
+  }
+}
