@@ -73,13 +73,20 @@ export default function MobileNav() {
   const toggleMenu = (open: boolean) => {
     setIsMenuOpen(open);
     if (open) {
+      // Save current scroll position before locking
+      const scrollY = window.scrollY;
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
+      document.body.style.top = `-${scrollY}px`;
     } else {
+      // Restore scroll position when unlocking
+      const scrollY = document.body.style.top;
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
+      document.body.style.top = '';
+      window.scrollTo(0, parseInt(scrollY || '0') * -1);
       setExpandedMenu(null);
       setSearchQuery('');
     }
@@ -97,6 +104,7 @@ export default function MobileNav() {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = '';
       document.body.style.position = '';
+      document.body.style.top = '';
     };
   }, [isMenuOpen]);
 
