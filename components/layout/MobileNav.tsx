@@ -285,7 +285,10 @@ export default function MobileNav() {
       {/* Full Screen Menu Overlay */}
       {isMenuOpen && (
         <div
-          className="md:hidden fixed inset-0 z-[1000] overflow-y-auto bg-[#FAF9F6]/98 backdrop-blur-3xl flex flex-col pt-6 pb-28 px-4 sm:px-6 animate-fade-in font-mono text-slate-700 select-none animate-duration-200 border-l border-t border-[#D4AF37]/25"
+          style={{ 
+            paddingBottom: 'calc(7rem + env(safe-area-inset-bottom, 0px))'
+          }}
+          className="md:hidden fixed inset-0 z-[1000] overflow-y-auto bg-[#FAF9F6]/98 backdrop-blur-3xl flex flex-col pt-6 px-4 sm:px-6 animate-fade-in font-mono text-slate-700 select-none animate-duration-200 border-l border-t border-[#D4AF37]/25"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               toggleMenu(false);
