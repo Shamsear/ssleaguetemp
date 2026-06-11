@@ -221,7 +221,7 @@ export default function MobileNav() {
       <nav
         className="md:hidden fixed left-4 right-4 z-[1001] transition-none rounded-2xl border bg-white/85 backdrop-blur-xl border-[#D4AF37]/25 shadow-lg shadow-black/5 shadow-[#D4AF37]/5 px-2 py-1.5"
         style={{
-          bottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))'
+          bottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))'
         }}
       >
         <div className="flex items-center justify-between relative px-2">
