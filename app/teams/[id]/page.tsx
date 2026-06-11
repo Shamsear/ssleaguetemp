@@ -720,10 +720,26 @@ function TeamDetailContent() {
                                     </td>
                                     {hasCategory && (
                                       <td className="py-3 px-4">
-                                        <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${
-                                          player.category?.toLowerCase() === 'legend'
-                                            ? 'bg-amber-100 text-amber-800'
-                                            : 'bg-blue-100 text-blue-800'
+                                        <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-bold uppercase border ${
+                                          (() => {
+                                            const cat = player.category?.toLowerCase();
+                                            switch (cat) {
+                                              case 'red':
+                                                return 'bg-red-100 text-red-800 border-red-200';
+                                              case 'black':
+                                                return 'bg-gray-900 text-white border-gray-800';
+                                              case 'blue':
+                                                return 'bg-blue-100 text-blue-800 border-blue-200';
+                                              case 'white':
+                                                return 'bg-gray-50 text-gray-800 border-gray-300';
+                                              case 'legend':
+                                                return 'bg-amber-100 text-amber-800 border-amber-200';
+                                              case 'classic':
+                                                return 'bg-blue-100 text-blue-800 border-blue-200';
+                                              default:
+                                                return 'bg-gray-100 text-gray-700 border-gray-200';
+                                            }
+                                          })()
                                         }`}>
                                           {player.category || 'N/A'}
                                         </span>
@@ -794,7 +810,7 @@ function TeamDetailContent() {
                     <p className="text-xs text-slate-400 font-mono mt-1">NO AWARDS GRANTED THIS SEASON</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {awards.map((award: any, index: number) => {
                       const awardTypeLabels: Record<string, string> = {
                         'season_player': 'Player of the Season',
@@ -822,7 +838,7 @@ function TeamDetailContent() {
 
                           <div className="text-center py-2">
                             <AwardIcon className="w-9 h-9 text-amber-500/80 mx-auto mb-1.5" />
-                            <h4 className="font-bold text-slate-900 text-xs truncate max-w-[150px]">
+                            <h4 className="font-bold text-slate-900 text-xs text-center mx-auto px-2">
                               {awardTypeLabels[award.award_type] || award.award_type}
                             </h4>
                             {award.player_name && (
@@ -925,7 +941,7 @@ function TeamDetailContent() {
                     {selectedView === 'overall' ? 'All Trophies Won' : 'Trophies Won This Season'}
                   </h3>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {selectedView === 'overall' ? (
                       allSeasonData.flatMap(seasonData =>
                         (seasonData.trophies || []).map((trophy: any) => ({
@@ -944,7 +960,7 @@ function TeamDetailContent() {
 
                           <div className="text-center py-2">
                             <TrophyIcon className="w-9 h-9 text-amber-500/80 mx-auto mb-1.5" />
-                            <h4 className="font-bold text-slate-900 text-xs truncate max-w-[130px]">{trophy.trophy_name}</h4>
+                            <h4 className="font-bold text-slate-900 text-xs text-center mx-auto px-2">{trophy.trophy_name}</h4>
                             <p className="text-[9px] text-slate-500 font-mono mt-0.5">{trophy.season}</p>
                           </div>
 
@@ -967,7 +983,7 @@ function TeamDetailContent() {
 
                           <div className="text-center py-2">
                             <TrophyIcon className="w-9 h-9 text-amber-500/80 mx-auto mb-1.5" />
-                            <h4 className="font-bold text-slate-900 text-xs truncate max-w-[130px]">{trophy.trophy_name}</h4>
+                            <h4 className="font-bold text-slate-900 text-xs text-center mx-auto px-2">{trophy.trophy_name}</h4>
                           </div>
 
                           <div className="border-t border-slate-200/50 pt-2 flex justify-between items-center text-[8px] font-mono">

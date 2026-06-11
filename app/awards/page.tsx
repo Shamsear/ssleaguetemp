@@ -201,26 +201,119 @@ function AwardsContent() {
       return items.filter(item => item.season_id === selectedSeason);
     };
 
-    const sortBySeasonAndDate = (items: any[]) => {
-      return [...items].sort((a, b) => {
-        if (a.season_id && b.season_id) {
-          const aNum = parseInt(a.season_id.replace(/\D/g, '')) || 0;
-          const bNum = parseInt(b.season_id.replace(/\D/g, '')) || 0;
-          if (aNum !== bNum) {
-            return bNum - aNum;
-          }
-        }
-        const aDate = a.selected_at || a.created_at || a.awarded_at;
-        const bDate = b.selected_at || b.created_at || b.awarded_at;
-        if (aDate && bDate) {
-          return new Date(bDate).getTime() - new Date(aDate).getTime();
-        }
-        return 0;
-      });
+    const getSeasonNumber = (seasonId: string): number => {
+      const match = seasonId?.match(/\d+/);
+      return match ? parseInt(match[0]) : 0;
     };
 
-    const allAwards = sortBySeasonAndDate([...filterBySeason(safeAwards), ...filterBySeason(safePlayerAwards)]);
-    const sortedTrophies = sortBySeasonAndDate([...filterBySeason(safeTrophies)]);
+    const groupAwardsBySeason = (items: any[], seasonId: string): any[] => {
+      const seasonNum = getSeasonNumber(seasonId);
+      const seasonItems = items.filter(item => item.season_id === seasonId);
+      const grouped: any[] = [];
+
+      // Separate awards by type
+      const individualAwards = seasonItems.filter(item => 
+        !item.round_number && !item.week_number
+      );
+      const potdAwards = seasonItems.filter(item => 
+        item.round_number && !item.week_number
+      );
+      const weekAwards = seasonItems.filter(item => 
+        item.week_number
+      );
+
+      // Add individual awards first
+      grouped.push(...individualAwards);
+
+      // Season-specific grouping logic
+      if (seasonNum >= 1 && seasonNum <= 15) {
+        // S1-S15: Only individual awards (already added)
+        // No weekly or POTD grouping
+      } else if (seasonNum === 16 || seasonNum === 17) {
+        // S16-S17: Complex grouping with specific round ranges
+        // Group 1: Week 4+ first, then Rounds 21+ POTD
+        const week21Plus = weekAwards.filter(a => (a.week_number || 0) >= 4);
+        grouped.push(...week21Plus);
+        const potd21Plus = potdAwards.filter(a => (a.round_number || 0) >= 21).sort((a, b) => (b.round_number || 0) - (a.round_number || 0));
+        grouped.push(...potd21Plus);
+
+        // Group 2: Week 3 first, then Rounds 20-14 POTD
+        const week20to14 = weekAwards.filter(a => (a.week_number || 0) === 3);
+        grouped.push(...week20to14);
+        const potd20to14 = potdAwards.filter(a => (a.round_number || 0) >= 14 && (a.round_number || 0) <= 20).sort((a, b) => (b.round_number || 0) - (a.round_number || 0));
+        grouped.push(...potd20to14);
+
+        // Group 3: Week 2 first, then Rounds 13-8 POTD
+        const week13to8 = weekAwards.filter(a => (a.week_number || 0) === 2);
+        grouped.push(...week13to8);
+        const potd13to8 = potdAwards.filter(a => (a.round_number || 0) >= 8 && (a.round_number || 0) <= 13).sort((a, b) => (b.round_number || 0) - (a.round_number || 0));
+        grouped.push(...potd13to8);
+
+        // Group 4: Week 1 first, then Rounds 7-1 POTD
+        const week7to1 = weekAwards.filter(a => (a.week_number || 0) === 1);
+        grouped.push(...week7to1);
+        const potd7to1 = potdAwards.filter(a => (a.round_number || 0) >= 1 && (a.round_number || 0) <= 7).sort((a, b) => (b.round_number || 0) - (a.round_number || 0));
+        grouped.push(...potd7to1);
+      } else if (seasonNum >= 18) {
+        // S18+: Group by 7-round blocks
+        const maxRound = Math.max(...potdAwards.map(a => a.round_number || 0), 0);
+        const numWeeks = Math.ceil(maxRound / 7);
+
+        for (let week = numWeeks; week >= 1; week--) {
+          const startRound = (week - 1) * 7 + 1;
+          const endRound = week * 7;
+
+          // Week award first for this week
+          const weekAward = weekAwards.filter(a => (a.week_number || 0) === week);
+          grouped.push(...weekAward);
+
+          // Then POTD for this week's rounds (descending)
+          const weekPotd = potdAwards
+            .filter(a => (a.round_number || 0) >= startRound && (a.round_number || 0) <= endRound)
+            .sort((a, b) => (b.round_number || 0) - (a.round_number || 0));
+          grouped.push(...weekPotd);
+        }
+      }
+
+      return grouped;
+    };
+
+    const groupAndSortAwards = (items: any[]) => {
+      if (selectedSeason === 'all') {
+        // When showing all seasons, group each season separately
+        const seasonIds = [...new Set(items.map(item => item.season_id))].sort((a, b) => {
+          const aNum = getSeasonNumber(a);
+          const bNum = getSeasonNumber(b);
+          return bNum - aNum; // Newest season first
+        });
+
+        const grouped: any[] = [];
+        seasonIds.forEach(seasonId => {
+          const seasonGrouped = groupAwardsBySeason(items, seasonId);
+          grouped.push(...seasonGrouped);
+        });
+
+        return grouped;
+      }
+
+      // When a specific season is selected
+      return groupAwardsBySeason(items, selectedSeason);
+    };
+
+    const allAwards = groupAndSortAwards([...filterBySeason(safeAwards), ...filterBySeason(safePlayerAwards)]);
+    const sortedTrophies = [...filterBySeason(safeTrophies)].sort((a, b) => {
+      if (a.season_id && b.season_id) {
+        const aNum = getSeasonNumber(a.season_id);
+        const bNum = getSeasonNumber(b.season_id);
+        if (aNum !== bNum) return bNum - aNum;
+      }
+      const aDate = a.awarded_at;
+      const bDate = b.awarded_at;
+      if (aDate && bDate) {
+        return new Date(bDate).getTime() - new Date(aDate).getTime();
+      }
+      return 0;
+    });
 
     return activeTab === 'awards' ? allAwards : sortedTrophies;
   };
@@ -528,7 +621,7 @@ function AwardsContent() {
                       className="console-card rounded-2xl overflow-hidden bg-white border border-slate-200/60 shadow-sm flex flex-col h-full hover:border-amber-400/40 transition-all duration-250 group"
                     >
                       {award.instagram_link && (
-                        <div className="relative w-full overflow-hidden bg-slate-50 border-b border-slate-100">
+                        <div key={`instagram-${award.id}`} className="relative w-full overflow-hidden bg-slate-50 border-b border-slate-100">
                           <InstagramEmbed
                             postUrl={award.instagram_link}
                             instagramPostUrl={award.instagram_post_url ? '' : undefined}
@@ -573,7 +666,11 @@ function AwardsContent() {
                           )}
                           <div className="flex justify-between items-center text-[9px] text-slate-400 font-mono">
                             <span>DATE: {formatDate(award.selected_at)}</span>
-                            <Link href={`/awards/season/${award.season_id}`} className="hover:text-amber-600 font-bold bg-slate-100 text-slate-650 px-2 py-0.5 rounded transition-colors">{award.season_id}</Link>
+                            {award.instagram_post_url ? (
+                              <span className="font-bold bg-slate-100 text-slate-650 px-2 py-0.5 rounded">{award.season_id}</span>
+                            ) : (
+                              <Link href={`/awards/season/${award.season_id}`} className="hover:text-amber-600 font-bold bg-slate-100 text-slate-650 px-2 py-0.5 rounded transition-colors">{award.season_id}</Link>
+                            )}
                           </div>
                         </div>
                       </div>

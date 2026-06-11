@@ -1113,7 +1113,7 @@ export default function PlayerDetailPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {teamTrophies.map((trophy) => {
                     const isLeague = trophy.trophy_type === 'league';
                     const isCup = trophy.trophy_type === 'cup';
@@ -1131,7 +1131,7 @@ export default function PlayerDetailPage() {
 
                         <div className="text-center py-2">
                           <AwardIcon className="w-9 h-9 text-amber-500/80 mx-auto mb-1.5" />
-                          <h4 className="font-bold text-slate-900 text-xs truncate max-w-[130px]">{trophy.trophy_name}</h4>
+                          <h4 className="font-bold text-slate-900 text-xs text-center mx-auto px-2">{trophy.trophy_name}</h4>
                           {trophy.position && (
                             <p className="text-[9px] text-slate-500 font-mono mt-0.5">Rank: #{trophy.position}</p>
                           )}
@@ -1158,7 +1158,7 @@ export default function PlayerDetailPage() {
                   {currentSeasonData.season_name || 'This Season'}
                 </p>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {playerAwards.map((award) => {
                     const isNewTable = award.round_number !== undefined || award.week_number !== undefined;
                     const awardName = isNewTable ? award.award_category : award.award_type;
@@ -1182,7 +1182,7 @@ export default function PlayerDetailPage() {
 
                         <div className="text-center py-2">
                           <AwardIcon className="w-9 h-9 text-amber-500/80 mx-auto mb-1.5" />
-                          <h4 className="font-bold text-slate-900 text-xs truncate max-w-[130px]">{awardName}</h4>
+                          <h4 className="font-bold text-slate-900 text-xs text-center mx-auto px-2">{awardName}</h4>
                           {award.round_number && (
                             <p className="text-[9px] text-slate-500 font-mono mt-0.5">Round {award.round_number}</p>
                           )}
