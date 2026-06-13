@@ -28,6 +28,16 @@ export async function GET(
       }, { status: 400 });
     }
 
+    // Get season details with cache
+    let seasonData = getCached<any>('seasons', seasonId, 10 * 60 * 1000); // 10 min TTL
+    if (!seasonData) {
+      const seasonDoc = await adminDb.collection('seasons').doc(seasonId).get();
+      if (seasonDoc.exists) {
+        seasonData = seasonDoc.data();
+        setCached('seasons', seasonId, seasonData);
+      }
+    }
+
     // Get team info from teams collection
     let teamInfo = getCached<any>('teams', teamId, 5 * 60 * 1000); // 5 min TTL
     if (!teamInfo) {
@@ -191,6 +201,8 @@ export async function GET(
         avgRating: Math.round(avgRating * 10) / 10,
         positionBreakdown,
         categoryBreakdown,
+        seasonType: seasonData?.type || 'single',
+        maxPlayers: seasonData?.football_base_slots || seasonData?.max_football_players || 25,
       },
     });
 

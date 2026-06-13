@@ -309,7 +309,7 @@ export default function PlayerLeaderboardPage() {
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) {
       return (
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
         </svg>
       );
@@ -317,13 +317,13 @@ export default function PlayerLeaderboardPage() {
     
     if (sortOrder === 'asc') {
       return (
-        <svg className="w-4 h-4 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
         </svg>
       );
     } else {
       return (
-        <svg className="w-4 h-4 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
         </svg>
       );
@@ -332,10 +332,11 @@ export default function PlayerLeaderboardPage() {
 
   if (loading || statsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading leaderboard...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Leaderboard...</p>
         </div>
       </div>
     );
@@ -352,39 +353,40 @@ export default function PlayerLeaderboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-pink-50">
-      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 max-w-7xl">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6 font-mono">
         {/* Header */}
         <div className="mb-4 sm:mb-6">
           {/* Back Link */}
           <Link
             href="/dashboard/team"
-            className="group inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-700 hover:text-purple-600 mb-4 font-medium transition-all rounded-xl shadow-sm hover:shadow-md border border-gray-200 hover:border-purple-300"
+            className="px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold flex items-center justify-center w-fit mb-4"
           >
-            <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            <span className="text-sm sm:text-base">Back to Dashboard</span>
+            Dashboard
           </Link>
 
           {/* Title Card */}
-          <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 p-5 sm:p-8 overflow-hidden">
-            {/* Decorative background */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full blur-3xl opacity-30 -z-10"></div>
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono relative overflow-hidden">
             
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/10">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
                   <div>
-                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 via-purple-900 to-pink-900 bg-clip-text text-transparent">
+                    <h1 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wider text-slate-800">
                       Player Leaderboard
                     </h1>
-                    <p className="text-sm sm:text-base text-gray-600 mt-1">
+                    <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
                       {tournament?.tournament_name ? `${tournament.tournament_name} - ` : ''}Player Rankings
                     </p>
                   </div>
@@ -393,7 +395,7 @@ export default function PlayerLeaderboardPage() {
                 {/* Quick Link */}
                 <Link
                   href="/dashboard/team/team-leaderboard"
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-medium transition-all mt-2"
+                  className="px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold inline-flex items-center gap-1.5 mt-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -412,146 +414,150 @@ export default function PlayerLeaderboardPage() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 backdrop-blur-md rounded-xl p-4 border border-blue-200/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 font-medium">Total Players</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalPlayers}</p>
-            </div>
-            <div className="p-3 bg-blue-500/20 rounded-lg">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+          <div className="console-card bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm hover:border-amber-400/40 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Players</p>
+                <p className="text-2xl font-black text-slate-800 mt-1">{stats.totalPlayers}</p>
+              </div>
+              <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 backdrop-blur-md rounded-xl p-4 border border-green-200/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 font-medium">Active Players</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.activePlayers}</p>
-            </div>
-            <div className="p-3 bg-green-500/20 rounded-lg">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+          <div className="console-card bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm hover:border-amber-400/40 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Players</p>
+                <p className="text-2xl font-black text-slate-800 mt-1">{stats.activePlayers}</p>
+              </div>
+              <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 backdrop-blur-md rounded-xl p-4 border border-yellow-200/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 font-medium">Top Scorer</p>
-              <p className="text-xl font-bold text-gray-900 mt-1 truncate">
-                {stats.topScorer ? stats.topScorer.name : 'N/A'}
-              </p>
-              {stats.topScorer && (
-                <p className="text-xs text-gray-500">{stats.topScorer.points} points</p>
-              )}
-            </div>
-            <div className="p-3 bg-yellow-500/20 rounded-lg">
-              <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
+          <div className="console-card bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm hover:border-amber-400/40 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Top Scorer</p>
+                <p className="text-base font-black text-slate-800 mt-1 truncate pr-2">
+                  {stats.topScorer ? stats.topScorer.name : 'N/A'}
+                </p>
+                {stats.topScorer && (
+                  <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">{stats.topScorer.points} points</p>
+                )}
+              </div>
+              <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
         {/* Overall Stats Toggle */}
-        <div className="mb-4 flex justify-end">
-        <button
-          onClick={() => setShowOverall(!showOverall)}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            showOverall
-              ? 'bg-purple-600 text-white'
-              : 'bg-white text-gray-700 border border-gray-300'
-          }`}
-        >
-          {showOverall ? '🌍 Overall Stats (All Tournaments)' : '🏆 Tournament Stats'}
-        </button>
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-xl p-2 border border-gray-100/20 mb-6">
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="mb-4 flex justify-end font-mono">
           <button
-            onClick={() => setActiveTab('all')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-              activeTab === 'all'
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            onClick={() => setShowOverall(!showOverall)}
+            className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
+              showOverall
+                ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-lg'
+                : 'bg-white text-slate-700 border border-slate-200/60 hover:border-amber-400/40 hover:text-amber-600'
             }`}
           >
-            📊 All Players
-          </button>
-          <button
-            onClick={() => setActiveTab('golden-boot')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-              activeTab === 'golden-boot'
-                ? 'bg-gradient-to-r from-yellow-500 to-amber-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            ⚽ Golden Boot
-          </button>
-          <button
-            onClick={() => setActiveTab('golden-glove')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-              activeTab === 'golden-glove'
-                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            🧤 Golden Glove
-          </button>
-          <button
-            onClick={() => setActiveTab('rankings')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-              activeTab === 'rankings'
-                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            🏆 Top Rankings
-          </button>
-          <button
-            onClick={() => setActiveTab('most-improved')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-              activeTab === 'most-improved'
-                ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            📈 Most Improved
+            {showOverall ? '🌍 Overall Stats' : '🏆 Tournament Stats'}
           </button>
         </div>
-      </div>
+
+        {/* Tabs */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 mb-6 font-mono shadow-sm">
+          <div className="mb-4">
+            <h2 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">Leaderboards</h2>
+            <p className="text-[10px] text-slate-400 font-bold uppercase">Select a view to filter player stats</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
+                activeTab === 'all'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
+              }`}
+            >
+              👥 All Players
+            </button>
+            <button
+              onClick={() => setActiveTab('golden-boot')}
+              className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
+                activeTab === 'golden-boot'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
+              }`}
+            >
+              ⚽ Golden Boot
+            </button>
+            <button
+              onClick={() => setActiveTab('golden-glove')}
+              className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
+                activeTab === 'golden-glove'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
+              }`}
+            >
+              🧤 Golden Glove
+            </button>
+            <button
+              onClick={() => setActiveTab('rankings')}
+              className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
+                activeTab === 'rankings'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
+              }`}
+            >
+              🏆 Top Rankings
+            </button>
+            <button
+              onClick={() => setActiveTab('most-improved')}
+              className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
+                activeTab === 'most-improved'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
+              }`}
+            >
+              📈 Most Improved
+            </button>
+          </div>
+        </div>
 
         {/* Filters - Only show for 'all' tab */}
         {activeTab === 'all' && (
-          <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-6 mb-6 border border-gray-100/20">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Filters</h3>
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 mb-6 font-mono shadow-sm">
+            <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-4">Filters</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Search Players</label>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by name or ID..."
-                  className="w-full py-2 px-4 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF]/70"
+                  className="w-full py-2 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Team</label>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Filter by Team</label>
                 <select
                   value={teamFilter}
                   onChange={(e) => setTeamFilter(e.target.value)}
-                  className="w-full py-2 px-4 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF]/70"
+                  className="w-full py-2 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                 >
                   <option value="">All Teams</option>
                   <option value="unassigned">Unassigned</option>
@@ -566,345 +572,394 @@ export default function PlayerLeaderboardPage() {
           </div>
         )}
 
-        {/* Leaderboard Table */}
-        <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl overflow-hidden border border-gray-100/20">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">
-                {activeTab === 'golden-boot' && '⚽'}
-                {activeTab === 'golden-glove' && '🧤'}
-                {activeTab === 'rankings' && '🏆'}
-                {activeTab === 'most-improved' && '📈'}
-                {activeTab === 'all' && '👥'}
-              </span>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">
-                  {activeTab === 'golden-boot' && 'Golden Boot - Top Scorers'}
-                  {activeTab === 'golden-glove' && 'Golden Glove - Clean Sheet Leaders'}
-                  {activeTab === 'rankings' && 'Top 20 Rankings'}
-                  {activeTab === 'most-improved' && 'Most Improved Players'}
-                  {activeTab === 'all' && 'Player Rankings'}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {activeTab === 'golden-boot' && 'Top 10 players by goals scored'}
-                  {activeTab === 'golden-glove' && 'Top 10 players by clean sheets'}
-                  {activeTab === 'rankings' && 'Top 20 players by points'}
-                  {activeTab === 'most-improved' && 'Top 10 players with highest points gain'}
-                  {activeTab === 'all' && `${filteredPlayers.length} players competing`}
-                </p>
+        {/* Leaderboard Table Container */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl overflow-hidden font-mono shadow-sm">
+          <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/40">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl">
+                    {activeTab === 'golden-boot' && '⚽'}
+                    {activeTab === 'golden-glove' && '🧤'}
+                    {activeTab === 'rankings' && '🏆'}
+                    {activeTab === 'most-improved' && '📈'}
+                    {activeTab === 'all' && '👥'}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">
+                    {activeTab === 'golden-boot' && 'Golden Boot - Top Scorers'}
+                    {activeTab === 'golden-glove' && 'Golden Glove - Clean Sheet Leaders'}
+                    {activeTab === 'rankings' && 'Top 20 Rankings'}
+                    {activeTab === 'most-improved' && 'Most Improved Players'}
+                    {activeTab === 'all' && 'Player Rankings'}
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
+                    {activeTab === 'golden-boot' && 'Top 10 players by goals scored'}
+                    {activeTab === 'golden-glove' && 'Top 10 players by clean sheets'}
+                    {activeTab === 'rankings' && 'Top 20 players by points'}
+                    {activeTab === 'most-improved' && 'Top 10 players with highest points gain'}
+                    {activeTab === 'all' && `${filteredPlayers.length} players competing`}
+                  </p>
+                </div>
+              </div>
+              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider sm:text-right">
+                <span className="text-slate-800 font-extrabold">{filteredPlayers.length}</span> / {players.length} Players
               </div>
             </div>
-            <div className="text-sm text-gray-600">
-              <span className="font-semibold">{filteredPlayers.length}</span> / {players.length} Players
-            </div>
           </div>
-        </div>
 
-        {/* Desktop Table - Hidden on mobile */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50/50">
-              <tr>
-                <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Rank
-                </th>
-                <th 
-                  className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100/50 transition-colors"
-                  onClick={() => handleSort('name')}
-                >
-                  <div className="flex items-center gap-1">
-                    Player
-                    <SortIcon field="name" />
-                  </div>
-                </th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Team
-                </th>
-                <th 
-                  className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100/50 transition-colors"
-                  onClick={() => handleSort('points')}
-                >
-                  <div className="flex items-center justify-center gap-1">
-                    {activeTab === 'most-improved' ? 'Points Change' : 'Points'}
-                    <SortIcon field="points" />
-                  </div>
-                </th>
-                <th 
-                  className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100/50 transition-colors"
-                  onClick={() => handleSort('matches_played')}
-                >
-                  <div className="flex items-center justify-center gap-1">
-                    Played
-                    <SortIcon field="matches_played" />
-                  </div>
-                </th>
-                <th 
-                  className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100/50 transition-colors"
-                  onClick={() => handleSort('wins')}
-                >
-                  <div className="flex items-center justify-center gap-1">
-                    W
-                    <SortIcon field="wins" />
-                  </div>
-                </th>
-                <th 
-                  className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100/50 transition-colors"
-                  onClick={() => handleSort('draws')}
-                >
-                  <div className="flex items-center justify-center gap-1">
-                    D
-                    <SortIcon field="draws" />
-                  </div>
-                </th>
-                <th 
-                  className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100/50 transition-colors"
-                  onClick={() => handleSort('losses')}
-                >
-                  <div className="flex items-center justify-center gap-1">
-                    L
-                    <SortIcon field="losses" />
-                  </div>
-                </th>
-                <th 
-                  className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100/50 transition-colors"
-                  onClick={() => handleSort('win_rate')}
-                >
-                  <div className="flex items-center justify-center gap-1">
-                    Win %
-                    <SortIcon field="win_rate" />
-                  </div>
-                </th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ⚽ GS
-                </th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  🥅 GC
-                </th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  🧤 CS
-                </th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ⭐ POTM
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white/60 divide-y divide-gray-200/50">
-              {filteredPlayers.length === 0 ? (
+          {/* Desktop Table - Hidden on mobile */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="bg-slate-50/50 border-b border-slate-100 font-mono text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">
                 <tr>
-                  <td colSpan={13} className="px-6 py-12 text-center text-gray-500">
-                    <span className="text-6xl mb-4 block">👤</span>
-                    <h3 className="text-lg font-medium text-gray-600 mb-2">No Players Found</h3>
-                    <p className="text-sm">Try adjusting your filters</p>
-                  </td>
+                  <th className="px-4 py-3.5 text-left font-bold uppercase tracking-wider">
+                    Rank
+                  </th>
+                  <th 
+                    className="px-4 py-3.5 text-left font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
+                    onClick={() => handleSort('name')}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      Player
+                      <SortIcon field="name" />
+                    </div>
+                  </th>
+                  <th className="px-4 py-3.5 text-left font-bold uppercase tracking-wider">
+                    Team
+                  </th>
+                  <th 
+                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
+                    onClick={() => handleSort('points')}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      {activeTab === 'most-improved' ? 'PTS Change' : 'PTS'}
+                      <SortIcon field="points" />
+                    </div>
+                  </th>
+                  <th 
+                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
+                    onClick={() => handleSort('matches_played')}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      MP
+                      <SortIcon field="matches_played" />
+                    </div>
+                  </th>
+                  <th 
+                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
+                    onClick={() => handleSort('wins')}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      W
+                      <SortIcon field="wins" />
+                    </div>
+                  </th>
+                  <th 
+                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
+                    onClick={() => handleSort('draws')}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      D
+                      <SortIcon field="draws" />
+                    </div>
+                  </th>
+                  <th 
+                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
+                    onClick={() => handleSort('losses')}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      L
+                      <SortIcon field="losses" />
+                    </div>
+                  </th>
+                  <th 
+                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
+                    onClick={() => handleSort('win_rate')}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      Win %
+                      <SortIcon field="win_rate" />
+                    </div>
+                  </th>
+                  <th className="px-4 py-3.5 font-bold uppercase tracking-wider">
+                    GS
+                  </th>
+                  <th className="px-4 py-3.5 font-bold uppercase tracking-wider">
+                    GC
+                  </th>
+                  <th className="px-4 py-3.5 font-bold uppercase tracking-wider">
+                    CS
+                  </th>
+                  <th className="px-4 py-3.5 font-bold uppercase tracking-wider">
+                    POTM
+                  </th>
                 </tr>
-              ) : (
-                filteredPlayers.map((player, index) => (
-                  <tr key={player.id || player.player_id || `player-${index}`} className={`hover:bg-purple-50/50 transition-colors ${index < 3 ? 'bg-yellow-50/30' : ''}`}>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                      {index === 0 && <span className="text-2xl">🥇</span>}
-                      {index === 1 && <span className="text-2xl">🥈</span>}
-                      {index === 2 && <span className="text-2xl">🥉</span>}
-                      {index > 2 && <span className="text-sm">{`#${index + 1}`}</span>}
+              </thead>
+              <tbody className="bg-white/40 divide-y divide-slate-100/60">
+                {filteredPlayers.length === 0 ? (
+                  <tr>
+                    <td colSpan={13} className="px-6 py-12 text-center text-slate-400 font-mono">
+                      <span className="text-4xl mb-3 block">👤</span>
+                      <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Players Found</h3>
+                      <p className="text-[10px] text-slate-450 uppercase font-semibold">Try adjusting your filters</p>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
-                      <div>
-                        <div className="text-sm font-bold text-gray-900">{player.name}</div>
-                        <div className="text-xs text-gray-500">{player.player_id}</div>
+                  </tr>
+                ) : (
+                  filteredPlayers.map((player, index) => {
+                    const isTop3 = index < 3;
+                    const rankClass = isTop3 
+                      ? 'border-l-4 border-l-amber-500 bg-amber-500/[0.015]' 
+                      : '';
+                    
+                    return (
+                      <tr 
+                        key={player.id || player.player_id || `player-${index}`} 
+                        className={`hover:bg-slate-50/50 transition-colors text-center ${rankClass}`}
+                      >
+                        <td className="px-4 py-3.5 whitespace-nowrap text-left text-xs font-black text-slate-800">
+                          {index === 0 && <span className="text-lg">🥇</span>}
+                          {index === 1 && <span className="text-lg">🥈</span>}
+                          {index === 2 && <span className="text-lg">🥉</span>}
+                          {index > 2 && <span className="text-slate-400">#{index + 1}</span>}
+                        </td>
+                        <td className="px-4 py-3.5 text-left">
+                          <div>
+                            <div className="text-xs font-black text-slate-800">{player.name}</div>
+                            <div className="text-[10px] text-slate-400 font-bold uppercase">{player.player_id}</div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 text-left whitespace-nowrap">
+                          <span className="text-xs text-slate-700 font-bold">
+                            {player.team_name || <span className="text-slate-450 italic">Unassigned</span>}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          {activeTab === 'most-improved' && player.points_change !== undefined ? (
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span 
+                                className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-extrabold border ${
+                                  player.points_change > 0 
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
+                                    : player.points_change < 0
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200/50'
+                                    : 'bg-slate-50 text-slate-650 border-slate-200/50'
+                                }`}
+                              >
+                                {player.points_change > 0 ? '+' : ''}{player.points_change}
+                              </span>
+                              <span className="text-[9px] text-slate-400 font-semibold uppercase">
+                                {player.base_points} → {player.points}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black border uppercase tracking-wider bg-slate-800 text-amber-400 border-slate-900">
+                              {player.points}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="text-xs text-slate-600 font-bold">{player.matches_played}</span>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="text-xs font-bold text-emerald-600">{player.wins}</span>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="text-xs text-slate-600 font-bold">{player.draws}</span>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="text-xs font-bold text-rose-600">{player.losses}</span>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="text-xs font-extrabold text-slate-700">
+                            {player.matches_played > 0 ? `${player.win_rate.toFixed(1)}%` : '-'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-emerald-50 text-emerald-700 border-emerald-200/40">
+                            ⚽ {player.goals || 0}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="text-xs font-bold text-rose-600">{player.goals_conceded || 0}</span>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="text-xs font-bold text-sky-600">{player.clean_sheets || 0}</span>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-amber-50 text-amber-700 border-amber-200/40">
+                            ⭐ {player.potm || 0}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Cards - Shown only on mobile */}
+          <div className="md:hidden space-y-4 px-2 pb-4">
+            {filteredPlayers.length === 0 ? (
+              <div className="text-center py-12 text-slate-400 font-mono">
+                <span className="text-4xl mb-3 block">👤</span>
+                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Players Found</h3>
+                <p className="text-[10px] text-slate-450 uppercase font-semibold">Try adjusting your filters</p>
+              </div>
+            ) : (
+              filteredPlayers.map((player, index) => {
+                const isTop3 = index < 3;
+                const cardBorder = isTop3 
+                  ? 'border-l-4 border-l-amber-500 border-y-slate-200/60 border-r-slate-200/60 bg-amber-500/[0.01]' 
+                  : 'border-slate-200/60';
+                
+                return (
+                  <div 
+                    key={player.id || player.player_id || `player-${index}`}
+                    className={`console-card bg-white border rounded-xl p-4 shadow-sm font-mono transition-all ${cardBorder}`}
+                  >
+                    {/* Header with Rank and Name */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="text-xl font-bold flex-shrink-0">
+                          {index === 0 && '🥇'}
+                          {index === 1 && '🥈'}
+                          {index === 2 && '🥉'}
+                          {index > 2 && <span className="text-xs text-slate-400 font-bold">#{index + 1}</span>}
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-black text-slate-800">{player.name}</h3>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase">{player.player_id}</p>
+                          <p className="text-[9px] text-slate-500 font-bold uppercase mt-0.5">
+                            {player.team_name || <span className="text-slate-400 italic">Unassigned</span>}
+                          </p>
+                        </div>
                       </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {player.team_name || <span className="text-gray-400 italic">Not assigned</span>}
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
                       {activeTab === 'most-improved' && player.points_change !== undefined ? (
-                        <div className="flex flex-col items-center gap-1">
+                        <div className="text-right">
                           <span 
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
+                            className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-extrabold border ${
                               player.points_change > 0 
-                                ? 'bg-green-100 text-green-800' 
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
                                 : player.points_change < 0
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-gray-100 text-gray-600'
+                                ? 'bg-rose-50 text-rose-700 border-rose-200/50'
+                                : 'bg-slate-50 text-slate-650 border-slate-200/50'
                             }`}
                           >
                             {player.points_change > 0 ? '+' : ''}{player.points_change}
                           </span>
-                          <span className="text-[10px] text-gray-500">
+                          <p className="text-[9px] text-slate-450 font-semibold uppercase mt-0.5">
                             {player.base_points} → {player.points}
-                          </span>
+                          </p>
                         </div>
                       ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-purple-100 text-purple-800">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black border uppercase tracking-wider bg-slate-800 text-amber-400 border-slate-900">
                           {player.points}
                         </span>
                       )}
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                      <span className="text-sm text-gray-600">{player.matches_played}</span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                      <span className="text-sm font-semibold text-green-600">{player.wins}</span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                      <span className="text-sm text-gray-600">{player.draws}</span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                      <span className="text-sm font-semibold text-red-600">{player.losses}</span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                      <span className="text-sm font-medium text-gray-900">
-                        {player.matches_played > 0 ? `${player.win_rate.toFixed(1)}%` : '-'}
-                      </span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                        ⚽ {player.goals || 0}
-                      </span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                      <span className="text-sm font-semibold text-red-600">{player.goals_conceded || 0}</span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                      <span className="text-sm font-semibold text-blue-600">{player.clean_sheets || 0}</span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700">
-                        ⭐ {player.potm || 0}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </div>
 
-        {/* Mobile Cards - Shown only on mobile */}
-        <div className="md:hidden space-y-4">
-          {filteredPlayers.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <span className="text-6xl mb-4 block">👤</span>
-              <h3 className="text-lg font-medium text-gray-600 mb-2">No Players Found</h3>
-              <p className="text-sm">Try adjusting your filters</p>
-            </div>
-          ) : (
-            filteredPlayers.map((player, index) => (
-              <div 
-                key={player.id || player.player_id || `player-${index}`}
-                className={`bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-md border-2 transition-all ${
-                  index < 3 ? 'border-yellow-400 bg-yellow-50/50' : 'border-gray-200'
-                }`}
-              >
-                {/* Header with Rank and Name */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="text-2xl font-bold">
-                      {index === 0 && '🥇'}
-                      {index === 1 && '🥈'}
-                      {index === 2 && '🥉'}
-                      {index > 2 && <span className="text-gray-600">#{index + 1}</span>}
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100">
+                      <div className="text-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Played</p>
+                        <p className="text-xs font-extrabold text-slate-800">{player.matches_played}</p>
+                      </div>
+                      <div className="text-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5 font-bold text-emerald-600">Wins</p>
+                        <p className="text-xs font-extrabold text-emerald-600">{player.wins}</p>
+                      </div>
+                      <div className="text-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Draws</p>
+                        <p className="text-xs font-extrabold text-slate-800">{player.draws}</p>
+                      </div>
+                      <div className="text-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5 font-bold text-rose-650">Losses</p>
+                        <p className="text-xs font-extrabold text-rose-600">{player.losses}</p>
+                      </div>
+                      <div className="text-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Win %</p>
+                        <p className="text-xs font-extrabold text-slate-800">
+                          {player.matches_played > 0 ? `${player.win_rate.toFixed(1)}%` : '-'}
+                        </p>
+                      </div>
+                      <div className="text-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Goals</p>
+                        <p className="text-xs font-extrabold text-emerald-700">⚽ {player.goals || 0}</p>
+                      </div>
+                      <div className="text-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Conceded</p>
+                        <p className="text-xs font-extrabold text-rose-600">{player.goals_conceded || 0}</p>
+                      </div>
+                      <div className="text-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Clean</p>
+                        <p className="text-xs font-extrabold text-sky-600">🧤 {player.clean_sheets || 0}</p>
+                      </div>
+                      <div className="text-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">POTM</p>
+                        <p className="text-xs font-extrabold text-amber-700">⭐ {player.potm || 0}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900">{player.name}</h3>
-                      <p className="text-xs text-gray-500">{player.player_id}</p>
-                      <p className="text-xs text-gray-600 mt-0.5">{player.team_name || 'Not assigned'}</p>
-                    </div>
                   </div>
-                  {activeTab === 'most-improved' && player.points_change !== undefined ? (
-                    <div className="text-right">
-                      <span 
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ${
-                          player.points_change > 0 
-                            ? 'bg-green-100 text-green-800' 
-                            : player.points_change < 0
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-600'
-                        }`}
-                      >
-                        {player.points_change > 0 ? '+' : ''}{player.points_change}
-                      </span>
-                      <p className="text-[10px] text-gray-500 mt-1">
-                        {player.base_points} → {player.points}
-                      </p>
-                    </div>
-                  ) : (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-purple-100 text-purple-800">
-                      {player.points}
-                    </span>
-                  )}
-                </div>
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-gray-200">
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">Played</p>
-                    <p className="text-sm font-bold text-gray-900">{player.matches_played}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">Wins</p>
-                    <p className="text-sm font-bold text-green-600">{player.wins}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">Draws</p>
-                    <p className="text-sm font-bold text-gray-600">{player.draws}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">Losses</p>
-                    <p className="text-sm font-bold text-red-600">{player.losses}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">Win %</p>
-                    <p className="text-sm font-bold text-gray-900">
-                      {player.matches_played > 0 ? `${player.win_rate.toFixed(1)}%` : '-'}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">⚽ Goals</p>
-                    <p className="text-sm font-bold text-green-700">{player.goals || 0}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">🥅 Conceded</p>
-                    <p className="text-sm font-bold text-red-600">{player.goals_conceded || 0}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">🧤 Clean</p>
-                    <p className="text-sm font-bold text-blue-600">{player.clean_sheets || 0}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">⭐ POTM</p>
-                    <p className="text-sm font-bold text-purple-600">{player.potm || 0}</p>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
-      </div>
 
         {/* Legend Info */}
-        <div className="mt-6 bg-purple-50 border border-purple-200 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <span className="text-2xl">📊</span>
-          <div>
-            <h3 className="text-sm font-semibold text-purple-800 mb-2">Leaderboard Legend</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs text-purple-700">
-              <div><strong>Points:</strong> Overall score accumulated</div>
-              <div><strong>Played:</strong> Total matches played</div>
-              <div><strong>Win %:</strong> Percentage of matches won</div>
-              <div><strong>W/D/L:</strong> Wins, Draws, Losses</div>
-              <div><strong>GS:</strong> Goals Scored</div>
-              <div><strong>GC:</strong> Goals Conceded</div>
-              <div><strong>CS:</strong> Clean Sheets</div>
-              <div><strong>POTM:</strong> Player of the Match awards</div>
-              <div><strong>🥇🥈🥉:</strong> Top 3 players highlighted</div>
+        <div className="console-card mt-6 bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm font-mono">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span className="text-xl">📊</span>
+            </div>
+            <div>
+              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-3">Leaderboard Legend</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2.5 text-[10px] text-slate-500 font-bold uppercase">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-800 font-extrabold min-w-[50px]">PTS:</span> 
+                  <span className="font-semibold text-slate-450 normal-case">Overall score accumulated</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-800 font-extrabold min-w-[50px]">MP:</span> 
+                  <span className="font-semibold text-slate-450 normal-case">Total matches played</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-800 font-extrabold min-w-[50px]">WIN %:</span> 
+                  <span className="font-semibold text-slate-450 normal-case">Percentage of matches won</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-800 font-extrabold min-w-[50px]">W/D/L:</span> 
+                  <span className="font-semibold text-slate-450 normal-case">Wins, Draws, Losses count</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-800 font-extrabold min-w-[50px]">GS:</span> 
+                  <span className="font-semibold text-slate-450 normal-case">Goals Scored</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-800 font-extrabold min-w-[50px]">GC:</span> 
+                  <span className="font-semibold text-slate-450 normal-case">Goals Conceded</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-800 font-extrabold min-w-[50px]">CS:</span> 
+                  <span className="font-semibold text-slate-450 normal-case">Clean Sheets (Goalkeeper stats)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-800 font-extrabold min-w-[50px]">POTM:</span> 
+                  <span className="font-semibold text-slate-450 normal-case">Player of the Match awards</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-800 font-extrabold min-w-[50px]">🥇🥈🥉:</span> 
+                  <span className="font-semibold text-slate-450 normal-case">Top 3 player ranks highlighted</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      </div>
     </div>
   );
 }
+

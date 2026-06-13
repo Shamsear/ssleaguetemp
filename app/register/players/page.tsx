@@ -73,7 +73,7 @@ function PlayersRegistrationPageContent() {
   const [playerSearchQuery, setPlayerSearchQuery] = useState<string>('')
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([])
   const [actioningPlayer, setActioningPlayer] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'manage' | 'register'>('manage')
+  const [activeTab, setActiveTab] = useState<'manage' | 'register' | 'registration'>('manage')
   const [totalMasterPlayers, setTotalMasterPlayers] = useState<number>(0)
   const [copiedUrl, setCopiedUrl] = useState(false)
   const [isTogglingRegistration, setIsTogglingRegistration] = useState(false)
@@ -104,7 +104,6 @@ function PlayersRegistrationPageContent() {
       const statsResult = await statsResponse.json()
       if (statsResult.success) {
         setStats(statsResult.data)
-        setNewLimit(statsResult.data.confirmed_slots_limit)
       }
 
       const masterPlayersData = masterPlayersSnapshot.docs.map(doc => ({
@@ -246,15 +245,12 @@ function PlayersRegistrationPageContent() {
 
     if (value.trim().length >= 2) {
       const searchLower = value.toLowerCase()
-      // Get list of registered player IDs for efficient lookup
       const registeredPlayerIds = new Set(registeredPlayers.map(p => p.player_id))
       
       const filtered = masterPlayers.filter(p => {
-        // First check if player matches search criteria
         const matchesSearch = p.player_id?.toLowerCase().includes(searchLower) ||
           p.name?.toLowerCase().includes(searchLower)
         
-        // Only include if matches search AND is not already registered
         return matchesSearch && !registeredPlayerIds.has(p.player_id)
       })
       setFilteredPlayers(filtered)
@@ -391,10 +387,7 @@ function PlayersRegistrationPageContent() {
 
   const handleExportToExcel = async () => {
     try {
-      // Fetch additional player details from Firebase realplayers collection
       const playerIds = filteredRegisteredPlayers.map(p => p.player_id)
-      
-      // Fetch player details in batches (Firestore 'in' query limit is 30)
       const playerDetailsMap = new Map()
       
       for (let i = 0; i < playerIds.length; i += 30) {
@@ -413,7 +406,6 @@ function PlayersRegistrationPageContent() {
         })
       }
 
-      // Prepare data for export
       const exportData = filteredRegisteredPlayers.map((player, index) => {
         const details = playerDetailsMap.get(player.player_id) || { email: '', phone: '' }
         return {
@@ -426,10 +418,8 @@ function PlayersRegistrationPageContent() {
         }
       })
 
-      // Create worksheet
       const ws = XLSX.utils.json_to_sheet(exportData)
       
-      // Set column widths
       ws['!cols'] = [
         { wch: 5 },  // #
         { wch: 25 }, // Name
@@ -439,15 +429,12 @@ function PlayersRegistrationPageContent() {
         { wch: 15 }  // Phone Number
       ]
 
-      // Create workbook
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, 'Registered Players')
 
-      // Generate filename with season and timestamp
       const timestamp = new Date().toISOString().split('T')[0]
       const filename = `registered_players_${season?.name || seasonId}_${timestamp}.xlsx`
 
-      // Download file
       XLSX.writeFile(wb, filename)
       
       setSuccess(`Exported ${exportData.length} players to Excel!`)
@@ -602,10 +589,11 @@ function PlayersRegistrationPageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading registration data...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading player registration...</p>
         </div>
       </div>
     )
@@ -613,20 +601,19 @@ function PlayersRegistrationPageContent() {
 
   if (error && !season) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl p-8 shadow-xl max-w-md w-full">
-          <div className="flex items-center justify-center mb-4">
-            <div className="p-3 rounded-full bg-red-100">
-              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
+      <div className="console-bg min-h-screen flex items-center justify-center relative px-4">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-8 max-w-md w-full mx-auto text-center relative z-10 font-mono">
+          <div className="text-rose-500 mb-4">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">Error</h2>
-          <p className="text-gray-600 text-center mb-6">{error}</p>
+          <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-2">Error</h2>
+          <p className="text-xs text-slate-500 uppercase font-semibold mb-6">{error}</p>
           <button
             onClick={() => router.push('/')}
-            className="w-full py-3 px-4 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+            className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl text-xs uppercase tracking-wider font-bold transition-all shadow-sm cursor-pointer"
           >
             Return Home
           </button>
@@ -636,303 +623,116 @@ function PlayersRegistrationPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Top Navigation Bar */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push('/dashboard/committee')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Back to Dashboard"
-              >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </button>
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900">Player Registration</h1>
-                <p className="text-xs sm:text-sm text-blue-600 font-medium">{season?.name}</p>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6 font-mono">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wider text-slate-800">Player Registration</h1>
+            <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
+              Season: <span className="font-extrabold text-amber-500">{season?.name || seasonId}</span>
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="hidden md:flex items-center gap-2 mr-2">
+              <div className="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200/40 rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm">
+                Total: {registeredPlayers.length}
+              </div>
+              <div className="px-3 py-1.5 bg-slate-50 text-slate-700 border border-slate-200/60 rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm">
+                Available: {totalMasterPlayers - registeredPlayers.length}
               </div>
             </div>
-            
-            <div className="hidden md:flex items-center gap-2">
-              <div className="px-3 py-1.5 bg-blue-50 rounded-lg">
-                <span className="text-xs font-medium text-blue-700 mr-1">Total:</span>
-                <span className="text-xs font-bold text-blue-900">{registeredPlayers.length}</span>
-              </div>
-              <div className="px-3 py-1.5 bg-gray-50 rounded-lg">
-                <span className="text-xs font-medium text-gray-700 mr-1">Available:</span>
-                <span className="text-xs font-bold text-gray-900">{totalMasterPlayers - registeredPlayers.length}</span>
-              </div>
-            </div>
+
+            <button
+              onClick={() => router.push('/dashboard/committee')}
+              className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all text-xs uppercase tracking-wider font-bold cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span>Back to Dashboard</span>
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Stats Bar */}
-      {stats && (
-        <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3">
-          <div className="flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-xs text-gray-500 mb-1">Total Registered</div>
-              <div className="text-2xl font-bold text-blue-600">{stats.total_registrations}</div>
-            </div>
+        {/* Messages */}
+        {(error || success) && (
+          <div className="animate-fade-in space-y-2">
+            {error && (
+              <div className="p-4 bg-red-50/50 border border-red-200/50 text-red-800 rounded-xl text-xs uppercase font-bold tracking-wider">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="p-4 bg-green-50/50 border border-green-200/50 text-green-800 rounded-xl text-xs uppercase font-bold tracking-wider">
+                {success}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Messages */}
-      {(error || success) && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 mb-4">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
-          {success && (
-            <div className="bg-green-50 border-l-4 border-green-500 rounded-lg p-4 mb-4">
-              <p className="text-sm text-green-800">{success}</p>
-            </div>
-          )}
-        </div>
-      )}
+        {/* Tab Controls */}
+        <div className="console-card bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+          <div className="flex border-b border-slate-100 p-2 bg-slate-50 gap-2 overflow-x-auto scrollbar-hide">
+            <button
+              onClick={() => setActiveTab('manage')}
+              className={`px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
+                activeTab === 'manage'
+                  ? 'bg-slate-800 text-white shadow-sm border border-slate-900'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/60'
+              }`}
+            >
+              Manage Players
+            </button>
+            <button
+              onClick={() => setActiveTab('register')}
+              className={`px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
+                activeTab === 'register'
+                  ? 'bg-slate-800 text-white shadow-sm border border-slate-900'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/60'
+              }`}
+            >
+              Quick Register
+            </button>
+            <button
+              onClick={() => setActiveTab('registration')}
+              className={`px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
+                activeTab === 'registration'
+                  ? 'bg-slate-800 text-white shadow-sm border border-slate-900'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/60'
+              }`}
+            >
+              Registration Control
+            </button>
+          </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Desktop: Tab Navigation */}
-        <div className="hidden lg:flex items-center gap-2 mb-6">
-          <button
-            onClick={() => setActiveTab('manage')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'manage'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Manage Players
-          </button>
-          <button
-            onClick={() => setActiveTab('register')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'register'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Quick Register
-          </button>
-        </div>
-
-        {/* Mobile: Dropdown Navigation */}
-        <div className="lg:hidden mb-4">
-          <select
-            value={activeTab}
-            onChange={(e) => setActiveTab(e.target.value as any)}
-            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="manage">Manage Players</option>
-            <option value="register">Quick Register</option>
-          </select>
-        </div>
-
-        {/* Tab Content */}
-        <div className="space-y-6">
-          {/* Registration Tab */}
-          {activeTab === 'registration' && (
-            <div className="space-y-6">
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600 mb-1">Total Players</p>
-                      <p className="text-3xl font-bold text-gray-900">{totalMasterPlayers}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600 mb-1">Registered</p>
-                      <p className="text-3xl font-bold text-green-600">{stats?.total_registrations || 0}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600 mb-1">Available</p>
-                      <p className="text-3xl font-bold text-amber-600">
-                        {totalMasterPlayers - (stats?.total_registrations || 0)}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Registration Control */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <span className="text-base font-semibold text-gray-700">Registration Status:</span>
-                    {season?.is_player_registration_open ? (
-                      <span className="inline-flex items-center px-3 py-1 text-sm font-bold rounded-full bg-green-100 text-green-800 border border-green-200">
-                        <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
-                        </svg>
-                        OPEN
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-3 py-1 text-sm font-bold rounded-full bg-red-100 text-red-800 border border-red-200">
-                        <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/>
-                        </svg>
-                        CLOSED
-                      </span>
-                    )}
-                  </div>
-                  
-                  <button
-                    onClick={togglePlayerRegistration}
-                    disabled={isTogglingRegistration}
-                    className={`inline-flex items-center px-4 py-2 text-sm font-semibold rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
-                      season?.is_player_registration_open
-                        ? 'bg-red-500 hover:bg-red-600 text-white'
-                        : 'bg-green-500 hover:bg-green-600 text-white'
-                    }`}
-                  >
-                    {isTogglingRegistration ? (
-                      <>
-                        <svg className="animate-spin w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Processing...
-                      </>
-                    ) : season?.is_player_registration_open ? (
-                      <>
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Close Registration
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        Open Registration
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {season?.is_player_registration_open ? (
-                  <div>
-                    <div className="mb-4 p-4 bg-green-50 rounded-xl border border-green-200">
-                      <p className="text-sm text-green-800 flex items-start">
-                        <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span><strong>Registration Link Active:</strong> Share the link below with players to register for {season?.name}.</span>
-                      </p>
-                    </div>
-                    
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Registration Link</label>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <input
-                        type="text"
-                        value={`${typeof window !== 'undefined' ? window.location.origin : ''}/register/player?season=${seasonId}`}
-                        readOnly
-                        onClick={(e) => e.currentTarget.select()}
-                        className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm font-mono text-gray-700"
-                      />
-                      <button
-                        onClick={() => copyToClipboard(`${typeof window !== 'undefined' ? window.location.origin : ''}/register/player?season=${seasonId}`)}
-                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center"
-                      >
-                        <svg className="w-4 h-4 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        <span className="hidden sm:inline">{copiedUrl ? 'Copied!' : 'Copy Link'}</span>
-                        <span className="sm:hidden">{copiedUrl ? '✓' : 'Copy'}</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 bg-red-50 rounded-xl border border-red-200">
-                    <p className="text-sm text-red-800 flex items-start">
-                      <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      <span><strong>Registration Closed:</strong> Players cannot register at this time. Click "Open Registration" to allow new player registrations.</span>
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Info Section */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Registration Information
-                </h3>
-                <div className="space-y-3 text-sm text-gray-600">
-                  <p>
-                    <strong className="text-gray-800">Season-Specific Link:</strong> The registration link is tied directly to {season?.name}. Players will automatically register for this season.
-                  </p>
-                  <p>
-                    <strong className="text-gray-800">Process:</strong> Players will complete registration for {season?.name}.
-                  </p>
-                  <p>
-                    <strong className="text-gray-800">Control:</strong> You can open or close registration at any time using the toggle above.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Manage Players Tab */}
-          {activeTab === 'manage' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              {/* Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 sm:px-6 py-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <h2 className="text-xl font-bold text-white">Registered Players ({registeredPlayers.length})</h2>
-                  
-                  <div className="flex flex-col sm:flex-row gap-2">
+          <div className="p-5">
+            {/* Manage Players Tab */}
+            {activeTab === 'manage' && (
+              <div className="space-y-4">
+                {/* Search / Filter header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50/50 p-4 border border-slate-100 rounded-2xl">
+                  <div className="flex-1 relative">
+                    <svg className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
                     <input
                       type="text"
-                      placeholder="Search..."
+                      placeholder="Search registered players..."
                       value={playerSearchQuery}
                       onChange={(e) => setPlayerSearchQuery(e.target.value)}
-                      className="px-3 py-2 rounded-lg text-sm bg-white/90 placeholder-gray-500 focus:ring-2 focus:ring-white/30"
+                      className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-400/20 text-xs font-bold uppercase tracking-wider"
                     />
-                    
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
                     <button
                       onClick={handleExportToExcel}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-sm transition-colors flex items-center gap-2"
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-700 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -944,193 +744,355 @@ function PlayersRegistrationPageContent() {
                       <button
                         onClick={handleBulkDelete}
                         disabled={submitting}
-                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
+                        className="px-4 py-2 bg-red-650 hover:bg-red-550 text-white border border-red-700 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-sm cursor-pointer disabled:opacity-50"
                       >
-                        Delete ({selectedPlayerIds.length})
+                        Delete Selected ({selectedPlayerIds.length})
                       </button>
                     )}
                   </div>
                 </div>
-                
-                <p className="text-blue-100 text-sm mt-2">
-                  Showing {filteredRegisteredPlayers.length} of {registeredPlayers.length} players
-                </p>
-              </div>
 
-              {/* Table */}
-              <div className="overflow-x-auto">
-                {filteredRegisteredPlayers.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {/* Table */}
+                <div className="overflow-x-auto border border-slate-100 rounded-2xl">
+                  {filteredRegisteredPlayers.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
+                      <h3 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-1">
+                        {playerSearchQuery ? 'No players found' : 'No players registered'}
+                      </h3>
+                      <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">
+                        {playerSearchQuery ? 'Try adjusting your search criteria' : 'Registered players will appear here'}
+                      </p>
                     </div>
-                    <p className="text-gray-600 font-medium">
-                      {playerSearchQuery ? 'No players found' : 'No players registered yet'}
-                    </p>
-                  </div>
-                ) : (
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-4 py-3 text-left">
-                          <input
-                            type="checkbox"
-                            checked={selectedPlayerIds.length === filteredRegisteredPlayers.length && filteredRegisteredPlayers.length > 0}
-                            onChange={toggleSelectAll}
-                            className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                          />
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">#</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Name</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase hidden sm:table-cell">ID</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase hidden md:table-cell">Date</th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {filteredRegisteredPlayers.map((player, index) => {
-                        const isActioning = actioningPlayer === player.player_id
-                        
-                        return (
-                          <tr key={player.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-4 py-3">
-                              <input
-                                type="checkbox"
-                                checked={selectedPlayerIds.includes(player.player_id)}
-                                onChange={() => togglePlayerSelection(player.player_id)}
-                                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                              />
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-500">{index + 1}</td>
-                            <td className="px-4 py-3 font-medium text-gray-900">{player.player_name || 'Unknown'}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600 font-mono hidden sm:table-cell">{player.player_id}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">
-                              {formatDateIST(player.registration_date)}
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center justify-end gap-2">
+                  ) : (
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-black tracking-wider text-slate-500">
+                          <th className="p-4 w-12">
+                            <input
+                              type="checkbox"
+                              checked={selectedPlayerIds.length === filteredRegisteredPlayers.length && filteredRegisteredPlayers.length > 0}
+                              onChange={toggleSelectAll}
+                              className="w-4 h-4 text-slate-800 border-slate-300 rounded focus:ring-1 focus:ring-slate-800/20"
+                            />
+                          </th>
+                          <th className="p-4 w-16">#</th>
+                          <th className="p-4">Name</th>
+                          <th className="p-4 hidden sm:table-cell">Player ID</th>
+                          <th className="p-4 hidden md:table-cell">Registration Date</th>
+                          <th className="p-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
+                        {filteredRegisteredPlayers.map((player, index) => {
+                          const isActioning = actioningPlayer === player.player_id
+                          
+                          return (
+                            <tr key={player.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="p-4">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedPlayerIds.includes(player.player_id)}
+                                  onChange={() => togglePlayerSelection(player.player_id)}
+                                  className="w-4 h-4 text-slate-800 border-slate-300 rounded focus:ring-1 focus:ring-slate-800/20"
+                                />
+                              </td>
+                              <td className="p-4 text-slate-400 font-mono">{index + 1}</td>
+                              <td className="p-4 text-slate-900 uppercase tracking-wide">{player.player_name || 'Unknown'}</td>
+                              <td className="p-4 font-mono hidden sm:table-cell text-slate-500">{player.player_id}</td>
+                              <td className="p-4 text-slate-500 hidden md:table-cell">
+                                {formatDateIST(player.registration_date)}
+                              </td>
+                              <td className="p-4 text-right">
                                 <button
                                   onClick={() => handleDeleteRegistration(player.player_id)}
                                   disabled={isActioning}
-                                  className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                                  className="p-1.5 text-red-650 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-200/40 cursor-pointer disabled:opacity-50"
                                   title="Delete registration"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                   </svg>
                                 </button>
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                )}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Quick Register Tab */}
-          {activeTab === 'register' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Player Registration</h2>
-              
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Search Player <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    onFocus={() => setShowDropdown(true)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Search by player ID or name..."
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Type at least 2 characters to search</p>
-                  
-                  {showDropdown && filteredPlayers.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                      {filteredPlayers.map(player => {
-                        const isRegistered = registeredPlayers.some(p => p.player_id === player.player_id)
-                        const isSelected = selectedPlayers.some(p => p.player_id === player.player_id)
-                        const isDisabled = isRegistered || isSelected
-                        return (
-                          <button
-                            key={player.id}
-                            type="button"
-                            onClick={() => !isDisabled && handlePlayerSelect(player)}
-                            disabled={isDisabled}
-                            className={`w-full px-4 py-3 text-left transition-colors border-b border-gray-100 last:border-b-0 ${
-                              isDisabled 
-                                ? 'bg-gray-50 cursor-not-allowed opacity-60' 
-                                : 'hover:bg-blue-50 cursor-pointer'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="font-medium text-gray-900">{player.name}</div>
-                                <div className="text-sm text-gray-500">{player.player_id}</div>
+            {/* Quick Register Tab */}
+            {activeTab === 'register' && (
+              <div className="space-y-4">
+                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-2">Quick Player Registration</h2>
+                
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="relative">
+                    <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">
+                      Search Player <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={handleSearchChange}
+                      onFocus={() => setShowDropdown(true)}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-400/20 text-xs font-bold uppercase tracking-wider"
+                      placeholder="Type player ID or name..."
+                    />
+                    <p className="text-[9px] text-slate-400 uppercase tracking-wider font-bold mt-1.5">Type at least 2 characters to search</p>
+                    
+                    {showDropdown && filteredPlayers.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                        {filteredPlayers.map(player => {
+                          const isRegistered = registeredPlayers.some(p => p.player_id === player.player_id)
+                          const isSelected = selectedPlayers.some(p => p.player_id === player.player_id)
+                          const isDisabled = isRegistered || isSelected
+                          return (
+                            <button
+                              key={player.id}
+                              type="button"
+                              onClick={() => !isDisabled && handlePlayerSelect(player)}
+                              disabled={isDisabled}
+                              className={`w-full px-4 py-3 text-left transition-colors border-b border-slate-50 last:border-b-0 cursor-pointer ${
+                                isDisabled 
+                                  ? 'bg-slate-50/50 cursor-not-allowed opacity-60' 
+                                  : 'hover:bg-amber-50/20'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="font-bold text-slate-800 text-xs uppercase tracking-wider">
+                                  <div>{player.name}</div>
+                                  <div className="text-[10px] text-slate-400 font-mono mt-0.5">{player.player_id}</div>
+                                </div>
+                                {isRegistered && (
+                                  <span className="text-[9px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200/40 px-2.5 py-0.5 rounded-full">
+                                    Registered
+                                  </span>
+                                )}
+                                {isSelected && !isRegistered && (
+                                  <span className="text-[9px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200/40 px-2.5 py-0.5 rounded-full">
+                                    Selected
+                                  </span>
+                                )}
                               </div>
-                              {isRegistered && (
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
-                                  Registered
-                                </span>
-                              )}
-                              {isSelected && !isRegistered && (
-                                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">
-                                  Selected
-                                </span>
-                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedPlayers.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">
+                        Selected Players ({selectedPlayers.length}):
+                      </p>
+                      <div className="space-y-2">
+                        {selectedPlayers.map((player) => (
+                          <div key={player.player_id} className="flex items-center justify-between p-3 bg-purple-50/50 rounded-xl border border-purple-200/50 font-bold text-xs uppercase tracking-wider">
+                            <div>
+                              <div className="text-slate-800">{player.name}</div>
+                              <div className="text-[10px] text-slate-400 font-mono mt-0.5">ID: {player.player_id}</div>
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePlayer(player.player_id)}
+                              className="p-1.5 text-red-650 hover:bg-red-50 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-red-200/40"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={submitting || selectedPlayers.length === 0}
+                    className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-slate-900 font-bold text-xs uppercase tracking-wider transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                  >
+                    {submitting ? 'Registering...' : `Register ${selectedPlayers.length > 0 ? `${selectedPlayers.length} Selected Player${selectedPlayers.length > 1 ? 's' : ''}` : 'Players'}`}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* Registration Control Tab */}
+            {activeTab === 'registration' && (
+              <div className="space-y-6">
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 font-mono">
+                  <div className="console-card bg-white rounded-2xl p-5 border border-slate-200/60 hover:border-amber-400/40 transition-all hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-md">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Total Players</div>
+                    <div className="text-2xl font-black text-slate-800">{totalMasterPlayers}</div>
+                  </div>
+
+                  <div className="console-card bg-white rounded-2xl p-5 border border-slate-200/60 hover:border-green-500/40 transition-all hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-md">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Registered</div>
+                    <div className="text-2xl font-black text-green-600">{stats?.total_registrations || 0}</div>
+                  </div>
+
+                  <div className="console-card bg-white rounded-2xl p-5 border border-slate-200/60 hover:border-amber-500/40 transition-all hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-md">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Available</div>
+                    <div className="text-2xl font-black text-amber-600">{totalMasterPlayers - (stats?.total_registrations || 0)}</div>
+                  </div>
+                </div>
+
+                {/* Registration Control Panel */}
+                <div className="console-card bg-white rounded-3xl p-6 border border-slate-200/60 font-mono">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs uppercase font-bold text-slate-500 tracking-wider">Registration Status:</span>
+                      {season?.is_player_registration_open ? (
+                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-green-50 text-green-700 border border-green-200/40 uppercase tracking-wider">
+                          <svg className="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/>
+                          </svg>
+                          OPEN
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-200/40 uppercase tracking-wider">
+                          <svg className="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4.3 4.3a1 1 0 011.4 0L10 8.6l4.3-4.3a1 1 0 111.4 1.4L11.4 10l4.3 4.3a1 1 0 01-1.4 1.4L10 11.4l-4.3 4.3a1 1 0 01-1.4-1.4L8.6 10 4.3 5.7a1 1 0 010-1.4z" clipRule="evenodd"/>
+                          </svg>
+                          CLOSED
+                        </span>
+                      )}
+                    </div>
+                    
+                    <button
+                      onClick={togglePlayerRegistration}
+                      disabled={isTogglingRegistration}
+                      className={`inline-flex items-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+                        season?.is_player_registration_open
+                          ? 'bg-red-650 hover:bg-red-550 text-white border border-red-700'
+                          : 'bg-green-650 hover:bg-green-500 text-white border border-green-700'
+                      }`}
+                    >
+                      {isTogglingRegistration ? (
+                        <>
+                          <svg className="animate-spin w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Processing...
+                        </>
+                      ) : season?.is_player_registration_open ? (
+                        <>
+                          <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          Close Registration
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          Open Registration
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {season?.is_player_registration_open ? (
+                    <div className="space-y-4">
+                      <div className="p-4 bg-green-50/50 border border-green-200/50 rounded-xl">
+                        <p className="text-[10px] uppercase font-bold text-green-850 flex items-start leading-relaxed tracking-wider">
+                          <svg className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 text-green-650" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span><strong>Registration Active:</strong> Share the link below with players to register for {season?.name}.</span>
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Registration Link</label>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="text"
+                            value={`${typeof window !== 'undefined' ? window.location.origin : ''}/register/player?season=${seasonId}`}
+                            readOnly
+                            onClick={(e) => e.currentTarget.select()}
+                            className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-400/20 text-xs font-mono text-slate-700 font-bold"
+                          />
+                          <button
+                            onClick={() => copyToClipboard(`${typeof window !== 'undefined' ? window.location.origin : ''}/register/player?season=${seasonId}`)}
+                            className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-slate-900 font-bold text-xs uppercase tracking-wider transition-all shadow-sm flex items-center justify-center cursor-pointer"
+                          >
+                            <svg className="w-4 h-4 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <span>{copiedUrl ? 'Copied!' : 'Copy Link'}</span>
                           </button>
-                        )
-                      })}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-red-50/50 border border-red-200/50 rounded-xl">
+                      <p className="text-[10px] uppercase font-bold text-red-850 flex items-start leading-relaxed tracking-wider">
+                        <svg className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 text-red-650" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <span><strong>Registration Closed:</strong> Players cannot register at this time. Click "Open Registration" to allow new player registrations.</span>
+                      </p>
                     </div>
                   )}
                 </div>
 
-                {selectedPlayers.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700 mb-2">
-                      Selected Players ({selectedPlayers.length}):
+                {/* Info Panel */}
+                <div className="console-card bg-white rounded-3xl p-6 border border-slate-200/60 font-mono">
+                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center mb-4">
+                    <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Registration Information
+                  </h3>
+                  <div className="space-y-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <p>
+                      <span className="text-slate-700">1. Season-Specific Link:</span> The registration link is tied directly to {season?.name}. Players will automatically register for this season.
                     </p>
-                    <div className="space-y-2">
-                      {selectedPlayers.map((player) => (
-                        <div key={player.player_id} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
-                          <div>
-                            <div className="font-medium text-gray-900">{player.name}</div>
-                            <div className="text-sm text-gray-600">ID: {player.player_id}</div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemovePlayer(player.player_id)}
-                            className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                    <p>
+                      <span className="text-slate-700">2. Process:</span> Players will complete registration for {season?.name}.
+                    </p>
+                    <p>
+                      <span className="text-slate-700">3. Control:</span> You can open or close registration at any time using the toggle above.
+                    </p>
                   </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={submitting || selectedPlayers.length === 0}
-                  className="w-full py-3 px-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitting ? 'Registering...' : `Register ${selectedPlayers.length > 0 ? `${selectedPlayers.length} Player${selectedPlayers.length > 1 ? 's' : ''}` : 'Players'}`}
-                </button>
-              </form>
-            </div>
-          )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -1140,10 +1102,11 @@ function PlayersRegistrationPageContent() {
 export default function PlayersRegistrationPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+          <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Loading...</p>
         </div>
       </div>
     }>

@@ -28,6 +28,7 @@ interface BudgetData {
   midSeasonMatches: number;
   requiredRealPlayers: number; // Exact count required
   maxFootballPlayers: number;
+  footballTotalSlots: number;
 }
 
 const FOOTBALL_POSITIONS = ['GK', 'CB', 'LB', 'RB', 'DMF', 'CMF', 'AMF', 'LMF', 'RMF', 'LWF', 'RWF', 'SS', 'CF'];
@@ -77,6 +78,7 @@ export default function BudgetPlannerPage() {
           // Use season settings for initial budgets, team_seasons for spent amounts
           const seasonSettings = data.data.seasonSettings || {};
           const team = data.data.team || {};
+          const stats = data.data.stats || {};
           
           setBudgetData({
             footballBudget: seasonSettings.euro_budget || 10000,
@@ -87,7 +89,7 @@ export default function BudgetPlannerPage() {
             midSeasonMatches: 19,
             requiredRealPlayers: seasonSettings.required_real_players || seasonSettings.min_real_players || 5, // Backward compatible
             maxFootballPlayers: seasonSettings.max_football_players || 25,
-            footballTotalSlots: teamSeasonData.football_total_slots || seasonSettings.max_football_players || 25,
+            footballTotalSlots: stats.football_total_slots || seasonSettings.max_football_players || 25,
           });
         }
       } catch (error) {
@@ -177,10 +179,11 @@ export default function BudgetPlannerPage() {
 
   if (loading || isLoadingBudget) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Budget Planner...</p>
         </div>
       </div>
     );
@@ -191,331 +194,343 @@ export default function BudgetPlannerPage() {
   }
 
   const currentPlayers = activeTab === 'football' ? footballPlayers : realPlayers;
-  const currentTotals = activeTab === 'football' ? footballTotals : realPlayerTotals;
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-      {/* Header */}
-      <div className="glass rounded-3xl p-4 sm:p-6 mb-6 hover:shadow-lg transition-all duration-300">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center">
-            <div className="bg-gradient-to-br from-green-400 to-emerald-600 p-3 rounded-full mr-4 shadow-lg">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-dark">Budget Planner</h1>
-              <p className="text-gray-600 mt-1">Estimate player costs and calculate salaries</p>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6 font-mono">
+        {/* Back Link */}
+        <Link
+          href="/dashboard"
+          className="px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold flex items-center justify-center w-fit mb-4"
+        >
+          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Dashboard
+        </Link>
+
+        {/* Header Title Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/10 flex-shrink-0">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wider text-slate-800">
+                  Budget Planner
+                </h1>
+                <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
+                  Estimate player costs and calculate salaries
+                </p>
+              </div>
             </div>
           </div>
-          <Link 
-            href="/dashboard" 
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors text-sm font-medium flex items-center"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            Dashboard
-          </Link>
-        </div>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setActiveTab('football')}
-          className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-            activeTab === 'football'
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-              : 'glass text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          ⚽ Virtual Players (eCoin)
-        </button>
-        <button
-          onClick={() => setActiveTab('real')}
-          className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-            activeTab === 'real'
-              ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg'
-              : 'glass text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          🎮 Real Players (SSCoin)
-        </button>
-      </div>
-
-      {/* Budget Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {activeTab === 'football' ? (
-          <>
-            {/* Football Budget Card */}
-            <div className="glass rounded-2xl p-6 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-blue-50 to-indigo-50">
-              <div className="flex items-center justify-between mb-4">
-                <div className="bg-blue-100 p-3 rounded-full">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <span className="text-xs text-blue-600 font-medium px-2 py-1 bg-blue-100 rounded-full">Total Budget</span>
-              </div>
-              <h3 className="text-sm text-gray-600 mb-1">Available Budget</h3>
-              <p className="text-3xl font-bold text-blue-600">{budgetData.footballBudget.toLocaleString()} eCoin</p>
-              <div className="mt-3 text-xs text-gray-500">Spent: {budgetData.footballSpent.toLocaleString()} eCoin</div>
-            </div>
-
-            {/* Estimated Total */}
-            <div className="glass rounded-2xl p-6 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
-              <div className="flex items-center justify-between mb-4">
-                <div className="bg-purple-100 p-3 rounded-full">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <span className="text-xs text-purple-600 font-medium px-2 py-1 bg-purple-100 rounded-full">Estimated</span>
-              </div>
-              <h3 className="text-sm text-gray-600 mb-1">Planned Spending</h3>
-              <p className="text-3xl font-bold text-purple-600">{currentTotals.total.toLocaleString()} eCoin</p>
-              <div className="mt-3 text-xs text-gray-500">Range: {currentTotals.min.toLocaleString()} - {currentTotals.max.toLocaleString()} eCoin</div>
-            </div>
-
-            {/* Remaining Budget */}
-            <div className="glass rounded-2xl p-6 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-green-50 to-emerald-50">
-              <div className="flex items-center justify-between mb-4">
-                <div className="bg-green-100 p-3 rounded-full">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <span className="text-xs text-green-600 font-medium px-2 py-1 bg-green-100 rounded-full">Remaining</span>
-              </div>
-              <h3 className="text-sm text-gray-600 mb-1">After Estimates</h3>
-              <p className={`text-3xl font-bold ${
-                budgetData.footballBudget - currentTotals.total >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {(budgetData.footballBudget - currentTotals.total).toLocaleString()} eCoin
-              </p>
-              <div className="mt-3 text-xs text-gray-500">For {budgetData.footballTotalSlots} player slots max</div>
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Real Player Budget Card */}
-            <div className="glass rounded-2xl p-6 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-green-50 to-emerald-50">
-              <div className="flex items-center justify-between mb-4">
-                <div className="bg-green-100 p-3 rounded-full">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <span className="text-xs text-green-600 font-medium px-2 py-1 bg-green-100 rounded-full">Total Budget</span>
-              </div>
-              <h3 className="text-sm text-gray-600 mb-1">Available Budget</h3>
-              <p className="text-3xl font-bold text-green-600">{budgetData.realPlayerBudget.toLocaleString()} SSCoin</p>
-              <div className="mt-3 text-xs text-gray-500">Spent: {budgetData.realPlayerSpent.toLocaleString()} SSCoin</div>
-            </div>
-
-            {/* Estimated Total */}
-            <div className="glass rounded-2xl p-6 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
-              <div className="flex items-center justify-between mb-4">
-                <div className="bg-purple-100 p-3 rounded-full">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <span className="text-xs text-purple-600 font-medium px-2 py-1 bg-purple-100 rounded-full">Estimated</span>
-              </div>
-              <h3 className="text-sm text-gray-600 mb-1">Planned Spending</h3>
-              <p className="text-3xl font-bold text-purple-600">{currentTotals.total.toLocaleString()} SSCoin</p>
-              <div className="mt-3 text-xs text-gray-500">Range: {currentTotals.min.toLocaleString()} - {currentTotals.max.toLocaleString()} SSCoin</div>
-            </div>
-
-            {/* Remaining Budget */}
-            <div className="glass rounded-2xl p-6 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-blue-50 to-indigo-50">
-              <div className="flex items-center justify-between mb-4">
-                <div className="bg-blue-100 p-3 rounded-full">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <span className="text-xs text-blue-600 font-medium px-2 py-1 bg-blue-100 rounded-full">Remaining</span>
-              </div>
-              <h3 className="text-sm text-gray-600 mb-1">After Estimates</h3>
-              <p className={`text-3xl font-bold ${
-                budgetData.realPlayerBudget - currentTotals.total >= 0 ? 'text-blue-600' : 'text-red-600'
-              }`}>
-                {(budgetData.realPlayerBudget - currentTotals.total).toLocaleString()} SSCoin
-              </p>
-              <div className="mt-3 text-xs text-gray-500">Must have exactly {budgetData.requiredRealPlayers} SS Members</div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Player Estimation Section */}
-      <div className="glass rounded-2xl p-6 mb-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold">
-            {activeTab === 'football' ? '⚽ Football Player Estimates' : '🎮 Real Player Estimates'}
-          </h2>
-          <button
-            onClick={() => addPlayerEstimate(activeTab)}
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Add Player
-          </button>
         </div>
 
-        {/* Player List */}
-        <div className="space-y-4">
-          {currentPlayers.map((player) => (
-            <div key={player.id} className="glass rounded-xl p-4 hover:shadow-md transition-all duration-300">
-              {activeTab === 'football' ? (
-                /* Football Players (SS Players) */
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-                  {/* Position */}
-                  <div>
-                    <label className="text-xs text-gray-600 mb-1 block">Position</label>
-                    <select
-                      value={player.position}
-                      onChange={(e) => updatePlayerEstimate(activeTab, player.id, 'position', e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      {FOOTBALL_POSITIONS.map(pos => (
-                        <option key={pos} value={pos}>{pos}</option>
-                      ))}
-                    </select>
-                  </div>
+        {/* Tab Navigation */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-2 shadow-sm">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setActiveTab('football')}
+              className={`p-3 rounded-xl font-extrabold uppercase tracking-wider text-xs transition-all cursor-pointer ${
+                activeTab === 'football'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
+              }`}
+            >
+              ⚽ Virtual Players (eCoin)
+            </button>
+            <button
+              onClick={() => setActiveTab('real')}
+              className={`p-3 rounded-xl font-extrabold uppercase tracking-wider text-xs transition-all cursor-pointer ${
+                activeTab === 'real'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
+              }`}
+            >
+              🎮 Real Players (SSCoin)
+            </button>
+          </div>
+        </div>
 
-                  {/* Estimated Cost */}
-                  <div>
-                    <label className="text-xs text-gray-600 mb-1 block">Estimated Bid (eCoin)</label>
-                    <input
-                      type="text"
-                      value={player.estimatedCost}
-                      onChange={(e) => updatePlayerEstimate(activeTab, player.id, 'estimatedCost', e.target.value)}
-                      placeholder="e.g., 100-150 or 120"
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Min bid: eCoin 100, increment +eCoin 10</p>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => removePlayerEstimate(activeTab, player.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
-                      title="Remove player"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
+        {/* Budget Overview Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {activeTab === 'football' ? (
+            <>
+              {/* Card 1: Available */}
+              <div className="console-card bg-white border border-slate-200/60 border-l-4 border-l-sky-500 rounded-2xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-3">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Available Budget</p>
+                  <span className="px-2 py-0.5 bg-sky-50 text-sky-700 border border-sky-200/50 rounded-lg text-[9px] font-black uppercase">eCoin Budget</span>
                 </div>
-              ) : (
-                /* Real Players (SS Members) */
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-                    {/* Star Rating */}
-                    <div>
-                      <label className="text-xs text-gray-600 mb-1 block">Star Rating</label>
-                      <select
-                        value={player.stars || 5}
-                        onChange={(e) => updatePlayerEstimate(activeTab, player.id, 'stars', e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        {STAR_RATINGS.map(star => (
-                          <option key={star} value={star}>{star}☆</option>
-                        ))}
-                      </select>
-                    </div>
+                <p className="text-2xl font-black text-slate-800">{budgetData.footballBudget.toLocaleString()} eCoin</p>
+                <div className="text-[10px] text-slate-400 font-bold uppercase mt-2">
+                  Spent: <span className="text-slate-700">{budgetData.footballSpent.toLocaleString()} eCoin</span>
+                </div>
+              </div>
 
-                    {/* Estimated Cost */}
-                    <div>
-                      <label className="text-xs text-gray-600 mb-1 block">Estimated Bid (SSCoin)</label>
-                      <input
-                        type="text"
-                        value={player.estimatedCost}
-                        onChange={(e) => updatePlayerEstimate(activeTab, player.id, 'estimatedCost', e.target.value)}
-                        placeholder="e.g., 100-200 or 150"
-                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Min bid: SSCoin 100, increment +SSCoin 10</p>
-                    </div>
+              {/* Card 2: Planned */}
+              <div className="console-card bg-white border border-slate-200/60 border-l-4 border-l-purple-500 rounded-2xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-3">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Planned Spending</p>
+                  <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200/50 rounded-lg text-[9px] font-black uppercase">Estimated</span>
+                </div>
+                <p className="text-2xl font-black text-purple-700">{footballTotals.total.toLocaleString()} eCoin</p>
+                <div className="text-[10px] text-slate-400 font-bold uppercase mt-2">
+                  Range: <span className="text-slate-700">{footballTotals.min.toLocaleString()} - {footballTotals.max.toLocaleString()} eCoin</span>
+                </div>
+              </div>
 
-                    {/* Actions */}
-                    <div className="flex items-end justify-end">
-                      <button
-                        onClick={() => removePlayerEstimate(activeTab, player.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
-                        title="Remove player"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+              {/* Card 3: Remaining */}
+              {(() => {
+                const remaining = budgetData.footballBudget - footballTotals.total;
+                const isOverBudget = remaining < 0;
+                return (
+                  <div className={`console-card bg-white border border-slate-200/60 border-l-4 rounded-2xl p-5 shadow-sm ${isOverBudget ? 'border-l-rose-500' : 'border-l-emerald-500'}`}>
+                    <div className="flex justify-between items-center mb-3">
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">After Estimates</p>
+                      <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase border ${isOverBudget ? 'bg-rose-50 text-rose-700 border-rose-200/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200/50'}`}>
+                        {isOverBudget ? 'Over Budget' : 'Remaining'}
+                      </span>
+                    </div>
+                    <p className={`text-2xl font-black ${isOverBudget ? 'text-rose-650' : 'text-emerald-700'}`}>
+                      {remaining.toLocaleString()} eCoin
+                    </p>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase mt-2">
+                      For <span className="text-slate-700">{budgetData.footballTotalSlots} Player Slots Max</span>
                     </div>
                   </div>
-
-
+                );
+              })()}
+            </>
+          ) : (
+            <>
+              {/* Card 1: Available SSCoin */}
+              <div className="console-card bg-white border border-slate-200/60 border-l-4 border-l-emerald-500 rounded-2xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-3">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Available Budget</p>
+                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/50 rounded-lg text-[9px] font-black uppercase">SSCoin Budget</span>
                 </div>
-              )}
+                <p className="text-2xl font-black text-slate-800">{budgetData.realPlayerBudget.toLocaleString()} SSCoin</p>
+                <div className="text-[10px] text-slate-400 font-bold uppercase mt-2">
+                  Spent: <span className="text-slate-700">{budgetData.realPlayerSpent.toLocaleString()} SSCoin</span>
+                </div>
+              </div>
+
+              {/* Card 2: Planned SSCoin */}
+              <div className="console-card bg-white border border-slate-200/60 border-l-4 border-l-purple-500 rounded-2xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-3">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Planned Spending</p>
+                  <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200/50 rounded-lg text-[9px] font-black uppercase">Estimated</span>
+                </div>
+                <p className="text-2xl font-black text-purple-700">{realPlayerTotals.total.toLocaleString()} SSCoin</p>
+                <div className="text-[10px] text-slate-400 font-bold uppercase mt-2">
+                  Range: <span className="text-slate-700">{realPlayerTotals.min.toLocaleString()} - {realPlayerTotals.max.toLocaleString()} SSCoin</span>
+                </div>
+              </div>
+
+              {/* Card 3: Remaining SSCoin */}
+              {(() => {
+                const remaining = budgetData.realPlayerBudget - realPlayerTotals.total;
+                const isOverBudget = remaining < 0;
+                return (
+                  <div className={`console-card bg-white border border-slate-200/60 border-l-4 rounded-2xl p-5 shadow-sm ${isOverBudget ? 'border-l-rose-500' : 'border-l-sky-500'}`}>
+                    <div className="flex justify-between items-center mb-3">
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">After Estimates</p>
+                      <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase border ${isOverBudget ? 'bg-rose-50 text-rose-700 border-rose-200/50' : 'bg-sky-50 text-sky-700 border-sky-200/50'}`}>
+                        {isOverBudget ? 'Over Budget' : 'Remaining'}
+                      </span>
+                    </div>
+                    <p className={`text-2xl font-black ${isOverBudget ? 'text-rose-650' : 'text-sky-700'}`}>
+                      {remaining.toLocaleString()} SSCoin
+                    </p>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase mt-2">
+                      Must Have Exactly <span className="text-slate-700">{budgetData.requiredRealPlayers} SS Members</span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </>
+          )}
+        </div>
+
+        {/* Player Estimates List Panel */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
+            <div>
+              <h2 className="text-base font-black text-slate-800 uppercase tracking-wider">
+                {activeTab === 'football' ? '⚽ Virtual Player Cost Estimates' : '🎮 Real Member Cost Estimates'}
+              </h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
+                Set estimates and analyze overall salary impact
+              </p>
             </div>
-          ))}
-
-          {currentPlayers.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            <button
+              onClick={() => addPlayerEstimate(activeTab)}
+              className="px-4 py-2 bg-slate-800 text-amber-400 border border-slate-900 rounded-xl hover:bg-slate-700 hover:shadow-md transition-all font-mono text-xs uppercase tracking-wider font-extrabold flex items-center justify-center w-fit cursor-pointer"
+            >
+              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
               </svg>
-              <p className="font-medium">No players added yet</p>
-              <p className="text-sm mt-2">Click "Add Player" to start planning your budget</p>
+              Add Player
+            </button>
+          </div>
+
+          {currentPlayers.length === 0 ? (
+            <div className="text-center py-12 text-slate-400">
+              <span className="text-4xl mb-3 block">📋</span>
+              <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Estimates Added Yet</h3>
+              <p className="text-[10px] text-slate-400 uppercase font-semibold">Click "Add Player" to start plotting your roster budget</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {currentPlayers.map((player) => (
+                <div key={player.id} className="bg-slate-50/50 hover:bg-slate-50/80 border border-slate-200/40 rounded-xl p-4 transition-all duration-200">
+                  {activeTab === 'football' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                      {/* Position */}
+                      <div>
+                        <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Position</label>
+                        <select
+                          value={player.position}
+                          onChange={(e) => updatePlayerEstimate(activeTab, player.id, 'position', e.target.value)}
+                          className="w-full py-2 px-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono cursor-pointer"
+                        >
+                          {FOOTBALL_POSITIONS.map(pos => (
+                            <option key={pos} value={pos}>{pos}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Estimated Cost */}
+                      <div className="md:col-span-2">
+                        <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Estimated Bid (eCoin)</label>
+                        <input
+                          type="text"
+                          value={player.estimatedCost}
+                          onChange={(e) => updatePlayerEstimate(activeTab, player.id, 'estimatedCost', e.target.value)}
+                          placeholder="e.g., 100-150 or 120"
+                          className="w-full py-2 px-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
+                        />
+                        <span className="text-[8px] text-slate-400 font-bold block mt-1 uppercase tracking-wide">Min bid: eCoin 100, increment +eCoin 10</span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex justify-end items-center pt-2 md:pt-4">
+                        <button
+                          onClick={() => removePlayerEstimate(activeTab, player.id)}
+                          className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-750 border border-transparent hover:border-rose-200/40 rounded-lg transition-all cursor-pointer"
+                          title="Remove player estimate"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                      {/* Star Rating */}
+                      <div>
+                        <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Star Rating</label>
+                        <select
+                          value={player.stars || 5}
+                          onChange={(e) => updatePlayerEstimate(activeTab, player.id, 'stars', e.target.value)}
+                          className="w-full py-2 px-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono cursor-pointer"
+                        >
+                          {STAR_RATINGS.map(star => (
+                            <option key={star} value={star}>{star}★</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Estimated Cost SSCoin */}
+                      <div className="md:col-span-2">
+                        <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Estimated Bid (SSCoin)</label>
+                        <input
+                          type="text"
+                          value={player.estimatedCost}
+                          onChange={(e) => updatePlayerEstimate(activeTab, player.id, 'estimatedCost', e.target.value)}
+                          placeholder="e.g., 100-200 or 150"
+                          className="w-full py-2 px-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
+                        />
+                        <span className="text-[8px] text-slate-400 font-bold block mt-1 uppercase tracking-wide">Min bid: SSCoin 100, increment +SSCoin 10</span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex justify-end items-center pt-2 md:pt-4">
+                        <button
+                          onClick={() => removePlayerEstimate(activeTab, player.id)}
+                          className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-750 border border-transparent hover:border-rose-200/40 rounded-lg transition-all cursor-pointer"
+                          title="Remove player estimate"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
-      </div>
 
-      {/* Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Budget Tips */}
-        <div className="glass rounded-2xl p-6 bg-gradient-to-br from-yellow-50 to-orange-50">
-          <div className="flex items-start">
-            <div className="bg-yellow-100 p-2 rounded-full mr-3">
-              <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
+        {/* Info & Tips Callout Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Card 1: Tips */}
+          <div className="console-card bg-white border border-slate-200/60 border-l-4 border-l-amber-500 rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-base">💡</span>
+              <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Pro Budget Tips</h4>
             </div>
-            <div className="flex-1">
-              <h3 className="font-medium text-yellow-800 mb-2">Pro Budget Tips</h3>
-              <ul className="text-sm text-yellow-700 space-y-1">
-                <li>• Enter cost estimates as ranges (e.g., "100-200") or single values</li>
-                <li>• Keep some budget reserve for unexpected opportunities</li>
-              </ul>
-            </div>
+            <ul className="text-xs text-slate-650 space-y-2 leading-relaxed font-semibold">
+              <li className="flex items-start gap-1">
+                <span>•</span>
+                <span>Enter cost estimates as ranges (e.g., "100-150") or single values.</span>
+              </li>
+              <li className="flex items-start gap-1">
+                <span>•</span>
+                <span>The midpoint of ranges will be used to calculate planned spending.</span>
+              </li>
+              <li className="flex items-start gap-1">
+                <span>•</span>
+                <span>Keep some budget reserve for unexpected opportunities during auction bids.</span>
+              </li>
+            </ul>
           </div>
-        </div>
 
-        {/* Slot & Contract Info */}
-        <div className="glass rounded-2xl p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-          <div className="flex items-start">
-            <div className="bg-blue-100 p-2 rounded-full mr-3">
-              <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
+          {/* Card 2: Slots & Contracts Guidelines */}
+          <div className="console-card bg-white border border-slate-200/60 border-l-4 border-l-sky-500 rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-base">📋</span>
+              <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Slot & Contract Guidelines</h4>
             </div>
-            <div className="flex-1">
-              <h3 className="font-medium text-blue-800 mb-2">Slot & Contract Info</h3>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• <strong>SS Players (Football):</strong> 25 player slots max, eCoin 100 min bid</li>
-                <li>• <strong>SS Members (Real):</strong> 5-7 member slots, SSCoin 100 min bid</li>
-                <li>• <strong>Bid increment:</strong> +eCoin 10 or +SSCoin 10 for each bid</li>
-                <li>• <strong>Season length:</strong> 38 matches (19 per half)</li>
-              </ul>
-            </div>
+            <ul className="text-xs text-slate-650 space-y-2 leading-relaxed font-semibold">
+              <li className="flex justify-between py-0.5 border-b border-slate-100">
+                <span className="uppercase text-slate-400">Virtual Player Slots Max</span>
+                <span className="text-slate-800 font-extrabold">{budgetData.maxFootballPlayers} Slots Max</span>
+              </li>
+              <li className="flex justify-between py-0.5 border-b border-slate-100">
+                <span className="uppercase text-slate-400">SS Members (Real) Required</span>
+                <span className="text-slate-800 font-extrabold">{budgetData.requiredRealPlayers} Members</span>
+              </li>
+              <li className="flex justify-between py-0.5 border-b border-slate-100">
+                <span className="uppercase text-slate-400">Min Bid Floor / Increment</span>
+                <span className="text-slate-800 font-extrabold">100 / +10</span>
+              </li>
+              <li className="flex justify-between py-0.5">
+                <span className="uppercase text-slate-400">Season Schedule</span>
+                <span className="text-slate-800 font-extrabold">38 Rounds (19 Mid-Season)</span>
+              </li>
+            </ul>
           </div>
         </div>
       </div>

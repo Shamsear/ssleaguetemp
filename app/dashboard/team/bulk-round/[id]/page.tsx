@@ -408,10 +408,10 @@ export default function TeamBulkRoundPage() {
   };
 
   const getTimerColor = () => {
-    if (timeRemaining === 0) return 'text-red-600';
-    if (timeRemaining < 300) return 'text-red-600 animate-pulse';
-    if (timeRemaining < 600) return 'text-orange-500';
-    return 'text-green-600';
+    if (timeRemaining === 0) return 'text-rose-600';
+    if (timeRemaining < 300) return 'text-rose-600 animate-pulse';
+    if (timeRemaining < 600) return 'text-amber-500';
+    return 'text-emerald-600';
   };
 
   const filteredPlayers = players.filter(player => {
@@ -433,10 +433,11 @@ export default function TeamBulkRoundPage() {
 
   if (loading || !user || user.role !== 'team' || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading bulk round...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading bulk round...</p>
         </div>
       </div>
     );
@@ -453,14 +454,17 @@ export default function TeamBulkRoundPage() {
   }
 
   return (
-    <div className="min-h-screen py-4 sm:py-6 md:py-8 px-3 sm:px-4 bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto max-w-7xl">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
         {/* Header */}
-        <div className="mb-4 sm:mb-6 md:mb-8">
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-sm font-mono mb-4 sm:mb-6">
           <div className="flex items-start sm:items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
             <Link
               href="/dashboard/team"
-              className="text-gray-500 hover:text-[#0066FF] transition-colors p-1 hover:bg-gray-100 rounded-lg mt-1 sm:mt-0"
+              className="text-slate-500 hover:text-amber-600 transition-colors p-1 hover:bg-slate-50 rounded-lg mt-1 sm:mt-0"
               aria-label="Back to dashboard"
             >
               <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -469,22 +473,22 @@ export default function TeamBulkRoundPage() {
             </Link>
             <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold gradient-text truncate">
+                <h1 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wider text-slate-800 truncate">
                   Bulk Round {bulkRound.round_number}
                 </h1>
                 {/* WebSocket Status */}
-                <span className={`inline-flex items-center px-2 sm:px-2.5 py-1 rounded-full text-xs font-medium w-fit ${
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider ${
                   isConnected 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-600'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-250' 
+                    : 'bg-slate-50 text-slate-500 border-slate-200'
                 }`}>
-                  <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 sm:mr-1.5 ${
-                    isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+                  <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
+                    isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'
                   }`}></span>
                   {isConnected ? 'Live' : 'Offline'}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2">
+              <p className="text-xs text-slate-500 uppercase font-semibold mt-1 sm:mt-2">
                 Click players to bid £{bulkRound.base_price} each
               </p>
             </div>
@@ -492,37 +496,37 @@ export default function TeamBulkRoundPage() {
         </div>
 
         {/* Timer and Info Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
-          <div className="glass rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 shadow-sm hover:shadow-md transition-shadow">
-            <div className="text-xs sm:text-sm text-gray-600 mb-1">Time Left</div>
-            <div className={`text-lg sm:text-xl md:text-2xl font-bold font-mono ${getTimerColor()}`}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 font-mono">
+          <div className="console-card bg-white border border-slate-200/60 rounded-xl p-3 sm:p-4 shadow-sm">
+            <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Time Left</div>
+            <div className={`text-lg sm:text-xl md:text-2xl font-black ${getTimerColor()}`}>
               {formatTime(timeRemaining)}
             </div>
           </div>
 
-          <div className="glass rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 shadow-sm hover:shadow-md transition-shadow">
-            <div className="text-xs sm:text-sm text-gray-600 mb-1">Price</div>
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">£{bulkRound.base_price}</div>
+          <div className="console-card bg-white border border-slate-200/60 rounded-xl p-3 sm:p-4 shadow-sm">
+            <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Price</div>
+            <div className="text-lg sm:text-xl md:text-2xl font-black text-slate-800">£{bulkRound.base_price}</div>
           </div>
 
-          <div className="glass rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 shadow-sm hover:shadow-md transition-shadow">
-            <div className="text-xs sm:text-sm text-gray-600 mb-1">Balance</div>
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-green-600">£{teamBalance}</div>
+          <div className="console-card bg-white border border-slate-200/60 rounded-xl p-3 sm:p-4 shadow-sm">
+            <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Balance</div>
+            <div className="text-lg sm:text-xl md:text-2xl font-black text-emerald-600">£{teamBalance}</div>
           </div>
 
-          <div className="glass rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 shadow-sm hover:shadow-md transition-shadow">
-            <div className="text-xs sm:text-sm text-gray-600 mb-1">Squad</div>
-            <div className={`text-lg sm:text-xl md:text-2xl font-bold ${
-              squadInfo.available > 0 ? 'text-blue-600' : 'text-red-600'
+          <div className="console-card bg-white border border-slate-200/60 rounded-xl p-3 sm:p-4 shadow-sm">
+            <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Squad</div>
+            <div className={`text-lg sm:text-xl md:text-2xl font-black ${
+              squadInfo.available > 0 ? 'text-blue-600' : 'text-rose-600'
             }`}>
               {squadInfo.current}/{squadInfo.max}
             </div>
-            <div className="text-[10px] sm:text-xs text-gray-500 mt-0.5 flex items-center justify-between">
+            <div className="text-[9px] text-slate-400 uppercase font-bold mt-0.5 flex items-center justify-between">
               <span>current</span>
               {purchasedSlots < slotSettings.maxPurchasable && (
                 <button
                   onClick={() => setShowSlotPurchase(true)}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-amber-500 hover:text-amber-600 font-extrabold tracking-wider uppercase"
                   title="Purchase additional slot"
                 >
                   +Buy
@@ -531,14 +535,14 @@ export default function TeamBulkRoundPage() {
             </div>
           </div>
 
-          <div className="glass rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 shadow-sm hover:shadow-md transition-shadow col-span-2 sm:col-span-1">
-            <div className="text-xs sm:text-sm text-gray-600 mb-1">Your Bids</div>
-            <div className={`text-lg sm:text-xl md:text-2xl font-bold ${
-              bidsCount > 0 ? 'text-blue-600' : 'text-gray-400'
+          <div className="console-card bg-white border border-slate-200/60 rounded-xl p-3 sm:p-4 shadow-sm col-span-2 sm:col-span-1">
+            <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Your Bids</div>
+            <div className={`text-lg sm:text-xl md:text-2xl font-black ${
+              bidsCount > 0 ? 'text-blue-600' : 'text-slate-400'
             }`}>
               {bidsCount}
             </div>
-            <div className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
+            <div className="text-[9px] text-slate-400 uppercase font-bold mt-0.5">
               {availableSlotsNow} slots left
             </div>
           </div>
@@ -546,61 +550,46 @@ export default function TeamBulkRoundPage() {
 
 
         {/* Info Card - Collapsible on mobile */}
-        <details className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 border border-white/20 shadow-sm group" open>
+        <details className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-sm group font-mono" open>
           <summary className="flex items-center gap-2 sm:gap-3 cursor-pointer list-none">
-            <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100">
-              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-1.5 sm:p-2 rounded-xl bg-slate-50 border border-slate-200">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-base sm:text-lg font-bold text-gray-900 flex-1">How It Works</h3>
-            <svg className="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h3 className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-slate-800 flex-1">How It Works</h3>
+            <svg className="w-5 h-5 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
             </svg>
           </summary>
-          <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-gray-700 mt-3 sm:mt-4 ml-10 sm:ml-11">
-            <li className="flex items-start">
-              <span className="text-blue-600 mr-2">•</span>
-              <span>Click any player to bid £{bulkRound.base_price}</span>
-            </li>
-            <li className="flex items-start">
-              <span className="text-blue-600 mr-2">•</span>
-              <span>Click again to remove your bid</span>
-            </li>
-            <li className="flex items-start">
-              <span className="text-blue-600 mr-2">•</span>
-              <span>Only bidder? Player is yours!</span>
-            </li>
-            <li className="flex items-start">
-              <span className="text-blue-600 mr-2">•</span>
-              <span>Multiple bids trigger tiebreaker</span>
-            </li>
-            <li className="flex items-start">
-              <span className="text-blue-600 mr-2">•</span>
-              <span>Bids auto-save, money reserved</span>
-            </li>
+          <ul className="space-y-1.5 sm:space-y-2 text-[10px] sm:text-xs text-slate-500 uppercase font-semibold mt-3 sm:mt-4 ml-10 sm:ml-11 list-disc">
+            <li>Click any player to bid £{bulkRound.base_price}</li>
+            <li>Click again to remove your bid</li>
+            <li>Only bidder? Player is yours!</li>
+            <li>Multiple bids trigger tiebreaker</li>
+            <li>Bids auto-save, money reserved</li>
           </ul>
         </details>
 
         {/* Filters and Controls */}
-        <div className="glass rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6 border border-white/20 shadow-sm">
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6 shadow-sm font-mono">
           <div className="flex flex-col gap-3">
             {/* Search with icon */}
             <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
                 type="text"
-                placeholder="Search players..."
+                placeholder="SEARCH PLAYERS..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-[#0066FF] text-sm transition-all"
+                className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-xs font-bold uppercase transition-all"
               />
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650"
                   aria-label="Clear search"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -614,18 +603,18 @@ export default function TeamBulkRoundPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setFilterStarred(!filterStarred)}
-                className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
                   filterStarred
-                    ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-400'
-                    : 'bg-white/70 text-gray-700 border border-gray-300 hover:bg-white'
+                    ? 'bg-amber-50 text-amber-700 border-amber-300'
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-amber-400/40 hover:text-amber-600'
                 }`}
               >
-                <svg className={`w-4 h-4 ${filterStarred ? 'fill-yellow-500' : 'fill-gray-400'}`} viewBox="0 0 24 24">
+                <svg className={`w-4 h-4 ${filterStarred ? 'fill-amber-500 text-amber-500' : 'fill-slate-400 text-slate-400'}`} viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                 </svg>
                 <span>Starred Only</span>
                 {filterStarred && (
-                  <span className="ml-1 px-2 py-0.5 bg-yellow-200 text-yellow-900 rounded-full text-xs font-bold">
+                  <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-900 rounded-lg text-[10px] font-black">
                     {players.filter(p => p.is_starred).length}
                   </span>
                 )}
@@ -640,10 +629,10 @@ export default function TeamBulkRoundPage() {
                     <button
                       key={pos}
                       onClick={() => setFilterPosition(pos)}
-                      className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap touch-manipulation ${
+                      className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap touch-manipulation border ${
                         filterPosition === pos
-                          ? 'bg-[#0066FF] text-white shadow-md scale-105'
-                          : 'bg-white/70 text-gray-700 hover:bg-white active:scale-95'
+                          ? 'bg-slate-800 text-white border-slate-900 scale-105'
+                          : 'bg-white text-slate-700 border-slate-200 hover:border-amber-400/40 hover:text-amber-600 active:scale-95'
                       }`}
                     >
                       {pos === 'all' ? 'All' : pos}
@@ -657,9 +646,9 @@ export default function TeamBulkRoundPage() {
 
         {/* Your Bidded Players */}
         {bidsCount > 0 && (
-          <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 border-2 border-green-200 shadow-lg">
-            <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4 flex items-center">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="console-card bg-white border border-emerald-500 rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-sm font-mono border-l-8 border-l-emerald-500">
+            <h2 className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-slate-800 mb-3 sm:mb-4 flex items-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Your Bids ({bidsCount})
@@ -671,29 +660,29 @@ export default function TeamBulkRoundPage() {
                 .map((player) => (
                   <div
                     key={player.id}
-                    className="glass rounded-lg sm:rounded-xl p-3 sm:p-4 border-2 border-green-300 bg-green-50 hover:shadow-md transition-shadow"
+                    className="console-card bg-emerald-50/30 border border-emerald-250 rounded-2xl p-3 sm:p-4 hover:shadow-md transition-shadow font-mono border-l-4 border-l-emerald-500"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1 min-w-0 pr-2">
                         <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-                          <h3 className="font-bold text-sm sm:text-base text-gray-800 truncate">{player.name}</h3>
+                          <h3 className="font-extrabold text-sm text-slate-850 truncate uppercase tracking-wide">{player.name}</h3>
                           {player.is_starred && (
-                            <svg className="w-4 h-4 text-yellow-500 fill-current" viewBox="0 0 24 24">
-                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg>
+                            <span className="px-1.5 py-0.5 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200/60 rounded-lg">
+                              STARRED
+                            </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-600 flex-wrap">
-                          <span className="px-1.5 sm:px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] sm:text-xs font-medium">
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-slate-400 uppercase font-bold flex-wrap">
+                          <span className="px-1.5 sm:px-2 py-0.5 bg-slate-100 border border-slate-205 text-slate-600 rounded-lg">
                             {player.position}
                           </span>
                           <span className="hidden sm:inline">•</span>
-                          <span className="truncate text-xs">{player.team_name}</span>
+                          <span className="truncate">{player.team_name}</span>
                         </div>
                       </div>
                       <button
                         onClick={() => handleTogglePlayer(player.id)}
-                        className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded border-2 bg-red-600 border-red-600 flex items-center justify-center hover:bg-red-700 active:scale-95 transition-all touch-manipulation"
+                        className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-xl bg-rose-600 border border-rose-700 flex items-center justify-center hover:bg-rose-700 active:scale-95 transition-all touch-manipulation"
                         title="Remove bid"
                         aria-label="Remove bid"
                       >
@@ -702,22 +691,22 @@ export default function TeamBulkRoundPage() {
                         </svg>
                       </button>
                     </div>
-                    <div className="flex items-center justify-between text-xs sm:text-sm mt-2">
-                      <span className="text-gray-600">Rating: {player.overall_rating}</span>
-                      <span className="text-green-600 font-bold">£{bulkRound?.base_price}</span>
+                    <div className="flex items-center justify-between text-xs mt-2">
+                      <span className="text-slate-400 font-bold">★ {player.overall_rating}</span>
+                      <span className="text-emerald-600 font-black">£{bulkRound?.base_price}</span>
                     </div>
                   </div>
                 ))
               }
             </div>
 
-            <div className="bg-gradient-to-r from-blue-100 to-blue-50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-blue-200">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div className="flex-1">
-                  <p className="text-blue-900 font-bold text-sm sm:text-base">
+                  <p className="text-slate-800 font-black text-sm uppercase tracking-wide">
                     {bidsCount} bid{bidsCount !== 1 ? 's' : ''} placed
                   </p>
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs sm:text-sm text-blue-700 mt-1">
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 uppercase font-bold mt-1">
                     <span className="whitespace-nowrap">Reserved: £{totalCost}</span>
                     <span className="hidden sm:inline">•</span>
                     <span className="whitespace-nowrap">Left: £{remainingBalance}</span>
@@ -731,12 +720,12 @@ export default function TeamBulkRoundPage() {
         )}
 
         {/* Available Players */}
-        <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/20 shadow-sm">
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-sm font-mono">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-800">
+            <h2 className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-slate-800">
               Available Players
             </h2>
-            <span className="text-xs sm:text-sm text-gray-500 font-medium bg-gray-100 px-2 sm:px-3 py-1 rounded-full">
+            <span className="text-xs font-black text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-0.5 rounded-lg">
               {filteredPlayers.length}
             </span>
           </div>
@@ -758,39 +747,41 @@ export default function TeamBulkRoundPage() {
                 <button
                   key={player.id}
                   onClick={() => handleTogglePlayer(player.id)}
-                  className={`glass rounded-lg sm:rounded-xl p-3 sm:p-4 border-2 transition-all text-left active:scale-98 touch-manipulation ${
+                  className={`bg-white border border-slate-200/60 rounded-2xl p-3 sm:p-4 transition-all text-left active:scale-98 touch-manipulation font-mono border-l-4 ${
                     isBidded
-                      ? 'border-green-500 bg-green-50 shadow-md'
-                      : 'border-white/20 hover:border-blue-300 hover:shadow-md'
+                      ? 'border-emerald-500 bg-emerald-50/20 border-l-emerald-500'
+                      : player.is_starred
+                      ? 'hover:border-amber-400/40 border-l-amber-500'
+                      : 'hover:border-amber-400/40 border-l-slate-300'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0 pr-2">
                       <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-                        <h3 className="font-bold text-sm sm:text-base text-gray-800 truncate">{player.name}</h3>
+                        <h3 className="font-extrabold text-sm text-slate-850 truncate uppercase tracking-wide">{player.name}</h3>
                         {player.is_starred && (
-                          <svg className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current flex-shrink-0" viewBox="0 0 24 24">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                          </svg>
+                          <span className="px-1.5 py-0.5 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200/60 rounded-lg">
+                            STARRED
+                          </span>
                         )}
                         {isBidded && (
-                          <span className="text-[10px] sm:text-xs font-semibold text-green-700 bg-green-100 px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap">
-                            ✓ Bid
+                          <span className="px-1.5 py-0.5 text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-lg whitespace-nowrap">
+                            ✓ BID
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-600 flex-wrap">
-                        <span className="px-1.5 sm:px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] sm:text-xs font-medium">
+                      <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-slate-400 uppercase font-bold flex-wrap">
+                        <span className="px-1.5 sm:px-2 py-0.5 bg-slate-100 border border-slate-205 text-slate-600 rounded-lg">
                           {player.position}
                         </span>
                         <span className="hidden sm:inline">•</span>
-                        <span className="truncate text-xs">{player.team_name}</span>
+                        <span className="truncate">{player.team_name}</span>
                       </div>
                     </div>
-                    <div className={`w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded border-2 flex items-center justify-center transition-all ${
+                    <div className={`w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-xl border flex items-center justify-center transition-all ${
                       isBidded
-                        ? 'bg-green-600 border-green-600 shadow-md'
-                        : 'border-gray-300 group-hover:border-blue-400'
+                        ? 'bg-emerald-600 border-emerald-600 shadow-md text-white'
+                        : 'border-slate-250 bg-slate-50'
                     }`}>
                       {isBidded && (
                         <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -799,9 +790,11 @@ export default function TeamBulkRoundPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-xs sm:text-sm mt-2">
-                    <span className="text-gray-600">Rating: {player.overall_rating}</span>
-                    <span className="text-[10px] sm:text-xs text-gray-500 truncate max-w-[100px] sm:max-w-none">{player.playing_style}</span>
+                  <div className="flex items-center justify-between text-xs mt-2">
+                    <span className="text-slate-400 font-bold">★ {player.overall_rating}</span>
+                    {player.playing_style && (
+                      <span className="text-[9px] text-slate-400 uppercase font-bold truncate max-w-[100px] sm:max-w-none">{player.playing_style}</span>
+                    )}
                   </div>
                 </button>
                 );
@@ -813,20 +806,20 @@ export default function TeamBulkRoundPage() {
 
       {/* Slot Purchase Modal */}
       {showSlotPurchase && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="glass rounded-2xl p-6 max-w-md w-full border border-white/20 shadow-2xl">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="console-card bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full shadow-2xl font-mono">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-100">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-205">
+                  <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Purchase Squad Slot</h3>
+                <h3 className="text-base font-extrabold uppercase tracking-wider text-slate-800">Purchase Squad Slot</h3>
               </div>
               <button
                 onClick={() => setShowSlotPurchase(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-slate-400 hover:text-slate-600 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -836,56 +829,56 @@ export default function TeamBulkRoundPage() {
 
             <div className="space-y-4">
               {/* Current Status */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="bg-slate-50 border border-slate-150 rounded-2xl p-4">
+                <div className="grid grid-cols-2 gap-3 text-[10px] uppercase font-bold text-slate-400">
                   <div>
-                    <span className="text-gray-600">Current Slots:</span>
-                    <div className="font-bold text-gray-900">{squadInfo.max}</div>
+                    <span>Current Slots:</span>
+                    <div className="font-mono font-black text-xs text-slate-800 mt-0.5">{squadInfo.max}</div>
                   </div>
                   <div>
-                    <span className="text-gray-600">Purchased:</span>
-                    <div className="font-bold text-blue-600">{purchasedSlots}/{slotSettings.maxPurchasable}</div>
+                    <span>Purchased:</span>
+                    <div className="font-mono font-black text-xs text-blue-600 mt-0.5">{purchasedSlots}/{slotSettings.maxPurchasable}</div>
                   </div>
                   <div>
-                    <span className="text-gray-600">Players:</span>
-                    <div className="font-bold text-gray-900">{squadInfo.current}</div>
+                    <span>Players:</span>
+                    <div className="font-mono font-black text-xs text-slate-800 mt-0.5">{squadInfo.current}</div>
                   </div>
                   <div>
-                    <span className="text-gray-600">Available:</span>
-                    <div className="font-bold text-green-600">{squadInfo.available}</div>
+                    <span>Available:</span>
+                    <div className="font-mono font-black text-xs text-emerald-600 mt-0.5">{squadInfo.available}</div>
                   </div>
                 </div>
               </div>
 
               {/* Purchase Details */}
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-blue-900">Slot Price:</span>
-                  <span className="text-lg font-bold text-blue-900">£{slotSettings.slotPrice}</span>
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-2 text-[10px] uppercase font-bold text-slate-500">
+                  <span>Slot Price:</span>
+                  <span className="text-xs font-black text-slate-800">£{slotSettings.slotPrice}</span>
                 </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-blue-900">Your Balance:</span>
-                  <span className="text-lg font-bold text-green-600">£{teamBalance}</span>
+                <div className="flex items-center justify-between mb-2 text-[10px] uppercase font-bold text-slate-500">
+                  <span>Your Balance:</span>
+                  <span className="text-xs font-black text-emerald-600">£{teamBalance}</span>
                 </div>
-                <div className="flex items-center justify-between pt-2 border-t border-blue-200">
-                  <span className="text-sm font-medium text-blue-900">After Purchase:</span>
-                  <span className="text-lg font-bold text-gray-900">£{teamBalance - slotSettings.slotPrice}</span>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-[10px] uppercase font-bold text-slate-800">
+                  <span>After Purchase:</span>
+                  <span className="text-xs font-black text-slate-900">£{teamBalance - slotSettings.slotPrice}</span>
                 </div>
               </div>
 
               {/* Warning */}
-              <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+              <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-4">
                 <div className="flex items-start gap-2">
-                  <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
-                  <div className="text-sm text-yellow-800">
-                    <p className="font-semibold mb-1">Important:</p>
-                    <ul className="space-y-1 text-xs">
-                      <li>• Purchased slots are permanent for this season</li>
-                      <li>• You cannot remove slots once purchased</li>
-                      <li>• Only admins can remove slots</li>
-                      <li>• Transaction will be recorded</li>
+                  <div className="text-[10px] uppercase font-bold text-amber-800">
+                    <p className="font-extrabold mb-1">Important:</p>
+                    <ul className="space-y-1 text-[9px] list-disc pl-3">
+                      <li>Purchased slots are permanent for this season</li>
+                      <li>You cannot remove slots once purchased</li>
+                      <li>Only admins can remove slots</li>
+                      <li>Transaction will be recorded</li>
                     </ul>
                   </div>
                 </div>
@@ -895,14 +888,14 @@ export default function TeamBulkRoundPage() {
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setShowSlotPurchase(false)}
-                  className="flex-1 px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition-colors"
+                  className="flex-1 px-3 py-2 bg-white border border-slate-200 hover:border-amber-400/40 hover:text-amber-600 rounded-xl font-mono text-xs uppercase tracking-wider font-bold transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handlePurchaseSlot}
                   disabled={teamBalance < slotSettings.slotPrice || purchasedSlots >= slotSettings.maxPurchasable}
-                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all disabled:opacity-50"
                 >
                   Purchase £{slotSettings.slotPrice}
                 </button>

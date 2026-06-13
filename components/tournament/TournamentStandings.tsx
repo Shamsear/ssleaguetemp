@@ -106,7 +106,7 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
 
   if (!data) {
     return (
-      <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-8 text-center">
+      <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-8 text-center font-mono shadow-sm">
         <span className="text-6xl mb-4 block">📊</span>
         <h3 className="text-lg font-medium text-gray-600 mb-2">No Standings Available</h3>
         <p className="text-sm text-gray-500">Standings will appear once matches are completed</p>
@@ -126,11 +126,11 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
     <div className="space-y-6">
       {/* Round Selector - Show for both league and group stage */}
       {(showLeagueStandings || showGroupStandings) && availableRounds.length > 0 && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 sm:p-6">
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 sm:p-6 shadow-sm font-mono">
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3 lg:gap-4">
             <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-2xl">🎯</span>
-              <label className="text-sm font-semibold text-gray-800 whitespace-nowrap">Filter by Round:</label>
+              <span className="text-xl">🎯</span>
+              <label className="text-xs font-black text-slate-800 uppercase tracking-wider whitespace-nowrap">Filter by Round:</label>
             </div>
             
             {/* Dropdown for mobile/small screens */}
@@ -138,7 +138,7 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
               <select
                 value={selectedRound === null ? 'all' : selectedRound}
                 onChange={(e) => setSelectedRound(e.target.value === 'all' ? null : Number(e.target.value))}
-                className="w-full px-4 py-2.5 bg-white border-2 border-blue-300 rounded-lg font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs font-bold uppercase tracking-wider text-slate-700 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-sm"
               >
                 <option value="all">📊 All Rounds (Current Standings)</option>
                 {availableRounds.map((roundNum) => (
@@ -153,23 +153,23 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
             <div className="hidden lg:flex flex-wrap items-center gap-2 flex-1">
               <button
                 onClick={() => setSelectedRound(null)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
+                className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
                   selectedRound === null
-                    ? 'bg-[#0066FF] text-white shadow-lg scale-105'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 hover:border-blue-300'
+                    ? 'bg-slate-800 text-amber-400 border border-slate-900 scale-105'
+                    : 'bg-white text-slate-750 border border-slate-200 hover:border-amber-400/40 hover:text-amber-600'
                 }`}
               >
                 📊 All Rounds
               </button>
-              <div className="h-6 w-px bg-gray-300 mx-1"></div>
+              <div className="h-5 w-px bg-slate-200 mx-1"></div>
               {availableRounds.map((roundNum) => (
                 <button
                   key={roundNum}
                   onClick={() => setSelectedRound(roundNum)}
-                  className={`px-3.5 py-2 rounded-lg font-medium transition-all text-sm ${
+                  className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
                     selectedRound === roundNum
-                      ? 'bg-[#0066FF] text-white shadow-lg scale-105'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 hover:border-blue-300'
+                      ? 'bg-slate-800 text-amber-400 border border-slate-900 scale-105'
+                      : 'bg-white text-slate-750 border border-slate-200 hover:border-amber-400/40 hover:text-amber-600'
                   }`}
                 >
                   R{roundNum}
@@ -180,9 +180,9 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
           
           {/* Info text */}
           {selectedRound !== null && (
-            <div className="mt-3 pt-3 border-t border-blue-200">
-              <p className="text-xs text-gray-600 flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mt-3 pt-3 border-t border-slate-100">
+              <p className="text-[10px] text-slate-500 uppercase font-bold flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Showing standings after Round {selectedRound} (includes only matches up to this round)
@@ -194,12 +194,14 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
 
       {/* Share Leaderboard Feature - Show for both league and group stage */}
       {((showLeagueStandings && standings && standings.length > 0) || (showGroupStandings && groupStandings)) && (
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-6">
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono relative overflow-hidden">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-3xl">📸</span>
+            <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center">
+              <span className="text-xl">📸</span>
+            </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900">Share Leaderboard</h3>
-              <p className="text-sm text-gray-600">Generate and share a beautiful image of the current standings</p>
+              <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Share Leaderboard</h3>
+              <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Generate and share a beautiful image of the current standings</p>
             </div>
           </div>
           <ShareableLeaderboard 
@@ -213,31 +215,30 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
           />
         </div>
       )}
+
       {/* Tabs for combined formats (League+Knockout or Group+Knockout) */}
       {hasBothStages && (
-        <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-xl p-4">
-          <div className="flex items-center justify-center gap-4">
-            <button
-              onClick={() => setActiveTab('standings')}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                activeTab === 'standings'
-                  ? 'bg-[#0066FF] text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {format === 'group_stage' ? '🏆 Group Stage' : '⚽ League Standings'}
-            </button>
-            <button
-              onClick={() => setActiveTab('knockout')}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                activeTab === 'knockout'
-                  ? 'bg-[#0066FF] text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              🥇 Knockout Stage
-            </button>
-          </div>
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-3 shadow-sm font-mono flex items-center justify-center gap-3">
+          <button
+            onClick={() => setActiveTab('standings')}
+            className={`px-4 py-2 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all shadow-sm cursor-pointer ${
+              activeTab === 'standings'
+                ? 'bg-slate-800 text-amber-400 border border-slate-900'
+                : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
+            }`}
+          >
+            {format === 'group_stage' ? '🏆 Group Stage' : '⚽ League Standings'}
+          </button>
+          <button
+            onClick={() => setActiveTab('knockout')}
+            className={`px-4 py-2 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all shadow-sm cursor-pointer ${
+              activeTab === 'knockout'
+                ? 'bg-slate-800 text-amber-400 border border-slate-900'
+                : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
+            }`}
+          >
+            🥇 Knockout Stage
+          </button>
         </div>
       )}
 
@@ -267,9 +268,9 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
       )}
 
       {/* Format Info Badge */}
-      <div className="flex items-center justify-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-full">
-          <span className="text-sm font-medium text-blue-700">
+      <div className="flex items-center justify-center font-mono">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-xl">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             {format === 'league' && has_knockout && '⚽ League + 🥇 Knockout Format'}
             {format === 'league' && !has_knockout && '⚽ League Format'}
             {format === 'group_stage' && has_knockout && '🏆 Group Stage + 🥇 Knockout Format'}

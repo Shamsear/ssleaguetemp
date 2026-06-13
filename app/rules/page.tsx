@@ -13,39 +13,45 @@ export default function RulesPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 py-4 sm:py-6 md:py-8 px-3 sm:px-4">
-            <div className="container mx-auto max-w-6xl">
+        <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+            {/* Ambient Gold Glow */}
+            <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+            <div className="max-w-6xl mx-auto relative z-10 space-y-6">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 md:mb-8 text-white">
+                <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm font-mono relative overflow-hidden mb-6 sm:mb-8">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
                         <div className="w-full sm:w-auto">
-                            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2">⚽ SS PES SUPER LEAGUE</h1>
-                            <p className="text-lg sm:text-xl md:text-2xl font-semibold text-blue-100">SEASON 16 - RULES & REGULATIONS</p>
+                            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold uppercase tracking-wider text-slate-800">⚽ SS PES SUPER LEAGUE</h1>
+                            <p className="text-xs text-slate-500 uppercase font-bold mt-1">SEASON 16 - RULES & REGULATIONS</p>
                         </div>
                         <Link
                             href="/"
-                            className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-white text-blue-600 rounded-lg sm:rounded-xl font-semibold hover:bg-blue-50 transition-all text-center text-sm sm:text-base"
+                            className="px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold flex items-center justify-center w-fit"
                         >
-                            ← Home
+                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            Home
                         </Link>
                     </div>
-                    <div className="border-t border-blue-400 pt-3 sm:pt-4 mt-3 sm:mt-4">
-                        <p className="text-blue-100 text-xs sm:text-sm">
+                    <div className="border-t border-slate-100 pt-3 sm:pt-4 mt-3 sm:mt-4">
+                        <p className="text-slate-500 text-xs sm:text-sm font-semibold">
                             📋 Complete tournament rules and regulations for all participants
                         </p>
                     </div>
                 </div>
 
                 {/* Section Tabs */}
-                <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-1.5 sm:p-2 mb-4 sm:mb-6">
+                <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-2 font-mono mb-4 sm:mb-6 shadow-sm">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2">
                         {sections.map((section) => (
                             <button
                                 key={section.id}
                                 onClick={() => setActiveSection(section.id)}
-                                className={`p-3 sm:p-4 rounded-lg sm:rounded-xl font-semibold transition-all ${activeSection === section.id
-                                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                className={`p-3 sm:p-4 rounded-xl font-extrabold uppercase tracking-wider text-xs transition-all cursor-pointer ${activeSection === section.id
+                                        ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                                        : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
                                     }`}
                             >
                                 <div className="text-xl sm:text-2xl mb-1">{section.icon}</div>
@@ -56,17 +62,17 @@ export default function RulesPage() {
                 </div>
 
                 {/* Content */}
-                <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 md:p-8">
+                <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 md:p-8 shadow-sm font-mono">
                     {activeSection === 'part1' && <Part1Rules />}
                     {activeSection === 'part2' && <Part2Rules />}
                     {activeSection === 'part3' && <Part3Rules />}
                 </div>
 
                 {/* Footer */}
-                <div className="mt-6 sm:mt-8 text-center">
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 text-white">
-                        <p className="text-lg sm:text-xl font-bold mb-2">🤝 SEASON 16 COMMITTEE</p>
-                        <p className="text-blue-100 text-xs sm:text-sm">
+                <div className="mt-6 sm:mt-8 text-center font-mono">
+                    <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
+                        <p className="text-base font-extrabold uppercase tracking-wider text-slate-800 mb-2">🤝 SEASON 16 COMMITTEE</p>
+                        <p className="text-xs text-slate-500 uppercase font-semibold">
                             WISH YOU A GREAT SUPER LEAGUE SEASON... and ALL THE BEST 👏
                         </p>
                     </div>
@@ -79,8 +85,8 @@ export default function RulesPage() {
 function Part1Rules() {
     return (
         <div className="space-y-4 sm:space-y-6">
-            <div className="border-l-4 border-blue-600 pl-3 sm:pl-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">
+            <div className="border-l-4 border-amber-500 pl-3 sm:pl-4 mb-2">
+                <h2 className="text-base sm:text-lg font-black text-slate-800 uppercase tracking-wider">
                     🌐 Match Day Time Table, Extra Rules and Suggestions
                 </h2>
             </div>
@@ -92,7 +98,7 @@ function Part1Rules() {
                 </RuleItem>
 
                 <RuleItem icon="🔸" title="Lineup Setup">
-                    ടൂർണമെന്റ് തുടങ്ങുമ്പോൾ തന്നെ എല്ലാ മാച്ച്ഡേയിലേക്കും ഉള്ള ലൈനപ്പ് (സ്റ്റാർട്ടിങ് 5+ സബ്) നിങ്ങൾക്ക് നമ്മുടെ ആപ്പിൽ സെറ്റ് ചെയ്തു വെക്കാവുന്നതാണ്. അതല്ല അതാത് മാച്ച്ഡേയിൽ ചെയ്യണമെങ്കിൽ അതും ചെയ്യാവുന്നതാണ്.
+                    ടൂർണമെന്റ് തുടങ്ങുമ്പോൾ തന്നെ എല്ലാ മാച്ച്ഡേയിലേക്കും ഉള്ള ലൈനപ്പ് (സ്റ്റാർട്ടിങ് 5+ സബ്) നിങ്ങൾക്ക് നമ്മുടെ ആപ്പിൽ സറ്റ് ചെയ്തു വെക്കാവുന്നതാണ്. അതല്ല അതാത് മാച്ച്ഡേയിൽ ചെയ്യണമെങ്കിൽ അതും ചെയ്യാവുന്നതാണ്.
                 </RuleItem>
 
                 <RuleItem icon="🔸" title="Lineup Deadline">
@@ -111,10 +117,14 @@ function Part1Rules() {
                     9 PM - Opponent ന് തനിക്ക് കളിക്കാൻ സാധിക്കുന്ന ടൈം വെളിപ്പെടുത്തി മെസ്സേജ് അയച്ചു കളിക്കാൻ ഉള്ള ടൈം ഫിക്സ് ചെയ്യാൻ ഉള്ള അവസാന സമയം 9 PM ആണ്.
                 </RuleItem>
 
-                <div className="bg-amber-50 border-l-4 border-amber-500 p-3 sm:p-4 rounded-lg">
-                    <p className="text-xs sm:text-sm text-amber-900">
-                        <strong>⚠️ Important:</strong> പ്ലെയർ തന്റെ അവൈലബിലിറ്റി വ്യക്തമാക്കിയിട്ടും Opponent തൻറെ Availability വ്യക്തമാക്കാത്ത സാഹചര്യത്തിൽ പ്ലെയറിന് Advantage എടുത്തു കൊണ്ട് താൻ പറയുന്ന സമയത്ത് Opponent നിർബന്ധമായി കളിക്കാൻ വരേണ്ടതാണ്.
-                    </p>
+                <div className="bg-amber-50/60 border border-amber-200/60 p-4 rounded-xl flex gap-3 items-start mt-2">
+                    <span className="text-lg flex-shrink-0">⚠️</span>
+                    <div>
+                        <span className="font-extrabold text-amber-800 text-[10px] uppercase tracking-wider block mb-1">Important Notice</span>
+                        <p className="text-xs sm:text-sm text-amber-900 leading-relaxed font-semibold">
+                            പ്ലെയർ തന്റെ അവൈലബിലിറ്റി വ്യക്തമാക്കിയിട്ടും Opponent തൻറെ Availability വ്യക്തമാക്കാത്ത സാഹചര്യത്തിൽ പ്ലെയറിന് Advantage എടുത്തു കൊണ്ട് താൻ പറയുന്ന സമയത്ത് Opponent നിർബന്ധമായി കളിക്കാൻ വരേണ്ടതാണ്.
+                        </p>
+                    </div>
                 </div>
             </RuleSection>
 
@@ -132,8 +142,12 @@ function Part1Rules() {
                     Deadline 12:00 Am ആയതിനാൽ മാച്ച് 11.40ന് എങ്കിലും ആരംഭിച്ചിരിക്കണം
                 </RuleItem>
 
-                <div className="bg-red-50 border-l-4 border-red-500 p-3 sm:p-4 rounded-lg">
-                    <p className="text-base sm:text-lg font-bold text-red-900">🔴 Deadline: 12:00 AM</p>
+                <div className="bg-rose-50/60 border border-rose-200/60 p-4 rounded-xl flex gap-3 items-center mt-2">
+                    <span className="text-lg flex-shrink-0">🚨</span>
+                    <div>
+                        <span className="font-extrabold text-rose-800 text-[10px] uppercase tracking-wider block mb-0.5">Final Deadline</span>
+                        <p className="text-base sm:text-lg font-black text-rose-900 uppercase">12:00 AM</p>
+                    </div>
                 </div>
             </RuleSection>
 
@@ -181,8 +195,8 @@ function Part1Rules() {
 function Part2Rules() {
     return (
         <div className="space-y-4 sm:space-y-6">
-            <div className="border-l-4 border-indigo-600 pl-3 sm:pl-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">
+            <div className="border-l-4 border-amber-500 pl-3 sm:pl-4 mb-2">
+                <h2 className="text-base sm:text-lg font-black text-slate-800 uppercase tracking-wider">
                     🚨 COMMON MATCH RULES
                 </h2>
             </div>
@@ -203,7 +217,7 @@ function Part2Rules() {
                             <li>Top 2 To Semifinals</li>
                             <li>3-6 Teams To Qualifier</li>
                         </ul>
-                        <p className="text-xs sm:text-sm text-gray-600">ഗോളിന്റെ എണ്ണമനുസരിച്ചു ആയിരികും വിജയിയെ തീരുമാനിക്കുക.</p>
+                        <p className="text-xs sm:text-sm text-slate-500 font-semibold">ഗോളിന്റെ എണ്ണമനുസരിച്ചു ആയിരികും വിജയിയെ തീരുമാനിക്കുക.</p>
                     </div>
                 </NumberedRule>
 
@@ -212,18 +226,22 @@ function Part2Rules() {
                 </NumberedRule>
 
                 <NumberedRule number="5">
-                    <div className="bg-blue-50 p-3 sm:p-4 rounded-lg space-y-2">
-                        <p className="font-semibold text-sm sm:text-base">Match Settings:</p>
-                        <ul className="list-disc list-inside ml-2 sm:ml-4 space-y-1 text-xs sm:text-sm">
+                    <div className="space-y-2 w-full">
+                        <p className="font-extrabold text-slate-800 text-xs sm:text-sm uppercase tracking-wider">Match Settings:</p>
+                        <ul className="list-disc list-inside ml-2 sm:ml-4 space-y-1 text-xs sm:text-sm text-slate-600">
                             <li>MATCH TIME - (6-8 MINUTE)</li>
                             <li>CONDITION - EXCELLENT</li>
                             <li>SUBSTITUTES - 5</li>
                             <li>SQUAD - SSPSL SEASON 16 SQUAD</li>
                         </ul>
-                        <div className="mt-3 p-2 sm:p-3 bg-amber-50 border-l-4 border-amber-500 rounded">
-                            <p className="text-xs sm:text-sm text-amber-900">
-                                <strong>⚠️ Penalty:</strong> 6 മിനിറ്റ് മാച്ചിന് പകരം 8 മിനിറ്റ് ആണ് SET ചെയ്തു ചീറ്റിംഗ് നടത്തിയാൽ ഓപ്പോണെന്റിനു +6 ADVANTAGE നൽകുന്നതായിരിക്കും.
-                            </p>
+                        <div className="mt-3 p-3 bg-amber-50/60 border border-amber-200/60 rounded-xl flex gap-2.5 items-start">
+                            <span className="text-lg flex-shrink-0">⚠️</span>
+                            <div>
+                                <span className="font-extrabold text-amber-800 text-[9px] uppercase tracking-wider block mb-0.5">Penalty Rule</span>
+                                <p className="text-xs text-amber-900 leading-relaxed font-semibold font-mono">
+                                    6 മിനിറ്റ് മാച്ചിന് പകരം 8 മിനിറ്റ് ആണ് SET ചെയ്തു ചീറ്റിംഗ് നടത്തിയാൽ ഓപ്പോണെന്റിനു +6 ADVANTAGE നൽകുന്നതായിരിക്കും.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </NumberedRule>
@@ -245,12 +263,16 @@ function Part2Rules() {
                 </NumberedRule>
 
                 <NumberedRule number="10">
-                    <div className="space-y-2">
+                    <div className="space-y-2 w-full">
                         <p>മാച്ചിനുള്ള ഫിക്ച്ചർ വന്നതിനു ശേഷം ടീമംഗങ്ങൾ കളിക്കാനുള്ള സമയം രാത്രി 9 മണിക്ക് മുമ്പ് തന്നെ തൻ്റെ എതിരാളിയുമായി സമയം വ്യക്തമാക്കി മെസ്സേജ് അയച്ചു തമ്മിൽ ധാരണ ആയിട്ടുണ്ട് എന്ന് ക്യാപ്റ്റൻ/മാനേജർ ഉറപ്പു വരുത്തണം.</p>
-                        <div className="bg-green-50 p-2 sm:p-3 rounded border-l-4 border-green-500">
-                            <p className="text-xs sm:text-sm text-green-900">
-                                Opponent മെസ്സേജ് വായിച്ചിട്ടും 1 മണിക്കൂറിനുള്ളിൽ റിപ്ലെ നൽകിയില്ല എങ്കിൽ +1 ലഭിക്കുന്നതാണ്.
-                            </p>
+                        <div className="bg-emerald-50/60 border border-emerald-200/60 p-3 rounded-xl flex gap-2.5 items-start">
+                            <span className="text-lg flex-shrink-0">💡</span>
+                            <div>
+                                <span className="font-extrabold text-emerald-800 text-[9px] uppercase tracking-wider block mb-0.5">Response advantage</span>
+                                <p className="text-xs text-emerald-950 leading-relaxed font-semibold">
+                                    Opponent മെസ്സേജ് വായിച്ചിട്ടും 1 മണിക്കൂറിനുള്ളിൽ റിപ്ലെ നൽകിയില്ല എങ്കിൽ +1 ലഭിക്കുന്നതാണ്.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </NumberedRule>
@@ -274,38 +296,43 @@ function Part2Rules() {
                 </NumberedRule>
 
                 <NumberedRule number="21">
-                    <div className="bg-red-50 p-3 sm:p-4 rounded-lg border-l-4 border-red-500">
-                        <p className="font-semibold text-red-900 mb-2 text-sm sm:text-base">RED CARD Rule:</p>
-                        <p className="text-xs sm:text-sm text-red-800">
-                            DRAW/LOSE ആയ മാച്ച് റീമാച് ചെയ്യാൻ OPPONENT നു താൽപര്യം ഇല്ലങ്കിൽ, പിന്നെ REMATCH നു സഭ്യമല്ലാത്ത രീതിയിൽ നിർബന്ധിച്ച് വെല്ലുവിളിക്കുന്നവർക്ക് RED CARD തന്നെ നൽകുന്നതായിരിക്കും. RED CARD ലഭിക്കുന്ന കളിക്കാരന് അടുത്ത ഒരു കളിയിൽ വിലക്ക് വരുന്നതാണ്.
-                        </p>
+                    <div className="bg-rose-50/60 border border-rose-200/60 p-4 rounded-xl flex gap-3 items-start w-full">
+                        <span className="text-xl flex-shrink-0">🔴</span>
+                        <div>
+                            <span className="font-extrabold text-rose-800 text-[10px] uppercase tracking-wider block mb-1">RED CARD Rule</span>
+                            <p className="text-xs sm:text-sm text-rose-950 leading-relaxed font-semibold">
+                                DRAW/LOSE ആയ മാച്ച് റീമാച് ചെയ്യാൻ OPPONENT നു താൽപര്യം ഇല്ലങ്കിൽ, പിന്നെ REMATCH നു സഭ്യമല്ലാത്ത രീതിയിൽ നിർബന്ധിച്ച് വെല്ലുവിളിക്കുന്നവർക്ക് RED CARD തന്നെ നൽകുന്നതായിരിക്കും. RED CARD ലഭിക്കുന്ന കളിക്കാരന് അടുത്ത ഒരു കളിയിൽ വിലക്ക് വരുന്നതാണ്.
+                            </p>
+                        </div>
                     </div>
                 </NumberedRule>
             </RuleSection>
 
             <RuleSection title="SUB Rule (Rule 18)" color="purple">
-                <div className="bg-purple-50 p-4 sm:p-6 rounded-lg border-2 border-purple-200">
-                    <h4 className="font-bold text-purple-900 mb-3 sm:mb-4 text-sm sm:text-base">2 തരം സബുകൾ ഉണ്ട്:</h4>
+                <div className="bg-purple-50/40 p-4 sm:p-5 rounded-2xl border border-purple-100 space-y-4">
+                    <h4 className="font-extrabold text-purple-900 uppercase tracking-wider text-xs sm:text-sm">2 തരം സബുകൾ ഉണ്ട്:</h4>
 
                     <div className="space-y-3 sm:space-y-4">
-                        <div className="bg-white p-3 sm:p-4 rounded-lg">
-                            <p className="font-semibold text-purple-900 mb-2 text-xs sm:text-sm">1. സബ് ഉള്ള കളിക്കാരൻ ഇറങ്ങാൻ ഉള്ള അവസരം</p>
-                            <p className="text-xs sm:text-sm text-gray-700">ഇവിടെ +2 കൊടുത്ത് സബ് ഇറങ്ങാവുന്നതാണ്.</p>
+                        <div className="bg-white border border-slate-200/40 p-3 sm:p-4 rounded-xl shadow-sm">
+                            <p className="font-extrabold text-purple-900 text-xs sm:text-sm uppercase tracking-wider mb-1.5">1. സബ് ഉള്ള കളിക്കാരൻ ഇറങ്ങാൻ ഉള്ള അവസരം</p>
+                            <p className="text-xs sm:text-sm text-slate-600">ഇവിടെ +2 കൊടുത്ത് സബ് ഇറങ്ങാവുന്നതാണ്.</p>
                         </div>
 
-                        <div className="bg-white p-3 sm:p-4 rounded-lg">
-                            <p className="font-semibold text-purple-900 mb-2 text-xs sm:text-sm">2. മാച്ച്ഡേയിൽ കളിച്ചു കൊണ്ടിരിക്കുന്ന താരത്തിനും സബ് ഇറങ്ങാം</p>
-                            <p className="text-xs sm:text-sm text-gray-700 mb-3">അങ്ങനെ ഉള്ള താരം കളിക്കാൻ ഇറങ്ങുമ്പോൾ ഏത് സബ്ബിനും അടിസ്ഥാനമായി (Base) +2 നൽകണം.</p>
+                        <div className="bg-white border border-slate-200/40 p-3 sm:p-4 rounded-xl shadow-sm space-y-3">
+                            <div>
+                                <p className="font-extrabold text-purple-900 text-xs sm:text-sm uppercase tracking-wider mb-1.5">2. മാച്ച്ഡേയിൽ കളിച്ചു കൊണ്ടിരിക്കുന്ന താരത്തിനും സബ് ഇറങ്ങാം</p>
+                                <p className="text-xs sm:text-sm text-slate-600">അങ്ങനെ ഉള്ള താരം കളിക്കാൻ ഇറങ്ങുമ്പോൾ ഏത് സബ്ബിനും അടിസ്ഥാനമായി (Base) +2 നൽകണം.</p>
+                            </div>
 
-                            <div className="bg-blue-50 p-2 sm:p-3 rounded border-l-4 border-blue-500">
-                                <p className="text-xs sm:text-sm font-semibold text-blue-900 mb-2">Formula:</p>
-                                <p className="text-xs sm:text-sm text-blue-800">Total Sub Cost = +2 (Base) + Position Difference</p>
+                            <div className="bg-sky-50/60 border border-sky-100 p-3 rounded-xl flex gap-2 items-center">
+                                <span className="text-xs font-black bg-slate-800 text-white px-2 py-0.5 rounded uppercase font-mono">Formula</span>
+                                <span className="text-xs sm:text-sm font-extrabold text-sky-900 font-mono">Total Sub Cost = +2 (Base) + Position Difference</span>
                             </div>
                         </div>
 
-                        <div className="bg-amber-50 p-3 sm:p-4 rounded-lg border-l-4 border-amber-500">
-                            <p className="font-semibold text-amber-900 mb-2 text-xs sm:text-sm">ഉദാഹരണം:</p>
-                            <ul className="text-xs sm:text-sm text-amber-800 space-y-1">
+                        <div className="bg-amber-50/60 border border-amber-200/40 p-3 sm:p-4 rounded-xl">
+                            <p className="font-extrabold text-amber-900 text-xs sm:text-sm uppercase tracking-wider mb-2">ഉദാഹരണം:</p>
+                            <ul className="text-xs sm:text-sm text-amber-900 space-y-1.5 font-semibold font-mono">
                                 <li>• Rank 4 OUT, Rank 1 IN → Diff: 3 → Total: +2 + 3 = <strong>+5</strong></li>
                                 <li>• Rank 5 OUT, Rank 3 IN → Diff: 2 → Total: +2 + 2 = <strong>+4</strong></li>
                                 <li>• Rank 3 OUT, Rank 2 IN → Diff: 1 → Total: +2 + 1 = <strong>+3</strong></li>
@@ -313,16 +340,10 @@ function Part2Rules() {
                         </div>
                     </div>
 
-                    <div className="mt-3 sm:mt-4 space-y-2">
-                        <p className="text-xs sm:text-sm text-purple-900">
-                            <strong>⏰ ഹോം ടീമിന്:</strong> രാത്രി 9 മണി വരെ (ഡെഡ്‌ലൈന് 3 മണിക്കൂർ മുൻപ് വരെ) ലൈനപ്പിൽ സബ്സ്റ്റിറ്റ്യൂഷൻ വരുത്താം.
-                        </p>
-                        <p className="text-xs sm:text-sm text-purple-900">
-                            <strong>⏰ എവേ ടീമിന്:</strong> രാത്രി 9 മണിക്ക് മുൻപ് ലൈനപ്പിൽ സബ്സ്റ്റിറ്റ്യൂഷൻ ചെയ്യാം.
-                        </p>
-                        <p className="text-xs sm:text-sm text-purple-900">
-                            <strong>📩 മെസ്സേജ് സമയം:</strong> ലൈനപ്പ് സബ്സ്റ്റിറ്റ്യൂഷൻ ചെയ്ത പ്ലയറിന് മെസ്സേജ് അയക്കാനുള്ള അവസാന സമയം 9:10 ആണ്.
-                        </p>
+                    <div className="mt-3 pt-3 border-t border-purple-100 space-y-2 text-xs sm:text-sm text-purple-950 font-semibold leading-relaxed">
+                        <p>⏰ <strong>ഹോം ടീമിന്:</strong> രാത്രി 9 മണി വരെ (ഡെഡ്‌ലൈന് 3 മണിക്കൂർ മുൻപ് വരെ) ലൈനപ്പിൽ സബ്സ്റ്റിറ്റ്യൂഷൻ വരുത്താം.</p>
+                        <p>⏰ <strong>എവേ ടീമിന്:</strong> രാത്രി 9 മണിക്ക് മുൻപ് ലൈനപ്പിൽ സബ്സ്റ്റിറ്റ്യൂഷൻ ചെയ്യാം.</p>
+                        <p>📩 <strong>മെസ്സേജ് സമയം:</strong> ലൈനപ്പ് സബ്സ്റ്റിറ്റ്യൂഷൻ ചെയ്ത പ്ലയറിന് മെസ്സേജ് അയക്കാനുള്ള അവസാന സമയം 9:10 ആണ്.</p>
                     </div>
                 </div>
             </RuleSection>
@@ -345,9 +366,10 @@ function Part2Rules() {
                 </NumberedRule>
             </RuleSection>
 
-            <div className="bg-red-50 border-2 border-red-500 rounded-lg p-4 sm:p-6 mt-4 sm:mt-6">
-                <p className="text-red-900 font-bold text-center text-base sm:text-lg">
-                    ❌ തെളിവ് ഇല്ലാത്ത വാദങ്ങൾ കമ്മിറ്റി പരിഗണിക്കില്ല ❌
+            <div className="bg-rose-50/60 border border-rose-200 rounded-xl p-4 sm:p-6 mt-4 sm:mt-6 text-center">
+                <span className="text-2xl mb-1.5 block">❌</span>
+                <p className="text-rose-950 font-black text-sm sm:text-base uppercase tracking-wider">
+                    തെളിവ് ഇല്ലാത്ത വാദങ്ങൾ കമ്മിറ്റി പരിഗണിക്കില്ല
                 </p>
             </div>
         </div>
@@ -357,8 +379,8 @@ function Part2Rules() {
 function Part3Rules() {
     return (
         <div className="space-y-4 sm:space-y-6">
-            <div className="border-l-4 border-purple-600 pl-3 sm:pl-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">
+            <div className="border-l-4 border-amber-500 pl-3 sm:pl-4 mb-2">
+                <h2 className="text-base sm:text-lg font-black text-slate-800 uppercase tracking-wider">
                     🔰 ADDITIONAL RULES
                 </h2>
             </div>
@@ -374,23 +396,21 @@ function Part3Rules() {
             </RuleSection>
 
             <RuleSection title="▶️ Claim ആക്കാൻ പാലിക്കേണ്ട വിധം" color="green">
-                <div className="bg-green-50 p-4 sm:p-6 rounded-lg border-2 border-green-200">
-                    <p className="text-green-900 mb-3 sm:mb-4 text-xs sm:text-sm">
+                <div className="bg-emerald-50/40 p-4 sm:p-5 rounded-2xl border border-emerald-100 space-y-4">
+                    <p className="text-emerald-950 font-semibold text-xs sm:text-sm">
                         ഹോം ടീം ഫിക്സ്ചർ ഇട്ട് കഴിഞ്ഞാൽ 9 മണിക്കൂ മുമ്പ് തന്നെ 2 ടീമിലെയും പ്ലെയേഴ്സ് പരസ്പരം മാച്ച് ടൈം ഫിക്സ് ചെയ്യുന്നതിനുള്ള മാച്ച് ഇൻവിറ്റേഷൻ മെസ്സേജ് അയക്കാൻ ശ്രദ്ധിക്കുക.
                     </p>
 
-                    <div className="bg-white p-3 sm:p-4 rounded-lg mb-3 sm:mb-4">
-                        <p className="font-semibold text-green-900 mb-2 text-xs sm:text-sm">മാച്ച് ഇൻവിറ്റേഷൻ മെസ്സേജ് Format:</p>
-                        <div className="bg-gray-50 p-2 sm:p-3 rounded border-l-4 border-green-500">
-                            <p className="text-xs sm:text-sm text-gray-700 font-mono">
-                                Hi Bro<br />
-                                SS Match ഉണ്ട്<br />
-                                ഞാൻ evening 03.00 PM തൊട്ട് 09.00 PM വരെ അവൈലബിൾ ആയിരിക്കുകയുള്ളൂ.
-                            </p>
+                    <div className="bg-white border border-slate-200/40 p-3.5 rounded-xl shadow-sm space-y-2">
+                        <p className="font-extrabold text-emerald-900 text-xs sm:text-sm uppercase tracking-wider">മാച്ച് ഇൻവിറ്റേഷൻ മെസ്സേജ് Format:</p>
+                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 font-mono text-xs sm:text-sm text-slate-700 leading-relaxed">
+                            Hi Bro<br />
+                            SS Match ഉണ്ട്<br />
+                            ഞാൻ evening 03.00 PM തൊട്ട് 09.00 PM വരെ അവൈലബിൾ ആയിരിക്കുകയുള്ളൂ.
                         </div>
                     </div>
 
-                    <div className="space-y-2 text-xs sm:text-sm text-green-900">
+                    <div className="space-y-2 text-xs sm:text-sm text-emerald-900 font-semibold font-sans">
                         <p>✅ മാച്ച് ഇൻവിറ്റേഷൻ മെസ്സേജിൽ സൗത്ത് സോക്കേർസ് ടൂർണമെന്റ് ആണെന്നും മെൻഷൻ ചെയ്യണം</p>
                         <p>✅ മെസ്സേജ് അയയ്ക്കുന്ന ആളുടെ അവൈലബിലിറ്റി സമയം കൃത്യമായി മെൻഷൻ ചെയ്യണം</p>
                         <p>✅ നിങ്ങളുടെ ടീമിനെ സംബന്ധിച്ചുള്ള ഏതൊരു ഇഷ്യൂ ഉം ഓപ്പണന്റ് ടീം Cap/Manager ആയി സംസാരിച്ച് പരിഹരിക്കാൻ ശ്രമിക്കുക</p>
@@ -399,79 +419,80 @@ function Part3Rules() {
             </RuleSection>
 
             <RuleSection title="▶️ NO REPLAY AFTER MESSAGE SEEING" color="amber">
-                <div className="bg-amber-50 p-4 sm:p-6 rounded-lg border-2 border-amber-200">
-                    <p className="text-amber-900 mb-3 sm:mb-4 text-xs sm:text-sm">
+                <div className="bg-amber-50/40 p-4 sm:p-5 rounded-2xl border border-amber-100 space-y-3">
+                    <p className="text-amber-955 font-semibold text-xs sm:text-sm">
                         ലീഗ് റൂളിൽ പറഞ്ഞ പ്രകാരമുള്ള മാച്ച് ഇൻവിറ്റേഷൻ കാര്യങ്ങളിൽ ഓപ്പണന്റ് ന്റെ ഭാഗത്ത് നിന്നും മെസ്സേജ് സീൻ ആക്കിയിട്ട് മറുപടി ഒന്നും ഇല്ലെങ്കിൽ:
                     </p>
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <span className="text-xl sm:text-2xl">🟨</span>
-                            <p className="text-amber-900 text-xs sm:text-sm">സെയിം മാച്ച്ഡേ തന്നെ റൂൾ violate ചെയ്ത പ്ലെയറിന് YELLOW കാർഡ്</p>
+                    <div className="space-y-2.5 font-sans">
+                        <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-amber-200/50">
+                            <span className="text-xl">🟨</span>
+                            <p className="text-amber-900 text-xs sm:text-sm font-semibold">സെയിം മാച്ച്ഡേ തന്നെ റൂൾ violate ചെയ്ത പ്ലെയറിന് YELLOW കാർഡ്</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-xl sm:text-2xl">🟥</span>
-                            <p className="text-amber-900 text-xs sm:text-sm">ആവർത്തിക്കുന്നത് RED (2 YELLOW) കാർഡും മാച്ച് ബാൻ</p>
+                        <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-amber-200/50">
+                            <span className="text-xl">🟥</span>
+                            <p className="text-amber-900 text-xs sm:text-sm font-semibold">ആവർത്തിക്കുന്നത് RED (2 YELLOW) കാർഡും മാച്ച് ബാൻ</p>
                         </div>
                     </div>
                 </div>
             </RuleSection>
 
             <RuleSection title="▶️ CUSTOM FORMATION RULE" color="purple">
-                <div className="bg-purple-50 p-4 sm:p-6 rounded-lg border-2 border-purple-200">
-                    <div className="space-y-3 sm:space-y-4">
-                        <p className="text-purple-900 text-xs sm:text-sm">
-                            ഓപ്പണന്റ് അയച്ച് തരുന്ന മാച്ച് റൂമിൽ കയറിയതിന് ശേഷം കാണുന്ന വിൻഡോയിലെ (സ്ക്രീനിലെ) ഗെയിം പ്ലാനിൽ മാത്രമേ നിങ്ങൾക്ക് ഫോർമേഷൻ കസ്റ്റം ചെയ്യാൻ പറ്റുകയുള്ളൂ.
-                        </p>
+                <div className="bg-purple-50/40 p-4 sm:p-5 rounded-2xl border border-purple-100 space-y-3.5">
+                    <p className="text-purple-955 text-xs sm:text-sm font-semibold">
+                        ഓപ്പണന്റ് അയച്ച് തരുന്ന മാച്ച് റൂമിൽ കയറിയതിന് ശേഷം കാണുന്ന വിൻഡോയിലെ (സ്ക്രീനിലെ) ഗെയിം പ്ലാനിൽ മാത്രമേ നിങ്ങൾക്ക് ഫോർമേഷൻ കസ്റ്റം ചെയ്യാൻ പറ്റുകയുള്ളൂ.
+                    </p>
 
-                        <div className="bg-red-50 p-3 sm:p-4 rounded border-l-4 border-red-500">
-                            <p className="text-red-900 font-semibold text-xs sm:text-sm">❌ പാടില്ലാത്തത്:</p>
-                            <ul className="text-xs sm:text-sm text-red-800 mt-2 space-y-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="bg-rose-50/60 border border-rose-200/60 p-3.5 rounded-xl font-sans">
+                            <span className="font-extrabold text-rose-800 text-[10px] uppercase tracking-wider block mb-1.5">❌ പാടില്ലാത്തത്:</span>
+                            <ul className="text-xs text-rose-900 space-y-1.5 font-semibold">
                                 <li>• TO MATCH എന്ന ഓപ്ഷൻ കൊടുത്ത് MATCH CONNECT ആയതിനു ശേഷം</li>
                                 <li>• മാച്ചിനിടയ്ക്കുള്ള PAUSE/HALF TIME കളിൽ</li>
                             </ul>
                         </div>
 
-                        <div className="bg-green-50 p-3 sm:p-4 rounded border-l-4 border-green-500">
-                            <p className="text-green-900 font-semibold text-xs sm:text-sm">✅ അനുവദനീയം:</p>
-                            <p className="text-xs sm:text-sm text-green-800 mt-2">INBUILD or DEFAULT ഫോർമേഷനുകൾ ഉപയോഗിക്കാവുന്നതാണ്.</p>
+                        <div className="bg-emerald-50/60 border border-emerald-200/60 p-3.5 rounded-xl font-sans">
+                            <span className="font-extrabold text-emerald-800 text-[10px] uppercase tracking-wider block mb-1.5">✅ അനുവദനീയം:</span>
+                            <p className="text-xs text-emerald-900 font-semibold leading-relaxed">INBUILD or DEFAULT ഫോർമേഷനുകൾ ഉപയോഗിക്കാവുന്നതാണ്.</p>
                         </div>
+                    </div>
 
-                        <div className="bg-amber-50 p-3 sm:p-4 rounded border-l-4 border-amber-500">
-                            <p className="text-amber-900 font-semibold text-xs sm:text-sm">⚠️ Penalty:</p>
-                            <p className="text-xs sm:text-sm text-amber-800 mt-2">
-                                മാച്ചിന് ഇടയിൽ ഫോർമേഷൻ custom ചെയ്‌താൽ എതിർ ടീമിന് +3 advantage നൽകുന്നതാണ്.
-                            </p>
-                        </div>
+                    <div className="bg-amber-50/60 border border-amber-200/60 p-3.5 rounded-xl">
+                        <span className="font-extrabold text-amber-800 text-[10px] uppercase tracking-wider block mb-1.5">⚠️ Penalty:</span>
+                        <p className="text-xs text-amber-900 font-semibold">
+                            മാച്ചിന് ഇടയിൽ ഫോർമേഷൻ custom ചെയ്‌താൽ എതിർ ടീമിന് +3 advantage നൽകുന്നതാണ്.
+                        </p>
                     </div>
                 </div>
             </RuleSection>
 
             <RuleSection title="▶️ 🆘 ഇഷ്യൂ കാർഡ്" color="red">
-                <div className="bg-red-50 p-4 sm:p-6 rounded-lg border-2 border-red-200">
-                    <p className="text-red-900 mb-3 sm:mb-4 text-xs sm:text-sm">
+                <div className="bg-rose-50/40 p-4 sm:p-5 rounded-2xl border border-rose-100 space-y-2">
+                    <p className="text-rose-955 font-semibold text-xs sm:text-sm">
                         ഓപ്പണന്റ് cap/manager ആയി സംസാരിച്ചു പരിഹാരം ആവാത്ത കാര്യങ്ങൾക്ക് മാത്രം കമ്മിറ്റിയിലെ പ്രോബ്ലം സോൾവിങ് മെംബേഴ്സിനെ മെൻഷൻ ചെയ്ത് ഇഷ്യൂ കാർഡ് ഉപയോഗിക്കുക.
                     </p>
-                    <p className="text-red-900 font-semibold text-xs sm:text-sm">
-                        അനാവിശ്യമായി ഇഷ്യൂ കാർഡ് റിപ്പോർട്ട് ചെയ്യാതിരിക്കുക.
+                    <p className="text-rose-900 font-bold text-xs">
+                        ⚠️ അനാവിശ്യമായി ഇഷ്യൂ കാർഡ് റിപ്പോർട്ട് ചെയ്യാതിരിക്കുക.
                     </p>
                 </div>
             </RuleSection>
 
-            <div className="bg-gradient-to-r from-red-100 to-orange-100 border-2 border-red-500 rounded-lg p-4 sm:p-6 md:p-8 mt-6 sm:mt-8">
-                <h3 className="text-xl sm:text-2xl font-bold text-red-900 mb-3 sm:mb-4 text-center">
-                    🛑 MOST IMPORTANT 🛑
+            <div className="console-card bg-slate-900 border border-slate-950 text-white rounded-2xl p-5 sm:p-6 md:p-8 mt-6 sm:mt-8 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
+                <h3 className="text-lg sm:text-xl font-black text-rose-400 mb-3 text-center uppercase tracking-wider flex items-center justify-center gap-2">
+                    <span>🛑</span> MOST IMPORTANT <span>🛑</span>
                 </h3>
-                <p className="text-red-900 text-center mb-3 sm:mb-4 text-xs sm:text-sm">
+                <p className="text-rose-200 text-center mb-4 text-xs sm:text-sm font-bold leading-relaxed">
                     കളി അവസാനിച്ച ശേഷം എതിരാളിയോട് രീതിയിൽ ഉള്ള മോശമായ പെരുമാറ്റം നിങ്ങളുടെ ഭാഗത്ത് നിന്നുണ്ടായാൽ കടുത്ത നടപടി തന്നെ എടുക്കുന്നത് ആയിരിക്കും.
                 </p>
-                <p className="text-red-800 text-center text-xs sm:text-sm">
-                    ഇതൊരു എൻ്റർടൈൻമെൻ്റ് ലീഗ് ആണെന്നുന്നുള്ള കാര്യവും അതിലുപരി നമുക്കിടയിൽ പരസ്പര സൗഹൃദം ലക്ഷ്യമാക്കി ഉള്ള കൂട്ടായ്മ ആണെന്നും മനസ്സിലാക്കി ലീഗിനെ നല്ല രീതിയിൽ മുന്നോട്ട് കൊണ്ട് പോകാൻ എല്ലാവരും പരമാവധി സഹകരിക്കണം
+                <p className="text-slate-400 text-center text-xs sm:text-sm leading-relaxed font-sans">
+                    ഇതൊരു എൻ്റർടൈൻമെൻ്റ് ലീഗ് ആണെന്നുന്നുള്ള കാര്യവും അതിലുപരി നമുക്കിដയിൽ പരസ്പര സൗഹൃദം ലക്ഷ്യമാക്കി ഉള്ള കൂട്ടായ്മ ആണെന്നും മനസ്സിലാക്കി ലീഗിനെ നല്ല രീതിയിൽ മുന്നോട്ട് കൊണ്ട് പോകാൻ എല്ലാവരും പരമാവധി സഹകരിക്കണം
                 </p>
             </div>
 
-            <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-4 sm:p-6 mt-4 sm:mt-6">
-                <h4 className="font-bold text-blue-900 mb-3 text-sm sm:text-base">💠 Final Notes:</h4>
-                <ul className="space-y-2 text-xs sm:text-sm text-blue-900">
+            <div className="bg-sky-50/50 border border-sky-100 rounded-2xl p-4 sm:p-5 mt-4 sm:mt-6 space-y-3 shadow-inner">
+                <h4 className="font-extrabold text-sky-955 uppercase tracking-wider text-xs sm:text-sm">💠 Final Notes:</h4>
+                <ul className="space-y-2 text-xs sm:text-sm text-sky-900 font-semibold font-sans">
                     <li>• റൂളിൽ പരാമർശിക്കാത്ത ഇഷ്യൂസ് വന്നാൽ കമ്മറ്റി ചർച്ച ചെയ്തു തീരുമാനം അറിയിക്കും</li>
                     <li>• കമ്മറ്റിയുടെ ഈ തീരുമാനം അന്തിമമായിരിക്കും</li>
                     <li>• കമ്മറ്റി അംഗങ്ങൾ ഉൾപ്പെടുന്ന ടീമുകളുടെ പ്രശ്നത്തിൽ കമ്മറ്റി അംഗം എന്ന നിലയിൽ ആ ടീമിലെ കമ്മറ്റി അംഗത്തിന് ഇടപെടാൻ സാധിക്കില്ല</li>
@@ -483,31 +504,57 @@ function Part3Rules() {
 
 // Helper Components
 function RuleSection({ title, color, children }: { title: string; color: string; children: React.ReactNode }) {
-    const colorClasses = {
-        blue: 'border-blue-500 bg-blue-50',
-        indigo: 'border-indigo-500 bg-indigo-50',
-        green: 'border-green-500 bg-green-50',
-        purple: 'border-purple-500 bg-purple-50',
-        red: 'border-red-500 bg-red-50',
-        amber: 'border-amber-500 bg-amber-50',
-        gray: 'border-gray-500 bg-gray-50',
+    const borderColors = {
+        blue: 'border-l-4 border-l-sky-500',
+        indigo: 'border-l-4 border-l-indigo-500',
+        green: 'border-l-4 border-l-emerald-500',
+        purple: 'border-l-4 border-l-purple-500',
+        red: 'border-l-4 border-l-rose-500',
+        amber: 'border-l-4 border-l-amber-500',
+        gray: 'border-l-4 border-l-slate-500',
+    };
+
+    const bgColors = {
+        blue: 'bg-sky-50/30',
+        indigo: 'bg-indigo-50/30',
+        green: 'bg-emerald-50/30',
+        purple: 'bg-purple-50/30',
+        red: 'bg-rose-50/30',
+        amber: 'bg-amber-50/30',
+        gray: 'bg-slate-50/30',
+    };
+
+    const textColors = {
+        blue: 'text-slate-800',
+        indigo: 'text-slate-800',
+        green: 'text-slate-800',
+        purple: 'text-slate-800',
+        red: 'text-slate-800',
+        amber: 'text-slate-800',
+        gray: 'text-slate-800',
     };
 
     return (
-        <div className={`border-l-4 ${colorClasses[color as keyof typeof colorClasses] || colorClasses.blue} p-3 sm:p-4 md:p-6 rounded-lg`}>
-            <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-3 sm:mb-4">{title}</h3>
-            <div className="space-y-3 sm:space-y-4">{children}</div>
+        <div className={`rounded-2xl border border-slate-200/60 overflow-hidden ${borderColors[color as keyof typeof borderColors] || borderColors.blue}`}>
+            <div className={`px-4 py-3 border-b border-slate-100 font-extrabold text-xs sm:text-sm uppercase tracking-wider ${bgColors[color as keyof typeof bgColors] || bgColors.blue} ${textColors[color as keyof typeof textColors] || textColors.blue}`}>
+                {title}
+            </div>
+            <div className="p-4 sm:p-5 space-y-3.5 bg-white">
+                {children}
+            </div>
         </div>
     );
 }
 
 function RuleItem({ icon, title, children }: { icon: string; title?: string; children: React.ReactNode }) {
     return (
-        <div className="flex gap-2 sm:gap-3">
-            <span className="text-lg sm:text-xl flex-shrink-0">{icon}</span>
-            <div className="flex-1">
-                {title && <p className="font-semibold text-gray-900 mb-1 text-xs sm:text-sm">{title}</p>}
-                <div className="text-gray-700 text-xs sm:text-sm leading-relaxed">{children}</div>
+        <div className="flex gap-3 items-start bg-slate-50/50 hover:bg-slate-50/80 p-3 rounded-xl border border-slate-100/50 transition-all duration-200">
+            <span className="text-base flex-shrink-0 w-7 h-7 rounded-lg bg-white shadow-sm border border-slate-100 flex items-center justify-center">
+                {icon}
+            </span>
+            <div className="flex-1 min-w-0">
+                {title && <p className="font-extrabold text-slate-800 text-xs sm:text-sm uppercase tracking-wider mb-1">{title}</p>}
+                <div className="text-slate-650 text-xs sm:text-sm leading-relaxed">{children}</div>
             </div>
         </div>
     );
@@ -515,13 +562,13 @@ function RuleItem({ icon, title, children }: { icon: string; title?: string; chi
 
 function NumberedRule({ number, children }: { number: string; children: React.ReactNode }) {
     return (
-        <div className="flex gap-3 sm:gap-4 bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+        <div className="flex gap-3 items-start bg-slate-50/50 hover:bg-slate-50/80 p-3.5 rounded-xl border border-slate-100/80 transition-all duration-200">
             <div className="flex-shrink-0">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm">
+                <div className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-900 text-amber-400 flex items-center justify-center font-black text-xs sm:text-sm shadow-md">
                     {number}
                 </div>
             </div>
-            <div className="flex-1 text-gray-700 text-xs sm:text-sm leading-relaxed">{children}</div>
+            <div className="flex-1 text-slate-600 text-xs sm:text-sm leading-relaxed pt-1">{children}</div>
         </div>
     );
 }

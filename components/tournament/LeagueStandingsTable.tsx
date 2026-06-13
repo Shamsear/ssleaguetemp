@@ -33,10 +33,10 @@ export default function LeagueStandingsTable({
   
   if (standings.length === 0) {
     return (
-      <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-8 text-center">
-        <span className="text-6xl mb-4 block">⚽</span>
-        <h3 className="text-lg font-medium text-gray-600 mb-2">No Team Statistics Available</h3>
-        <p className="text-sm text-gray-500">Team standings will appear once matches are completed</p>
+      <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-8 text-center font-mono shadow-sm">
+        <span className="text-4xl mb-3 block">⚽</span>
+        <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-2">No Team Statistics Available</h3>
+        <p className="text-xs text-slate-500 uppercase font-semibold">Team standings will appear once matches are completed</p>
       </div>
     );
   }
@@ -46,14 +46,16 @@ export default function LeagueStandingsTable({
   return (
     <div className="space-y-6">
       {/* League Table */}
-      <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl overflow-hidden border border-gray-100/20">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="console-card bg-white border border-slate-200/60 rounded-2xl overflow-hidden font-mono shadow-sm">
+        <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/40">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">⚽</span>
+              <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center">
+                <span className="text-xl">⚽</span>
+              </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">League Table</h3>
-                <p className="text-sm text-gray-600">{standings.length} teams competing</p>
+                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">League Table</h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{standings.length} teams competing</p>
               </div>
             </div>
             
@@ -61,23 +63,23 @@ export default function LeagueStandingsTable({
             <div className="md:hidden flex gap-2">
               <button
                 onClick={() => setViewMode('table')}
-                className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                className={`p-2 rounded-xl transition-all font-mono text-xs uppercase font-extrabold shadow-sm ${
+                  viewMode === 'table' ? 'bg-slate-800 text-amber-400 border border-slate-900' : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
                 }`}
                 title="Table View"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
               </button>
               <button
                 onClick={() => setViewMode('cards')}
-                className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'cards' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                className={`p-2 rounded-xl transition-all font-mono text-xs uppercase font-extrabold shadow-sm ${
+                  viewMode === 'cards' ? 'bg-slate-800 text-amber-400 border border-slate-900' : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
                 }`}
                 title="Card View"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
               </button>
@@ -95,13 +97,13 @@ export default function LeagueStandingsTable({
               return (
                 <div
                   key={team.team_id}
-                  className={`bg-white rounded-xl p-4 shadow-md border-2 ${
-                    isCurrentUser ? 'border-blue-400' : 'border-gray-200'
-                  } ${isPlayoffSpot ? 'border-l-4 border-l-blue-500' : ''}`}
+                  className={`console-card bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm relative overflow-hidden transition-all duration-200 ${
+                    isCurrentUser ? 'ring-1 ring-amber-500 bg-amber-500/[0.02]' : ''
+                  } ${isPlayoffSpot ? 'border-l-4 border-l-emerald-500' : ''}`}
                 >
                   {/* Header */}
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="text-2xl font-bold">
+                    <div className="text-xl font-bold font-mono">
                       {index === 0 && '🥇'}
                       {index === 1 && '🥈'}
                       {index === 2 && '🥉'}
@@ -112,24 +114,24 @@ export default function LeagueStandingsTable({
                       <img 
                         src={team.team_logo} 
                         alt={`${team.team_name} logo`}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                        className="w-10 h-10 rounded-full object-cover border border-slate-200"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-sm">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-black text-sm shadow-sm shadow-amber-500/10">
                         {team.team_name.charAt(0).toUpperCase()}
                       </div>
                     )}
                     
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-gray-900 truncate">{team.team_name}</div>
-                      <div className="flex gap-1 mt-1">
+                      <div className="font-extrabold text-slate-800 truncate uppercase text-sm">{team.team_name}</div>
+                      <div className="flex flex-wrap gap-1.5 mt-1 font-mono">
                         {isCurrentUser && (
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                          <span className="text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200/40 px-2 py-0.5 rounded-full uppercase tracking-wider">
                             You
                           </span>
                         )}
                         {isPlayoffSpot && (
-                          <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium">
+                          <span className="text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-250/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
                             🎯 Playoff
                           </span>
                         )}
@@ -137,54 +139,49 @@ export default function LeagueStandingsTable({
                     </div>
                     
                     <div className="text-right">
-                      <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-800">
-                        {team.points} pts
+                      <div className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-slate-50 text-slate-700 border-slate-200/60">
+                        {team.points} PTS
                       </div>
                     </div>
                   </div>
                   
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                    <div className="bg-gray-50 rounded-lg p-2">
-                      <div className="text-gray-500 font-medium">MP</div>
-                      <div className="text-gray-900 font-bold mt-1">{team.matches_played}</div>
+                  <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-bold uppercase tracking-wider">
+                    <div className="bg-slate-50/50 rounded-lg p-1.5 border border-slate-250/20">
+                      <div className="text-slate-400 font-bold">MP</div>
+                      <div className="text-slate-700 font-black mt-0.5">{team.matches_played}</div>
                     </div>
-                    <div className="bg-green-50 rounded-lg p-2">
-                      <div className="text-green-600 font-medium">W</div>
-                      <div className="text-green-700 font-bold mt-1">{team.wins}</div>
+                    <div className="bg-emerald-50/40 rounded-lg p-1.5 border border-emerald-100/30 text-emerald-700">
+                      <div className="text-emerald-500 font-bold">W</div>
+                      <div className="text-emerald-700 font-black mt-0.5">{team.wins}</div>
                     </div>
-                    <div className="bg-gray-50 rounded-lg p-2">
-                      <div className="text-gray-500 font-medium">D</div>
-                      <div className="text-gray-900 font-bold mt-1">{team.draws}</div>
+                    <div className="bg-slate-50/50 rounded-lg p-1.5 border border-slate-250/20">
+                      <div className="text-slate-400 font-bold">D</div>
+                      <div className="text-slate-700 font-black mt-0.5">{team.draws}</div>
                     </div>
-                    <div className="bg-red-50 rounded-lg p-2">
-                      <div className="text-red-600 font-medium">L</div>
-                      <div className="text-red-700 font-bold mt-1">{team.losses}</div>
+                    <div className="bg-rose-50/40 rounded-lg p-1.5 border border-rose-100/30 text-rose-700">
+                      <div className="text-rose-500 font-bold">L</div>
+                      <div className="text-rose-700 font-black mt-0.5">{team.losses}</div>
                     </div>
                   </div>
                   
                   {/* Goals */}
-                  <div className="grid grid-cols-3 gap-2 mt-2 text-center text-xs">
-                    <div className="bg-blue-50 rounded-lg p-2">
-                      <div className="text-blue-600 font-medium">GF</div>
-                      <div className="text-blue-700 font-bold mt-1">{team.goals_for}</div>
+                  <div className="grid grid-cols-3 gap-2 mt-2 text-center text-[10px] font-bold uppercase tracking-wider">
+                    <div className="bg-slate-50/50 rounded-lg p-1.5 border border-slate-250/20">
+                      <div className="text-slate-400 font-bold">GF</div>
+                      <div className="text-slate-700 font-black mt-0.5">{team.goals_for}</div>
                     </div>
-                    <div className="bg-orange-50 rounded-lg p-2">
-                      <div className="text-orange-600 font-medium">GA</div>
-                      <div className="text-orange-700 font-bold mt-1">{team.goals_against}</div>
+                    <div className="bg-slate-50/50 rounded-lg p-1.5 border border-slate-250/20">
+                      <div className="text-slate-400 font-bold">GA</div>
+                      <div className="text-slate-700 font-black mt-0.5">{team.goals_against}</div>
                     </div>
-                    <div className={`rounded-lg p-2 ${
-                      team.goal_difference > 0 ? 'bg-green-50' :
-                      team.goal_difference < 0 ? 'bg-red-50' : 'bg-gray-50'
+                    <div className={`rounded-lg p-1.5 border ${
+                      team.goal_difference > 0 ? 'bg-emerald-50/40 border-emerald-100/30 text-emerald-750' :
+                      team.goal_difference < 0 ? 'bg-rose-50/40 border-rose-100/30 text-rose-750' :
+                      'bg-slate-50/50 border-slate-250/20 text-slate-700'
                     }`}>
-                      <div className={`font-medium ${
-                        team.goal_difference > 0 ? 'text-green-600' :
-                        team.goal_difference < 0 ? 'text-red-600' : 'text-gray-500'
-                      }`}>GD</div>
-                      <div className={`font-bold mt-1 ${
-                        team.goal_difference > 0 ? 'text-green-700' :
-                        team.goal_difference < 0 ? 'text-red-700' : 'text-gray-900'
-                      }`}>
+                      <div className="font-bold">GD</div>
+                      <div className="font-black mt-0.5">
                         {team.goal_difference > 0 ? '+' : ''}{team.goal_difference}
                       </div>
                     </div>
@@ -198,42 +195,42 @@ export default function LeagueStandingsTable({
         {/* Table View */}
         {viewMode === 'table' && (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50/50">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="bg-slate-50/50 font-mono text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">
                 <tr>
-                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-4 text-left font-bold uppercase tracking-wider">
                     Rank
                   </th>
-                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-4 text-left font-bold uppercase tracking-wider">
                     Team
                   </th>
-                  <th className="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-3 sm:px-6 py-4 font-bold uppercase tracking-wider">
                     MP
                   </th>
-                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-4 font-bold uppercase tracking-wider">
                     W
                   </th>
-                  <th className="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="hidden sm:table-cell px-3 sm:px-6 py-4 font-bold uppercase tracking-wider">
                     D
                   </th>
-                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-4 font-bold uppercase tracking-wider">
                     L
                   </th>
-                  <th className="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="hidden lg:table-cell px-3 sm:px-6 py-4 font-bold uppercase tracking-wider">
                     GF
                   </th>
-                  <th className="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="hidden lg:table-cell px-3 sm:px-6 py-4 font-bold uppercase tracking-wider">
                     GA
                   </th>
-                  <th className="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-3 sm:px-6 py-4 font-bold uppercase tracking-wider">
                     GD
                   </th>
-                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-4 font-bold uppercase tracking-wider text-amber-600">
                     PTS
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white/60 divide-y divide-gray-200/50">
+              <tbody className="bg-white/40 divide-y divide-slate-100/60">
                 {standings.map((team, index) => {
                   const isPlayoffSpot = showPlayoffIndicator && index < playoffSpots;
                   const isCurrentUser = currentUserId && team.team_id === currentUserId;
@@ -241,47 +238,47 @@ export default function LeagueStandingsTable({
                   return (
                     <tr 
                       key={team.team_id} 
-                      className={`hover:bg-blue-50/50 transition-colors ${
-                        index < 3 ? 'bg-green-50/30' : ''
+                      className={`hover:bg-slate-50/50 transition-colors text-center ${
+                        index < 3 ? 'bg-amber-500/[0.005]' : ''
                       } ${
-                        isPlayoffSpot ? 'border-l-4 border-l-blue-500' : ''
+                        isPlayoffSpot ? 'border-l-4 border-l-emerald-500' : ''
                       } ${
-                        isCurrentUser ? 'ring-2 ring-blue-400' : ''
+                        isCurrentUser ? 'ring-1 ring-amber-500 bg-amber-500/[0.02]' : ''
                       }`}
                     >
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                        {index === 0 && <span className="text-xl sm:text-2xl">🥇</span>}
-                        {index === 1 && <span className="text-xl sm:text-2xl">🥈</span>}
-                        {index === 2 && <span className="text-xl sm:text-2xl">🥉</span>}
-                        {index > 2 && <span className="text-xs sm:text-sm">{`#${index + 1}`}</span>}
+                      <td className="px-3 sm:px-6 py-3.5 whitespace-nowrap text-left text-xs font-black text-slate-800">
+                        {index === 0 && <span className="text-lg">🥇</span>}
+                        {index === 1 && <span className="text-lg">🥈</span>}
+                        {index === 2 && <span className="text-lg">🥉</span>}
+                        {index > 2 && <span className="font-bold">{`#${index + 1}`}</span>}
                       </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <td className="px-3 sm:px-6 py-3.5 text-left">
                         <div className="flex items-center gap-2 sm:gap-3">
                           {/* Team Logo */}
                           {team.team_logo ? (
                             <img 
                               src={team.team_logo} 
                               alt={`${team.team_name} logo`}
-                              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                              className="w-8 h-8 rounded-full object-cover border border-slate-200 flex-shrink-0"
                             />
                           ) : (
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-black text-[10px] flex-shrink-0 shadow-sm shadow-amber-500/10">
                               {team.team_name.charAt(0).toUpperCase()}
                             </div>
                           )}
                           
                           <div className="min-w-0">
-                            <div className="text-xs sm:text-sm font-bold text-gray-900 truncate">
+                            <div className="text-xs sm:text-sm font-extrabold text-slate-850 truncate uppercase tracking-tight">
                               {team.team_name}
                             </div>
-                            <div className="flex flex-wrap items-center gap-1 mt-1">
+                            <div className="flex flex-wrap items-center gap-1.5 mt-0.5 font-mono">
                               {isCurrentUser && (
-                                <span className="text-[10px] sm:text-xs bg-blue-100 text-blue-700 px-1.5 sm:px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+                                <span className="text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200/40 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
                                   You
                                 </span>
                               )}
                               {isPlayoffSpot && (
-                                <span className="text-[10px] sm:text-xs bg-green-50 text-green-600 px-1.5 sm:px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+                                <span className="text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-250/30 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
                                   🎯 Playoff
                                 </span>
                               )}
@@ -289,35 +286,35 @@ export default function LeagueStandingsTable({
                           </div>
                         </div>
                       </td>
-                      <td className="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-sm text-gray-600">
+                      <td className="hidden md:table-cell px-3 sm:px-6 py-3.5 whitespace-nowrap text-xs font-bold text-slate-600">
                         {team.matches_played}
                       </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-semibold text-green-600">
+                      <td className="px-3 sm:px-6 py-3.5 whitespace-nowrap text-xs font-extrabold text-emerald-600">
                         {team.wins}
                       </td>
-                      <td className="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm text-gray-600">
+                      <td className="hidden sm:table-cell px-3 sm:px-6 py-3.5 whitespace-nowrap text-xs font-bold text-slate-500">
                         {team.draws}
                       </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-semibold text-red-600">
+                      <td className="px-3 sm:px-6 py-3.5 whitespace-nowrap text-xs font-extrabold text-rose-600">
                         {team.losses}
                       </td>
-                      <td className="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-sm text-gray-600">
+                      <td className="hidden lg:table-cell px-3 sm:px-6 py-3.5 whitespace-nowrap text-xs font-bold text-slate-600">
                         {team.goals_for}
                       </td>
-                      <td className="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-sm text-gray-600">
+                      <td className="hidden lg:table-cell px-3 sm:px-6 py-3.5 whitespace-nowrap text-xs font-bold text-slate-600">
                         {team.goals_against}
                       </td>
-                      <td className="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                        <span className={`text-xs sm:text-sm font-medium ${
-                          team.goal_difference > 0 ? 'text-green-600' :
-                          team.goal_difference < 0 ? 'text-red-600' :
-                          'text-gray-600'
+                      <td className="hidden md:table-cell px-3 sm:px-6 py-3.5 whitespace-nowrap">
+                        <span className={`text-xs font-extrabold ${
+                          team.goal_difference > 0 ? 'text-emerald-600' :
+                          team.goal_difference < 0 ? 'text-rose-600' :
+                          'text-slate-600'
                         }`}>
                           {team.goal_difference > 0 ? '+' : ''}{team.goal_difference}
                         </span>
                       </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                        <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-blue-100 text-blue-800">
+                      <td className="px-3 sm:px-6 py-3.5 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black border uppercase tracking-wider bg-slate-50 text-slate-700 border-slate-200/60">
                           {team.points}
                         </span>
                       </td>
@@ -331,20 +328,22 @@ export default function LeagueStandingsTable({
       </div>
 
       {/* Legend */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+      <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm font-mono relative overflow-hidden">
         <div className="flex items-start gap-3">
-          <span className="text-2xl">📊</span>
+          <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span className="text-lg">📊</span>
+          </div>
           <div>
-            <h3 className="text-sm font-semibold text-blue-800 mb-2">League Table Legend</h3>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs text-blue-700">
-              <div><strong>MP:</strong> Matches Played</div>
-              <div><strong>W:</strong> Wins</div>
-              <div><strong>D:</strong> Draws</div>
-              <div><strong>L:</strong> Losses</div>
-              <div><strong>GF:</strong> Goals For</div>
-              <div><strong>GA:</strong> Goals Against</div>
-              <div><strong>GD:</strong> Goal Difference</div>
-              <div><strong>PTS:</strong> Points (3 for win, 1 for draw)</div>
+            <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-2">League Table Legend</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-x-4 gap-y-2 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+              <div><strong className="text-slate-700 font-black">MP:</strong> Matches Played</div>
+              <div><strong className="text-slate-700 font-black">W:</strong> Wins</div>
+              <div><strong className="text-slate-700 font-black">D:</strong> Draws</div>
+              <div><strong className="text-slate-700 font-black">L:</strong> Losses</div>
+              <div><strong className="text-slate-700 font-black">GF:</strong> Goals For</div>
+              <div><strong className="text-slate-700 font-black">GA:</strong> Goals Against</div>
+              <div><strong className="text-slate-700 font-black">GD:</strong> Goal Difference</div>
+              <div><strong className="text-slate-700 font-black">PTS:</strong> Points</div>
             </div>
           </div>
         </div>
@@ -352,13 +351,15 @@ export default function LeagueStandingsTable({
 
       {/* Current Leader */}
       {topTeam && topTeam.matches_played > 0 && (
-        <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-xl p-6">
+        <div className="console-card bg-gradient-to-br from-amber-500/5 via-orange-500/[0.02] to-transparent border border-amber-500/20 rounded-2xl p-5 shadow-sm font-mono relative overflow-hidden">
           <div className="flex items-center gap-3">
-            <span className="text-4xl">🏆</span>
+            <div className="w-12 h-12 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-center flex-shrink-0 animate-pulse">
+              <span className="text-2xl">🏆</span>
+            </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Current Leader</h3>
-              <p className="text-2xl font-extrabold text-yellow-600 mt-1">{topTeam.team_name}</p>
-              <p className="text-sm text-gray-600 mt-1">
+              <h3 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Current Leader</h3>
+              <p className="text-xl font-extrabold text-slate-800 uppercase tracking-wider mt-1">{topTeam.team_name}</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">
                 {topTeam.points} points • {topTeam.wins} wins • GD: {topTeam.goal_difference > 0 ? '+' : ''}{topTeam.goal_difference}
               </p>
             </div>

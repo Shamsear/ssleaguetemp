@@ -170,16 +170,16 @@ export default function ShareableLeaderboard({
     <div className="space-y-4">
       {/* Group Selector for Group Stage */}
       {isGroupStage && groups.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          <span className="text-sm font-semibold text-gray-700 flex items-center">Select Group:</span>
+        <div className="flex flex-wrap items-center gap-2 font-mono">
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Select Group:</span>
           {groups.map((group) => (
             <button
               key={group}
               onClick={() => setSelectedGroup(group)}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all text-sm ${
+              className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
                 selectedGroup === group
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
               Group {group}
@@ -192,9 +192,9 @@ export default function ShareableLeaderboard({
       <div className="flex flex-wrap gap-3">
         <button
           onClick={() => setShowPreview(!showPreview)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors shadow-md"
+          className="inline-flex items-center gap-2 px-3.5 py-2 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer bg-slate-800 hover:bg-slate-900 border border-slate-900 hover:border-black text-amber-400"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
           </svg>
@@ -204,16 +204,16 @@ export default function ShareableLeaderboard({
         <button
           onClick={generateImage}
           disabled={isGenerating}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-3.5 py-2 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer bg-white text-slate-750 border border-slate-200 hover:border-amber-400/40 hover:text-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isGenerating ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-750"></div>
               Generating...
             </>
           ) : (
             <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               Download Image
@@ -224,16 +224,16 @@ export default function ShareableLeaderboard({
         <button
           onClick={shareImage}
           disabled={isGenerating}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-3.5 py-2 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 hover:border-emerald-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isGenerating ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               Generating...
             </>
           ) : (
             <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
               Share Image

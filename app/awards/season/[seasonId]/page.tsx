@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import InstagramEmbed from '@/components/InstagramEmbed';
-import { Shield, Trophy, Award, Calendar } from 'lucide-react';
+import { Shield, Trophy as TrophyIcon, Award as AwardIcon, Calendar, Zap, Flame, ChevronDown } from 'lucide-react';
 
 interface Award {
   id: string;
@@ -47,6 +47,127 @@ interface TrophyData {
   awarded_at?: string;
 }
 
+function SeasonAwardCardInner({ award, cardClass, positionClass, positionLabel }: { award: PlayerAward; cardClass: string; positionClass: string; positionLabel: string }) {
+  return (
+    <>
+      <div className="flex justify-between items-start">
+        <div className="min-w-0">
+          <span className="text-[8px] font-bold text-slate-400 tracking-wider block uppercase">Honour</span>
+          <h4 className="font-black text-slate-800 text-[10px] leading-tight truncate mt-0.5" title={award.award_type}>
+            {award.award_type}
+          </h4>
+        </div>
+        <AwardIcon className="w-3.5 h-3.5 text-amber-500 fill-amber-500/10 flex-shrink-0" />
+      </div>
+      
+      <div className="text-center py-2 flex flex-col items-center min-w-0">
+        <AwardIcon className={`w-10 h-10 mb-2 ${
+          cardClass.includes('gold') ? 'text-amber-550' :
+          cardClass.includes('silver') ? 'text-slate-450' :
+          cardClass.includes('bronze') ? 'text-amber-800' : 'text-slate-355'
+        }`} />
+        <h3 className="font-black text-slate-800 text-[11px] tracking-tight truncate max-w-full">
+          {award.player_name}
+        </h3>
+        {award.team_name && (
+          <span className="text-[9px] font-bold text-slate-500 uppercase mt-0.5 truncate max-w-full">
+            {award.team_name}
+          </span>
+        )}
+        {award.player_category && (
+          <span className="text-[8px] font-extrabold text-slate-400 uppercase mt-0.5 bg-slate-100/60 px-1.5 py-0.5 rounded">
+            {award.player_category}
+          </span>
+        )}
+      </div>
+
+      <div className="border-t border-slate-200/50 pt-2 flex justify-between items-center text-[8px] font-mono">
+        <span className="text-slate-400 font-bold uppercase">PLACING:</span>
+        <span className={positionClass}>
+          {positionLabel.toUpperCase()}
+        </span>
+      </div>
+    </>
+  );
+}
+
+function WeeklyAwardCardInner({ award, positionLabel, positionClass, renderStats }: { award: Award; positionLabel: string; positionClass: string; renderStats: (stats: any) => React.ReactNode }) {
+  return (
+    <>
+      <div className="flex justify-between items-start">
+        <div className="min-w-0">
+          <span className="text-[8px] font-bold text-slate-400 tracking-wider block uppercase">Honour</span>
+          <h4 className="font-black text-slate-800 text-[10px] leading-tight truncate mt-0.5" title={award.award_type}>
+            {award.award_type}
+          </h4>
+        </div>
+        <AwardIcon className="w-3.5 h-3.5 text-amber-500 fill-amber-500/10 flex-shrink-0" />
+      </div>
+      
+      <div className="text-center py-2 flex flex-col items-center min-w-0 w-full">
+        <AwardIcon className="w-10 h-10 mb-2 text-amber-550" />
+        <h3 className="font-black text-slate-800 text-[11px] tracking-tight truncate max-w-full">
+          {award.player_name || award.team_name}
+        </h3>
+        {award.team_name && award.player_name && (
+          <span className="text-[9px] font-bold text-slate-500 uppercase mt-0.5 truncate max-w-full">
+            {award.team_name}
+          </span>
+        )}
+        
+        {/* FIFA Card Attributes */}
+        {renderStats(award.performance_stats)}
+      </div>
+
+      <div className="border-t border-slate-200/50 pt-2 flex justify-between items-center text-[8px] font-mono">
+        <span className="text-slate-400 font-bold uppercase">MATCHDAY:</span>
+        <span className={positionClass}>
+          {positionLabel}
+        </span>
+      </div>
+    </>
+  );
+}
+
+function TrophyCardInner({ trophy, cardClass, positionClass, positionLabel }: { trophy: TrophyData; cardClass: string; positionClass: string; positionLabel: string }) {
+  return (
+    <>
+      <div className="flex justify-between items-start">
+        <div className="min-w-0">
+          <span className="text-[8px] font-bold text-slate-400 tracking-wider block uppercase">Cabinet</span>
+          <h4 className="font-black text-slate-800 text-[10px] leading-tight truncate mt-0.5" title={trophy.trophy_name}>
+            {trophy.trophy_name}
+          </h4>
+        </div>
+        <TrophyIcon className="w-3.5 h-3.5 text-amber-500 fill-amber-550/10 flex-shrink-0" />
+      </div>
+      
+      <div className="text-center py-2 flex flex-col items-center min-w-0">
+        <TrophyIcon className={`w-10 h-10 mb-2 ${
+          cardClass.includes('gold') ? 'text-amber-550' :
+          cardClass.includes('silver') ? 'text-slate-450' :
+          cardClass.includes('bronze') ? 'text-amber-800' : 'text-slate-355'
+        }`} />
+        <h3 className="font-black text-slate-800 text-[11px] tracking-tight truncate max-w-full">
+          {trophy.team_name}
+        </h3>
+        {trophy.trophy_type && (
+          <span className="text-[8px] font-extrabold text-slate-400 uppercase mt-0.5 bg-slate-100/60 px-1.5 py-0.5 rounded">
+            {trophy.trophy_type.replace('_', ' ')}
+          </span>
+        )}
+      </div>
+
+      <div className="border-t border-slate-200/50 pt-2 flex justify-between items-center text-[8px] font-mono">
+        <span className="text-slate-400 font-bold uppercase">POSITION:</span>
+        <span className={positionClass}>
+          {positionLabel.toUpperCase()}
+        </span>
+      </div>
+    </>
+  );
+}
+
 export default function SeasonAwardsPage() {
   const params = useParams();
   const seasonId = params.seasonId as string;
@@ -56,6 +177,20 @@ export default function SeasonAwardsPage() {
   const [trophies, setTrophies] = useState<TrophyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'awards' | 'trophies'>('awards');
+  const [awardsSubTab, setAwardsSubTab] = useState<'season' | 'weekly'>('season');
+  const [expandedRounds, setExpandedRounds] = useState<Set<string>>(new Set());
+
+  const toggleRound = (roundKey: string) => {
+    setExpandedRounds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(roundKey)) {
+        newSet.delete(roundKey);
+      } else {
+        newSet.add(roundKey);
+      }
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -119,7 +254,7 @@ export default function SeasonAwardsPage() {
     try {
       return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
-        month: 'long',
+        month: 'short',
         day: 'numeric'
       });
     } catch {
@@ -156,43 +291,37 @@ export default function SeasonAwardsPage() {
     if (entries.length === 0 && !hasCleanSheet && !hasMatchup) return null;
 
     return (
-      <div className="space-y-2 bg-slate-50 border border-slate-100 rounded-xl p-3">
-        <div className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-wider">PERFORMANCE DETAILS</div>
-        
+      <div className="flex flex-wrap gap-1 justify-center max-w-full mt-1.5 font-mono">
         {hasMatchup && (
-          <div className="text-[10px] font-mono font-bold text-slate-650 bg-amber-50 border border-amber-100 px-2.5 py-1 rounded-lg">
+          <div className="text-[8px] font-bold text-slate-700 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded text-center w-full truncate mb-0.5">
             ⚔️ {stats.matchup}
           </div>
         )}
 
         {hasCleanSheet && (
-          <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-150 text-emerald-700 rounded text-[9px] font-mono font-bold uppercase tracking-wide">
-            🛡️ Clean Sheet
+          <div className="inline-flex items-center px-1.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded text-[7px] font-bold uppercase">
+            🛡️ CS
           </div>
         )}
 
-        {entries.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-1">
-            {entries.map(([originalKey, value]: [string, any]) => {
-              const key = originalKey.toLowerCase();
-              let label = key.replace(/_/g, ' ');
-              let colorClass = 'bg-white text-slate-700 border-slate-200';
+        {entries.map(([originalKey, value]: [string, any]) => {
+          const key = originalKey.toLowerCase();
+          let label = key.replace(/_/g, ' ');
+          let colorClass = 'bg-white text-slate-700 border-slate-200';
 
-              if (key === 'wins') { label = 'W'; colorClass = 'bg-emerald-50 text-emerald-800 border-emerald-200'; }
-              else if (key === 'losses') { label = 'L'; colorClass = 'bg-rose-50 text-rose-800 border-rose-200'; }
-              else if (key === 'draws') { label = 'D'; colorClass = 'bg-slate-50 text-slate-700 border-slate-200'; }
-              else if (key.includes('goals') && !key.includes('against')) { label = key.replace('goals', 'G').replace('total', 'Tot').replace('avg', 'Avg'); colorClass = 'bg-amber-50 text-amber-800 border-amber-200'; }
-              else if (key === 'motm') { label = 'MOTM'; colorClass = 'bg-amber-50 text-amber-850 border-amber-250'; }
+          if (key === 'wins') { label = 'W'; colorClass = 'bg-emerald-50 text-emerald-850 border-emerald-200/50'; }
+          else if (key === 'losses') { label = 'L'; colorClass = 'bg-rose-50 text-rose-850 border-rose-200/50'; }
+          else if (key === 'draws') { label = 'D'; colorClass = 'bg-slate-50 text-slate-700 border-slate-200/50'; }
+          else if (key.includes('goals') && !key.includes('against')) { label = 'G'; colorClass = 'bg-amber-50 text-amber-850 border-amber-200/50'; }
+          else if (key === 'motm') { label = 'POTM'; colorClass = 'bg-amber-50 text-amber-900 border-amber-250/50'; }
 
-              return (
-                <div key={key} className={`flex items-center gap-1 px-2 py-0.5 rounded border text-[9px] font-mono font-bold shadow-sm uppercase ${colorClass}`}>
-                  <span>{label}:</span>
-                  <span>{String(value)}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+          return (
+            <div key={key} className={`flex items-center gap-0.5 px-1 py-0.2 rounded border text-[7px] font-bold ${colorClass}`}>
+              <span>{label}:</span>
+              <span>{String(value)}</span>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -207,35 +336,52 @@ export default function SeasonAwardsPage() {
   const totalAwards = cleanedAwards.length + cleanedPlayerAwards.length;
   const totalTrophies = Array.isArray(trophies) ? trophies.length : 0;
 
-  const filteredItems = activeTab === 'awards' 
-    ? [...cleanedAwards, ...cleanedPlayerAwards].sort((a, b) => {
-        const aDate = a.selected_at || ('created_at' in a ? a.created_at : undefined);
-        const bDate = b.selected_at || ('created_at' in b ? b.created_at : undefined);
-        if (aDate && bDate) {
-          return new Date(bDate).getTime() - new Date(aDate).getTime();
-        }
-        return 0;
-      })
-    : [...trophies].sort((a, b) => {
-        const aDate = a.awarded_at;
-        const bDate = b.awarded_at;
-        if (aDate && bDate) {
-          return new Date(bDate).getTime() - new Date(aDate).getTime();
-        }
-        return 0;
-      });
+  // Group weekly awards by round/week with proper ordering
+  const groupedWeeklyAwards = cleanedAwards.reduce((acc, award) => {
+    const key = award.round_number ? `Round ${award.round_number}` : award.week_number ? `Week ${award.week_number}` : 'Other';
+    if (!acc[key]) {
+      acc[key] = [];
+    }
+    acc[key].push(award);
+    return acc;
+  }, {} as Record<string, Award[]>);
+
+  // Calculate sort value for proper ordering (weeks come after specific rounds based on season)
+  const getSortValue = (groupKey: string) => {
+    const roundMatch = groupKey.match(/Round (\d+)/);
+    const weekMatch = groupKey.match(/Week (\d+)/);
+    
+    if (roundMatch) {
+      return parseInt(roundMatch[1]);
+    } else if (weekMatch) {
+      const weekNum = parseInt(weekMatch[1]);
+      const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+      const isOldSeason = seasonNum === 16 || seasonNum === 17;
+      
+      if (isOldSeason) {
+        if (weekNum === 1) return 7.5;
+        if (weekNum === 2) return 13.5;
+        if (weekNum === 3) return 20.5;
+        if (weekNum === 4) return 26.5;
+        return 26 + ((weekNum - 4) * 6.5) + 0.5;
+      } else {
+        return 7 + (7 * (weekNum - 1)) + 0.5;
+      }
+    }
+    return 999;
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 py-4 sm:py-8 px-3 sm:px-4 lg:px-6 console-bg">
-        <div className="container mx-auto max-w-7xl relative z-10 pt-5 lg:pt-24">
+        <div className="container mx-auto max-w-7xl relative z-10 pt-5 lg:pt-24 font-mono">
           <div className="animate-pulse space-y-6">
-            <div className="h-4 bg-slate-200 rounded w-24"></div>
-            <div className="h-20 bg-slate-200 rounded-2xl"></div>
-            <div className="h-12 bg-slate-200 rounded-2xl w-48"></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-white border border-slate-200/60 rounded-2xl h-64 p-5"></div>
+            <div className="h-6 bg-slate-200 rounded w-24"></div>
+            <div className="h-24 bg-slate-200 rounded-2xl"></div>
+            <div className="h-16 bg-slate-200 rounded-2xl w-full"></div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 justify-items-center">
+              {[...Array(14)].map((_, i) => (
+                <div key={i} className="bg-white border border-slate-200/60 rounded-2xl w-full h-[310px] p-5"></div>
               ))}
             </div>
           </div>
@@ -245,323 +391,319 @@ export default function SeasonAwardsPage() {
   }
 
   return (
-    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
-      
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
 
-      <div className="max-w-7xl mx-auto relative z-10 space-y-8">
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
         
         {/* Navigation back */}
-        <Link
-          href="/awards"
-          className="inline-flex items-center text-xs font-mono font-bold text-slate-500 hover:text-amber-600 transition-colors"
-        >
-          ← BACK_TO_AWARDS
-        </Link>
+        <div className="mb-4">
+          <Link
+            href="/awards"
+            className="px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold flex items-center justify-center w-fit"
+          >
+            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Awards
+          </Link>
+        </div>
 
         {/* Header Title Panel */}
-        <div className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6 font-mono relative overflow-hidden">
           <div className="text-center md:text-left">
-            <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">Season Honors</span>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+            <span className="text-[10px] text-amber-655 font-extrabold uppercase tracking-wider font-mono">Season Honors</span>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-800 uppercase tracking-tight mt-1">
               {seasonId ? `${seasonId.toUpperCase()} Honors` : 'Season Honors'}
             </h1>
-            <p className="text-xs text-slate-500 font-mono mt-1">
-              AWARDS & TROPHIES DISTRIBUTED THROUGHOUT THE SEASON: <span className="text-amber-600 font-bold">{totalAwards}</span> AWARDS & <span className="text-amber-600 font-bold">{totalTrophies}</span> TROPHIES
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
+              Awards and trophies distributed throughout the season
             </p>
           </div>
           
           <div className="flex gap-4">
-            <div className="text-center bg-slate-50 border border-slate-200 px-5 py-2.5 rounded-xl font-mono">
-              <div className="text-2xl font-black text-amber-600">{totalAwards}</div>
+            <div className="text-center bg-slate-50/50 border border-slate-100 px-4 py-2 rounded-xl font-mono min-w-[90px]">
+              <div className="text-xl font-black text-amber-600">{totalAwards}</div>
               <div className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Awards</div>
             </div>
-            <div className="text-center bg-slate-50 border border-slate-200 px-5 py-2.5 rounded-xl font-mono">
-              <div className="text-2xl font-black text-amber-600">{totalTrophies}</div>
+            <div className="text-center bg-slate-50/50 border border-slate-100 px-4 py-2 rounded-xl font-mono min-w-[90px]">
+              <div className="text-xl font-black text-amber-600">{totalTrophies}</div>
               <div className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Trophies</div>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
-          <div className="flex gap-2">
+        {/* Main Tabs Selection Bar */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm font-mono">
+          <div className="mb-4">
+            <h2 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">Cabinet Sections</h2>
+            <p className="text-[10px] text-slate-400 font-bold uppercase">Select category to explore</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setActiveTab('awards')}
-              className={`px-4 py-2.5 rounded-xl font-mono font-bold text-xs transition-all cursor-pointer ${
+              className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
                 activeTab === 'awards'
-                  ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              ★ AWARDS ({totalAwards})
+              ★ Awards ({totalAwards})
             </button>
             <button
               onClick={() => setActiveTab('trophies')}
-              className={`px-4 py-2.5 rounded-xl font-mono font-bold text-xs transition-all cursor-pointer ${
+              className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
                 activeTab === 'trophies'
-                  ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              🏆 TROPHIES ({totalTrophies})
+              🏆 Trophies ({totalTrophies})
             </button>
           </div>
         </div>
 
-        {/* Content Grid */}
-        {filteredItems.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {activeTab === 'awards' ? (
-              filteredItems.map((item, index) => {
-                // Determine if it's an Award or PlayerAward
-                const isPlayerAward = 'award_category' in item;
+        {/* Sub Tabs Selection (Only for Awards) */}
+        {activeTab === 'awards' && (
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm font-mono">
+            <div className="mb-4">
+              <h2 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <AwardIcon className="w-4 h-4 text-amber-500" /> Individual Honours
+              </h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase">Filter individual awards</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setAwardsSubTab('season')}
+                className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
+                  awardsSubTab === 'season'
+                    ? 'bg-slate-800 text-amber-400 border border-slate-900'
+                    : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
+                }`}
+              >
+                🏆 Season Awards ({cleanedPlayerAwards.length})
+              </button>
+              <button
+                onClick={() => setAwardsSubTab('weekly')}
+                className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
+                  awardsSubTab === 'weekly'
+                    ? 'bg-slate-800 text-amber-400 border border-slate-900'
+                    : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
+                }`}
+              >
+                📅 Weekly Awards ({cleanedAwards.length})
+              </button>
+            </div>
+          </div>
+        )}
 
-                if (isPlayerAward) {
-                  const award = item as PlayerAward;
-                  const isWinner = award.award_position?.toLowerCase().includes('winner');
-                  const isRunnerUp = award.award_position?.toLowerCase().includes('runner');
-                  const isThird = award.award_position?.toLowerCase().includes('third');
-                  const Wrapper = award.instagram_post_url ? 'a' : 'div';
-
-                  return (
-                    <Wrapper
-                      {...(award.instagram_post_url ? { href: award.instagram_post_url, target: '_blank', rel: 'noopener noreferrer' } : {})}
-                      key={`player-${award.id}-${index}`}
-                      className={`console-card rounded-2xl overflow-hidden bg-white border shadow-sm flex flex-col h-full hover:border-amber-400/40 transition-all duration-250 group ${
-                        isWinner ? 'border-amber-200 bg-gradient-to-br from-amber-50/10 to-white' : 'border-slate-200/60'
-                      }`}
-                    >
-                      {award.instagram_link && (
-                        <div className="relative w-full overflow-hidden bg-slate-50 border-b border-slate-100">
-                          <InstagramEmbed
-                            postUrl={award.instagram_link}
-                            instagramPostUrl={award.instagram_post_url ? '' : undefined}
-                          />
-                        </div>
-                      )}
-
-                      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                        <div className="space-y-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="space-y-1">
-                              <div className="flex flex-wrap gap-1">
-                                <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase tracking-wider ${
-                                  award.award_category === 'individual'
-                                    ? 'bg-purple-55 border border-purple-150 text-purple-700'
-                                    : 'bg-indigo-50 border border-indigo-150 text-indigo-700'
-                                }`}>
-                                  {award.award_category}
-                                </span>
-                                {award.award_position && (
-                                  <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase tracking-wider ${
-                                    isWinner ? 'bg-amber-100 border border-amber-250 text-amber-800' :
-                                    isRunnerUp ? 'bg-slate-100 border border-slate-200 text-slate-700' :
-                                    isThird ? 'bg-orange-100 border border-orange-200 text-orange-800' :
-                                    'bg-blue-50 border border-blue-200 text-blue-700'
-                                  }`}>
-                                    {award.award_position}
-                                  </span>
-                                )}
-                              </div>
-                              <h3 className="font-extrabold text-slate-900 text-base tracking-tight group-hover:text-amber-600 transition-colors mt-1">
-                                {award.award_type}
-                              </h3>
-                            </div>
-                            <div className="relative flex-shrink-0">
-                              <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-lg shadow-sm">
-                                ⭐
-                              </div>
-                              {isWinner && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full animate-ping"></div>}
-                            </div>
-                          </div>
-
-                          <div className={`border rounded-xl p-3.5 space-y-0.5 ${
-                            isWinner ? 'bg-amber-50/30 border-amber-100' : 'bg-slate-50 border-slate-100'
-                          }`}>
-                            <div className="text-[9px] text-slate-400 font-mono font-bold uppercase tracking-wider">RECIPIENT</div>
-                            <div className="font-extrabold text-base text-slate-900 leading-tight">
-                              {award.player_name}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                              {award.team_name && (
-                                <div className="text-xs text-slate-500 font-mono">{award.team_name}</div>
-                              )}
-                              {award.player_category && (
-                                <span className="inline-block px-1.5 py-0.5 rounded bg-white border border-slate-100 text-[8px] font-mono font-bold text-amber-600 uppercase">
-                                  {award.player_category}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-[9px] text-slate-400 font-mono">
-                          <span>SEASON AWARD</span>
-                          <span className="bg-slate-100 text-slate-650 px-2 py-0.5 rounded font-bold">{award.season_id}</span>
-                        </div>
-                      </div>
-                    </Wrapper>
-                  );
-                } else {
-                  const award = item as Award;
-                  const Wrapper = award.instagram_post_url ? 'a' : 'div';
-
-                  return (
-                    <Wrapper
-                      {...(award.instagram_post_url ? { href: award.instagram_post_url, target: '_blank', rel: 'noopener noreferrer' } : {})}
-                      key={`award-${award.id}-${index}`}
-                      className="console-card rounded-2xl overflow-hidden bg-white border border-slate-200/60 shadow-sm flex flex-col h-full hover:border-amber-400/40 transition-all duration-250 group"
-                    >
-                      {award.instagram_link && (
-                        <div className="relative w-full overflow-hidden bg-slate-50 border-b border-slate-100">
-                          <InstagramEmbed
-                            postUrl={award.instagram_link}
-                            instagramPostUrl={award.instagram_post_url ? '' : undefined}
-                          />
-                        </div>
-                      )}
-
-                      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                        <div className="space-y-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="space-y-1">
-                              <span className="text-[9px] text-amber-600 font-mono font-bold uppercase tracking-wider">
-                                {award.round_number ? `ROUND ${award.round_number}` : award.week_number ? `WEEK ${award.week_number}` : 'SEASON AWARD'}
-                              </span>
-                              <h3 className="font-extrabold text-slate-900 text-base tracking-tight group-hover:text-amber-600 transition-colors">
-                                {award.award_type}
-                              </h3>
-                            </div>
-                            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-lg shadow-sm">
-                              {getAwardIcon(award.award_type)}
-                            </div>
-                          </div>
-
-                          <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 space-y-0.5">
-                            <div className="text-[9px] text-slate-400 font-mono font-bold uppercase tracking-wider">RECIPIENT</div>
-                            <div className="font-extrabold text-base text-slate-900 leading-tight">
-                              {award.player_name || award.team_name}
-                            </div>
-                            {award.team_name && award.player_name && (
-                              <div className="text-xs text-slate-500 font-mono">{award.team_name}</div>
-                            )}
-                          </div>
-
-                          {renderStats(award.performance_stats)}
-                        </div>
-
-                        <div className="space-y-2.5 pt-3 border-t border-slate-100">
-                          {award.notes && (
-                            <div className="p-2.5 bg-amber-50/50 border-l-2 border-amber-500 rounded text-[10px] text-slate-650 font-medium">
-                              <span className="font-bold text-amber-850">NOTE:</span> {award.notes}
-                            </div>
-                          )}
-                          <div className="flex justify-between items-center text-[9px] text-slate-400 font-mono">
-                            <span>DATE: {formatDate(award.selected_at)}</span>
-                            <span className="bg-slate-100 text-slate-650 px-2 py-0.5 rounded font-bold">{award.season_id}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </Wrapper>
-                  );
-                }
-              })
+        {/* Dynamic Content Sections */}
+        {activeTab === 'awards' ? (
+          awardsSubTab === 'season' ? (
+            cleanedPlayerAwards.length === 0 ? (
+              <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-12 text-center shadow-sm max-w-lg mx-auto font-mono">
+                <TrophyIcon className="w-12 h-12 text-slate-350 mx-auto mb-4" />
+                <p className="text-slate-800 text-base font-extrabold uppercase">No Season Awards Found</p>
+                <p className="text-[10px] text-slate-455 font-bold uppercase mt-1">Individual season awards will show here once recorded</p>
+              </div>
             ) : (
-              filteredItems.map((item, index) => {
-                const trophy = item as TrophyData;
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 justify-items-center">
+                {cleanedPlayerAwards.map((award, index) => {
+                  const isWinner = award.award_position?.toLowerCase().includes('winner') || award.award_position?.toLowerCase().includes('1st');
+                  const isRunnerUp = award.award_position?.toLowerCase().includes('runner') || award.award_position?.toLowerCase().includes('2nd');
+                  const isThird = award.award_position?.toLowerCase().includes('third') || award.award_position?.toLowerCase().includes('3rd');
+                  
+                  let cardClass = 'fut-card p-4 flex flex-col justify-between';
+                  let positionLabel = 'NOMINEE';
+                  let positionClass = 'text-slate-400 font-extrabold';
+                  
+                  if (isWinner) {
+                    cardClass += ' fut-card-gold';
+                    positionLabel = award.award_position || 'WINNER';
+                    positionClass = 'text-amber-700 font-black';
+                  } else if (isRunnerUp) {
+                    cardClass += ' fut-card-silver';
+                    positionLabel = award.award_position || 'RUNNER-UP';
+                    positionClass = 'text-slate-600 font-black';
+                  } else if (isThird) {
+                    cardClass += ' fut-card-bronze';
+                    positionLabel = award.award_position || 'THIRD PLACE';
+                    positionClass = 'text-amber-900 font-black';
+                  } else if (award.award_position) {
+                    positionLabel = award.award_position;
+                  }
+
+                  const key = `player-${award.id}-${index}`;
+                  const className = `${cardClass} hover-float`;
+
+                  if (award.instagram_post_url) {
+                    return (
+                      <a
+                        href={award.instagram_post_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        key={key}
+                        className={className}
+                      >
+                        <SeasonAwardCardInner award={award} cardClass={cardClass} positionClass={positionClass} positionLabel={positionLabel} />
+                      </a>
+                    );
+                  } else {
+                    return (
+                      <div key={key} className={className}>
+                        <SeasonAwardCardInner award={award} cardClass={cardClass} positionClass={positionClass} positionLabel={positionLabel} />
+                      </div>
+                    );
+                  }
+                })}
+              </div>
+            )
+          ) : (
+            // Weekly Awards Display
+            cleanedAwards.length === 0 ? (
+              <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-12 text-center shadow-sm max-w-lg mx-auto font-mono">
+                <Calendar className="w-12 h-12 text-slate-350 mx-auto mb-4" />
+                <p className="text-slate-800 text-base font-extrabold uppercase">No Weekly Awards Found</p>
+                <p className="text-[10px] text-slate-455 font-bold uppercase mt-1">Matchday awards will show here once recorded</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {Object.entries(groupedWeeklyAwards)
+                  .sort((a, b) => {
+                    const aValue = getSortValue(a[0]);
+                    const bValue = getSortValue(b[0]);
+                    return aValue - bValue;
+                  })
+                  .map(([groupKey, awards]) => {
+                    const isExpanded = expandedRounds.has(groupKey);
+                    
+                    return (
+                      <div key={groupKey} className="console-card bg-white border border-slate-200/60 rounded-2xl overflow-hidden shadow-sm">
+                        {/* Collapsible Header */}
+                        <button
+                          onClick={() => toggleRound(groupKey)}
+                          className="w-full flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-1.5 flex items-center justify-center">
+                              <h3 className="font-extrabold text-amber-700 font-mono text-xs uppercase tracking-wider">
+                                {groupKey}
+                              </h3>
+                            </div>
+                            <span className="text-[10px] text-slate-450 font-bold uppercase">
+                              {awards.length} {awards.length === 1 ? 'Award' : 'Awards'}
+                            </span>
+                          </div>
+                          <ChevronDown 
+                            className={`w-4 h-4 text-amber-655 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                          />
+                        </button>
+                      
+                        {/* Collapsible Content */}
+                        {isExpanded && (
+                          <div className="p-4 pt-0 border-t border-slate-100 bg-slate-50/[0.01]">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 justify-items-center pt-4">
+                              {awards.map((award, index) => {
+                                const cardClass = 'fut-card fut-card-gold p-4 flex flex-col justify-between';
+                                const positionLabel = award.round_number ? `ROUND ${award.round_number}` : award.week_number ? `WEEK ${award.week_number}` : 'WEEKLY WINNER';
+                                const positionClass = 'text-amber-700 font-black';
+
+                                const key = `weekly-${award.id}-${index}`;
+                                const className = `${cardClass} hover-float`;
+
+                                if (award.instagram_post_url) {
+                                  return (
+                                    <a
+                                      href={award.instagram_post_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      key={key}
+                                      className={className}
+                                    >
+                                      <WeeklyAwardCardInner award={award} positionLabel={positionLabel} positionClass={positionClass} renderStats={renderStats} />
+                                    </a>
+                                  );
+                                } else {
+                                  return (
+                                    <div key={key} className={className}>
+                                      <WeeklyAwardCardInner award={award} positionLabel={positionLabel} positionClass={positionClass} renderStats={renderStats} />
+                                    </div>
+                                  );
+                                }
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            )
+          )
+        ) : (
+          // Trophies Cabinet Display
+          trophies.length === 0 ? (
+            <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-12 text-center shadow-sm max-w-lg mx-auto font-mono">
+              <TrophyIcon className="w-12 h-12 text-slate-350 mx-auto mb-4" />
+              <p className="text-slate-800 text-base font-extrabold uppercase">No Trophies Cabinet Records Found</p>
+              <p className="text-[10px] text-slate-455 font-bold uppercase mt-1">Tournament honours will show here once recorded</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 justify-items-center">
+              {trophies.map((trophy, index) => {
                 const isChampion = trophy.position === 1 || trophy.trophy_position?.toLowerCase().includes('champion') || trophy.trophy_position?.toLowerCase().includes('1st');
                 const isRunnerUp = trophy.position === 2 || trophy.trophy_position?.toLowerCase().includes('runner') || trophy.trophy_position?.toLowerCase().includes('2nd');
-                const Wrapper = trophy.instagram_post_url ? 'a' : 'div';
+                const isThird = trophy.position === 3 || trophy.trophy_position?.toLowerCase().includes('third') || trophy.trophy_position?.toLowerCase().includes('3rd');
+                
+                let cardClass = 'fut-card p-4 flex flex-col justify-between';
+                let positionLabel = 'FINALIST';
+                let positionClass = 'text-slate-400 font-extrabold';
+                
+                if (isChampion) {
+                  cardClass += ' fut-card-gold';
+                  positionLabel = trophy.trophy_position || 'CHAMPION';
+                  positionClass = 'text-amber-700 font-black';
+                } else if (isRunnerUp) {
+                  cardClass += ' fut-card-silver';
+                  positionLabel = trophy.trophy_position || 'RUNNER-UP';
+                  positionClass = 'text-slate-600 font-black';
+                } else if (isThird) {
+                  cardClass += ' fut-card-bronze';
+                  positionLabel = trophy.trophy_position || 'THIRD PLACE';
+                  positionClass = 'text-amber-900 font-black';
+                } else if (trophy.trophy_position) {
+                  positionLabel = trophy.trophy_position;
+                }
 
-                return (
-                  <Wrapper
-                    {...(trophy.instagram_post_url ? { href: trophy.instagram_post_url, target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    key={`trophy-${trophy.id}-${index}`}
-                    className={`console-card rounded-2xl overflow-hidden bg-white border shadow-sm flex flex-col h-full hover:border-amber-400/40 transition-all duration-250 group ${
-                      isChampion ? 'border-amber-200 bg-gradient-to-br from-amber-50/10 to-white' : 'border-slate-200/60'
-                    }`}
-                  >
-                    {trophy.instagram_link && (
-                      <div className="relative w-full overflow-hidden bg-slate-50 border-b border-slate-100">
-                        <InstagramEmbed
-                          postUrl={trophy.instagram_link}
-                          instagramPostUrl={trophy.instagram_post_url ? '' : undefined}
-                        />
-                      </div>
-                    )}
+                const key = `trophy-${trophy.id}-${index}`;
+                const className = `${cardClass} hover-float`;
 
-                    <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                      <div className="space-y-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="space-y-1">
-                            <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase tracking-wider ${
-                              trophy.trophy_type === 'league' ? 'bg-amber-105 border border-amber-250 text-amber-800' :
-                              trophy.trophy_type === 'runner_up' ? 'bg-slate-100 border border-slate-200 text-slate-700' :
-                              'bg-orange-50 border border-orange-150 text-orange-700'
-                            }`}>
-                              {trophy.trophy_type.replace('_', ' ')}
-                            </span>
-                            <h3 className="font-extrabold text-slate-900 text-base tracking-tight group-hover:text-amber-600 transition-colors mt-1">
-                              {trophy.trophy_name}
-                            </h3>
-                          </div>
-                          <div className="relative flex-shrink-0">
-                            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-lg shadow-sm">
-                              🏆
-                            </div>
-                            {isChampion && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full animate-ping"></div>}
-                          </div>
-                        </div>
-
-                        <div className={`border rounded-xl p-3.5 space-y-2 ${
-                          isChampion ? 'bg-amber-50/30 border-amber-100' : 'bg-slate-50 border-slate-100'
-                        }`}>
-                          <div>
-                            <div className="text-[9px] text-slate-400 font-mono font-bold uppercase tracking-wider">CHAMPION SQUAD</div>
-                            <div className="font-extrabold text-base text-slate-900 leading-tight">
-                              {trophy.team_name}
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-1.5 pt-1.5 border-t border-slate-200/50">
-                            {trophy.trophy_position && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-[9px] font-mono font-bold text-amber-700 uppercase">
-                                ★ {trophy.trophy_position}
-                              </span>
-                            )}
-                            {trophy.position && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[9px] font-mono font-bold text-slate-600 uppercase">
-                                POS: #{trophy.position}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-[9px] text-slate-400 font-mono">
-                        <span>DATE: {formatDate(trophy.awarded_at)}</span>
-                        <span className="bg-slate-100 text-slate-650 px-2 py-0.5 rounded font-bold">{trophy.season_id}</span>
-                      </div>
+                if (trophy.instagram_post_url) {
+                  return (
+                    <a
+                      href={trophy.instagram_post_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      key={key}
+                      className={className}
+                    >
+                      <TrophyCardInner trophy={trophy} cardClass={cardClass} positionClass={positionClass} positionLabel={positionLabel} />
+                    </a>
+                  );
+                } else {
+                  return (
+                    <div key={key} className={className}>
+                      <TrophyCardInner trophy={trophy} cardClass={cardClass} positionClass={positionClass} positionLabel={positionLabel} />
                     </div>
-                  </Wrapper>
-                );
-              })
-            )}
-          </div>
+                  );
+                }
+              })}
+            </div>
+          )
         )}
-
-        {/* Empty State */}
-        {filteredItems.length === 0 && (
-          <div className="bg-white border border-slate-200/60 rounded-2xl p-12 text-center shadow-sm max-w-lg mx-auto">
-            <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-900 text-lg font-bold">No Records Found</p>
-            <p className="text-xs text-slate-400 font-mono mt-1 uppercase">Awards or trophies will show here once recorded</p>
-          </div>
-        )}
-
       </div>
     </div>
   );
 }
+

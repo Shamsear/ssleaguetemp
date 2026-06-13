@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import PlayerImage from '@/components/PlayerImage';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 
@@ -234,29 +235,30 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
 
   const getPositionColor = (position: string) => {
     const colors: { [key: string]: string } = {
-      GK: 'bg-yellow-100 text-yellow-800',
-      CB: 'bg-red-100 text-red-800',
-      LB: 'bg-orange-100 text-orange-800',
-      RB: 'bg-orange-100 text-orange-800',
-      DMF: 'bg-blue-100 text-blue-800',
-      CMF: 'bg-sky-100 text-sky-800',
-      AMF: 'bg-cyan-100 text-cyan-800',
-      LMF: 'bg-teal-100 text-teal-800',
-      RMF: 'bg-teal-100 text-teal-800',
-      LWF: 'bg-green-100 text-green-800',
-      RWF: 'bg-green-100 text-green-800',
-      SS: 'bg-purple-100 text-purple-800',
-      CF: 'bg-pink-100 text-pink-800',
+      GK: 'bg-amber-50 text-amber-700 border border-amber-200/40',
+      CB: 'bg-rose-50 text-rose-700 border border-rose-200/40',
+      LB: 'bg-rose-50/60 text-rose-700 border border-rose-200/30',
+      RB: 'bg-rose-50/60 text-rose-700 border border-rose-200/30',
+      DMF: 'bg-indigo-50 text-indigo-700 border border-indigo-200/40',
+      CMF: 'bg-sky-50 text-sky-700 border border-sky-200/40',
+      AMF: 'bg-violet-50 text-violet-700 border border-violet-200/40',
+      LMF: 'bg-sky-50/60 text-sky-700 border border-sky-200/30',
+      RMF: 'bg-sky-50/60 text-sky-700 border border-sky-200/30',
+      LWF: 'bg-emerald-50/60 text-emerald-700 border border-emerald-200/30',
+      RWF: 'bg-emerald-50/60 text-emerald-700 border border-emerald-200/30',
+      SS: 'bg-emerald-50 text-emerald-700 border border-emerald-200/40',
+      CF: 'bg-emerald-50 text-emerald-700 border border-emerald-200/40',
     };
-    return colors[position] || 'bg-gray-100 text-gray-800';
+    return colors[position] || 'bg-slate-50 text-slate-700 border border-slate-200/40';
   };
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading team profile...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Squad...</p>
         </div>
       </div>
     );
@@ -268,16 +270,20 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
 
   if (error || !teamProfile) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="glass rounded-3xl p-8 max-w-2xl mx-auto text-center">
-          <div className="text-red-600 mb-4">
-            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="console-bg min-h-screen flex items-center justify-center relative px-4">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-8 max-w-md w-full mx-auto text-center relative z-10 font-mono">
+          <div className="text-rose-500 mb-4">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-dark mb-2">Team Not Found</h2>
-          <p className="text-gray-600 mb-4">{error || 'This team does not exist in the current season'}</p>
-          <Link href="/dashboard/team/all-teams" className="text-[#0066FF] hover:underline">
+          <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-2">Team Not Found</h2>
+          <p className="text-xs text-slate-500 uppercase font-semibold mb-6">{error || 'This team does not exist in the current season'}</p>
+          <Link 
+            href="/dashboard/team/all-teams" 
+            className="inline-flex items-center justify-center px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl text-xs uppercase tracking-wider font-bold transition-all shadow-sm w-full"
+          >
             Back to All Teams
           </Link>
         </div>
@@ -286,26 +292,31 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
         {/* Header */}
-        <div className="glass rounded-3xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6 gap-4 flex-wrap font-mono">
             <Link 
               href="/dashboard/team/all-teams" 
-              className="flex items-center text-gray-600 hover:text-[#0066FF] transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-bold"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
               <span>Back to All Teams</span>
             </Link>
-            <span className="text-sm text-gray-600">Season: <span className="font-semibold text-[#0066FF]">{seasonName}</span></span>
+            <span className="text-xs text-slate-500 uppercase font-semibold">
+              Season: <span className="font-extrabold text-amber-500">{seasonName}</span>
+            </span>
           </div>
 
           {/* Team Header */}
-          <div className="flex items-center gap-4">
-            <div className="h-20 w-20 flex-shrink-0 bg-[#0066FF]/10 rounded-xl flex items-center justify-center p-2">
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="h-20 w-20 flex-shrink-0 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-center p-2 relative overflow-hidden shadow-inner mx-auto md:mx-0">
               {teamProfile.logoUrl ? (
                 <Image 
                   src={teamProfile.logoUrl} 
@@ -315,265 +326,272 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
                   className="object-contain w-full h-full"
                 />
               ) : (
-                <svg className="w-10 h-10 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               )}
             </div>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-dark mb-2">{teamProfile.name}</h1>
-              <div className="flex flex-wrap gap-3">
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 uppercase tracking-wider font-mono mb-2">{teamProfile.name}</h1>
+              
+              {/* Currencies Grid in Team Header */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mt-4 text-[10px] uppercase font-bold tracking-wider font-mono text-left">
                 {standings && (
-                  <span className="inline-flex items-center rounded-full bg-gradient-to-r from-blue-100 to-blue-200 px-4 py-1.5 text-sm font-bold text-blue-800">
-                    #{standings.position} in League
-                  </span>
+                  <div className="bg-amber-50/60 border border-amber-200/50 p-2.5 rounded-xl flex flex-col justify-between">
+                    <span className="text-amber-600 text-[8px] mb-1">League Standing</span>
+                    <span className="text-amber-800 font-extrabold text-xs">
+                      #{standings.position} in League
+                    </span>
+                  </div>
                 )}
                 
-                {/* Dual currency display (multi-season or dual currency system) */}
+                <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
+                  <span className="text-slate-400 text-[8px] mb-1">Squad Players</span>
+                  <span className="text-slate-700 font-extrabold text-xs">
+                    ⚽ {players.filter((p: any) => p.type === 'footballplayer').length} + 👤 {players.filter((p: any) => p.type === 'realplayer').length}
+                  </span>
+                </div>
+
                 {seasonType === 'multi' || teamProfile.currencySystem === 'dual' ? (
                   <>
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
-                      <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      eCoin Spent: {(teamProfile.footballSpent || 0).toLocaleString()}
-                    </span>
-                    <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
-                      <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      SSCoin Spent: {(teamProfile.realPlayerSpent || 0).toLocaleString()}
-                    </span>
-                    <span className="inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-800">
-                      <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      eCoin Left: {(teamProfile.footballBudget || 0).toLocaleString()}
-                    </span>
-                    <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-800">
-                      <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      SSCoin Left: {(teamProfile.realPlayerBudget || 0).toLocaleString()}
-                    </span>
+                    <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
+                      <span className="text-slate-400 text-[8px] mb-1">eCoin Spent</span>
+                      <span className="text-blue-600 font-extrabold text-xs">
+                        {(teamProfile.footballSpent || 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
+                      <span className="text-slate-400 text-[8px] mb-1">SSCoin Spent</span>
+                      <span className="text-purple-600 font-extrabold text-xs">
+                        {(teamProfile.realPlayerSpent || 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
+                      <span className="text-slate-400 text-[8px] mb-1">eCoin Left</span>
+                      <span className="text-indigo-600 font-extrabold text-xs">
+                        {(teamProfile.footballBudget || 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
+                      <span className="text-slate-400 text-[8px] mb-1">SSCoin Left</span>
+                      <span className="text-amber-600 font-extrabold text-xs">
+                        {(teamProfile.realPlayerBudget || 0).toLocaleString()}
+                      </span>
+                    </div>
                   </>
                 ) : (
-                  /* Single currency display */
                   <>
-                    <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
-                      <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Spent: {teamProfile.totalSpent.toLocaleString()}
-                    </span>
-                    <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-800">
-                      <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      Left: {teamProfile.budget.toLocaleString()}
-                    </span>
+                    <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
+                      <span className="text-slate-400 text-[8px] mb-1">Spent</span>
+                      <span className="text-emerald-600 font-extrabold text-xs">
+                        {teamProfile.totalSpent.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
+                      <span className="text-slate-400 text-[8px] mb-1">Left</span>
+                      <span className="text-amber-600 font-extrabold text-xs">
+                        {teamProfile.budget.toLocaleString()}
+                      </span>
+                    </div>
                   </>
                 )}
-                
-                <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
-                  {players.filter((p: any) => p.type === 'footballplayer').length} eFootball + {players.filter((p: any) => p.type === 'realplayer').length} Tournament
-                </span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="glass rounded-2xl p-2 mb-6">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveTab('squad')}
-              className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                activeTab === 'squad'
-                  ? 'bg-[#0066FF] text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              Squad ({players.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('fixtures')}
-              className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                activeTab === 'fixtures'
-                  ? 'bg-[#0066FF] text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              Fixtures
-            </button>
-            <button
-              onClick={() => setActiveTab('stats')}
-              className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                activeTab === 'stats'
-                  ? 'bg-[#0066FF] text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              Stats
-            </button>
-          </div>
+        <div className="flex gap-2 p-1.5 bg-slate-100/80 border border-slate-200/60 rounded-2xl shadow-inner font-mono">
+          <button
+            onClick={() => setActiveTab('squad')}
+            className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${
+              activeTab === 'squad'
+                ? 'bg-slate-800 text-white shadow-sm'
+                : 'text-slate-500 hover:bg-slate-200/50 hover:text-slate-700'
+            }`}
+          >
+            Squad ({players.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('fixtures')}
+            className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${
+              activeTab === 'fixtures'
+                ? 'bg-slate-800 text-white shadow-sm'
+                : 'text-slate-500 hover:bg-slate-200/50 hover:text-slate-700'
+            }`}
+          >
+            Fixtures
+          </button>
+          <button
+            onClick={() => setActiveTab('stats')}
+            className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${
+              activeTab === 'stats'
+                ? 'bg-slate-800 text-white shadow-sm'
+                : 'text-slate-500 hover:bg-slate-200/50 hover:text-slate-700'
+            }`}
+          >
+            Stats
+          </button>
         </div>
 
         {/* Tab Content */}
         {activeTab === 'squad' && (
           <div className="space-y-6">
             {/* eFootball Players Section */}
-            <div className="glass rounded-3xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-6 font-mono flex-wrap gap-2">
+                <h2 className="text-lg font-extrabold flex items-center gap-2 uppercase tracking-wider text-slate-800">
                   <span>⚽</span>
                   <span>eFootball Players</span>
                 </h2>
-                <span className="text-sm font-semibold text-blue-600 bg-blue-100 px-3 py-1 rounded-full">
+                <span className="text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200/60 px-2.5 py-1 rounded-xl uppercase tracking-wider">
                   {players.filter((p: any) => p.type === 'footballplayer').length} Players
                 </span>
               </div>
               {players.filter((p: any) => p.type === 'footballplayer').length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
                   {players.filter((p: any) => p.type === 'footballplayer').map((player) => (
-                    <div key={player.id} className="glass rounded-xl p-4 hover:shadow-lg transition-all border-l-4 border-blue-400">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="h-12 w-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                          {player.photo_url ? (
-                            <Image 
-                              src={player.photo_url} 
-                              alt={player.name} 
-                              width={48}
-                              height={48}
-                              className="object-cover"
+                    <div key={player.id} className="bg-slate-50/40 border border-slate-200/60 rounded-2xl p-4 hover:border-amber-400/40 hover:bg-white hover:shadow-sm transition-all duration-200 border-l-4 border-l-blue-500 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="h-12 w-12 bg-slate-100 border border-slate-200/60 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center p-0.5">
+                            <PlayerImage
+                              playerId={player.player_id || player.id}
+                              playerName={player.name}
+                              size={48}
+                              className="rounded-lg"
                             />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center bg-gray-300 text-gray-600 font-bold">
-                              {player.name.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-extrabold text-slate-800 truncate text-sm uppercase tracking-wide">{player.name}</h3>
+                            <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                              {player.position && (
+                                <span className={`inline-block px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider ${getPositionColor(player.position)}`}>
+                                  {player.position}
+                                </span>
+                              )}
+                              {player.overall_rating && (
+                                <span className="text-xs font-black text-amber-500">★ {player.overall_rating}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="text-[11px] text-slate-500 space-y-1 border-t border-slate-100 pt-2.5 uppercase font-bold tracking-wider">
+                          {player.purchase_price && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Price:</span> 
+                              <span className="text-slate-700 font-mono">£{player.purchase_price.toLocaleString()}</span>
+                            </div>
+                          )}
+                          {player.club && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Club:</span> 
+                              <span className="text-slate-700 truncate max-w-[150px]">{player.club}</span>
+                            </div>
+                          )}
+                          {player.nationality && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Nation:</span> 
+                              <span className="text-slate-700 truncate max-w-[150px]">{player.nationality}</span>
                             </div>
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-dark truncate">{player.name}</h3>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {player.position && (
-                              <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${getPositionColor(player.position)}`}>
-                                {player.position}
-                              </span>
-                            )}
-                            {player.overall_rating && (
-                              <span className="text-sm font-semibold text-orange-600">{player.overall_rating}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="text-sm text-gray-600 space-y-1">
-                        {player.purchase_price && (
-                          <div>
-                            <span className="font-medium">Price:</span> £{player.purchase_price.toLocaleString()}
-                          </div>
-                        )}
-                        {player.club && (
-                          <div>
-                            <span className="font-medium">Club:</span> {player.club}
-                          </div>
-                        )}
-                        {player.nationality && (
-                          <div>
-                            <span className="font-medium">Nation:</span> {player.nationality}
-                          </div>
-                        )}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-gray-500 py-8">No eFootball players acquired yet</p>
+                <p className="text-center text-xs text-slate-400 py-8 uppercase font-bold">No eFootball players acquired yet</p>
               )}
             </div>
 
             {/* Tournament Players Section */}
-            <div className="glass rounded-3xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-6 font-mono flex-wrap gap-2">
+                <h2 className="text-lg font-extrabold flex items-center gap-2 uppercase tracking-wider text-slate-800">
                   <span>🏆</span>
                   <span>Tournament Players</span>
                 </h2>
-                <span className="text-sm font-semibold text-green-600 bg-green-100 px-3 py-1 rounded-full">
+                <span className="text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200/60 px-2.5 py-1 rounded-xl uppercase tracking-wider">
                   {players.filter((p: any) => p.type === 'realplayer').length} Players
                 </span>
               </div>
               {players.filter((p: any) => p.type === 'realplayer').length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
                   {players
                     .filter((p: any) => p.type === 'realplayer')
                     .sort((a: any, b: any) => (b.points || 0) - (a.points || 0))
                     .map((player) => (
-                    <div key={player.id} className="glass rounded-xl p-4 hover:shadow-lg transition-all border-l-4 border-green-400">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="h-12 w-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                          {player.photo_url ? (
-                            <Image 
-                              src={player.photo_url} 
-                              alt={player.name} 
-                              width={48}
-                              height={48}
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center bg-gray-300 text-gray-600 font-bold">
-                              {player.name.substring(0, 2).toUpperCase()}
+                    <div key={player.id} className="bg-slate-50/40 border border-slate-200/60 rounded-2xl p-4 hover:border-amber-400/40 hover:bg-white hover:shadow-sm transition-all duration-200 border-l-4 border-l-emerald-500 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="h-12 w-12 bg-slate-100 border border-slate-200/60 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center p-0.5">
+                            {player.photo_url ? (
+                              <Image 
+                                src={player.photo_url} 
+                                alt={player.name} 
+                                width={48}
+                                height={48}
+                                className="object-cover rounded-lg w-full h-full"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center bg-slate-200 text-slate-500 font-bold rounded-lg text-sm">
+                                {player.name.substring(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-extrabold text-slate-800 truncate text-sm uppercase tracking-wide">{player.name}</h3>
+                            <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                              {player.star_rating && (
+                                <span className="text-xs font-black text-amber-500">⭐ {player.star_rating}</span>
+                              )}
+                              {player.category && (
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-150 uppercase tracking-wider">
+                                  {player.category}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="text-[11px] text-slate-500 space-y-1 border-t border-slate-100 pt-2.5 uppercase font-bold tracking-wider">
+                          {player.nationality && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Nationality:</span> 
+                              <span className="text-slate-700 truncate max-w-[150px]">{player.nationality}</span>
+                            </div>
+                          )}
+                          {player.place && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Place:</span> 
+                              <span className="text-slate-700 truncate max-w-[150px]">{player.place}</span>
+                            </div>
+                          )}
+                          {player.points !== undefined && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Points:</span> 
+                              <span className="text-slate-700 font-mono font-black text-xs">{player.points}</span>
                             </div>
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-dark truncate">{player.name}</h3>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {player.star_rating && (
-                              <span className="text-sm font-semibold text-yellow-600">⭐ {player.star_rating}</span>
-                            )}
-                            {player.category && (
-                              <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800 font-medium">
-                                {player.category}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="text-sm text-gray-600 space-y-1">
-                        {player.nationality && (
-                          <div>
-                            <span className="font-medium">Nationality:</span> {player.nationality}
-                          </div>
-                        )}
-                        {player.place && (
-                          <div>
-                            <span className="font-medium">Place:</span> {player.place}
-                          </div>
-                        )}
-                        {player.points !== undefined && (
-                          <div>
-                            <span className="font-medium">Points:</span> {player.points}
-                          </div>
-                        )}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-gray-500 py-8">No tournament players registered yet</p>
+                <p className="text-center text-xs text-slate-400 py-8 uppercase font-bold">No tournament players registered yet</p>
               )}
             </div>
           </div>
         )}
 
         {activeTab === 'fixtures' && (
-          <div className="glass rounded-3xl p-6">
-            <h2 className="text-2xl font-bold mb-6">Fixtures</h2>
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+            <h2 className="text-lg font-extrabold uppercase tracking-wider text-slate-800 mb-6 font-mono">Fixtures</h2>
             {fixtures.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-3 font-mono">
                 {fixtures.map((fixture) => {
                   const isHome = fixture.home_team_id === teamId;
                   const opponent = isHome ? fixture.away_team_name : fixture.home_team_name;
@@ -585,39 +603,39 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
                     : null;
 
                   return (
-                    <div key={fixture.id} className="glass rounded-xl p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {fixture.round_number && (
-                            <span className="text-sm font-bold text-gray-500">R{fixture.round_number}</span>
-                          )}
-                          <span className="text-sm text-gray-600">{isHome ? 'vs' : '@'} {opponent}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {fixture.status === 'completed' ? (
-                            <>
-                              <span className="text-lg font-bold">
-                                {isHome ? fixture.home_score : fixture.away_score} - {isHome ? fixture.away_score : fixture.home_score}
-                              </span>
-                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                result === 'W' ? 'bg-green-100 text-green-800' :
-                                result === 'L' ? 'bg-red-100 text-red-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {result}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-sm text-gray-500 capitalize">{fixture.status}</span>
-                          )}
-                        </div>
+                    <div key={fixture.id} className="bg-slate-50/60 border border-slate-200/40 hover:bg-white hover:border-amber-400/20 p-4 rounded-2xl transition-all duration-200 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {fixture.round_number && (
+                          <span className="text-xs font-extrabold text-slate-400 bg-slate-100 border border-slate-200/40 px-2 py-0.5 rounded-lg">R{fixture.round_number}</span>
+                        )}
+                        <span className="text-sm font-bold text-slate-700 uppercase tracking-wider">
+                          {isHome ? 'vs' : '@'} {opponent}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 font-mono">
+                        {fixture.status === 'completed' ? (
+                          <>
+                            <span className="text-base font-black text-slate-800">
+                              {isHome ? fixture.home_score : fixture.away_score} - {isHome ? fixture.away_score : fixture.home_score}
+                            </span>
+                            <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase border tracking-wider ${
+                              result === 'W' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' :
+                              result === 'L' ? 'bg-rose-50 text-rose-700 border-rose-200/60' :
+                              'bg-slate-100 text-slate-500 border-slate-200/60'
+                            }`}>
+                              {result}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{fixture.status}</span>
+                        )}
                       </div>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <p className="text-center text-gray-500 py-8">No fixtures scheduled</p>
+              <p className="text-center text-xs text-slate-400 py-8 uppercase font-bold">No fixtures scheduled</p>
             )}
           </div>
         )}
@@ -626,73 +644,73 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
           <div className="space-y-6">
             {standings ? (
               <>
-                <div className="glass rounded-3xl p-6">
-                  <h2 className="text-2xl font-bold mb-6">League Statistics</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 glass rounded-xl">
-                      <div className="text-3xl font-bold text-[#0066FF]">{standings.position}</div>
-                      <div className="text-sm text-gray-600 mt-1">Position</div>
+                <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+                  <h2 className="text-lg font-extrabold uppercase tracking-wider text-slate-800 mb-6 font-mono">League Statistics</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono">
+                    <div className="text-center p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col justify-between">
+                      <div className="text-3xl font-black text-blue-600">{standings.position}</div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">League Position</div>
                     </div>
-                    <div className="text-center p-4 glass rounded-xl">
-                      <div className="text-3xl font-bold text-green-600">{standings.points}</div>
-                      <div className="text-sm text-gray-600 mt-1">Points</div>
+                    <div className="text-center p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col justify-between">
+                      <div className="text-3xl font-black text-amber-500">{standings.points}</div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">Points</div>
                     </div>
-                    <div className="text-center p-4 glass rounded-xl">
-                      <div className="text-3xl font-bold text-orange-600">{standings.played}</div>
-                      <div className="text-sm text-gray-600 mt-1">Played</div>
+                    <div className="text-center p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col justify-between">
+                      <div className="text-3xl font-black text-slate-700">{standings.played}</div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">Matches Played</div>
                     </div>
-                    <div className="text-center p-4 glass rounded-xl">
-                      <div className="text-3xl font-bold text-purple-600">{teamProfile.averageRating.toFixed(1)}</div>
-                      <div className="text-sm text-gray-600 mt-1">Avg Rating</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="glass rounded-3xl p-6">
-                  <h3 className="text-xl font-bold mb-4">Match Record</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-green-50 rounded-xl">
-                      <div className="text-2xl font-bold text-green-600">{standings.won}</div>
-                      <div className="text-sm text-green-700">Wins</div>
-                    </div>
-                    <div className="text-center p-4 bg-gray-50 rounded-xl">
-                      <div className="text-2xl font-bold text-gray-600">{standings.drawn}</div>
-                      <div className="text-sm text-gray-700">Draws</div>
-                    </div>
-                    <div className="text-center p-4 bg-red-50 rounded-xl">
-                      <div className="text-2xl font-bold text-red-600">{standings.lost}</div>
-                      <div className="text-sm text-red-700">Losses</div>
+                    <div className="text-center p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col justify-between">
+                      <div className="text-3xl font-black text-purple-600">★ {teamProfile.averageRating.toFixed(1)}</div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">Squad Avg Rating</div>
                     </div>
                   </div>
                 </div>
 
-                <div className="glass rounded-3xl p-6">
-                  <h3 className="text-xl font-bold mb-4">Goals</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center p-4 glass rounded-xl">
-                      <div className="text-2xl font-bold text-green-600">{standings.goalsFor}</div>
-                      <div className="text-sm text-gray-600">Scored</div>
+                <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+                  <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 mb-4 font-mono">Match Record</h3>
+                  <div className="grid grid-cols-3 gap-4 font-mono text-xs uppercase tracking-wider font-bold">
+                    <div className="text-center p-4 bg-emerald-50/60 border border-emerald-100 text-emerald-700 rounded-2xl">
+                      <div className="text-2xl font-black text-emerald-600">{standings.won}</div>
+                      <div className="text-[9px] mt-1 text-emerald-500">Wins</div>
                     </div>
-                    <div className="text-center p-4 glass rounded-xl">
-                      <div className="text-2xl font-bold text-red-600">{standings.goalsAgainst}</div>
-                      <div className="text-sm text-gray-600">Conceded</div>
+                    <div className="text-center p-4 bg-slate-50 border border-slate-200/40 text-slate-500 rounded-2xl">
+                      <div className="text-2xl font-black text-slate-600">{standings.drawn}</div>
+                      <div className="text-[9px] mt-1 text-slate-400">Draws</div>
                     </div>
-                    <div className="text-center p-4 glass rounded-xl">
-                      <div className={`text-2xl font-bold ${standings.goalDifference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className="text-center p-4 bg-rose-50/60 border border-rose-100 text-rose-700 rounded-2xl">
+                      <div className="text-2xl font-black text-rose-600">{standings.lost}</div>
+                      <div className="text-[9px] mt-1 text-rose-500">Losses</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+                  <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 mb-4 font-mono">Goals</h3>
+                  <div className="grid grid-cols-3 gap-4 font-mono text-xs uppercase tracking-wider font-bold">
+                    <div className="text-center p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                      <div className="text-2xl font-black text-slate-700">{standings.goalsFor}</div>
+                      <div className="text-[9px] mt-1 text-slate-400">Scored</div>
+                    </div>
+                    <div className="text-center p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                      <div className="text-2xl font-black text-slate-700">{standings.goalsAgainst}</div>
+                      <div className="text-[9px] mt-1 text-slate-400">Conceded</div>
+                    </div>
+                    <div className="text-center p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                      <div className={`text-2xl font-black ${standings.goalDifference >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                         {standings.goalDifference >= 0 ? '+' : ''}{standings.goalDifference}
                       </div>
-                      <div className="text-sm text-gray-600">Difference</div>
+                      <div className="text-[9px] mt-1 text-slate-400">Difference</div>
                     </div>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="glass rounded-3xl p-8 text-center">
-                <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-12 text-center shadow-sm font-mono">
+                <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <h3 className="text-xl font-bold text-gray-700 mb-2">No Statistics Available</h3>
-                <p className="text-gray-500">Team statistics will appear here once matches are played</p>
+                <h3 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-2">No Statistics Available</h3>
+                <p className="text-xs text-slate-500 font-semibold uppercase">Team statistics will appear here once matches are played.</p>
               </div>
             )}
           </div>

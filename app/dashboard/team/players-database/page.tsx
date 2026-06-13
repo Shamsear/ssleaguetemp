@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import OptimizedImage from '@/components/OptimizedImage';
+import PlayerImage, { PlayerAvatar } from '@/components/PlayerImage';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useCachedSeasons } from '@/hooks/useCachedFirebase';
@@ -236,44 +237,45 @@ export default function TeamPlayersPage() {
 
   const getPositionColor = (position: string) => {
     switch (position) {
-      case 'QB': return 'bg-red-100 text-red-800';
-      case 'RB': return 'bg-blue-100 text-blue-800';
-      case 'WR': return 'bg-green-100 text-green-800';
-      case 'TE': return 'bg-purple-100 text-purple-800';
-      case 'K': return 'bg-yellow-100 text-yellow-800';
-      case 'DST': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'QB': return 'bg-red-50 text-red-600 border border-red-200/60';
+      case 'RB': return 'bg-blue-50 text-blue-600 border border-blue-200/60';
+      case 'WR': return 'bg-emerald-50 text-emerald-600 border border-emerald-200/60';
+      case 'TE': return 'bg-purple-50 text-purple-600 border border-purple-200/60';
+      case 'K': return 'bg-amber-50 text-amber-600 border border-amber-200/60';
+      case 'DST': return 'bg-slate-50 text-slate-600 border border-slate-200/60';
+      default: return 'bg-slate-50 text-slate-600 border border-slate-200/60';
     }
   };
 
   const getRatingColor = (rating: number) => {
-    if (rating >= 85) return 'bg-green-100 text-green-800 border-green-200';
-    if (rating >= 75) return 'bg-blue-100 text-blue-800 border-blue-200';
-    if (rating >= 65) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    return 'bg-gray-100 text-gray-800 border-gray-200';
+    if (rating >= 85) return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+    if (rating >= 75) return 'bg-blue-50 text-blue-700 border border-blue-200';
+    if (rating >= 65) return 'bg-amber-50 text-amber-700 border border-amber-200';
+    return 'bg-slate-50 text-slate-600 border border-slate-200';
   };
 
   const getStarRatingColor = (rating: number) => {
-    if (rating >= 9) return 'bg-purple-100 text-purple-800 border-purple-200';
-    if (rating >= 7) return 'bg-blue-100 text-blue-800 border-blue-200';
-    if (rating >= 5) return 'bg-green-100 text-green-800 border-green-200';
-    return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    if (rating >= 9) return 'bg-purple-50 text-purple-700 border border-purple-200';
+    if (rating >= 7) return 'bg-blue-50 text-blue-700 border border-blue-200';
+    if (rating >= 5) return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+    return 'bg-amber-50 text-amber-700 border border-amber-200';
   };
 
   const getCategoryColor = (category: string) => {
     switch (category?.toLowerCase()) {
-      case 'legend': return 'bg-yellow-100 text-yellow-800';
-      case 'classic': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'legend': return 'bg-amber-50 text-amber-700 border border-amber-200/60';
+      case 'classic': return 'bg-blue-50 text-blue-700 border border-blue-200/60';
+      default: return 'bg-slate-50 text-slate-600 border border-slate-200/60';
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-amber-500 border-t-transparent mx-auto"></div>
+          <p className="mt-4 text-xs font-mono font-bold text-slate-500 uppercase tracking-wider">Loading Console...</p>
         </div>
       </div>
     );
@@ -282,12 +284,11 @@ export default function TeamPlayersPage() {
   // Show loading only for the current tab
   if (isCurrentLoading) {
     return (
-      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-        <div className="glass rounded-3xl p-6 shadow-lg">
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading {activeTab} players...</p>
-          </div>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-amber-500 border-t-transparent mx-auto"></div>
+          <p className="mt-4 text-xs font-mono font-bold text-slate-500 uppercase tracking-wider">Loading {activeTab} players...</p>
         </div>
       </div>
     );
@@ -298,529 +299,575 @@ export default function TeamPlayersPage() {
   }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-      {/* Mobile Header Section */}
-      <div className="block sm:hidden glass rounded-3xl p-4 shadow-lg mb-4">
-        <div className="text-center mb-4">
-          <h2 className="text-xl font-bold text-dark mb-1">Players Database</h2>
-          <p className="text-sm text-gray-500">{filteredPlayers.length} of {currentPlayers.length} players</p>
-        </div>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Decorative eSports glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
 
-        {/* Mobile Tabs */}
-        <div className="flex mb-4 bg-white/50 rounded-xl p-1">
-          <button
-            onClick={() => setActiveTab('tournament')}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'tournament'
-                ? 'bg-[#0066FF] text-white shadow-sm'
-                : 'text-gray-600 hover:text-[#0066FF]'
-            }`}
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
+        {/* Navigation */}
+        <div>
+          <Link
+            href="/dashboard/team"
+            className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
-            Tournament ({tournamentPlayers.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('auction')}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'auction'
-                ? 'bg-[#0066FF] text-white shadow-sm'
-                : 'text-gray-600 hover:text-[#0066FF]'
-            }`}
-          >
-            Auction ({auctionPlayers.length})
-          </button>
-        </div>
-        
-        {/* Mobile Search Bar */}
-        <div className="relative mb-3">
-          <input 
-            type="text" 
-            placeholder="Search players..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 py-3 pr-4 bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 shadow-sm text-base"
-          />
-          <svg className="w-5 h-5 text-gray-500 absolute left-3 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-        
-        {/* Mobile Filters */}
-        <div className="flex gap-2">
-          {activeTab === 'auction' ? (
-            <div className="relative flex-1">
-              <select 
-                value={positionFilter}
-                onChange={(e) => setPositionFilter(e.target.value)}
-                className="w-full pl-8 py-2.5 pr-4 bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 shadow-sm text-sm"
-              >
-                <option value="all">All Positions</option>
-                {positions.map(position => (
-                  <option key={position} value={position}>{position}</option>
-                ))}
-              </select>
-              <svg className="w-4 h-4 text-gray-500 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          ) : (
-            <div className="relative flex-1">
-              <select 
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full pl-8 py-2.5 pr-4 bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 shadow-sm text-sm"
-              >
-                <option value="all">All Categories</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-              <svg className="w-4 h-4 text-gray-500 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          )}
-          
-          <Link href="/dashboard/team" className="px-4 py-2.5 rounded-xl bg-white/60 text-[#0066FF] hover:bg-white/80 transition-all duration-300 text-sm font-medium flex items-center shadow-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
+            ← Back to Dashboard
           </Link>
         </div>
-      </div>
-      
-      {/* Desktop Header Section */}
-      <div className="hidden sm:block glass rounded-3xl p-4 sm:p-6 shadow-lg mb-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="mb-2 sm:mb-0">
-            <h2 className="text-2xl font-bold text-dark mb-1">Players Database</h2>
-            <p className="text-sm text-gray-500">View players from both auction and tournament systems</p>
+
+        {/* Mobile Header Section */}
+        <div className="block sm:hidden console-card bg-white border border-slate-200/60 rounded-3xl p-4 shadow-sm mb-4">
+          <div className="text-center mb-4">
+            <span className="text-[9px] text-amber-600 font-bold uppercase tracking-wider font-mono">PLAYERS</span>
+            <h2 className="text-xl font-mono font-bold text-slate-800 uppercase tracking-wide">Players Database</h2>
+            <p className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mt-1">
+              Showing {filteredPlayers.length} of {currentPlayers.length} players
+            </p>
           </div>
-          
-          {/* Desktop Tabs */}
-          <div className="flex bg-white/50 rounded-xl p-1 mb-4 sm:mb-0">
+
+          {/* Mobile Tabs */}
+          <div className="flex mb-4 bg-slate-100 rounded-xl p-1">
             <button
               onClick={() => setActiveTab('tournament')}
-              className={`py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all ${
                 activeTab === 'tournament'
-                  ? 'bg-[#0066FF] text-white shadow-sm'
-                  : 'text-gray-600 hover:text-[#0066FF]'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Tournament Players ({tournamentPlayers.length})
+              Tournament ({tournamentPlayers.length})
             </button>
             <button
               onClick={() => setActiveTab('auction')}
-              className={`py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all ${
                 activeTab === 'auction'
-                  ? 'bg-[#0066FF] text-white shadow-sm'
-                  : 'text-gray-600 hover:text-[#0066FF]'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Auction Players ({auctionPlayers.length})
+              Auction ({auctionPlayers.length})
             </button>
-        </div>
-        
-        {/* Filter Controls */}
-        <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-3 sm:items-center">
-          {activeTab === 'auction' ? (
-            <div className="flex flex-col sm:flex-row gap-2">
-              {/* Position Filter */}
-              <div className="relative">
+          </div>
+          
+          {/* Mobile Search Bar */}
+          <div className="relative mb-3">
+            <input 
+              type="text" 
+              placeholder="Search players..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-sans"
+            />
+            <svg className="w-5 h-5 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          
+          {/* Mobile Filters */}
+          <div className="flex gap-2">
+            {activeTab === 'auction' ? (
+              <div className="relative flex-1">
                 <select 
                   value={positionFilter}
                   onChange={(e) => setPositionFilter(e.target.value)}
-                  className="pl-10 py-2.5 pr-4 bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 shadow-sm w-full"
+                  className="w-full pl-8 py-2 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-xs font-mono font-bold uppercase tracking-wider cursor-pointer"
                 >
                   <option value="all">All Positions</option>
-                  {POSITIONS.map(position => (
+                  {positions.map(position => (
                     <option key={position} value={position}>{position}</option>
                   ))}
                 </select>
-                <svg className="w-5 h-5 text-gray-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-              
-              {/* Position Group Filter */}
-              <div className="relative">
-                <select 
-                  value={positionGroupFilter}
-                  onChange={(e) => setPositionGroupFilter(e.target.value)}
-                  className="pl-10 py-2.5 pr-4 bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 shadow-sm w-full"
-                >
-                  <option value="all">All Position Groups</option>
-                  {positionGroups.map(group => (
-                    <option key={group} value={group}>{group}</option>
-                  ))}
-                </select>
-                <svg className="w-5 h-5 text-gray-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row gap-2">
-              {/* Category Filter */}
-              <div className="relative">
+            ) : (
+              <div className="relative flex-1">
                 <select 
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="pl-10 py-2.5 pr-4 bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 shadow-sm w-full"
+                  className="w-full pl-8 py-2 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-xs font-mono font-bold uppercase tracking-wider cursor-pointer"
                 >
                   <option value="all">All Categories</option>
                   {categories.map(category => (
                     <option key={category} value={category}>{category}</option>
                   ))}
                 </select>
-                <svg className="w-5 h-5 text-gray-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-              
-              {/* Star Rating Filter */}
-              <div className="relative">
-                <select 
-                  value={starRatingFilter}
-                  onChange={(e) => setStarRatingFilter(e.target.value)}
-                  className="pl-10 py-2.5 pr-4 bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 shadow-sm w-full"
-                >
-                  <option value="all">All Star Ratings</option>
-                  {starRatings.map(rating => (
-                    <option key={rating} value={rating}>{rating} ⭐</option>
-                  ))}
-                </select>
-                <svg className="w-5 h-5 text-gray-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                </svg>
-              </div>
-
-              {/* Status Filter */}
-              <div className="relative">
-                <select 
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="pl-10 py-2.5 pr-4 bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 shadow-sm w-full"
-                >
-                  <option value="all">All Status</option>
-                  {statuses.map(status => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-                <svg className="w-5 h-5 text-gray-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-          )}
-            
-            {/* Search Bar */}
-            <div className="relative w-full sm:w-64">
-              <input 
-                type="text" 
-                placeholder="Search players..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 py-2.5 pr-4 bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 shadow-sm"
-              />
-              <svg className="w-5 h-5 text-gray-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-
-            <Link href="/dashboard/team" className="px-4 py-2.5 rounded-xl bg-white/60 text-[#0066FF] hover:bg-white/80 transition-all duration-300 text-sm font-medium flex items-center shadow-sm">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Dashboard
-            </Link>
+            )}
           </div>
         </div>
-      </div>
-      
-      {/* Mobile Card View */}
-      <div className="block md:hidden space-y-4 glass rounded-3xl p-4 sm:p-6 shadow-lg">
-        {filteredPlayers.length > 0 ? (
-          filteredPlayers.map(player => (
-            <div 
-              key={player.id}
-              className="glass-card p-4 rounded-2xl hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/50 border border-white/30"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="h-14 w-14 rounded-full overflow-hidden flex items-center justify-center shadow-md border border-white/40 bg-[#0066FF]/10">
-                    {player.photo_url ? (
-                      <OptimizedImage
-                        src={player.photo_url}
-                        alt={player.name}
-                        width={56}
-                        height={56}
-                        quality={85}
-                        className="w-14 h-14 rounded-full object-cover"
-                        fallback={
-                          <div className="w-14 h-14 flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600 rounded-full">
-                            <span className="text-xl font-bold text-white">{player.name[0]}</span>
-                          </div>
-                        }
-                      />
-                    ) : (
-                      <div className="w-14 h-14 flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600 rounded-full">
-                        <span className="text-xl font-bold text-white">{player.name[0]}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-800 text-base">{player.name}</h4>
-                    <div className="flex items-center gap-2 mt-1">
-                      {activeTab === 'auction' ? (
-                        <>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPositionColor((player as AuctionPlayer).position)}`}>
-                            {(player as AuctionPlayer).position}
-                          </span>
-                          {(player as AuctionPlayer).position_group && (
-                            <span className="text-xs px-2 py-0.5 bg-[#0066FF]/10 text-[#0066FF] rounded-lg">{(player as AuctionPlayer).position_group}</span>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor((player as TournamentPlayer).category || '')}`}>
-                            {(player as TournamentPlayer).category || 'N/A'}
-                          </span>
-                          <span className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-lg">
-                            {(player as TournamentPlayer).star_rating}⭐
-                          </span>
-                          <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-lg">
-                            {(player as TournamentPlayer).points} pts
-                          </span>
-                        </>
-                      )}
-                    </div>
+        
+        {/* Desktop Header Section */}
+        <div className="hidden sm:block console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">DATABASE</span>
+              <h2 className="text-2xl font-mono font-bold text-slate-800 uppercase tracking-wide">Players Database</h2>
+              <p className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mt-1">
+                Showing {filteredPlayers.length} of {currentPlayers.length} players
+              </p>
+            </div>
+            
+            {/* Desktop Tabs */}
+            <div className="flex bg-slate-100 rounded-xl p-1">
+              <button
+                onClick={() => setActiveTab('tournament')}
+                className={`py-2 px-4 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all ${
+                  activeTab === 'tournament'
+                    ? 'bg-slate-800 text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                Tournament ({tournamentPlayers.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('auction')}
+                className={`py-2 px-4 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all ${
+                  activeTab === 'auction'
+                    ? 'bg-slate-800 text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                Auction ({auctionPlayers.length})
+              </button>
+            </div>
+          </div>
+          
+          {/* Desktop Filter Controls */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
+            {activeTab === 'auction' ? (
+              <>
+                {/* Position Filter */}
+                <div>
+                  <label className="block text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">Position</label>
+                  <div className="relative">
+                    <select 
+                      value={positionFilter}
+                      onChange={(e) => setPositionFilter(e.target.value)}
+                      className="w-full pl-8 py-2 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-xs font-mono font-bold uppercase tracking-wider cursor-pointer"
+                    >
+                      <option value="all">All Positions</option>
+                      {positions.map(position => (
+                        <option key={position} value={position}>{position}</option>
+                      ))}
+                    </select>
+                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
                 </div>
-                {activeTab === 'auction' ? (
-                  <span className={`flex items-center justify-center h-10 w-10 rounded-full shadow-sm border ${getRatingColor((player as AuctionPlayer).overall_rating)}`}>
-                    <span className="font-bold text-sm">{(player as AuctionPlayer).overall_rating}</span>
-                  </span>
-                ) : (
-                  <div className="text-right">
-                    <div className="text-xs text-gray-500">Status</div>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      (player as TournamentPlayer).status === 'assigned' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {(player as TournamentPlayer).status}
-                    </span>
+                
+                {/* Position Group Filter */}
+                <div>
+                  <label className="block text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">Position Group</label>
+                  <div className="relative">
+                    <select 
+                      value={positionGroupFilter}
+                      onChange={(e) => setPositionGroupFilter(e.target.value)}
+                      className="w-full pl-8 py-2 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-xs font-mono font-bold uppercase tracking-wider cursor-pointer"
+                    >
+                      <option value="all">All Position Groups</option>
+                      {positionGroups.map(group => (
+                        <option key={group} value={group}>{group}</option>
+                      ))}
+                    </select>
+                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
-                )}
-              </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Category Filter */}
+                <div>
+                  <label className="block text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">Category</label>
+                  <div className="relative">
+                    <select 
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="w-full pl-8 py-2 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-xs font-mono font-bold uppercase tracking-wider cursor-pointer"
+                    >
+                      <option value="all">All Categories</option>
+                      {categories.map(category => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                
+                {/* Star Rating Filter */}
+                <div>
+                  <label className="block text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">Star Rating</label>
+                  <div className="relative">
+                    <select 
+                      value={starRatingFilter}
+                      onChange={(e) => setStarRatingFilter(e.target.value)}
+                      className="w-full pl-8 py-2 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-xs font-mono font-bold uppercase tracking-wider cursor-pointer"
+                    >
+                      <option value="all">All Star Ratings</option>
+                      {starRatings.map(rating => (
+                        <option key={rating} value={rating}>{rating} ⭐</option>
+                      ))}
+                    </select>
+                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Status Filter */}
+                <div>
+                  <label className="block text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">Status</label>
+                  <div className="relative">
+                    <select 
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full pl-8 py-2 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-xs font-mono font-bold uppercase tracking-wider cursor-pointer"
+                    >
+                      <option value="all">All Status</option>
+                      {statuses.map(status => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </>
+            )}
               
-              <div className="mt-4 pt-3 border-t border-gray-200/50 flex justify-between items-center">
-                <div className="text-sm text-gray-700">
+            {/* Search Bar */}
+            <div className={`${activeTab === 'auction' ? 'lg:col-span-2' : 'lg:col-span-1'}`}>
+              <label className="block text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">Search Players</label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="Search players..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-sans"
+                />
+                <svg className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Mobile Card View */}
+        <div className="block md:hidden space-y-4">
+          {filteredPlayers.length > 0 ? (
+            filteredPlayers.map(player => (
+              <div 
+                key={player.id}
+                className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:border-amber-400/40 transition-all duration-200"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-14 w-14 rounded-full overflow-hidden flex items-center justify-center border-2 border-slate-200 bg-slate-50 shrink-0">
+                      {activeTab === 'tournament' ? (
+                        <PlayerAvatar
+                          playerId={(player as TournamentPlayer).player_id}
+                          playerName={player.name}
+                          size={56}
+                        />
+                      ) : player.photo_url ? (
+                        <OptimizedImage
+                          src={player.photo_url}
+                          alt={player.name}
+                          width={56}
+                          height={56}
+                          quality={85}
+                          className="w-14 h-14 rounded-full object-cover"
+                          fallback={
+                            <div className="w-14 h-14 flex items-center justify-center bg-gradient-to-br from-slate-400 to-slate-600 rounded-full">
+                              <span className="text-xl font-bold text-white">{player.name[0]}</span>
+                            </div>
+                          }
+                        />
+                      ) : (
+                        <div className="w-14 h-14 flex items-center justify-center bg-gradient-to-br from-slate-400 to-slate-600 rounded-full">
+                          <span className="text-xl font-bold text-white">{player.name[0]}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="font-mono">
+                      <h4 className="font-bold text-slate-800 text-sm leading-tight">{player.name}</h4>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                        {activeTab === 'auction' ? (
+                          <>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase ${getPositionColor((player as AuctionPlayer).position)}`}>
+                              {(player as AuctionPlayer).position}
+                            </span>
+                            {(player as AuctionPlayer).position_group && (
+                              <span className="text-[9px] px-2 py-0.5 bg-slate-100 text-slate-600 font-bold rounded uppercase border border-slate-200/50">
+                                {(player as AuctionPlayer).position_group}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase ${getCategoryColor((player as TournamentPlayer).category || '')}`}>
+                              {(player as TournamentPlayer).category || 'N/A'}
+                            </span>
+                            <span className="text-[9px] px-2 py-0.5 bg-amber-50 text-amber-700 font-bold rounded uppercase border border-amber-200/50">
+                              {(player as TournamentPlayer).star_rating}⭐
+                            </span>
+                            <span className="text-[9px] px-2 py-0.5 bg-blue-50 text-blue-700 font-bold rounded uppercase border border-blue-200/50">
+                              {(player as TournamentPlayer).points} pts
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {activeTab === 'auction' ? (
+                    <span className={`flex items-center justify-center h-10 w-10 rounded-full shadow-sm border font-mono font-bold text-sm ${getRatingColor((player as AuctionPlayer).overall_rating)}`}>
+                      {(player as AuctionPlayer).overall_rating}
+                    </span>
+                  ) : (
+                    <div className="text-right font-mono">
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Status</div>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
+                        (player as TournamentPlayer).status === 'assigned' 
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
+                          : 'bg-slate-50 text-slate-600 border-slate-200/50'
+                      }`}>
+                        {(player as TournamentPlayer).status}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center font-mono">
+                  <div>
+                    {activeTab === 'auction' ? (
+                      <>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Acquisition Value</span>
+                        <div className={`text-sm font-bold mt-0.5 ${(player as AuctionPlayer).acquisition_value ? 'text-amber-600' : 'text-slate-400'}`}>
+                          {(player as AuctionPlayer).acquisition_value ? `£${(player as AuctionPlayer).acquisition_value!.toLocaleString()}` : 'Free Transfer'}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Auction Value</span>
+                        <div className="text-sm font-bold text-amber-600 mt-0.5">
+                          ₹{((player as TournamentPlayer).auction_value || 0).toLocaleString()}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <Link 
+                    href={`/dashboard/players/${player.player_id || player.id}`} 
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider transition-colors duration-200 flex items-center shadow-sm shadow-slate-900/10 hover:scale-[1.02]"
+                  >
+                    <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Details
+                  </Link>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-8 text-center shadow-sm">
+              <svg className="w-16 h-16 mx-auto text-slate-350 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <p className="text-slate-800 text-lg font-mono font-bold uppercase tracking-wider mb-2">
+                {currentPlayers.length === 0 ? 'No players acquired yet' : 'No matches found'}
+              </p>
+              <p className="text-slate-400 font-mono text-xs uppercase tracking-wider mb-4">
+                {currentPlayers.length === 0 ? 'Join an active round to bid on players' : 'Try adjusting your filters'}
+              </p>
+              {currentPlayers.length === 0 && (
+                <Link href="/dashboard/team" className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-md hover:bg-slate-700 transition-all">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Browse Players
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+        
+        {/* Desktop Table View */}
+        <div className="hidden md:block console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto rounded-2xl border border-slate-100 shadow-inner bg-slate-50/50">
+            <table className="min-w-full divide-y divide-slate-200/60 font-mono text-xs">
+              <thead className="bg-slate-100/80 border-b border-slate-200/60">
+                <tr>
+                  <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider">Player Name</th>
                   {activeTab === 'auction' ? (
                     <>
-                      <span className="font-medium text-xs text-gray-500">Acquisition Value</span><br />
-                      <span className={`text-base font-semibold ${(player as AuctionPlayer).acquisition_value ? 'text-[#0066FF]' : 'text-gray-500'}`}>
-                        {(player as AuctionPlayer).acquisition_value ? `£${(player as AuctionPlayer).acquisition_value!.toLocaleString()}` : 'Free Transfer'}
-                      </span>
+                      <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider">Position</th>
+                      <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider">Group</th>
+                      <th className="px-6 py-4 text-center font-bold text-slate-500 uppercase tracking-wider">Rating</th>
+                      <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider">Acquisition Value</th>
                     </>
                   ) : (
                     <>
-                      <span className="font-medium text-xs text-gray-500">Auction Value</span><br />
-                      <span className="text-base font-semibold text-[#0066FF]">
-                        ₹{((player as TournamentPlayer).auction_value || 0).toLocaleString()}
-                      </span>
+                      <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider">Category</th>
+                      <th className="px-6 py-4 text-center font-bold text-slate-500 uppercase tracking-wider">Star Rating</th>
+                      <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider">Points</th>
+                      <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider">Auction Value</th>
+                      <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider">Status</th>
                     </>
                   )}
-                </div>
-                <Link href={`/dashboard/players/${player.player_id || player.id}`} className="px-4 py-2 rounded-xl bg-[#0066FF] text-white hover:bg-[#0052CC] transition-colors duration-200 flex items-center text-sm shadow-sm">
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  Details
-                </Link>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="glass-card p-8 rounded-2xl text-center backdrop-blur-sm bg-white/40 border border-white/20 shadow-lg">
-            <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <p className="text-gray-700 text-lg font-medium mb-2">
-              {currentPlayers.length === 0 ? 'No players acquired yet' : 'No matches found'}
-            </p>
-            <p className="text-gray-500 text-sm mb-4">
-              {currentPlayers.length === 0 ? 'Join an active round to bid on players' : 'Try adjusting your filters'}
-            </p>
-            {currentPlayers.length === 0 && (
-              <Link href="/dashboard/team" className="inline-flex items-center px-4 py-2 rounded-xl bg-[#0066FF] text-white shadow-md hover:bg-[#0052CC] transition-all duration-300">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                Browse Players
-              </Link>
-            )}
-          </div>
-        )}
-      </div>
-      
-      {/* Desktop Table View */}
-      <div className="hidden md:block glass rounded-3xl p-4 sm:p-6 shadow-lg overflow-hidden">
-        <div className="overflow-x-auto rounded-xl">
-          <table className="min-w-full divide-y divide-gray-200 bg-white/40 backdrop-blur-sm">
-            <thead className="bg-gray-50/80">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                {activeTab === 'auction' ? (
-                  <>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acquisition Value</th>
-                  </>
-                ) : (
-                  <>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Star Rating</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Auction Value</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  </>
-                )}
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white/30">
-              {filteredPlayers.length > 0 ? (
-                filteredPlayers.map(player => (
-                  <tr key={player.id} className="hover:bg-white/70 transition-all duration-200">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-12 w-12 rounded-full overflow-hidden flex items-center justify-center border border-white/40 shadow-sm bg-[#0066FF]/10">
-                          {player.photo_url ? (
-                            <OptimizedImage
-                              src={player.photo_url}
-                              alt={player.name}
-                              width={48}
-                              height={48}
-                              quality={85}
-                              className="w-12 h-12 rounded-full object-cover"
-                              fallback={
-                                <div className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600 rounded-full">
-                                  <span className="text-lg font-bold text-white">{player.name[0]}</span>
-                                </div>
-                              }
-                            />
-                          ) : (
-                            <div className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600 rounded-full">
-                              <span className="text-lg font-bold text-white">{player.name[0]}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-800">{player.name}</div>
-                          <div className="text-xs text-gray-500">ID: {player.player_id || player.id}</div>
-                        </div>
-                      </div>
-                    </td>
-                    {activeTab === 'auction' ? (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${getPositionColor((player as AuctionPlayer).position)}`}>
-                            {(player as AuctionPlayer).position}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {(player as AuctionPlayer).position_group ? (
-                            <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-[#0066FF]/10 text-[#0066FF]">
-                              {(player as AuctionPlayer).position_group}
-                            </span>
-                          ) : (
-                            <span className="text-gray-500">-</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-medium border ${getRatingColor((player as AuctionPlayer).overall_rating)}`}>
-                            {(player as AuctionPlayer).overall_rating}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={(player as AuctionPlayer).acquisition_value ? 'text-[#0066FF] font-medium' : 'text-gray-500'}>
-                            {(player as AuctionPlayer).acquisition_value ? `£${(player as AuctionPlayer).acquisition_value!.toLocaleString()}` : 'Free Transfer'}
-                          </span>
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${getCategoryColor((player as TournamentPlayer).category || '')}`}>
-                            {(player as TournamentPlayer).category || 'N/A'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <span className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-medium border ${getStarRatingColor((player as TournamentPlayer).star_rating)}`}>
-                              {(player as TournamentPlayer).star_rating}
-                            </span>
-                            <span className="ml-1 text-yellow-500">⭐</span>
+                  <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {filteredPlayers.length > 0 ? (
+                  filteredPlayers.map(player => (
+                    <tr key={player.id} className="hover:bg-slate-50/70 transition-all duration-150">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-12 w-12 rounded-full overflow-hidden flex items-center justify-center border-2 border-slate-200 bg-slate-50">
+                            {activeTab === 'tournament' ? (
+                              <PlayerAvatar
+                                playerId={(player as TournamentPlayer).player_id}
+                                playerName={player.name}
+                                size={48}
+                              />
+                            ) : player.photo_url ? (
+                              <OptimizedImage
+                                src={player.photo_url}
+                                alt={player.name}
+                                width={48}
+                                height={48}
+                                quality={85}
+                                className="w-12 h-12 rounded-full object-cover"
+                                fallback={
+                                  <div className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-slate-400 to-slate-600 rounded-full">
+                                    <span className="text-lg font-bold text-white">{player.name[0]}</span>
+                                  </div>
+                                }
+                              />
+                            ) : (
+                              <div className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-slate-400 to-slate-600 rounded-full">
+                                <span className="text-lg font-bold text-white">{player.name[0]}</span>
+                              </div>
+                            )}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-gray-800">{(player as TournamentPlayer).points}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-[#0066FF] font-medium">
-                            ₹{((player as TournamentPlayer).auction_value || 0).toLocaleString()}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                            (player as TournamentPlayer).status === 'assigned' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {(player as TournamentPlayer).status}
-                          </span>
-                        </td>
-                      </>
-                    )}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <Link href={`/dashboard/players/${player.player_id || player.id}`} className="inline-flex items-center px-3 py-1.5 rounded-lg bg-[#0066FF] text-white hover:bg-[#0052CC] transition-all duration-200 shadow-sm">
-                        <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        View Details
-                      </Link>
+                          <div className="ml-4">
+                            <div className="text-sm font-sans font-bold text-slate-800 hover:text-amber-600 transition-colors">{player.name}</div>
+                            <div className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">ID: {player.player_id || player.id}</div>
+                          </div>
+                        </div>
+                      </td>
+                      {activeTab === 'auction' ? (
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded text-[9px] font-bold uppercase ${getPositionColor((player as AuctionPlayer).position)}`}>
+                              {(player as AuctionPlayer).position}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {(player as AuctionPlayer).position_group ? (
+                              <span className="px-2.5 py-1 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-600 border border-slate-200/50">
+                                {(player as AuctionPlayer).position_group}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400">-</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <span className={`inline-flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold border shadow-sm ${getRatingColor((player as AuctionPlayer).overall_rating)}`}>
+                              {(player as AuctionPlayer).overall_rating}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`font-bold ${(player as AuctionPlayer).acquisition_value ? 'text-amber-600' : 'text-slate-400'}`}>
+                              {(player as AuctionPlayer).acquisition_value ? `£${(player as AuctionPlayer).acquisition_value!.toLocaleString()}` : 'Free Transfer'}
+                            </span>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded text-[9px] font-bold uppercase ${getCategoryColor((player as TournamentPlayer).category || '')}`}>
+                              {(player as TournamentPlayer).category || 'N/A'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <div className="flex items-center justify-center">
+                              <span className={`inline-flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold border shadow-sm ${getStarRatingColor((player as TournamentPlayer).star_rating)}`}>
+                                {(player as TournamentPlayer).star_rating}
+                              </span>
+                              <span className="ml-1 text-amber-500 text-[10px]">⭐</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="font-bold text-slate-800">{(player as TournamentPlayer).points}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-amber-600 font-bold">
+                              ₹{((player as TournamentPlayer).auction_value || 0).toLocaleString()}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-bold uppercase border ${
+                              (player as TournamentPlayer).status === 'assigned' 
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
+                                : 'bg-slate-50 text-slate-600 border-slate-200/50'
+                            }`}>
+                              {(player as TournamentPlayer).status}
+                            </span>
+                          </td>
+                        </>
+                      )}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <Link 
+                          href={`/dashboard/players/${player.player_id || player.id}`} 
+                          className="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider transition-all duration-200 shadow-sm shadow-slate-900/10 hover:scale-[1.02]"
+                        >
+                          <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          Details
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={activeTab === 'auction' ? 6 : 7} className="px-6 py-12 whitespace-nowrap text-center">
+                      <svg className="w-12 h-12 mx-auto text-slate-350 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <p className="text-slate-800 text-base font-mono font-bold uppercase tracking-wider mb-1">
+                        {currentPlayers.length === 0 ? 'No players acquired yet' : 'No matches found'}
+                      </p>
+                      <p className="text-slate-400 font-mono text-xs uppercase tracking-wider mb-4">
+                        {currentPlayers.length === 0 ? 'Join an active round to bid on players' : 'Try adjusting your filters'}
+                      </p>
+                      {currentPlayers.length === 0 && (
+                        <Link href="/dashboard/team" className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-md hover:bg-slate-700 transition-all">
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                          Browse Players
+                        </Link>
+                      )}
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-10 whitespace-nowrap text-sm text-gray-500 text-center">
-                    <svg className="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <p className="text-gray-700 text-lg font-medium mb-2">
-                      {currentPlayers.length === 0 ? 'No players acquired yet' : 'No matches found'}
-                    </p>
-                    <p className="text-gray-500 text-sm mb-4">
-                      {currentPlayers.length === 0 ? 'Join an active round to bid on players' : 'Try adjusting your filters'}
-                    </p>
-                    {currentPlayers.length === 0 && (
-                      <Link href="/dashboard/team" className="inline-flex items-center px-4 py-2 rounded-xl bg-[#0066FF] text-white shadow-md hover:bg-[#0052CC] transition-all duration-300">
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        Browse Players
-                      </Link>
-                    )}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

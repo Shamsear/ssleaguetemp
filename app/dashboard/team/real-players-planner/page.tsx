@@ -44,7 +44,7 @@ interface PlayerPlan {
   matches: number;
 }
 
-// Star upgrade matrix based on your specifications
+// Star upgrade matrix based on specifications
 const UPGRADE_MATRIX: Record<number, Record<number, number>> = {
   3: { 140: 4, 265: 5, 415: 6, 590: 7, 790: 8, 1040: 9, 1540: 10 },
   4: { 195: 5, 345: 6, 520: 7, 720: 8, 970: 9, 1470: 10 },
@@ -462,7 +462,6 @@ export default function RealPlayersPlannerPage() {
     // Generate increments in steps of 5
     for (let bid = startBid; bid <= maxBid && increments.length < 10; bid += 5) {
       // Calculate points: current points + 1 point for each +5 SSCoin above base price
-      // Example: base price 140, bid 150 = +10 SSCoin = +2 points
       const bidDifference = bid - playerBasePrice;
       const pointsIncrement = Math.floor(bidDifference / 5);
       const points = playerCurrentPoints + pointsIncrement;
@@ -486,10 +485,11 @@ export default function RealPlayersPlannerPage() {
 
   if (loading || isLoadingBudget || isLoadingPlayers) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Real Players Planner...</p>
         </div>
       </div>
     );
@@ -500,99 +500,134 @@ export default function RealPlayersPlannerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
-      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 max-w-7xl">
-        {/* Header */}
-        <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 lg:p-6 mb-4 sm:mb-6 shadow-lg border border-white/20">
-          <div className="flex flex-col gap-3 sm:gap-4">
-            <div className="flex items-start sm:items-center justify-between gap-3">
-              <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
-                <div className="bg-gradient-to-br from-green-400 to-emerald-600 p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-lg flex-shrink-0">
-                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6 font-mono">
+        {/* Back Link */}
+        <Link
+          href="/dashboard"
+          className="px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold flex items-center justify-center w-fit mb-4"
+        >
+          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Dashboard
+        </Link>
+
+        {/* Header Title Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/10 flex-shrink-0">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wider text-slate-800">
+                  Real Players Planner
+                </h1>
+                <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
+                  Select exactly {requiredPlayers} SS Members for auction
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Budget Overview Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: Budget */}
+          <div className="console-card bg-white border border-slate-200/60 border-l-4 border-l-sky-500 rounded-2xl p-5 shadow-sm">
+            <div className="flex justify-between items-center mb-3">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">SSCoin Budget</p>
+              <span className="px-2 py-0.5 bg-sky-50 text-sky-700 border border-sky-200/50 rounded-lg text-[9px] font-black uppercase">Total Budget</span>
+            </div>
+            <p className="text-2xl font-black text-slate-800">{teamBudget.toLocaleString()} SSCoin</p>
+            <div className="text-[10px] text-slate-400 font-bold uppercase mt-2">
+              Available to spend
+            </div>
+          </div>
+
+          {/* Card 2: Planned */}
+          <div className="console-card bg-white border border-slate-200/60 border-l-4 border-l-purple-500 rounded-2xl p-5 shadow-sm">
+            <div className="flex justify-between items-center mb-3">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Planned Spending</p>
+              <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200/50 rounded-lg text-[9px] font-black uppercase">Estimated</span>
+            </div>
+            <p className="text-2xl font-black text-purple-700">{totalPlannedSpend.toLocaleString()} SSCoin</p>
+            <div className="text-[10px] text-slate-400 font-bold uppercase mt-2">
+              Roster target: <span className="text-slate-700">{players.length} players selected</span>
+            </div>
+          </div>
+
+          {/* Card 3: Remaining */}
+          {(() => {
+            const isOverBudget = remainingBudget < 0;
+            return (
+              <div className={`console-card bg-white border border-slate-200/60 border-l-4 rounded-2xl p-5 shadow-sm ${isOverBudget ? 'border-l-rose-500' : 'border-l-emerald-500'}`}>
+                <div className="flex justify-between items-center mb-3">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Remaining Balance</p>
+                  <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase border ${isOverBudget ? 'bg-rose-50 text-rose-700 border-rose-200/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200/50'}`}>
+                    {isOverBudget ? 'Over Budget' : 'Remaining'}
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">Real Players Planner</h1>
-                  <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">Select exactly {requiredPlayers} SS Members for auction</p>
+                <p className={`text-2xl font-black ${isOverBudget ? 'text-rose-650' : 'text-emerald-700'}`}>
+                  {remainingBudget.toLocaleString()} SSCoin
+                </p>
+                <div className="text-[10px] text-slate-400 font-bold uppercase mt-2">
+                  Spent: <span className="text-slate-700">{teamSpent > 0 ? `${teamSpent} SSCoin` : 'Not spent'}</span>
                 </div>
               </div>
-              <Link
-                href="/dashboard"
-                className="px-3 py-2 bg-white/80 text-gray-700 rounded-lg sm:rounded-xl hover:bg-white shadow-sm transition-all text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2 flex-shrink-0"
-              >
-                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <span className="hidden sm:inline">Dashboard</span>
-              </Link>
-            </div>
-          </div>
+            );
+          })()}
         </div>
 
-        {/* Budget Summary */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-3 sm:mb-4">
-          <div className="glass rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100">
-            <div className="text-xs sm:text-sm text-gray-600 mb-1">Budget</div>
-            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600 truncate">{teamBudget.toLocaleString()}</div>
-            <div className="text-xs text-gray-500 mt-0.5 sm:mt-1">Available</div>
-          </div>
-
-          <div className="glass rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100">
-            <div className="text-xs sm:text-sm text-gray-600 mb-1">Planned</div>
-            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-600 truncate">{totalPlannedSpend.toLocaleString()}</div>
-            <div className="text-xs text-gray-500 mt-0.5 sm:mt-1">{players.length} player{players.length !== 1 ? 's' : ''}</div>
-          </div>
-
-          <div className={`glass rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 hover:shadow-lg transition-all duration-300 ${remainingBudget < 0 ? 'bg-gradient-to-br from-red-50 to-orange-50 border border-red-200' : 'bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200'
-            }`}>
-            <div className="text-xs sm:text-sm text-gray-600 mb-1">Remaining</div>
-            <div className={`text-lg sm:text-xl lg:text-2xl font-bold truncate ${remainingBudget < 0 ? 'text-red-600' : 'text-green-600'}`}>
-              {remainingBudget.toLocaleString()}
-            </div>
-            <div className="text-xs text-gray-500 mt-0.5 sm:mt-1 truncate">{teamSpent > 0 ? `${teamSpent} spent` : 'Not spent'}</div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
+        {/* Action Buttons Row */}
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={addPlayer}
             disabled={players.length >= requiredPlayers}
-            className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-medium text-sm sm:text-base"
+            className="px-4 py-2.5 bg-slate-800 text-amber-400 border border-slate-900 rounded-xl hover:bg-slate-700 hover:shadow-md transition-all font-mono text-xs uppercase tracking-wider font-extrabold flex items-center justify-center w-fit cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
             </svg>
-            <span>Add Player</span>
-            {players.length >= requiredPlayers && <span className="ml-1 text-xs">(Exact count reached)</span>}
+            Add Player {players.length >= requiredPlayers && '(Roster Full)'}
           </button>
 
           <button
             onClick={() => setShowUpgradeMatrix(!showUpgradeMatrix)}
-            className="px-4 py-2.5 bg-white/80 text-gray-700 rounded-lg sm:rounded-xl hover:bg-white hover:shadow-md transition-all flex items-center justify-center font-medium text-sm sm:text-base border border-gray-200"
+            className="px-4 py-2.5 bg-white border border-slate-200/60 rounded-xl hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold flex items-center justify-center w-fit cursor-pointer shadow-sm"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            {showUpgradeMatrix ? 'Hide' : 'View'} Matrix
+            {showUpgradeMatrix ? 'Hide' : 'View'} Upgrade Matrix
           </button>
         </div>
 
-        {/* Upgrade Matrix */}
+        {/* Upgrade Matrix Panel */}
         {showUpgradeMatrix && (
-          <div className="glass rounded-2xl p-6 mb-6">
-            <h2 className="text-xl font-bold mb-4">Star Upgrade Matrix</h2>
-            <p className="text-sm text-gray-600 mb-4">Bid amounts required to upgrade players to higher star ratings</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm">
+            <div className="mb-4">
+              <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider">Star Upgrade Threshold Matrix</h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">SSCoin bid amounts required to upgrade players to higher star ratings</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Object.entries(UPGRADE_MATRIX).map(([initialStar, upgrades]) => (
-                <div key={initialStar} className="bg-white/60 rounded-xl p-4 border border-gray-200">
-                  <h3 className="font-bold text-lg mb-2 text-blue-600">{initialStar}★ Initial</h3>
-                  <div className="space-y-1">
+                <div key={initialStar} className="bg-slate-50/50 border border-slate-200/40 rounded-xl p-4 font-mono">
+                  <h3 className="font-extrabold text-xs text-amber-600 uppercase tracking-wider mb-3 pb-1.5 border-b border-slate-200/60 flex justify-between items-center">
+                    <span>{initialStar}★ Initial Rating</span>
+                    <span className="bg-slate-800 text-white text-[9px] px-1.5 py-0.5 rounded uppercase font-bold font-mono">Base</span>
+                  </h3>
+                  <div className="space-y-1.5">
                     {Object.entries(upgrades).map(([amount, finalStar]) => (
-                      <div key={amount} className="flex justify-between text-sm">
-                        <span className="text-gray-600">SSCoin {amount}</span>
-                        <span className="font-semibold text-green-600">→ {finalStar}★</span>
+                      <div key={amount} className="flex justify-between text-xs py-0.5 border-b border-slate-100 last:border-b-0 font-semibold text-slate-600">
+                        <span>Bid SSCoin {amount}</span>
+                        <span className="font-extrabold text-emerald-600">→ {finalStar}★ Rating</span>
                       </div>
                     ))}
                   </div>
@@ -602,45 +637,46 @@ export default function RealPlayersPlannerPage() {
           </div>
         )}
 
-        {/* Player Cards */}
-        <div className="space-y-3 sm:space-y-4">
+        {/* Player Cards List */}
+        <div className="space-y-4">
           {players.map((player, index) => {
             const nextUpgrade = getNextUpgrade(player.currentPoints, player.bidAmount, player.basePrice);
-
             return (
               <div
                 key={player.id}
-                className="glass rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 hover:shadow-lg transition-all duration-300 border border-white/20"
+                className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm transition-all duration-200"
                 style={{ position: 'relative', zIndex: openDropdownIndex === index ? 100 : 1 }}
               >
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-800 flex items-center gap-2">
-                    <span className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-xs sm:text-sm font-bold">{index + 1}</span>
-                    <span className="hidden sm:inline">Player</span>
+                {/* Header info */}
+                <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                  <h3 className="text-xs font-black text-slate-800 flex items-center gap-2 uppercase tracking-wider">
+                    <span className="bg-slate-800 text-amber-400 w-6 h-6 border border-slate-900 rounded-lg flex items-center justify-center font-black text-xs shadow-md">{index + 1}</span>
+                    <span> Roster Slot {index + 1}</span>
                   </h3>
                   <button
                     onClick={() => removePlayer(player.id)}
                     disabled={players.length <= requiredPlayers}
-                    className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                     title={players.length <= requiredPlayers ? `Exactly ${requiredPlayers} players required` : 'Remove player'}
                   >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-                  {/* Left Column - Input */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left Column: Player dropdown & bid input */}
                   <div className="space-y-4">
-                    <div className="relative" style={{ zIndex: openDropdownIndex === index ? 50 : 'auto' }}>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Player Selection</label>
+                    {/* Player Selection Dropdown */}
+                    <div className="relative">
+                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Player Selection</label>
                       <button
                         onClick={() => toggleDropdown(index)}
-                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:bg-gray-50 transition-colors text-left flex items-center gap-3"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 hover:border-amber-400/40 hover:bg-slate-50 transition-colors text-left flex items-center gap-3 cursor-pointer shadow-sm bg-white"
                       >
                         {player.photo_url ? (
-                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-white/50 shadow-md relative">
+                          <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 border border-slate-200/80 shadow-sm relative bg-slate-100">
                             <OptimizedImage
                               src={player.photo_url}
                               alt={player.name}
@@ -650,77 +686,63 @@ export default function RealPlayersPlannerPage() {
                               className="w-full h-full object-cover"
                               style={getPhotoStyle(player.photo_position_x_circle, player.photo_position_y_circle, player.photo_scale_circle)}
                               fallback={
-                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100">
-                                  <span className="text-sm font-bold text-blue-600">{player.name[0]}</span>
+                                <div className="w-full h-full flex items-center justify-center bg-slate-800 text-amber-400 font-extrabold text-xs">
+                                  {player.name[0].toUpperCase()}
                                 </div>
                               }
                             />
                           </div>
                         ) : player.player_id ? (
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 flex-shrink-0">
-                            <span className="text-sm font-bold text-blue-600">{player.name[0]}</span>
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-800 text-amber-400 font-extrabold text-xs flex-shrink-0">
+                            {player.name[0].toUpperCase()}
                           </div>
-                        ) : null}
+                        ) : (
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 text-slate-400 font-extrabold text-xs flex-shrink-0">
+                            ?
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
-                          <div className={`font-medium ${!player.player_id ? 'text-gray-500' : 'text-gray-900'}`}>
+                          <div className={`text-xs font-extrabold ${!player.player_id ? 'text-slate-400 uppercase' : 'text-slate-800'}`}>
                             {player.name}
                           </div>
                           {player.category && (
-                            <div className="text-xs text-gray-500">{player.category}</div>
+                            <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">{player.category}</div>
                           )}
                         </div>
-                        <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        <svg className="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
 
-                      {/* Dropdown */}
+                      {/* Dropdown list popup */}
                       {openDropdownIndex === index && (
-                        <div className="absolute w-full mt-2 bg-white rounded-lg shadow-xl border border-gray-200 max-h-96 overflow-hidden flex flex-col" style={{ zIndex: 50 }}>
-                          {/* Search */}
-                          <div
-                            className="p-3 border-b border-gray-200"
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                        <div className="absolute w-full mt-2 bg-white rounded-xl shadow-xl border border-slate-200 max-h-96 overflow-hidden flex flex-col z-50">
+                          <div className="p-2 border-b border-slate-100">
                             <input
                               type="text"
-                              placeholder="Search players..."
+                              placeholder="Search player name or team..."
                               value={searchTerms[index] || ''}
                               onChange={(e) => setSearchTerms({ ...searchTerms, [index]: e.target.value })}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                              autoFocus
+                              className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                             />
                           </div>
-
-                          {/* Player List */}
-                          <div
-                            className="overflow-y-auto max-h-80"
-                            onMouseDown={(e) => e.stopPropagation()}
-                          >
+                          <div className="overflow-y-auto max-h-72 divide-y divide-slate-100">
                             {getFilteredPlayersForDropdown(index).length === 0 ? (
-                              <div className="p-4 text-center text-gray-500 text-sm">
-                                {searchTerms[index] ? 'No players found' : 'All players selected'}
+                              <div className="p-4 text-center text-slate-400 text-xs font-bold uppercase">
+                                {searchTerms[index] ? 'No matching members' : 'All members selected'}
                               </div>
                             ) : (
                               getFilteredPlayersForDropdown(index).map((realPlayer) => (
                                 <button
                                   key={realPlayer.player_id}
-                                  onMouseDown={(e) => {
-                                    console.log('🖱️ MouseDown on player button', realPlayer.player_name);
-                                    e.stopPropagation();
-                                  }}
                                   onClick={(e) => {
-                                    console.log('👆 Click on player button', realPlayer.player_name);
-                                    e.stopPropagation();
                                     e.preventDefault();
                                     selectRealPlayer(realPlayer, index);
                                   }}
-                                  className="w-full flex items-center gap-3 p-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-100 last:border-b-0"
+                                  className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 transition-colors text-left"
                                 >
-                                  {/* Player Photo */}
-                                  <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-white/50 shadow-md relative">
+                                  {/* Photo */}
+                                  <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 border border-slate-200 shadow-sm relative bg-slate-100">
                                     {realPlayer.photo_url ? (
                                       <OptimizedImage
                                         src={realPlayer.photo_url}
@@ -731,48 +753,49 @@ export default function RealPlayersPlannerPage() {
                                         className="w-full h-full object-cover"
                                         style={getPhotoStyle(realPlayer.photo_position_x_circle, realPlayer.photo_position_y_circle, realPlayer.photo_scale_circle)}
                                         fallback={
-                                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100">
-                                            <span className="text-lg font-bold text-blue-600">{realPlayer.player_name[0]}</span>
+                                          <div className="w-full h-full flex items-center justify-center bg-slate-800 text-amber-400 font-extrabold text-xs">
+                                            {realPlayer.player_name[0].toUpperCase()}
                                           </div>
                                         }
                                       />
                                     ) : (
-                                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100">
-                                        <span className="text-lg font-bold text-blue-600">{realPlayer.player_name[0]}</span>
+                                      <div className="w-full h-full flex items-center justify-center bg-slate-800 text-amber-400 font-extrabold text-xs">
+                                        {realPlayer.player_name[0].toUpperCase()}
                                       </div>
                                     )}
                                   </div>
 
-                                  {/* Player Info */}
+                                  {/* Details */}
                                   <div className="flex-1 min-w-0">
-                                    <div className="font-semibold text-gray-900 text-sm truncate">
+                                    <div className="font-extrabold text-slate-800 text-xs truncate">
                                       {realPlayer.display_name || realPlayer.player_name}
                                     </div>
-                                    <div className="text-xs text-gray-600 truncate">{realPlayer.team}</div>
+                                    <div className="text-[9px] text-slate-400 font-bold uppercase truncate">{realPlayer.team}</div>
                                     <div className="flex items-center gap-1.5 mt-1">
                                       {realPlayer.category && (
-                                        <span className={`px-1.5 py-0.5 text-xs font-semibold rounded ${realPlayer.category.toLowerCase() === 'legend'
-                                          ? 'bg-yellow-100 text-yellow-800'
-                                          : 'bg-blue-100 text-blue-800'
-                                          }`}>
+                                        <span className={`px-1.5 py-0.2 text-[8px] font-black uppercase rounded ${
+                                          realPlayer.category.toLowerCase() === 'legend'
+                                            ? 'bg-amber-100 text-amber-800 border border-amber-200/50'
+                                            : 'bg-blue-100 text-blue-800 border border-blue-200/50'
+                                        }`}>
                                           {realPlayer.category}
                                         </span>
                                       )}
-                                      <span className="px-1.5 py-0.5 text-xs font-semibold rounded bg-purple-100 text-purple-800">
-                                        {realPlayer.star_rating || 3}⭐
+                                      <span className="px-1.5 py-0.2 text-[8px] font-black uppercase rounded bg-purple-100 text-purple-800 border border-purple-200/50">
+                                        {realPlayer.star_rating || 3}★
                                       </span>
                                     </div>
                                   </div>
 
                                   {/* Stats */}
-                                  <div className="flex gap-2 text-xs flex-shrink-0">
-                                    <div className="text-center">
-                                      <div className="font-bold text-blue-600">{realPlayer.points || 0}</div>
-                                      <div className="text-gray-500">Pts</div>
+                                  <div className="flex gap-3 text-center text-[10px] font-bold flex-shrink-0 pr-1">
+                                    <div>
+                                      <div className="font-extrabold text-slate-800">{realPlayer.points || 0}</div>
+                                      <div className="text-[8px] text-slate-400 uppercase">Pts</div>
                                     </div>
-                                    <div className="text-center">
-                                      <div className="font-bold text-green-600">{realPlayer.goals_scored || 0}</div>
-                                      <div className="text-gray-500">G</div>
+                                    <div>
+                                      <div className="font-extrabold text-emerald-600">⚽ {realPlayer.goals_scored || 0}</div>
+                                      <div className="text-[8px] text-slate-400 uppercase">Gls</div>
                                     </div>
                                   </div>
                                 </button>
@@ -783,200 +806,191 @@ export default function RealPlayersPlannerPage() {
                       )}
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Bid Amount (SSCoin)</label>
-                      <input
-                        type="number"
-                        value={player.bidAmount || ''}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          updatePlayer(player.id, 'bidAmount', value === '' ? 0 : Number(value));
-                        }}
-                        min={player.basePrice}
-                        step={10}
-                        placeholder="Enter bid amount"
-                        className={`w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-transparent ${player.player_id && player.bidAmount > 0 && player.bidAmount < player.basePrice
-                          ? 'border-red-500 bg-red-50'
-                          : 'border-gray-300'
+                    {/* Inputs Row (Bid and Matches) */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Bid input */}
+                      <div>
+                        <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Bid Amount (SSCoin)</label>
+                        <input
+                          type="number"
+                          value={player.bidAmount || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            updatePlayer(player.id, 'bidAmount', value === '' ? 0 : Number(value));
+                          }}
+                          min={player.basePrice}
+                          step={10}
+                          placeholder="Enter bid"
+                          className={`w-full py-2 px-3 bg-white border rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono ${
+                            player.player_id && player.bidAmount > 0 && player.bidAmount < player.basePrice
+                              ? 'border-rose-450 bg-rose-50/50'
+                              : 'border-slate-200'
                           }`}
-                        disabled={!player.player_id}
-                      />
-                      {player.player_id && player.bidAmount > 0 && player.bidAmount < player.basePrice ? (
-                        <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
-                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                          Amount cannot be below player's base price of ${player.basePrice}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {player.player_id
-                            ? `Player's base price: SSCoin ${player.basePrice}`
-                            : 'Select a player first'}
-                        </p>
-                      )}
-                    </div>
+                          disabled={!player.player_id}
+                        />
+                        {player.player_id && player.bidAmount > 0 && player.bidAmount < player.basePrice ? (
+                          <span className="text-[8px] text-rose-600 font-bold block mt-1 uppercase">Below floor of SSCoin {player.basePrice}</span>
+                        ) : (
+                          <span className="text-[8px] text-slate-400 font-bold block mt-1 uppercase">
+                            {player.player_id ? `Floor: SSCoin ${player.basePrice}` : 'Choose player first'}
+                          </span>
+                        )}
+                      </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Matches</label>
-                      <input
-                        type="number"
-                        value={player.matches || ''}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          updatePlayer(player.id, 'matches', value === '' ? 0 : Number(value));
-                        }}
-                        min="0"
-                        step="1"
-                        placeholder="Enter matches"
-                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        disabled={!player.player_id}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        {player.player_id ? 'Number of matches for planning' : 'Select a player first'}
-                      </p>
+                      {/* Matches input */}
+                      <div>
+                        <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Planned Matches</label>
+                        <input
+                          type="number"
+                          value={player.matches || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            updatePlayer(player.id, 'matches', value === '' ? 0 : Number(value));
+                          }}
+                          min="0"
+                          step="1"
+                          placeholder="Matches"
+                          className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
+                          disabled={!player.player_id}
+                        />
+                        <span className="text-[8px] text-slate-400 font-bold block mt-1 uppercase">Matches to schedule</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Right Column - Calculations */}
+                  {/* Right Column: Star Upgrade display and bid increments preview */}
                   <div className="space-y-4">
-                    {/* Star Upgrade Display */}
-                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border-2 border-purple-200">
-                      <div className="text-sm font-medium text-gray-700 mb-2">⭐ Star Rating</div>
-                      {(() => {
-                        const currentStarsFromPoints = calculateStarRatingFromPoints(player.currentPoints);
-                        const bidDifference = player.bidAmount - player.basePrice;
-                        const pointsIncrement = Math.floor(bidDifference / 5);
-                        const projectedPoints = player.currentPoints + pointsIncrement;
-                        const projectedStars = calculateStarRatingFromPoints(projectedPoints);
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Projected Star rating */}
+                      <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 font-mono">
+                        <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-2">⭐ Projected Star Rating</div>
+                        {(() => {
+                          const currentStarsFromPoints = calculateStarRatingFromPoints(player.currentPoints);
+                          const bidDifference = player.bidAmount - player.basePrice;
+                          const pointsIncrement = Math.floor(bidDifference / 5);
+                          const projectedPoints = player.currentPoints + pointsIncrement;
+                          const projectedStars = calculateStarRatingFromPoints(projectedPoints);
+                          const isUpgraded = projectedStars > currentStarsFromPoints;
 
-                        return projectedStars > currentStarsFromPoints ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-2xl font-bold text-gray-600">{currentStarsFromPoints}★</span>
-                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                            </svg>
-                            <span className="text-2xl font-bold text-green-600">{projectedStars}★</span>
-                            <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                              Upgraded!
-                            </span>
+                          return (
+                            <div className="flex flex-col gap-1.5">
+                              {isUpgraded ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xl font-black text-slate-450">{currentStarsFromPoints}★</span>
+                                  <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                  </svg>
+                                  <span className="text-xl font-black text-emerald-700">{projectedStars}★</span>
+                                  <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-700 border border-emerald-200/50 rounded-lg text-[8px] font-black uppercase">
+                                    Upgraded!
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="text-xl font-black text-slate-700">{currentStarsFromPoints}★</div>
+                              )}
+                              {nextUpgrade ? (
+                                <span className="text-[8px] text-slate-500 font-bold uppercase mt-1 leading-relaxed">
+                                  💡 Next upgrade at SSCoin {nextUpgrade.amount} → {nextUpgrade.stars}★ ({nextUpgrade.pointsNeeded} pts)
+                                </span>
+                              ) : player.player_id ? (
+                                <span className="text-[8px] text-emerald-600 font-bold uppercase mt-1">✓ Max 10★ rating reached</span>
+                              ) : null}
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      {/* Bid Increments preview */}
+                      {player.player_id && player.bidAmount > 0 && (
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 font-mono">
+                          <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-2 flex justify-between">
+                            <span>🎯 Bid Increments (+5 SSCoin)</span>
+                            <span className="text-[8px] lowercase">(stars & points)</span>
                           </div>
-                        ) : (
-                          <div className="text-2xl font-bold text-gray-600">{currentStarsFromPoints}★</div>
-                        );
-                      })()}
-                      {nextUpgrade && (
-                        <p className="text-xs text-gray-600 mt-2">
-                          💡 Next upgrade: SSCoin {nextUpgrade.amount} → {nextUpgrade.stars}★ ({nextUpgrade.pointsNeeded} pts)
-                        </p>
+                          <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
+                            {getBidIncrements(player.initialStars, player.bidAmount, player.basePrice, player.currentPoints).map((increment, idx) => {
+                              const isCurrentBid = increment.bid === player.bidAmount;
+                              return (
+                                <div
+                                  key={idx}
+                                  className={`flex items-center justify-between text-[10px] py-1 px-1.5 rounded ${
+                                    isCurrentBid
+                                      ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-sm font-black'
+                                      : increment.isUpgrade
+                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 font-extrabold'
+                                      : 'bg-white border border-slate-100 text-slate-650'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-1.5">
+                                    <span>${increment.bid}</span>
+                                    {isCurrentBid && <span className="text-[8px] px-1 bg-slate-900 text-amber-400 border border-slate-950 rounded uppercase font-bold">Cur</span>}
+                                    {increment.isUpgrade && !isCurrentBid && <span className="text-[8px] px-1 bg-emerald-100 text-emerald-700 rounded uppercase font-bold">Up</span>}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-extrabold">{increment.stars}★</span>
+                                    <span className="font-bold">{increment.points} pts</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
                       )}
                     </div>
-
-                    {/* Bid Increments with Points Preview */}
-                    {player.player_id && player.bidAmount > 0 && (
-                      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200">
-                        <div className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                          <span>🎯 Bid Increments (+5)</span>
-                          <span className="text-xs text-gray-500">(Stars & Points)</span>
-                        </div>
-                        <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                          {getBidIncrements(player.initialStars, player.bidAmount, player.basePrice, player.currentPoints).map((increment, idx) => {
-                            const isCurrentBid = increment.bid === player.bidAmount;
-                            return (
-                              <div
-                                key={idx}
-                                className={`flex items-center justify-between text-xs py-1.5 px-2 rounded-lg ${isCurrentBid
-                                  ? 'bg-blue-100 border border-blue-300 font-semibold'
-                                  : increment.isUpgrade
-                                    ? 'bg-green-100 border border-green-300 font-semibold'
-                                    : 'bg-white/50'
-                                  }`}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <span className={isCurrentBid ? 'text-blue-700' : 'text-gray-700'}>
-                                    ${increment.bid}
-                                  </span>
-                                  {isCurrentBid && (
-                                    <span className="text-xs px-1.5 py-0.5 bg-blue-200 text-blue-700 rounded">Current</span>
-                                  )}
-                                  {increment.isUpgrade && !isCurrentBid && (
-                                    <span className="text-xs px-1.5 py-0.5 bg-green-200 text-green-700 rounded">⬆ Upgrade!</span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <span className={`font-semibold ${isCurrentBid ? 'text-blue-700' : increment.isUpgrade ? 'text-green-700' : 'text-gray-600'
-                                    }`}>
-                                    {increment.stars}⭐
-                                  </span>
-                                  <span className={`font-bold ${isCurrentBid ? 'text-blue-700' : increment.isUpgrade ? 'text-green-700' : 'text-gray-700'
-                                    }`}>
-                                    {increment.points} pts
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <p className="text-xs text-gray-600 mt-2">
-                          Base: ${player.basePrice} | Current: {player.currentPoints} pts (+1 per +5 above base)
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
             );
           })}
-        </div>
+          </div>
 
-        {/* Warning Messages */}
+        {/* Warning messages */}
         {players.length !== requiredPlayers && (
-          <div className="mt-4 sm:mt-6 glass rounded-xl sm:rounded-2xl p-3 sm:p-4 bg-yellow-50 border-2 border-yellow-300">
-            <div className="flex items-start gap-2 sm:gap-3">
-              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <p className="text-yellow-800 font-medium text-sm sm:text-base">
-                You need exactly {requiredPlayers} SS Members. Currently: {players.length}
+          <div className="console-card bg-amber-50/60 border border-amber-200/60 p-4 rounded-xl flex gap-3 items-center">
+            <span className="text-lg flex-shrink-0">⚠️</span>
+            <div>
+              <span className="font-extrabold text-amber-800 text-[10px] uppercase tracking-wider block mb-0.5">Roster Status Warning</span>
+              <p className="text-xs sm:text-sm text-amber-900 leading-relaxed font-semibold">
+                You must select exactly {requiredPlayers} SS Members. Current selection size: {players.length}
               </p>
             </div>
           </div>
         )}
 
         {remainingBudget < 0 && (
-          <div className="mt-4 sm:mt-6 glass rounded-xl sm:rounded-2xl p-3 sm:p-4 bg-red-50 border-2 border-red-300">
-            <div className="flex items-start gap-2 sm:gap-3">
-              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-red-800 font-medium text-sm sm:text-base">
-                Warning: Budget exceeded by SSCoin {Math.abs(remainingBudget).toLocaleString()}!
+          <div className="console-card bg-rose-50/60 border border-rose-200/60 p-4 rounded-xl flex gap-3 items-center">
+            <span className="text-lg flex-shrink-0">🚨</span>
+            <div>
+              <span className="font-extrabold text-rose-800 text-[10px] uppercase tracking-wider block mb-0.5">Budget Alert</span>
+              <p className="text-xs sm:text-sm text-rose-900 leading-relaxed font-semibold">
+                Real player budget exceeded by SSCoin {Math.abs(remainingBudget).toLocaleString()}!
               </p>
             </div>
           </div>
         )}
 
-        {/* Info Panel */}
-        <div className="mt-4 sm:mt-6 glass rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100">
-          <h3 className="font-bold text-base sm:text-lg text-indigo-900 mb-3 flex items-center gap-2">
-            📝 <span>Planning Tips</span>
-          </h3>
-          <ul className="space-y-2 text-xs sm:text-sm text-indigo-800">
-            <li className="flex items-start gap-2">
-              <span className="text-indigo-600 font-bold flex-shrink-0">•</span>
-              <span>Must have <strong>exactly {requiredPlayers} SS Members</strong> on your team</span>
+        {/* Bottom Tips Callout */}
+        <div className="console-card bg-white border border-slate-200/60 border-l-4 border-l-indigo-500 rounded-2xl p-5 shadow-sm font-mono">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-base">📝</span>
+            <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Planning Guidelines</h4>
+          </div>
+          <ul className="text-xs text-slate-655 space-y-2 leading-relaxed font-semibold">
+            <li className="flex items-start gap-1">
+              <span>•</span>
+              <span>Must have exactly {requiredPlayers} SS Members (Real players) on your squad.</span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-indigo-600 font-bold flex-shrink-0">•</span>
-              <span>Strategic bidding can upgrade players to higher star ratings</span>
+            <li className="flex items-start gap-1">
+              <span>•</span>
+              <span>Strategic SSCoin bid increases directly boost player points and stars.</span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-indigo-600 font-bold flex-shrink-0">•</span>
-              <span>Higher stars = higher per-match salaries, plan carefully</span>
+            <li className="flex items-start gap-1">
+              <span>•</span>
+              <span>Higher final star ratings correspond to increased per-match salaries. Plan according to your budget limits!</span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-indigo-600 font-bold flex-shrink-0">•</span>
-              <span>This is a planning tool - actual results may vary</span>
+            <li className="flex items-start gap-1">
+              <span>•</span>
+              <span>This is a strategic planning sandbox - actual auction results may differ.</span>
             </li>
           </ul>
         </div>

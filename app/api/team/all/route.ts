@@ -283,6 +283,9 @@ export async function GET(request: NextRequest) {
         totalValue: totalRealPlayerValue, // Real player value in $
         footballSpent: footballSpent, // € spent on football players
         realPlayerSpent: realPlayerSpent, // $ spent on real players
+        footballBudget: teamSeasonData?.football_budget || 0,
+        realPlayerBudget: teamSeasonData?.real_player_budget || 0,
+        currencySystem: teamSeasonData?.currency_system || 'single',
         avgRating: Math.round(avgRating * 10) / 10,
         positionBreakdown,
       });
@@ -297,6 +300,8 @@ export async function GET(request: NextRequest) {
         teams: teamsData,
         seasonName,
         seasonId,
+        seasonType: seasonData?.type || 'single',
+        maxPlayers: seasonData?.football_base_slots || seasonData?.max_football_players || 25,
       },
     });
 

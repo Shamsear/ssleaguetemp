@@ -525,10 +525,11 @@ export default function TeamRoundPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading round...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Round...</p>
         </div>
       </div>
     );
@@ -542,20 +543,24 @@ export default function TeamRoundPage() {
   const bidProgress = (bidCount / round.max_bids_per_team) * 100;
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
-      <div className="glass rounded-3xl backdrop-blur-md p-4 sm:p-6 shadow-lg border border-white/10">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-sm">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 sm:mb-6 gap-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 sm:mb-6 gap-3 font-mono">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-dark bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-dark">
+            <h2 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wider text-slate-800">
               Active Rounds
             </h2>
-            <p className="text-sm text-gray-500 mt-1">Place bids on players in active rounds</p>
+            <p className="text-xs text-slate-500 uppercase font-semibold mt-1">Place bids on players in active rounds</p>
           </div>
           <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
             <Link
               href="/dashboard/team"
-              className="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-white/60 hover:bg-white/80 shadow-sm transition-all duration-300 text-sm font-medium flex items-center justify-center"
+              className="flex-1 sm:flex-initial px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-bold flex items-center justify-center"
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -564,7 +569,7 @@ export default function TeamRoundPage() {
             </Link>
             <Link
               href="/dashboard/team/bids"
-              className="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-white/60 hover:bg-white/80 shadow-sm transition-all duration-300 text-sm font-medium flex items-center justify-center"
+              className="flex-1 sm:flex-initial px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-bold flex items-center justify-center"
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -585,67 +590,65 @@ export default function TeamRoundPage() {
         </div>
 
         {/* Timer Card */}
-        <div className="glass-card mb-6 p-5 sm:p-6 rounded-2xl backdrop-blur-md shadow-lg border border-white/10 hover:shadow-xl transition-all">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl mb-6 p-5 sm:p-6 shadow-sm hover:border-amber-400/40 hover:shadow-md transition-all duration-200 font-mono">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <div className="mb-4 md:mb-0">
-              <div className="flex items-center">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2 animate-pulse backdrop-blur-sm">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mr-1.5"></span>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-emerald-50 text-emerald-700 border-emerald-250 animate-pulse">
                   Live
                 </span>
-                <h3 className="text-lg font-bold text-dark">{round.position.includes(',') ? round.position.split(',').join(' + ') : round.position} Round</h3>
+                <h3 className="text-base font-extrabold uppercase tracking-wider text-slate-850">{round.position.includes(',') ? round.position.split(',').join(' + ') : round.position} Round</h3>
               </div>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-xs text-slate-400 uppercase font-bold mt-1.5">
                 You must place exactly {round.max_bids_per_team} bids in this round for your bids to be considered
               </p>
             </div>
-            <div className="flex flex-col items-center bg-gradient-to-r from-primary/5 to-primary/10 p-3 rounded-xl backdrop-blur-md">
-              <div className="text-sm text-gray-600 mb-1">Time Remaining</div>
-              <div className={`text-2xl font-bold ${getTimerColor()}`}>
+            <div className="flex flex-col items-center bg-slate-50 border border-slate-100 p-3 rounded-xl">
+              <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Time Remaining</div>
+              <div className={`text-xl font-black ${getTimerColor()}`}>
                 {formatTime(timeRemaining)}
               </div>
             </div>
           </div>
 
           {/* Auction Status Info */}
-          <div className="mt-5 mb-4 glass p-4 rounded-xl bg-blue-50/30 backdrop-blur-sm border border-blue-100/20">
+          <div className="mt-5 mb-4 p-4 bg-slate-50 border border-slate-200/60 rounded-2xl font-mono">
             <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 bg-blue-100 p-2 rounded-full">
-                <svg className="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex-shrink-0 bg-slate-100 border border-slate-200 p-2 rounded-xl">
+                <svg className="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <div>
-                <h4 className="text-sm font-medium text-blue-700">Auction Status</h4>
-                <div className="mt-1.5 text-xs text-blue-600 grid grid-cols-2 sm:grid-cols-4 gap-y-1.5 gap-x-4">
+              <div className="flex-1">
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Auction Status</h4>
+                <div className="mt-3 text-[10px] text-slate-500 uppercase font-bold grid grid-cols-2 sm:grid-cols-4 gap-y-1.5 gap-x-4">
                   <div>
-                    <span className="text-xs text-blue-500">Rounds completed:</span>
-                    <p className="font-medium">{completedRounds} of {totalRounds}</p>
+                    <span className="text-slate-400">Rounds completed:</span>
+                    <p className="text-xs text-slate-700 font-mono font-black mt-0.5">{completedRounds} of {totalRounds}</p>
                   </div>
                   <div>
-                    <span className="text-xs text-blue-500">Rounds remaining:</span>
-                    <p className="font-medium">{totalRounds - completedRounds}</p>
+                    <span className="text-slate-400">Rounds remaining:</span>
+                    <p className="text-xs text-slate-700 font-mono font-black mt-0.5">{totalRounds - completedRounds}</p>
                   </div>
                   <div>
-                    <span className="text-xs text-blue-500">Max bid this round:</span>
-                    <p className="font-medium">
+                    <span className="text-slate-400">Max bid this round:</span>
+                    <p className="text-xs text-slate-700 font-mono font-black mt-0.5">
                       £{Math.max(0, teamBalance - ((totalRounds - completedRounds - 1) * 1000)).toLocaleString()}
                     </p>
                   </div>
                   <div>
-                    <span className="text-xs text-blue-500">Your balance:</span>
-                    <p className={`font-medium ${teamBalance >= 1000 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className="text-slate-400">Your balance:</span>
+                    <p className={`text-xs font-mono font-black mt-0.5 ${teamBalance >= 1000 ? 'text-emerald-600' : 'text-rose-600'}`}>
                       £{teamBalance.toLocaleString()}
-                      <span className={`text-xs ml-1 block sm:inline ${teamBalance >= 1000 ? 'text-green-500' : 'text-red-500'}`}>
+                      <span className={`text-[10px] ml-1 block sm:inline ${teamBalance >= 1000 ? 'text-emerald-500' : 'text-rose-500'}`}>
                         ({teamBalance >= 1000 ? 'sufficient' : 'insufficient'})
                       </span>
                     </p>
                   </div>
                 </div>
-                <div className="mt-3 pt-3 border-t border-blue-200/30">
-                  <p className="text-xs text-blue-600">
-                    💡 <strong>Budget Reserve System:</strong> The system enforces phase-based minimum reserves to ensure you have enough balance for future rounds. 
-                    Bids that would leave you below the required reserve will be rejected.
+                <div className="mt-3 pt-3 border-t border-slate-200/60">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    Budget Reserve System: The system enforces phase-based minimum reserves to ensure you have enough balance for future rounds. Bids that would leave you below the required reserve will be rejected.
                   </p>
                 </div>
               </div>
@@ -653,16 +656,16 @@ export default function TeamRoundPage() {
           </div>
 
           {/* Bids Progress */}
-          <div className="mt-4 mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-gray-700">Bids Placed</span>
-              <span className="text-sm font-medium text-primary">
+          <div className="mt-4 mb-6 font-mono">
+            <div className="flex justify-between items-center mb-2 text-[10px] uppercase font-bold tracking-wider">
+              <span className="text-slate-400">Bids Placed</span>
+              <span className="text-slate-800">
                 {bidCount} / {round.max_bids_per_team}
               </span>
             </div>
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden backdrop-blur-sm">
+            <div className="h-2.5 bg-slate-100 rounded-xl overflow-hidden border border-slate-200/60">
               <div
-                className="h-3 rounded-full bg-gradient-to-r from-primary to-primary-dark transition-all duration-300"
+                className="h-full rounded-xl bg-slate-800 transition-all duration-300"
                 style={{ width: `${Math.min(bidProgress, 100)}%` }}
               ></div>
             </div>
@@ -670,43 +673,36 @@ export default function TeamRoundPage() {
 
           {/* Submission Status Banner */}
           {hasSubmitted && isLocked && (
-            <div className="mb-4 p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+            <div className="mb-4 p-4 bg-emerald-50 border border-emerald-250 rounded-2xl font-mono">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="bg-green-100 p-2 rounded-full">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="bg-emerald-100 border border-emerald-200 p-2 rounded-xl">
+                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="font-semibold text-green-800">Bids Submitted</p>
-                    <p className="text-sm text-green-600">Your bids are locked and submitted</p>
+                    <p className="font-extrabold text-emerald-800 uppercase tracking-wide text-sm">Bids Submitted</p>
+                    <p className="text-[10px] text-emerald-600 uppercase font-bold mt-0.5">Your bids are locked and submitted</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={handleShareToWhatsApp}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2"
+                    className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all"
                   >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                    </svg>
-                    Share on WhatsApp
+                    Share
                   </button>
                   <button
                     onClick={handleCopyToClipboard}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2"
-                    title="Copy bids to clipboard"
+                    className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
                     Copy
                   </button>
                   <button
                     onClick={handleUnlockBids}
                     disabled={isUnlocking}
-                    className="px-4 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all"
                   >
                     {isUnlocking ? 'Unlocking...' : 'Unlock to Modify'}
                   </button>
@@ -1315,45 +1311,32 @@ function PlayerCard({
 
   return (
     <div
-      className={`glass-card p-4 rounded-xl backdrop-blur-sm shadow-sm border transition-all ${
-        player.is_starred
-          ? 'border-yellow-300 hover:border-yellow-400'
-          : 'border-white/10 hover:border-primary/20'
-      } hover:shadow-md ${hasBid ? 'ring-2 ring-primary' : ''}`}
+      className={`bg-white border border-slate-200/60 rounded-2xl p-4 hover:border-amber-400/40 hover:shadow-md transition-all duration-200 font-mono border-l-4 ${
+        player.is_starred ? 'border-l-amber-500' : 'border-l-slate-300'
+      } ${hasBid ? 'ring-2 ring-slate-800' : ''}`}
     >
       <div className="flex justify-between items-start">
         <div className="flex items-start gap-3">
-          <div className="bg-primary/10 flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center">
-            <span className="text-lg font-bold text-primary">{player.position[0]}</span>
+          <div className="bg-slate-50 border border-slate-200/60 rounded-xl flex-shrink-0 h-10 w-10 flex items-center justify-center">
+            <span className="text-sm font-extrabold text-slate-600">{player.position}</span>
           </div>
           <div>
-            <div className="font-medium text-dark flex items-center">
+            <div className="font-extrabold text-slate-800 flex items-center gap-1 uppercase tracking-wide text-sm">
               {player.name}
               {player.is_starred && (
-                <>
-                  <svg className="w-4 h-4 ml-1.5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  <span className="ml-2 px-1.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-md">
-                    Starred
-                  </span>
-                </>
+                <span className="px-1.5 py-0.5 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200/60 rounded-lg">
+                  STARRED
+                </span>
               )}
             </div>
-            <div className="text-xs text-gray-500 mt-0.5">
+            <div className="text-[10px] text-slate-400 uppercase font-bold mt-1">
               {player.position} • {player.team_name}
             </div>
 
             {player.overall_rating && (
-              <div className="flex items-center mt-1.5">
-                <div
-                  className={`w-5 h-5 flex items-center justify-center rounded-full ${getRatingColor(
-                    player.overall_rating
-                  )} text-white text-xs font-bold shadow-sm`}
-                >
-                  {player.overall_rating}
-                </div>
-                {player.playing_style && <span className="text-xs ml-1.5">{player.playing_style}</span>}
+              <div className="flex items-center mt-1.5 gap-1.5">
+                <span className="text-xs font-black text-amber-500">★ {player.overall_rating}</span>
+                {player.playing_style && <span className="text-[9px] text-slate-400 uppercase font-bold">{player.playing_style}</span>}
               </div>
             )}
           </div>
@@ -1362,15 +1345,7 @@ function PlayerCard({
         <div className="flex flex-col items-end gap-2">
           {hasBid && bid && (
             <>
-              <div className="inline-flex items-center px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-lg bg-slate-800 text-white text-[10px] font-black border border-slate-900 uppercase tracking-wider">
                 £{bid.amount.toLocaleString()}
               </div>
               {!isLocked && (

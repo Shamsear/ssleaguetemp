@@ -522,10 +522,11 @@ export default function TeamBulkTiebreakerPage() {
 
   if (loading || !user || user.role !== 'team' || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading tiebreaker...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Tiebreaker...</p>
         </div>
       </div>
     );
@@ -533,9 +534,10 @@ export default function TeamBulkTiebreakerPage() {
 
   if (!tiebreaker || !player) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Tiebreaker not found</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <p className="text-rose-600 font-extrabold uppercase tracking-wider">Tiebreaker not found</p>
         </div>
       </div>
     );
@@ -544,32 +546,34 @@ export default function TeamBulkTiebreakerPage() {
   // Show withdrawn message page
   if (isWithdrawn) {
     return (
-      <div className="min-h-screen py-8 px-4">
-        <div className="container mx-auto max-w-3xl">
-          <div className="glass rounded-2xl p-8 border border-white/20 text-center">
+      <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+        <div className="max-w-3xl mx-auto relative z-10">
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-8 text-center font-mono">
             <div className="mb-6">
-              <div className="inline-flex p-4 rounded-full bg-gray-100 mb-4">
-                <svg className="w-16 h-16 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="inline-flex p-4 rounded-xl bg-slate-50 border border-slate-200 mb-4">
+                <svg className="w-16 h-16 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-3">You Have Withdrawn</h1>
-              <p className="text-lg text-gray-600 mb-6">
-                You have withdrawn from the tiebreaker for <span className="font-bold">{player.name}</span>.
+              <h1 className="text-2xl font-extrabold uppercase tracking-wider text-slate-800 mb-3">You Have Withdrawn</h1>
+              <p className="text-sm text-slate-500 uppercase font-semibold mb-6">
+                You have withdrawn from the tiebreaker for <span className="font-bold text-slate-800">{player.name}</span>.
               </p>
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-6">
-                <p className="text-sm text-blue-800">
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-6">
+                <p className="text-xs text-slate-600 uppercase font-bold">
                   You are no longer participating in this Last Person Standing auction.
                   {tiebreaker.highest_bidder_team_name && (
                     <span className="block mt-2">
-                      Current leader: <strong>{tiebreaker.highest_bidder_team_name}</strong> with a bid of <strong>£{tiebreaker.current_highest_bid}</strong>
+                      Current leader: <strong className="text-slate-800">{tiebreaker.highest_bidder_team_name}</strong> with a bid of <strong className="text-slate-800">£{tiebreaker.current_highest_bid}</strong>
                     </span>
                   )}
                 </p>
               </div>
               <Link
                 href="/dashboard/team"
-                className="inline-flex items-center px-6 py-3 bg-[#0066FF] text-white rounded-xl hover:bg-[#0052CC] transition-colors font-bold"
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all inline-flex items-center"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -597,57 +601,60 @@ export default function TeamBulkTiebreakerPage() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="container mx-auto max-w-5xl">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-5xl mx-auto relative z-10 space-y-6">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-sm font-mono mb-4 sm:mb-6">
+          <div className="flex items-center gap-3">
             <Link
               href="/dashboard/team"
-              className="text-gray-500 hover:text-[#0066FF] transition-colors"
+              className="text-slate-500 hover:text-amber-600 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </Link>
             <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl md:text-4xl font-bold gradient-text">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wider text-slate-800">
                   Tiebreaker
                 </h1>
                 {/* WebSocket Status */}
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider ${
                   isConnected 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-600'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-250' 
+                    : 'bg-slate-55 text-slate-500 border-slate-200'
                 }`}>
-                  <span className={`w-2 h-2 rounded-full mr-1.5 ${
-                    isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+                  <span className={`w-1.5 h-1.5 rounded-full ${
+                    isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
                   }`}></span>
                   {isConnected ? 'Live' : 'Offline'}
                 </span>
               </div>
-              <p className="text-gray-600 mt-1">Place your highest bid to win the player</p>
+              <p className="text-xs text-slate-455 uppercase font-bold mt-1">Place your highest bid to win the player</p>
             </div>
           </div>
         </div>
 
         {/* Error Banner */}
         {fetchError && (
-          <div className="glass rounded-2xl p-6 mb-6 border-2 border-red-300 bg-red-50">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-red-500 text-white">
+          <div className="console-card bg-rose-50/35 border border-rose-250 rounded-2xl p-6 mb-6 font-mono border-l-8 border-l-rose-500">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="p-2.5 rounded-xl bg-rose-600 text-white border border-rose-700">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-red-900">Error Loading Data</h3>
-                <p className="text-red-700">{fetchError}</p>
+                <h3 className="text-sm font-extrabold uppercase tracking-wider text-rose-900">Error Loading Data</h3>
+                <p className="text-xs text-rose-700 uppercase font-semibold mt-0.5">{fetchError}</p>
               </div>
               <button
                 onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all"
               >
                 Retry
               </button>
@@ -657,30 +664,30 @@ export default function TeamBulkTiebreakerPage() {
 
         {/* Status Banner */}
         {isWinning ? (
-          <div className="glass rounded-2xl p-6 mb-6 border-2 border-green-300 bg-green-50">
+          <div className="console-card bg-emerald-50/30 border border-emerald-250 rounded-2xl p-6 mb-6 font-mono border-l-8 border-l-emerald-500 shadow-sm">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-green-500 text-white">
+              <div className="p-2.5 rounded-xl bg-emerald-600 border border-emerald-700 text-white shadow-sm">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-green-900">You're Winning!</h3>
-                <p className="text-green-700">Your bid of £{tiebreaker.current_highest_bid} is currently the highest</p>
+                <h3 className="text-sm font-extrabold uppercase tracking-wide text-emerald-800">You're Winning!</h3>
+                <p className="text-[10px] text-emerald-600 uppercase font-bold mt-0.5">Your bid of £{tiebreaker.current_highest_bid} is currently the highest</p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="glass rounded-2xl p-6 mb-6 border-2 border-orange-300 bg-orange-50">
+          <div className="console-card bg-amber-50/30 border border-amber-250 rounded-2xl p-6 mb-6 font-mono border-l-8 border-l-amber-500 shadow-sm animate-pulse">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-orange-500 text-white">
+              <div className="p-2.5 rounded-xl bg-amber-500 border border-amber-600 text-white shadow-sm">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-orange-900">You're Being Outbid!</h3>
-                <p className="text-orange-700">
+                <h3 className="text-sm font-extrabold uppercase tracking-wide text-amber-800">You're Being Outbid!</h3>
+                <p className="text-[10px] text-amber-600 uppercase font-bold mt-0.5">
                   Another team has the highest bid at £{tiebreaker.current_highest_bid}
                 </p>
               </div>
@@ -689,27 +696,27 @@ export default function TeamBulkTiebreakerPage() {
         )}
 
         {/* Player Card */}
-        <div className="glass rounded-2xl p-6 mb-6 border border-white/20">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Player Information</h2>
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 mb-6 shadow-sm font-mono border-l-4 border-l-slate-300">
+          <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 mb-4">Player Information</h2>
           <div className="flex items-center gap-6">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-              <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center flex-shrink-0">
+              <svg className="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zm-4 7a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">{player.name}</h3>
-              <div className="flex items-center gap-4 text-sm">
-                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
+              <h3 className="text-lg font-extrabold uppercase tracking-wide text-slate-850 mb-2">{player.name}</h3>
+              <div className="flex items-center gap-3 text-[10px] uppercase font-bold text-slate-500 flex-wrap">
+                <span className="px-2 py-0.5 bg-slate-100 border border-slate-205 text-slate-600 rounded-lg">
                   {player.position}
                 </span>
-                <span className="text-gray-600">{player.team_name}</span>
-                <span className="text-gray-600">Rating: {player.overall_rating}</span>
+                <span>{player.team_name}</span>
+                <span>Rating: ★{player.overall_rating}</span>
               </div>
-              <div className="mt-3 text-sm text-gray-600">
-                <p>Original bid: £{tiebreaker.original_amount}</p>
+              <div className="mt-3 text-[10px] uppercase font-bold text-slate-400 space-y-0.5">
+                <p>Original bid: <span className="text-slate-800">£{tiebreaker.original_amount}</span></p>
                 {tiebreaker.my_last_bid && (
-                  <p>Your last bid: £{tiebreaker.my_last_bid}</p>
+                  <p>Your last bid: <span className="text-slate-800">£{tiebreaker.my_last_bid}</span></p>
                 )}
               </div>
             </div>
@@ -717,58 +724,58 @@ export default function TeamBulkTiebreakerPage() {
         </div>
 
         {/* Bidding Section */}
-        <div className="glass rounded-2xl p-6 mb-6 border border-white/20">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Place Your Bid</h2>
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 mb-6 shadow-sm font-mono">
+          <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 mb-4">Place Your Bid</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="glass rounded-xl p-4 border border-white/10">
-              <div className="text-sm text-gray-600 mb-1">Current Highest Bid</div>
-              <div className="text-3xl font-bold text-red-600">£{tiebreaker.current_highest_bid}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-[10px] uppercase font-bold text-slate-400">
+            <div className="bg-slate-50 border border-slate-150 rounded-2xl p-4">
+              <span>Current Highest Bid</span>
+              <div className="text-2xl font-black text-rose-600 mt-0.5">£{tiebreaker.current_highest_bid}</div>
               {!isWinning && (
-                <div className="text-sm text-gray-600 mt-1">by another team</div>
+                <div className="text-[9px] text-slate-400 font-bold mt-1">by another team</div>
               )}
             </div>
 
-            <div className="glass rounded-xl p-4 border border-white/10">
-              <div className="text-sm text-gray-600 mb-1">Your Balance</div>
-              <div className="text-3xl font-bold text-green-600">£{teamBalance}</div>
-              <div className="text-sm text-gray-600 mt-1">
-                Available after bid: £{teamBalance - parseInt(bidAmount || '0')}
+            <div className="bg-slate-50 border border-slate-150 rounded-2xl p-4">
+              <span>Your Balance</span>
+              <div className="text-2xl font-black text-emerald-600 mt-0.5">£{teamBalance}</div>
+              <div className="text-[9px] text-slate-400 font-bold mt-1">
+                Available after: £{teamBalance - parseInt(bidAmount || '0')}
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Your Bid Amount</label>
+              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-2">Your Bid Amount</label>
               <div className="flex gap-3">
                 <div className="relative flex-1">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <span className="text-gray-500 text-lg">£</span>
+                    <span className="text-slate-500 font-extrabold text-sm">£</span>
                   </div>
                   <input
                     type="number"
                     value={bidAmount}
                     onChange={(e) => setBidAmount(e.target.value)}
                     min={(tiebreaker.current_highest_bid || 0) + 1}
-                    className="w-full pl-10 pr-4 py-3 text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#0066FF] focus:border-[#0066FF]"
+                    className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-black"
                     placeholder="Enter amount"
                   />
                 </div>
                 <button
                   onClick={() => setBidAmount((tiebreaker.current_highest_bid + 1).toString())}
-                  className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors text-sm font-medium"
+                  className="px-3 py-2 bg-white border border-slate-200 hover:border-amber-400/40 hover:text-amber-600 rounded-xl font-mono text-xs uppercase tracking-wider font-bold"
                 >
                   Min Bid
                 </button>
                 <button
                   onClick={() => setBidAmount((tiebreaker.current_highest_bid + 5).toString())}
-                  className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors text-sm font-medium"
+                  className="px-3 py-2 bg-white border border-slate-200 hover:border-amber-400/40 hover:text-amber-600 rounded-xl font-mono text-xs uppercase tracking-wider font-bold"
                 >
                   +£5
                 </button>
               </div>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-[9px] uppercase font-bold text-slate-400 mt-2">
                 Minimum bid: £{tiebreaker.current_highest_bid + 1}
               </p>
             </div>
@@ -777,13 +784,13 @@ export default function TeamBulkTiebreakerPage() {
               <button
                 onClick={handlePlaceBid}
                 disabled={isSubmitting || parseInt(bidAmount) <= tiebreaker.current_highest_bid}
-                className="flex-1 px-6 py-4 bg-[#0066FF] text-white rounded-xl hover:bg-[#0052CC] transition-colors font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Placing Bid...' : 'Place Bid'}
               </button>
               <button
                 onClick={handleWithdraw}
-                className="px-6 py-4 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium"
+                className="px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white border border-rose-700 rounded-xl font-mono text-xs uppercase tracking-wider font-bold transition-all"
               >
                 Withdraw
               </button>
@@ -792,66 +799,66 @@ export default function TeamBulkTiebreakerPage() {
         </div>
 
         {/* Info Card */}
-        <div className="glass rounded-2xl p-6 mb-6 border border-white/20 bg-yellow-50">
+        <div className="console-card bg-amber-50/50 border border-amber-200 rounded-2xl p-6 mb-6 shadow-sm font-mono">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-yellow-100">
-              <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-yellow-900 mb-2">How Tiebreaker Auctions Work</h3>
-              <ul className="space-y-1 text-sm text-yellow-800">
-                <li>• This is an open auction - the highest bidder wins the player</li>
-                <li>• You can continue bidding until the committee closes the auction</li>
-                <li>• Each bid must be higher than the current highest bid</li>
-                <li>• The last team to bid when the auction closes wins the player</li>
-                <li>• You can withdraw at any time if you don't want to continue</li>
+              <h3 className="text-sm font-extrabold uppercase tracking-wider text-amber-900 mb-2">How Tiebreaker Auctions Work</h3>
+              <ul className="space-y-1 text-[10px] text-amber-800 uppercase font-semibold list-disc pl-3">
+                <li>This is an open auction - the highest bidder wins the player</li>
+                <li>You can continue bidding until the committee closes the auction</li>
+                <li>Each bid must be higher than the current highest bid</li>
+                <li>The last team to bid when the auction closes wins the player</li>
+                <li>You can withdraw at any time if you don't want to continue</li>
               </ul>
             </div>
           </div>
         </div>
 
         {/* Bid History */}
-        <div className="glass rounded-2xl p-6 border border-white/20">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Bid History</h2>
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm font-mono">
+          <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 mb-4 font-mono">Bid History</h2>
           
           {tiebreaker.bid_history.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-slate-400 text-xs font-bold uppercase">
               <p>No bids yet</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 font-mono">
               {tiebreaker.bid_history.map((bid, index) => (
                 <div
                   key={index}
-                  className={`flex items-center justify-between p-4 rounded-xl border ${
+                  className={`flex items-center justify-between p-4 rounded-2xl border ${
                     isMyBid(bid.team_id)
-                      ? 'bg-blue-50 border-blue-200'
-                      : 'bg-white border-gray-200'
+                      ? 'bg-slate-50 border-slate-350 border-2'
+                      : 'bg-slate-50/50 border-slate-200'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center border text-white font-extrabold text-sm uppercase ${
                       isMyBid(bid.team_id)
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-300 text-gray-700'
+                        ? 'bg-slate-800 border-slate-900'
+                        : 'bg-slate-400 border-slate-500'
                     }`}>
-                      {isMyBid(bid.team_id) ? 'You' : bid.team_name[0]}
+                      {isMyBid(bid.team_id) ? 'Y' : bid.team_name[0]}
                     </div>
                     <div>
-                      <div className="font-semibold text-gray-900">
+                      <div className="font-extrabold text-sm text-slate-850 uppercase tracking-wide">
                         {isMyBid(bid.team_id) ? 'Your Team' : bid.team_name}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-[9px] text-slate-400 uppercase font-bold mt-0.5">
                         {new Date(bid.timestamp).toLocaleTimeString()}
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-gray-900">£{bid.amount}</div>
+                    <div className="text-lg font-black text-slate-800">£{bid.amount}</div>
                     {bid.amount === tiebreaker.current_highest_bid && (
-                      <div className="text-xs text-green-600 font-semibold">Highest Bid</div>
+                      <div className="text-[9px] text-emerald-650 font-extrabold uppercase mt-0.5">Highest Bid</div>
                     )}
                   </div>
                 </div>

@@ -7,6 +7,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import Image from 'next/image';
+
 interface Player {
   id: string;
   name: string;
@@ -25,6 +26,10 @@ interface TeamDetails {
   owner_uid?: string;
   owner_name?: string;
   owner_email?: string;
+  dollar_balance?: number;
+  euro_balance?: number;
+  dollar_spent?: number;
+  euro_spent?: number;
 }
 
 interface TeamData {
@@ -35,6 +40,8 @@ interface TeamData {
   avgRating: number;
   positionBreakdown: { [key: string]: number };
   categoryBreakdown?: { [key: string]: number };
+  seasonType?: 'single' | 'multi';
+  maxPlayers?: number;
 }
 
 interface TournamentStat {
@@ -83,6 +90,8 @@ export default function TeamDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'players' | 'stats'>('players');
   const [playerFilter, setPlayerFilter] = useState<'all' | 'real' | 'football'>('all');
+  const [seasonType, setSeasonType] = useState<'single' | 'multi'>('single');
+  const [maxPlayers, setMaxPlayers] = useState(25);
 
   const teamId = params?.id as string;
 
@@ -112,6 +121,8 @@ export default function TeamDetailPage() {
 
         if (data.success && data.data) {
           setTeamData(data.data);
+          setSeasonType(data.data.seasonType || 'single');
+          setMaxPlayers(data.data.maxPlayers || 25);
           setError(null);
         } else {
           setError(data.error || 'Team not found');
@@ -144,11 +155,9 @@ export default function TeamDetailPage() {
         const data = await response.json();
 
         if (data.success) {
-          // Map the new API response to the old format
           const tournaments = data.tournaments || [];
           const overall = data.overall || null;
           
-          // Transform tournament data to match old format
           const transformedTournaments = tournaments.map((t: any) => ({
             tournament_id: t.tournament_id,
             tournament_name: t.tournament_name,
@@ -167,7 +176,6 @@ export default function TeamDetailPage() {
             conceded_per_game: t.matches_played > 0 ? (t.goals_against / t.matches_played).toFixed(2) : '0.00',
           }));
           
-          // Transform overall data to match old format
           const transformedOverall = overall ? {
             matches_played: overall.matches_played,
             wins: overall.wins,
@@ -198,12 +206,32 @@ export default function TeamDetailPage() {
     }
   }, [isCommitteeAdmin, userSeasonId, teamId, activeTab]);
 
+  const getPositionColor = (position: string) => {
+    const colors: { [key: string]: string } = {
+      GK: 'bg-amber-50 text-amber-700 border border-amber-200/40',
+      CB: 'bg-rose-50 text-rose-700 border border-rose-200/40',
+      LB: 'bg-rose-50/60 text-rose-700 border border-rose-200/30',
+      RB: 'bg-rose-50/60 text-rose-700 border border-rose-200/30',
+      DMF: 'bg-indigo-50 text-indigo-700 border border-indigo-200/40',
+      CMF: 'bg-sky-50 text-sky-700 border border-sky-200/40',
+      AMF: 'bg-violet-50 text-violet-700 border border-violet-200/40',
+      LMF: 'bg-sky-50/60 text-sky-700 border border-sky-200/30',
+      RMF: 'bg-sky-50/60 text-sky-700 border border-sky-200/30',
+      LWF: 'bg-emerald-50/60 text-emerald-700 border border-emerald-200/30',
+      RWF: 'bg-emerald-50/60 text-emerald-700 border border-emerald-200/30',
+      SS: 'bg-emerald-50 text-emerald-700 border border-emerald-200/40',
+      CF: 'bg-emerald-50 text-emerald-700 border border-emerald-200/40',
+    };
+    return colors[position] || 'bg-slate-50 text-slate-700 border border-slate-200/40';
+  };
+
   if (loading || loadingTeam) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#0066FF] mx-auto"></div>
-          <p className="mt-6 text-gray-600 font-medium">Loading team details...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Team Details...</p>
         </div>
       </div>
     );
@@ -215,173 +243,188 @@ export default function TeamDetailPage() {
 
   if (error || !teamData) {
     return (
-      <div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto max-w-screen-2xl">
-          <div className="glass rounded-3xl p-8 shadow-xl border border-white/30 text-center">
-            <svg className="w-20 h-20 mx-auto text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <div className="console-bg min-h-screen flex items-center justify-center relative px-4">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-8 max-w-md w-full mx-auto text-center relative z-10 font-mono">
+          <div className="text-rose-500 mb-4">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Error</h2>
-            <p className="text-gray-600 mb-6">{error || 'Team not found'}</p>
-            <Link
-              href="/dashboard/committee/teams"
-              className="inline-flex items-center px-5 py-3 bg-gradient-to-r from-[#0066FF] to-blue-600 hover:from-[#0052CC] hover:to-blue-700 text-white text-sm font-semibold rounded-xl transition-all duration-300 shadow-lg"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Back to Teams
-            </Link>
           </div>
+          <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-2">Error Loading Team</h2>
+          <p className="text-xs text-slate-500 uppercase font-semibold mb-6">{error || 'Team not found'}</p>
+          <Link 
+            href="/dashboard/committee/teams" 
+            className="inline-flex items-center justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl text-xs uppercase tracking-wider font-bold transition-all shadow-sm w-full"
+          >
+            Back to Teams
+          </Link>
         </div>
       </div>
     );
   }
 
   const { team, players } = teamData;
-  
-  // Separate players by type
   const realPlayers = players.filter(p => p.is_real_player);
   const footballPlayers = players.filter(p => !p.is_real_player);
 
   return (
-    <div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8">
-      <div className="container mx-auto max-w-screen-2xl">
-        
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
         {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/dashboard/committee/teams"
-            className="inline-flex items-center text-gray-600 hover:text-[#0066FF] mb-4 transition-colors"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Teams
-          </Link>
-          
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="h-20 w-20 flex-shrink-0 bg-gradient-to-br from-[#0066FF]/10 to-blue-500/10 rounded-2xl flex items-center justify-center p-2 shadow-xl">
-                {team.logoUrl ? (
-                  <Image 
-                    src={team.logoUrl} 
-                    alt={team.name} 
-                    width={80} 
-                    height={80} 
-                    className="object-contain w-full h-full" 
-                  />
-                ) : (
-                  <svg className="w-10 h-10 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-                  </svg>
-                )}
-              </div>
-              <div>
-                <h1 className="text-4xl md:text-5xl font-bold gradient-text mb-2">
-                  {team.name}
-                </h1>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Active
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono">
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 flex-shrink-0 bg-white border border-slate-200/60 rounded-2xl flex items-center justify-center p-1.5 shadow-md relative overflow-hidden">
+              {team.logoUrl ? (
+                <Image 
+                  src={team.logoUrl} 
+                  alt={team.name} 
+                  width={64} 
+                  height={64} 
+                  className="object-contain w-full h-full" 
+                />
+              ) : (
+                <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              )}
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wider text-slate-800">{team.name}</h1>
+              <div className="flex flex-wrap items-center gap-3 mt-1 text-xs uppercase tracking-wider font-bold">
+                <span className="inline-flex items-center px-2 py-0.5 rounded bg-green-50 text-green-700 border border-green-200/40">
+                  Active
+                </span>
+                {team.owner_name && (
+                  <span className="text-slate-500">
+                    Owner: <span className="text-slate-800 font-extrabold">{team.owner_name}</span>
                   </span>
-                  {team.owner_name && (
-                    <span className="text-sm text-gray-600">
-                      Owner: <span className="font-semibold">{team.owner_name}</span>
-                    </span>
-                  )}
-                </div>
+                )}
               </div>
             </div>
           </div>
+
+          <Link 
+            href="/dashboard/committee/teams" 
+            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all text-xs uppercase tracking-wider font-bold"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back to Teams</span>
+          </Link>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="glass rounded-xl p-4 shadow-lg border border-white/30">
-            <div className="text-xs text-gray-500 mb-1">Total Players</div>
-            <div className="text-2xl font-bold text-purple-600">{players.length}</div>
-            <div className="text-xs text-gray-400 mt-1">
+        {/* Stats Overview Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 font-mono">
+          {/* Total Players Card */}
+          <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+            <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">Squad Players</span>
+            <div className="text-xl font-black text-slate-700">⚽ {players.length} / {maxPlayers}</div>
+            <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1">
               {realPlayers.length} Real · {footballPlayers.length} Football
             </div>
           </div>
 
-          <div className="glass rounded-xl p-4 shadow-lg border border-white/30">
-            <div className="text-xs text-gray-500 mb-1">Balance</div>
-            <div className="text-2xl font-bold text-[#0066FF]">
-              💰 {team.balance.toLocaleString()}
-            </div>
-          </div>
+          {/* Currency Details */}
+          {seasonType === 'multi' || team.dollar_balance !== undefined ? (
+            <>
+              <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">eCoin Budget Left</span>
+                <div className="text-xl font-black text-blue-600">💶 {(team.euro_balance || 0).toLocaleString()}</div>
+                <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1">
+                  Spent: {(team.euro_spent || 0).toLocaleString()}
+                </div>
+              </div>
 
-          <div className="glass rounded-xl p-4 shadow-lg border border-white/30">
-            <div className="text-xs text-gray-500 mb-1">Avg Rating</div>
-            <div className="text-2xl font-bold text-amber-600">
-              {teamData.avgRating.toFixed(1)}
-            </div>
+              <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">SSCoin Budget Left</span>
+                <div className="text-xl font-black text-purple-600">🪙 {(team.dollar_balance || 0).toLocaleString()}</div>
+                <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1">
+                  Spent: {(team.dollar_spent || 0).toLocaleString()}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">Total value</span>
+                <div className="text-xl font-black text-emerald-600">💰 {teamData.totalValue.toLocaleString()}</div>
+              </div>
+
+              <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">Wallet Balance</span>
+                <div className="text-xl font-black text-amber-600">💰 {team.balance.toLocaleString()}</div>
+              </div>
+            </>
+          )}
+
+          {/* Average Rating */}
+          <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+            <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">Avg Rating</span>
+            <div className="text-xl font-black text-amber-500">★ {teamData.avgRating.toFixed(1)}</div>
           </div>
         </div>
 
-        {/* Contract Info - Removed for single season */}
-
-        {/* Tabs */}
-        <div className="glass rounded-xl shadow-lg border border-white/30 overflow-hidden">
-          <div className="flex border-b border-gray-200/50">
+        {/* Tab Controls */}
+        <div className="console-card bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden font-mono">
+          <div className="flex border-b border-slate-100 p-2 bg-slate-50 gap-2">
             <button
               onClick={() => setActiveTab('players')}
-              className={`flex-1 px-4 py-3 font-medium transition-all text-sm ${
+              className={`flex-1 px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${
                 activeTab === 'players'
-                  ? 'bg-gradient-to-r from-[#0066FF] to-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-white/30'
+                  ? 'bg-slate-800 text-white shadow-sm border border-slate-900'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/60'
               }`}
             >
               Players ({players.length})
             </button>
             <button
               onClick={() => setActiveTab('stats')}
-              className={`flex-1 px-4 py-3 font-medium transition-all text-sm ${
+              className={`flex-1 px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${
                 activeTab === 'stats'
-                  ? 'bg-gradient-to-r from-[#0066FF] to-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-white/30'
+                  ? 'bg-slate-800 text-white shadow-sm border border-slate-900'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/60'
               }`}
             >
               Statistics
             </button>
           </div>
 
-          <div className="p-4">
+          <div className="p-5">
             {activeTab === 'players' ? (
-              <>
+              <div className="space-y-4">
                 {/* Player Type Filter */}
-                <div className="flex gap-2 mb-4 flex-wrap">
+                <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={() => setPlayerFilter('all')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`px-3 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all ${
                       playerFilter === 'all'
-                        ? 'bg-purple-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-slate-800 text-white border border-slate-900'
+                        : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/60'
                     }`}
                   >
                     All ({players.length})
                   </button>
                   <button
                     onClick={() => setPlayerFilter('real')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`px-3 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all ${
                       playerFilter === 'real'
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-purple-600 text-white border border-purple-700'
+                        : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/60'
                     }`}
                   >
                     Real ({realPlayers.length})
                   </button>
                   <button
                     onClick={() => setPlayerFilter('football')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`px-3 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all ${
                       playerFilter === 'football'
-                        ? 'bg-indigo-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-blue-600 text-white border border-blue-700'
+                        : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/60'
                     }`}
                   >
                     Football ({footballPlayers.length})
@@ -395,7 +438,7 @@ export default function TeamDetailPage() {
                     playerFilter === 'real' ? realPlayers : footballPlayers;
                   
                   return filteredPlayers.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       {filteredPlayers.map((player) => {
                         const CardWrapper = player.is_real_player ? Link : 'div';
                         const cardProps = player.is_real_player 
@@ -406,198 +449,211 @@ export default function TeamDetailPage() {
                           <CardWrapper
                             key={player.id}
                             {...cardProps}
-                            className={`glass rounded-xl p-4 border border-white/20 hover:border-[#0066FF]/40 transition-all hover:shadow-lg ${
+                            className={`console-card bg-white border border-slate-200/60 rounded-2xl p-5 hover:border-amber-400/40 hover:shadow-md transition-all duration-200 flex flex-col justify-between ${
                               player.is_real_player ? 'cursor-pointer' : ''
                             }`}
                           >
-                            <div className="flex items-center justify-between mb-3">
-                              <h3 className="font-bold text-gray-900 text-base truncate flex-1">
-                                {player.name}
-                              </h3>
-                              {player.is_real_player && (
-                                <span className="ml-2 px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-bold rounded-full">
-                                  Real
-                                </span>
-                              )}
-                            </div>
-                            
-                            <div className="space-y-2">
-                              {!player.is_real_player && (
-                                <div className="flex items-center justify-between text-sm">
-                                  <span className="text-gray-600">Position</span>
-                                  <span className="font-semibold text-gray-900 px-2 py-0.5 bg-[#0066FF]/10 rounded">
+                            <div>
+                              <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-bold text-slate-800 text-sm truncate uppercase tracking-wide">
+                                  {player.name}
+                                </h3>
+                                {player.is_real_player ? (
+                                  <span className="px-2.5 py-0.5 bg-purple-50 text-purple-700 border border-purple-200/40 text-[9px] font-bold rounded-full uppercase tracking-wider">
+                                    Real
+                                  </span>
+                                ) : (
+                                  <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200/40 text-[9px] font-bold rounded-full uppercase tracking-wider">
+                                    Football
+                                  </span>
+                                )}
+                              </div>
+                              
+                              <div className="space-y-2 text-[10px] uppercase font-bold tracking-wider text-slate-700">
+                                <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2 rounded-xl">
+                                  <span className="text-slate-400 text-[8px]">Position</span>
+                                  <span className={`px-2 py-0.5 rounded font-extrabold ${getPositionColor(player.position)}`}>
                                     {player.position}
                                   </span>
                                 </div>
-                              )}
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-600">Rating</span>
-                                <span className="font-semibold text-amber-600">
-                                  ⭐ {player.rating.toFixed(1)}
-                                </span>
-                              </div>
-                              {player.category && (
-                                <div className="flex items-center justify-between text-sm">
-                                  <span className="text-gray-600">Category</span>
-                                  <span className="font-semibold text-purple-600">
-                                    {player.category}
+                                <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2 rounded-xl">
+                                  <span className="text-slate-400 text-[8px]">Rating</span>
+                                  <span className="text-amber-500 font-extrabold">
+                                    ★ {player.rating.toFixed(1)}
                                   </span>
                                 </div>
-                              )}
+                                {player.category && (
+                                  <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2 rounded-xl">
+                                    <span className="text-slate-400 text-[8px]">Category</span>
+                                    <span className="text-purple-600 font-extrabold">
+                                      {player.category}
+                                    </span>
+                                  </div>
+                                )}
+                                {player.value !== undefined && player.value > 0 && (
+                                  <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2 rounded-xl">
+                                    <span className="text-slate-400 text-[8px]">Value</span>
+                                    <span className="text-emerald-600 font-extrabold">
+                                      {player.is_real_player ? '$' : '€'} {player.value.toLocaleString()}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </CardWrapper>
                         );
                       })}
                     </div>
                   ) : (
-                    <div className="text-center py-12">
-                      <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    <div className="text-center py-16">
+                      <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                       </svg>
-                      <p className="text-gray-600">No players in this category</p>
+                      <h3 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-1">No Players</h3>
+                      <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">No players found in this category</p>
                     </div>
                   );
                 })()}
-              </>
+              </div>
             ) : (
               <div className="space-y-6">
                 {loadingStats ? (
-                  <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading statistics...</p>
+                  <div className="text-center py-16">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+                    <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Loading statistics...</p>
                   </div>
                 ) : (
                   <>
                     {/* Overall Stats */}
-                    {overallStats && (
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                          <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {overallStats ? (
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center mb-4">
+                          <svg className="w-4 h-4 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                           </svg>
                           Overall Season Statistics
                         </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
-                          <div className="glass rounded-xl p-4 text-center border-2 border-green-200">
-                            <div className="text-3xl font-bold text-green-600 mb-1">{overallStats.matches_played}</div>
-                            <div className="text-xs text-gray-600 font-medium">Matches</div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 text-[10px] uppercase font-bold tracking-wider text-center">
+                          <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                            <div className="text-2xl font-black text-slate-700 mb-1">{overallStats.matches_played}</div>
+                            <div className="text-slate-400 text-[8px] tracking-wide">Matches</div>
                           </div>
-                          <div className="glass rounded-xl p-4 text-center border-2 border-blue-200">
-                            <div className="text-3xl font-bold text-blue-600 mb-1">{overallStats.wins}</div>
-                            <div className="text-xs text-gray-600 font-medium">Wins</div>
+                          <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                            <div className="text-2xl font-black text-green-600 mb-1">{overallStats.wins}</div>
+                            <div className="text-slate-400 text-[8px] tracking-wide">Wins</div>
                           </div>
-                          <div className="glass rounded-xl p-4 text-center border-2 border-yellow-200">
-                            <div className="text-3xl font-bold text-yellow-600 mb-1">{overallStats.draws}</div>
-                            <div className="text-xs text-gray-600 font-medium">Draws</div>
+                          <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                            <div className="text-2xl font-black text-yellow-600 mb-1">{overallStats.draws}</div>
+                            <div className="text-slate-400 text-[8px] tracking-wide">Draws</div>
                           </div>
-                          <div className="glass rounded-xl p-4 text-center border-2 border-red-200">
-                            <div className="text-3xl font-bold text-red-600 mb-1">{overallStats.losses}</div>
-                            <div className="text-xs text-gray-600 font-medium">Losses</div>
+                          <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                            <div className="text-2xl font-black text-red-600 mb-1">{overallStats.losses}</div>
+                            <div className="text-slate-400 text-[8px] tracking-wide">Losses</div>
                           </div>
-                          <div className="glass rounded-xl p-4 text-center border-2 border-purple-200">
-                            <div className="text-3xl font-bold text-purple-600 mb-1">{overallStats.points}</div>
-                            <div className="text-xs text-gray-600 font-medium">Points</div>
+                          <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                            <div className="text-2xl font-black text-purple-600 mb-1">{overallStats.points}</div>
+                            <div className="text-slate-400 text-[8px] tracking-wide">Points</div>
                           </div>
-                          <div className="glass rounded-xl p-4 text-center border-2 border-indigo-200">
-                            <div className="text-3xl font-bold text-indigo-600 mb-1">{overallStats.win_rate}%</div>
-                            <div className="text-xs text-gray-600 font-medium">Win Rate</div>
+                          <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                            <div className="text-2xl font-black text-indigo-600 mb-1">{overallStats.win_rate}%</div>
+                            <div className="text-slate-400 text-[8px] tracking-wide">Win Rate</div>
                           </div>
                         </div>
 
                         {/* Goals Stats */}
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                          <div className="glass rounded-xl p-4 text-center">
-                            <div className="text-2xl font-bold text-emerald-600 mb-1">{overallStats.goals_scored}</div>
-                            <div className="text-xs text-gray-600 font-medium">Goals Scored</div>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-[10px] uppercase font-bold tracking-wider text-center mt-4">
+                          <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                            <div className="text-xl font-black text-emerald-600 mb-1">{overallStats.goals_scored}</div>
+                            <div className="text-slate-400 text-[8px] tracking-wide">Goals Scored</div>
                           </div>
-                          <div className="glass rounded-xl p-4 text-center">
-                            <div className="text-2xl font-bold text-rose-600 mb-1">{overallStats.goals_conceded}</div>
-                            <div className="text-xs text-gray-600 font-medium">Goals Conceded</div>
+                          <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                            <div className="text-xl font-black text-rose-600 mb-1">{overallStats.goals_conceded}</div>
+                            <div className="text-slate-400 text-[8px] tracking-wide">Goals Conceded</div>
                           </div>
-                          <div className="glass rounded-xl p-4 text-center">
-                            <div className={`text-2xl font-bold mb-1 ${overallStats.goal_difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                            <div className={`text-xl font-black mb-1 ${overallStats.goal_difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                               {overallStats.goal_difference >= 0 ? '+' : ''}{overallStats.goal_difference}
                             </div>
-                            <div className="text-xs text-gray-600 font-medium">Goal Difference</div>
+                            <div className="text-slate-400 text-[8px] tracking-wide">Goal Difference</div>
                           </div>
-                          <div className="glass rounded-xl p-4 text-center">
-                            <div className="text-2xl font-bold text-teal-600 mb-1">{overallStats.goals_per_game}</div>
-                            <div className="text-xs text-gray-600 font-medium">Goals/Game</div>
+                          <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                            <div className="text-xl font-black text-teal-600 mb-1">{overallStats.goals_per_game}</div>
+                            <div className="text-slate-400 text-[8px] tracking-wide">Goals/Game</div>
                           </div>
-                          <div className="glass rounded-xl p-4 text-center">
-                            <div className="text-2xl font-bold text-cyan-600 mb-1">{overallStats.clean_sheets}</div>
-                            <div className="text-xs text-gray-600 font-medium">Clean Sheets</div>
+                          <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
+                            <div className="text-xl font-black text-cyan-600 mb-1">{overallStats.clean_sheets}</div>
+                            <div className="text-slate-400 text-[8px] tracking-wide">Clean Sheets</div>
                           </div>
                         </div>
                       </div>
-                    )}
+                    ) : null}
 
                     {/* Tournament Breakdown */}
                     {tournamentStats.length > 0 ? (
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                          <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="space-y-4 pt-6">
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center">
+                          <svg className="w-4 h-4 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                           </svg>
                           Tournament Statistics
                         </h3>
                         <div className="space-y-4">
                           {tournamentStats.map((stat) => (
-                            <div key={stat.tournament_id} className="glass rounded-xl p-5 border border-white/30 hover:border-[#0066FF]/30 transition-all">
+                            <div key={stat.tournament_id} className="console-card bg-white rounded-2xl p-5 border border-slate-200/60 hover:border-amber-400/40 transition-all duration-200">
                               <div className="flex items-center justify-between mb-4">
                                 <div>
-                                  <h4 className="text-lg font-bold text-gray-900">{stat.tournament_name}</h4>
-                                  <span className="inline-block px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full mt-1 capitalize">
+                                  <h4 className="text-base font-bold text-slate-800 uppercase tracking-wide">{stat.tournament_name}</h4>
+                                  <span className="inline-block px-2.5 py-0.5 bg-purple-50 text-purple-700 border border-purple-200/40 text-[9px] font-bold rounded-full mt-1 uppercase tracking-wider">
                                     {stat.tournament_type}
                                   </span>
                                 </div>
                                 <div className="text-right">
-                                  <div className="text-2xl font-bold text-[#0066FF]">{stat.points}</div>
-                                  <div className="text-xs text-gray-500">Points</div>
+                                  <div className="text-2xl font-black text-blue-600">{stat.points}</div>
+                                  <div className="text-[8px] uppercase tracking-wider font-bold text-slate-400">Points</div>
                                 </div>
                               </div>
 
-                              <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                                <div className="text-center">
-                                  <div className="text-lg font-bold text-gray-900">{stat.matches_played}</div>
-                                  <div className="text-xs text-gray-600">Played</div>
+                              <div className="grid grid-cols-3 md:grid-cols-6 gap-3 text-[10px] font-bold uppercase tracking-wider text-center">
+                                <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                                  <div className="text-slate-800 font-extrabold">{stat.matches_played}</div>
+                                  <div className="text-slate-400 text-[8px]">Played</div>
                                 </div>
-                                <div className="text-center">
-                                  <div className="text-lg font-bold text-green-600">{stat.wins}</div>
-                                  <div className="text-xs text-gray-600">Wins</div>
+                                <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                                  <div className="text-green-600 font-extrabold">{stat.wins}</div>
+                                  <div className="text-slate-400 text-[8px]">Wins</div>
                                 </div>
-                                <div className="text-center">
-                                  <div className="text-lg font-bold text-yellow-600">{stat.draws}</div>
-                                  <div className="text-xs text-gray-600">Draws</div>
+                                <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                                  <div className="text-yellow-600 font-extrabold">{stat.draws}</div>
+                                  <div className="text-slate-400 text-[8px]">Draws</div>
                                 </div>
-                                <div className="text-center">
-                                  <div className="text-lg font-bold text-red-600">{stat.losses}</div>
-                                  <div className="text-xs text-gray-600">Losses</div>
+                                <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                                  <div className="text-red-600 font-extrabold">{stat.losses}</div>
+                                  <div className="text-slate-400 text-[8px]">Losses</div>
                                 </div>
-                                <div className="text-center">
-                                  <div className="text-lg font-bold text-emerald-600">{stat.goals_scored}</div>
-                                  <div className="text-xs text-gray-600">GF</div>
+                                <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                                  <div className="text-emerald-600 font-extrabold">{stat.goals_scored}</div>
+                                  <div className="text-slate-400 text-[8px]">GF</div>
                                 </div>
-                                <div className="text-center">
-                                  <div className="text-lg font-bold text-rose-600">{stat.goals_conceded}</div>
-                                  <div className="text-xs text-gray-600">GA</div>
+                                <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                                  <div className="text-rose-600 font-extrabold">{stat.goals_conceded}</div>
+                                  <div className="text-slate-400 text-[8px]">GA</div>
                                 </div>
                               </div>
 
-                              <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-gray-200">
-                                <div className="text-center">
-                                  <div className={`text-sm font-bold ${stat.goal_difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-slate-100 text-[10px] font-bold uppercase tracking-wider text-center">
+                                <div>
+                                  <div className={`font-extrabold ${stat.goal_difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                     {stat.goal_difference >= 0 ? '+' : ''}{stat.goal_difference}
                                   </div>
-                                  <div className="text-xs text-gray-600">GD</div>
+                                  <div className="text-slate-400 text-[8px]">GD</div>
                                 </div>
-                                <div className="text-center">
-                                  <div className="text-sm font-bold text-indigo-600">{stat.win_rate}%</div>
-                                  <div className="text-xs text-gray-600">Win Rate</div>
+                                <div>
+                                  <div className="text-indigo-600 font-extrabold">{stat.win_rate}%</div>
+                                  <div className="text-slate-400 text-[8px]">Win Rate</div>
                                 </div>
-                                <div className="text-center">
-                                  <div className="text-sm font-bold text-cyan-600">{stat.clean_sheets}</div>
-                                  <div className="text-xs text-gray-600">Clean Sheets</div>
+                                <div>
+                                  <div className="text-cyan-600 font-extrabold">{stat.clean_sheets}</div>
+                                  <div className="text-slate-400 text-[8px]">Clean Sheets</div>
                                 </div>
                               </div>
                             </div>
@@ -606,12 +662,12 @@ export default function TeamDetailPage() {
                       </div>
                     ) : (
                       !overallStats && (
-                        <div className="text-center py-12">
-                          <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        <div className="text-center py-16">
+                          <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                           </svg>
-                          <h3 className="text-xl font-medium text-gray-600 mb-2">No Statistics Available</h3>
-                          <p className="text-gray-500">This team hasn't played any matches yet this season</p>
+                          <h3 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-1">No Statistics</h3>
+                          <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">This team hasn't played any matches yet this season</p>
                         </div>
                       )
                     )}

@@ -23,6 +23,10 @@ export default function MobileNav() {
     if (href === '/') {
       return pathname === '/';
     }
+    // For dashboard links, only highlight if it's an exact match
+    if (href.includes('/dashboard/')) {
+      return pathname === href;
+    }
     return pathname.startsWith(href);
   };
 

@@ -91,7 +91,7 @@ export default function TournamentSelector() {
       <select
         value={selectedTournamentId || ''}
         onChange={(e) => setSelectedTournamentId(e.target.value)}
-        className="appearance-none flex items-center gap-2 px-4 py-2 pr-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all cursor-pointer"
+        className="appearance-none flex items-center gap-2 px-4 py-2 pr-10 bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl transition-all cursor-pointer font-mono text-xs font-bold uppercase tracking-wider"
       >
         {tournaments.map((tournament) => (
           <option key={tournament.id} value={tournament.id}>

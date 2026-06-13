@@ -167,10 +167,11 @@ export default function AuctionResultsPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading results...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Results...</p>
         </div>
       </div>
     );
@@ -178,19 +179,20 @@ export default function AuctionResultsPage() {
 
   if (rounds.length === 0) {
     return (
-      <div className="min-h-screen py-8 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="glass rounded-3xl p-8 text-center">
-            <div className="inline-flex items-center justify-center p-4 bg-gray-100 rounded-full mb-4">
-              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="max-w-xl mx-auto relative z-10 font-mono">
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-12 text-center shadow-sm">
+            <div className="inline-flex items-center justify-center p-4 bg-slate-50 border border-slate-200/60 rounded-full mb-4">
+              <svg className="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">No Completed Rounds Yet</h2>
-            <p className="text-gray-600 mb-6">Auction results will appear here after rounds are completed</p>
+            <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-2">No Completed Rounds Yet</h2>
+            <p className="text-xs text-slate-500 uppercase font-semibold mb-6">Auction results will appear here after rounds are completed</p>
             <Link
               href="/dashboard/team"
-              className="inline-block px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-red-600 transition-all"
+              className="inline-flex items-center justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all shadow-sm w-full"
             >
               Back to Dashboard
             </Link>
@@ -201,33 +203,36 @@ export default function AuctionResultsPage() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="container mx-auto max-w-6xl">
-        <div className="glass rounded-3xl p-6 sm:p-8 shadow-lg">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto relative z-10 space-y-6">
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 gap-4 flex-wrap font-mono">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Auction Results</h1>
-              <p className="text-gray-600 mt-1">{rounds.length} completed rounds</p>
+              <h1 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wider text-slate-800">Auction Results</h1>
+              <p className="text-xs text-slate-500 uppercase font-semibold mt-1">{rounds.length} completed rounds</p>
             </div>
             <Link
               href="/dashboard/team"
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
+              className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-bold"
             >
-              ← Back
+              Back
             </Link>
           </div>
 
           {/* Round Filter Pills */}
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Filter by Round</h3>
+          <div className="mb-6 font-mono">
+            <h3 className="text-[10px] uppercase font-bold text-slate-400 mb-3 tracking-wider">Filter by Round</h3>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedRound('all')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
                   selectedRound === 'all'
-                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-slate-800 text-white border-slate-900 shadow-sm'
+                    : 'bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50'
                 }`}
               >
                 All Rounds
@@ -236,13 +241,13 @@ export default function AuctionResultsPage() {
                 <button
                   key={round.round_id}
                   onClick={() => setSelectedRound(round.round_id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
                     selectedRound === round.round_id
-                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-slate-800 text-white border-slate-900 shadow-sm'
+                      : 'bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50'
                   }`}
                 >
-                  Round {round.round_number} - {round.position}
+                  Round {round.round_number} ({round.position})
                 </button>
               ))}
             </div>
@@ -252,40 +257,40 @@ export default function AuctionResultsPage() {
           {filteredRounds.map(round => (
             <div key={round.round_id} className="mb-8">
               {/* Round Header */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 mb-4 border border-blue-200">
-                <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 mb-4 font-mono">
+                <div className="flex items-center justify-between flex-wrap gap-4">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">
-                      Round {round.round_number} - {round.position}
+                    <h2 className="text-lg font-extrabold text-slate-800 uppercase tracking-wider">
+                      Round {round.round_number} ({round.position})
                     </h2>
-                    <p className="text-sm text-gray-600 mt-1">
-                      📅 Ended {new Date(round.end_time).toLocaleDateString()} • 
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mt-1.5">
+                      Ended {new Date(round.end_time).toLocaleDateString()} • 
                       {' '}{round.total_players} Players • 
                       {' '}{round.total_players > 0 ? Math.round((round.total_players - round.no_bids) / round.total_players * 100) : 0}% Participation
                     </p>
                   </div>
-                  <div className="flex gap-2">
-                    <span className="px-3 py-1 rounded-lg bg-green-100 text-green-700 text-sm font-medium">
-                      ✅ {round.your_wins} Won
+                  <div className="flex gap-2 text-xs font-bold uppercase tracking-wider">
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-700">
+                      Won: {round.your_wins}
                     </span>
-                    <span className="px-3 py-1 rounded-lg bg-red-100 text-red-700 text-sm font-medium">
-                      ❌ {round.your_losses} Lost
+                    <span className="px-2.5 py-1 rounded-lg bg-rose-50 border border-rose-100 text-rose-700">
+                      Lost: {round.your_losses}
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Sort Controls */}
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-gray-600">
-                  {round.players.length} player{round.players.length !== 1 ? 's' : ''} in this round
+              <div className="flex items-center justify-between mb-4 font-mono">
+                <p className="text-xs text-slate-400 uppercase font-bold">
+                  {round.players.length} player{round.players.length !== 1 ? 's' : ''} in round
                 </p>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Sort by:</span>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-slate-400 uppercase font-bold">Sort by:</span>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="px-3 py-1.5 rounded-xl border border-slate-200/60 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-bold uppercase tracking-wider text-[11px]"
                   >
                     <option value="amount">Bid Amount</option>
                     <option value="status">Status</option>
@@ -299,48 +304,48 @@ export default function AuctionResultsPage() {
                 {sortPlayers(round.players).map(player => {
                   const isExpanded = expandedPlayers.has(player.player_id);
                   const statusColor = player.your_bid?.won 
-                    ? 'border-green-500 bg-green-50/50' 
+                    ? 'border-l-emerald-500 bg-emerald-50/20 hover:bg-emerald-50/30' 
                     : player.your_bid 
-                    ? 'border-red-500 bg-red-50/50' 
-                    : 'border-gray-300 bg-gray-50/50';
+                    ? 'border-l-rose-500 bg-rose-50/20 hover:bg-rose-50/30' 
+                    : 'border-l-slate-400 bg-slate-50/30 hover:bg-slate-50/50';
 
                   return (
-                    <div key={player.player_id} className={`glass-card rounded-xl border-l-4 ${statusColor} overflow-hidden transition-all`}>
+                    <div key={player.player_id} className={`bg-white border border-slate-200/60 rounded-2xl border-l-4 ${statusColor} overflow-hidden transition-all duration-200 font-mono`}>
                       {/* Player Card Header */}
                       <div className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3 flex-1 min-w-0">
                             {/* Position Badge */}
-                            <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0 ${
+                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center border font-bold text-xs uppercase tracking-wider shrink-0 ${
                               player.your_bid?.won 
-                                ? 'bg-gradient-to-br from-green-500 to-emerald-600' 
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                                 : player.your_bid 
-                                ? 'bg-gradient-to-br from-red-500 to-rose-600'
-                                : 'bg-gradient-to-br from-gray-400 to-gray-600'
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : 'bg-slate-50 text-slate-600 border-slate-200'
                             }`}>
                               {player.position}
                             </div>
 
                             {/* Player Info */}
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 font-mono">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-bold text-gray-900 text-lg">{player.player_name}</h3>
-                                <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-xs font-medium">
-                                  {player.overall_rating} OVR
+                                <h3 className="font-extrabold text-slate-800 text-base uppercase tracking-wide">{player.player_name}</h3>
+                                <span className="text-xs font-black text-amber-500">
+                                  ★ {player.overall_rating}
                                 </span>
                                 {player.player_team && (
-                                  <span className="text-sm text-gray-600">{player.player_team}</span>
+                                  <span className="text-xs text-slate-400 uppercase font-bold">{player.player_team}</span>
                                 )}
                                 {/* Phase Badge */}
                                 {player.phase && (
-                                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                                    player.phase === 'phase1' ? 'bg-green-100 text-green-700' :
-                                    player.phase === 'phase2' ? 'bg-orange-100 text-orange-700' :
-                                    'bg-purple-100 text-purple-700'
+                                  <span className={`px-2.5 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider border ${
+                                    player.phase === 'phase1' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' :
+                                    player.phase === 'phase2' ? 'bg-amber-50 text-amber-700 border-amber-200/60' :
+                                    'bg-purple-50 text-purple-700 border-purple-200/60'
                                   }`}>
-                                    {player.phase === 'phase1' ? 'Phase 1: Regular' :
-                                     player.phase === 'phase2' ? 'Phase 2: Incomplete' :
-                                     'Phase 3: Random'}
+                                    {player.phase === 'phase1' ? 'Regular' :
+                                     player.phase === 'phase2' ? 'Incomplete' :
+                                     'Random'}
                                   </span>
                                 )}
                               </div>
@@ -355,33 +360,36 @@ export default function AuctionResultsPage() {
                               )}
 
                               {/* Bid Info */}
-                              <div className="flex flex-wrap items-center gap-3 mt-2">
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[11px] uppercase font-bold tracking-wider">
                                 {player.your_bid ? (
                                   <>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm text-gray-600">Your Bid:</span>
-                                      <span className="font-bold text-gray-900">£{player.your_bid.amount.toLocaleString()}</span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-slate-400">Your Bid:</span>
+                                      <span className="text-slate-800 font-black">£{player.your_bid.amount.toLocaleString()}</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm text-gray-600">Winner:</span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-slate-400">Winner:</span>
                                       {!player.your_bid.won && (
-                                        <span className="text-sm text-gray-700 font-medium">{player.winning_bid.team_name} •</span>
+                                        <span className="text-slate-700 font-extrabold">{player.winning_bid.team_name} (</span>
                                       )}
-                                      <span className={`font-bold ${player.your_bid.won ? 'text-green-600' : 'text-red-600'}`}>
+                                      <span className={`font-black ${player.your_bid.won ? 'text-emerald-600' : 'text-rose-600'}`}>
                                         £{player.winning_bid.amount.toLocaleString()}
                                       </span>
+                                      {!player.your_bid.won && (
+                                        <span className="text-slate-700 font-extrabold">)</span>
+                                      )}
                                     </div>
                                     {!player.your_bid.won && player.your_bid.lost_by > 0 && (
-                                      <span className="text-sm text-red-600 font-medium">
+                                      <span className="text-rose-600 font-black font-mono">
                                         Lost by £{player.your_bid.lost_by.toLocaleString()}
                                       </span>
                                     )}
                                   </>
                                 ) : (
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm text-gray-500">No bid placed</span>
-                                    <span className="text-sm text-gray-600">• Winner: {player.winning_bid.team_name}</span>
-                                    <span className="font-bold text-gray-900">£{player.winning_bid.amount.toLocaleString()}</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-slate-400">No bid placed</span>
+                                    <span className="text-slate-500 font-extrabold">• Winner: {player.winning_bid.team_name}</span>
+                                    <span className="text-slate-800 font-black">£{player.winning_bid.amount.toLocaleString()}</span>
                                   </div>
                                 )}
                               </div>
@@ -391,12 +399,12 @@ export default function AuctionResultsPage() {
                           {/* Status Badge & Expand Button */}
                           <div className="flex items-center gap-2 shrink-0">
                             {player.your_bid && (
-                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                              <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider ${
                                 player.your_bid.won 
-                                  ? 'bg-green-100 text-green-700' 
-                                  : 'bg-red-100 text-red-700'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' 
+                                  : 'bg-rose-50 text-rose-700 border-rose-200/60'
                               }`}>
-                                {player.your_bid.won ? '✓ WON' : '✗ LOST'}
+                                {player.your_bid.won ? 'WON' : 'LOST'}
                               </span>
                             )}
                             <button
@@ -419,23 +427,20 @@ export default function AuctionResultsPage() {
 
                       {/* Expanded View - All Bids */}
                       {isExpanded && (
-                        <div className="border-t border-gray-200 bg-white/50 p-4">
-                          <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
+                        <div className="border-t border-slate-100 bg-slate-50/20 p-4 font-mono">
+                          <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
                             All Bids ({player.total_bids})
                           </h4>
-                          <div className="space-y-2">
+                          <div className="space-y-2 text-xs font-bold uppercase tracking-wider">
                             {player.all_bids.map((bid, idx) => (
                               <div 
                                 key={idx} 
-                                className={`flex items-center justify-between p-3 rounded-lg ${
+                                className={`flex items-center justify-between p-3 rounded-xl border ${
                                   bid.is_winner 
-                                    ? 'bg-green-100 border border-green-300' 
+                                    ? 'bg-emerald-50 border-emerald-200/60 text-emerald-800' 
                                     : bid.is_you 
-                                    ? 'bg-blue-50 border border-blue-200'
-                                    : 'bg-gray-50'
+                                    ? 'bg-blue-50 border-blue-200/60 text-blue-800'
+                                    : 'bg-slate-50/60 border-slate-200/30 text-slate-700'
                                 }`}
                               >
                                 <div className="flex items-center gap-2">

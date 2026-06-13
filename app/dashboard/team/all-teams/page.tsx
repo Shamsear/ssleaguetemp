@@ -234,21 +234,21 @@ export default function AllTeamsPage() {
 
   const getPositionColor = (position: string) => {
     const colors: { [key: string]: string } = {
-      GK: 'bg-yellow-100 text-yellow-800',
-      CB: 'bg-red-100 text-red-800',
-      LB: 'bg-orange-100 text-orange-800',
-      RB: 'bg-orange-100 text-orange-800',
-      DMF: 'bg-blue-100 text-blue-800',
-      CMF: 'bg-sky-100 text-sky-800',
-      AMF: 'bg-cyan-100 text-cyan-800',
-      LMF: 'bg-teal-100 text-teal-800',
-      RMF: 'bg-teal-100 text-teal-800',
-      LWF: 'bg-green-100 text-green-800',
-      RWF: 'bg-green-100 text-green-800',
-      SS: 'bg-purple-100 text-purple-800',
-      CF: 'bg-pink-100 text-pink-800',
+      GK: 'bg-amber-50 text-amber-700 border border-amber-200/40',
+      CB: 'bg-rose-50 text-rose-700 border border-rose-200/40',
+      LB: 'bg-rose-50/60 text-rose-700 border border-rose-200/30',
+      RB: 'bg-rose-50/60 text-rose-700 border border-rose-200/30',
+      DMF: 'bg-indigo-50 text-indigo-700 border border-indigo-200/40',
+      CMF: 'bg-sky-50 text-sky-700 border border-sky-200/40',
+      AMF: 'bg-violet-50 text-violet-700 border border-violet-200/40',
+      LMF: 'bg-sky-50/60 text-sky-700 border border-sky-200/30',
+      RMF: 'bg-sky-50/60 text-sky-700 border border-sky-200/30',
+      LWF: 'bg-emerald-50/60 text-emerald-700 border border-emerald-200/30',
+      RWF: 'bg-emerald-50/60 text-emerald-700 border border-emerald-200/30',
+      SS: 'bg-emerald-50 text-emerald-700 border border-emerald-200/40',
+      CF: 'bg-emerald-50 text-emerald-700 border border-emerald-200/40',
     };
-    return colors[position] || 'bg-gray-100 text-gray-800';
+    return colors[position] || 'bg-slate-50 text-slate-700 border border-slate-200/40';
   };
 
 
@@ -256,10 +256,11 @@ export default function AllTeamsPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading teams...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Teams...</p>
         </div>
       </div>
     );
@@ -271,16 +272,20 @@ export default function AllTeamsPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="glass rounded-3xl p-8 max-w-2xl mx-auto text-center">
-          <div className="text-red-600 mb-4">
-            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="console-bg min-h-screen flex items-center justify-center relative px-4">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-8 max-w-md w-full mx-auto text-center relative z-10 font-mono">
+          <div className="text-rose-500 mb-4">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-dark mb-2">Error Loading Teams</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Link href="/dashboard" className="text-[#0066FF] hover:underline">
+          <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-2">Error Loading Teams</h2>
+          <p className="text-xs text-slate-500 uppercase font-semibold mb-6">{error}</p>
+          <Link 
+            href="/dashboard" 
+            className="inline-flex items-center justify-center px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl text-xs uppercase tracking-wider font-bold transition-all shadow-sm w-full"
+          >
             Back to Dashboard
           </Link>
         </div>
@@ -289,21 +294,24 @@ export default function AllTeamsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="glass rounded-3xl p-6 sm:p-8 max-w-7xl mx-auto hover:shadow-lg transition-all duration-300">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-dark">All Teams</h1>
-            <p className="text-sm text-gray-600 mt-1">
-              Season: <span className="font-semibold text-[#0066FF]">{seasonName}</span>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="font-mono">
+            <h1 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wider text-slate-800">All Teams</h1>
+            <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
+              Season: <span className="font-extrabold text-amber-500">{seasonName}</span>
             </p>
           </div>
           <Link 
             href="/dashboard" 
-            className="flex items-center text-gray-600 hover:text-[#0066FF] transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-bold"
           >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             <span>Back to Dashboard</span>
@@ -311,14 +319,12 @@ export default function AllTeamsPage() {
         </div>
 
         {/* Teams Count Badge */}
-        <div className="mb-6">
-          <div className="inline-flex items-center bg-blue-50 rounded-lg px-4 py-2">
-            <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200/60 rounded-xl font-mono text-xs uppercase tracking-wider font-bold shadow-sm">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            <span className="text-blue-800 font-medium">
-              {teams.length} Team{teams.length !== 1 ? 's' : ''} Registered
-            </span>
+            <span>{teams.length} Team{teams.length !== 1 ? 's' : ''} Registered</span>
           </div>
         </div>
 
@@ -327,12 +333,12 @@ export default function AllTeamsPage() {
             {teams.map((teamData) => (
               <div 
                 key={teamData.team.id} 
-                className="glass rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] bg-white/60"
+                className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 hover:border-amber-400/40 hover:shadow-md transition-all duration-200 font-mono flex flex-col justify-between"
               >
-                <div className="p-6">
+                <div>
                   {/* Team Header */}
-                  <div className="flex items-center mb-4">
-                    <div className="h-14 w-14 flex-shrink-0 bg-[#0066FF]/10 rounded-lg flex items-center justify-center mr-3 p-1.5">
+                  <div className="flex items-center mb-4 gap-3">
+                    <div className="h-14 w-14 flex-shrink-0 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-center p-1.5 relative overflow-hidden shadow-inner">
                       {teamData.team.logoUrl ? (
                         <Image 
                           src={teamData.team.logoUrl} 
@@ -342,148 +348,133 @@ export default function AllTeamsPage() {
                           className="object-contain w-full h-full"
                         />
                       ) : (
-                        <svg className="w-6 h-6 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                       )}
                     </div>
-                    <h2 className="text-xl font-bold text-dark">{teamData.team.name}</h2>
+                    <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wide leading-tight">{teamData.team.name}</h2>
                   </div>
 
-                  {/* Team Stats */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
-                      <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      ⚽ {teamData.footballPlayersCount}/{maxPlayers}
-                    </span>
-                    
-                    {seasonType === 'multi' && teamData.realPlayersCount > 0 && (
-                      <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-800">
-                        <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        👤 {teamData.realPlayersCount}
+                  {/* Team Stats Grid */}
+                  <div className="grid grid-cols-2 gap-2 mb-4 text-[10px] uppercase font-bold tracking-wider">
+                    {/* Players Count */}
+                    <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
+                      <span className="text-slate-400 text-[8px] mb-1">Squad Players</span>
+                      <span className="text-slate-700 flex items-center gap-1 font-mono">
+                        ⚽ {teamData.footballPlayersCount} / {maxPlayers}
                       </span>
+                    </div>
+
+                    {seasonType === 'multi' && (
+                      <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
+                        <span className="text-slate-400 text-[8px] mb-1">Real Players</span>
+                        <span className="text-slate-700 flex items-center gap-1 font-mono">
+                          👤 {teamData.realPlayersCount}
+                        </span>
+                      </div>
                     )}
-                    
+
+                    {/* Currencies */}
                     {seasonType === 'multi' || teamData.team.currencySystem === 'dual' ? (
                       <>
-                        <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
-                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          eCoin Spent: {(teamData.team.footballSpent || 0).toLocaleString()}
-                        </span>
-                        <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
-                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          SSCoin Spent: {(teamData.team.realPlayerSpent || 0).toLocaleString()}
-                        </span>
-                        <span className="inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-800">
-                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          eCoin Left: {(teamData.team.footballBudget || 0).toLocaleString()}
-                        </span>
-                        <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-800">
-                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          SSCoin Left: {(teamData.team.realPlayerBudget || 0).toLocaleString()}
-                        </span>
+                        <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between col-span-1">
+                          <span className="text-slate-400 text-[8px] mb-1">eCoin Spent</span>
+                          <span className="text-blue-600 font-extrabold font-mono text-xs">
+                            {(teamData.team.footballSpent || 0).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between col-span-1">
+                          <span className="text-slate-400 text-[8px] mb-1">SSCoin Spent</span>
+                          <span className="text-purple-600 font-extrabold font-mono text-xs">
+                            {(teamData.team.realPlayerSpent || 0).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between col-span-1">
+                          <span className="text-slate-400 text-[8px] mb-1">eCoin Left</span>
+                          <span className="text-indigo-600 font-extrabold font-mono text-xs">
+                            {(teamData.team.footballBudget || 0).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between col-span-1">
+                          <span className="text-slate-400 text-[8px] mb-1">SSCoin Left</span>
+                          <span className="text-amber-600 font-extrabold font-mono text-xs">
+                            {(teamData.team.realPlayerBudget || 0).toLocaleString()}
+                          </span>
+                        </div>
                       </>
                     ) : (
                       <>
-                        <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
-                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          Spent: {teamData.totalValue.toLocaleString()}
-                        </span>
-                        <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-800">
-                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          Left: {teamData.team.balance.toLocaleString()}
-                        </span>
+                        <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between col-span-1">
+                          <span className="text-slate-400 text-[8px] mb-1">Spent</span>
+                          <span className="text-emerald-600 font-extrabold font-mono text-xs">
+                            {teamData.totalValue.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between col-span-1">
+                          <span className="text-slate-400 text-[8px] mb-1">Left</span>
+                          <span className="text-amber-600 font-extrabold font-mono text-xs">
+                            {teamData.team.balance.toLocaleString()}
+                          </span>
+                        </div>
                       </>
                     )}
                   </div>
 
                   {/* Average Rating */}
                   {teamData.avgRating > 0 && (
-                    <div className="mb-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">Avg. Rating</span>
-                        <span className="text-2xl font-bold text-orange-600">
-                          {teamData.avgRating.toFixed(1)}
+                    <div className="mb-4 p-3 bg-amber-50/50 border border-amber-200/50 rounded-xl">
+                      <div className="flex items-center justify-between font-mono">
+                        <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Squad Avg Rating</span>
+                        <span className="text-lg font-black text-amber-500">
+                          ★ {teamData.avgRating.toFixed(1)}
                         </span>
                       </div>
                     </div>
                   )}
 
                   {/* Squad Composition */}
-                  <div className="mb-4">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">Squad Composition</h3>
-                    <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-1">
-                      {POSITIONS.slice(0, 12).map((position) => {
+                  <div className="space-y-2 mb-4">
+                    <h3 className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Squad Composition</h3>
+                    <div className="grid grid-cols-4 gap-1 text-[9px] font-mono font-bold">
+                      {POSITIONS.map((position) => {
                         const count = teamData.positionBreakdown[position] || 0;
                         return (
-                          <div key={position} className="text-center">
-                            <div 
-                              className={`rounded-lg p-1.5 ${getPositionColor(position)} ${
-                                count === 0 ? 'opacity-40' : ''
-                              }`}
-                            >
-                              <div className="text-xs font-bold">{position}</div>
-                              <div className="text-sm font-bold">{count}</div>
-                            </div>
+                          <div 
+                            key={position} 
+                            className={`rounded-lg py-1 px-1.5 flex justify-between items-center ${getPositionColor(position)} ${
+                              count === 0 ? 'opacity-30' : ''
+                            }`}
+                          >
+                            <span>{position}</span>
+                            <span className="font-extrabold">{count}</span>
                           </div>
                         );
                       })}
                     </div>
-                    {/* CF position - full width */}
-                    {POSITIONS.slice(12).map((position) => {
-                      const count = teamData.positionBreakdown[position] || 0;
-                      return (
-                        <div key={position} className="mt-1">
-                          <div 
-                            className={`rounded-lg p-1.5 text-center ${getPositionColor(position)} ${
-                              count === 0 ? 'opacity-40' : ''
-                            }`}
-                          >
-                            <span className="text-xs font-bold mr-2">{position}</span>
-                            <span className="text-sm font-bold">{count}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
                   </div>
+                </div>
 
-                  {/* View Squad Button */}
-                  <div className="mt-4">
-                    <Link
-                      href={`/dashboard/team/squad/${teamData.team.id}`}
-                      className="block w-full py-2 px-4 bg-[#0066FF] text-white rounded-lg text-center font-medium hover:bg-[#0052CC] transition-colors"
-                    >
-                      View Squad
-                    </Link>
-                  </div>
+                {/* View Squad Button */}
+                <div className="mt-auto pt-3 border-t border-slate-100">
+                  <Link
+                    href={`/dashboard/team/squad/${teamData.team.id}`}
+                    className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all shadow-sm"
+                  >
+                    View Squad
+                  </Link>
                 </div>
               </div>
             ))}
           </div>
         ) : (
           /* No Teams Message */
-          <div className="text-center py-12">
-            <svg className="w-20 h-20 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-12 text-center shadow-sm">
+            <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No Teams Found</h3>
-            <p className="text-gray-500">No teams are registered for this season yet.</p>
+            <h3 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-2">No Teams Found</h3>
+            <p className="text-xs text-slate-500 font-semibold uppercase">No teams are registered for this season yet.</p>
           </div>
         )}
       </div>

@@ -188,7 +188,6 @@ export async function POST(request: NextRequest) {
           is_locked = true,
           locked_at = NOW(),
           locked_by = 'system',
-          locked_reason = 'Matchups created',
           updated_at = NOW()
         WHERE fixture_id = ${fixture_id}
           AND team_id = ${homeTeamId}
@@ -269,7 +268,6 @@ export async function POST(request: NextRequest) {
             is_locked = true,
             locked_at = NOW(),
             locked_by = 'system',
-            locked_reason = 'Auto-submitted (5 players)',
             submitted_at = NOW(),
             submitted_by = 'system',
             updated_at = NOW()
@@ -343,7 +341,6 @@ export async function POST(request: NextRequest) {
               is_valid,
               locked_at,
               locked_by,
-              locked_reason,
               selected_by_opponent,
               submitted_by
             ) VALUES (
@@ -359,7 +356,6 @@ export async function POST(request: NextRequest) {
               false,
               NOW(),
               'system',
-              'Missed deadline after warning',
               false,
               'system'
             )
@@ -368,7 +364,6 @@ export async function POST(request: NextRequest) {
               is_locked = true,
               locked_at = NOW(),
               locked_by = 'system',
-              locked_reason = 'Missed deadline after warning',
               updated_at = NOW()
           `;
           
@@ -409,7 +404,6 @@ export async function POST(request: NextRequest) {
           is_locked = true,
           locked_at = NOW(),
           locked_by = 'system',
-          locked_reason = 'Round started',
           updated_at = NOW()
         WHERE fixture_id = ${fixture_id}
           AND team_id = ${awayTeamId}

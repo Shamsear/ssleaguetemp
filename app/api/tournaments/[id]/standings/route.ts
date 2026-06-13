@@ -99,6 +99,30 @@ export async function GET(
       `;
     }
 
+    // Fetch all knockout fixtures (both completed and pending/scheduled)
+    let knockoutFixturesList: any[] = [];
+    if (tournament.has_knockout_stage || tournament.is_pure_knockout) {
+      knockoutFixturesList = await sql`
+        SELECT 
+          id,
+          home_team_id,
+          home_team_name,
+          away_team_id,
+          away_team_name,
+          home_score,
+          away_score,
+          status,
+          result,
+          group_name,
+          knockout_round,
+          round_number
+        FROM fixtures
+        WHERE tournament_id = ${tournamentId}
+          AND knockout_round IS NOT NULL
+          AND knockout_round != ''
+      `;
+    }
+
     // Handle different tournament formats
     if (tournament.has_group_stage) {
       // Group Stage format - calculate standings per group
@@ -111,7 +135,7 @@ export async function GET(
         format: 'group_stage',
         has_knockout: tournament.has_knockout_stage,
         groupStandings,
-        knockoutFixtures: tournament.has_knockout_stage ? getKnockoutFixtures(fixtures) : null,
+        knockoutFixtures: tournament.has_knockout_stage ? getKnockoutFixtures(knockoutFixturesList) : null,
       });
     } else if (tournament.is_pure_knockout) {
       // Pure Knockout format
@@ -120,7 +144,7 @@ export async function GET(
         tournament_name: tournament.tournament_name,
         season_name: seasonName,
         format: 'knockout',
-        knockoutFixtures: getKnockoutFixtures(fixtures),
+        knockoutFixtures: getKnockoutFixtures(knockoutFixturesList),
       });
     } else {
       // League format (or League + Knockout)
@@ -143,7 +167,7 @@ export async function GET(
         has_knockout: tournament.has_knockout_stage,
         playoff_spots: playoffSpots,
         standings,
-        knockoutFixtures: tournament.has_knockout_stage ? getKnockoutFixtures(fixtures) : null,
+        knockoutFixtures: tournament.has_knockout_stage ? getKnockoutFixtures(knockoutFixturesList) : null,
       });
     }
   } catch (error: any) {

@@ -1465,8 +1465,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
   const phaseInfo = getPhaseInfo();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50">
-      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 max-w-7xl">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Decorative eSports glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
         {/* Lineup Deadline Monitor - Only show for manual mode */}
         {matchupMode !== 'blind_lineup' && roundDeadlines && roundDeadlines.scheduled_date && roundDeadlines.round_start_time && (
           <div className="mb-6">
@@ -1484,18 +1486,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         <div className="mb-4 sm:mb-6">
           <Link
             href="/dashboard/team/matches"
-            className="group inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-700 hover:text-indigo-600 mb-4 sm:mb-6 font-medium transition-all rounded-xl shadow-sm hover:shadow-md border border-gray-200 hover:border-indigo-300"
+            className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all mb-4"
           >
-            <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            <span className="text-sm sm:text-base">Back to Matches</span>
+            ← Back to Matches
           </Link>
 
-          <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 p-5 sm:p-8 overflow-hidden">
-            {/* Decorative background elements */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full blur-3xl opacity-30 -z-10"></div>
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-cyan-100 to-blue-100 rounded-full blur-3xl opacity-30 -z-10"></div>
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-8 shadow-sm overflow-hidden relative">
+
             {/* Title and Phase Badge */}
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 sm:mb-8">
               <div className="flex-1">
@@ -1506,7 +1503,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     </svg>
                   </div>
                   <div>
-                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 via-indigo-900 to-purple-900 bg-clip-text text-transparent">
+                    <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">FIXTURE</span>
+                    <h1 className="text-2xl font-mono font-bold text-slate-800 uppercase tracking-wide">
                       {fixture.knockout_round ? (
                         <>
                           {fixture.knockout_round === 'quarter_finals' && '⚔️ Quarter Finals'}
@@ -1527,21 +1525,21 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           KNOCKOUT
                         </span>
                       )}
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold font-mono uppercase tracking-wider border border-indigo-200 rounded-full">
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                         </svg>
                         {fixture.leg === 'first' ? '1st' : '2nd'} Leg
                       </span>
                       {scoringSystem && scoringSystem !== tournamentSystem && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-medium rounded-full">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold font-mono uppercase tracking-wider border border-amber-200 rounded-full">
                           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
                           </svg>
                           {scoringSystem === 'wins' ? 'Win-Based' : 'Goal-Based'} Scoring
                         </span>
                       )}
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 text-xs font-medium rounded-full">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold font-mono uppercase tracking-wider border border-purple-200 rounded-full">
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
                           <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
@@ -1553,12 +1551,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 </div>
               </div>
               <div className="flex flex-col gap-2">
-                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold shadow-lg whitespace-nowrap ${phaseInfo.color === 'yellow' ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white' :
-                  phaseInfo.color === 'blue' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' :
-                    phaseInfo.color === 'purple' ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white' :
-                      phaseInfo.color === 'green' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' :
-                        'bg-gradient-to-r from-gray-400 to-gray-500 text-white'
-                  }`}>
+                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider border whitespace-nowrap ${
+                  phaseInfo.color === 'yellow' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                  phaseInfo.color === 'blue' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                  phaseInfo.color === 'purple' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                  phaseInfo.color === 'green' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                  'bg-slate-50 text-slate-700 border-slate-200'
+                }`}>
                   <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
                   {phaseInfo.label}
                 </span>
@@ -1566,22 +1565,17 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             </div>
 
             {/* Teams VS */}
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 sm:gap-6 items-center mb-6 sm:mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 sm:gap-6 items-center mb-6 sm:mb-8 font-mono">
               {/* Home Team */}
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
-                <div className="relative bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium text-blue-600 uppercase tracking-wide">Home Team</div>
-                      <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate">
-                        {fixture.home_team_name}
-                      </div>
+              <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center shadow-sm">
+                    🏠
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Home Team</div>
+                    <div className="text-lg sm:text-xl font-bold text-slate-800 uppercase tracking-wide truncate">
+                      {fixture.home_team_name}
                     </div>
                   </div>
                 </div>
@@ -1589,29 +1583,21 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
               {/* VS Badge */}
               <div className="flex justify-center items-center">
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur-lg opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                  <div className="relative bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-xl sm:text-2xl font-black shadow-2xl transform group-hover:scale-110 transition-transform">
-                    <span className="animate-pulse">VS</span>
-                  </div>
+                <div className="relative bg-slate-800 text-white rounded-full w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-sm sm:text-base font-black shadow-md border-4 border-slate-200">
+                  <span>VS</span>
                 </div>
               </div>
 
               {/* Away Team */}
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
-                <div className="relative bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium text-purple-600 uppercase tracking-wide">Away Team</div>
-                      <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate">
-                        {fixture.away_team_name}
-                      </div>
+              <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center shadow-sm">
+                    ✈️
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Away Team</div>
+                    <div className="text-lg sm:text-xl font-bold text-slate-800 uppercase tracking-wide truncate">
+                      {fixture.away_team_name}
                     </div>
                   </div>
                 </div>
@@ -1621,25 +1607,22 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
             {/* Phase Info & Deadlines - Only show for manual mode */}
             {matchupMode !== 'blind_lineup' && (
-              <div className="relative overflow-hidden p-4 sm:p-5 bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 rounded-xl sm:rounded-2xl border border-indigo-100 shadow-inner">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-200 to-purple-200 rounded-full blur-2xl opacity-20"></div>
-                <div className="relative flex items-start gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="console-card bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono relative overflow-hidden">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-amber-50 text-amber-600 border border-amber-200 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm sm:text-base text-gray-800 font-semibold mb-2">{phaseInfo.description}</p>
+                    <p className="text-xs text-slate-800 font-bold uppercase tracking-wider mb-2">{phaseInfo.description}</p>
                     {roundDeadlines && lineupDeadline && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] text-slate-500 uppercase tracking-wider font-bold">
                         <div className="flex items-center gap-2">
-                          <span className="text-base">📅</span>
-                          <span>Match: {roundDeadlines.scheduled_date}</span>
+                          <span>📅 Match Date: {roundDeadlines.scheduled_date}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-base">⏰</span>
-                          <span>Lineup Deadline: {lineupDeadline.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST</span>
+                          <span>⏰ Lineup Deadline: {lineupDeadline.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST</span>
                         </div>
                       </div>
                     )}
@@ -1651,19 +1634,19 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
             {/* Lineup Submission Section - Only show for manual mode */}
             {matchupMode !== 'blind_lineup' && (
-              <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 p-5 sm:p-8 overflow-hidden mb-6">
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-8 shadow-sm overflow-hidden relative mb-6">
                 <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full blur-3xl opacity-20 -z-10"></div>
 
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center shadow-sm">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                       </svg>
                     </div>
-                    <div>
-                      <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 to-purple-900 bg-clip-text text-transparent">Team Lineups</h2>
-                      <p className="text-xs sm:text-sm text-gray-600 mt-1">Submit your starting XI and substitutes</p>
+                    <div className="font-mono">
+                      <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Team Lineups</h2>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Submit your starting XI and substitutes</p>
                     </div>
                   </div>
                 </div>
@@ -1688,21 +1671,16 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                   const isOpen = canSubmitLineup || canHomeEdit || canEditDuringFixtureEntry;
 
                   return (
-                    <div className={`mb-4 p-4 rounded-xl border-2 ${isOpen
-                      ? 'bg-green-50 border-green-300'
-                      : 'bg-red-50 border-red-300'
+                    <div className={`mb-4 p-4 rounded-xl border font-mono ${isOpen
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      : 'bg-red-50 text-red-800 border-red-200'
                       }`}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <svg className={`w-5 h-5 ${isOpen ? 'text-green-600' : 'text-red-600'
-                          }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span className={`text-sm font-semibold ${isOpen ? 'text-green-900' : 'text-red-900'
-                          }`}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isOpen ? 'text-emerald-700' : 'text-red-700'}`}>
                           {isOpen ? '✓ Lineup Submission Open' : '⏰ Lineup Submission Closed'}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-700">
+                      <p className="text-[10px] font-bold uppercase tracking-wider opacity-85">
                         {canEditDuringFixtureEntry
                           ? `⚡ Both teams can edit lineup & create fixture until: ${awayDeadline?.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'short', timeStyle: 'medium' })} IST (First to submit wins!)`
                           : canHomeEdit && !canSubmitLineup
@@ -1719,25 +1697,19 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 {/* Lineup Status Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   {/* Home Team Lineup Status */}
-                  <div className={`p-4 rounded-xl border-2 transition-all ${homeLineupSubmitted
-                    ? 'bg-green-50 border-green-300'
-                    : 'bg-gray-50 border-gray-300'
+                  <div className={`p-4 rounded-xl border transition-all font-mono ${homeLineupSubmitted
+                    ? 'bg-emerald-50/20 border-emerald-200'
+                    : 'bg-slate-50 border-slate-200'
                     }`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                        </svg>
-                        <span className="text-sm font-semibold text-gray-900">🏠 {fixture.home_team_name}</span>
+                        <span className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">🏠 {fixture.home_team_name}</span>
                       </div>
                       {homeLineupSubmitted && (
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                        </svg>
+                        <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">SUBMITTED</span>
                       )}
                     </div>
-                    <p className={`text-xs font-medium ${homeLineupSubmitted ? 'text-green-700' : 'text-gray-600'
-                      }`}>
+                    <p className={`text-[10px] font-bold uppercase tracking-wider ${homeLineupSubmitted ? 'text-emerald-700' : 'text-slate-400'}`}>
                       {homeLineupSubmitted
                         ? '✓ Lineup Submitted'
                         : '⏳ Waiting for lineup'}
@@ -1745,25 +1717,19 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                   </div>
 
                   {/* Away Team Lineup Status */}
-                  <div className={`p-4 rounded-xl border-2 transition-all ${awayLineupSubmitted
-                    ? 'bg-green-50 border-green-300'
-                    : 'bg-gray-50 border-gray-300'
+                  <div className={`p-4 rounded-xl border transition-all font-mono ${awayLineupSubmitted
+                    ? 'bg-emerald-50/20 border-emerald-200'
+                    : 'bg-slate-50 border-slate-200'
                     }`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
-                        <span className="text-sm font-semibold text-gray-900">✈️ {fixture.away_team_name}</span>
+                        <span className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">✈️ {fixture.away_team_name}</span>
                       </div>
                       {awayLineupSubmitted && (
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                        </svg>
+                        <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">SUBMITTED</span>
                       )}
                     </div>
-                    <p className={`text-xs font-medium ${awayLineupSubmitted ? 'text-green-700' : 'text-gray-600'
-                      }`}>
+                    <p className={`text-[10px] font-bold uppercase tracking-wider ${awayLineupSubmitted ? 'text-emerald-700' : 'text-slate-400'}`}>
                       {awayLineupSubmitted
                         ? '✓ Lineup Submitted'
                         : '⏳ Waiting for lineup'}
@@ -1796,22 +1762,14 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       <>
                         <Link
                           href={`/dashboard/team/fixture/${fixtureId}/lineup`}
-                          className="group relative w-full px-5 py-4 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white font-bold rounded-2xl hover:from-purple-700 hover:via-pink-700 hover:to-purple-700 transition-all shadow-xl hover:shadow-2xl hover:scale-[1.02] flex items-center justify-center gap-3 overflow-hidden"
+                          className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all"
                         >
-                          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 group-hover:animate-shimmer"></div>
-                          <div className="relative flex items-center gap-3">
-                            <svg className="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                            </svg>
-                            <span className="text-base sm:text-lg">
-                              {isHomeTeam && homeLineupSubmitted ? '✏️ Edit Your Lineup' :
-                                !isHomeTeam && awayLineupSubmitted ? '✏️ Edit Your Lineup' :
-                                  '📝 Submit Your Lineup'}
-                            </span>
-                          </div>
+                          {isHomeTeam && homeLineupSubmitted ? 'Edit Your Lineup' :
+                           !isHomeTeam && awayLineupSubmitted ? 'Edit Your Lineup' :
+                           'Submit Your Lineup'}
                         </Link>
                         {canHomeEdit && matchups.length > 0 && (
-                          <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                          <div className="mt-3 p-3 bg-orange-50/20 border border-orange-200 rounded-xl">
                             <div className="flex items-start gap-2">
                               <svg className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -1867,21 +1825,21 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         </div>
 
         {/* Matchups Section */}
-        <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 p-5 sm:p-8 overflow-hidden">
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-8 shadow-sm overflow-hidden relative">
           {/* Decorative elements */}
           <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full blur-3xl opacity-20 -z-10"></div>
 
-          <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center shadow-sm">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 to-indigo-900 bg-clip-text text-transparent">Player Matchups</h2>
+              <div className="font-mono">
+                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Player Matchups</h2>
                 {matchups.length > 0 && (
-                  <p className="text-xs sm:text-sm text-gray-600 mt-1">{matchups.length} matches configured</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{matchups.length} matches configured</p>
                 )}
               </div>
             </div>
@@ -1995,7 +1953,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               <button
                 onClick={handleCreateMatchups}
                 disabled={isSaving}
-                className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold text-sm sm:text-base rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full inline-flex items-center justify-center px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? (
                   <span className="flex items-center justify-center gap-2">
@@ -2021,7 +1979,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 {/* WhatsApp Share Button */}
                 <button
                   onClick={handleWhatsAppShare}
-                  className="group relative px-5 py-4 bg-gradient-to-r from-green-500 via-green-600 to-emerald-600 text-white font-bold rounded-2xl hover:from-green-600 hover:via-green-700 hover:to-emerald-700 transition-all shadow-xl hover:shadow-2xl hover:scale-[1.02] flex items-center justify-center gap-3 overflow-hidden"
+                  className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 group-hover:animate-shimmer"></div>
                   <div className="relative flex items-center gap-3">
@@ -2050,7 +2008,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       });
                     });
                   }}
-                  className="group relative px-5 py-4 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 text-white font-bold rounded-2xl hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 transition-all shadow-xl hover:shadow-2xl hover:scale-[1.02] flex items-center justify-center gap-3 overflow-hidden"
+                  className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 group-hover:animate-shimmer"></div>
                   <div className="relative flex items-center gap-3">
@@ -2066,7 +2024,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               {canEditMatchups && !isEditMode && (
                 <button
                   onClick={() => setIsEditMode(true)}
-                  className="group relative w-full px-5 py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-bold rounded-2xl hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all shadow-xl hover:shadow-2xl hover:scale-[1.02] flex items-center justify-center gap-3 overflow-hidden"
+                  className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 group-hover:animate-shimmer"></div>
                   <div className="relative flex items-center gap-3">
@@ -2081,17 +2039,16 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               {canEditMatchups && isEditMode ? (
                 // Edit Mode
                 <>
-                  <div className="relative overflow-hidden bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-300 rounded-2xl p-5 mb-4 shadow-lg">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full blur-2xl opacity-30"></div>
-                    <div className="relative flex items-start gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="console-card bg-slate-50 border border-slate-200/60 rounded-2xl p-5 mb-4 shadow-sm font-mono relative overflow-hidden">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-blue-900 mb-1">📝 Edit Mode Active</p>
-                        <p className="text-xs text-blue-700">Change away player assignments and match durations</p>
+                        <p className="text-xs text-slate-800 font-bold uppercase tracking-wider mb-1">📝 Edit Mode Active</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Change away player assignments and match durations</p>
                       </div>
                     </div>
                   </div>
@@ -2139,7 +2096,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               }
                               setMatchups(newMatchups);
                             }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 text-xs font-mono font-bold uppercase tracking-wider border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none transition-all cursor-pointer"
                           >
                             <option value="">-- Select Player --</option>
                             {awayStartingXI
@@ -2199,7 +2156,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     <button
                       onClick={() => setIsEditMode(false)}
                       disabled={isSaving}
-                      className="flex-1 px-5 py-3.5 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 font-bold rounded-xl hover:from-gray-300 hover:to-gray-400 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <span className="flex items-center justify-center gap-2">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2237,7 +2194,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         }
                       }}
                       disabled={isSaving}
-                      className="flex-1 px-5 py-3.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <span className="flex items-center justify-center gap-2">
                         {isSaving ? (
@@ -2313,14 +2270,14 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     const winner = homeTotalScore > awayTotalScore ? 'home' : awayTotalScore > homeTotalScore ? 'away' : 'draw';
 
                     return (
-                      <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-2 border-blue-300 rounded-2xl p-4 sm:p-6 shadow-xl">
+                      <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-6 shadow-sm font-mono">
                         <h3 className="text-center text-sm font-semibold text-gray-600 mb-4">
                           Match Result {tournamentSystem === 'wins' && '(Points)'}
                         </h3>
                         <div className="grid grid-cols-3 gap-4 items-center mb-4">
                           {/* Home Total */}
-                          <div className={`text-center p-4 rounded-xl ${winner === 'home' ? 'bg-green-500 text-white shadow-lg scale-105' : 'bg-white text-gray-700'
-                            } transition-all`}>
+                          <div className={`text-center p-4 rounded-2xl border transition-all ${winner === 'home' ? 'bg-emerald-50/30 border-emerald-500 text-emerald-800 font-bold scale-105' : 'bg-slate-50 border-slate-200 text-slate-700'
+                            }`}>
                             <div className="text-xs sm:text-sm font-medium mb-1">{fixture.home_team_name}</div>
                             <div className="text-3xl sm:text-4xl font-bold">{homeTotalScore}</div>
                             {winner === 'home' && <div className="text-xs mt-1 font-semibold">✓ WINNER</div>}
@@ -2356,8 +2313,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           </div>
 
                           {/* Away Total */}
-                          <div className={`text-center p-4 rounded-xl ${winner === 'away' ? 'bg-green-500 text-white shadow-lg scale-105' : 'bg-white text-gray-700'
-                            } transition-all`}>
+                          <div className={`text-center p-4 rounded-2xl border transition-all ${winner === 'away' ? 'bg-emerald-50/30 border-emerald-500 text-emerald-800 font-bold scale-105' : 'bg-slate-50 border-slate-200 text-slate-700'
+                            }`}>
                             <div className="text-xs sm:text-sm font-medium mb-1">{fixture.away_team_name}</div>
                             <div className="text-3xl sm:text-4xl font-bold">{awayTotalScore}</div>
                             {winner === 'away' && <div className="text-xs mt-1 font-semibold">✓ WINNER</div>}
@@ -2393,14 +2350,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                   {/* Man of the Match Display */}
                   {fixture.motm_player_name && (
-                    <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-xl p-4">
+                    <div className="console-card bg-white border border-amber-300 rounded-2xl p-4 font-mono shadow-sm bg-gradient-to-r from-amber-500/5 to-amber-500/10">
                       <div className="flex items-center justify-center gap-3">
-                        <svg className="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
                         <div>
-                          <div className="text-xs font-semibold text-yellow-700 uppercase tracking-wide">Man of the Match</div>
-                          <div className="text-lg font-bold text-yellow-900">{fixture.motm_player_name}</div>
+                          <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider text-center">🏆 Man of the Match</div>
+                          <div className="text-base font-bold text-slate-800 uppercase tracking-wide text-center mt-0.5">{fixture.motm_player_name}</div>
                         </div>
                       </div>
                     </div>
@@ -2417,7 +2371,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       const awayPOTD = fixture.motm_player_id === matchup.away_player_id;
 
                       return (
-                        <div key={idx} className={`p-4 rounded-xl border-2 transition-all ${isPOTD ? 'bg-gradient-to-br from-yellow-50 via-amber-50 to-yellow-100 border-yellow-400 shadow-lg' : 'bg-gradient-to-br from-gray-50 to-white border-gray-200'
+                        <div key={idx} className={`console-card bg-white border rounded-2xl p-4 transition-all font-mono hover:border-amber-400/40 duration-200 ${isPOTD ? 'border-amber-300 shadow-sm bg-gradient-to-r from-amber-500/5 to-amber-500/10' : 'border-slate-200/60 shadow-sm'
                           }`}>
                           {/* Match Header */}
                           <div className="flex items-center justify-between mb-3">
@@ -2446,7 +2400,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                           {/* Substitution Warnings */}
                           {(matchup.home_substituted || matchup.away_substituted) && (
-                            <div className="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                            <div className="mb-3 p-3 bg-orange-50/20 border border-orange-200 rounded-xl font-mono">
                               <div className="flex items-start gap-2">
                                 <svg className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -2473,11 +2427,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           {/* Main Matchup Display */}
                           <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-center">
                             {/* Home Player */}
-                            <div className={`p-2.5 sm:p-3 rounded-lg border-2 transition-all ${homePOTD ? 'bg-gradient-to-br from-yellow-200 to-yellow-300 border-yellow-500 shadow-md' :
-                              homeWon ? 'bg-gradient-to-br from-green-100 to-green-200 border-green-400' :
-                                isDraw ? 'bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300' :
-                                  awayWon ? 'bg-gradient-to-br from-red-50 to-red-100 border-red-200' :
-                                    'bg-white border-gray-200'
+                            <div className={`p-2.5 sm:p-3 rounded-xl border transition-all ${homePOTD ? 'bg-amber-50/60 border-amber-300' :
+                              homeWon ? 'bg-emerald-50/30 border-emerald-200' :
+                                isDraw ? 'bg-slate-50 border-slate-200' :
+                                  awayWon ? 'bg-red-50/20 border-red-200' :
+                                    'bg-slate-50 border-slate-200'
                               }`}>
                               <div className="text-center">
                                 <div className="flex items-center justify-center gap-1 mb-1">
@@ -2511,8 +2465,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             <div className="flex flex-col items-center gap-1 sm:gap-2 order-first sm:order-none">
                               {hasResult ? (
                                 <>
-                                  <div className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-bold text-base sm:text-lg shadow-md ${isDraw ? 'bg-yellow-400 text-yellow-900' :
-                                    'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                                  <div className={`px-3.5 py-1.5 rounded-xl font-bold text-base font-mono shadow-sm border ${isDraw ? 'bg-amber-500 text-white border-amber-600' :
+                                    'bg-slate-800 text-white border-slate-900'
                                     }`}>
                                     {matchup.home_goals} - {matchup.away_goals}
                                   </div>
@@ -2531,11 +2485,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             </div>
 
                             {/* Away Player */}
-                            <div className={`p-2.5 sm:p-3 rounded-lg border-2 transition-all ${awayPOTD ? 'bg-gradient-to-br from-yellow-200 to-yellow-300 border-yellow-500 shadow-md' :
-                              awayWon ? 'bg-gradient-to-br from-green-100 to-green-200 border-green-400' :
-                                isDraw ? 'bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300' :
-                                  homeWon ? 'bg-gradient-to-br from-red-50 to-red-100 border-red-200' :
-                                    'bg-white border-gray-200'
+                            <div className={`p-2.5 sm:p-3 rounded-xl border transition-all ${awayPOTD ? 'bg-amber-50/60 border-amber-300' :
+                              awayWon ? 'bg-emerald-50/30 border-emerald-200' :
+                                isDraw ? 'bg-slate-50 border-slate-200' :
+                                  homeWon ? 'bg-red-50/20 border-red-200' :
+                                    'bg-slate-50 border-slate-200'
                               }`}>
                               <div className="text-center">
                                 <div className="flex items-center justify-center gap-1 mb-1">
@@ -2606,15 +2560,9 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         setMotmPlayerId(fixture.motm_player_id || null);
                         setIsResultMode(true);
                       }}
-                      className="group relative w-full px-5 py-4 bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 text-white font-bold rounded-2xl hover:from-emerald-600 hover:via-green-600 hover:to-teal-600 transition-all shadow-xl hover:shadow-2xl hover:scale-[1.02] flex items-center justify-center gap-3 overflow-hidden"
+                      className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 group-hover:animate-shimmer"></div>
-                      <div className="relative flex items-center gap-3">
-                        <svg className="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        <span className="text-base sm:text-lg">{matchups.some(m => m.home_goals !== null) ? '✏️ Edit Results' : '✅ Enter Results'}</span>
-                      </div>
+                      {matchups.some(m => m.home_goals !== null) ? '✏️ Edit Results' : '✅ Enter Results'}
                     </button>
                   )}
 
@@ -2622,7 +2570,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                   {matchups.some(m => m.home_goals !== null) && (
                     <button
                       onClick={handleWhatsAppShare}
-                      className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow-lg flex items-center justify-center gap-2"
+                      className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
                     >
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
@@ -2634,17 +2582,16 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               ) : phase === 'result_entry' && isResultMode ? (
                 // Result Entry Mode
                 <div className="space-y-4">
-                  <div className="relative overflow-hidden bg-gradient-to-r from-emerald-50 via-green-50 to-teal-50 border-2 border-green-300 rounded-2xl p-5 shadow-lg">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-200 to-teal-200 rounded-full blur-2xl opacity-30"></div>
-                    <div className="relative flex items-start gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="console-card bg-slate-50 border border-slate-200/60 rounded-2xl p-5 mb-4 shadow-sm font-mono relative overflow-hidden">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-green-900 mb-1">⚽ Result Entry Mode</p>
-                        <p className="text-xs text-green-700">Enter goals scored by each player and select Man of the Match</p>
+                        <p className="text-xs text-slate-800 font-bold uppercase tracking-wider mb-1">⚽ Result Entry Mode</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Enter goals scored by each player and select Man of the Match</p>
                       </div>
                     </div>
                   </div>
@@ -2702,7 +2649,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     const winner = homeTotalScore > awayTotalScore ? 'home' : awayTotalScore > homeTotalScore ? 'away' : 'draw';
 
                     return (
-                      <div className="bg-gradient-to-r from-blue-100 to-purple-100 border-2 border-blue-300 rounded-xl p-4">
+                      <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm font-mono">
                         <div className="text-center text-xs font-semibold text-gray-600 mb-2">
                           Current Score {tournamentSystem === 'wins' && '(Points)'}
                         </div>
@@ -2772,7 +2719,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-cyan-200 to-blue-200 rounded-full blur-2xl opacity-20"></div>
                     <div className="relative flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 flex-1">
-                        <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <div className="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
                           <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                           </svg>
@@ -2791,9 +2738,9 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           setSwapMode(!swapMode);
                           setSwapFirstIndex(null);
                         }}
-                        className={`px-4 py-2 text-sm font-bold rounded-xl transition-all shadow-md hover:shadow-lg whitespace-nowrap ${swapMode
-                          ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white'
-                          : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white'
+                        className={`px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm whitespace-nowrap ${swapMode
+                          ? 'bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/60'
+                          : 'bg-slate-800 hover:bg-slate-700 text-white'
                           }`}
                       >
                         {swapMode ? '❌ Cancel' : '🔄 Enable'}
@@ -2863,7 +2810,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   setSubPenaltyAmount(2); // Reset to default
                                   setIsSubModalOpen(true);
                                 }}
-                                className="group relative px-3 py-1.5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white text-xs font-bold rounded-lg transition-all shadow-md hover:shadow-lg overflow-hidden"
+                                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-mono font-bold uppercase tracking-wider rounded-lg transition-all shadow-sm"
                                 title="Substitute Home Player"
                               >
                                 <span className="relative flex items-center gap-1">
@@ -2882,7 +2829,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   setSubPenaltyAmount(2); // Reset to default
                                   setIsSubModalOpen(true);
                                 }}
-                                className="group relative px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs font-bold rounded-lg transition-all shadow-md hover:shadow-lg overflow-hidden"
+                                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-mono font-bold uppercase tracking-wider rounded-lg transition-all shadow-sm"
                                 title="Substitute Away Player"
                               >
                                 <span className="relative flex items-center gap-1">
@@ -2927,7 +2874,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   home_goals: parseInt(e.target.value) || 0
                                 }
                               })}
-                              className="w-full px-4 py-3 text-center text-lg font-bold border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-4 py-2.5 text-center text-base font-mono font-bold border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none transition-all"
                               placeholder="0"
                             />
                             <p className="text-xs text-gray-500 mt-1 text-center">Goals</p>
@@ -2952,7 +2899,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   away_goals: parseInt(e.target.value) || 0
                                 }
                               })}
-                              className="w-full px-4 py-3 text-center text-lg font-bold border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                              className="w-full px-4 py-2.5 text-center text-base font-mono font-bold border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none transition-all"
                               placeholder="0"
                             />
                             <p className="text-xs text-gray-500 mt-1 text-center">Goals</p>
@@ -2963,14 +2910,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                   </div>
 
                   {/* Penalty/Fine Goals Section */}
-                  <div className="bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl p-4">
+                  <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm font-mono">
                     <div className="flex items-center gap-2 mb-3">
-                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      <h3 className="text-sm font-bold text-orange-900">Penalty / Fine Goals</h3>
+                      <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Penalty / Fine Goals</h3>
                     </div>
-                    <p className="text-xs text-orange-700 mb-3">Add extra goals for rule violations (not counted for player stats or POTM)</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-3">Add extra goals for rule violations (not counted for player stats or POTM)</p>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -2982,7 +2926,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           min="0"
                           value={homePenaltyGoals}
                           onChange={(e) => setHomePenaltyGoals(parseInt(e.target.value) || 0)}
-                          className="w-full px-3 py-2 text-center text-lg font-bold border-2 border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          className="w-full px-3 py-2 text-center text-base font-bold border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none font-mono"
                           placeholder="0"
                         />
                         <p className="text-xs text-gray-500 mt-1 text-center">Fine Goals</p>
@@ -2997,7 +2941,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           min="0"
                           value={awayPenaltyGoals}
                           onChange={(e) => setAwayPenaltyGoals(parseInt(e.target.value) || 0)}
-                          className="w-full px-3 py-2 text-center text-lg font-bold border-2 border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          className="w-full px-3 py-2 text-center text-base font-bold border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none font-mono"
                           placeholder="0"
                         />
                         <p className="text-xs text-gray-500 mt-1 text-center">Fine Goals</p>
@@ -3006,12 +2950,9 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                   </div>
 
                   {/* Man of the Match Selector (Fixture Level) */}
-                  <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-xl p-4">
+                  <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm font-mono">
                     <div className="flex items-center justify-between mb-3">
-                      <label className="flex items-center gap-2 text-sm font-bold text-yellow-900">
-                        <svg className="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
+                      <label className="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wider">
                         <span className="uppercase tracking-wide">Man of the Match</span>
                       </label>
                       <button
@@ -3175,7 +3116,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             });
                           }
                         }}
-                        className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-semibold rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm flex items-center gap-1"
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center gap-1"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -3187,7 +3128,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     <select
                       value={motmPlayerId || ''}
                       onChange={(e) => setMotmPlayerId(e.target.value || null)}
-                      className="w-full px-4 py-3 text-lg font-medium border-2 border-yellow-400 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white"
+                      className="w-full px-3 py-2.5 text-xs font-mono font-bold uppercase tracking-wider border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none transition-all cursor-pointer"
                     >
                       <option value="">-- Select Player --</option>
                       <optgroup label="🏠 Home Team ({fixture.home_team_name})">
@@ -3369,9 +3310,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                   <div className="flex gap-3">
                     <button
-                      onClick={() => setIsResultMode(false)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsResultMode(false);
+                      }}
                       disabled={isSaving}
-                      className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-colors"
+                      className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Cancel
                     </button>
@@ -3652,7 +3597,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         }
                       }}
                       disabled={isSaving}
-                      className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-xl hover:from-green-700 hover:to-green-800 transition-all shadow-lg disabled:opacity-50"
+                      className="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50"
                     >
                       {isSaving ? 'Saving...' : 'Save Results'}
                     </button>
@@ -3731,7 +3676,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         }
                       }}
                       disabled={isSaving}
-                      className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg disabled:opacity-50"
+                      className="flex-1 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50"
                     >
                       {isSaving ? 'Saving...' : '💾 Save as Draft'}
                     </button>
@@ -3789,7 +3734,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         const winner = homeTotalScore > awayTotalScore ? 'home' : awayTotalScore > homeTotalScore ? 'away' : 'draw';
 
                         return (
-                          <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-2 border-blue-300 rounded-2xl p-4 sm:p-6 shadow-xl mb-4">
+                          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-6 shadow-sm font-mono mb-4">
                             <h3 className="text-center text-sm font-semibold text-gray-600 mb-4">
                               Match Result {tournamentSystem === 'wins' && '(Points)'}
                             </h3>
@@ -4005,9 +3950,9 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
       {/* Substitution Modal */}
       {isSubModalOpen && subMatchupIndex !== null && subSide && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 font-mono">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">🔁 Substitute Player</h3>
+              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">🔁 Substitute Player</h3>
               <button
                 onClick={() => setIsSubModalOpen(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -4026,8 +3971,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               </p>
 
               {/* Manual penalty input */}
-              <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                <label className="block text-sm font-semibold text-orange-900 mb-2">
+              <div className="mt-3 p-3 bg-orange-50/20 border border-orange-200 rounded-xl">
+                <label className="block text-xs font-bold text-orange-900 mb-2">
                   ⚠️ Penalty Goals (awarded to opponent)
                 </label>
                 <input
@@ -4035,7 +3980,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                   min="0"
                   value={subPenaltyAmount}
                   onChange={(e) => setSubPenaltyAmount(parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 text-center text-lg font-bold border-2 border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 text-center text-base font-bold border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none font-mono"
                   placeholder="Enter penalty amount"
                 />
                 <p className="text-xs text-orange-600 mt-2">
@@ -4045,13 +3990,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                 Select Replacement Player
               </label>
               <select
                 value={subNewPlayerId}
                 onChange={(e) => setSubNewPlayerId(e.target.value)}
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2.5 text-xs font-mono font-bold uppercase tracking-wider border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none transition-all cursor-pointer"
               >
                 <option value="">-- Choose Player --</option>
                 {(subSide === 'home' ? homePlayers : awayPlayers)
@@ -4096,14 +4041,14 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             <div className="flex gap-3">
               <button
                 onClick={() => setIsSubModalOpen(false)}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
+                className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubstitution}
                 disabled={!subNewPlayerId || isSaving}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? 'Substituting...' : subNewPlayerId ? 'Confirm Substitution' : 'Select Player First'}
               </button>

@@ -375,10 +375,11 @@ export default function EditTeamProfilePage() {
 
   if (loading || seasonsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading...</p>
         </div>
       </div>
     );
@@ -389,98 +390,136 @@ export default function EditTeamProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 py-6 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Edit Team Profile</h1>
-          <p className="text-gray-600">Update your team information, owner, and manager details</p>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative z-10 space-y-6 font-mono">
+        {/* Back Link */}
+        <Link
+          href="/dashboard/team/profile"
+          className="px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold flex items-center justify-center w-fit mb-4"
+        >
+          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Profile
+        </Link>
+
+        {/* Header Title Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/10 flex-shrink-0">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wider text-slate-800">
+                  Edit Team Profile
+                </h1>
+                <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
+                  Update your team info, owner, and manager details
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Flash Messages */}
         {error && (
-          <div className="mb-6 glass rounded-2xl p-4 border-l-4 border-red-500 bg-red-50">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 text-red-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"></path>
-              </svg>
-              <p className="text-red-800">{error}</p>
+          <div className="console-card bg-rose-50/60 border border-rose-200 p-4 rounded-xl flex gap-3 items-center mb-6">
+            <span className="text-lg flex-shrink-0">⚠️</span>
+            <div>
+              <span className="font-extrabold text-rose-800 text-[10px] uppercase tracking-wider block mb-0.5">Error</span>
+              <p className="text-xs text-rose-900 leading-relaxed font-semibold">
+                {error}
+              </p>
             </div>
           </div>
         )}
 
         {success && (
-          <div className="mb-6 glass rounded-2xl p-4 border-l-4 border-green-500 bg-green-50">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
-              </svg>
-              <p className="text-green-800">{success}</p>
+          <div className="console-card bg-emerald-50/60 border border-emerald-200 p-4 rounded-xl flex gap-3 items-center mb-6">
+            <span className="text-lg flex-shrink-0">✅</span>
+            <div>
+              <span className="font-extrabold text-emerald-800 text-[10px] uppercase tracking-wider block mb-0.5">Success</span>
+              <p className="text-xs text-emerald-900 leading-relaxed font-semibold">
+                {success}
+              </p>
             </div>
           </div>
         )}
 
         {/* Section Navigation */}
-        <div className="glass rounded-2xl p-2 mb-6 flex gap-2">
-          <button
-            onClick={() => setActiveSection('team')}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
-              activeSection === 'team'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Team Info
-          </button>
-          <button
-            onClick={() => setActiveSection('owner')}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
-              activeSection === 'owner'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Owner
-          </button>
-          <button
-            onClick={() => setActiveSection('manager')}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
-              activeSection === 'manager'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Manager
-          </button>
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-2 shadow-sm mb-6">
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveSection('team')}
+              className={`p-3 rounded-xl font-extrabold uppercase tracking-wider text-xs transition-all cursor-pointer ${
+                activeSection === 'team'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
+              }`}
+            >
+              Team Info
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSection('owner')}
+              className={`p-3 rounded-xl font-extrabold uppercase tracking-wider text-xs transition-all cursor-pointer ${
+                activeSection === 'owner'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
+              }`}
+            >
+              Owner
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSection('manager')}
+              className={`p-3 rounded-xl font-extrabold uppercase tracking-wider text-xs transition-all cursor-pointer ${
+                activeSection === 'manager'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
+              }`}
+            >
+              Manager
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Team Info Section */}
           {activeSection === 'team' && (
-            <div className="glass rounded-3xl p-8 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Team Information</h2>
+            <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
+              <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-6 pb-2 border-b border-slate-100">Team Information</h2>
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Team Name *</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Team Name *</label>
                   <input
                     type="text"
                     value={teamName}
                     onChange={(e) => setTeamName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Team Logo</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Team Logo</label>
                   <div className="flex items-center gap-4 mb-4">
                     {(newLogoPreview || currentLogoUrl) && (
-                      <img
-                        src={newLogoPreview || currentLogoUrl}
-                        alt="Team logo"
-                        className="w-24 h-24 rounded-xl object-contain bg-white p-2 border-2 border-gray-200"
-                      />
+                      <div className="w-24 h-24 rounded-xl overflow-hidden border border-slate-200/60 shadow-md relative bg-white flex items-center justify-center p-2">
+                        <img
+                          src={newLogoPreview || currentLogoUrl}
+                          alt="Team logo"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                     )}
                   </div>
                   <div className="relative">
@@ -493,15 +532,15 @@ export default function EditTeamProfilePage() {
                     />
                     <label
                       htmlFor="logo-upload"
-                      className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-white border border-slate-200/80 rounded-xl cursor-pointer hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold shadow-sm"
                     >
-                      <svg className="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 mr-2 text-slate-655" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      <span className="text-sm font-medium text-gray-700">Choose Logo</span>
+                      <span className="text-xs font-extrabold uppercase tracking-wider">Choose Logo</span>
                     </label>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">Max size: 5MB</p>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase mt-2">Max size: 5MB</p>
                 </div>
               </div>
             </div>
@@ -509,59 +548,59 @@ export default function EditTeamProfilePage() {
 
           {/* Owner Section */}
           {activeSection === 'owner' && (
-            <div className="glass rounded-3xl p-8 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Owner Information</h2>
+            <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
+              <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-6 pb-2 border-b border-slate-100">Owner Information</h2>
               
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Name *</label>
                   <input
                     type="text"
                     value={ownerName}
                     onChange={(e) => setOwnerName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Email *</label>
                   <input
                     type="email"
                     value={ownerEmail}
                     onChange={(e) => setOwnerEmail(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Phone *</label>
                   <input
                     type="tel"
                     value={ownerPhone}
                     onChange={(e) => setOwnerPhone(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Date of Birth</label>
                   <input
                     type="date"
                     value={ownerDOB}
                     onChange={(e) => setOwnerDOB(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Place</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Place</label>
                   <select
                     value={ownerPlace}
                     onChange={(e) => setOwnerPlace(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    className="w-full py-2.5 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono cursor-pointer"
                   >
                     <option value="">Select District</option>
                     {keralaDistricts.map(district => (
@@ -571,56 +610,58 @@ export default function EditTeamProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nationality</label>
                   <input
                     type="text"
                     value={ownerNationality}
                     onChange={(e) => setOwnerNationality(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Bio</label>
                   <textarea
                     value={ownerBio}
                     onChange={(e) => setOwnerBio(e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Instagram Handle</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Instagram Handle</label>
                   <input
                     type="text"
                     value={ownerInstagram}
                     onChange={(e) => setOwnerInstagram(e.target.value)}
                     placeholder="@username"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Twitter Handle</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Twitter Handle</label>
                   <input
                     type="text"
                     value={ownerTwitter}
                     onChange={(e) => setOwnerTwitter(e.target.value)}
                     placeholder="@username"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Photo</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Photo</label>
                   <div className="flex items-center gap-4 mb-4">
                     {(ownerPhotoPreview || currentOwnerPhoto) && (
-                      <img
-                        src={ownerPhotoPreview || currentOwnerPhoto}
-                        alt="Owner"
-                        className="w-24 h-24 rounded-xl object-cover border-2 border-gray-200"
-                      />
+                      <div className="w-24 h-24 rounded-xl overflow-hidden border border-slate-200/60 shadow-md relative bg-white flex items-center justify-center p-1">
+                        <img
+                          src={ownerPhotoPreview || currentOwnerPhoto}
+                          alt="Owner"
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      </div>
                     )}
                   </div>
                   <div className="relative">
@@ -633,12 +674,12 @@ export default function EditTeamProfilePage() {
                     />
                     <label
                       htmlFor="owner-photo-upload"
-                      className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-white border border-slate-200/80 rounded-xl cursor-pointer hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold shadow-sm"
                     >
-                      <svg className="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 mr-2 text-slate-655" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      <span className="text-sm font-medium text-gray-700">Choose Photo</span>
+                      <span className="text-xs font-extrabold uppercase tracking-wider">Choose Photo</span>
                     </label>
                   </div>
                 </div>
@@ -648,20 +689,20 @@ export default function EditTeamProfilePage() {
 
           {/* Manager Section */}
           {activeSection === 'manager' && (
-            <div className="glass rounded-3xl p-8 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Manager Information</h2>
+            <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm mb-6">
+              <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-6 pb-2 border-b border-slate-100">Manager Information</h2>
               
               {/* Manager Type Selection */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">Manager Type</label>
-                <div className="flex gap-4">
+                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Manager Type</label>
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setManagerMode('player')}
-                    className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+                    className={`p-3 rounded-xl font-extrabold uppercase tracking-wider text-xs transition-all cursor-pointer ${
                       managerMode === 'player'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                        : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
                     }`}
                   >
                     Playing Manager
@@ -669,10 +710,10 @@ export default function EditTeamProfilePage() {
                   <button
                     type="button"
                     onClick={() => setManagerMode('non-player')}
-                    className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+                    className={`p-3 rounded-xl font-extrabold uppercase tracking-wider text-xs transition-all cursor-pointer ${
                       managerMode === 'non-player'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                        : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
                     }`}
                   >
                     Non-Playing Manager
@@ -682,44 +723,54 @@ export default function EditTeamProfilePage() {
 
               {managerMode === 'player' ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Select Player *</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-3">Select Player *</label>
                   
                   {selectedPlayer && (
-                    <div className="mb-4 p-4 bg-blue-50 rounded-xl border-2 border-blue-600">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-blue-600 font-medium mb-1">Current Manager</p>
-                          <p className="font-bold text-gray-900">{selectedPlayer.name || 'Unknown'}</p>
-                          <p className="text-sm text-gray-600">{selectedPlayer.position || 'Player'} • {selectedPlayer.overall_rating || 0} OVR</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedPlayer(null)}
-                          className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium text-sm"
-                        >
-                          Change Manager
-                        </button>
+                    <div className="mb-6 p-4 bg-amber-50/40 border border-amber-200/60 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <span className="font-extrabold text-amber-800 text-[9px] uppercase tracking-wider block mb-1">Current Selected Manager</span>
+                        <p className="text-sm font-black text-slate-850 uppercase tracking-wider">{selectedPlayer.name || 'Unknown'}</p>
+                        <p className="text-[10px] text-slate-500 uppercase mt-0.5 font-bold">
+                          {selectedPlayer.position || 'Player'} • <span className="text-amber-600">{selectedPlayer.overall_rating || 0} OVR</span>
+                        </p>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedPlayer(null)}
+                        className="px-4 py-2 bg-rose-50 text-rose-600 border border-rose-200 rounded-xl hover:bg-rose-100/60 hover:text-rose-700 transition-all font-mono text-xs uppercase tracking-wider font-extrabold cursor-pointer"
+                      >
+                        Change Manager
+                      </button>
                     </div>
                   )}
                   
                   {!selectedPlayer && (
                     <div>
-                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {realPlayers.map(player => (
                           <button
                             key={player.id}
                             type="button"
                             onClick={() => setSelectedPlayer(player)}
-                            className="p-4 rounded-xl border-2 text-left transition-all border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                            className="p-4 rounded-xl border border-slate-200 bg-white text-left transition-all hover:border-amber-400 hover:shadow-md cursor-pointer flex items-center justify-between group"
                           >
-                            <div className="font-bold text-gray-900">{player.name || 'Unknown'}</div>
-                            <div className="text-sm text-gray-600">{player.position || 'Player'}</div>
+                            <div>
+                              <div className="text-xs font-black text-slate-800 uppercase tracking-wider group-hover:text-amber-600 transition-colors">{player.name || 'Unknown'}</div>
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">{player.position || 'Player'}</div>
+                            </div>
+                            {player.overall_rating && (
+                              <div className="w-8 h-8 rounded-lg bg-slate-800 text-amber-400 flex items-center justify-center font-black text-xs border border-slate-900">
+                                {player.overall_rating}
+                              </div>
+                            )}
                           </button>
                         ))}
                       </div>
                       {realPlayers.length === 0 && (
-                        <p className="text-gray-500 text-center py-8">No real players in squad yet. Add real players first before selecting a playing manager.</p>
+                        <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
+                          <p className="text-slate-400 text-xs font-bold uppercase tracking-wider leading-relaxed">No real players in squad yet.</p>
+                          <p className="text-[10px] text-slate-400 uppercase mt-1">Add real players first before selecting a playing manager.</p>
+                        </div>
                       )}
                     </div>
                   )}
@@ -727,52 +778,52 @@ export default function EditTeamProfilePage() {
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Name *</label>
                     <input
                       type="text"
                       value={managerName}
                       onChange={(e) => setManagerName(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                      className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                       required={managerMode === 'non-player'}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Email</label>
                     <input
                       type="email"
                       value={managerEmail}
                       onChange={(e) => setManagerEmail(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                      className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Phone</label>
                     <input
                       type="tel"
                       value={managerPhone}
                       onChange={(e) => setManagerPhone(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                      className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Date of Birth</label>
                     <input
                       type="date"
                       value={managerDOB}
                       onChange={(e) => setManagerDOB(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                      className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Place</label>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Place</label>
                     <select
                       value={managerPlace}
                       onChange={(e) => setManagerPlace(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                      className="w-full py-2.5 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono cursor-pointer"
                     >
                       <option value="">Select District</option>
                       {keralaDistricts.map(district => (
@@ -782,34 +833,36 @@ export default function EditTeamProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nationality</label>
                     <input
                       type="text"
                       value={managerNationality}
                       onChange={(e) => setManagerNationality(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                      className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Jersey Number</label>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Jersey Number</label>
                     <input
                       type="number"
                       value={managerJerseyNumber}
                       onChange={(e) => setManagerJerseyNumber(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                      className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Photo</label>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Photo</label>
                     <div className="flex items-center gap-4 mb-4">
                       {(managerPhotoPreview || currentManagerPhoto) && (
-                        <img
-                          src={managerPhotoPreview || currentManagerPhoto}
-                          alt="Manager"
-                          className="w-24 h-24 rounded-xl object-cover border-2 border-gray-200"
-                        />
+                        <div className="w-24 h-24 rounded-xl overflow-hidden border border-slate-200/60 shadow-md relative bg-white flex items-center justify-center p-1">
+                          <img
+                            src={managerPhotoPreview || currentManagerPhoto}
+                            alt="Manager"
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                        </div>
                       )}
                     </div>
                     <div className="relative">
@@ -822,14 +875,15 @@ export default function EditTeamProfilePage() {
                       />
                       <label
                         htmlFor="manager-photo-upload"
-                        className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                        className="inline-flex items-center px-4 py-2 bg-white border border-slate-200/80 rounded-xl cursor-pointer hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold shadow-sm"
                       >
-                        <svg className="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 mr-2 text-slate-655" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <span className="text-sm font-medium text-gray-700">Choose Photo</span>
+                        <span className="text-xs font-extrabold uppercase tracking-wider">Choose Photo</span>
                       </label>
                     </div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-2">Max size: 5MB</p>
                   </div>
                 </div>
               )}
@@ -837,10 +891,10 @@ export default function EditTeamProfilePage() {
           )}
 
           {/* Action Buttons */}
-          <div className="glass rounded-3xl p-6 flex justify-between items-center">
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 sm:p-5 shadow-sm flex justify-between items-center gap-4">
             <Link
               href="/dashboard/team/profile"
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium"
+              className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold text-center shadow-sm"
             >
               Cancel
             </Link>
@@ -848,7 +902,7 @@ export default function EditTeamProfilePage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 bg-slate-800 text-amber-400 border border-slate-900 rounded-xl hover:bg-slate-700 hover:shadow-md transition-all font-mono text-xs uppercase tracking-wider font-extrabold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm"
             >
               {isSubmitting ? 'Updating...' : 'Update Profile'}
             </button>
