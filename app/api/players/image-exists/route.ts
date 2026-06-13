@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const extensions = ['png', 'jpg', 'jpeg', 'webp'];
     
     for (const ext of extensions) {
-      const imagePath = path.join(publicDir, `${playerId}.${ext}`);
+      const imagePath = `${publicDir}/${playerId}.${ext}`;
       if (fs.existsSync(imagePath)) {
         return NextResponse.json({ 
           exists: true, 

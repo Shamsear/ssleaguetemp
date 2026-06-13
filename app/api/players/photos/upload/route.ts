@@ -31,12 +31,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-// Maximum file size: 4.5MB (Vercel limit)
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '4.5mb',
-    },
-  },
-};

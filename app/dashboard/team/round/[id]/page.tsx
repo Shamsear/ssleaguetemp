@@ -543,7 +543,8 @@ export default function TeamRoundPage() {
   const bidProgress = (bidCount / round.max_bids_per_team) * 100;
 
   return (
-    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+    <>
+      <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
@@ -578,8 +579,9 @@ export default function TeamRoundPage() {
             </Link>
           </div>
         </div>
+        </div>
 
-        {/* Mobile Selected Count Notch */}
+      {/* Mobile Selected Count Notch */}
         <div className="md:hidden sticky top-0 z-30 -mt-2 mb-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary text-white text-xs font-semibold shadow-md">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -710,8 +712,9 @@ export default function TeamRoundPage() {
               </div>
             </div>
           )}
+        </div>
 
-          {/* Your Selected Players */}
+        {/* Your Selected Players */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-medium text-dark flex items-center">
@@ -1140,7 +1143,7 @@ export default function TeamRoundPage() {
         cancelText={confirmState.cancelText}
         type={confirmState.type}
       />
-    </div>
+    </>
   );
 }
 

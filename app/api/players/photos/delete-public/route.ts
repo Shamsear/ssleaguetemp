@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
         for (const file of files) {
           try {
-            const filePath = join(uploadDir, file);
+            const filePath = `${uploadDir}/${file}`;
             await unlink(filePath);
             results.push({
               fileName: file,
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
         for (const ext of extensions) {
           try {
-            const filePath = join(uploadDir, `${playerId}.${ext}`);
+            const filePath = `${uploadDir}/${playerId}.${ext}`;
             await unlink(filePath);
             results.push({
               playerId,
