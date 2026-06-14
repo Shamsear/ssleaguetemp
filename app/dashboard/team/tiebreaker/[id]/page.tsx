@@ -328,7 +328,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 font-mono">
             <div className="flex items-center">
-              <div className="bg-amber-50 border border-amber-250 p-2 rounded-xl mr-3">
+              <div className="bg-amber-50 border border-amber-200 p-2 rounded-xl mr-3">
                 <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
@@ -379,9 +379,9 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
                   <span className="text-lg font-black text-slate-700">{tiebreaker.player.position}</span>
                 </div>
                 <div className="flex-grow">
-                  <h4 className="text-lg font-extrabold uppercase tracking-wide text-slate-850">{tiebreaker.player.name}</h4>
+                  <h4 className="text-lg font-extrabold uppercase tracking-wide text-slate-800">{tiebreaker.player.name}</h4>
                   <div className="flex items-center mt-1 gap-2 flex-wrap">
-                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-slate-100 border-slate-205 text-slate-650">
+                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-slate-100 border-slate-200 text-slate-600">
                       {tiebreaker.player.position}
                     </span>
                     {tiebreaker.player.team_name && (
@@ -393,7 +393,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
                       </div>
                     )}
                   </div>
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-[10px] uppercase font-bold text-slate-505">
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-[10px] uppercase font-bold text-slate-500">
                     <div>
                       <span>Original Bid:</span>
                       <p className="font-mono font-black text-xs text-slate-800 mt-0.5">£{Math.floor(tiebreaker.original_amount).toLocaleString()}</p>
@@ -413,14 +413,14 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
           {/* Bid Submission */}
           <div className="mb-8 font-mono">
             <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 mb-4 flex items-center">
-              <svg className="w-5 h-5 text-slate-505 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-slate-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Submit New Bid
             </h3>
 
             {tiebreaker.submitted ? (
-              <div className="console-card bg-emerald-50/30 border border-emerald-250 rounded-2xl p-4 border-l-4 border-l-emerald-500">
+              <div className="console-card bg-emerald-50/30 border border-emerald-200 rounded-2xl p-4 border-l-4 border-l-emerald-500">
                 <div className="flex items-start">
                   <svg className="h-5 w-5 text-emerald-600 mt-0.5 animate-pulse" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -445,7 +445,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
             ) : (
               <form onSubmit={handleSubmit} className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm">
                 <div className="mb-4">
-                  <label htmlFor="bidAmount" className="block text-[10px] uppercase font-bold text-slate-405 mb-2">
+                  <label htmlFor="bidAmount" className="block text-[10px] uppercase font-bold text-slate-400 mb-2">
                     New Bid Amount
                   </label>
                   <div className="relative">
@@ -508,7 +508,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
                 </div>
 
                 {error && (
-                  <div className="mb-4 bg-rose-50 border border-rose-250 p-3 rounded-2xl text-xs font-bold text-rose-700 uppercase">
+                  <div className="mb-4 bg-rose-50 border border-rose-200 p-3 rounded-2xl text-xs font-bold text-rose-700 uppercase">
                     {error}
                   </div>
                 )}
@@ -660,11 +660,11 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
                   {userBidsInRound.map((bid) => {
                     const statusConfig = {
                       won: { icon: '🏆', color: 'text-emerald-600', bg: 'bg-emerald-50/30 border-emerald-200', label: 'You Won' },
-                      allocated_to_other: { icon: '💀', color: 'text-rose-650', bg: 'bg-rose-50/30 border-rose-200', label: `Won by ${bid.allocated_to_team}` },
-                      lost: { icon: '💀', color: 'text-rose-650', bg: 'bg-rose-50/30 border-rose-200', label: 'Lost' },
+                      allocated_to_other: { icon: '💀', color: 'text-rose-600', bg: 'bg-rose-50/30 border-rose-200', label: `Won by ${bid.allocated_to_team}` },
+                      lost: { icon: '💀', color: 'text-rose-600', bg: 'bg-rose-50/30 border-rose-200', label: 'Lost' },
                       tiebreaker: { icon: '⚖️', color: 'text-amber-600', bg: 'bg-amber-50/30 border-amber-200', label: 'Current Tiebreaker' },
                       tiebreaker_other: { icon: '⚖️', color: 'text-amber-600', bg: 'bg-amber-50/30 border-amber-200', label: 'Other Tiebreaker' },
-                      available: { icon: '✨', color: 'text-blue-600', bg: 'bg-slate-55 border-slate-200', label: 'Still Available' },
+                      available: { icon: '✨', color: 'text-blue-600', bg: 'bg-slate-50 border-slate-200', label: 'Still Available' },
                       pending: { icon: '⏳', color: 'text-slate-500', bg: 'bg-slate-50 border-slate-200', label: 'Pending' },
                     };
                     
@@ -681,8 +681,8 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
                           <span className="text-xl mr-3">{config.icon}</span>
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-extrabold text-sm text-slate-850 uppercase tracking-wide">{bid.player_name}</p>
-                              <span className="px-1.5 py-0.5 rounded-lg text-[9px] font-black border uppercase tracking-wider bg-white border-slate-205 text-slate-600">
+                              <p className="font-extrabold text-sm text-slate-800 uppercase tracking-wide">{bid.player_name}</p>
+                              <span className="px-1.5 py-0.5 rounded-lg text-[9px] font-black border uppercase tracking-wider bg-white border-slate-200 text-slate-600">
                                 {bid.position}
                               </span>
                               {bid.overall_rating && (
@@ -705,7 +705,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
                 
                 {/* Summary */}
                 <div className="mt-4 pt-4 border-t border-slate-200">
-                  <div className="grid grid-cols-3 gap-2 text-center text-[10px] uppercase font-bold text-slate-450">
+                  <div className="grid grid-cols-3 gap-2 text-center text-[10px] uppercase font-bold text-slate-400">
                     <div>
                       <span>Allocated</span>
                       <p className="font-mono font-black text-xs text-rose-600 mt-0.5">

@@ -417,3 +417,164 @@ html {
   }
 }
 
+/* Reduce motion for accessibility and performance */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Retro styling overrides for inputs and selectors inside console containers */
+.console-card select,
+.console-card input[type="text"],
+.console-card input[type="number"],
+.console-card input[type="search"],
+.console-card textarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  font-size: 0.75rem !important; /* text-xs */
+  border-radius: 0.75rem !important; /* rounded-xl */
+  border: 1px solid rgba(15, 23, 42, 0.15) !important;
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  padding: 0.625rem 0.875rem !important;
+}
+
+/* Fix text going behind icon inside console cards */
+.console-card input.pl-10,
+.console-card select.pl-10 {
+  padding-left: 2.5rem !important;
+}
+
+.console-card select:focus,
+.console-card input:focus {
+  border-color: #d4af37 !important;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15) !important;
+  outline: none !important;
+}
+
+.console-card label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  font-size: 0.7rem !important; /* text-[10px] */
+  font-weight: 700 !important; /* font-bold */
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: #64748b !important; /* text-slate-400 */
+}
+
+/* Override all buttons inside console-card to match retro style */
+.console-card button {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  font-size: 0.75rem !important; /* text-xs */
+  font-weight: 700 !important; /* font-bold */
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-radius: 0.75rem !important; /* rounded-xl */
+  transition: all 0.2s !important;
+}
+
+/* Active console-card button states (representing selected items in toggles/timing groups) */
+.console-card button.bg-blue-600,
+.console-card button.bg-purple-600,
+.console-card button.bg-indigo-600,
+.console-card button.bg-green-600,
+.console-card button.bg-primary,
+.console-card button[type="submit"] {
+  background: #1e293b !important; /* bg-slate-800 */
+  border: 1px solid #1e293b !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.console-card button.bg-blue-600:hover:not(:disabled),
+.console-card button.bg-purple-600:hover:not(:disabled),
+.console-card button.bg-indigo-600:hover:not(:disabled),
+.console-card button.bg-green-600:hover:not(:disabled),
+.console-card button.bg-primary:hover:not(:disabled),
+.console-card button[type="submit"]:hover:not(:disabled) {
+  background: #334155 !important; /* bg-slate-700 */
+  border-color: #334155 !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Inactive console-card button states */
+.console-card button.bg-white,
+.console-card button.bg-gray-100,
+.console-card button.bg-slate-100 {
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.15) !important;
+  color: #64748b !important; /* text-slate-400 */
+}
+
+.console-card button.bg-white:hover:not(:disabled),
+.console-card button.bg-gray-100:hover:not(:disabled),
+.console-card button.bg-slate-100:hover:not(:disabled) {
+  background: #f8fafc !important; /* bg-slate-50 */
+  color: #1e293b !important;
+}
+
+.console-card button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Range slider styles inside console card */
+.console-card input[type="range"] {
+  accent-color: #d4af37 !important;
+}
+
+/* Checkbox styles inside console card */
+.console-card input[type="checkbox"] {
+  accent-color: #d4af37 !important;
+  border-radius: 0.25rem !important;
+  border: 1px solid rgba(15, 23, 42, 0.15) !important;
+}
+
+/* Override container cards inside forms */
+.console-card .bg-blue-50,
+.console-card .bg-purple-50,
+.console-card .bg-green-50,
+.console-card .bg-red-50,
+.console-card .bg-gray-50,
+.console-card .bg-slate-50,
+.console-card .bg-gradient-to-br,
+.console-card .border-2,
+.console-card .border-slate-150 {
+  background-color: #f8fafc !important; /* bg-slate-50 */
+  background-image: none !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important; /* border-slate-100 */
+  border-radius: 1rem !important; /* rounded-2xl */
+  padding: 1rem !important; /* p-4 */
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02) !important; /* shadow-inner */
+}
+
+/* Selected active player list card */
+.console-card .bg-red-50.border-red-300 {
+  background-color: #fff1f2 !important; /* bg-rose-50 */
+  border: 1px solid #fda4af !important; /* border-rose-300 */
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.05) !important;
+}
+
+/* Inner card boxes */
+.console-card .bg-white {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  border-radius: 0.75rem !important; /* rounded-xl */
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Headings inside forms */
+.console-card h3 {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  font-size: 0.75rem !important; /* text-xs */
+  font-weight: 700 !important; /* font-bold */
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: #1e293b !important;
+}
+
+

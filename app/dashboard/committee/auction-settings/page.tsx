@@ -7,6 +7,23 @@ import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { useModal } from '@/hooks/useModal';
+import AlertModal from '@/components/modals/AlertModal';
+import { 
+  ArrowLeft, 
+  Save, 
+  RefreshCw, 
+  AlertTriangle, 
+  TrendingUp, 
+  Info,
+  Calendar,
+  DollarSign,
+  Users,
+  Clock,
+  Layers,
+  Settings,
+  AlertCircle
+} from 'lucide-react';
 
 interface AuctionSettings {
   id: number;
@@ -34,6 +51,7 @@ interface AuctionStats {
 export default function AuctionSettingsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { alertState, showAlert, closeAlert } = useModal();
   const [settings, setSettings] = useState<AuctionSettings | null>(null);
   const [currentSeasonId, setCurrentSeasonId] = useState<string | null>(null);
   const [stats, setStats] = useState<AuctionStats>({
@@ -58,11 +76,7 @@ export default function AuctionSettingsPage() {
     phase_3_min_balance: 10,
   });
 
-  // Auto-adjust phase end rounds when max_rounds changes
   const handleMaxRoundsChange = (newMaxRounds: number) => {
-    // Calculate proportional phase ends based on typical 25-round structure (18, 20)
-    // Phase 1: ~72% of rounds (18/25)
-    // Phase 2: ~80% of rounds (20/25)
     const phase1Percent = 0.72;
     const phase2Percent = 0.80;
     
@@ -78,7 +92,6 @@ export default function AuctionSettingsPage() {
     setHasUnsavedChanges(true);
   };
 
-  // Handle form data changes and mark as unsaved
   const handleFormChange = (updates: Partial<typeof formData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
     setHasUnsavedChanges(true);
@@ -90,16 +103,13 @@ export default function AuctionSettingsPage() {
       const { data, success } = await response.json();
 
       if (success) {
-        // Always update settings and stats (for display purposes)
         setSettings(data.settings);
         setStats(data.stats);
         
-        // Store the season_id from the settings
         if (data.settings?.season_id) {
           setCurrentSeasonId(data.settings.season_id);
         }
         
-        // Only update form data if there are no unsaved changes and settings exist
         if (!hasUnsavedChanges && data.settings) {
           setFormData({
             auction_window: data.settings.auction_window || 'season_start',
@@ -124,7 +134,6 @@ export default function AuctionSettingsPage() {
 
   const fetchActiveSeason = async () => {
     try {
-      // Get active season from Firebase
       const seasonsQuery = query(
         collection(db, 'seasons'),
         where('isActive', '==', true)
@@ -135,8 +144,6 @@ export default function AuctionSettingsPage() {
         const seasonDoc = seasonsSnapshot.docs[0];
         const seasonId = seasonDoc.id;
         setCurrentSeasonId(seasonId);
-        
-        // Now fetch settings for this season
         fetchSettings();
       } else {
         console.error('No active season found');
@@ -166,7 +173,7 @@ export default function AuctionSettingsPage() {
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (autoRefresh && user?.role === 'committee_admin' && currentSeasonId) {
-      interval = setInterval(fetchSettings, 15000); // Refresh every 15 seconds
+      interval = setInterval(fetchSettings, 15000);
     }
     return () => {
       if (interval) clearInterval(interval);
@@ -176,28 +183,42 @@ export default function AuctionSettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation: Phase end rounds must be within max_rounds
     if (formData.phase_1_end_round >= formData.max_rounds) {
-      alert(`Phase 1 End Round (${formData.phase_1_end_round}) must be less than Maximum Rounds (${formData.max_rounds})`);
+      showAlert({
+        type: 'error',
+        title: 'Validation Error',
+        message: `Phase 1 End Round (${formData.phase_1_end_round}) must be less than Maximum Rounds (${formData.max_rounds}).`
+      });
       return;
     }
     
     if (formData.phase_2_end_round > formData.max_rounds) {
-      alert(`Phase 2 End Round (${formData.phase_2_end_round}) cannot exceed Maximum Rounds (${formData.max_rounds})`);
+      showAlert({
+        type: 'error',
+        title: 'Validation Error',
+        message: `Phase 2 End Round (${formData.phase_2_end_round}) cannot exceed Maximum Rounds (${formData.max_rounds}).`
+      });
       return;
     }
     
     if (formData.phase_1_end_round >= formData.phase_2_end_round) {
-      alert(`Phase 1 End Round (${formData.phase_1_end_round}) must be less than Phase 2 End Round (${formData.phase_2_end_round})`);
+      showAlert({
+        type: 'error',
+        title: 'Validation Error',
+        message: `Phase 1 End Round (${formData.phase_1_end_round}) must be less than Phase 2 End Round (${formData.phase_2_end_round}).`
+      });
       return;
     }
     
     setSaving(true);
 
     try {
-      // Use the current season_id from settings, or error if not available
       if (!currentSeasonId) {
-        alert('Error: No active season found. Please ensure a season is active.');
+        showAlert({
+          type: 'error',
+          title: 'Season Error',
+          message: 'No active season found. Please ensure a season is active.'
+        });
         setSaving(false);
         return;
       }
@@ -212,17 +233,27 @@ export default function AuctionSettingsPage() {
 
       if (result.success) {
         setHasUnsavedChanges(false);
-        // Update settings immediately from the response
         setSettings(result.data);
-        alert('Settings saved successfully!');
-        // Fetch full data including stats (wait a bit for state to update)
+        showAlert({
+          type: 'success',
+          title: 'Settings Saved',
+          message: 'Auction settings have been saved successfully.'
+        });
         setTimeout(() => fetchSettings(), 100);
       } else {
-        alert(`Error: ${result.error}`);
+        showAlert({
+          type: 'error',
+          title: 'Save Failed',
+          message: `Error: ${result.error}`
+        });
       }
     } catch (err) {
       console.error('Error saving settings:', err);
-      alert('Failed to save settings');
+      showAlert({
+        type: 'error',
+        title: 'Save Failed',
+        message: 'An error occurred while saving the auction settings.'
+      });
     } finally {
       setSaving(false);
     }
@@ -230,10 +261,10 @@ export default function AuctionSettingsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center console-bg">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading auction settings...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-mono text-sm">Loading auction settings...</p>
         </div>
       </div>
     );
@@ -244,99 +275,115 @@ export default function AuctionSettingsPage() {
   }
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-6">
-      <div className="glass rounded-3xl p-3 sm:p-6 mb-3 backdrop-blur-md">
-        {/* Header */}
-        <div className="flex flex-col gap-3 mb-3">
-          <h2 className="text-xl sm:text-2xl font-bold text-dark gradient-text">Auction Settings</h2>
-          
-          {/* Navigation Links */}
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/dashboard/committee"
-              className="px-4 py-2.5 text-sm glass rounded-xl hover:bg-white/90 transition-all duration-300 flex items-center justify-center text-dark w-full sm:w-auto"
-            >
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Back to Dashboard
-            </Link>
-          </div>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Decorative eSports glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
+
+      <div className="max-w-4xl mx-auto relative z-10 space-y-8">
+        {/* Navigation */}
+        <div>
+          <Link
+            href="/dashboard/committee"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
         </div>
 
-        {/* No Settings Warning */}
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+          <div>
+            <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">COMMITTEE CONSOLE</span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+              Auction Settings
+            </h1>
+            <p className="text-xs text-slate-400 font-mono mt-1">
+              Configure parameters, squad limits, and budget reserve rules for the active season.
+            </p>
+          </div>
+          {currentSeasonId && (
+            <div className="bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider px-3.5 py-1.5 rounded-xl border border-slate-700 shadow-sm shrink-0">
+              Active Season: {currentSeasonId}
+            </div>
+          )}
+        </div>
+
+        {/* No Settings Warning Card */}
         {!settings && (
-          <div className="mb-6 glass p-5 rounded-2xl bg-yellow-50/60 backdrop-blur-sm border border-yellow-100/30">
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-base font-medium text-yellow-800">No Auction Settings Found</h3>
-                <div className="mt-2 text-sm text-yellow-700">
-                  <p>No auction settings have been configured yet. Please fill in the form below and save to create the initial settings.</p>
+          <div className="console-card border-2 border-amber-500/20 bg-amber-50/40 p-5 rounded-3xl flex items-start gap-4">
+            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="font-mono text-xs">
+              <h3 className="font-extrabold text-amber-805 uppercase tracking-wider">No Auction Settings Found</h3>
+              <p className="text-slate-500 mt-1">
+                No auction settings have been configured yet for this season. Please complete the parameters form below and save to initialize.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Auction Settings Overview Stats */}
+        {settings && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Rounds</p>
+                <div className="flex items-baseline gap-1 mt-2">
+                  <span className="text-2xl font-black text-amber-600">{stats.total_rounds}</span>
+                  <span className="text-slate-400 text-xs">/ {formData.max_rounds}</span>
                 </div>
               </div>
+              <p className="text-[10px] text-slate-400 mt-2">Rounds created in this auction</p>
+            </div>
+
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Completed Rounds</p>
+                <div className="flex items-baseline gap-1 mt-2">
+                  <span className="text-2xl font-black text-green-600">{stats.completed_rounds}</span>
+                  <span className="text-slate-400 text-xs">/ {formData.max_rounds}</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-400 mt-2">Rounds that have been finalized</p>
+            </div>
+
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Remaining Rounds</p>
+                <div className="flex items-baseline gap-1 mt-2">
+                  <span className="text-2xl font-black text-blue-600">{stats.remaining_rounds}</span>
+                  <span className="text-slate-400 text-xs">/ {formData.max_rounds}</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-400 mt-2">Rounds that can still be created</p>
             </div>
           </div>
         )}
 
-        {/* Auction Settings Overview */}
-        {settings && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="glass p-4 rounded-xl bg-white/40 backdrop-blur-sm border border-gray-100/20">
-              <h3 className="text-gray-700 text-lg font-medium mb-2">Total Rounds</h3>
-              <div className="flex items-end">
-                <span className="text-3xl font-bold text-primary">{stats.total_rounds}</span>
-                <span className="text-gray-500 ml-2 text-sm">/ {formData.max_rounds}</span>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Rounds created in this auction</p>
-            </div>
+        {/* Configuration Form Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
+          <h3 className="text-sm font-mono font-bold text-slate-900 uppercase tracking-wider mb-6 flex items-center gap-2">
+            <Settings className="w-4 h-4 text-amber-500" />
+            Configure Auction Settings
+          </h3>
 
-            <div className="glass p-4 rounded-xl bg-white/40 backdrop-blur-sm border border-gray-100/20">
-              <h3 className="text-gray-700 text-lg font-medium mb-2">Completed Rounds</h3>
-              <div className="flex items-end">
-                <span className="text-3xl font-bold text-green-600">{stats.completed_rounds}</span>
-                <span className="text-gray-500 ml-2 text-sm">/ {formData.max_rounds}</span>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Rounds that have been finalized</p>
-            </div>
-
-            <div className="glass p-4 rounded-xl bg-white/40 backdrop-blur-sm border border-gray-100/20">
-              <h3 className="text-gray-700 text-lg font-medium mb-2">Remaining Rounds</h3>
-              <div className="flex items-end">
-                <span className="text-3xl font-bold text-blue-600">{stats.remaining_rounds}</span>
-                <span className="text-gray-500 ml-2 text-sm">/ {formData.max_rounds}</span>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Rounds that can still be created</p>
-            </div>
-          </div>
-        )}
-
-        {/* Settings Form */}
-        <div className="glass p-5 sm:p-6 rounded-2xl bg-white/40 backdrop-blur-sm border border-gray-100/20">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Configure Auction Settings</h3>
-
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Window type select */}
               <div className="md:col-span-2">
-                <label htmlFor="auction_window" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="auction_window" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
                   Auction Window Type
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                    <Calendar className="w-4 h-4" />
                   </span>
                   <select
                     id="auction_window"
                     value={formData.auction_window}
                     onChange={(e) => handleFormChange({ auction_window: e.target.value })}
                     required
-                    className="pl-10 w-full py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all duration-200 text-base appearance-none"
+                    className="pl-10 w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold appearance-none cursor-pointer"
                   >
                     <option value="season_start">🏆 Season Start</option>
                     <option value="transfer_window">🔄 Transfer Window</option>
@@ -345,18 +392,17 @@ export default function AuctionSettingsPage() {
                     <option value="summer_window">☀️ Summer Window</option>
                   </select>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">Select the type of auction window these settings apply to</p>
+                <p className="mt-1.5 text-[10px] text-slate-400 font-mono">Select the type of auction window these settings apply to</p>
               </div>
 
+              {/* Max Rounds */}
               <div>
-                <label htmlFor="max_rounds" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="max_rounds" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
                   Maximum Rounds
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                    <Layers className="w-4 h-4" />
                   </span>
                   <input
                     type="number"
@@ -365,21 +411,20 @@ export default function AuctionSettingsPage() {
                     onChange={(e) => handleMaxRoundsChange(parseInt(e.target.value) || 1)}
                     min="1"
                     required
-                    className="pl-10 w-full py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all duration-200 text-base"
+                    className="pl-10 w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold"
                   />
                 </div>
-                <p className="mt-1 text-xs text-gray-500">Maximum number of rounds in this auction. Phase end rounds will auto-adjust.</p>
+                <p className="mt-1.5 text-[10px] text-slate-400 font-mono">Max rounds in this auction. Phases will auto-adjust.</p>
               </div>
 
+              {/* Min Balance */}
               <div>
-                <label htmlFor="min_balance_per_round" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Minimum Balance Per Round
+                <label htmlFor="min_balance_per_round" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  Min Balance Per Round
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                    <DollarSign className="w-4 h-4" />
                   </span>
                   <input
                     type="number"
@@ -388,21 +433,20 @@ export default function AuctionSettingsPage() {
                     onChange={(e) => handleFormChange({ min_balance_per_round: parseInt(e.target.value) || 0 })}
                     min="0"
                     required
-                    className="pl-10 w-full py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all duration-200 text-base"
+                    className="pl-10 w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold"
                   />
                 </div>
-                <p className="mt-1 text-xs text-gray-500">Minimum balance required per remaining round (default: 30)</p>
+                <p className="mt-1.5 text-[10px] text-slate-400 font-mono">Minimum balance required per remaining round (default: 30)</p>
               </div>
 
+              {/* Max squad size */}
               <div>
-                <label htmlFor="max_squad_size" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="max_squad_size" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
                   Maximum Squad Size
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                    <Users className="w-4 h-4" />
                   </span>
                   <input
                     type="number"
@@ -412,21 +456,20 @@ export default function AuctionSettingsPage() {
                     min="1"
                     max="50"
                     required
-                    className="pl-10 w-full py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all duration-200 text-base"
+                    className="pl-10 w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold"
                   />
                 </div>
-                <p className="mt-1 text-xs text-gray-500">Maximum number of players each team can have (default: 25)</p>
+                <p className="mt-1.5 text-[10px] text-slate-400 font-mono">Maximum number of players each team can have (default: 25)</p>
               </div>
 
+              {/* Contract Duration */}
               <div>
-                <label htmlFor="contract_duration" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="contract_duration" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
                   Contract Duration (years)
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                    <Clock className="w-4 h-4" />
                   </span>
                   <input
                     type="number"
@@ -436,21 +479,23 @@ export default function AuctionSettingsPage() {
                     min="1"
                     max="5"
                     required
-                    className="pl-10 w-full py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all duration-200 text-base"
+                    className="pl-10 w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold"
                   />
                 </div>
-                <p className="mt-1 text-xs text-gray-500">Default contract duration for players (default: 2 years)</p>
+                <p className="mt-1.5 text-[10px] text-slate-400 font-mono">Default contract duration for players (default: 2 years)</p>
               </div>
             </div>
 
-            {/* Phase Configuration */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <h4 className="text-md font-semibold text-gray-800 mb-4">Budget Reserve Phases</h4>
-              <p className="text-sm text-gray-600 mb-4">Configure three-phase reserve system to ensure teams maintain enough balance throughout the auction.</p>
+            {/* Phase reserve configuration */}
+            <div className="mt-8 pt-6 border-t border-slate-100">
+              <h4 className="text-sm font-mono font-bold text-slate-900 uppercase tracking-wider mb-2">Budget Reserve Phases</h4>
+              <p className="text-xs text-slate-450 font-mono mb-4">Configure the three-phase reserve system to ensure teams maintain enough balance throughout the auction.</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Phase 1 End Round */}
                 <div>
-                  <label htmlFor="phase_1_end_round" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="phase_1_end_round" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
                     Phase 1 End Round (Strict Reserve)
                   </label>
                   <input
@@ -461,18 +506,19 @@ export default function AuctionSettingsPage() {
                     min="1"
                     max={formData.max_rounds - 1}
                     required
-                    className={`w-full py-3 px-4 bg-white/60 border rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all duration-200 text-base ${
-                      formData.phase_1_end_round >= formData.max_rounds ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold ${
+                      formData.phase_1_end_round >= formData.max_rounds ? 'border-red-300 bg-red-50/50' : 'border-slate-200'
                     }`}
                   />
-                  <p className="mt-1 text-xs text-gray-500">Last round of Phase 1 (bids exceeding reserve are rejected)</p>
+                  <p className="mt-1.5 text-[10px] text-slate-405 font-mono">Last round of Phase 1 (bids exceeding reserve are rejected)</p>
                   {formData.phase_1_end_round >= formData.max_rounds && (
-                    <p className="mt-1 text-xs text-red-600">⚠ Must be less than max rounds ({formData.max_rounds})</p>
+                    <p className="mt-1 text-[10px] text-red-650 font-mono flex items-center gap-1 font-bold"><AlertCircle className="w-3 h-3" /> Must be less than max rounds ({formData.max_rounds})</p>
                   )}
                 </div>
 
+                {/* Phase 1 Reserve Amount */}
                 <div>
-                  <label htmlFor="phase_1_min_balance" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="phase_1_min_balance" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
                     Phase 1 Reserve Amount (£)
                   </label>
                   <input
@@ -482,13 +528,14 @@ export default function AuctionSettingsPage() {
                     onChange={(e) => handleFormChange({ phase_1_min_balance: parseInt(e.target.value) || 0 })}
                     min="0"
                     required
-                    className="w-full py-3 px-4 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all duration-200 text-base"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold"
                   />
-                  <p className="mt-1 text-xs text-gray-500">Reserve amount per round in Phase 1 (default: £30)</p>
+                  <p className="mt-1.5 text-[10px] text-slate-405 font-mono">Reserve amount per round in Phase 1 (default: £30)</p>
                 </div>
 
+                {/* Phase 2 End Round */}
                 <div>
-                  <label htmlFor="phase_2_end_round" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="phase_2_end_round" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
                     Phase 2 End Round (Soft Reserve)
                   </label>
                   <input
@@ -499,23 +546,24 @@ export default function AuctionSettingsPage() {
                     min="1"
                     max={formData.max_rounds}
                     required
-                    className={`w-full py-3 px-4 bg-white/60 border rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all duration-200 text-base ${
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold ${
                       formData.phase_2_end_round > formData.max_rounds || formData.phase_2_end_round <= formData.phase_1_end_round
                         ? 'border-red-300 bg-red-50/50'
-                        : 'border-gray-200'
+                        : 'border-slate-200'
                     }`}
                   />
-                  <p className="mt-1 text-xs text-gray-500">Last round of Phase 2 (bids allowed with warnings)</p>
+                  <p className="mt-1.5 text-[10px] text-slate-405 font-mono">Last round of Phase 2 (bids allowed with warnings)</p>
                   {formData.phase_2_end_round > formData.max_rounds && (
-                    <p className="mt-1 text-xs text-red-600">⚠ Cannot exceed max rounds ({formData.max_rounds})</p>
+                    <p className="mt-1 text-[10px] text-red-650 font-mono flex items-center gap-1 font-bold"><AlertCircle className="w-3 h-3" /> Cannot exceed max rounds ({formData.max_rounds})</p>
                   )}
                   {formData.phase_2_end_round <= formData.phase_1_end_round && (
-                    <p className="mt-1 text-xs text-red-600">⚠ Must be greater than Phase 1 ({formData.phase_1_end_round})</p>
+                    <p className="mt-1 text-[10px] text-red-650 font-mono flex items-center gap-1 font-bold"><AlertCircle className="w-3 h-3" /> Must be greater than Phase 1 ({formData.phase_1_end_round})</p>
                   )}
                 </div>
 
+                {/* Phase 2 Reserve Amount */}
                 <div>
-                  <label htmlFor="phase_2_min_balance" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="phase_2_min_balance" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
                     Phase 2 Reserve Amount (£)
                   </label>
                   <input
@@ -525,13 +573,14 @@ export default function AuctionSettingsPage() {
                     onChange={(e) => handleFormChange({ phase_2_min_balance: parseInt(e.target.value) || 0 })}
                     min="0"
                     required
-                    className="w-full py-3 px-4 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all duration-200 text-base"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold"
                   />
-                  <p className="mt-1 text-xs text-gray-500">Reserve amount per round in Phase 2 (default: £30)</p>
+                  <p className="mt-1.5 text-[10px] text-slate-405 font-mono">Reserve amount per round in Phase 2 (default: £30)</p>
                 </div>
 
+                {/* Phase 3 Reserve Amount */}
                 <div>
-                  <label htmlFor="phase_3_min_balance" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="phase_3_min_balance" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
                     Phase 3 Reserve Amount (£)
                   </label>
                   <input
@@ -541,74 +590,83 @@ export default function AuctionSettingsPage() {
                     onChange={(e) => handleFormChange({ phase_3_min_balance: parseInt(e.target.value) || 0 })}
                     min="0"
                     required
-                    className="w-full py-3 px-4 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all duration-200 text-base"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold"
                   />
-                  <p className="mt-1 text-xs text-gray-500">Reserve amount per slot in Phase 3 (default: £10)</p>
+                  <p className="mt-1.5 text-[10px] text-slate-405 font-mono">Reserve amount per slot in Phase 3 (default: £10)</p>
                 </div>
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-8 pt-4">
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-medium hover:from-primary/90 hover:to-secondary/90 transform hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 shadow-md disabled:opacity-50"
+                className="w-full py-3 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white rounded-xl transition-all duration-200 font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm hover:scale-[1.01]"
               >
+                <Save className="w-4 h-4" />
                 {saving ? 'Saving...' : 'Save Settings'}
               </button>
             </div>
           </form>
         </div>
 
-        {/* Explanation Section */}
-        <div className="mt-6 glass p-5 rounded-2xl bg-blue-50/60 backdrop-blur-sm border border-blue-100/30">
-          <div className="flex items-start">
-            <div className="flex-shrink-0">
-              <svg className="h-6 w-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-base font-medium text-blue-800">About Minimum Balance Requirements</h3>
-              <div className="mt-2 text-sm text-blue-700">
-                <p>The minimum balance requirement ensures teams can participate in all remaining rounds of the auction.</p>
-                <p className="mt-2">
-                  For example, if 15 rounds are completed and 10 remain, with a minimum balance requirement of 30 per round,
-                  each team must have at least 300 in their balance to start the next round.
-                </p>
-                <p className="mt-2">This helps ensure fair competition throughout the entire auction process.</p>
-              </div>
-            </div>
+        {/* Explanation Alert Section */}
+        <div className="console-card bg-blue-50/50 border border-blue-100/50 rounded-3xl p-5 flex items-start gap-4">
+          <Info className="w-5 h-5 text-blue-550 shrink-0 mt-0.5" />
+          <div className="font-mono text-xs text-blue-800">
+            <h3 className="font-extrabold uppercase tracking-wider mb-1">About Minimum Balance Requirements</h3>
+            <p className="text-blue-700/95 leading-relaxed">
+              The minimum balance requirement ensures teams can participate in all remaining rounds of the auction.
+            </p>
+            <p className="text-blue-700/95 mt-1.5 leading-relaxed">
+              For example, if 15 rounds are completed and 10 remain, with a minimum balance requirement of 30 per round,
+              each team must have at least 300 in their balance to start the next round.
+            </p>
+            <p className="text-blue-705 mt-1.5 font-bold uppercase tracking-wide">
+              This helps ensure fair competition throughout the entire auction process.
+            </p>
           </div>
         </div>
 
         {/* Auto-refresh Controls */}
-        <div className="mt-6 flex items-center">
-          <label htmlFor="auto-refresh-toggle" className="flex items-center cursor-pointer">
-            <div className="relative">
-              <input
-                type="checkbox"
-                id="auto-refresh-toggle"
-                checked={autoRefresh}
-                onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="sr-only"
-              />
-              <div className={`block w-10 h-6 rounded-full ${autoRefresh ? 'bg-primary' : 'bg-gray-300'}`}></div>
-              <div
-                className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${
-                  autoRefresh ? 'translate-x-4' : ''
-                }`}
-              ></div>
-            </div>
-            <div className="ml-3 text-gray-700 text-sm font-medium">
-              Auto-refresh data{' '}
-              <span className={autoRefresh ? 'text-green-600' : 'text-gray-500'}>
-                ({autoRefresh ? 'enabled' : 'disabled'})
-              </span>
-            </div>
-          </label>
+        <div className="flex items-center justify-between bg-white/60 border border-slate-200/60 rounded-3xl p-5 shadow-sm font-mono text-xs">
+          <div className="flex items-center">
+            <label htmlFor="auto-refresh-toggle" className="flex items-center cursor-pointer select-none">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  id="auto-refresh-toggle"
+                  checked={autoRefresh}
+                  onChange={(e) => setAutoRefresh(e.target.checked)}
+                  className="sr-only"
+                />
+                <div className={`block w-10 h-6 rounded-full transition-colors ${autoRefresh ? 'bg-amber-500' : 'bg-slate-350'}`}></div>
+                <div
+                  className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${
+                    autoRefresh ? 'translate-x-4' : ''
+                  }`}
+                ></div>
+              </div>
+              <div className="ml-3 text-slate-705 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <RefreshCw className={`w-3.5 h-3.5 ${autoRefresh ? 'animate-spin' : ''} text-slate-400`} />
+                Auto-refresh data{' '}
+                <span className={autoRefresh ? 'text-green-600' : 'text-slate-400 font-normal'}>
+                  ({autoRefresh ? 'enabled' : 'disabled'})
+                </span>
+              </div>
+            </label>
+          </div>
         </div>
       </div>
+
+      {/* Modal Component */}
+      <AlertModal
+        isOpen={alertState.isOpen}
+        onClose={closeAlert}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+      />
     </div>
   );
 }

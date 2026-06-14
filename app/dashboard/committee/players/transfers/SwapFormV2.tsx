@@ -421,11 +421,10 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
     const maxPlayerValue = Math.max(selectedPlayerA.auction_value, selectedPlayerB.auction_value);
     return Math.round(maxPlayerValue * 0.30 * 100) / 100;
   }, [selectedPlayerA, selectedPlayerB]);
-
   if (loadingPlayers || teamsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500"></div>
       </div>
     );
   }
@@ -434,16 +433,16 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
     <div className="space-y-6">
       {/* Alerts */}
       {error && (
-        <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg">
-          <p className="font-semibold">Error</p>
-          <p>{error}</p>
+        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl font-mono text-xs uppercase tracking-wide">
+          <p className="font-extrabold">⚠️ Error</p>
+          <p className="mt-1">{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-lg">
-          <p className="font-semibold">Success!</p>
-          <pre className="whitespace-pre-wrap text-sm mt-2 font-sans">{success}</pre>
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl font-mono text-xs uppercase tracking-wide">
+          <p className="font-extrabold">✨ Success</p>
+          <pre className="whitespace-pre-wrap text-[10px] mt-2 font-mono leading-relaxed">{success}</pre>
         </div>
       )}
 
@@ -463,35 +462,33 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
 
         {/* Team A Info */}
         {selectedPlayerA && (
-          <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-            <h3 className="font-semibold text-blue-900 mb-3">Team A: {teamAName}</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
+            <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-3.5">Team A: {teamAName}</h3>
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-gray-600">Player:</span>
-                <p className="font-semibold text-gray-900">{selectedPlayerA.player_name}</p>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Player</span>
+                <p className="font-extrabold text-slate-800 uppercase mt-0.5">{selectedPlayerA.player_name}</p>
               </div>
               <div>
-                <span className="text-gray-600">Value:</span>
-                <p className="font-semibold text-gray-900">${selectedPlayerA.auction_value}</p>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Value</span>
+                <p className="font-extrabold text-amber-600 mt-0.5">${selectedPlayerA.auction_value}</p>
               </div>
               <div>
-                <span className="text-gray-600">Category:</span>
-                <p className="font-semibold text-gray-900">{selectedPlayerA.category}</p>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Category</span>
+                <p className="font-extrabold text-slate-800 uppercase mt-0.5">{selectedPlayerA.category}</p>
               </div>
               <div>
-                <span className="text-gray-600">Current Balance:</span>
-                <p className="font-semibold text-gray-900">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Balance</span>
+                <p className="font-extrabold text-slate-800 mt-0.5">
                   {teamABalance !== undefined ? `$${teamABalance.toFixed(2)}` : 'Loading...'}
                 </p>
               </div>
             </div>
             {teamALimit && (
-              <div className={`mt-3 p-2 rounded-lg ${
-                teamALimit.remaining > 0 ? 'bg-blue-100' : 'bg-red-100'
+              <div className={`mt-3 p-2.5 rounded-xl border text-[10px] uppercase font-bold tracking-wider text-center ${
+                teamALimit.remaining > 0 ? 'bg-white border-slate-200 text-slate-650' : 'bg-rose-50 border-rose-200 text-rose-600'
               }`}>
-                <span className="text-sm font-semibold">
-                  Transfer Slots: {teamALimit.remaining} of 2 remaining
-                </span>
+                Transfer Slots: {teamALimit.remaining} / 2 remaining
               </div>
             )}
           </div>
@@ -511,35 +508,33 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
 
         {/* Team B Info */}
         {selectedPlayerB && (
-          <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
-            <h3 className="font-semibold text-purple-900 mb-3">Team B: {teamBName}</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
+            <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-3.5">Team B: {teamBName}</h3>
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-gray-600">Player:</span>
-                <p className="font-semibold text-gray-900">{selectedPlayerB.player_name}</p>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Player</span>
+                <p className="font-extrabold text-slate-800 uppercase mt-0.5">{selectedPlayerB.player_name}</p>
               </div>
               <div>
-                <span className="text-gray-600">Value:</span>
-                <p className="font-semibold text-gray-900">${selectedPlayerB.auction_value}</p>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Value</span>
+                <p className="font-extrabold text-amber-600 mt-0.5">${selectedPlayerB.auction_value}</p>
               </div>
               <div>
-                <span className="text-gray-600">Category:</span>
-                <p className="font-semibold text-gray-900">{selectedPlayerB.category}</p>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Category</span>
+                <p className="font-extrabold text-slate-800 uppercase mt-0.5">{selectedPlayerB.category}</p>
               </div>
               <div>
-                <span className="text-gray-600">Current Balance:</span>
-                <p className="font-semibold text-gray-900">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Balance</span>
+                <p className="font-extrabold text-slate-800 mt-0.5">
                   {teamBBalance !== undefined ? `$${teamBBalance.toFixed(2)}` : 'Loading...'}
                 </p>
               </div>
             </div>
             {teamBLimit && (
-              <div className={`mt-3 p-2 rounded-lg ${
-                teamBLimit.remaining > 0 ? 'bg-purple-100' : 'bg-red-100'
+              <div className={`mt-3 p-2.5 rounded-xl border text-[10px] uppercase font-bold tracking-wider text-center ${
+                teamBLimit.remaining > 0 ? 'bg-white border-slate-200 text-slate-650' : 'bg-rose-50 border-rose-200 text-rose-600'
               }`}>
-                <span className="text-sm font-semibold">
-                  Transfer Slots: {teamBLimit.remaining} of 2 remaining
-                </span>
+                Transfer Slots: {teamBLimit.remaining} / 2 remaining
               </div>
             )}
           </div>
@@ -547,226 +542,101 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
 
         {/* Real-time Calculation Preview */}
         {calculation && selectedPlayerA && selectedPlayerB && (
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-2 border-purple-200">
-            <h3 className="font-bold text-purple-900 mb-4 text-lg flex items-center gap-2">
-              💱 Swap Calculation Preview
+          <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
+            <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+              📊 Swap Preview
             </h3>
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Player A Details */}
-              <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-blue-500">
-                <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                  👤 {selectedPlayerA.player_name} ({teamAName})
+              <div className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm">
+                <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] mb-3 flex items-center gap-1">
+                  👤 {selectedPlayerA.player_name}
                 </h4>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Current Value:</span>
-                    <span className="font-semibold text-gray-900">${calculation.playerA.originalValue.toFixed(2)}</span>
+                    <span className="text-slate-400">Value:</span>
+                    <span className="font-bold text-slate-800">${calculation.playerA.originalValue.toFixed(2)} → ${calculation.playerA.newValue.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">New Value:</span>
-                    <span className="font-bold text-green-600">${calculation.playerA.newValue.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                    <span className="text-sm text-gray-600">Category:</span>
-                    <span className={`font-bold ${
-                      calculation.playerA.newCategory !== selectedPlayerA.category 
-                        ? 'text-yellow-600' 
-                        : 'text-gray-900'
-                    }`}>
+                    <span className="text-slate-400">Category:</span>
+                    <span className={`font-extrabold ${calculation.playerA.newCategory !== selectedPlayerA.category ? 'text-amber-600' : 'text-slate-800'}`}>
                       {selectedPlayerA.category} → {calculation.playerA.newCategory}
-                      {calculation.playerA.newCategory !== selectedPlayerA.category && ' ⬆️'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Points:</span>
-                    <span className="font-semibold text-gray-900">
+                    <span className="text-slate-400">Points:</span>
+                    <span className="font-bold text-slate-800">
                       {selectedPlayerA.points} → {selectedPlayerA.points + calculation.playerA.pointsAdded}
                     </span>
                   </div>
                   {calculation.playerA.pointsAdded > 0 && (
-                    <div className="bg-yellow-50 rounded p-2 mt-2">
-                      <span className="text-xs text-yellow-800 font-semibold">+{calculation.playerA.pointsAdded} points added</span>
+                    <div className="bg-amber-50/50 border border-amber-200/50 rounded-lg p-1.5 text-[10px] font-bold text-center text-amber-800 uppercase tracking-wider mt-1">
+                      +{calculation.playerA.pointsAdded} Points Added
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Player B Details */}
-              <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-purple-500">
-                <h4 className="font-semibold text-purple-900 mb-3 flex items-center gap-2">
-                  👤 {selectedPlayerB.player_name} ({teamBName})
+              <div className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm">
+                <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] mb-3 flex items-center gap-1">
+                  👤 {selectedPlayerB.player_name}
                 </h4>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Current Value:</span>
-                    <span className="font-semibold text-gray-900">${calculation.playerB.originalValue.toFixed(2)}</span>
+                    <span className="text-slate-400">Value:</span>
+                    <span className="font-bold text-slate-800">${calculation.playerB.originalValue.toFixed(2)} → ${calculation.playerB.newValue.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">New Value:</span>
-                    <span className="font-bold text-green-600">${calculation.playerB.newValue.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                    <span className="text-sm text-gray-600">Category:</span>
-                    <span className={`font-bold ${
-                      calculation.playerB.newCategory !== selectedPlayerB.category 
-                        ? 'text-yellow-600' 
-                        : 'text-gray-900'
-                    }`}>
+                    <span className="text-slate-400">Category:</span>
+                    <span className={`font-extrabold ${calculation.playerB.newCategory !== selectedPlayerB.category ? 'text-amber-600' : 'text-slate-800'}`}>
                       {selectedPlayerB.category} → {calculation.playerB.newCategory}
-                      {calculation.playerB.newCategory !== selectedPlayerB.category && ' ⬆️'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Points:</span>
-                    <span className="font-semibold text-gray-900">
+                    <span className="text-slate-400">Points:</span>
+                    <span className="font-bold text-slate-800">
                       {selectedPlayerB.points} → {selectedPlayerB.points + calculation.playerB.pointsAdded}
                     </span>
                   </div>
                   {calculation.playerB.pointsAdded > 0 && (
-                    <div className="bg-yellow-50 rounded p-2 mt-2">
-                      <span className="text-xs text-yellow-800 font-semibold">+{calculation.playerB.pointsAdded} points added</span>
+                    <div className="bg-amber-50/50 border border-amber-200/50 rounded-lg p-1.5 text-[10px] font-bold text-center text-amber-800 uppercase tracking-wider mt-1">
+                      +{calculation.playerB.pointsAdded} Points Added
                     </div>
                   )}
                 </div>
               </div>
+            </div>
 
-              {/* Free Operation Banner */}
-              <div className="bg-green-50 rounded-lg p-4 shadow-sm border border-green-200 text-center">
-                <span className="text-lg font-bold text-green-700">🆓 Free Swap</span>
-                <p className="text-sm text-green-600 mt-1">
-                  This operation is entirely free. No fees or cash balances are modified.
+            {/* Free Swap Info Banner */}
+            <div className="mt-4 bg-white border border-slate-150 rounded-xl p-4 shadow-sm text-center">
+              <span className="text-xs font-black text-emerald-600 uppercase tracking-wider">🆓 Free Player Swap</span>
+              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-1">
+                This operation is free of swap charges. Budgets remain untouched.
+              </p>
+            </div>
+
+            {/* Warnings */}
+            {limitExceeded && (
+              <div className="mt-4 bg-rose-50 border border-rose-200 rounded-xl p-4 text-rose-700">
+                <p className="font-extrabold">⚠️ Limit Exceeded</p>
+                <p className="text-[10px] mt-1 font-bold">
+                  {teamALimitExceeded && `${teamAName} has no transfer slots left. `}
+                  {teamBLimitExceeded && `${teamBName} has no transfer slots left.`}
                 </p>
               </div>
-
-              {/* Category Upgrades Summary */}
-              {(calculation.playerA.newCategory !== selectedPlayerA.category || 
-                calculation.playerB.newCategory !== selectedPlayerB.category) && (
-                <div className="bg-yellow-50 rounded-lg p-4 shadow-sm border border-yellow-200">
-                  <h4 className="font-semibold text-yellow-800 mb-3 text-sm flex items-center gap-2">
-                    🏷️ Category Upgrades!
-                  </h4>
-                  <div className="space-y-3">
-                    {calculation.playerA.newCategory !== selectedPlayerA.category && (
-                      <div className="bg-white rounded-lg p-3 border border-yellow-200">
-                        <p className="text-xs text-gray-600 mb-2 font-semibold">{selectedPlayerA.player_name}</p>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Category:</span>
-                            <span className="font-semibold text-gray-900">
-                              {selectedPlayerA.category} → {calculation.playerA.newCategory}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Points:</span>
-                            <span className="font-semibold text-gray-900">
-                              {selectedPlayerA.points} → {selectedPlayerA.points + calculation.playerA.pointsAdded}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center pt-1 border-t border-yellow-100">
-                            <span className="text-xs text-gray-500">Points Added:</span>
-                            <span className="text-sm font-bold text-green-600">
-                              +{calculation.playerA.pointsAdded}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {calculation.playerB.newCategory !== selectedPlayerB.category && (
-                      <div className="bg-white rounded-lg p-3 border border-yellow-200">
-                        <p className="text-xs text-gray-600 mb-2 font-semibold">{selectedPlayerB.player_name}</p>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Category:</span>
-                            <span className="font-semibold text-gray-900">
-                              {selectedPlayerB.category} → {calculation.playerB.newCategory}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Points:</span>
-                            <span className="font-semibold text-gray-900">
-                              {selectedPlayerB.points} → {selectedPlayerB.points + calculation.playerB.pointsAdded}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center pt-1 border-t border-yellow-100">
-                            <span className="text-xs text-gray-500">Points Added:</span>
-                            <span className="text-sm font-bold text-green-600">
-                              +{calculation.playerB.pointsAdded}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Warnings */}
-              {teamAHasInsufficientFunds && (
-                <div className="bg-red-100 border-2 border-red-300 rounded-lg p-4">
-                  <p className="text-red-800 font-semibold text-sm flex items-center gap-2">
-                    ⚠️ Insufficient Funds - {teamAName}
-                  </p>
-                  <p className="text-red-700 text-xs mt-1">
-                    {teamAName} needs ${calculation.teamAPays.toFixed(2)} but only has ${teamABalance?.toFixed(2)}
-                  </p>
-                </div>
-              )}
-
-              {teamBHasInsufficientFunds && (
-                <div className="bg-red-100 border-2 border-red-300 rounded-lg p-4">
-                  <p className="text-red-800 font-semibold text-sm flex items-center gap-2">
-                    ⚠️ Insufficient Funds - {teamBName}
-                  </p>
-                  <p className="text-red-700 text-xs mt-1">
-                    {teamBName} needs ${calculation.teamBPays.toFixed(2)} but only has ${teamBBalance?.toFixed(2)}
-                  </p>
-                </div>
-              )}
-
-              {cashValidation && !cashValidation.valid && (
-                <div className="bg-orange-100 border-2 border-orange-300 rounded-lg p-4">
-                  <p className="text-orange-800 font-semibold text-sm flex items-center gap-2">
-                    ⚠️ Cash Limit Exceeded
-                  </p>
-                  <p className="text-orange-700 text-xs mt-1">
-                    {cashValidation.message}
-                  </p>
-                </div>
-              )}
-
-              {teamALimitExceeded && (
-                <div className="bg-red-100 border-2 border-red-300 rounded-lg p-4">
-                  <p className="text-red-800 font-semibold text-sm flex items-center gap-2">
-                    ⚠️ Transfer Limit Exceeded - {teamAName}
-                  </p>
-                  <p className="text-red-700 text-xs mt-1">
-                    {teamAName} has used all 2 transfer slots for this season
-                  </p>
-                </div>
-              )}
-
-              {teamBLimitExceeded && (
-                <div className="bg-red-100 border-2 border-red-300 rounded-lg p-4">
-                  <p className="text-red-800 font-semibold text-sm flex items-center gap-2">
-                    ⚠️ Transfer Limit Exceeded - {teamBName}
-                  </p>
-                  <p className="text-red-700 text-xs mt-1">
-                    {teamBName} has used all 2 transfer slots for this season
-                  </p>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         )}
 
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={!selectedPlayerAId || !selectedPlayerBId || submitting || hasInsufficientFunds || limitExceeded || (cashValidation && !cashValidation.valid)}
-          className="w-full py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+          disabled={!selectedPlayerAId || !selectedPlayerBId || submitting || hasInsufficientFunds || limitExceeded}
+          className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md cursor-pointer text-center"
         >
-          {submitting ? 'Processing Swap...' : 'Execute Swap'}
+          {submitting ? 'Processing Swap...' : 'Execute Player Swap'}
         </button>
       </form>
     </div>

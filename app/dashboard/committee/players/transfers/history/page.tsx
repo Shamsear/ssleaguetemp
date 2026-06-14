@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { History, Download, Filter, ArrowUpDown } from 'lucide-react';
+import { History, Download, Filter } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { usePermissions } from '@/hooks/usePermissions';
 
@@ -94,14 +94,14 @@ export default function TransferHistoryPage() {
   
   const [transactions, setTransactions] = useState<TransferTransaction[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
-  const [availableSeasons, setAvailableSeasons] = useState<string[]>([]); // New: seasons with transactions
+  const [availableSeasons, setAvailableSeasons] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // Filters
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');
-  const [selectedPlayerType, setSelectedPlayerType] = useState<string>(''); // New: player type filter
-  const [selectedSeason, setSelectedSeason] = useState<string>(''); // New: season filter
+  const [selectedPlayerType, setSelectedPlayerType] = useState<string>('');
+  const [selectedSeason, setSelectedSeason] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(0);
   const [limit] = useState(20);
   const [totalCount, setTotalCount] = useState(0);
@@ -133,7 +133,6 @@ export default function TransferHistoryPage() {
     if (!userSeasonId) return;
     
     try {
-      // Load teams for filtering
       const teamsRes = await fetchWithTokenRefresh(`/api/team/all?season_id=${userSeasonId}`);
       if (teamsRes.ok) {
         const teamsData = await teamsRes.json();
@@ -152,7 +151,6 @@ export default function TransferHistoryPage() {
     try {
       setIsLoading(true);
       
-      // Build query params
       const params = new URLSearchParams({
         season_id: selectedSeason || userSeasonId,
         page: currentPage.toString(),
@@ -163,7 +161,6 @@ export default function TransferHistoryPage() {
       if (selectedType) params.append('type', selectedType);
       if (selectedPlayerType) params.append('player_type', selectedPlayerType);
 
-      // Fetch from API
       const response = await fetchWithTokenRefresh(`/api/transfers/history?${params.toString()}`);
       
       if (!response.ok) {
@@ -197,26 +194,26 @@ export default function TransferHistoryPage() {
       const type = tx.transaction_type.toUpperCase();
       
       let players = '';
-      let teams = '';
-      let values = '';
-      let fees = '';
+      let teamsList = '';
+      let valuesStr = '';
+      let feesStr = '';
       let starChanges = '';
       
       if (tx.transaction_type === 'transfer') {
         players = tx.player?.name || '';
-        teams = `${tx.old_team_id} → ${tx.new_team_id}`;
-        values = `${tx.values?.old_value} → ${tx.values?.new_value}`;
-        fees = tx.financial?.committee_fee?.toFixed(2) || '';
+        teamsList = `${tx.old_team_id} → ${tx.new_team_id}`;
+        valuesStr = `${tx.values?.old_value} → ${tx.values?.new_value}`;
+        feesStr = tx.financial?.committee_fee?.toFixed(2) || '';
         starChanges = `${tx.star_rating?.old}⭐ → ${tx.star_rating?.new}⭐`;
       } else if (tx.transaction_type === 'swap') {
         players = `${tx.player_a?.name} ↔ ${tx.player_b?.name}`;
-        teams = `${tx.teams?.team_a_id} ↔ ${tx.teams?.team_b_id}`;
-        values = `${tx.player_a?.old_value}/${tx.player_b?.old_value} → ${tx.player_a?.new_value}/${tx.player_b?.new_value}`;
-        fees = tx.financial?.total_committee_fees?.toFixed(2) || '';
+        teamsList = `${tx.teams?.team_a_id} ↔ ${tx.teams?.team_b_id}`;
+        valuesStr = `${tx.player_a?.old_value}/${tx.player_b?.old_value} → ${tx.player_a?.new_value}/${tx.player_b?.new_value}`;
+        feesStr = tx.financial?.total_committee_fees?.toFixed(2) || '';
         starChanges = `${tx.player_a?.old_star}⭐→${tx.player_a?.new_star}⭐ / ${tx.player_b?.old_star}⭐→${tx.player_b?.new_star}⭐`;
       }
       
-      return [date, type, players, teams, values, fees, starChanges, tx.processed_by_name];
+      return [date, type, players, teamsList, valuesStr, feesStr, starChanges, tx.processed_by_name];
     });
 
     const csvContent = [
@@ -235,87 +232,87 @@ export default function TransferHistoryPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString('en-GB', { 
+      day: '2-digit',
       month: 'short', 
-      day: 'numeric', 
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'transfer': return 'bg-blue-100 text-blue-700';
-      case 'swap': return 'bg-purple-100 text-purple-700';
-      case 'release': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
-  };
-
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-400 font-bold uppercase tracking-wider">Loading history data...</p>
+        </div>
       </div>
     );
   }
 
-  if (!user) return null;
+  if (!user || user.role !== 'committee_admin') return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Decorative glowing overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
+
+      <div className="max-w-5xl mx-auto relative z-10 space-y-8">
+        {/* Back Link */}
+        <div className="flex justify-between items-center">
           <Link
             href="/dashboard/committee/players/transfers"
-            className="inline-flex items-center gap-2 text-sm sm:text-base text-gray-600 hover:text-purple-600 transition-colors mb-3 sm:mb-4 group"
+            className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
-            <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Transfers
+            ← Back to Transfers
           </Link>
-          <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/30 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
-                  <History className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold gradient-text">Transfer History</h1>
-                  <p className="text-xs sm:text-sm text-gray-600 mt-1">View all player transfers, swaps, and releases</p>
-                </div>
-              </div>
-              <button
-                onClick={exportToCSV}
-                disabled={transactions.length === 0}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
-              >
-                <Download className="w-4 h-4" />
-                <span className="hidden sm:inline">Export CSV</span>
-              </button>
-            </div>
+          
+          <div className="bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider px-3 py-1.5 rounded-xl border border-slate-700 shadow-sm shrink-0">
+            LOGS: SYSTEM_TRANSFERS
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="glass rounded-2xl sm:rounded-3xl border border-white/30 shadow-xl p-4 sm:p-6 mb-6">
+        {/* Header Title Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-slate-800 shadow-sm shrink-0">
+                <History className="w-5 h-5 text-white" />
+              </div>
+              <div className="font-mono">
+                <h1 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none uppercase">Transfer History</h1>
+                <p className="text-xs text-slate-400 mt-1">View all player transfers, swaps, and releases</p>
+              </div>
+            </div>
+            <button
+              onClick={exportToCSV}
+              disabled={transactions.length === 0}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        {/* Filters Panel */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm font-mono text-xs">
           <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-purple-600" />
-            <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+            <Filter className="w-4 h-4 text-amber-500" />
+            <h2 className="text-xs font-bold text-slate-850 uppercase tracking-wider">Search Filters</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Season</label>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Season</label>
               <select
                 value={selectedSeason}
                 onChange={(e) => {
                   setSelectedSeason(e.target.value);
                   setCurrentPage(0);
                 }}
-                className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 bg-white"
+                className="w-full px-3 py-2 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-white"
               >
                 <option value="">Current Season ({userSeasonId})</option>
                 {availableSeasons.map((season) => (
@@ -326,14 +323,14 @@ export default function TransferHistoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Team</label>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Team</label>
               <select
                 value={selectedTeamId}
                 onChange={(e) => {
                   setSelectedTeamId(e.target.value);
                   setCurrentPage(0);
                 }}
-                className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 bg-white"
+                className="w-full px-3 py-2 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-white"
               >
                 <option value="">All Teams</option>
                 {teams.map((teamData) => (
@@ -344,14 +341,14 @@ export default function TransferHistoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Transaction Type</label>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Transaction Type</label>
               <select
                 value={selectedType}
                 onChange={(e) => {
                   setSelectedType(e.target.value);
                   setCurrentPage(0);
                 }}
-                className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 bg-white"
+                className="w-full px-3 py-2 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-white"
               >
                 <option value="">All Types</option>
                 <option value="release">Player Releases</option>
@@ -363,14 +360,14 @@ export default function TransferHistoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Player Type</label>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Player Type</label>
               <select
                 value={selectedPlayerType}
                 onChange={(e) => {
                   setSelectedPlayerType(e.target.value);
                   setCurrentPage(0);
                 }}
-                className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 bg-white"
+                className="w-full px-3 py-2 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-white"
               >
                 <option value="">All Player Types</option>
                 <option value="real">👤 Real Players</option>
@@ -380,72 +377,76 @@ export default function TransferHistoryPage() {
           </div>
         </div>
 
-        {/* Transactions List */}
+        {/* Transactions list */}
         {transactions.length === 0 ? (
-          <div className="glass rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center border border-white/30 shadow-xl">
-            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 mb-4 sm:mb-6">
-              <History className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">No Transactions Found</h3>
-            <p className="text-sm sm:text-base text-gray-600 max-w-md mx-auto">No transfer transactions found for the selected filters</p>
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-12 text-center shadow-sm">
+            <History className="w-12 h-12 mx-auto text-slate-300 mb-4" />
+            <h3 className="text-base font-extrabold text-slate-800 uppercase tracking-wide">No Transactions Found</h3>
+            <p className="text-xs text-slate-400 font-mono mt-1 max-w-sm mx-auto">No transfer transactions found matching selected filters</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {transactions.map((tx) => (
-              <div key={tx.id} className="glass rounded-2xl border border-white/30 shadow-xl overflow-hidden">
-                {/* Transaction Header */}
-                <div className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 sm:px-6 py-3">
-                  <div className="flex items-center justify-between">
+              <div key={tx.id} className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm">
+                {/* Header bar */}
+                <div className="bg-slate-800 text-white px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <span className={`px-3 py-1 rounded-lg text-xs font-bold ${getTypeColor(tx.transaction_type)} bg-white`}>
-                        {tx.transaction_type.toUpperCase()}
+                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        tx.transaction_type === 'release' 
+                          ? 'bg-red-100 text-red-800' 
+                          : tx.transaction_type === 'swap' 
+                          ? 'bg-purple-100 text-purple-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {tx.transaction_type}
                       </span>
-                      <span className="text-sm">{formatDate(tx.created_at)}</span>
+                      <span className="text-slate-350">{formatDate(tx.created_at)}</span>
                     </div>
-                    <span className="text-xs text-purple-100">By: {tx.processed_by_name}</span>
+                    <span className="text-slate-400">Processed By: {tx.processed_by_name}</span>
                   </div>
                 </div>
 
-                {/* Transaction Details */}
-                <div className="p-4 sm:p-6">
+                {/* Details content */}
+                <div className="p-5 font-mono text-xs text-slate-650">
                   {tx.transaction_type === 'release' && (
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
-                          <p className="text-sm text-gray-600">Player Released</p>
-                          <p className="text-lg font-bold text-gray-900">{tx.player_name}</p>
-                          <p className="text-xs text-gray-500">{tx.player_type === 'real' ? 'Real Player' : 'Football Player'}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Player Released</p>
+                          <p className="text-base font-extrabold text-slate-900 mt-0.5">{tx.player_name}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 leading-none">
+                            {tx.player_type === 'real' ? '👤 Real Player' : '⚽ Football Player'}
+                          </p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-600">Team</p>
-                          <p className="text-sm font-semibold text-gray-900">{tx.team_name}</p>
-                          <p className="text-xs text-gray-500">{tx.team_id}</p>
+                        <div className="text-left sm:text-right">
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Team roster</p>
+                          <p className="text-sm font-extrabold text-slate-850 mt-0.5">{tx.team_name}</p>
+                          <p className="text-[9px] text-slate-350 font-bold uppercase tracking-wider">{tx.team_id}</p>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t">
-                        <div>
-                          <p className="text-xs text-gray-600">Auction Value</p>
-                          <p className="text-sm font-bold text-gray-900">{tx.auction_value?.toFixed(2)}</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-inner">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide mb-1">Original Value</p>
+                          <p className="text-sm font-extrabold text-slate-800">£{tx.auction_value?.toLocaleString()}</p>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-600">Refund Amount</p>
-                          <p className="text-sm font-bold text-green-600">{tx.refund_amount?.toFixed(2)}</p>
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-inner">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide mb-1">Refund Amount</p>
+                          <p className="text-sm font-extrabold text-emerald-605">£{tx.refund_amount?.toLocaleString()}</p>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-600">Refund %</p>
-                          <p className="text-sm font-bold text-blue-600">{tx.refund_percentage}%</p>
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-inner">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide mb-1">Refund Percentage</p>
+                          <p className="text-sm font-extrabold text-blue-600">{tx.refund_percentage}%</p>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-600">Release Timing</p>
-                          <p className="text-sm font-bold text-purple-600 capitalize">{tx.release_timing}</p>
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-inner">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide mb-1">Release Timing</p>
+                          <p className="text-sm font-extrabold text-purple-650 capitalize">{tx.release_timing}</p>
                         </div>
                       </div>
                       {tx.release_season && (
-                        <div className="pt-2 border-t">
-                          <p className="text-xs text-gray-600">Release Season: <span className="font-semibold text-gray-900">{tx.release_season}</span></p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Contract: {tx.original_contract_start} - {tx.original_contract_end}
-                          </p>
+                        <div className="pt-3 border-t border-slate-100 text-[10px] text-slate-400 flex flex-col sm:flex-row sm:justify-between gap-1 leading-none">
+                          <span>Release Season: <strong className="text-slate-700">{tx.release_season}</strong></span>
+                          <span>Contract Timeline: <strong className="text-slate-700">{tx.original_contract_start} - {tx.original_contract_end}</strong></span>
                         </div>
                       )}
                     </div>
@@ -453,33 +454,37 @@ export default function TransferHistoryPage() {
 
                   {tx.transaction_type === 'transfer' && (
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
-                          <p className="text-sm text-gray-600">Player</p>
-                          <p className="text-lg font-bold text-gray-900">{tx.player?.name}</p>
-                          <p className="text-xs text-gray-500">{tx.player?.type === 'real' ? 'Real Player' : 'Football Player'}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Transferred Player</p>
+                          <p className="text-base font-extrabold text-slate-900 mt-0.5">{tx.player?.name}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 leading-none">
+                            {tx.player?.type === 'real' ? '👤 Real Player' : '⚽ Football Player'}
+                          </p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-600">Teams</p>
-                          <p className="text-sm font-semibold text-gray-900">{tx.old_team_id} → {tx.new_team_id}</p>
+                        <div className="text-left sm:text-right">
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Transfer Path</p>
+                          <p className="text-sm font-extrabold text-slate-850 mt-0.5">
+                            {tx.old_team_id} → {tx.new_team_id}
+                          </p>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t">
-                        <div>
-                          <p className="text-xs text-gray-600">Old Value</p>
-                          <p className="text-sm font-bold text-gray-900">{tx.values?.old_value.toFixed(2)}</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-inner">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide mb-1">Old Value</p>
+                          <p className="text-sm font-extrabold text-slate-800">£{tx.values?.old_value?.toLocaleString()}</p>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-600">New Value</p>
-                          <p className="text-sm font-bold text-green-600">{tx.values?.new_value.toFixed(2)}</p>
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-inner">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide mb-1">New Value</p>
+                          <p className="text-sm font-extrabold text-emerald-605">£{tx.values?.new_value?.toLocaleString()}</p>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-600">Committee Fee</p>
-                          <p className="text-sm font-bold text-purple-600">{tx.financial?.committee_fee?.toFixed(2)}</p>
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-inner">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide mb-1">Committee Fee</p>
+                          <p className="text-sm font-extrabold text-purple-605">£{tx.financial?.committee_fee?.toLocaleString()}</p>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-600">Star Rating</p>
-                          <p className="text-sm font-bold text-yellow-600">
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-inner">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide mb-1">Star Rating</p>
+                          <p className="text-sm font-extrabold text-yellow-600">
                             {tx.star_rating?.old}⭐ → {tx.star_rating?.new}⭐
                           </p>
                         </div>
@@ -490,54 +495,61 @@ export default function TransferHistoryPage() {
                   {tx.transaction_type === 'swap' && (
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="bg-blue-50 rounded-xl p-4">
-                          <p className="text-xs text-blue-600 font-semibold mb-2">Player A</p>
-                          <p className="font-bold text-gray-900 mb-1">{tx.player_a?.name}</p>
-                          <div className="text-xs space-y-1">
+                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 shadow-inner">
+                          <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-[9px] font-bold rounded">PLAYER A</span>
+                          <p className="font-extrabold text-slate-900 text-sm mt-2 mb-1">{tx.player_a?.name}</p>
+                          <div className="text-[10px] space-y-1 text-slate-500 mt-2">
                             {tx.player_a?.old_value > 0 && (
-                              <p>Value: {tx.player_a?.old_value.toFixed(2)} → {tx.player_a?.new_value.toFixed(2)}</p>
+                              <p>Value: £{tx.player_a?.old_value?.toLocaleString()} → £{tx.player_a?.new_value?.toLocaleString()}</p>
                             )}
                             {tx.player_a?.old_star > 0 && (
                               <p>Stars: {tx.player_a?.old_star}⭐ → {tx.player_a?.new_star}⭐</p>
                             )}
                             <p>Team: {tx.teams?.team_a_id}</p>
                             {tx.teams?.team_a_pays > 0 && (
-                              <p className="text-red-600 font-semibold">Fee: £{tx.teams.team_a_pays}</p>
+                              <p className="text-red-650 font-bold">Swap Fee: £{tx.teams.team_a_pays?.toLocaleString()}</p>
                             )}
                           </div>
                         </div>
-                        <div className="bg-purple-50 rounded-xl p-4">
-                          <p className="text-xs text-purple-600 font-semibold mb-2">Player B</p>
-                          <p className="font-bold text-gray-900 mb-1">{tx.player_b?.name}</p>
-                          <div className="text-xs space-y-1">
+
+                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 shadow-inner">
+                          <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-[9px] font-bold rounded">PLAYER B</span>
+                          <p className="font-extrabold text-slate-900 text-sm mt-2 mb-1">{tx.player_b?.name}</p>
+                          <div className="text-[10px] space-y-1 text-slate-500 mt-2">
                             {tx.player_b?.old_value > 0 && (
-                              <p>Value: {tx.player_b?.old_value.toFixed(2)} → {tx.player_b?.new_value.toFixed(2)}</p>
+                              <p>Value: £{tx.player_b?.old_value?.toLocaleString()} → £{tx.player_b?.new_value?.toLocaleString()}</p>
                             )}
                             {tx.player_b?.old_star > 0 && (
                               <p>Stars: {tx.player_b?.old_star}⭐ → {tx.player_b?.new_star}⭐</p>
                             )}
                             <p>Team: {tx.teams?.team_b_id}</p>
                             {tx.teams?.team_b_pays > 0 && (
-                              <p className="text-red-600 font-semibold">Fee: £{tx.teams.team_b_pays}</p>
+                              <p className="text-red-650 font-bold">Swap Fee: £{tx.teams.team_b_pays?.toLocaleString()}</p>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center justify-center">
-                        <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
+
+                      <div className="flex items-center justify-center py-2">
+                        <span className="px-4 py-1.5 bg-slate-800 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">
                           {tx.player_a?.name} ↔ {tx.player_b?.name}
-                        </div>
+                        </span>
                       </div>
-                      {tx.financial?.total_committee_fees !== undefined && tx.financial.total_committee_fees > 0 && (
-                        <div className="pt-4 border-t text-center">
-                          <p className="text-xs text-gray-600">Total Swap Fees</p>
-                          <p className="text-lg font-bold text-purple-600">£{tx.financial.total_committee_fees.toFixed(2)}</p>
-                        </div>
-                      )}
-                      {tx.financial?.cash_amount && tx.financial.cash_amount > 0 && (
-                        <div className="pt-2 text-center">
-                          <p className="text-xs text-gray-600">Cash Transfer</p>
-                          <p className="text-sm font-bold text-green-600">£{tx.financial.cash_amount.toFixed(2)}</p>
+
+                      {(tx.financial?.total_committee_fees || tx.financial?.cash_amount) && (
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 text-center">
+                          {tx.financial?.total_committee_fees !== undefined && tx.financial.total_committee_fees > 0 && (
+                            <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-inner">
+                              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide mb-1">Total Swap Fees</p>
+                              <p className="text-sm font-extrabold text-purple-650">£{tx.financial.total_committee_fees?.toLocaleString()}</p>
+                            </div>
+                          )}
+                          {tx.financial?.cash_amount !== undefined && tx.financial.cash_amount > 0 && (
+                            <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-inner">
+                              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide mb-1">Cash Addition</p>
+                              <p className="text-sm font-extrabold text-green-600">£{tx.financial.cash_amount?.toLocaleString()}</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -548,23 +560,23 @@ export default function TransferHistoryPage() {
           </div>
         )}
 
-        {/* Pagination */}
+        {/* Pagination Panel */}
         {totalCount > limit && (
-          <div className="mt-6 flex items-center justify-between glass rounded-xl p-4 border border-white/30">
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 shadow-sm flex items-center justify-between font-mono text-xs">
             <button
               onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
               disabled={currentPage === 0}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
             >
               Previous
             </button>
-            <span className="text-sm text-gray-600">
+            <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
               Page {currentPage + 1} of {Math.ceil(totalCount / limit)} ({totalCount} total)
             </span>
             <button
               onClick={() => setCurrentPage(p => p + 1)}
               disabled={!hasMore}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
             >
               Next
             </button>

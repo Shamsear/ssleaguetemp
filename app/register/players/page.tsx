@@ -1009,8 +1009,8 @@ function PlayersRegistrationPageContent() {
                       disabled={isTogglingRegistration}
                       className={`inline-flex items-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:-translate-y-0.5 active:translate-y-0 ${
                         season?.is_player_registration_open
-                          ? 'bg-red-650 hover:bg-red-550 text-white border border-red-750'
-                          : 'bg-green-650 hover:bg-green-550 text-white border border-green-750'
+                          ? 'bg-red-600 hover:bg-red-500 text-white border border-red-700'
+                          : 'bg-green-600 hover:bg-green-500 text-white border border-green-700'
                       }`}
                     >
                       {isTogglingRegistration ? (

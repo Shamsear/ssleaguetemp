@@ -154,6 +154,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/footballplayers" className="text-slate-600 hover:text-[#D4AF37] hover:translate-x-1 text-xs transition-all duration-150 inline-block font-medium">
+                  Football Players
+                </Link>
+              </li>
+              <li>
                 <Link href="/fixtures" className="text-slate-600 hover:text-[#D4AF37] hover:translate-x-1 text-xs transition-all duration-150 inline-block font-medium">
                   Match Fixtures
                 </Link>

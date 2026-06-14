@@ -150,6 +150,7 @@ export default function MobileNav() {
       { href: '/', label: 'Home Lobby', cat: 'League Portals' },
       { href: '/season/current', label: 'Current Season', cat: 'League Portals' },
       { href: '/players', label: 'Players Database', cat: 'League Portals' },
+      { href: '/footballplayers', label: 'Football Players', cat: 'League Portals' },
       { href: '/teams', label: 'League Teams', cat: 'League Portals' },
       { href: '/fixtures', label: 'Match Fixtures', cat: 'League Portals' },
       { href: '/fixtures?tab=results', label: 'Match Results', cat: 'League Portals' },

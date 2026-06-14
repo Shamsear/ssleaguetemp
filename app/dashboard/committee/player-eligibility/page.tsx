@@ -149,10 +149,10 @@ export default function PlayerEligibilityPage() {
 
     if (authLoading || (loading && initialLoad)) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600 font-medium">Loading player eligibility data...</p>
+            <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+                <div className="text-center font-mono">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
+                    <p className="mt-4 text-xs text-slate-450 font-bold uppercase tracking-wider">Loading eligibility matrix...</p>
                 </div>
             </div>
         );
@@ -163,18 +163,18 @@ export default function PlayerEligibilityPage() {
     // Show message if no season is selected
     if (!userSeasonId) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-                <div className="text-center max-w-md mx-auto p-8">
-                    <div className="text-6xl mb-4">🏆</div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">No Season Selected</h2>
-                    <p className="text-gray-600 mb-6">
-                        Please select a season from the tournament management page to view player eligibility data.
+            <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+                <div className="text-center max-w-md mx-auto p-8 font-mono">
+                    <div className="text-4xl mb-4">🏆</div>
+                    <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">No Season Selected</h2>
+                    <p className="text-xs text-slate-450 mt-2 mb-6 uppercase font-bold tracking-wider leading-relaxed">
+                        Please select a season from the tournament management panel to load eligibility rules.
                     </p>
                     <Link
                         href="/dashboard/committee/team-management/tournament"
-                        className="inline-flex items-center px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+                        className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
                     >
-                        Go to Tournament Management
+                        Go to Tournament
                     </Link>
                 </div>
             </div>
@@ -182,41 +182,44 @@ export default function PlayerEligibilityPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 p-3 sm:p-4 md:p-6">
-            <div className="max-w-7xl mx-auto">
+        <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+            {/* Decorative eSports glowing ambient overlay */}
+            <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
+
+            <div className="max-w-7xl mx-auto relative z-10 space-y-8">
                 {/* Header */}
-                <div className="mb-6 md:mb-8">
-                    <Link
-                        href="/dashboard/committee/team-management/tournament"
-                        className="inline-flex items-center text-purple-600 hover:text-purple-700 mb-4 text-sm font-medium"
-                    >
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Back to Tournament
-                    </Link>
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                        Player Eligibility Checker
-                    </h1>
-                    <p className="text-gray-600 mt-2 text-sm">
-                        Check if players have met minimum game requirements
-                    </p>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <Link
+                            href="/dashboard/committee/team-management/tournament"
+                            className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all mb-4"
+                        >
+                            ← Back to Tournament
+                        </Link>
+                        <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight font-mono">
+                            Player Eligibility Checker
+                        </h1>
+                        <p className="text-xs text-slate-400 font-mono mt-1 leading-normal">
+                            Check if players have met minimum game requirements
+                        </p>
+                    </div>
+                    
+                    <div className="bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider px-3 py-1.5 rounded-xl border border-slate-700 shadow-sm shrink-0">
+                        SYSTEM: ELIGIBILITY
+                    </div>
                 </div>
 
                 {/* Filters */}
-                <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 space-y-4">
+                <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4 font-mono text-xs">
                     {/* Round Range */}
                     <div>
-                        <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                            </svg>
+                        <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                             Filter by Round Range
                         </h2>
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                                     From Round
                                 </label>
                                 <input
@@ -225,12 +228,12 @@ export default function PlayerEligibilityPage() {
                                     max={toRound}
                                     value={fromRound}
                                     onChange={(e) => setFromRound(Math.max(1, Math.min(parseInt(e.target.value) || 1, toRound)))}
-                                    className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                                     To Round
                                 </label>
                                 <input
@@ -239,12 +242,12 @@ export default function PlayerEligibilityPage() {
                                     max={maxRound}
                                     value={toRound}
                                     onChange={(e) => setToRound(Math.max(fromRound, Math.min(parseInt(e.target.value) || maxRound, maxRound)))}
-                                    className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                                     Minimum Games Required
                                 </label>
                                 <input
@@ -253,38 +256,35 @@ export default function PlayerEligibilityPage() {
                                     max={toRound - fromRound + 1}
                                     value={minGames}
                                     onChange={(e) => setMinGames(Math.max(0, parseInt(e.target.value) || 0))}
-                                    className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide"
                                 />
                             </div>
                         </div>
 
-                        <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
+                        <div className="mt-4 flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                             {loading && !initialLoad ? (
                                 <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+                                    <div className="animate-spin rounded-full h-3 w-3 border-b border-amber-500"></div>
                                     <span>Updating stats...</span>
                                 </>
                             ) : (
                                 <>
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    Showing stats from Round {fromRound} to Round {toRound} • Min {minGames} games required
+                                    <span>Showing stats from Round {fromRound} to Round {toRound} • Min {minGames} games required</span>
                                 </>
                             )}
                         </div>
                     </div>
 
                     {/* Team and Eligibility Filters */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                                 Filter by Team
                             </label>
                             <select
                                 value={filterTeam}
                                 onChange={(e) => setFilterTeam(e.target.value)}
-                                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer"
                             >
                                 <option value="all">All Teams</option>
                                 {teams.map(team => (
@@ -294,13 +294,13 @@ export default function PlayerEligibilityPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                                 Filter by Eligibility
                             </label>
                             <select
                                 value={filterEligibility}
                                 onChange={(e) => setFilterEligibility(e.target.value as any)}
-                                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer"
                             >
                                 <option value="all">All Players</option>
                                 <option value="eligible">✅ Eligible Only</option>
@@ -312,140 +312,138 @@ export default function PlayerEligibilityPage() {
 
                 {/* Search */}
                 <div className="mb-4 md:mb-6">
-                    <div className="relative">
+                    <div className="relative font-mono text-xs">
                         <input
                             type="text"
                             placeholder="Search player or team..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full px-4 sm:px-5 py-2.5 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-sm sm:text-base"
+                            className="w-full px-4 py-3 pl-10 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide shadow-sm"
                         />
-                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 absolute left-3 sm:left-4 top-3 sm:top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
                 </div>
 
                 {/* Summary Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
-                        <div className="text-sm font-medium opacity-90">Total Players</div>
-                        <div className="text-3xl font-bold mt-2">{filteredPlayers.length}</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 font-mono text-xs">
+                    <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Players</span>
+                        <div className="text-2xl font-black text-slate-800 mt-2">{filteredPlayers.length}</div>
                     </div>
-                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
-                        <div className="text-sm font-medium opacity-90">✅ Eligible</div>
-                        <div className="text-3xl font-bold mt-2">{eligibleCount}</div>
+                    <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">✅ Eligible</span>
+                        <div className="text-2xl font-black text-emerald-600 mt-2">{eligibleCount}</div>
                     </div>
-                    <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
-                        <div className="text-sm font-medium opacity-90">⚠️ Ineligible</div>
-                        <div className="text-3xl font-bold mt-2">{ineligibleCount}</div>
+                    <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">⚠️ Ineligible</span>
+                        <div className="text-2xl font-black text-amber-600 mt-2">{ineligibleCount}</div>
                     </div>
-                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
-                        <div className="text-sm font-medium opacity-90">Eligibility Rate</div>
-                        <div className="text-3xl font-bold mt-2">
+                    <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Eligibility Rate</span>
+                        <div className="text-2xl font-black text-slate-800 mt-2">
                             {players.length > 0 ? Math.round((eligibleCount / players.length) * 100) : 0}%
                         </div>
                     </div>
                 </div>
 
                 {/* Players Table */}
-                <div className="bg-white rounded-xl md:rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+                <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm font-mono text-xs">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gradient-to-r from-purple-600 to-blue-600 text-white sticky top-0 z-10">
+                        <table className="min-w-full divide-y divide-slate-100">
+                            <thead className="bg-slate-800 text-white uppercase text-[10px] font-bold tracking-wider">
                                 <tr>
-                                    <th className="px-3 md:px-4 py-3 text-left text-xs font-bold uppercase tracking-tight">
+                                    <th className="px-4 py-3 text-left">
                                         Status
                                     </th>
                                     <th
                                         onClick={() => handleSort('player_name')}
-                                        className="px-3 md:px-4 py-3 text-left text-xs font-bold uppercase tracking-tight cursor-pointer hover:bg-purple-700 transition-colors"
+                                        className="px-4 py-3 text-left cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        Player {sortBy === 'player_name' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                        Player {sortBy === 'player_name' && (sortOrder === 'asc' ? '▲' : '▼')}
                                     </th>
                                     <th
                                         onClick={() => handleSort('team_name')}
-                                        className="px-3 md:px-4 py-3 text-left text-xs font-bold uppercase tracking-tight cursor-pointer hover:bg-purple-700 transition-colors"
+                                        className="px-4 py-3 text-left cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        Team {sortBy === 'team_name' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                        Team {sortBy === 'team_name' && (sortOrder === 'asc' ? '▲' : '▼')}
                                     </th>
                                     <th
                                         onClick={() => handleSort('matches_played')}
-                                        className="px-3 md:px-4 py-3 text-center text-xs font-bold uppercase tracking-tight cursor-pointer hover:bg-purple-700 transition-colors"
+                                        className="px-4 py-3 text-center cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        Games {sortBy === 'matches_played' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                        Games {sortBy === 'matches_played' && (sortOrder === 'asc' ? '▲' : '▼')}
                                     </th>
                                     <th
                                         onClick={() => handleSort('wins')}
-                                        className="px-3 md:px-4 py-3 text-center text-xs font-bold uppercase tracking-tight cursor-pointer hover:bg-purple-700 transition-colors"
+                                        className="px-4 py-3 text-center cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        W {sortBy === 'wins' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                        W {sortBy === 'wins' && (sortOrder === 'asc' ? '▲' : '▼')}
                                     </th>
                                     <th
                                         onClick={() => handleSort('draws')}
-                                        className="px-3 md:px-4 py-3 text-center text-xs font-bold uppercase tracking-tight cursor-pointer hover:bg-purple-700 transition-colors"
+                                        className="px-4 py-3 text-center cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        D {sortBy === 'draws' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                        D {sortBy === 'draws' && (sortOrder === 'asc' ? '▲' : '▼')}
                                     </th>
                                     <th
                                         onClick={() => handleSort('losses')}
-                                        className="px-3 md:px-4 py-3 text-center text-xs font-bold uppercase tracking-tight cursor-pointer hover:bg-purple-700 transition-colors"
+                                        className="px-4 py-3 text-center cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        L {sortBy === 'losses' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                        L {sortBy === 'losses' && (sortOrder === 'asc' ? '▲' : '▼')}
                                     </th>
                                     <th
                                         onClick={() => handleSort('goal_difference')}
-                                        className="px-3 md:px-4 py-3 text-center text-xs font-bold uppercase tracking-tight cursor-pointer hover:bg-purple-700 transition-colors"
+                                        className="px-4 py-3 text-center cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        GD {sortBy === 'goal_difference' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                        GD {sortBy === 'goal_difference' && (sortOrder === 'asc' ? '▲' : '▼')}
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 bg-white">
+                            <tbody className="divide-y divide-slate-100 bg-white">
                                 {filteredPlayers.map((player, index) => {
                                     const isEligible = player.matches_played >= minGames;
                                     return (
-                                        <tr key={player.id} className={`hover:bg-purple-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                                            <td className="px-3 md:px-4 py-3">
+                                        <tr key={player.id} className="even:bg-slate-50/40 hover:bg-slate-50 transition-colors">
+                                            <td className="px-4 py-3">
                                                 {isEligible ? (
-                                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                                                    <span className="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-50 border border-emerald-250 text-emerald-700">
                                                         ✅ Eligible
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700">
+                                                    <span className="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-50 border border-amber-250 text-amber-700">
                                                         ⚠️ Ineligible
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-3 md:px-4 py-3">
+                                            <td className="px-4 py-3">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                                                    <div className="flex-shrink-0 w-6 h-6 bg-slate-800 rounded-full flex items-center justify-center text-white font-extrabold text-[10px]">
                                                         {player.player_name.charAt(0)}
                                                     </div>
-                                                    <span className="text-sm font-semibold text-gray-900">{player.player_name}</span>
+                                                    <span className="font-bold text-slate-800 uppercase tracking-wide">{player.player_name}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-3 md:px-4 py-3">
-                                                <span className="text-sm text-gray-700">{player.team_name}</span>
+                                            <td className="px-4 py-3">
+                                                <span className="text-slate-650 uppercase font-medium">{player.team_name}</span>
                                             </td>
-                                            <td className="px-3 md:px-4 py-3 text-center">
-                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${isEligible ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                                                    }`}>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className={`inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wide bg-slate-50 border border-slate-200 text-slate-700`}>
                                                     {player.matches_played} / {minGames}
                                                 </span>
                                             </td>
-                                            <td className="px-3 md:px-4 py-3 text-center">
-                                                <span className="text-sm font-medium text-gray-700">{player.wins || 0}</span>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="font-bold text-slate-700">{player.wins || 0}</span>
                                             </td>
-                                            <td className="px-3 md:px-4 py-3 text-center">
-                                                <span className="text-sm font-medium text-gray-700">{player.draws || 0}</span>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="font-bold text-slate-700">{player.draws || 0}</span>
                                             </td>
-                                            <td className="px-3 md:px-4 py-3 text-center">
-                                                <span className="text-sm font-medium text-gray-700">{player.losses || 0}</span>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="font-bold text-slate-700">{player.losses || 0}</span>
                                             </td>
-                                            <td className="px-3 md:px-4 py-3 text-center">
-                                                <span className={`text-sm font-bold ${player.goal_difference > 0 ? 'text-green-600' : player.goal_difference < 0 ? 'text-red-600' : 'text-gray-600'
-                                                    }`}>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className={`font-extrabold ${player.goal_difference > 0 ? 'text-emerald-600' : player.goal_difference < 0 ? 'text-rose-600' : 'text-slate-600'}`}>
                                                     {player.goal_difference > 0 ? '+' : ''}{player.goal_difference || 0}
                                                 </span>
                                             </td>

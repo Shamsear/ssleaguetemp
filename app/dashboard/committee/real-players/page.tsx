@@ -447,10 +447,10 @@ export default function RealPlayersPage() {
 
   if (loading || teamsLoading || loadingTeamSeasons) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600 font-medium">Loading teams...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center">
+        <div className="text-center font-mono">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-400 font-bold uppercase tracking-wider">Loading team databases...</p>
         </div>
       </div>
     );
@@ -468,119 +468,132 @@ export default function RealPlayersPage() {
   const maxPlayers = minPlayers; // Max equals min for exact count
 
   return (
-    <div className="min-h-screen py-6 px-4 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
-      <div className="container mx-auto max-w-7xl">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Decorative eSports glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-                🎯 Team Management
-              </h1>
-              <p className="text-gray-600">
-                Assign SS Members to teams • {currentSeason?.name}
-              </p>
-            </div>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
             <button
               onClick={() => router.push('/dashboard/committee')}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all"
+              className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all mb-4"
             >
-              ← Back
+              ← Back to Panel
             </button>
+            <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight font-mono">
+              🎯 SS Members Team Assignment
+            </h1>
+            <p className="text-xs text-slate-400 font-mono mt-1 leading-normal">
+              Assign SS Members to teams for {currentSeason?.name || 'Active Season'}
+            </p>
+          </div>
+          
+          <div className="bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider px-3 py-1.5 rounded-xl border border-slate-700 shadow-sm shrink-0">
+            COMMITTEE ADMIN ONLY
+          </div>
+        </div>
+
+        {/* Season Info & Toggles */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono text-xs">
+          {/* Season info */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm space-y-4">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SEASON PARAMETERS</h3>
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Season</p>
+                <p className="text-sm font-extrabold text-slate-800 uppercase mt-0.5">{userSeasonId}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Required Players</p>
+                <p className="text-sm font-extrabold text-slate-800 uppercase mt-0.5">{minPlayers} Exactly</p>
+              </div>
+            </div>
           </div>
 
-          {/* Season Info */}
-          <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm text-indigo-600 font-medium">Current Season</p>
-              <p className="text-lg font-bold text-indigo-900">{userSeasonId}</p>
-            </div>
-            <div className="ml-auto text-right">
-              <p className="text-xs text-indigo-600">Players per team</p>
-              <p className="text-lg font-bold text-indigo-900">{minPlayers} exactly</p>
-            </div>
-          </div>
-
-          {/* Budget Display Toggle */}
-          <div className="flex items-center justify-center gap-3 p-3 bg-white rounded-xl border border-gray-200">
-            <span className="text-sm text-gray-600 font-medium">Budget Display:</span>
-            <button
-              onClick={() => setShowActualBudget(!showActualBudget)}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${showActualBudget
-                ? 'bg-green-100 text-green-700 border-2 border-green-300'
-                : 'bg-gray-100 text-gray-600 border-2 border-gray-300'
+          {/* Budget Toggle */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm space-y-3">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">BUDGET TRACKING MODE</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowActualBudget(true)}
+                className={`flex-1 py-2 font-mono font-bold text-xs uppercase tracking-wider rounded-xl border transition-all ${
+                  showActualBudget
+                    ? 'bg-slate-800 border-slate-800 text-white shadow-sm'
+                    : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600'
                 }`}
-            >
-              💰 Actual Balance
-            </button>
-            <button
-              onClick={() => setShowActualBudget(!showActualBudget)}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${!showActualBudget
-                ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-                : 'bg-gray-100 text-gray-600 border-2 border-gray-300'
+              >
+                💰 Actual Balance
+              </button>
+              <button
+                onClick={() => setShowActualBudget(false)}
+                className={`flex-1 py-2 font-mono font-bold text-xs uppercase tracking-wider rounded-xl border transition-all ${
+                  !showActualBudget
+                    ? 'bg-slate-800 border-slate-800 text-white shadow-sm'
+                    : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600'
                 }`}
-            >
-              📊 Max Limit
-            </button>
-            <div className="ml-2 text-xs text-gray-500">
-              {showActualBudget ? '(From Firebase team_seasons)' : '(Initial budget - local calc)'}
+              >
+                📊 Max Limit
+              </button>
+            </div>
+            <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+              {showActualBudget ? 'Active balance loaded from database' : 'Initial budget minus locally calculated costs'}
             </div>
           </div>
         </div>
 
         {/* Messages */}
-        {success && (
-          <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg animate-pulse">
-            <p className="text-green-800 font-medium">{success}</p>
+        {error && (
+          <div className="bg-rose-50 border border-rose-200/60 rounded-2xl p-4 font-mono text-xs">
+            <div className="flex items-center gap-2 text-rose-800">
+              <span className="font-extrabold">⚠️ ERROR:</span>
+              <span className="font-bold uppercase tracking-wide">{error}</span>
+            </div>
           </div>
         )}
 
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-            <p className="text-red-800 font-medium">{error}</p>
+        {success && (
+          <div className="bg-emerald-50 border border-emerald-200/60 rounded-2xl p-4 font-mono text-xs">
+            <div className="flex items-center gap-2 text-emerald-800">
+              <span className="font-extrabold">✅ SUCCESS:</span>
+              <span className="font-bold uppercase tracking-wide">{success}</span>
+            </div>
           </div>
         )}
 
         {/* Quick Assign - Live Auction Mode */}
-        <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-sm border-2 border-green-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-white flex items-center">
-                  <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Quick Assign - Live Auction
-                </h2>
-                <p className="text-green-100 text-sm mt-1">Assign players instantly as WhatsApp auction happens</p>
-              </div>
-              <div className="px-3 py-1 bg-green-500 rounded-full">
-                <span className="text-white font-bold text-sm">🔴 LIVE</span>
-              </div>
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm font-mono text-xs">
+          <div className="bg-slate-800 text-white p-5 border-b border-slate-700 flex items-center justify-between">
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Quick Assign - Live Auction
+              </h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Assign players instantly as WhatsApp auction happens</p>
+            </div>
+            <div className="px-2 py-0.5 bg-rose-600/90 text-white font-extrabold text-[9px] uppercase tracking-wider rounded border border-rose-500 animate-pulse">
+              🔴 LIVE
             </div>
           </div>
 
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Player Selection */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">1. Select Player</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">1. Select Player</label>
                 <select
                   value={quickAssignPlayer?.id || ''}
                   onChange={(e) => {
                     const player = availablePlayers.find(p => p.id === e.target.value);
                     setQuickAssignPlayer(player || null);
                     if (player) {
-                      // Auto-fill minimum auction value
                       setQuickAssignAuction('250');
                     }
                   }}
-                  className="w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm font-medium"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer"
                 >
                   <option value="">Choose player...</option>
                   {availablePlayers
@@ -592,23 +605,22 @@ export default function RealPlayersPage() {
                     ))}
                 </select>
                 {quickAssignPlayer && (
-                  <div className="mt-2 p-2 bg-white rounded border border-green-200">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">
-                        {quickAssignPlayer.category}
-                      </span>
-                    </div>
+                  <div className="mt-2 px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
+                    <span className="text-[9px] font-extrabold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded uppercase">
+                      {quickAssignPlayer.category}
+                    </span>
+                    <span className="text-[10px] font-black text-slate-600">MIN 💰250</span>
                   </div>
                 )}
               </div>
 
               {/* Team Selection */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">2. Select Team</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">2. Select Team</label>
                 <select
                   value={quickAssignTeam}
                   onChange={(e) => setQuickAssignTeam(e.target.value)}
-                  className="w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm font-medium"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer"
                 >
                   <option value="">Choose team...</option>
                   {teams
@@ -627,7 +639,7 @@ export default function RealPlayersPage() {
                     })}
                 </select>
                 {quickAssignTeam && (
-                  <div className="mt-2 p-2 bg-white rounded border border-green-200">
+                  <div className="mt-2 px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
                     {(() => {
                       const team = teams.find(t => t.id === quickAssignTeam);
                       if (!team) return null;
@@ -635,10 +647,12 @@ export default function RealPlayersPage() {
                         ? team.currentBudget
                         : (team.originalBudget - team.assignedPlayers.reduce((sum, p) => sum + p.auctionValue, 0));
                       return (
-                        <p className="text-xs font-semibold text-gray-700">
-                          Budget: 💰{remaining.toLocaleString()} left
-                          {showActualBudget && <span className="text-blue-600 ml-1">(Firebase)</span>}
-                        </p>
+                        <>
+                          <span className="text-[10px] text-slate-500 font-bold uppercase">BUDGET LEFT:</span>
+                          <span className={`text-[10px] font-black ${remaining < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                            💰{remaining.toLocaleString()}
+                          </span>
+                        </>
                       );
                     })()}
                   </div>
@@ -647,9 +661,9 @@ export default function RealPlayersPage() {
 
               {/* Auction Value Input */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">3. Auction Value</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">3. Auction Value</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">💰</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-semibold">💰</span>
                   <input
                     type="number"
                     value={quickAssignAuction}
@@ -657,14 +671,15 @@ export default function RealPlayersPage() {
                     placeholder="0"
                     min={250}
                     step="10"
-                    className="w-full pl-12 pr-3 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm font-bold text-right"
+                    className="w-full pl-8 pr-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide text-right"
                   />
                 </div>
                 {quickAssignPlayer && quickAssignAuction && (
-                  <div className="mt-2 p-2 bg-white rounded border border-green-200">
-                    <p className="text-xs text-gray-600">
-                      Auction Value: <span className="font-semibold text-blue-600">💰{parseInt(quickAssignAuction) || 0}</span>
-                    </p>
+                  <div className="mt-2 px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase">FINAL PRICE:</span>
+                    <span className="text-[10px] font-black text-blue-600">
+                      💰{(parseInt(quickAssignAuction) || 0).toLocaleString()}
+                    </span>
                   </div>
                 )}
               </div>
@@ -674,22 +689,20 @@ export default function RealPlayersPage() {
                 <button
                   onClick={handleQuickAssign}
                   disabled={!quickAssignPlayer || !quickAssignTeam || !quickAssignAuction || isQuickAssigning}
-                  className={`w-full py-3 px-4 rounded-lg font-bold text-white transition-all transform hover:scale-105 ${!quickAssignPlayer || !quickAssignTeam || !quickAssignAuction || isQuickAssigning
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-lg'
-                    }`}
+                  className={`w-full py-2.5 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm ${
+                    !quickAssignPlayer || !quickAssignTeam || !quickAssignAuction || isQuickAssigning
+                      ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed'
+                      : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                  }`}
                 >
                   {isQuickAssigning ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span className="flex items-center justify-center gap-1.5">
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       Assigning...
                     </span>
                   ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      Assign Now!
+                    <span className="flex items-center justify-center gap-1.5">
+                      ⚡ Assign Now
                     </span>
                   )}
                 </button>
@@ -698,44 +711,41 @@ export default function RealPlayersPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Available Players Panel */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden sticky top-6">
-              <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-4 py-4">
-                <h2 className="text-lg font-bold text-white flex items-center">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm font-mono text-xs sticky top-0">
+              <div className="bg-slate-800 text-white p-5 border-b border-slate-700">
+                <h2 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
-                  Available Players
+                  Available SS Members
                 </h2>
-                <p className="text-purple-100 text-sm mt-1">{availablePlayers.length} unassigned</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{availablePlayers.length} unassigned players</p>
 
-                <div className="mt-3">
+                <div className="mt-4">
                   <input
                     type="text"
-                    placeholder="Search players..."
+                    placeholder="SEARCH MEMBERS..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-purple-300 focus:outline-none"
+                    className="w-full px-4 py-2 border border-slate-700/60 rounded-xl bg-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/80 font-mono text-xs font-bold uppercase tracking-wider"
                   />
                 </div>
               </div>
 
-              <div className="max-h-[calc(100vh-280px)] overflow-y-auto p-4 space-y-2">
+              <div className="max-h-[500px] overflow-y-auto p-4 space-y-2">
                 {filteredAvailablePlayers.length === 0 ? (
-                  <div className="text-center py-8">
-                    <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <p className="text-sm text-gray-500">
+                  <div className="text-center py-12 text-slate-400 uppercase font-bold tracking-wider">
+                    <p className="text-xs">
                       {searchTerm ? 'No players found' : 'All players assigned!'}
                     </p>
                     {availablePlayers.length === 0 && (
-                      <p className="text-xs text-gray-400 mt-2">
-                        <Link href="/dashboard/committee/player-ratings" className="text-purple-600 underline">
+                      <p className="text-[10px] text-slate-500 mt-2">
+                        <Link href="/dashboard/committee/player-ratings" className="text-amber-500 underline">
                           Set star ratings
-                        </Link> to add players
+                        </Link> to import members
                       </p>
                     )}
                   </div>
@@ -743,21 +753,19 @@ export default function RealPlayersPage() {
                   filteredAvailablePlayers.map(player => (
                     <div
                       key={player.id}
-                      className="p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 cursor-grab"
+                      className="p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-200/85 rounded-xl cursor-grab transition-all"
                       draggable
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-900 text-sm">{player.playerName}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">
-                              {player.category}
-                            </span>
-                          </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-bold text-slate-800 uppercase tracking-wide">{player.playerName}</p>
+                          <span className="inline-flex mt-1 text-[9px] font-extrabold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded uppercase">
+                            {player.category}
+                          </span>
                         </div>
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        <span className="font-semibold text-blue-600">💰{player.auctionValue}</span>
+                        <div className="text-right">
+                          <span className="font-black text-blue-600 block text-xs">💰{player.auctionValue}</span>
+                        </div>
                       </div>
                     </div>
                   ))
@@ -769,64 +777,62 @@ export default function RealPlayersPage() {
           {/* Teams Panel */}
           <div className="lg:col-span-2 space-y-4">
             {teams.map(team => {
-              // Calculate budget based on toggle
               const totalCost = team.assignedPlayers.reduce((sum, p) => sum + p.auctionValue, 0);
 
-              // Use actual budget from Firebase if toggle is on, otherwise use max limit calculation
               const displayBudget = showActualBudget ? team.currentBudget : (team.originalBudget - totalCost);
               const displaySpent = showActualBudget ? team.currentSpent : totalCost;
               const displayTotal = showActualBudget ? (team.currentBudget + team.currentSpent) : team.originalBudget;
 
               const isOverBudget = displayBudget < 0;
               const playerCount = team.assignedPlayers.length;
-              const isValidCount = playerCount === maxPlayers; // Must be exactly the required count
+              const isValidCount = playerCount === maxPlayers;
 
               return (
                 <div
                   key={team.id}
-                  className={`bg-white rounded-2xl shadow-sm border-2 transition-all ${team.isExpanded ? 'border-blue-400' : 'border-gray-200'
-                    }`}
+                  className={`console-card bg-white border rounded-3xl overflow-hidden transition-all ${
+                    team.isExpanded ? 'border-amber-400 shadow-md' : 'border-slate-200/60 shadow-sm'
+                  }`}
                 >
                   {/* Team Header */}
                   <div
-                    className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="p-4 cursor-pointer hover:bg-slate-50/50 transition-colors font-mono text-xs"
                     onClick={() => toggleTeam(team.id)}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className={`p-2 rounded-lg ${isValidCount && !isOverBudget ? 'bg-green-100' : 'bg-gray-100'
-                          }`}>
-                          <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-xl border ${
+                          isValidCount && !isOverBudget 
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                            : 'bg-slate-100 border-slate-200 text-slate-500'
+                        }`}>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-bold text-gray-900 text-lg">{team.name}</h3>
-                          <div className="flex items-center gap-3 mt-1 text-xs">
-                            <span className={`font-semibold ${playerCount !== maxPlayers ? 'text-red-600' : 'text-gray-700'
-                              }`}>
-                              {playerCount}/{maxPlayers} players
+                        <div>
+                          <h3 className="font-extrabold text-slate-800 uppercase tracking-wider">{team.name}</h3>
+                          <div className="flex items-center gap-2 mt-1 text-[10px]">
+                            <span className={`font-bold uppercase tracking-wider ${playerCount !== maxPlayers ? 'text-rose-600' : 'text-slate-500'}`}>
+                              {playerCount}/{maxPlayers} Players
                             </span>
-                            <span className="text-gray-400">•</span>
-                            <span className={`font-semibold ${isOverBudget ? 'text-red-600' : 'text-green-600'
-                              }`}>
-                              💰{displayBudget.toLocaleString()} left
-                              {showActualBudget && <span className="text-xs ml-1">(Firebase)</span>}
+                            <span className="text-slate-400 font-bold">•</span>
+                            <span className={`font-bold uppercase tracking-wider ${isOverBudget ? 'text-rose-600 font-extrabold' : 'text-emerald-600'}`}>
+                              💰{displayBudget.toLocaleString()} LEFT
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2.5">
                         {isValidCount && !isOverBudget && (
-                          <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-                            ✓ Ready
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-emerald-50 border border-emerald-200 text-emerald-700">
+                            ✓ READY
                           </span>
                         )}
 
                         <svg
-                          className={`w-5 h-5 text-gray-500 transition-transform ${team.isExpanded ? 'rotate-180' : ''
-                            }`}
+                          className={`w-4 h-4 text-slate-400 transition-transform ${team.isExpanded ? 'rotate-180' : ''}`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -839,80 +845,74 @@ export default function RealPlayersPage() {
 
                   {/* Team Content (Expanded) */}
                   {team.isExpanded && (
-                    <div className="border-t border-gray-200">
+                    <div className="border-t border-slate-200/60 font-mono text-xs !overflow-visible">
                       {/* Budget Bar */}
-                      <div className="px-4 py-3 bg-gray-50">
-                        <div className="flex justify-between text-xs mb-2">
-                          <span className="text-gray-600">Budget Usage</span>
-                          <span className={`font-semibold ${isOverBudget ? 'text-red-600' : 'text-gray-700'
-                            }`}>
+                      <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 font-mono text-[10px]">
+                        <div className="flex justify-between mb-1.5">
+                          <span className="text-slate-500 font-bold uppercase">Budget Usage</span>
+                          <span className={`font-bold ${isOverBudget ? 'text-rose-600 font-extrabold' : 'text-slate-700'}`}>
                             💰{displaySpent.toLocaleString()} / 💰{displayTotal.toLocaleString()}
-                            {showActualBudget && <span className="text-xs ml-1 text-blue-600">(Firebase)</span>}
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-slate-200 rounded-full h-1.5 border border-slate-300/20">
                           <div
-                            className={`h-2 rounded-full transition-all ${isOverBudget ? 'bg-red-500' : 'bg-blue-500'
-                              }`}
+                            className={`h-full rounded-full transition-all ${isOverBudget ? 'bg-rose-500' : 'bg-blue-500'}`}
                             style={{ width: `${Math.min((displaySpent / displayTotal) * 100, 100)}%` }}
                           />
                         </div>
                       </div>
 
                       {/* Assigned Players */}
-                      <div className="p-4">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                          Assigned Players ({playerCount})
+                      <div className="p-5 space-y-4">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                          Assigned Players ({playerCount} of {maxPlayers})
                         </h4>
 
                         {team.assignedPlayers.length === 0 ? (
-                          <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                            <p className="text-sm text-gray-500">No players assigned yet</p>
-                            <p className="text-xs text-gray-400 mt-1">Select from available players</p>
+                          <div className="text-center py-8 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 text-slate-400 uppercase tracking-wider">
+                            <p className="text-xs">No players assigned yet</p>
+                            <p className="text-[10px] text-slate-500 mt-1">Select from available players below</p>
                           </div>
                         ) : (
-                          <div className="space-y-2 mb-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {team.assignedPlayers.map((player, index) => (
                               <div
                                 key={player.id}
-                                className="p-3 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
+                                className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 transition-all"
                               >
                                 <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-2 flex-1">
-                                    <span className="text-xs font-semibold text-gray-500">#{index + 1}</span>
-                                    <div className="flex-1">
-                                      <p className="font-semibold text-gray-900 text-sm">{player.playerName}</p>
-                                      <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">
-                                          {player.category}
-                                        </span>
-                                      </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold text-slate-400">#{index + 1}</span>
+                                    <div>
+                                      <p className="font-bold text-slate-800 uppercase tracking-wide">{player.playerName}</p>
+                                      <span className="inline-flex mt-0.5 text-[9px] font-extrabold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded uppercase">
+                                        {player.category}
+                                      </span>
                                     </div>
                                   </div>
                                   <button
                                     onClick={() => removePlayerFromTeam(team.id, player.id)}
-                                    className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                    className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200"
                                     title="Remove player"
                                   >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                   </button>
                                 </div>
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs text-gray-600">Auction:</span>
-                                      <input
-                                        type="number"
-                                        value={player.auctionValue}
-                                        onChange={(e) => updatePlayerAuctionValue(team.id, player.id, parseInt(e.target.value) || 0)}
-                                        min={250}
-                                        step="10"
-                                        className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                                        title="Minimum: 💰250 (category base value)"
-                                      />
-                                    </div>
+                                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/50">
+                                  <span className="text-[10px] text-slate-500 font-bold uppercase">Auction Bid:</span>
+                                  <div className="relative">
+                                    <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-500 font-semibold text-[10px]">💰</span>
+                                    <input
+                                      type="number"
+                                      value={player.auctionValue}
+                                      onChange={(e) => updatePlayerAuctionValue(team.id, player.id, parseInt(e.target.value) || 0)}
+                                      min={250}
+                                      step="10"
+                                      className="w-20 pl-5 pr-2 py-1 text-[11px] font-bold text-right border border-slate-200 rounded-lg focus:border-slate-800 focus:outline-none"
+                                      title="Minimum: 💰250"
+                                    />
                                   </div>
                                 </div>
                               </div>
@@ -921,24 +921,23 @@ export default function RealPlayersPage() {
                         )}
 
                         {/* Add Player Dropdown with Search */}
-                        <div className="mb-4 relative">
-                          <label className="block text-xs font-medium text-gray-700 mb-2">
+                        <div className="mb-4 relative pt-2 border-t border-slate-200/55 !overflow-visible">
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                             Add Player to {team.name}
                           </label>
-                          <p className="text-xs text-gray-500 mb-1">Available: {availablePlayers.length} players</p>
 
-                          {playerCount !== maxPlayers ? (
-                            <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 text-sm text-center">
-                              Need exactly {maxPlayers} players (currently {playerCount})
+                          {playerCount >= maxPlayers ? (
+                            <div className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-slate-400 text-xs text-center uppercase font-bold tracking-wider">
+                              Slots filled ({playerCount}/{maxPlayers})
                             </div>
                           ) : (
                             <div
-                              className="relative"
+                              className="relative !overflow-visible"
                               ref={(el) => dropdownRefs.current.set(team.id, el)}
                             >
                               <input
                                 type="text"
-                                placeholder="Search and select player..."
+                                placeholder="SEARCH AND SELECT PLAYER..."
                                 value={dropdownSearchTerms.get(team.id) || ''}
                                 onChange={(e) => {
                                   const newMap = new Map(dropdownSearchTerms);
@@ -949,10 +948,10 @@ export default function RealPlayersPage() {
                                   }
                                 }}
                                 onFocus={() => setDropdownOpen(team.id)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm pr-10"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide pr-10"
                               />
                               <svg
-                                className="w-5 h-5 text-gray-400 absolute right-3 top-2.5 pointer-events-none"
+                                className="w-4 h-4 text-slate-400 absolute right-3.5 top-3 pointer-events-none"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -961,7 +960,7 @@ export default function RealPlayersPage() {
                               </svg>
 
                               {dropdownOpen === team.id && availablePlayers.length > 0 && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto divide-y divide-slate-100">
                                   {availablePlayers
                                     .filter(p => {
                                       const searchTerm = (dropdownSearchTerms.get(team.id) || '').toLowerCase();
@@ -982,21 +981,17 @@ export default function RealPlayersPage() {
                                           setDropdownSearchTerms(newMap);
                                           setDropdownOpen(null);
                                         }}
-                                        className="w-full px-3 py-2 text-left hover:bg-blue-50 border-b border-gray-100 last:border-0 text-sm transition-colors"
+                                        className="w-full px-4 py-2.5 text-left hover:bg-slate-50 flex items-center justify-between text-xs transition-colors"
                                       >
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex-1">
-                                            <p className="font-medium text-gray-900">{player.playerName}</p>
-                                            <div className="flex items-center gap-2 mt-1">
-                                              <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">
-                                                {player.category}
-                                              </span>
-                                            </div>
-                                          </div>
-                                          <span className="text-xs font-semibold text-blue-600 ml-2">
-                                            💰{player.auctionValue}
+                                        <div>
+                                          <p className="font-bold text-slate-800 uppercase">{player.playerName}</p>
+                                          <span className="inline-flex text-[9px] font-extrabold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded uppercase mt-0.5">
+                                            {player.category}
                                           </span>
                                         </div>
+                                        <span className="text-xs font-black text-blue-600">
+                                          💰{player.auctionValue}
+                                        </span>
                                       </button>
                                     ))}
                                   {availablePlayers.filter(p => {
@@ -1005,7 +1000,7 @@ export default function RealPlayersPage() {
                                     return p.playerName.toLowerCase().includes(searchTerm) ||
                                       p.category?.toLowerCase().includes(searchTerm);
                                   }).length === 0 && (
-                                      <div className="px-3 py-4 text-center text-sm text-gray-500">
+                                      <div className="px-3 py-4 text-center text-xs text-slate-400 font-bold uppercase tracking-wider">
                                         No players found
                                       </div>
                                     )}
@@ -1023,24 +1018,25 @@ export default function RealPlayersPage() {
                             playerCount !== maxPlayers ||
                             isOverBudget
                           }
-                          className={`w-full py-3 px-4 rounded-xl font-semibold transition-all ${savingTeamId === team.id
-                            ? 'bg-gray-400 text-white cursor-wait'
-                            : playerCount !== maxPlayers || isOverBudget
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                              : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:shadow-lg'
-                            }`}
+                          className={`w-full py-2.5 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm ${
+                            savingTeamId === team.id
+                              ? 'bg-slate-300 text-slate-500 cursor-wait'
+                              : playerCount !== maxPlayers || isOverBudget
+                                ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed'
+                                : 'bg-slate-800 hover:bg-slate-700 text-white'
+                          }`}
                         >
                           {savingTeamId === team.id ? (
-                            <span className="flex items-center justify-center gap-2">
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span className="flex items-center justify-center gap-1.5">
+                              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                               Saving...
                             </span>
                           ) : playerCount !== maxPlayers ? (
                             playerCount > maxPlayers 
-                              ? `Must have exactly ${maxPlayers} players (remove ${playerCount - maxPlayers})`
-                              : `Must have exactly ${maxPlayers} players (add ${maxPlayers - playerCount})`
+                              ? `✕ Remove ${playerCount - maxPlayers} Players`
+                              : `+ Add ${maxPlayers - playerCount} Players`
                           ) : isOverBudget ? (
-                            'Over budget!'
+                            '✕ Over Budget!'
                           ) : (
                             `💾 Save ${team.name}`
                           )}

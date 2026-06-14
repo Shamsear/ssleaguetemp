@@ -208,6 +208,10 @@ export default function Navbar() {
                 Players
                 <span className={getBackgroundSpanClass('/players')}></span>
               </Link>
+              <Link href="/footballplayers" className={getLinkClass('/footballplayers')}>
+                Football Players
+                <span className={getBackgroundSpanClass('/footballplayers')}></span>
+              </Link>
               <Link href="/teams" className={getLinkClass('/teams')}>
                 Teams
                 <span className={getBackgroundSpanClass('/teams')}></span>

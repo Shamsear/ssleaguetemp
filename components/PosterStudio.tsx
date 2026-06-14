@@ -3,6 +3,21 @@
 import { useRef, useState, useMemo, useEffect } from 'react';
 import * as htmlToImage from 'html-to-image';
 import { SinglePlayerDesign, TableDesign, TeamOfWeekDesign, TeamOfDayDesign } from './PosterDesigns';
+import { 
+  BarChart2, 
+  Calendar, 
+  Trophy, 
+  Users, 
+  Award, 
+  FileSpreadsheet, 
+  Download, 
+  ClipboardList,
+  Check,
+  Palette,
+  Info,
+  AlertTriangle,
+  Focus
+} from 'lucide-react';
 
 interface PlayerStats {
   player_id: string;
@@ -782,116 +797,103 @@ export default function PosterStudio({
     }
   };
 
-  return (
+    return (
     <>
       {/* 1. TOGGLE BUTTON - Always Visible */}
       <button
         onClick={() => setShowPoster(!showPoster)}
-        className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all border ${
+        className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer flex items-center gap-2 ${
           showPoster
-            ? 'bg-violet-500/20 border-violet-500/40 text-violet-600'
-            : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+            ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+            : 'bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200/60'
         }`}
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        {showPoster ? 'Hide Poster Studio' : '🎨 Poster Studio'}
+        <BarChart2 className="w-4 h-4 text-amber-500" />
+        {showPoster ? 'Hide Poster Studio' : 'Open Poster Studio'}
       </button>
 
       {/* 2. COLLAPSIBLE PANEL */}
       {showPoster && (
-        <div className="mt-4 rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 overflow-hidden shadow-xl">
+        <div className="mt-4 console-card bg-white border border-slate-200/60 rounded-2xl overflow-hidden font-mono shadow-sm relative">
           
           {/* 2A. STUDIO HEADER */}
-          <div className="px-5 py-4 border-b border-gray-200 bg-white/50">
+          <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/40 font-mono">
             <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  🎨 Poster Studio
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Create premium shareable posters
-                </p>
+              <div className="flex items-center gap-2.5">
+                <Palette className="w-5 h-5 text-amber-505" />
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">
+                    Poster Studio
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
+                    Create premium shareable posters for stats & milestones
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Theme Tabs */}
-            <div className="flex gap-2 flex-wrap">
-              {(Object.entries(THEMES) as [ThemeKey, Theme][]).map(([key, t]) => (
-                <button
-                  key={key}
-                  onClick={() => setActiveTheme(key)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                    activeTheme === key
-                      ? 'border-opacity-50 shadow-lg'
-                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-100'
-                  }`}
-                  style={
-                    activeTheme === key
-                      ? {
-                          background: `${t.accent}18`,
-                          borderColor: `${t.accent}50`,
-                          color: t.accent,
-                          boxShadow: `0 2px 12px ${t.glow.replace('0.35', '0.2')}`,
-                        }
-                      : undefined
-                  }
-                >
-                  <span>{t.emoji}</span>
-                  <span className="hidden sm:inline">{t.label}</span>
-                </button>
-              ))}
+            <div className="flex gap-2 flex-wrap mb-3">
+              {(Object.entries(THEMES) as [ThemeKey, Theme][]).map(([key, t]) => {
+                const isActive = activeTheme === key;
+                let iconElement = <Trophy className="w-3.5 h-3.5 mr-1.5" />;
+                if (key === 'golden-boot') iconElement = <Trophy className="w-3.5 h-3.5 mr-1.5" style={{ color: t.accent }} />;
+                if (key === 'golden-ball') iconElement = <Award className="w-3.5 h-3.5 mr-1.5" style={{ color: t.accent }} />;
+                if (key === 'golden-glove') iconElement = <Award className="w-3.5 h-3.5 mr-1.5" style={{ color: t.accent }} />;
+                if (key === 'player-of-day') iconElement = <Calendar className="w-3.5 h-3.5 mr-1.5" style={{ color: t.accent }} />;
+                if (key === 'player-of-week') iconElement = <Trophy className="w-3.5 h-3.5 mr-1.5" style={{ color: t.accent }} />;
+                if (key === 'team-of-week') iconElement = <Users className="w-3.5 h-3.5 mr-1.5" style={{ color: t.accent }} />;
+                if (key === 'team-of-day') iconElement = <Users className="w-3.5 h-3.5 mr-1.5" style={{ color: t.accent }} />;
+                if (key === 'full-stats') iconElement = <BarChart2 className="w-3.5 h-3.5 mr-1.5" style={{ color: t.accent }} />;
+
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setActiveTheme(key)}
+                    className={`flex items-center px-3 py-1.5 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold transition-all border shadow-sm cursor-pointer ${
+                      isActive
+                        ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                        : 'bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200/60'
+                    }`}
+                  >
+                    {iconElement}
+                    <span>{t.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Round/Week Filter Toggle and Selection */}
             {(roundOptions.length > 0 || weekOptions.length > 0 || availableMatchdays.length > 0 || availableWeeksFromAwards.length > 0) && 
              activeTheme !== 'full-stats' && (
-              <div className="mt-3 space-y-2">
-                {/* Filter Type Toggle (only show if both options exist and not Player of Day/Week/Team of Week/Team of Day) */}
+              <div className="mt-3 space-y-3">
+                {/* Filter Type Toggle */}
                 {roundOptions.length > 0 && weekOptions.length > 0 && 
                  activeTheme !== 'player-of-day' && activeTheme !== 'player-of-week' && activeTheme !== 'team-of-week' && activeTheme !== 'team-of-day' && (
-                  <div className="flex gap-2 mb-2">
+                  <div className="flex gap-2 mb-2 font-mono">
                     <button
                       onClick={() => {
                         setFilterType('round');
-                        setSelectedWeek(0); // Reset week when switching to round
+                        setSelectedWeek(0);
                       }}
-                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                      className={`flex-1 px-3 py-1.5 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold transition-all border shadow-sm cursor-pointer ${
                         filterType === 'round'
-                          ? 'text-white shadow-md'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                          : 'bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200/60'
                       }`}
-                      style={
-                        filterType === 'round'
-                          ? {
-                              background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
-                              boxShadow: `0 4px 12px ${theme.glow.replace('0.35', '0.25')}`,
-                            }
-                          : undefined
-                      }
                     >
                       Round Filter
                     </button>
                     <button
                       onClick={() => {
                         setFilterType('week');
-                        setSelectedRound(0); // Reset round when switching to week
+                        setSelectedRound(0);
                       }}
-                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                      className={`flex-1 px-3 py-1.5 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold transition-all border shadow-sm cursor-pointer ${
                         filterType === 'week'
-                          ? 'text-white shadow-md'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                          : 'bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200/60'
                       }`}
-                      style={
-                        filterType === 'week'
-                          ? {
-                              background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
-                              boxShadow: `0 4px 12px ${theme.glow.replace('0.35', '0.25')}`,
-                            }
-                          : undefined
-                      }
                     >
                       Week Filter
                     </button>
@@ -899,8 +901,8 @@ export default function PosterStudio({
                 )}
                 
                 {/* Filter Selection Dropdown */}
-                <div>
-                  <label className="text-xs font-semibold text-gray-700 block mb-1">
+                <div className="font-mono">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
                     {activeTheme === 'player-of-day' 
                       ? 'Filter by Matchday:' 
                       : activeTheme === 'team-of-day'
@@ -935,58 +937,50 @@ export default function PosterStudio({
                         setSelectedRound(value);
                       }
                     }}
-                    className="w-full px-3 py-2 rounded-lg border text-sm font-bold"
-                    style={{
-                      background: `${theme.accent}08`,
-                      borderColor: `${theme.accent}30`,
-                      color: '#333',
-                    }}
+                    className="w-full py-2 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-850 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono font-extrabold cursor-pointer"
                   >
                     <option value={0}>
                       {activeTheme === 'player-of-day' || activeTheme === 'team-of-day'
-                        ? 'Latest' 
+                        ? 'LATEST MATCHDAY' 
                         : activeTheme === 'player-of-week' || activeTheme === 'team-of-week'
-                          ? 'All Weeks'
+                          ? 'ALL WEEKS'
                           : filterType === 'week' 
-                            ? 'All Weeks' 
-                            : 'Season'}
+                            ? 'ALL WEEKS' 
+                            : 'COMPLETE SEASON'}
                     </option>
                     {(() => {
-                      // Player of Day: Show only matchdays with awards
                       if (activeTheme === 'player-of-day' || activeTheme === 'team-of-day') {
                         return availableMatchdays.map(matchday => (
                           <option key={matchday} value={matchday}>
-                            Matchday {matchday}
+                            MATCHDAY {matchday}
                           </option>
                         ));
                       }
                       
-                      // Player of Week: Show only weeks with awards
                       if (activeTheme === 'player-of-week' || activeTheme === 'team-of-week') {
                         return availableWeeksFromAwards.map(week => {
                           const { start, end } = getWeekRange(week);
                           return (
                             <option key={week} value={week}>
-                              Week {week} ({start}-{end})
+                              WEEK {week} (R{start}-R{end})
                             </option>
                           );
                         });
                       }
                       
-                      // Other themes: Show week or round options
                       const options = filterType === 'week' ? weekOptions : roundOptions;
                       return options.map(opt => {
                         if (filterType === 'week') {
                           const { start, end } = getWeekRange(opt);
                           return (
                             <option key={opt} value={opt}>
-                              Week {opt} ({start}-{end})
+                              WEEK {opt} (R{start}-R{end})
                             </option>
                           );
                         } else {
                           return (
                             <option key={opt} value={opt}>
-                              Till Round {opt}
+                              TILL ROUND {opt}
                             </option>
                           );
                         }
@@ -999,30 +993,19 @@ export default function PosterStudio({
 
             {/* Team of Week Player Selection */}
             {activeTheme === 'team-of-week' && teamOfWeekAward && (
-              <div className="mt-3">
-                <label className="text-xs font-semibold text-gray-700 block mb-1">
+              <div className="mt-3 font-mono">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
                   Select Player from Team:
                 </label>
                 <select
                   value={selectedTeamOfWeekPlayer || ''}
                   onChange={(e) => {
                     const playerId = e.target.value || null;
-                    const playerData = players.filter(p => p.team_name === teamOfWeekAward.team_name);
-                    alert(`Player Selected!\nID: ${playerId}\nTeam: ${teamOfWeekAward.team_name}\nPlayers in team: ${playerData.length}`);
-                    console.log('[Team of Week] Player selected:', {
-                      playerId,
-                      teamName: teamOfWeekAward.team_name,
-                      availablePlayers: playerData.map(p => ({
-                        id: p.player_id,
-                        name: p.player_name,
-                        photo: p.player_photo || p.photo_url
-                      }))
-                    });
                     setSelectedTeamOfWeekPlayer(playerId);
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full py-2 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-850 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono font-extrabold cursor-pointer"
                 >
-                  <option value="">-- Select a player --</option>
+                  <option value="">-- SELECT A PLAYER --</option>
                   {players
                     .filter(p => p.team_name === teamOfWeekAward.team_name)
                     .map(player => (
@@ -1033,13 +1016,15 @@ export default function PosterStudio({
                   }
                 </select>
                 {!selectedTeamOfWeekPlayer && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    💡 Select a player to show their photo on the poster
+                  <p className="text-[9px] text-slate-450 font-bold uppercase mt-1 flex items-center gap-1">
+                    <Info className="w-3.5 h-3.5 text-slate-400" />
+                    Select a player to show their photo on the poster
                   </p>
                 )}
                 {selectedTeamOfWeekPlayer && (
-                  <p className="text-xs text-green-600 mt-1">
-                    ✓ Selected: {players.find(p => p.player_id === selectedTeamOfWeekPlayer)?.player_name}
+                  <p className="text-[9px] text-emerald-605 font-bold uppercase mt-1 flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    Selected: {players.find(p => p.player_id === selectedTeamOfWeekPlayer)?.player_name}
                   </p>
                 )}
               </div>
@@ -1048,96 +1033,88 @@ export default function PosterStudio({
             {/* Poster Style Toggle for Golden Boot/Ball/Glove/Full Stats */}
             {(activeTheme === 'golden-boot' || activeTheme === 'golden-ball' || 
               activeTheme === 'golden-glove' || activeTheme === 'full-stats') && (
-              <div className="mt-3">
-                <label className="text-xs font-semibold text-gray-700 block mb-1">
+              <div className="mt-3 font-mono">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
                   Poster Style:
                 </label>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setPosterStyle('single')}
-                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                    className={`flex-1 px-3 py-2 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold transition-all border shadow-sm cursor-pointer ${
                       posterStyle === 'single'
-                        ? 'text-white shadow-md'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                        : 'bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200/60'
                     }`}
-                    style={
-                      posterStyle === 'single'
-                        ? {
-                            background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent2})`,
-                          }
-                        : undefined
-                    }
                   >
-                    👤 Single Player View
+                    <Users className="w-3.5 h-3.5 mr-1.5 inline-block" />
+                    Single Player View
                   </button>
                   <button
                     onClick={() => setPosterStyle('table')}
-                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                    className={`flex-1 px-3 py-2 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold transition-all border shadow-sm cursor-pointer ${
                       posterStyle === 'table'
-                        ? 'text-white shadow-md'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                        : 'bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200/60'
                     }`}
-                    style={
-                      posterStyle === 'table'
-                        ? {
-                            background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent2})`,
-                          }
-                        : undefined
-                    }
                   >
-                    📊 Leaderboard Table
+                    <BarChart2 className="w-3.5 h-3.5 mr-1.5 inline-block" />
+                    Leaderboard Table
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Photo Position & Crop Controls - Only for Single Player View */}
+            {/* Photo Position & Crop Controls */}
             {(posterStyle === 'single' || activeTheme === 'player-of-day' || activeTheme === 'player-of-week' || activeTheme === 'team-of-week') && (
-              <div className="mt-3">
+              <div className="mt-3 font-mono">
                 <button
                   onClick={() => setShowPhotoControls(!showPhotoControls)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold bg-slate-50 text-slate-700 border border-slate-200/60 hover:bg-slate-100 transition-all cursor-pointer"
                 >
-                  <span>📸 Photo Position & Crop</span>
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-amber-500" />
+                    Photo Position & Crop
+                  </span>
                   <svg 
                     className={`w-4 h-4 transition-transform ${showPhotoControls ? 'rotate-180' : ''}`} 
                     fill="none" 
                     viewBox="0 0 24 24" 
                     stroke="currentColor"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 
                 {showPhotoControls && (
-                  <div className="mt-3 p-3 rounded-lg bg-white border border-gray-200 space-y-3">
+                  <div className="mt-3 p-3 rounded-xl bg-white border border-slate-200/60 space-y-4 font-mono">
                     {/* Interactive Mode Toggle */}
-                    <div className="pb-3 border-b border-gray-200">
+                    <div className="pb-3 border-b border-slate-100">
                       <button
                         onClick={() => setInteractiveMode(interactiveMode === 'photo' ? 'none' : 'photo')}
-                        className={`w-full px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold transition-all border shadow-sm cursor-pointer flex items-center justify-center gap-1.5 ${
                           interactiveMode === 'photo'
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                            ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                            : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'
                         }`}
                       >
-                        {interactiveMode === 'photo' ? '✓ Interactive Mode Active' : '🎯 Enable Interactive Mode'}
+                        <Focus className="w-3.5 h-3.5" />
+                        {interactiveMode === 'photo' ? 'Interactive Mode Active' : 'Enable Interactive Drag/Resize'}
                       </button>
                       {interactiveMode === 'photo' && (
-                        <p className="text-xs text-gray-600 mt-2 text-center">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mt-2 text-center">
                           Click and drag on the photo in the preview, or use arrow keys to reposition it
                         </p>
                       )}
                     </div>
 
                     {/* Custom Photo Upload */}
-                    <div className="pb-3 border-b border-gray-200">
-                      <label className="text-xs font-semibold text-gray-700 block mb-2">
+                    <div className="pb-3 border-b border-slate-100">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
                         Custom Player Photo
                       </label>
                       {customPlayerPhoto ? (
                         <div className="space-y-2">
-                          <div className="relative w-full h-32 rounded-lg overflow-hidden border border-gray-200">
+                          <div className="relative w-full h-32 rounded-xl overflow-hidden border border-slate-200">
                             <img 
                               src={customPlayerPhoto} 
                               alt="Custom player" 
@@ -1146,17 +1123,15 @@ export default function PosterStudio({
                           </div>
                           <button
                             onClick={clearCustomPlayerPhoto}
-                            className="w-full px-3 py-2 bg-red-100 text-red-700 rounded-lg text-xs font-bold hover:bg-red-200 transition-all"
+                            className="w-full px-3 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold hover:bg-rose-105 transition-all cursor-pointer"
                           >
-                            🗑️ Remove Custom Photo
+                            Remove Custom Photo
                           </button>
                         </div>
                       ) : (
-                        <label className="w-full px-3 py-2 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold hover:bg-purple-200 transition-all cursor-pointer flex items-center justify-center gap-2">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          📤 Upload Custom Photo
+                        <label className="w-full px-3 py-2 bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold hover:bg-violet-100 transition-all cursor-pointer flex items-center justify-center gap-2">
+                          <Download className="w-4 h-4" />
+                          Upload Custom Photo
                           <input
                             type="file"
                             accept="image/*"
@@ -1168,43 +1143,42 @@ export default function PosterStudio({
                     </div>
 
                     {/* Manual Background Removal for Photo */}
-                    <div className="pb-3 border-b border-gray-200">
-                      <label className="text-xs font-semibold text-gray-700 block mb-2">
+                    <div className="pb-3 border-b border-slate-100">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
                         Remove Background
                       </label>
                       <button
                         onClick={() => handleRemoveBackground('player')}
                         disabled={isRemovingBackground || (!customPlayerPhoto && filteredPlayers.length === 0 && !(activeTheme === 'team-of-week' && teamOfWeekAward))}
-                        className="w-full px-3 py-2 bg-gradient-to-r from-pink-100 to-purple-100 text-purple-700 rounded-lg text-xs font-bold hover:from-pink-200 hover:to-purple-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white border border-orange-600 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold hover:from-amber-600 hover:to-orange-650 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                       >
                         {isRemovingBackground ? (
                           <>
-                            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Removing...
+                            <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
+                            Removing background...
                           </>
                         ) : (
                           <>
-                            🪄 Remove Background
+                            Remove Background
                           </>
                         )}
                       </button>
                       {backgroundRemovalError && (
-                        <p className="text-xs text-red-600 mt-2">
-                          ⚠️ {backgroundRemovalError}
+                        <p className="text-[10px] text-rose-600 font-bold uppercase mt-2 flex items-center gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                          {backgroundRemovalError}
                         </p>
                       )}
-                      <p className="text-xs text-gray-500 mt-2">
-                        💡 Uses API credits - click only when needed
+                      <p className="text-[9px] text-slate-400 font-bold uppercase mt-2 flex items-center gap-1.5">
+                        <Info className="w-3.5 h-3.5 text-slate-400" />
+                        Uses API credits - click only when needed
                       </p>
                     </div>
                     
                     {/* Horizontal Position */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">
                           Horizontal Position
                         </label>
                         <input
@@ -1213,7 +1187,7 @@ export default function PosterStudio({
                           max="1000"
                           value={photoPosition.x}
                           onChange={(e) => setPhotoPosition(prev => ({ ...prev, x: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-350 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1222,24 +1196,17 @@ export default function PosterStudio({
                         max="1000"
                         value={photoPosition.x}
                         onChange={(e) => setPhotoPosition(prev => ({ ...prev, x: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>-50%</span>
-                        <span>0%</span>
-                        <span>50%</span>
-                        <span>100%</span>
-                        <span>150%</span>
-                      </div>
                     </div>
 
                     {/* Vertical Position */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Vertical Position
                         </label>
                         <input
@@ -1248,7 +1215,7 @@ export default function PosterStudio({
                           max="1000"
                           value={photoPosition.y}
                           onChange={(e) => setPhotoPosition(prev => ({ ...prev, y: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-355 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1257,24 +1224,17 @@ export default function PosterStudio({
                         max="1000"
                         value={photoPosition.y}
                         onChange={(e) => setPhotoPosition(prev => ({ ...prev, y: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>-50%</span>
-                        <span>0%</span>
-                        <span>50%</span>
-                        <span>100%</span>
-                        <span>150%</span>
-                      </div>
                     </div>
 
                     {/* Photo Scale/Zoom */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Photo Scale
                         </label>
                         <input
@@ -1283,7 +1243,7 @@ export default function PosterStudio({
                           max="200"
                           value={photoScale}
                           onChange={(e) => setPhotoScale(Number(e.target.value))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-355 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1292,22 +1252,17 @@ export default function PosterStudio({
                         max="200"
                         value={photoScale}
                         onChange={(e) => setPhotoScale(Number(e.target.value))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>50%</span>
-                        <span>100%</span>
-                        <span>200%</span>
-                      </div>
                     </div>
 
                     {/* Crop Width */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Crop Width
                         </label>
                         <input
@@ -1316,7 +1271,7 @@ export default function PosterStudio({
                           max="100"
                           value={photoCrop.width}
                           onChange={(e) => setPhotoCrop(prev => ({ ...prev, width: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-355 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1325,22 +1280,17 @@ export default function PosterStudio({
                         max="100"
                         value={photoCrop.width}
                         onChange={(e) => setPhotoCrop(prev => ({ ...prev, width: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>Narrow</span>
-                        <span>Medium</span>
-                        <span>Full</span>
-                      </div>
                     </div>
 
                     {/* Crop Height */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Crop Height
                         </label>
                         <input
@@ -1349,7 +1299,7 @@ export default function PosterStudio({
                           max="100"
                           value={photoCrop.height}
                           onChange={(e) => setPhotoCrop(prev => ({ ...prev, height: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-355 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1358,22 +1308,17 @@ export default function PosterStudio({
                         max="100"
                         value={photoCrop.height}
                         onChange={(e) => setPhotoCrop(prev => ({ ...prev, height: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>Short</span>
-                        <span>Medium</span>
-                        <span>Full</span>
-                      </div>
                     </div>
 
                     {/* Crop from Top */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Crop from Top
                         </label>
                         <input
@@ -1382,7 +1327,7 @@ export default function PosterStudio({
                           max="50"
                           value={photoCrop.top}
                           onChange={(e) => setPhotoCrop(prev => ({ ...prev, top: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-355 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1391,22 +1336,17 @@ export default function PosterStudio({
                         max="50"
                         value={photoCrop.top}
                         onChange={(e) => setPhotoCrop(prev => ({ ...prev, top: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>None</span>
-                        <span>Medium</span>
-                        <span>Max</span>
-                      </div>
                     </div>
 
                     {/* Crop from Bottom */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Crop from Bottom
                         </label>
                         <input
@@ -1415,7 +1355,7 @@ export default function PosterStudio({
                           max="50"
                           value={photoCrop.bottom}
                           onChange={(e) => setPhotoCrop(prev => ({ ...prev, bottom: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-355 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1424,22 +1364,17 @@ export default function PosterStudio({
                         max="50"
                         value={photoCrop.bottom}
                         onChange={(e) => setPhotoCrop(prev => ({ ...prev, bottom: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>None</span>
-                        <span>Medium</span>
-                        <span>Max</span>
-                      </div>
                     </div>
 
                     {/* Crop from Left */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Crop from Left
                         </label>
                         <input
@@ -1448,7 +1383,7 @@ export default function PosterStudio({
                           max="50"
                           value={photoCrop.left}
                           onChange={(e) => setPhotoCrop(prev => ({ ...prev, left: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-355 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1457,22 +1392,17 @@ export default function PosterStudio({
                         max="50"
                         value={photoCrop.left}
                         onChange={(e) => setPhotoCrop(prev => ({ ...prev, left: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>None</span>
-                        <span>Medium</span>
-                        <span>Max</span>
-                      </div>
                     </div>
 
                     {/* Crop from Right */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Crop from Right
                         </label>
                         <input
@@ -1481,7 +1411,7 @@ export default function PosterStudio({
                           max="50"
                           value={photoCrop.right}
                           onChange={(e) => setPhotoCrop(prev => ({ ...prev, right: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-355 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1490,16 +1420,11 @@ export default function PosterStudio({
                         max="50"
                         value={photoCrop.right}
                         onChange={(e) => setPhotoCrop(prev => ({ ...prev, right: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>None</span>
-                        <span>Medium</span>
-                        <span>Max</span>
-                      </div>
                     </div>
 
                     {/* Reset Button */}
@@ -1509,62 +1434,66 @@ export default function PosterStudio({
                         setPhotoScale(100);
                         setPhotoCrop({ width: 100, height: 100, top: 0, left: 0, right: 0, bottom: 0 });
                       }}
-                      className="w-full px-3 py-2 rounded-lg text-xs font-bold bg-gray-700 text-white hover:bg-gray-800 transition-all"
+                      className="w-full px-3 py-2 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold bg-slate-800 text-amber-400 border border-slate-900 shadow-md hover:bg-slate-900 transition-all cursor-pointer"
                     >
-                      Reset to Default
+                      Reset Photo Settings
                     </button>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Team Logo Position & Crop Controls - Only for Single Player View */}
+            {/* Team Logo Position & Crop Controls */}
             {(posterStyle === 'single' || activeTheme === 'player-of-day' || activeTheme === 'player-of-week' || activeTheme === 'team-of-week' || activeTheme === 'team-of-day') && (
-              <div className="mt-3">
+              <div className="mt-3 font-mono">
                 <button
                   onClick={() => setShowLogoControls(!showLogoControls)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold bg-slate-50 text-slate-700 border border-slate-200/60 hover:bg-slate-100 transition-all cursor-pointer"
                 >
-                  <span>🏆 Team Logo Position & Crop</span>
+                  <span className="flex items-center gap-1.5">
+                    <Trophy className="w-4 h-4 text-amber-500" />
+                    Team Logo Position & Crop
+                  </span>
                   <svg 
                     className={`w-4 h-4 transition-transform ${showLogoControls ? 'rotate-180' : ''}`} 
                     fill="none" 
                     viewBox="0 0 24 24" 
                     stroke="currentColor"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 
                 {showLogoControls && (
-                  <div className="mt-3 p-3 rounded-lg bg-white border border-gray-200 space-y-3">
+                  <div className="mt-3 p-3 rounded-xl bg-white border border-slate-200/60 space-y-4 font-mono">
                     {/* Interactive Mode Toggle */}
-                    <div className="pb-3 border-b border-gray-200">
+                    <div className="pb-3 border-b border-slate-100">
                       <button
                         onClick={() => setInteractiveMode(interactiveMode === 'logo' ? 'none' : 'logo')}
-                        className={`w-full px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold transition-all border shadow-sm cursor-pointer flex items-center justify-center gap-1.5 ${
                           interactiveMode === 'logo'
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                            ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                            : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'
                         }`}
                       >
-                        {interactiveMode === 'logo' ? '✓ Interactive Mode Active' : '🎯 Enable Interactive Mode'}
+                        <Focus className="w-3.5 h-3.5" />
+                        {interactiveMode === 'logo' ? 'Interactive Mode Active' : 'Enable Interactive Drag/Resize'}
                       </button>
                       {interactiveMode === 'logo' && (
-                        <p className="text-xs text-gray-600 mt-2 text-center">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mt-2 text-center">
                           Click and drag on the logo in the preview, or use arrow keys to reposition it
                         </p>
                       )}
                     </div>
 
                     {/* Custom Logo Upload */}
-                    <div className="pb-3 border-b border-gray-200">
-                      <label className="text-xs font-semibold text-gray-700 block mb-2">
+                    <div className="pb-3 border-b border-slate-100">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
                         Custom Team Logo
                       </label>
                       {customTeamLogo ? (
                         <div className="space-y-2">
-                          <div className="relative w-full h-32 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
+                          <div className="relative w-full h-32 rounded-xl overflow-hidden border border-slate-200 bg-gray-50 flex items-center justify-center">
                             <img 
                               src={customTeamLogo} 
                               alt="Custom logo" 
@@ -1573,17 +1502,15 @@ export default function PosterStudio({
                           </div>
                           <button
                             onClick={clearCustomTeamLogo}
-                            className="w-full px-3 py-2 bg-red-100 text-red-700 rounded-lg text-xs font-bold hover:bg-red-200 transition-all"
+                            className="w-full px-3 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold hover:bg-rose-100 transition-all cursor-pointer"
                           >
-                            🗑️ Remove Custom Logo
+                            Remove Custom Logo
                           </button>
                         </div>
                       ) : (
-                        <label className="w-full px-3 py-2 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold hover:bg-purple-200 transition-all cursor-pointer flex items-center justify-center gap-2">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          📤 Upload Custom Logo
+                        <label className="w-full px-3 py-2 bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold hover:bg-violet-100 transition-all cursor-pointer flex items-center justify-center gap-2">
+                          <Download className="w-4 h-4" />
+                          Upload Custom Logo
                           <input
                             type="file"
                             accept="image/*"
@@ -1595,43 +1522,42 @@ export default function PosterStudio({
                     </div>
 
                     {/* Manual Background Removal for Logo */}
-                    <div className="pb-3 border-b border-gray-200">
-                      <label className="text-xs font-semibold text-gray-700 block mb-2">
+                    <div className="pb-3 border-b border-slate-100">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
                         Remove Background
                       </label>
                       <button
                         onClick={() => handleRemoveBackground('logo')}
                         disabled={isRemovingBackground || (!customTeamLogo && filteredPlayers.length === 0 && !(activeTheme === 'team-of-day' && teamOfDayAward) && !(activeTheme === 'team-of-week' && teamOfWeekAward))}
-                        className="w-full px-3 py-2 bg-gradient-to-r from-pink-100 to-purple-100 text-purple-700 rounded-lg text-xs font-bold hover:from-pink-200 hover:to-purple-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full px-3 py-2 bg-gradient-to-r from-amber-50 to-orange-50 text-white border border-orange-600 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold hover:from-amber-600 hover:to-orange-650 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                       >
                         {isRemovingBackground ? (
                           <>
-                            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Removing...
+                            <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
+                            Removing background...
                           </>
                         ) : (
                           <>
-                            🪄 Remove Background
+                            Remove Background
                           </>
                         )}
                       </button>
                       {backgroundRemovalError && (
-                        <p className="text-xs text-red-600 mt-2">
-                          ⚠️ {backgroundRemovalError}
+                        <p className="text-[10px] text-rose-600 font-bold uppercase mt-2 flex items-center gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                          {backgroundRemovalError}
                         </p>
                       )}
-                      <p className="text-xs text-gray-500 mt-2">
-                        💡 Uses API credits - click only when needed
+                      <p className="text-[9px] text-slate-400 font-bold uppercase mt-2 flex items-center gap-1.5">
+                        <Info className="w-3.5 h-3.5 text-slate-400" />
+                        Uses API credits - click only when needed
                       </p>
                     </div>
                     
                     {/* Horizontal Position */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Horizontal Position
                         </label>
                         <input
@@ -1640,7 +1566,7 @@ export default function PosterStudio({
                           max="1000"
                           value={logoPosition.x}
                           onChange={(e) => setLogoPosition(prev => ({ ...prev, x: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-350 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1649,24 +1575,17 @@ export default function PosterStudio({
                         max="1000"
                         value={logoPosition.x}
                         onChange={(e) => setLogoPosition(prev => ({ ...prev, x: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>-50%</span>
-                        <span>0%</span>
-                        <span>50%</span>
-                        <span>100%</span>
-                        <span>150%</span>
-                      </div>
                     </div>
 
                     {/* Vertical Position */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Vertical Position
                         </label>
                         <input
@@ -1675,7 +1594,7 @@ export default function PosterStudio({
                           max="1000"
                           value={logoPosition.y}
                           onChange={(e) => setLogoPosition(prev => ({ ...prev, y: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-350 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1684,24 +1603,17 @@ export default function PosterStudio({
                         max="1000"
                         value={logoPosition.y}
                         onChange={(e) => setLogoPosition(prev => ({ ...prev, y: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>-50%</span>
-                        <span>0%</span>
-                        <span>50%</span>
-                        <span>100%</span>
-                        <span>150%</span>
-                      </div>
                     </div>
 
                     {/* Logo Scale/Zoom */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Logo Scale
                         </label>
                         <input
@@ -1710,7 +1622,7 @@ export default function PosterStudio({
                           max="200"
                           value={logoScale}
                           onChange={(e) => setLogoScale(Number(e.target.value))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-350 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1719,22 +1631,17 @@ export default function PosterStudio({
                         max="200"
                         value={logoScale}
                         onChange={(e) => setLogoScale(Number(e.target.value))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>50%</span>
-                        <span>100%</span>
-                        <span>200%</span>
-                      </div>
                     </div>
 
                     {/* Crop Width */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Crop Width
                         </label>
                         <input
@@ -1743,7 +1650,7 @@ export default function PosterStudio({
                           max="100"
                           value={logoCrop.width}
                           onChange={(e) => setLogoCrop(prev => ({ ...prev, width: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-350 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1752,22 +1659,17 @@ export default function PosterStudio({
                         max="100"
                         value={logoCrop.width}
                         onChange={(e) => setLogoCrop(prev => ({ ...prev, width: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>Narrow</span>
-                        <span>Medium</span>
-                        <span>Full</span>
-                      </div>
                     </div>
 
                     {/* Crop Height */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Crop Height
                         </label>
                         <input
@@ -1776,7 +1678,7 @@ export default function PosterStudio({
                           max="100"
                           value={logoCrop.height}
                           onChange={(e) => setLogoCrop(prev => ({ ...prev, height: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-350 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1785,22 +1687,17 @@ export default function PosterStudio({
                         max="100"
                         value={logoCrop.height}
                         onChange={(e) => setLogoCrop(prev => ({ ...prev, height: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>Short</span>
-                        <span>Medium</span>
-                        <span>Full</span>
-                      </div>
                     </div>
 
                     {/* Crop from Top */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Crop from Top
                         </label>
                         <input
@@ -1809,7 +1706,7 @@ export default function PosterStudio({
                           max="50"
                           value={logoCrop.top}
                           onChange={(e) => setLogoCrop(prev => ({ ...prev, top: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-355 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1818,22 +1715,17 @@ export default function PosterStudio({
                         max="50"
                         value={logoCrop.top}
                         onChange={(e) => setLogoCrop(prev => ({ ...prev, top: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>None</span>
-                        <span>Medium</span>
-                        <span>Max</span>
-                      </div>
                     </div>
 
                     {/* Crop from Bottom */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Crop from Bottom
                         </label>
                         <input
@@ -1842,7 +1734,7 @@ export default function PosterStudio({
                           max="50"
                           value={logoCrop.bottom}
                           onChange={(e) => setLogoCrop(prev => ({ ...prev, bottom: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-355 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1851,22 +1743,17 @@ export default function PosterStudio({
                         max="50"
                         value={logoCrop.bottom}
                         onChange={(e) => setLogoCrop(prev => ({ ...prev, bottom: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>None</span>
-                        <span>Medium</span>
-                        <span>Max</span>
-                      </div>
                     </div>
 
                     {/* Crop from Left */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Crop from Left
                         </label>
                         <input
@@ -1875,7 +1762,7 @@ export default function PosterStudio({
                           max="50"
                           value={logoCrop.left}
                           onChange={(e) => setLogoCrop(prev => ({ ...prev, left: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-355 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1884,22 +1771,17 @@ export default function PosterStudio({
                         max="50"
                         value={logoCrop.left}
                         onChange={(e) => setLogoCrop(prev => ({ ...prev, left: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>None</span>
-                        <span>Medium</span>
-                        <span>Max</span>
-                      </div>
                     </div>
 
                     {/* Crop from Right */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-gray-700">
+                        <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">
                           Crop from Right
                         </label>
                         <input
@@ -1908,7 +1790,7 @@ export default function PosterStudio({
                           max="50"
                           value={logoCrop.right}
                           onChange={(e) => setLogoCrop(prev => ({ ...prev, right: Number(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-16 px-1.5 py-0.5 text-xs border border-slate-355 rounded text-center text-slate-800 bg-white font-mono"
                         />
                       </div>
                       <input
@@ -1917,16 +1799,11 @@ export default function PosterStudio({
                         max="50"
                         value={logoCrop.right}
                         onChange={(e) => setLogoCrop(prev => ({ ...prev, right: Number(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer border border-slate-205"
                         style={{
                           accentColor: theme.accent,
                         }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>None</span>
-                        <span>Medium</span>
-                        <span>Max</span>
-                      </div>
                     </div>
 
                     {/* Reset Button */}
@@ -1936,9 +1813,9 @@ export default function PosterStudio({
                         setLogoScale(100);
                         setLogoCrop({ width: 100, height: 100, top: 0, left: 0, right: 0, bottom: 0 });
                       }}
-                      className="w-full px-3 py-2 rounded-lg text-xs font-bold bg-gray-700 text-white hover:bg-gray-800 transition-all"
+                      className="w-full px-3 py-2 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold bg-slate-800 text-amber-400 border border-slate-900 shadow-md hover:bg-slate-900 transition-all cursor-pointer"
                     >
-                      Reset to Default
+                      Reset Logo Settings
                     </button>
                   </div>
                 )}
@@ -1947,37 +1824,34 @@ export default function PosterStudio({
 
             {/* Team of Day - Additional Logo Controls */}
             {activeTheme === 'team-of-day' && teamOfDayAward && (
-              <div className="mt-3">
-                <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 space-y-3">
-                  <h4 className="text-xs font-bold text-blue-900 mb-3">⚽ Match Logos (Home & Away)</h4>
+              <div className="mt-3 font-mono">
+                <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 space-y-3">
+                  <h4 className="text-xs font-bold text-blue-900 mb-3 flex items-center gap-1.5"><Trophy className="w-4 h-4 text-blue-800" /> Match Logos (Home & Away)</h4>
                   
                   {/* Home Team Logo */}
                   <div className="pb-3 border-b border-blue-200">
-                    <label className="text-xs font-semibold text-gray-700 block mb-2">
-                      🏠 Home Team: {teamOfDayAward.home_team}
+                    <label className="text-xs font-semibold text-gray-700 block mb-2 font-mono">
+                      Home Team: {teamOfDayAward.home_team}
                     </label>
                     <button
                       onClick={() => handleRemoveBackground('home-logo')}
                       disabled={isRemovingBackground}
-                      className="w-full px-3 py-2 bg-gradient-to-r from-green-100 to-blue-100 text-blue-700 rounded-lg text-xs font-bold hover:from-green-200 hover:to-blue-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="w-full px-3 py-2 bg-gradient-to-r from-amber-50 to-orange-50 text-white border border-orange-600 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold hover:from-amber-600 hover:to-orange-650 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                     >
                       {isRemovingBackground ? (
                         <>
-                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Removing...
+                          <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
+                          Removing background...
                         </>
                       ) : (
                         <>
-                          🪄 Remove Background (Home)
+                          Remove Background (Home)
                         </>
                       )}
                     </button>
                     {customHomeTeamLogo && (
                       <div className="mt-2">
-                        <div className="relative w-full h-20 rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center">
+                        <div className="relative w-full h-20 rounded-xl overflow-hidden border border-gray-200 bg-white flex items-center justify-center">
                           <img 
                             src={customHomeTeamLogo} 
                             alt="Custom home logo" 
@@ -1991,9 +1865,9 @@ export default function PosterStudio({
                               setCustomTeamLogo(null);
                             }
                           }}
-                          className="w-full mt-2 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-bold hover:bg-red-200 transition-all"
+                          className="w-full mt-2 px-3 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold hover:bg-rose-100 transition-all cursor-pointer"
                         >
-                          🗑️ Remove
+                          Remove
                         </button>
                       </div>
                     )}
@@ -2001,31 +1875,28 @@ export default function PosterStudio({
 
                   {/* Away Team Logo */}
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 block mb-2">
-                      ✈️ Away Team: {teamOfDayAward.away_team}
+                    <label className="text-xs font-semibold text-gray-700 block mb-2 font-mono">
+                      Away Team: {teamOfDayAward.away_team}
                     </label>
                     <button
                       onClick={() => handleRemoveBackground('away-logo')}
                       disabled={isRemovingBackground}
-                      className="w-full px-3 py-2 bg-gradient-to-r from-orange-100 to-red-100 text-red-700 rounded-lg text-xs font-bold hover:from-orange-200 hover:to-red-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="w-full px-3 py-2 bg-gradient-to-r from-amber-50 to-orange-50 text-white border border-orange-600 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold hover:from-amber-600 hover:to-orange-650 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                     >
                       {isRemovingBackground ? (
                         <>
-                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Removing...
+                          <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
+                          Removing background...
                         </>
                       ) : (
                         <>
-                          🪄 Remove Background (Away)
+                          Remove Background (Away)
                         </>
                       )}
                     </button>
                     {customAwayTeamLogo && (
                       <div className="mt-2">
-                        <div className="relative w-full h-20 rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center">
+                        <div className="relative w-full h-20 rounded-xl overflow-hidden border border-gray-200 bg-white flex items-center justify-center">
                           <img 
                             src={customAwayTeamLogo} 
                             alt="Custom away logo" 
@@ -2039,16 +1910,17 @@ export default function PosterStudio({
                               setCustomTeamLogo(null);
                             }
                           }}
-                          className="w-full mt-2 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-bold hover:bg-red-200 transition-all"
+                          className="w-full mt-2 px-3 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold hover:bg-rose-100 transition-all cursor-pointer"
                         >
-                          🗑️ Remove
+                          Remove
                         </button>
                       </div>
                     )}
                   </div>
 
-                  <p className="text-xs text-gray-600 mt-2">
-                    💡 Remove backgrounds for match logos independently
+                  <p className="text-[10px] text-slate-450 font-bold uppercase mt-2 text-center flex items-center justify-center gap-1">
+                    <Info className="w-3.5 h-3.5 text-slate-400" />
+                    Remove backgrounds for match logos independently
                   </p>
                 </div>
               </div>
@@ -2056,27 +1928,20 @@ export default function PosterStudio({
 
             {/* Top N Selector for Golden Boot/Ball/Glove */}
             {(activeTheme === 'golden-boot' || activeTheme === 'golden-ball' || activeTheme === 'golden-glove') && (
-              <div className="mt-3">
-                <label className="text-xs font-semibold text-gray-700 block mb-1">
+              <div className="mt-3 font-mono">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
                   Show Top:
                 </label>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap font-mono">
                   {[5, 10, 15, 20].map(count => (
                     <button
                       key={count}
                       onClick={() => setTopCount(count)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold transition-all border shadow-sm cursor-pointer ${
                         topCount === count
-                          ? 'text-white shadow-md'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                          : 'bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200/60'
                       }`}
-                      style={
-                        topCount === count
-                          ? {
-                              background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent2})`,
-                            }
-                          : undefined
-                      }
                     >
                       Top {count}
                     </button>
@@ -2088,8 +1953,8 @@ export default function PosterStudio({
             {/* Player Name Editor for Golden Boot/Ball/Glove - Single Player View */}
             {(activeTheme === 'golden-boot' || activeTheme === 'golden-ball' || activeTheme === 'golden-glove') && 
              posterStyle === 'single' && playersWithCustomNames.length > 0 && (
-              <div className="mt-3">
-                <label className="text-xs font-semibold text-gray-700 block mb-1">
+              <div className="mt-3 font-mono">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
                   Display Name (Optional):
                 </label>
                 <input
@@ -2100,9 +1965,9 @@ export default function PosterStudio({
                     ...prev,
                     [playersWithCustomNames[0].player_id]: e.target.value
                   }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full py-2 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-850 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">
                   Leave empty to use original name: "{filteredPlayers[0].player_name}"
                 </p>
               </div>
@@ -2111,8 +1976,8 @@ export default function PosterStudio({
             {/* Player Name Editor for Player of Day/Week */}
             {(activeTheme === 'player-of-day' || activeTheme === 'player-of-week') && 
              playersWithCustomNames.length > 0 && (
-              <div className="mt-3">
-                <label className="text-xs font-semibold text-gray-700 block mb-1">
+              <div className="mt-3 font-mono">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
                   Display Name (Optional):
                 </label>
                 <input
@@ -2123,9 +1988,9 @@ export default function PosterStudio({
                     ...prev,
                     [playersWithCustomNames[0].player_id]: e.target.value
                   }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full py-2 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-850 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">
                   Leave empty to use original name: "{filteredPlayers[0].player_name}"
                 </p>
               </div>
@@ -2133,8 +1998,8 @@ export default function PosterStudio({
 
             {/* Team Name Editor for Team of Week */}
             {activeTheme === 'team-of-week' && getTeamOfWeekAward() && (
-              <div className="mt-3">
-                <label className="text-xs font-semibold text-gray-700 block mb-1">
+              <div className="mt-3 font-mono">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
                   Display Team Name (Optional):
                 </label>
                 <input
@@ -2145,9 +2010,9 @@ export default function PosterStudio({
                     ...prev,
                     [`team-${getTeamOfWeekAward()?.player_id}`]: e.target.value
                   }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full py-2 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-850 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">
                   Leave empty to use original team name: "{getTeamOfWeekAward()?.team_name}"
                 </p>
               </div>
@@ -2155,22 +2020,22 @@ export default function PosterStudio({
 
             {/* Page Navigation for Full Stats */}
             {activeTheme === 'full-stats' && totalPages > 1 && (
-              <div className="mt-3 flex items-center justify-between">
-                <label className="text-xs font-semibold text-gray-700">
+              <div className="mt-3 flex items-center justify-between font-mono">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                   Showing {statsPage * playersPerPage + 1}-{Math.min((statsPage + 1) * playersPerPage, players.length)} of {players.length} players
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 font-mono">
                   <button
                     onClick={() => setStatsPage(p => Math.max(0, p - 1))}
                     disabled={!hasPrevPage}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="px-3 py-1.5 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold transition-all border shadow-sm cursor-pointer bg-white text-slate-500 hover:text-slate-850 hover:bg-slate-50 border-slate-200/60 disabled:opacity-50"
                   >
                     ← Previous
                   </button>
                   <button
                     onClick={() => setStatsPage(p => Math.min(totalPages - 1, p + 1))}
                     disabled={!hasNextPage}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="px-3 py-1.5 rounded-xl text-xs font-mono uppercase tracking-wider font-extrabold transition-all border shadow-sm cursor-pointer bg-white text-slate-500 hover:text-slate-850 hover:bg-slate-50 border-slate-200/60 disabled:opacity-50"
                   >
                     Next →
                   </button>
@@ -2179,18 +2044,18 @@ export default function PosterStudio({
             )}
           </div>
 
-          {/* 2B. LIVE PREVIEW with CSS Scale Trick */}
-          <div className="p-5 flex justify-center relative">
+          {/* 2B. LIVE PREVIEW */}
+          <div className="bg-slate-900/5 backdrop-blur-sm p-6 flex justify-center relative border border-slate-200/40 rounded-2xl shadow-inner">
             {isFetchingStats && (
-              <div className="absolute inset-5 z-50 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-xl">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-xl">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
               </div>
             )}
             <div 
-              className="rounded-xl overflow-hidden border border-gray-200 shadow-2xl relative" 
+              className="rounded-xl overflow-hidden border border-slate-200 shadow-2xl relative bg-black" 
               style={{ 
-                width: 600,  // 800px * 0.75 = 600px
-                height: 750, // 1000px * 0.75 = 750px
+                width: 600,
+                height: 750,
                 cursor: interactiveMode !== 'none' 
                   ? (isResizing ? 'nwse-resize' : (isDragging ? 'grabbing' : 'grab'))
                   : 'default'
@@ -2206,8 +2071,7 @@ export default function PosterStudio({
                 if (interactiveMode === 'none') return;
                 
                 if (isResizing && resizeHandle) {
-                  // Handle crop resizing
-                  const deltaX = (e.clientX - dragStart.x) / 4; // Adjusted for sensitivity
+                  const deltaX = (e.clientX - dragStart.x) / 4;
                   const deltaY = (e.clientY - dragStart.y) / 4;
                   
                   if (interactiveMode === 'photo') {
@@ -2219,7 +2083,6 @@ export default function PosterStudio({
                       let newLeft = prev.left || 0;
                       let newRight = prev.right || 0;
                       
-                      // Handle corner resizes (adjust width/height)
                       if (resizeHandle === 'se') {
                         newWidth = Math.max(20, Math.min(100, initialCrop.width + deltaX));
                         newHeight = Math.max(20, Math.min(100, initialCrop.height + deltaY));
@@ -2233,7 +2096,6 @@ export default function PosterStudio({
                         newWidth = Math.max(20, Math.min(100, initialCrop.width - deltaX));
                         newHeight = Math.max(20, Math.min(100, initialCrop.height - deltaY));
                       }
-                      // Handle edge resizes (adjust side crops)
                       else if (resizeHandle === 'n') {
                         newTop = Math.max(0, Math.min(50, (initialCrop.top || 0) + deltaY));
                       } else if (resizeHandle === 's') {
@@ -2255,7 +2117,6 @@ export default function PosterStudio({
                       let newLeft = prev.left || 0;
                       let newRight = prev.right || 0;
                       
-                      // Handle corner resizes
                       if (resizeHandle === 'se') {
                         newWidth = Math.max(20, Math.min(100, initialCrop.width + deltaX));
                         newHeight = Math.max(20, Math.min(100, initialCrop.height + deltaY));
@@ -2269,7 +2130,6 @@ export default function PosterStudio({
                         newWidth = Math.max(20, Math.min(100, initialCrop.width - deltaX));
                         newHeight = Math.max(20, Math.min(100, initialCrop.height - deltaY));
                       }
-                      // Handle edge resizes
                       else if (resizeHandle === 'n') {
                         newTop = Math.max(0, Math.min(50, (initialCrop.top || 0) + deltaY));
                       } else if (resizeHandle === 's') {
@@ -2284,7 +2144,6 @@ export default function PosterStudio({
                     });
                   }
                 } else if (isDragging) {
-                  // Handle position dragging
                   const deltaX = (e.clientX - dragStart.x) / 6;
                   const deltaY = (e.clientY - dragStart.y) / 6;
                   
@@ -2314,7 +2173,6 @@ export default function PosterStudio({
                 setResizeHandle(null);
               }}
               onWheel={(e) => {
-                // Mouse wheel for scale adjustment
                 if (interactiveMode !== 'none' && e.shiftKey) {
                   e.preventDefault();
                   const delta = e.deltaY > 0 ? -5 : 5;
@@ -2330,12 +2188,13 @@ export default function PosterStudio({
               {/* Interactive Mode Indicator */}
               {interactiveMode !== 'none' && (
                 <div className="absolute top-2 left-2 z-50 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-2">
-                  {interactiveMode === 'photo' ? '📸 Photo Interactive' : '🏆 Logo Interactive'}
+                  <Focus className="w-3.5 h-3.5" />
+                  {interactiveMode === 'photo' ? 'Photo Interactive' : 'Logo Interactive'}
                   <span className="text-[10px] opacity-80">| Arrow Keys: Move | Shift+Arrow: Fast Move | Shift+Scroll: Scale</span>
                 </div>
               )}
               
-              {/* Interactive Mode Overlay - Shows bounding box and resize handles */}
+              {/* Interactive Mode Overlay */}
               {interactiveMode !== 'none' && (
                 <div 
                   className="absolute inset-0 z-40"
@@ -2348,7 +2207,6 @@ export default function PosterStudio({
                   }}
                 >
                   <div className="relative w-full h-full">
-                    {/* Full poster dimmed overlay */}
                     <div style={{
                       position: 'absolute',
                       inset: 0,
@@ -2356,12 +2214,9 @@ export default function PosterStudio({
                       pointerEvents: 'none',
                     }} />
                     
-                    {/* Crop region - matches actual visible area on poster */}
-                    {/* For Player of Day/Week: Photo is in specific container, Logo is separate */}
                     {(activeTheme === 'player-of-day' || activeTheme === 'player-of-week' || 
                       (posterStyle === 'single' && (activeTheme === 'golden-boot' || activeTheme === 'golden-ball' || activeTheme === 'golden-glove'))) && (
                       <>
-                        {/* Photo crop area - positioned using actual container bounds */}
                         {interactiveMode === 'photo' && photoContainerBounds && (
                           <div style={{
                             position: 'absolute',
@@ -2371,7 +2226,6 @@ export default function PosterStudio({
                             height: `${photoContainerBounds.height}px`,
                             pointerEvents: 'none',
                           }}>
-                            {/* Clear area showing actual crop - accounting for side crops AND position offset */}
                             <div 
                               onWheel={(e) => {
                                 if (interactiveMode === 'photo' && e.shiftKey) {
@@ -2393,7 +2247,6 @@ export default function PosterStudio({
                               cursor: 'move',
                               pointerEvents: 'auto',
                             }}>
-                              {/* Corner Resize Handles */}
                               {[
                                 { pos: 'nw', top: -6, left: -6, cursor: 'nw-resize' },
                                 { pos: 'ne', top: -6, right: -6, cursor: 'ne-resize' },
@@ -2424,7 +2277,6 @@ export default function PosterStudio({
                                 />
                               ))}
 
-                              {/* Edge Resize Handles (Top, Bottom, Left, Right) */}
                               {[
                                 { pos: 'n', top: -6, left: '50%', transform: 'translateX(-50%)', cursor: 'n-resize' },
                                 { pos: 's', bottom: -6, left: '50%', transform: 'translateX(-50%)', cursor: 's-resize' },
@@ -2446,7 +2298,7 @@ export default function PosterStudio({
                                     height: pos === 'n' || pos === 's' ? 14 : 40,
                                     background: '#3b82f6',
                                     border: '3px solid white',
-                                    borderRadius: pos === 'n' || pos === 's' ? '7px' : '7px',
+                                    borderRadius: '7px',
                                     cursor,
                                     pointerEvents: 'auto',
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
@@ -2459,7 +2311,6 @@ export default function PosterStudio({
                           </div>
                         )}
                         
-                        {/* Logo crop area - positioned where logo actually renders */}
                         {interactiveMode === 'logo' && logoContainerBounds && (
                           <div style={{
                             position: 'absolute',
@@ -2469,7 +2320,6 @@ export default function PosterStudio({
                             height: `${logoContainerBounds.height}px`,
                             pointerEvents: 'none',
                           }}>
-                            {/* Clear area showing actual crop - accounting for side crops AND position offset */}
                             <div
                               onWheel={(e) => {
                                 if (interactiveMode === 'logo' && e.shiftKey) {
@@ -2484,14 +2334,13 @@ export default function PosterStudio({
                               top: `calc(${logoCrop.top || 0}% + ${(logoPosition.y - 50) * 0.67}px)`,
                               left: `calc(${logoCrop.left || 0}% + ${(logoPosition.x - 50) * 0.67}px)`,
                               width: `${100 - (logoCrop.left || 0) - (logoCrop.right || 0)}%`,
-                              height: `${100 - (logoCrop.top || 0) - (logoCrop.right || 0)}%`,
+                              height: `${100 - (logoCrop.top || 0) - (logoCrop.bottom || 0)}%`,
                               background: 'transparent',
                               border: '3px solid #f59e0b',
                               boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
                               cursor: 'move',
                               pointerEvents: 'auto',
                             }}>
-                              {/* Corner Resize Handles */}
                               {[
                                 { pos: 'nw', top: -6, left: -6, cursor: 'nw-resize' },
                                 { pos: 'ne', top: -6, right: -6, cursor: 'ne-resize' },
@@ -2522,7 +2371,6 @@ export default function PosterStudio({
                                 />
                               ))}
 
-                              {/* Edge Resize Handles (Top, Bottom, Left, Right) */}
                               {[
                                 { pos: 'n', top: -6, left: '50%', transform: 'translateX(-50%)', cursor: 'n-resize' },
                                 { pos: 's', bottom: -6, left: '50%', transform: 'translateX(-50%)', cursor: 's-resize' },
@@ -2544,7 +2392,7 @@ export default function PosterStudio({
                                     height: pos === 'n' || pos === 's' ? 14 : 40,
                                     background: '#f59e0b',
                                     border: '3px solid white',
-                                    borderRadius: pos === 'n' || pos === 's' ? '7px' : '7px',
+                                    borderRadius: '7px',
                                     cursor,
                                     pointerEvents: 'auto',
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
@@ -2563,128 +2411,121 @@ export default function PosterStudio({
               )}
               
               <div style={{ 
-                width: '600px',   // Scaled size: 800 * 0.75
-                height: '750px',  // Scaled size: 1000 * 0.75
+                width: '600px',
+                height: '750px',
                 position: 'relative',
                 overflow: 'hidden',
               }}>
                 <div style={{ 
                   transform: 'scale(0.75)', 
                   transformOrigin: 'top left',
-                  width: '800px',   // Exact poster width
-                  height: '1000px', // Exact poster height
+                  width: '800px',
+                  height: '1000px',
                 }}>
-                <PosterSnapshot 
-                  key={`preview-${activeTheme}-${selectedRound}-${selectedWeek}-${statsPage}-${posterStyle}-${customPlayerPhoto ? 'custom-photo' : ''}-${customTeamLogo ? 'custom-logo' : ''}-${customHomeTeamLogo ? 'custom-home-logo' : ''}-${customAwayTeamLogo ? 'custom-away-logo' : ''}-${selectedTeamOfWeekPlayer || 'no-player'}`}
-                  theme={theme}
-                  players={activeTheme === 'team-of-week' ? players : playersWithCustomNames}
-                  LogoBranding={LogoBranding}
-                  isFullStats={activeTheme === 'full-stats'}
-                  posterStyle={posterStyle}
-                  themeKey={activeTheme}
-                  selectedRound={selectedRound}
-                  selectedWeek={selectedWeek}
-                  photoPosition={photoPosition}
-                  photoScale={photoScale}
-                  photoCrop={photoCrop}
-                  logoPosition={logoPosition}
-                  logoScale={logoScale}
-                  logoCrop={logoCrop}
-                  seasonId={seasonId}
-                  startRank={startRank}
-                  teamOfWeekAward={getTeamOfWeekAward()}
-                  teamOfDayAward={getTeamOfDayAward()}
-                  customPlayerPhoto={customPlayerPhoto}
-                  customTeamLogo={customTeamLogo}
-                  customHomeTeamLogo={customHomeTeamLogo}
-                  customAwayTeamLogo={customAwayTeamLogo}
-                  selectedTeamOfWeekPlayer={selectedTeamOfWeekPlayer}
-                />
+                  <PosterSnapshot 
+                    key={`preview-${activeTheme}-${selectedRound}-${selectedWeek}-${statsPage}-${posterStyle}-${customPlayerPhoto ? 'custom-photo' : ''}-${customTeamLogo ? 'custom-logo' : ''}-${customHomeTeamLogo ? 'custom-home-logo' : ''}-${customAwayTeamLogo ? 'custom-away-logo' : ''}-${selectedTeamOfWeekPlayer || 'no-player'}`}
+                    theme={theme}
+                    players={activeTheme === 'team-of-week' ? players : playersWithCustomNames}
+                    LogoBranding={LogoBranding}
+                    isFullStats={activeTheme === 'full-stats'}
+                    posterStyle={posterStyle}
+                    themeKey={activeTheme}
+                    selectedRound={selectedRound}
+                    selectedWeek={selectedWeek}
+                    photoPosition={photoPosition}
+                    photoScale={photoScale}
+                    photoCrop={photoCrop}
+                    logoPosition={logoPosition}
+                    logoScale={logoScale}
+                    logoCrop={logoCrop}
+                    seasonId={seasonId}
+                    startRank={startRank}
+                    teamOfWeekAward={getTeamOfWeekAward()}
+                    teamOfDayAward={getTeamOfDayAward()}
+                    customPlayerPhoto={customPlayerPhoto}
+                    customTeamLogo={customTeamLogo}
+                    customHomeTeamLogo={customHomeTeamLogo}
+                    customAwayTeamLogo={customAwayTeamLogo}
+                    customPlayerNames={customPlayerNames}
+                    selectedTeamOfWeekPlayer={selectedTeamOfWeekPlayer}
+                  />
+                </div>
               </div>
             </div>
-            </div>
+          </div>
 
-            {/* 2C. ACTION BUTTONS */}
-            <div className="px-5 py-4 border-t border-gray-200 bg-white/50 flex flex-wrap gap-2 justify-end items-center">
+          {/* 2C. ACTION BUTTONS */}
+          <div className="px-5 py-4 border-t border-slate-105 bg-slate-50/40 flex flex-wrap gap-2 justify-end items-center font-mono">
             {/* Download Button */}
             <button
               onClick={handleDownload}
               disabled={downloading || downloadDone}
-              className={`px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${
+              className={`px-4 py-2.5 rounded-xl font-mono uppercase tracking-wider font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${
                 downloadDone
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-700 text-white hover:bg-gray-800'
+                  ? 'bg-emerald-600 text-white border border-emerald-700'
+                  : 'bg-slate-800 text-amber-400 border border-slate-900 hover:bg-slate-900'
               }`}
               style={{ opacity: downloading ? 0.6 : 1 }}
             >
               {downloading ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
                   Saving...
                 </>
-
               ) : downloadDone ? (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="w-4 h-4" />
                   Downloaded!
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+                  <Download className="w-4 h-4" />
                   Download Poster
                 </>
               )}
             </button>
 
-            {/* Share Button with Gradient */}
+            {/* Share Button with Theme Gradient */}
             <button
               onClick={handleShare}
               disabled={sharing || shareDone}
-              className={`px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${
-                shareDone ? 'bg-green-500 text-white' : ''
+              className={`px-4 py-2.5 rounded-xl font-mono uppercase tracking-wider font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${
+                shareDone 
+                  ? 'bg-emerald-600 text-white border border-emerald-700' 
+                  : 'border border-slate-900 hover:opacity-95'
               }`}
               style={
                 !shareDone
                   ? {
                       background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent2})`,
                       color: '#0a0a0a',
-                      border: 'none',
                       opacity: sharing ? 0.6 : 1,
                     }
-                  : { opacity: 1 }
+                  : undefined
               }
             >
               {sharing ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-800"></div>
+                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></div>
                   Sharing...
                 </>
               ) : shareDone ? (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="w-4 h-4" />
                   Shared!
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
+                  <FileSpreadsheet className="w-4 h-4" />
                   Share Poster
                 </>
               )}
             </button>
           </div>
         </div>
-        </div>
       )}
 
-      {/* 3. OFF-SCREEN CAPTURE TARGET (full size, hidden) */}
+      {/* 3. OFF-SCREEN CAPTURE TARGET */}
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">
         <div ref={posterRef}>
           <PosterSnapshot 
@@ -2719,7 +2560,6 @@ export default function PosterStudio({
     </>
   );
 }
-
 
 // Poster Snapshot Component - Uses exact designs from reference images
 function PosterSnapshot({ 

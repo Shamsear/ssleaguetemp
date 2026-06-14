@@ -7,6 +7,16 @@ import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { 
+  ArrowLeft, 
+  Shuffle, 
+  RefreshCw, 
+  AlertTriangle, 
+  Info, 
+  Layers, 
+  Activity, 
+  Sparkles 
+} from 'lucide-react';
 
 // Only these positions are used for position groups
 const POSITION_GROUP_POSITIONS = ['CB', 'DMF', 'CMF', 'AMF', 'CF'] as const;
@@ -20,11 +30,11 @@ const POSITION_LABELS = {
 } as const;
 
 const POSITION_COLORS = {
-  CB: 'bg-green-500',
-  DMF: 'bg-yellow-500',
-  CMF: 'bg-yellow-500',
-  AMF: 'bg-purple-500',
-  CF: 'bg-red-500',
+  CB: 'bg-emerald-500',
+  DMF: 'bg-amber-500',
+  CMF: 'bg-amber-400',
+  AMF: 'bg-violet-500',
+  CF: 'bg-rose-500',
 } as const;
 
 interface Player {
@@ -186,13 +196,13 @@ export default function PositionGroupsPage() {
         setAllPlayers(relevantPlayers);
         
         // Now update the position view with fresh data
-        const posPlayers = relevantPlayers.filter(p => p.position?.toUpperCase() === selectedPosition);
+        const posPlayers = relevantPlayers.filter((p: Player) => p.position?.toUpperCase() === selectedPosition);
         console.log(`📊 [Position Groups] Found ${posPlayers.length} ${selectedPosition} players after division`);
         
         setGroupedPlayers({
-          group1: posPlayers.filter(p => p.position_group === `${selectedPosition}-1`),
-          group2: posPlayers.filter(p => p.position_group === `${selectedPosition}-2`),
-          ungrouped: posPlayers.filter(p => !p.position_group)
+          group1: posPlayers.filter((p: Player) => p.position_group === `${selectedPosition}-1`),
+          group2: posPlayers.filter((p: Player) => p.position_group === `${selectedPosition}-2`),
+          ungrouped: posPlayers.filter((p: Player) => !p.position_group)
         });
         
         calculateStats(relevantPlayers);
@@ -231,12 +241,20 @@ export default function PositionGroupsPage() {
       });
 
       if (response.ok) {
-        // Update local state
-        setAllPlayers(prev => prev.map(p => 
+        // Prevent race condition or state lag by updating all relevant states synchronously
+        const updatedAllPlayers = allPlayers.map(p => 
           p.id === player.id ? { ...p, position_group: newGroup } : p
-        ));
-        handlePositionClick(selectedPosition);
-        calculateStats(allPlayers);
+        );
+        setAllPlayers(updatedAllPlayers);
+        
+        const posPlayers = updatedAllPlayers.filter(p => p.position?.toUpperCase() === selectedPosition);
+        setGroupedPlayers({
+          group1: posPlayers.filter(p => p.position_group === `${selectedPosition}-1`),
+          group2: posPlayers.filter(p => p.position_group === `${selectedPosition}-2`),
+          ungrouped: posPlayers.filter(p => !p.position_group)
+        });
+        
+        calculateStats(updatedAllPlayers);
       }
     } catch (err) {
       console.error('Error swapping player:', err);
@@ -250,10 +268,11 @@ export default function PositionGroupsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading position groups...</p>
+      <div className="min-h-screen flex items-center justify-center console-bg font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-500 uppercase tracking-wider font-extrabold">Loading position groups...</p>
         </div>
       </div>
     );
@@ -264,32 +283,49 @@ export default function PositionGroupsPage() {
   }
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-6">
-      <div className="glass rounded-3xl p-3 sm:p-6 mb-6 backdrop-blur-md">
-        {/* Header */}
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center">
-              <Link
-                href="/dashboard/committee"
-                className="inline-flex items-center justify-center p-2 mr-3 rounded-xl bg-white/60 text-gray-700 hover:bg-white/80 transition-all duration-200 backdrop-blur-sm border border-gray-200/50 shadow-sm"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </Link>
-              <div>
-                <h2 className="text-2xl font-bold text-dark gradient-text">Position Group Management</h2>
-                <p className="text-sm text-gray-600 mt-1">Divide players into equal position groups for auction rounds</p>
-              </div>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Decorative eSports glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto relative z-10 space-y-6">
+        {/* Navigation */}
+        <div>
+          <Link
+            href="/dashboard/committee"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
+        </div>
+
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <Layers className="w-6 h-6 text-amber-400" />
             </div>
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">COMMITTEE CONSOLE</span>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                Position Group Management
+              </h1>
+              <p className="text-xs text-slate-400 font-mono mt-1">
+                Divide players into equal position groups for balanced auction rounds.
+              </p>
+            </div>
+          </div>
+          <div className="bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider px-3.5 py-1.5 rounded-xl border border-slate-700 shadow-sm shrink-0">
+            Total Players: {allPlayers.length}
           </div>
         </div>
 
         {/* Position Selection */}
-        <div className="glass p-5 rounded-xl bg-white/40 backdrop-blur-sm border border-white/10 shadow-sm mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Select Position to Manage</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+          <h2 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+            <Activity className="w-4 h-4 text-amber-500" />
+            Select Position to Manage
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {POSITION_GROUP_POSITIONS.map((position) => {
               const stat = stats[position] || { total: 0, group1: 0, group2: 0, ungrouped: 0 };
               const isSelected = selectedPosition === position;
@@ -298,22 +334,25 @@ export default function PositionGroupsPage() {
                 <button
                   key={position}
                   onClick={() => handlePositionClick(position)}
-                  className={`p-3 rounded-lg transition-all flex flex-col items-center justify-center gap-2 ${
+                  className={`p-4 rounded-2xl border transition-all flex flex-col items-center justify-center gap-2 font-mono relative cursor-pointer ${
                     isSelected 
-                      ? 'bg-primary/20 border-2 border-primary' 
-                      : 'bg-white/70 hover:bg-primary/10 border-2 border-gray-200'
+                      ? 'border-amber-500 bg-amber-50/50 shadow-md shadow-amber-500/5 ring-1 ring-amber-500' 
+                      : 'border-slate-200 bg-white hover:bg-slate-50'
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className={`w-3 h-3 rounded-full ${POSITION_COLORS[position as keyof typeof POSITION_COLORS]}`}></span>
-                    <span className="font-medium text-sm">{position}</span>
+                    <span className={`w-2.5 h-2.5 rounded-full ${POSITION_COLORS[position as keyof typeof POSITION_COLORS]}`}></span>
+                    <span className="font-extrabold text-sm text-slate-800">{position}</span>
                   </div>
-                  <div className="text-xs text-gray-600 text-center">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase text-center mt-1">
                     <div>{stat.total} total</div>
                     {stat.ungrouped > 0 && (
-                      <div className="text-orange-600 font-medium">{stat.ungrouped} ungrouped</div>
+                      <div className="text-amber-600 font-extrabold mt-0.5">{stat.ungrouped} ungrouped</div>
                     )}
                   </div>
+                  {stat.ungrouped > 0 && (
+                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                  )}
                 </button>
               );
             })}
@@ -322,29 +361,27 @@ export default function PositionGroupsPage() {
 
         {/* Group Management */}
         {selectedPosition && (
-          <div className="glass p-5 rounded-xl bg-white/40 backdrop-blur-sm border border-white/10 shadow-sm">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
-              <h3 className="text-lg font-semibold text-gray-800">
-                {selectedPosition} Position Groups
-              </h3>
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className={`w-3 h-3 rounded-full ${POSITION_COLORS[selectedPosition as keyof typeof POSITION_COLORS]}`}></span>
+                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">
+                  {POSITION_LABELS[selectedPosition as keyof typeof POSITION_LABELS]} ({selectedPosition}) Groups
+                </h3>
+              </div>
               <button
                 onClick={handleDividePlayers}
                 disabled={dividing}
-                className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-all flex items-center gap-2 text-sm disabled:opacity-50"
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg disabled:opacity-50 transition-all flex items-center gap-2 cursor-pointer"
               >
                 {dividing ? (
                   <>
-                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <RefreshCw className="animate-spin h-3.5 w-3.5 text-amber-400" />
                     Dividing...
                   </>
                 ) : (
                   <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                    </svg>
+                    <Shuffle className="w-3.5 h-3.5 text-amber-400" />
                     Divide Players
                   </>
                 )}
@@ -352,58 +389,62 @@ export default function PositionGroupsPage() {
             </div>
 
             {/* Help Text */}
-            <div className="bg-blue-50 p-3 rounded-lg mb-5 border border-blue-100">
-              <div className="flex items-start gap-2">
-                <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-sm text-blue-700">
-                  Use the "Divide Players" button to automatically split players into two equally balanced groups. 
-                  You can then manually move players between groups using the swap buttons.
+            <div className="console-card bg-amber-50/50 border border-amber-200/60 p-5 rounded-2xl flex items-start gap-3 text-slate-700">
+              <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="text-xs">
+                <h4 className="font-extrabold text-amber-800 uppercase tracking-wider mb-1">Equal Auto-Distribution</h4>
+                <p className="text-slate-500">
+                  Use the <strong className="text-slate-800">"Divide Players"</strong> button to automatically split players into two balanced groups sorted by rating. 
+                  You can manually swap players between groups using the action buttons in the list below.
                 </p>
               </div>
             </div>
 
             {/* Groups Display */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Group 1 */}
-              <div className="glass p-4 rounded-xl bg-white/30 backdrop-blur-sm border border-white/10">
-                <h4 className="text-base font-medium text-gray-700 mb-3">
-                  {selectedPosition}-1 Group ({groupedPlayers.group1.length} players)
-                </h4>
+              <div className="console-card bg-slate-50/40 border border-slate-200/50 rounded-2xl p-5">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    {selectedPosition}-1 Group
+                  </h4>
+                  <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider font-mono">
+                    {groupedPlayers.group1.length} players
+                  </span>
+                </div>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-white/50">
-                      <tr>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Player</th>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
-                        <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">Move</th>
+                  <table className="min-w-full divide-y divide-slate-150">
+                    <thead>
+                      <tr className="bg-slate-100/60 font-mono text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                        <th className="px-3 py-2 text-left">Player</th>
+                        <th className="px-3 py-2 text-center">Rating</th>
+                        <th className="px-3 py-2 text-center w-16">Swap</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white/30 divide-y divide-gray-200">
+                    <tbody className="divide-y divide-slate-100 font-mono text-xs text-slate-700 bg-white/40">
                       {groupedPlayers.group1.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="px-3 py-4 text-center text-sm text-gray-500">
+                          <td colSpan={3} className="px-3 py-6 text-center text-slate-400 italic">
                             No players in this group
                           </td>
                         </tr>
                       ) : (
                         groupedPlayers.group1.map(player => (
-                          <tr key={player.id} className="hover:bg-white/60 transition-colors">
-                            <td className="px-3 py-3 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">{player.name}</div>
+                          <tr key={player.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="px-3 py-2.5 font-bold text-slate-800 whitespace-nowrap">
+                              {player.name}
                             </td>
-                            <td className="px-3 py-3 whitespace-nowrap">
-                              <div className="text-sm text-gray-500">{player.overall_rating || 'N/A'}</div>
+                            <td className="px-3 py-2.5 text-center text-slate-500 font-bold">
+                              {player.overall_rating || 'N/A'}
                             </td>
-                            <td className="px-3 py-3 whitespace-nowrap text-center">
+                            <td className="px-3 py-2.5 text-center">
                               <button
                                 onClick={() => handleSwapGroup(player)}
-                                className="inline-flex items-center justify-center p-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all"
+                                className="inline-flex items-center justify-center p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-amber-50 hover:border-amber-400 text-slate-400 hover:text-amber-600 shadow-sm transition-all cursor-pointer"
+                                title="Move to Group 2"
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                </svg>
+                                <Shuffle className="w-3.5 h-3.5" />
                               </button>
                             </td>
                           </tr>
@@ -415,43 +456,48 @@ export default function PositionGroupsPage() {
               </div>
 
               {/* Group 2 */}
-              <div className="glass p-4 rounded-xl bg-white/30 backdrop-blur-sm border border-white/10">
-                <h4 className="text-base font-medium text-gray-700 mb-3">
-                  {selectedPosition}-2 Group ({groupedPlayers.group2.length} players)
-                </h4>
+              <div className="console-card bg-slate-50/40 border border-slate-200/50 rounded-2xl p-5">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-violet-500" />
+                    {selectedPosition}-2 Group
+                  </h4>
+                  <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider font-mono">
+                    {groupedPlayers.group2.length} players
+                  </span>
+                </div>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-white/50">
-                      <tr>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Player</th>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
-                        <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">Move</th>
+                  <table className="min-w-full divide-y divide-slate-150">
+                    <thead>
+                      <tr className="bg-slate-100/60 font-mono text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                        <th className="px-3 py-2 text-left">Player</th>
+                        <th className="px-3 py-2 text-center">Rating</th>
+                        <th className="px-3 py-2 text-center w-16">Swap</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white/30 divide-y divide-gray-200">
+                    <tbody className="divide-y divide-slate-100 font-mono text-xs text-slate-700 bg-white/40">
                       {groupedPlayers.group2.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="px-3 py-4 text-center text-sm text-gray-500">
+                          <td colSpan={3} className="px-3 py-6 text-center text-slate-400 italic">
                             No players in this group
                           </td>
                         </tr>
                       ) : (
                         groupedPlayers.group2.map(player => (
-                          <tr key={player.id} className="hover:bg-white/60 transition-colors">
-                            <td className="px-3 py-3 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">{player.name}</div>
+                          <tr key={player.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="px-3 py-2.5 font-bold text-slate-800 whitespace-nowrap">
+                              {player.name}
                             </td>
-                            <td className="px-3 py-3 whitespace-nowrap">
-                              <div className="text-sm text-gray-500">{player.overall_rating || 'N/A'}</div>
+                            <td className="px-3 py-2.5 text-center text-slate-500 font-bold">
+                              {player.overall_rating || 'N/A'}
                             </td>
-                            <td className="px-3 py-3 whitespace-nowrap text-center">
+                            <td className="px-3 py-2.5 text-center">
                               <button
                                 onClick={() => handleSwapGroup(player)}
-                                className="inline-flex items-center justify-center p-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all"
+                                className="inline-flex items-center justify-center p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-amber-50 hover:border-amber-400 text-slate-400 hover:text-amber-600 shadow-sm transition-all cursor-pointer"
+                                title="Move to Group 1"
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                </svg>
+                                <Shuffle className="w-3.5 h-3.5" />
                               </button>
                             </td>
                           </tr>
@@ -465,14 +511,13 @@ export default function PositionGroupsPage() {
 
             {/* Warning for ungrouped players */}
             {groupedPlayers.ungrouped.length > 0 && (
-              <div className="mt-4 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                <div className="flex items-start gap-2">
-                  <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <p className="text-sm text-yellow-700">
-                    <strong>{groupedPlayers.ungrouped.length} players</strong> are not assigned to any group. 
-                    Click "Divide Players" to assign them automatically.
+              <div className="console-card bg-rose-50/30 border border-rose-200/50 p-4 rounded-2xl flex items-start gap-3 text-rose-800 font-mono">
+                <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5 animate-bounce" />
+                <div className="text-xs">
+                  <span className="font-extrabold uppercase tracking-wide">Ungrouped Players Detected</span>
+                  <p className="text-slate-500 mt-1">
+                    There are <strong className="text-rose-700">{groupedPlayers.ungrouped.length} player(s)</strong> that are not assigned to any group. 
+                    Click the <strong className="text-slate-800">"Divide Players"</strong> button above to automatically distribute them.
                   </p>
                 </div>
               </div>
@@ -492,3 +537,4 @@ export default function PositionGroupsPage() {
     </div>
   );
 }
+

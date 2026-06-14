@@ -177,7 +177,7 @@ export default function FootballPlayerForm() {
   if (loadingPlayers || teamsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500"></div>
       </div>
     );
   }
@@ -257,32 +257,30 @@ export default function FootballPlayerForm() {
     }
   };
 
-
-
   return (
     <div className="space-y-6">
       {/* Info Banner */}
-      <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
-        <h3 className="font-semibold text-green-900 mb-2">⚽ Football Player Swap</h3>
-        <ul className="text-sm text-green-800 space-y-1">
-          <li>• <strong>Swap:</strong> Exchange team assignments AND acquisition values between two players</li>
-          <li>• <strong>Swap Fees:</strong> Swaps are 100% FREE. No fee deductions from available budgets.</li>
-          <li>• <strong>Values are swapped:</strong> Player A gets Player B's value, Player B gets Player A's value</li>
+      <div className="p-5 bg-slate-50 border border-slate-200/60 rounded-2xl font-mono text-xs">
+        <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-2.5">⚽ Football Player Swap</h3>
+        <ul className="space-y-1.5 text-slate-500">
+          <li>• <strong className="text-slate-800">Swap:</strong> Exchange team assignments AND acquisition values between two players</li>
+          <li>• <strong className="text-slate-800">Swap Fees:</strong> Swaps are 100% FREE. No fee deductions from available budgets.</li>
+          <li>• <strong className="text-slate-800">Values are swapped:</strong> Player A gets Player B's value, Player B gets Player A's value</li>
         </ul>
       </div>
 
       {/* Alerts */}
       {error && (
-        <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg">
-          <p className="font-semibold">Error</p>
-          <p>{error}</p>
+        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl font-mono text-xs uppercase tracking-wide">
+          <p className="font-extrabold">⚠️ Error</p>
+          <p className="mt-1">{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-lg">
-          <p className="font-semibold">Success!</p>
-          <p>{success}</p>
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl font-mono text-xs uppercase tracking-wide">
+          <p className="font-extrabold">✨ Success</p>
+          <pre className="whitespace-pre-wrap text-[10px] mt-2 font-mono leading-relaxed">{success}</pre>
         </div>
       )}
 
@@ -304,21 +302,27 @@ export default function FootballPlayerForm() {
 
           {/* Player A Info */}
           {selectedPlayerA && (
-            <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-              <h3 className="font-semibold text-blue-900 mb-2">Player A: {selectedPlayerA.player_name}</h3>
-              <p className="text-sm text-gray-700 mb-2">Team: {selectedPlayerA.team_name}</p>
-
+            <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
+              <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-3.5">Player A: {selectedPlayerA.player_name}</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Team</span>
+                  <p className="font-extrabold text-slate-800 uppercase mt-0.5">{selectedPlayerA.team_name}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Acquisition Value</span>
+                  <p className="font-extrabold text-amber-600 mt-0.5">{selectedPlayerA.acquisition_value} eCoin</p>
+                </div>
+              </div>
               {swapLimits[selectedPlayerA.team_id] && (
-                <div className="mt-3 p-3 bg-white rounded-lg border border-blue-200">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-semibold text-gray-700">Swap Status:</span>
-                    <span className="text-xs font-bold text-blue-600">
-                      {swapLimits[selectedPlayerA.team_id].swaps_used} / 5 used
-                    </span>
+                <div className="mt-3.5 p-3.5 bg-white border border-slate-200 rounded-xl">
+                  <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider">
+                    <span className="text-slate-500">Swap Status:</span>
+                    <span className="text-slate-800">{swapLimits[selectedPlayerA.team_id].swaps_used} / 5 used</span>
                   </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-xs text-gray-600">Next Swap Fee:</span>
-                    <span className="text-sm font-bold text-green-600">FREE</span>
+                  <div className="flex justify-between items-center mt-2 text-[10px] uppercase font-bold tracking-wider">
+                    <span className="text-slate-500">Next Swap Fee:</span>
+                    <span className="text-emerald-650 font-black">FREE ✨</span>
                   </div>
                 </div>
               )}
@@ -331,7 +335,7 @@ export default function FootballPlayerForm() {
               players={availablePlayersForB}
               value={selectedPlayerBId}
               onChange={setSelectedPlayerBId}
-              label={`Player B (from different team)`}
+              label="Player B (from different team)"
               placeholder="Select Player B..."
               color="purple"
               playerType="football"
@@ -340,21 +344,27 @@ export default function FootballPlayerForm() {
 
           {/* Player B Info */}
           {selectedPlayerB && (
-            <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
-              <h3 className="font-semibold text-purple-900 mb-2">Player B: {selectedPlayerB.player_name}</h3>
-              <p className="text-sm text-gray-700 mb-2">Team: {selectedPlayerB.team_name}</p>
-
+            <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
+              <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-3.5">Player B: {selectedPlayerB.player_name}</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Team</span>
+                  <p className="font-extrabold text-slate-800 uppercase mt-0.5">{selectedPlayerB.team_name}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Acquisition Value</span>
+                  <p className="font-extrabold text-amber-600 mt-0.5">{selectedPlayerB.acquisition_value} eCoin</p>
+                </div>
+              </div>
               {swapLimits[selectedPlayerB.team_id] && (
-                <div className="mt-3 p-3 bg-white rounded-lg border border-purple-200">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-semibold text-gray-700">Swap Status:</span>
-                    <span className="text-xs font-bold text-purple-600">
-                      {swapLimits[selectedPlayerB.team_id].swaps_used} / 5 used
-                    </span>
+                <div className="mt-3.5 p-3.5 bg-white border border-slate-200 rounded-xl">
+                  <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider">
+                    <span className="text-slate-500">Swap Status:</span>
+                    <span className="text-slate-800">{swapLimits[selectedPlayerB.team_id].swaps_used} / 5 used</span>
                   </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-xs text-gray-600">Next Swap Fee:</span>
-                    <span className="text-sm font-bold text-green-600">FREE</span>
+                  <div className="flex justify-between items-center mt-2 text-[10px] uppercase font-bold tracking-wider">
+                    <span className="text-slate-500">Next Swap Fee:</span>
+                    <span className="text-emerald-650 font-black">FREE ✨</span>
                   </div>
                 </div>
               )}
@@ -363,11 +373,9 @@ export default function FootballPlayerForm() {
 
           {/* Free Swap Banner */}
           {selectedPlayerA && selectedPlayerB && (
-            <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6 border-2 border-green-200">
-              <h3 className="font-bold text-green-900 mb-2 text-lg flex items-center gap-2">
-                ✨ Free Swap
-              </h3>
-              <p className="text-sm text-green-800">
+            <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs text-center">
+              <h3 className="font-black text-emerald-600 uppercase tracking-wider mb-2.5">✨ Free Swap</h3>
+              <p className="text-slate-500">
                 Football player swaps are completely free. No fees will be charged and available budgets will remain unchanged.
               </p>
             </div>
@@ -376,14 +384,10 @@ export default function FootballPlayerForm() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={
-              !selectedPlayerAId ||
-              !selectedPlayerBId ||
-              submitting
-            }
-            className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+            disabled={!selectedPlayerAId || !selectedPlayerBId || submitting}
+            className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md cursor-pointer text-center"
           >
-            {submitting ? 'Processing Swap...' : '🔄 Swap Players'}
+            {submitting ? 'Processing Swap...' : 'Execute Player Swap'}
           </button>
         </form>
     </div>

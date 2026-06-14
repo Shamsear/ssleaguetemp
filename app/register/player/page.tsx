@@ -26,35 +26,39 @@ const PlayerRow = memo(({ player, onSelect }: {
   onSelect: (playerId: string) => void 
 }) => {
   const statusClass = 
-    player.status === 'registered_current' ? 'bg-blue-100 text-blue-800' :
-    player.status === 'registered_other' ? 'bg-yellow-100 text-yellow-800' :
-    'bg-green-100 text-green-800'
+    player.status === 'registered_current' ? 'bg-blue-50/60 text-blue-700 border border-blue-200/30' :
+    player.status === 'registered_other' ? 'bg-amber-50/60 text-amber-700 border border-amber-200/30' :
+    'bg-green-50/60 text-green-700 border border-green-200/30'
   
   const rowClass =
-    player.status === 'registered_current' ? 'hover:bg-blue-50' :
-    player.status === 'registered_other' ? 'hover:bg-yellow-50' :
-    'hover:bg-green-50 cursor-pointer'
+    player.status === 'registered_current' ? 'bg-blue-50/[0.03] hover:bg-blue-50/[0.1]' :
+    player.status === 'registered_other' ? 'bg-amber-50/[0.03] hover:bg-amber-50/[0.1]' :
+    'hover:bg-amber-500/[0.02] cursor-pointer'
 
   return (
-    <tr className={`${rowClass} transition-colors`}>
-      <td className="px-4 py-3 text-sm font-medium text-gray-900">{player.player_id}</td>
-      <td className="px-4 py-3 text-sm text-gray-900">{player.name}</td>
-      <td className="px-4 py-3">
-        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClass}`}>
+    <tr className={`${rowClass} transition-colors font-mono`}>
+      <td className="p-4 text-xs text-slate-500">
+        <span className="px-2 py-0.5 bg-slate-50 text-slate-600 rounded border border-slate-200/40 text-[10px] font-mono">
+          {player.player_id}
+        </span>
+      </td>
+      <td className="p-4 text-xs font-bold text-slate-800 uppercase tracking-wide">{player.name}</td>
+      <td className="p-4">
+        <span className={`inline-flex px-2.5 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${statusClass}`}>
           {player.status_text}
         </span>
       </td>
-      <td className="px-4 py-3">
+      <td className="p-4 text-right">
         {player.status === 'available' ? (
           <button
             onClick={() => onSelect(player.player_id)}
-            className="bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1 rounded-lg transition-colors"
+            className="bg-slate-800 hover:bg-slate-700 border border-slate-900 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-xl transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer shadow-sm animate-pulse-slow"
           >
             Select
           </button>
         ) : (
-          <span className="text-sm text-gray-500">
-            {player.status === 'registered_current' ? 'Already registered' : 'Unavailable'}
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            {player.status === 'registered_current' ? 'Registered' : 'Unavailable'}
           </span>
         )}
       </td>
@@ -246,13 +250,13 @@ function PlayerSearchContent() {
       console.error('Sign out error:', err)
     }
   }
-
   if (loading || authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0066FF]/5 via-white to-[#00D4FF]/5 flex items-center justify-center p-4">
-        <div className="glass rounded-3xl p-8 shadow-lg border border-white/20 max-w-md w-full text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading player registration...</p>
         </div>
       </div>
     )
@@ -260,20 +264,19 @@ function PlayerSearchContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0066FF]/5 via-white to-[#00D4FF]/5 flex items-center justify-center p-4">
-        <div className="glass rounded-3xl p-8 shadow-lg border border-white/20 max-w-lg w-full">
-          <div className="flex items-center justify-center mb-4">
-            <div className="p-3 rounded-full bg-red-100">
-              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
+      <div className="console-bg min-h-screen flex items-center justify-center relative px-4">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-8 max-w-md w-full mx-auto text-center relative z-10 font-mono">
+          <div className="text-rose-500 mb-4">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Registration Unavailable</h2>
-          <p className="text-center text-gray-600 mb-6">{error}</p>
+          <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-2">Registration Unavailable</h2>
+          <p className="text-xs text-slate-500 uppercase font-semibold mb-6">{error}</p>
           <button
             onClick={() => router.push('/')}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#00D4FF] text-white font-medium hover:shadow-lg transition-all"
+            className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl text-xs uppercase tracking-wider font-bold transition-all shadow-sm cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
           >
             Return Home
           </button>
@@ -283,25 +286,44 @@ function PlayerSearchContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0066FF]/5 via-white to-[#00D4FF]/5 py-8 px-4">
-      <div className="max-w-5xl mx-auto">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative z-10 space-y-6 font-mono">
         {/* Header */}
-        <div className="glass rounded-3xl p-6 shadow-lg border border-white/20 mb-6">
-          <div className="bg-gradient-to-r from-purple-600 to-purple-700 -mx-6 -mt-6 px-6 py-4 rounded-t-3xl mb-6">
-            <h1 className="text-2xl font-bold text-white flex items-center">
-              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+        <div className="console-card bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                Player Registration
+              </h1>
+              {season && (
+                <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
+                  Season: <span className="font-extrabold text-amber-500">{season.name}</span>
+                </p>
+              )}
+            </div>
+            
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all text-xs uppercase tracking-wider font-bold cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              Player Registration
-            </h1>
-            {season && <p className="text-purple-100 text-sm mt-1">{season.name}</p>}
+              <span>Back Home</span>
+            </button>
           </div>
 
           {/* Step 1: Google Sign-in */}
           {!user ? (
-            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+            <div className="bg-gradient-to-r from-blue-50/50 to-cyan-50/50 rounded-xl p-6 border border-blue-200/40 text-slate-850">
+              <h3 className="text-xs uppercase font-bold text-slate-505 tracking-wider mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -310,11 +332,11 @@ function PlayerSearchContent() {
                 Step 1: Sign in with Gmail
               </h3>
               
-              <div className="bg-blue-100 border border-blue-300 rounded-lg p-4 mb-4">
-                <p className="text-sm text-blue-800 mb-2">
-                  <strong>🔒 Secure Authentication Required</strong>
+              <div className="bg-blue-50/60 border border-blue-200/30 text-blue-700 p-4 rounded-xl mb-4 font-mono">
+                <p className="text-xs uppercase font-extrabold mb-1">
+                  🔒 Secure Authentication Required
                 </p>
-                <p className="text-sm text-blue-700">
+                <p className="text-[10px] uppercase font-bold leading-relaxed">
                   Sign in with your Gmail account to begin registration.
                 </p>
               </div>
@@ -322,16 +344,16 @@ function PlayerSearchContent() {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={signingIn}
-                className="w-full py-4 px-6 bg-white hover:bg-gray-50 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-lg"
+                className="w-full py-3 px-4 bg-white border border-slate-200 hover:border-amber-400/40 hover:text-amber-600 text-slate-700 font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {signingIn ? (
                   <>
-                    <div className="animate-spin rounded-full h-6 w-6 border-3 border-gray-700 border-t-transparent"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-slate-700 border-t-transparent"></div>
                     <span>Signing in...</span>
                   </>
                 ) : (
                   <>
-                    <svg className="w-6 h-6" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                       <path fill="#FBBC04" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -345,22 +367,22 @@ function PlayerSearchContent() {
           ) : (
             <>
               {/* Signed in indicator */}
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-6 border border-green-300">
+              <div className="bg-gradient-to-r from-green-50/50 to-emerald-50/50 rounded-xl p-4 mb-6 border border-green-200/40 font-mono">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-md">
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
                     <div>
-                      <p className="font-bold text-green-900 text-sm">Signed In</p>
-                      <p className="text-xs text-green-700">{user.email}</p>
+                      <p className="font-bold text-green-900 text-xs uppercase tracking-wider">Signed In</p>
+                      <p className="text-[10px] text-green-700 font-mono">{user.email}</p>
                     </div>
                   </div>
                   <button
                     onClick={handleSignOut}
-                    className="px-3 py-1 text-xs bg-white hover:bg-gray-100 border border-green-300 text-green-700 font-medium rounded-lg transition-colors"
+                    className="px-3 py-1.5 text-xs bg-white hover:bg-slate-50 border border-green-200/40 text-green-700 font-bold rounded-lg transition-all cursor-pointer shadow-sm animate-pulse-slow"
                   >
                     Sign Out
                   </button>
@@ -368,12 +390,12 @@ function PlayerSearchContent() {
               </div>
 
               {/* Step 2: Find Your Player Profile */}
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2 flex items-center">
-                  <span className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">2</span>
+              <div className="mb-6 font-mono text-slate-500">
+                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center">
+                  <span className="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center text-xs font-bold mr-2">2</span>
                   Find Your Player Profile
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-[10px] uppercase font-bold tracking-wider leading-relaxed">
                   Search using your unique Player ID (e.g., sspslpsl001) or your full name to find your player profile.
                 </p>
               </div>
@@ -382,9 +404,9 @@ function PlayerSearchContent() {
 
           {/* Search Input - Only show if user is signed in */}
           {user && (
-            <div className="mb-6">
-              <label htmlFor="search_term" className="block text-sm font-semibold text-gray-700 mb-2">
-                <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mb-6 font-mono">
+              <label htmlFor="search_term" className="block text-[10px] uppercase font-bold text-slate-500 mb-2">
+                <svg className="w-4 h-4 inline mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 Search for your Player Profile
@@ -395,20 +417,20 @@ function PlayerSearchContent() {
                   id="search_term"
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="w-full px-4 py-3 text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-colors"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 text-xs font-bold uppercase tracking-wider"
                   placeholder="Start typing your Player ID (sspslpsl001) or Full Name"
                   autoComplete="off"
                 />
                 {searching && (
-                  <div className="absolute right-3 top-3">
-                    <svg className="w-6 h-6 text-purple-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <div className="absolute right-3.5 top-1/2 transform -translate-y-1/2">
+                    <svg className="w-5 h-5 text-amber-500 animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                   </div>
                 )}
               </div>
-              <div className="mt-2 text-sm text-gray-600">
+              <div className="mt-2 text-[9px] text-slate-400 uppercase tracking-wider font-bold space-y-1 leading-normal">
                 <p><strong>Player ID format:</strong> sspslpsl001, sspslpsl002, etc.</p>
                 <p><strong>Name search:</strong> Enter your full name as registered</p>
               </div>
@@ -418,85 +440,89 @@ function PlayerSearchContent() {
 
         {/* Search Results - Only show if user is signed in */}
         {user && (
-          <div className="glass rounded-3xl shadow-lg border border-white/20 overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-4 py-3">
-              <h3 className="text-lg font-semibold text-white flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="console-card bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+            <div className="border-b border-slate-100 p-4 bg-slate-50 flex items-center justify-between">
+              <h3 className="text-xs uppercase font-extrabold text-slate-800 tracking-wider flex items-center gap-2">
+                <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
                 Player Search Results
-                <span className="ml-2 text-sm bg-white/20 px-2 py-1 rounded-full">{players.length} players</span>
               </h3>
+              <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-200/40 text-[10px] font-mono font-bold">
+                {players.length} FOUND
+              </span>
             </div>
           
-          <div className="max-h-[500px] overflow-y-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Player ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Action</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {players.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                      <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                      <p className="text-lg font-medium">
-                        {searchTerm.trim().length >= 2 ? 'No players found' : 'Start typing to search'}
-                      </p>
-                      <p className="text-sm">
-                        {searchTerm.trim().length >= 2 ? 'Try adjusting your search terms' : 'Enter at least 2 characters to search for players'}
-                      </p>
-                    </td>
+            <div className="max-h-[500px] overflow-y-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200/60 text-[10px] uppercase font-black tracking-wider text-slate-500 font-mono">
+                    <th className="p-4 w-32">Player ID</th>
+                    <th className="p-4">Name</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4 text-right">Action</th>
                   </tr>
-                ) : (
-                  players.map((player) => (
-                    <PlayerRow 
-                      key={player.id} 
-                      player={player} 
-                      onSelect={handleSelectPlayer}
-                    />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
+                  {players.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="p-12 text-center font-mono">
+                        <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <h3 className="text-base font-bold text-slate-800 uppercase tracking-wider mb-1">
+                          {searchTerm.trim().length >= 2 ? 'No players found' : 'Ready to search'}
+                        </h3>
+                        <p className="text-xs text-slate-400 uppercase font-bold tracking-wider leading-relaxed">
+                          {searchTerm.trim().length >= 2
+                            ? 'Try adjusting your search terms'
+                            : 'Enter at least 2 characters of your ID or Name above'}
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    players.map((player) => (
+                      <PlayerRow 
+                        key={player.id} 
+                        player={player} 
+                        onSelect={handleSelectPlayer}
+                      />
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
         {/* Footer */}
         {user && (
           <div className="mt-6">
-            <div className="glass rounded-2xl p-6 border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50">
-              <div className="flex items-start gap-4">
+            <div className="console-card bg-white rounded-3xl p-6 border border-slate-200/60 font-mono shadow-sm">
+              <div className="flex flex-col sm:flex-row items-start gap-4">
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 bg-amber-500/[0.08] text-amber-600 rounded-full flex items-center justify-center border border-amber-500/20">
+                    <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                     </svg>
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Can't find your profile?</h3>
-                  <p className="text-sm text-gray-700 mb-4">
+                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-2">Can't find your profile?</h3>
+                  <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider leading-relaxed mb-4">
                     If you're a new player and don't have a Player ID yet, you can register as a new player.
                   </p>
                   <button
                     onClick={() => router.push(`/register/player/verify?season=${seasonId}`)}
-                    className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-bold px-6 py-3 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all shadow-sm cursor-pointer hover:-translate-y-0.5 active:translate-y-0 text-xs uppercase tracking-wider"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                     </svg>
                     Register as New Player
                   </button>
-                  <p className="text-xs text-gray-600 mt-3 flex items-center">
-                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <p className="text-[9px] text-slate-400 uppercase tracking-wider font-bold mt-4 flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Already have a Player ID? Search above to find your profile.
@@ -509,14 +535,20 @@ function PlayerSearchContent() {
         
         {/* Success/Error Messages */}
         {success && (
-          <div className="mt-4 p-4 rounded-xl bg-green-50 border border-green-200">
-            <p className="text-green-600 text-sm text-center">{success}</p>
+          <div className="mt-4 p-4 bg-green-50 border border-green-200/40 text-green-800 rounded-xl text-xs uppercase font-bold tracking-wider flex items-center gap-2 font-mono">
+            <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{success}</span>
           </div>
         )}
         
         {error && (
-          <div className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200">
-            <p className="text-red-600 text-sm text-center">{error}</p>
+          <div className="mt-4 p-4 bg-rose-50 border border-rose-200/40 text-rose-800 rounded-xl text-xs uppercase font-bold tracking-wider flex items-center gap-2 font-mono">
+            <svg className="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>{error}</span>
           </div>
         )}
       </div>
@@ -527,10 +559,11 @@ function PlayerSearchContent() {
 export default function PlayerSearch() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-[#0066FF]/5 via-white to-[#00D4FF]/5 flex items-center justify-center p-4">
-        <div className="glass rounded-3xl p-8 shadow-lg border border-white/20 max-w-md w-full text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading player registration...</p>
         </div>
       </div>
     }>

@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { useModal } from '@/hooks/useModal'
 import AlertModal from '@/components/modals/AlertModal'
 import ConfirmModal from '@/components/modals/ConfirmModal'
-import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { fetchWithTokenRefresh } from '@/lib/token-refresh'
 
 interface FootballPlayer {
   id: string
@@ -43,7 +43,6 @@ export default function CommitteePlayersPage() {
   const [totalPlayers, setTotalPlayers] = useState(0)
   const [teamsCache, setTeamsCache] = useState<Map<string, { id: string; name: string }>>(new Map())
   const [initialLoad, setInitialLoad] = useState(true)
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
   const [isExporting, setIsExporting] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportSoldFilter, setExportSoldFilter] = useState<'all' | 'sold' | 'unsold'>('all')
@@ -91,7 +90,7 @@ export default function CommitteePlayersPage() {
         fetch(`/api/players?${params}`)
       ])
 
-      const { data: playersData, success, pagination, totalCount } = await playersResponse.json()
+      const { data: playersData, success, totalCount } = await playersResponse.json()
       if (!success) {
         throw new Error('Failed to fetch players')
       }
@@ -136,7 +135,7 @@ export default function CommitteePlayersPage() {
       setLoading(false)
       setInitialLoad(false)
     }
-  }, [currentPage, positionFilter, eligibilityFilter, searchTerm])
+  }, [currentPage, positionFilter, eligibilityFilter, searchTerm, showAlert])
 
   // Single effect to trigger fetch on any dependency change
   useEffect(() => {
@@ -340,12 +339,12 @@ export default function CommitteePlayersPage() {
         // Set columns
         worksheet.columns = getColumnsDefinition()
 
-        // Style header row
+        // Style header row (Gold theme to match retro look)
         worksheet.getRow(1).font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } }
         worksheet.getRow(1).fill = {
           type: 'pattern',
           pattern: 'solid',
-          fgColor: { argb: 'FF0066FF' }
+          fgColor: { argb: 'FFF59E0B' } // Amber-500 color matching our buttons
         }
         worksheet.getRow(1).height = 25
 
@@ -432,12 +431,12 @@ export default function CommitteePlayersPage() {
       const totalPlayers = allPlayers.length
       const eligiblePlayers = allPlayers.filter((p: any) => p.is_auction_eligible).length
       const soldPlayers = allPlayers.filter((p: any) => p.is_sold).length
-      const positionCounts = Object.entries(playersByPosition).map(([pos, players]) => ({
+      const positionCounts = Object.entries(playersByPosition).map(([pos, players]: [string, any]) => ({
         position: pos,
         count: players.length
       })).sort((a, b) => b.count - a.count)
 
-      const positionGroupCounts = Object.entries(playersByPositionGroup).map(([group, players]) => ({
+      const positionGroupCounts = Object.entries(playersByPositionGroup).map(([group, players]: [string, any]) => ({
         group: group,
         count: players.length
       })).sort((a, b) => b.count - a.count)
@@ -466,11 +465,11 @@ export default function CommitteePlayersPage() {
         }))
       ]
 
-      summaryData.forEach((item, index) => {
+      summaryData.forEach((item) => {
         const row = summarySheet.addRow(item)
-        // Style section headers
+        // Style section headers (Gold color)
         if (item.metric.includes('BREAKDOWN') || item.metric === 'WORKSHEETS CREATED') {
-          row.font = { bold: true, color: { argb: 'FF0066FF' } }
+          row.font = { bold: true, color: { argb: 'FFF59E0B' } }
         }
       })
 
@@ -479,7 +478,7 @@ export default function CommitteePlayersPage() {
       summarySheet.getRow(1).fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FF0066FF' }
+        fgColor: { argb: 'FFF59E0B' }
       }
 
       // Generate Excel file buffer
@@ -497,8 +496,8 @@ export default function CommitteePlayersPage() {
       window.URL.revokeObjectURL(url)
 
       const totalSheets = Object.keys(playersByPosition).length + Object.keys(playersByPositionGroup).length + 2
-      const positionSheetNames = Object.entries(playersByPosition).map(([pos, players]) => `${pos} (${players.length})`).join(', ')
-      const groupSheetNames = Object.entries(playersByPositionGroup).map(([group, players]) => `${group} Group (${players.length})`).join(', ')
+      const positionSheetNames = Object.entries(playersByPosition).map(([pos, players]: [string, any]) => `${pos} (${players.length})`).join(', ')
+      const groupSheetNames = Object.entries(playersByPositionGroup).map(([group, players]: [string, any]) => `${group} Group (${players.length})`).join(', ')
 
       showAlert({
         type: 'success',
@@ -532,19 +531,20 @@ export default function CommitteePlayersPage() {
   const paginatedPlayers = filteredPlayers
 
   const getRatingColor = (rating?: number) => {
-    if (!rating) return 'bg-gray-100 text-gray-800'
-    if (rating >= 85) return 'bg-green-100 text-green-800'
-    if (rating >= 75) return 'bg-blue-100 text-blue-800'
-    if (rating >= 65) return 'bg-yellow-100 text-yellow-800'
-    return 'bg-gray-100 text-gray-800'
+    if (!rating) return 'bg-slate-50 text-slate-400 border border-slate-200/30'
+    if (rating >= 85) return 'bg-green-50/60 text-green-700 border border-green-200/30 font-bold'
+    if (rating >= 75) return 'bg-blue-50/60 text-blue-700 border border-blue-200/30 font-bold'
+    if (rating >= 65) return 'bg-amber-50/60 text-amber-700 border border-amber-200/30 font-bold'
+    return 'bg-slate-50/60 text-slate-700 border border-slate-200/30 font-bold'
   }
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading player management...</p>
         </div>
       </div>
     )
@@ -553,42 +553,41 @@ export default function CommitteePlayersPage() {
   // Show loading skeleton on initial load
   if (initialLoad && loading) {
     return (
-      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
-        <div className="glass rounded-3xl p-3 sm:p-6 mb-4 sm:mb-8">
-          {/* Header Skeleton */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="h-8 bg-gray-200 rounded-lg w-48 animate-pulse"></div>
-            <div className="h-10 bg-gray-200 rounded-lg w-32 animate-pulse"></div>
-          </div>
-
-          {/* Search Skeleton */}
-          <div className="mb-4">
-            <div className="h-11 bg-gray-200 rounded-xl animate-pulse mb-3"></div>
-            <div className="flex gap-2">
-              <div className="h-11 bg-gray-200 rounded-xl flex-1 animate-pulse"></div>
-              <div className="h-11 bg-gray-200 rounded-xl flex-1 animate-pulse"></div>
-              <div className="h-11 bg-gray-200 rounded-xl w-24 animate-pulse"></div>
+      <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative z-10 space-y-6 font-mono">
+          <div className="console-card bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 animate-pulse">
+            <div className="flex justify-between items-center mb-6 pb-6 border-b border-slate-100">
+              <div className="h-8 bg-slate-100 rounded-lg w-48 animate-pulse"></div>
+              <div className="h-10 bg-slate-100 rounded-lg w-32 animate-pulse"></div>
             </div>
-          </div>
 
-          {/* Stats Bar Skeleton */}
-          <div className="mb-4 p-3 bg-white/50 rounded-xl">
-            <div className="h-5 bg-gray-200 rounded w-64 animate-pulse"></div>
-          </div>
-
-          {/* Table Skeleton */}
-          <div className="space-y-2">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="bg-white/70 rounded-lg p-4 animate-pulse">
-                <div className="flex items-center gap-4">
-                  <div className="h-6 bg-gray-200 rounded flex-1"></div>
-                  <div className="h-6 bg-gray-200 rounded w-16"></div>
-                  <div className="h-6 bg-gray-200 rounded w-16"></div>
-                  <div className="h-6 bg-gray-200 rounded w-24"></div>
-                  <div className="h-6 bg-gray-200 rounded w-20"></div>
-                </div>
+            <div className="mb-4">
+              <div className="h-11 bg-slate-50 border border-slate-200/60 rounded-xl animate-pulse mb-3"></div>
+              <div className="flex gap-2">
+                <div className="h-11 bg-slate-50 border border-slate-200/60 rounded-xl flex-1 animate-pulse"></div>
+                <div className="h-11 bg-slate-50 border border-slate-200/60 rounded-xl flex-1 animate-pulse"></div>
+                <div className="h-11 bg-slate-50 border border-slate-200/60 rounded-xl w-24 animate-pulse"></div>
               </div>
-            ))}
+            </div>
+
+            <div className="mb-4 p-3 bg-slate-50 border border-slate-200/40 rounded-xl">
+              <div className="h-5 bg-slate-100 rounded w-64 animate-pulse"></div>
+            </div>
+
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="bg-slate-50/50 rounded-lg p-4 animate-pulse">
+                  <div className="flex items-center gap-4">
+                    <div className="h-6 bg-slate-100 rounded flex-1"></div>
+                    <div className="h-6 bg-slate-100 rounded w-16"></div>
+                    <div className="h-6 bg-slate-100 rounded w-16"></div>
+                    <div className="h-6 bg-slate-100 rounded w-24"></div>
+                    <div className="h-6 bg-slate-100 rounded w-20"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -600,51 +599,67 @@ export default function CommitteePlayersPage() {
   }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
-      <div className="glass rounded-3xl p-3 sm:p-6 mb-4 sm:mb-8">
-        <div className="flex flex-col gap-4 mb-4 sm:mb-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center hidden sm:flex">
-            <h2 className="text-xl font-bold gradient-text">
-              {eligibilityFilter === 'eligible' ? 'Auction Eligible Players' : 'All Players'}
-            </h2>
-            <div className="flex gap-2">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6 font-mono">
+        {/* Header and Controls */}
+        <div className="console-card bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 overflow-hidden">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {eligibilityFilter === 'eligible' ? 'Auction Eligible Players' : 'All Players'}
+              </h1>
+              <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mt-1">
+                Total Registered Database: <span className="font-extrabold text-amber-500">{totalPlayers}</span>
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <button
                 onClick={() => setShowExportModal(true)}
                 disabled={isExporting}
-                className="px-4 py-2.5 text-sm bg-green-500 text-white rounded-xl hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center"
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all shadow-sm cursor-pointer hover:-translate-y-0.5 active:translate-y-0 text-xs uppercase tracking-wider disabled:opacity-50"
               >
                 {isExporting ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Exporting...
+                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Exporting...</span>
                   </>
                 ) : (
                   <>
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    Export to Excel
+                    <span>Export Excel</span>
                   </>
                 )}
               </button>
+              
               <Link
                 href="/dashboard/committee"
-                className="px-4 py-2.5 text-sm glass rounded-xl hover:bg-white/90 transition-all duration-300 flex items-center"
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 font-bold rounded-xl transition-all shadow-sm cursor-pointer hover:-translate-y-0.5 active:translate-y-0 text-xs uppercase tracking-wider"
               >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Back to Dashboard
+                <span>Dashboard</span>
               </Link>
             </div>
           </div>
 
           {/* Search and Filter */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             <div className="relative w-full">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </span>
@@ -652,107 +667,131 @@ export default function CommitteePlayersPage() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search players..."
-                className="pl-10 w-full py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all duration-200"
+                placeholder="Search by Player Name, ID..."
+                className="pl-10 w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 text-xs font-bold uppercase tracking-wider"
               />
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select
-                value={positionFilter}
-                onChange={(e) => setPositionFilter(e.target.value)}
-                className="flex-1 py-2.5 px-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all duration-200"
-              >
-                <option value="">All Positions</option>
-                {positions.filter(p => p).map(pos => (
-                  <option key={pos} value={pos}>{pos}</option>
-                ))}
-              </select>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 relative">
+                <select
+                  value={positionFilter}
+                  onChange={(e) => setPositionFilter(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 text-xs font-bold uppercase tracking-wider appearance-none"
+                >
+                  <option value="">All Positions</option>
+                  {positions.filter(p => p).map(pos => (
+                    <option key={pos} value={pos}>{pos}</option>
+                  ))}
+                </select>
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-slate-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
 
-              <select
-                value={eligibilityFilter}
-                onChange={(e) => setEligibilityFilter(e.target.value)}
-                className="flex-1 py-2.5 px-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all duration-200"
-              >
-                <option value="eligible">Eligible Players</option>
-                <option value="all">All Players</option>
-              </select>
+              <div className="flex-1 relative">
+                <select
+                  value={eligibilityFilter}
+                  onChange={(e) => setEligibilityFilter(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 text-xs font-bold uppercase tracking-wider appearance-none"
+                >
+                  <option value="eligible">Eligible Players</option>
+                  <option value="all">All Players</option>
+                </select>
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-slate-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
 
               <button
                 type="button"
-                className="px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary/90 transition-all duration-300"
+                onClick={fetchPlayers}
+                className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all shadow-sm cursor-pointer hover:-translate-y-0.5 active:translate-y-0 text-xs uppercase tracking-wider text-center"
               >
-                Filter
+                Refresh
               </button>
             </div>
           </div>
         </div>
 
         {/* Stats Bar */}
-        <div className="mb-4 p-3 bg-white/50 rounded-xl">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">
-              Showing <strong>{((currentPage - 1) * PLAYERS_PER_PAGE) + 1}</strong> to <strong>{Math.min(currentPage * PLAYERS_PER_PAGE, (currentPage - 1) * PLAYERS_PER_PAGE + filteredPlayers.length)}</strong> of <strong>{totalPlayers}</strong> players
-            </span>
-            {totalPages > 1 && (
-              <span className="text-gray-500">Page {currentPage} of {totalPages}</span>
-            )}
-          </div>
+        <div className="bg-slate-50 border border-slate-200/60 p-4 rounded-xl flex items-center justify-between font-mono text-[10px] uppercase font-bold text-slate-500 shadow-sm">
+          <span>
+            Showing <strong className="text-slate-800">{((currentPage - 1) * PLAYERS_PER_PAGE) + 1}</strong> to <strong className="text-slate-800">{Math.min(currentPage * PLAYERS_PER_PAGE, (currentPage - 1) * PLAYERS_PER_PAGE + filteredPlayers.length)}</strong> of <strong className="text-slate-800">{totalPlayers}</strong> players
+          </span>
+          {totalPages > 1 && (
+            <span className="text-slate-450">Page {currentPage} of {totalPages}</span>
+          )}
         </div>
 
         {/* Mobile Cards (hidden on desktop) */}
         <div className="block sm:hidden">
           {loading && !initialLoad ? (
-            <div className="grid gap-2">
+            <div className="grid gap-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white/70 border border-white/40 rounded-xl p-3 animate-pulse">
-                  <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div key={i} className="console-card bg-white border border-slate-200/60 rounded-xl p-4 animate-pulse">
+                  <div className="h-4 bg-slate-100 rounded w-3/4 mb-3 animate-pulse"></div>
+                  <div className="h-3 bg-slate-100 rounded w-1/2 animate-pulse"></div>
                 </div>
               ))}
             </div>
           ) : paginatedPlayers.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500 text-sm">No players found</p>
+            <div className="console-card bg-white rounded-2xl p-12 text-center border border-slate-200/60 font-mono">
+              <svg className="w-12 h-12 mx-auto text-slate-350 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <h3 className="text-sm font-bold text-slate-850 uppercase tracking-wider mb-1">No players found</h3>
+              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Try adjusting your filters or search term</p>
             </div>
           ) : (
-            <div className="grid gap-2">
+            <div className="grid gap-4 font-mono">
               {paginatedPlayers.map((player) => (
-                <div key={player.id} className="bg-white/70 backdrop-blur-sm border border-white/40 rounded-xl p-3 transition-all duration-200 hover:bg-white/80 hover:shadow-md">
+                <div key={player.id} className="console-card bg-white rounded-xl p-4 border border-slate-200/60 hover:bg-slate-50/50 hover:shadow-md transition-all">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-800 text-sm truncate">{player.name}</h3>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <h3 className="font-extrabold text-slate-800 text-sm truncate uppercase tracking-wide">{player.name}</h3>
                         {player.is_auction_eligible && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
-                            ✓
+                          <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-green-50 text-green-700 border border-green-200/30 uppercase tracking-wider">
+                            ELG
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-gray-600">
-                        <span className="font-medium">{player.position}</span>
+                      
+                      <div className="flex flex-wrap items-center gap-2 text-[10px]">
+                        <span className="font-bold text-slate-500 uppercase">{player.position || 'N/A'}</span>
                         {player.position_group && (
-                          <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-medium">
+                          <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/30 font-bold uppercase tracking-wider">
                             {player.position_group}
                           </span>
                         )}
-                        <span className={`px-2 py-0.5 rounded-md text-xs font-medium ${getRatingColor(player.overall_rating)}`}>
-                          {player.overall_rating || '--'}
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getRatingColor(player.overall_rating)}`}>
+                          OVR: {player.overall_rating || '--'}
                         </span>
                       </div>
+                      
                       {player.team ? (
-                        <div className="text-xs text-gray-500 mt-1 truncate">
+                        <div className="text-[10px] text-slate-600 font-bold uppercase tracking-wider mt-2 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
                           Team: {player.team.name}
                         </div>
                       ) : (
-                        <div className="text-xs text-gray-500 mt-1">Free Agent</div>
+                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-2 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
+                          Free Agent
+                        </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 ml-2">
+                    
+                    <div className="flex items-center gap-1.5 ml-2">
                       <Link
                         href={`/dashboard/committee/players/${player.id}`}
-                        className="p-2 rounded-lg bg-gray-100/80 text-gray-600 hover:bg-gray-200/80 hover:text-gray-800 transition-colors duration-200"
+                        className="p-2 rounded-xl bg-slate-50 hover:bg-amber-500 hover:text-white border border-slate-200/60 text-slate-600 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
                         title="View Details"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -763,7 +802,7 @@ export default function CommitteePlayersPage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(player.id)}
-                        className="p-2 rounded-lg bg-red-50/80 text-red-600 hover:bg-red-100/80 hover:text-red-700 transition-colors duration-200"
+                        className="p-2 rounded-xl bg-slate-50 hover:bg-rose-500 hover:text-white border border-slate-200/60 text-rose-600 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
                         title="Delete Player"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -779,68 +818,73 @@ export default function CommitteePlayersPage() {
         </div>
 
         {/* Desktop Table (hidden on mobile) */}
-        <div className="hidden sm:block overflow-x-auto rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-white/10">
-              <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Player</th>
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Position</th>
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Overall</th>
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden md:table-cell">Team</th>
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+        <div className="hidden sm:block console-card bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200/60 text-[10px] uppercase font-black tracking-wider text-slate-500 font-mono">
+                <th className="p-4 w-2/5">Player</th>
+                <th className="p-4 w-1/5">Position</th>
+                <th className="p-4 w-1/5">Overall</th>
+                <th className="p-4 w-1/5 hidden md:table-cell">Team</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white/30">
+            <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
               {loading && !initialLoad ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center">
+                  <td colSpan={5} className="p-12 text-center font-mono">
                     <div className="flex justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0066FF]"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
                     </div>
                   </td>
                 </tr>
               ) : paginatedPlayers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                  <td colSpan={5} className="p-12 text-center font-mono text-slate-400 uppercase tracking-wider font-bold">
                     No players found
                   </td>
                 </tr>
               ) : (
                 paginatedPlayers.map((player) => (
-                  <tr key={player.id} className="hover:bg-white/60 transition-colors">
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      <div className="flex flex-col">
-                        <div className="text-sm font-medium text-gray-800">
-                          {player.name}
-                          {player.is_auction_eligible && (
-                            <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                              Eligible
-                            </span>
-                          )}
-                        </div>
+                  <tr key={player.id} className="hover:bg-slate-50/[0.1] transition-colors font-mono">
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wide">{player.name}</span>
+                        {player.is_auction_eligible && (
+                          <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-extrabold bg-green-50 text-green-700 border border-green-200/30 uppercase tracking-wider">
+                            Eligible
+                          </span>
+                        )}
                       </div>
                     </td>
-                    <td className="px-2 py-3 whitespace-nowrap text-sm text-gray-700">
-                      {player.position}
+                    <td className="p-4 text-xs font-bold text-slate-500 uppercase">
+                      {player.position || 'N/A'}
                       {player.position_group && (
-                        <span className="ml-2 px-2 py-0.5 rounded text-xs bg-primary/10 text-primary font-medium">
+                        <span className="ml-2 px-2 py-0.5 rounded text-[9px] bg-amber-50 text-amber-700 border border-amber-200/30 font-bold uppercase tracking-wider">
                           {player.position_group}
                         </span>
                       )}
                     </td>
-                    <td className="px-2 py-3 whitespace-nowrap text-sm">
-                      <span className={`px-2 py-1 rounded-md ${getRatingColor(player.overall_rating)}`}>
+                    <td className="p-4">
+                      <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${getRatingColor(player.overall_rating)}`}>
                         {player.overall_rating || '--'}
                       </span>
                     </td>
-                    <td className="px-2 py-3 whitespace-nowrap text-sm text-gray-700 hidden md:table-cell">
-                      {player.team ? player.team.name : <span className="text-gray-500">Free Agent</span>}
+                    <td className="p-4 text-xs font-bold text-slate-700 uppercase hidden md:table-cell">
+                      {player.team ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                          <span>{player.team.name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 font-bold uppercase">Free Agent</span>
+                      )}
                     </td>
-                    <td className="px-2 py-3 whitespace-nowrap text-sm">
-                      <div className="flex space-x-1">
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
                         <Link
                           href={`/dashboard/committee/players/${player.id}`}
-                          className="text-gray-600 hover:text-gray-800 font-medium transition-colors duration-200 flex items-center p-1"
+                          className="p-1.5 rounded-lg bg-slate-50 hover:bg-amber-500 hover:text-white border border-slate-200/60 text-slate-600 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
                           title="View Details"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -851,7 +895,7 @@ export default function CommitteePlayersPage() {
                         <button
                           type="button"
                           onClick={() => handleDelete(player.id)}
-                          className="text-red-600 hover:text-red-800 font-medium transition-colors duration-200 flex items-center p-1"
+                          className="p-1.5 rounded-lg bg-slate-50 hover:bg-rose-500 hover:text-white border border-slate-200/60 text-rose-600 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
                           title="Delete Player"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -869,26 +913,26 @@ export default function CommitteePlayersPage() {
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-gray-600">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
+            <div className="text-slate-500 uppercase font-bold tracking-wider">
               Showing <strong>{((currentPage - 1) * PLAYERS_PER_PAGE) + 1}</strong> to <strong>{Math.min(currentPage * PLAYERS_PER_PAGE, (currentPage - 1) * PLAYERS_PER_PAGE + filteredPlayers.length)}</strong> of <strong>{totalPlayers}</strong> players
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-1">
               <button
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm bg-white/60 border border-gray-200 rounded-lg hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2.5 py-1.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-slate-350 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider text-[10px]"
               >
                 First
               </button>
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm bg-white/60 border border-gray-200 rounded-lg hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2.5 py-1.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-slate-350 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider text-[10px]"
               >
-                Previous
+                Prev
               </button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum
                   if (totalPages <= 5) {
@@ -904,9 +948,9 @@ export default function CommitteePlayersPage() {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-2 text-sm rounded-lg transition-colors ${currentPage === pageNum
-                        ? 'bg-primary text-white font-medium'
-                        : 'bg-white/60 border border-gray-200 hover:bg-white/80'
+                      className={`px-2.5 py-1.5 rounded-lg font-bold text-[10px] transition-all border ${currentPage === pageNum
+                        ? 'bg-amber-500 border-amber-600 text-white shadow-sm'
+                        : 'bg-white border-slate-250/60 text-slate-700 hover:bg-slate-50'
                         }`}
                     >
                       {pageNum}
@@ -917,14 +961,14 @@ export default function CommitteePlayersPage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm bg-white/60 border border-gray-200 rounded-lg hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2.5 py-1.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-slate-350 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider text-[10px]"
               >
                 Next
               </button>
               <button
                 onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm bg-white/60 border border-gray-200 rounded-lg hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2.5 py-1.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:border-slate-350 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider text-[10px]"
               >
                 Last
               </button>
@@ -955,67 +999,80 @@ export default function CommitteePlayersPage() {
 
       {/* Export Filter Modal */}
       {showExportModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Export Players to Excel</h3>
-            <p className="text-gray-600 mb-6">Choose which players to include in the export:</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="console-card bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl border border-slate-200/60 font-mono">
+            <h3 className="text-lg font-extrabold text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-2">
+              <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Export Players to Excel
+            </h3>
+            <p className="text-[10px] uppercase font-bold text-slate-500 mb-6 tracking-wide">
+              Choose which player records to compile into the Excel workbook:
+            </p>
 
             <div className="space-y-3 mb-6">
-              <label className="flex items-center p-3 border-2 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
-                style={{ borderColor: exportSoldFilter === 'all' ? '#0066FF' : '#E5E7EB' }}>
+              <label 
+                className="flex items-center p-3 border-2 rounded-xl cursor-pointer hover:bg-slate-50/50 transition-all"
+                style={{ borderColor: exportSoldFilter === 'all' ? '#F59E0B' : '#E2E8F0' }}
+              >
                 <input
                   type="radio"
                   name="exportFilter"
                   value="all"
                   checked={exportSoldFilter === 'all'}
                   onChange={(e) => setExportSoldFilter(e.target.value as 'all' | 'sold' | 'unsold')}
-                  className="w-4 h-4 text-primary"
+                  className="w-4 h-4 text-amber-500 focus:ring-amber-500 border-slate-300"
                 />
-                <span className="ml-3 font-medium text-gray-900">All Players</span>
+                <span className="ml-3 text-xs uppercase font-extrabold text-slate-700 tracking-wide">All Players</span>
               </label>
 
-              <label className="flex items-center p-3 border-2 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
-                style={{ borderColor: exportSoldFilter === 'sold' ? '#0066FF' : '#E5E7EB' }}>
+              <label 
+                className="flex items-center p-3 border-2 rounded-xl cursor-pointer hover:bg-slate-50/50 transition-all"
+                style={{ borderColor: exportSoldFilter === 'sold' ? '#F59E0B' : '#E2E8F0' }}
+              >
                 <input
                   type="radio"
                   name="exportFilter"
                   value="sold"
                   checked={exportSoldFilter === 'sold'}
                   onChange={(e) => setExportSoldFilter(e.target.value as 'all' | 'sold' | 'unsold')}
-                  className="w-4 h-4 text-primary"
+                  className="w-4 h-4 text-amber-500 focus:ring-amber-500 border-slate-300"
                 />
-                <span className="ml-3 font-medium text-gray-900">Sold Players Only</span>
+                <span className="ml-3 text-xs uppercase font-extrabold text-slate-700 tracking-wide">Sold Players Only</span>
               </label>
 
-              <label className="flex items-center p-3 border-2 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
-                style={{ borderColor: exportSoldFilter === 'unsold' ? '#0066FF' : '#E5E7EB' }}>
+              <label 
+                className="flex items-center p-3 border-2 rounded-xl cursor-pointer hover:bg-slate-50/50 transition-all"
+                style={{ borderColor: exportSoldFilter === 'unsold' ? '#F59E0B' : '#E2E8F0' }}
+              >
                 <input
                   type="radio"
                   name="exportFilter"
                   value="unsold"
                   checked={exportSoldFilter === 'unsold'}
                   onChange={(e) => setExportSoldFilter(e.target.value as 'all' | 'sold' | 'unsold')}
-                  className="w-4 h-4 text-primary"
+                  className="w-4 h-4 text-amber-500 focus:ring-amber-500 border-slate-300"
                 />
-                <span className="ml-3 font-medium text-gray-900">Unsold Players Only</span>
+                <span className="ml-3 text-xs uppercase font-extrabold text-slate-700 tracking-wide">Unsold Players Only</span>
               </label>
             </div>
 
             <div className="flex gap-3">
               <button
                 onClick={() => setShowExportModal(false)}
-                className="flex-1 px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+                className="flex-1 px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors font-bold uppercase tracking-wider text-xs text-center"
               >
                 Cancel
               </button>
               <button
                 onClick={handleExportToExcel}
-                className="flex-1 px-4 py-2.5 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors font-medium flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-all shadow-sm font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Export
+                <span>Export</span>
               </button>
             </div>
           </div>

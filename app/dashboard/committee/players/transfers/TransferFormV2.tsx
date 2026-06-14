@@ -333,11 +333,10 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
   const sellingTeamLimit = selectedPlayer ? transferLimits[selectedPlayer.team_id] : undefined;
   const sellingTeamName = selectedPlayer?.team_name || 'Team';
   const buyingTeamName = availableTeams.find(t => t.id === newTeamId)?.name || 'Team';
-
   if (loadingPlayers || teamsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500"></div>
       </div>
     );
   }
@@ -346,16 +345,16 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
     <div className="space-y-6">
       {/* Alerts */}
       {error && (
-        <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg">
-          <p className="font-semibold">Error</p>
-          <p>{error}</p>
+        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl font-mono text-xs uppercase tracking-wide">
+          <p className="font-extrabold">⚠️ Error</p>
+          <p className="mt-1">{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-lg">
-          <p className="font-semibold">Success!</p>
-          <pre className="whitespace-pre-wrap text-sm mt-2 font-sans">{success}</pre>
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl font-mono text-xs uppercase tracking-wide">
+          <p className="font-extrabold">✨ Success</p>
+          <pre className="whitespace-pre-wrap text-[10px] mt-2 font-mono leading-relaxed">{success}</pre>
         </div>
       )}
 
@@ -375,24 +374,24 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
 
         {/* Current Player Info (Read-only) */}
         {selectedPlayer && (
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-3">Current Player Information</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
+            <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-3.5">Current Player Information</h3>
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-gray-600">Current Team:</span>
-                <p className="font-semibold text-gray-900">{selectedPlayer.team_name}</p>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Team</span>
+                <p className="font-extrabold text-slate-800 uppercase mt-0.5">{selectedPlayer.team_name}</p>
               </div>
               <div>
-                <span className="text-gray-600">Current Value:</span>
-                <p className="font-semibold text-gray-900">${selectedPlayer.auction_value}</p>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Value</span>
+                <p className="font-extrabold text-amber-600 mt-0.5">${selectedPlayer.auction_value}</p>
               </div>
               <div>
-                <span className="text-gray-600">Star Rating:</span>
-                <p className="font-semibold text-gray-900">{selectedPlayer.star_rating}⭐</p>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Star Rating</span>
+                <p className="font-extrabold text-slate-800 mt-0.5">{'⭐'.repeat(selectedPlayer.star_rating || 0)}</p>
               </div>
               <div>
-                <span className="text-gray-600">Points:</span>
-                <p className="font-semibold text-gray-900">{selectedPlayer.points}</p>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Points</span>
+                <p className="font-extrabold text-slate-800 mt-0.5">{selectedPlayer.points}</p>
               </div>
             </div>
           </div>
@@ -400,24 +399,24 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
 
         {/* Transfer Limit Display */}
         {selectedPlayer && sellingTeamLimit && (
-          <div className={`p-4 rounded-xl border ${
+          <div className={`p-4 rounded-2xl border font-mono text-xs uppercase tracking-wide ${
             sellingTeamLimit.remaining > 0 
-              ? 'bg-blue-50 border-blue-200' 
-              : 'bg-red-50 border-red-200'
+              ? 'bg-slate-50 border-slate-200' 
+              : 'bg-rose-50 border-rose-200 text-rose-705'
           }`}>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-gray-700">
-                {sellingTeamName} Transfer Slots:
+              <span className="font-bold text-slate-500">
+                {sellingTeamName} Slots:
               </span>
-              <span className={`text-lg font-bold ${
-                sellingTeamLimit.remaining > 0 ? 'text-blue-600' : 'text-red-600'
+              <span className={`font-black text-xs ${
+                sellingTeamLimit.remaining > 0 ? 'text-slate-800' : 'text-rose-600'
               }`}>
-                {sellingTeamLimit.remaining} of 2 remaining
+                {sellingTeamLimit.remaining} / 2 remaining
               </span>
             </div>
             {sellingTeamLimit.remaining === 0 && (
-              <p className="text-sm text-red-600 mt-2">
-                ⚠️ This team has used all transfer slots for this season
+              <p className="text-[10px] text-rose-600 font-bold mt-2">
+                ⚠️ Warning: Zero transfer slots remaining
               </p>
             )}
           </div>
@@ -425,145 +424,129 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
 
         {/* New Team Selection */}
         {selectedPlayer && (
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <div className="font-mono text-xs">
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
               New Team
             </label>
-            <select
-              value={newTeamId}
-              onChange={(e) => setNewTeamId(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-              required
-            >
-              <option value="">-- Choose Team --</option>
-              {availableTeams.map(team => (
-                <option key={team.id} value={team.id}>
-                  {team.team_name || team.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={newTeamId}
+                onChange={(e) => setNewTeamId(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white uppercase font-bold tracking-wider appearance-none cursor-pointer outline-none"
+                required
+              >
+                <option value="">-- Select Target Team --</option>
+                {availableTeams.map(team => (
+                  <option key={team.id} value={team.id}>
+                    {team.team_name || team.name}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-slate-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Real-time Calculation Preview */}
         {calculation && selectedPlayer && newTeamId && (
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200">
-            <h3 className="font-bold text-blue-900 mb-4 text-lg flex items-center gap-2">
-              💰 Transfer Calculation Preview
+          <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
+            <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+              📊 Transfer Preview
             </h3>
             
-            <div className="space-y-4">
-              {/* Player Value Changes */}
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <h4 className="font-semibold text-gray-700 mb-3 text-sm">Player Value</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Player Value Details */}
+              <div className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm">
+                <h4 className="font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-3">Value Appreciation</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Original Value:</span>
-                    <span className="font-semibold text-gray-900">${calculation.originalValue.toFixed(2)}</span>
+                    <span className="text-slate-400">Original Value:</span>
+                    <span className="font-bold text-slate-800">${calculation.originalValue.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Star Multiplier:</span>
-                    <span className="font-semibold text-blue-600">{(calculation.starMultiplier * 100).toFixed(0)}%</span>
+                    <span className="text-slate-400">Multiplier:</span>
+                    <span className="font-extrabold text-amber-600">{(calculation.starMultiplier * 100).toFixed(0)}%</span>
                   </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                    <span className="text-sm font-semibold text-gray-700">New Value:</span>
-                    <span className="font-bold text-green-600 text-lg">${calculation.newValue.toFixed(2)}</span>
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                    <span className="font-extrabold text-slate-800">New Value:</span>
+                    <span className="font-black text-emerald-650">${calculation.newValue.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
 
               {/* Committee Fee */}
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <h4 className="font-semibold text-gray-700 mb-3 text-sm">Committee Fee (10%)</h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Fee Amount:</span>
-                  <span className="font-bold text-purple-600 text-lg">${calculation.committeeFee.toFixed(2)}</span>
+              <div className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm flex flex-col justify-between">
+                <div>
+                  <h4 className="font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-3">Committee Fee (10%)</h4>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">Fee Amount:</span>
+                    <span className="font-extrabold text-rose-600">${calculation.committeeFee.toFixed(2)}</span>
+                  </div>
                 </div>
+                {calculation.newStarRating > selectedPlayer.star_rating && (
+                  <div className="bg-amber-50/50 border border-amber-200/50 rounded-lg p-2 mt-3 text-[10px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5 justify-center">
+                    ⭐ Upgraded to {calculation.newStarRating}⭐ (+{calculation.pointsAdded} Points)
+                  </div>
+                )}
               </div>
-
-              {/* Financial Summary */}
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <h4 className="font-semibold text-gray-700 mb-3 text-sm">Financial Summary</h4>
-                <div className="space-y-3">
-                  {/* Buying Team */}
-                  <div className="bg-red-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-600 mb-1">{buyingTeamName} (Buying)</p>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-semibold text-gray-700">Total Cost:</span>
-                      <span className="font-bold text-red-600 text-lg">-${calculation.buyingTeamPays.toFixed(2)}</span>
-                    </div>
-                    {buyingTeamBalance !== undefined && (
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Current Balance:</span>
-                          <span className="font-semibold">${buyingTeamBalance.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">After Transfer:</span>
-                          <span className={`font-semibold ${
-                            buyingTeamBalance - calculation.buyingTeamPays >= 0 
-                              ? 'text-green-600' 
-                              : 'text-red-600'
-                          }`}>
-                            ${(buyingTeamBalance - calculation.buyingTeamPays).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Selling Team */}
-                  <div className="bg-green-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-600 mb-1">{sellingTeamName} (Selling)</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-semibold text-gray-700">Receives:</span>
-                      <span className="font-bold text-green-600 text-lg">+${calculation.sellingTeamReceives.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Star Rating Upgrade */}
-              {calculation.newStarRating > selectedPlayer.star_rating && (
-                <div className="bg-yellow-50 rounded-lg p-4 shadow-sm border border-yellow-200">
-                  <h4 className="font-semibold text-yellow-800 mb-2 text-sm flex items-center gap-2">
-                    ⭐ Star Rating Upgrade!
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700">Star Rating:</span>
-                      <span className="font-semibold text-gray-900">
-                        {selectedPlayer.star_rating}⭐ → {calculation.newStarRating}⭐
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700">Points:</span>
-                      <span className="font-semibold text-gray-900">
-                        {selectedPlayer.points} → {selectedPlayer.points + calculation.pointsAdded}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center pt-2 border-t border-yellow-200">
-                      <span className="text-xs text-gray-600">Points Added:</span>
-                      <span className="text-sm font-bold text-green-600">
-                        +{calculation.pointsAdded} points
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Insufficient Funds Warning */}
-              {hasInsufficientFunds && (
-                <div className="bg-red-100 border-2 border-red-300 rounded-lg p-4">
-                  <p className="text-red-800 font-semibold text-sm flex items-center gap-2">
-                    ⚠️ Insufficient Funds
-                  </p>
-                  <p className="text-red-700 text-xs mt-1">
-                    {buyingTeamName} needs ${calculation.buyingTeamPays.toFixed(2)} but only has ${buyingTeamBalance?.toFixed(2)}
-                  </p>
-                </div>
-              )}
             </div>
+
+            {/* Financial Summary */}
+            <div className="mt-4 bg-white border border-slate-150 rounded-xl p-4 shadow-sm">
+              <h4 className="font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-3">Budget Impact Summary</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Buying Team */}
+                <div className="bg-rose-50/50 border border-rose-100 rounded-lg p-3">
+                  <div className="text-[9px] font-bold text-slate-450 uppercase mb-1">{buyingTeamName} (Buying)</div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="text-slate-500">Total Cost:</span>
+                    <span className="font-black text-rose-600">-${calculation.buyingTeamPays.toFixed(2)}</span>
+                  </div>
+                  {buyingTeamBalance !== undefined && (
+                    <div className="space-y-1 text-[10px] pt-1.5 border-t border-rose-200/40">
+                      <div className="flex justify-between text-slate-500">
+                        <span>Balance:</span>
+                        <span>${buyingTeamBalance.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold">
+                        <span>Remaining:</span>
+                        <span className={buyingTeamBalance - calculation.buyingTeamPays >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
+                          ${(buyingTeamBalance - calculation.buyingTeamPays).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Selling Team */}
+                <div className="bg-emerald-50/50 border border-emerald-100 rounded-lg p-3 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[9px] font-bold text-slate-450 uppercase mb-1">{sellingTeamName} (Selling)</div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500">Receives:</span>
+                      <span className="font-black text-emerald-600">+${calculation.sellingTeamReceives.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <div className="text-[9px] text-slate-450 uppercase tracking-wider mt-2.5">
+                    *After 10% fee deduction
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Warnings */}
+            {hasInsufficientFunds && (
+              <div className="mt-4 bg-rose-50 border border-rose-200 rounded-xl p-4 text-rose-700">
+                <p className="font-extrabold">⚠️ Insufficient Budget</p>
+                <p className="text-[10px] mt-1 font-bold">
+                  {buyingTeamName} has ${buyingTeamBalance?.toFixed(2)} but needs ${calculation.buyingTeamPays.toFixed(2)}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -571,9 +554,9 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
         <button
           type="submit"
           disabled={!selectedPlayerId || !newTeamId || submitting || hasInsufficientFunds || (sellingTeamLimit?.remaining === 0)}
-          className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+          className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md cursor-pointer text-center"
         >
-          {submitting ? 'Processing Transfer...' : 'Execute Transfer'}
+          {submitting ? 'Processing Transfer...' : 'Execute Player Transfer'}
         </button>
       </form>
     </div>

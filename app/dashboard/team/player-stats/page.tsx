@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
+import { BarChart2, ArrowLeft, Calendar, Search } from 'lucide-react';
 
 interface PlayerStats {
   id: string;
@@ -265,9 +266,7 @@ export default function TeamPlayerStatsPage() {
           href="/dashboard/team"
           className="px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold flex items-center justify-center w-fit mb-4"
         >
-          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
+          <ArrowLeft className="w-4 h-4 mr-1.5 text-slate-600" />
           Dashboard
         </Link>
 
@@ -275,10 +274,8 @@ export default function TeamPlayerStatsPage() {
         <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono relative overflow-hidden">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/10 flex-shrink-0">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
+              <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+                <BarChart2 className="w-6 h-6 text-amber-400" />
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wider text-slate-800">
@@ -297,9 +294,7 @@ export default function TeamPlayerStatsPage() {
           {/* Season Filter */}
           <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono">
             <div className="flex items-center gap-2 mb-3">
-              <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+              <Calendar className="w-4 h-4 text-amber-500" />
               <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Select Season</h3>
             </div>
             {seasons.length === 0 ? (
@@ -335,9 +330,7 @@ export default function TeamPlayerStatsPage() {
           {/* Search Card */}
           <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono flex flex-col justify-between">
             <div className="flex items-center gap-2 mb-3">
-              <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <Search className="w-4 h-4 text-amber-500" />
               <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Search Player</h3>
             </div>
             <div className="relative flex-1 flex items-center">

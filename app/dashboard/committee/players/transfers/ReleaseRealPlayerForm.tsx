@@ -239,33 +239,33 @@ export default function ReleaseRealPlayerForm() {
     return (
         <div className="space-y-6">
             {/* Info Banner */}
-            <div className="p-4 bg-amber-50 border-l-4 border-amber-500 rounded-lg">
-                <h3 className="font-semibold text-amber-900 mb-2">🔓 Player Release System</h3>
-                <ul className="text-sm text-amber-800 space-y-1">
+            <div className="p-5 bg-slate-50 border border-slate-200/60 rounded-2xl font-mono text-xs">
+                <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-2.5">🔓 Player Release System</h3>
+                <ul className="space-y-1.5 text-slate-500">
                     <li>• Release players at season start or mid-season (X.5)</li>
-                    <li>• <strong>Manual refund percentage selection</strong> (0-100%)</li>
+                    <li>• <strong className="text-slate-800">Manual refund percentage selection</strong> (0-100%)</li>
                     <li>• Refund added to team's dollar balance</li>
                     <li>• Player becomes a free agent immediately</li>
                 </ul>
             </div>
 
             {/* Success/Error Messages */}
-            {success && (
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-green-800 font-semibold">{success}</p>
+            {error && (
+                <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl font-mono text-xs uppercase tracking-wide">
+                    <p className="font-extrabold">⚠️ Error</p>
+                    <p className="mt-1">{error}</p>
                 </div>
             )}
-            {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-800">{error}</p>
+
+            {success && (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl font-mono text-xs uppercase tracking-wide">
+                    <p className="font-extrabold">✨ Success</p>
+                    <pre className="whitespace-pre-wrap text-[10px] mt-2 font-mono leading-relaxed">{success}</pre>
                 </div>
             )}
 
             {/* Player Selection */}
-            <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Select Player to Release
-                </label>
+            <div className="font-mono text-xs">
                 <SearchablePlayerSelect
                     players={players.map(p => ({
                         id: p.player_id,
@@ -282,174 +282,162 @@ export default function ReleaseRealPlayerForm() {
                     value={selectedPlayerId}
                     onChange={setSelectedPlayerId}
                     disabled={loading || processing}
-                    placeholder="Search by player name or team..."
-                    label=""
+                    placeholder="Search player name or team..."
+                    label="Select Player to Release"
                     color="blue"
                 />
                 {loading && (
-                    <p className="text-sm text-gray-500 mt-2">Loading players...</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-2">Loading players...</p>
                 )}
                 {!loading && players.length === 0 && (
-                    <p className="text-sm text-gray-500 mt-2">No players with active contracts found</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-2">No players with active contracts found</p>
                 )}
             </div>
 
-                {/* Release Timing */}
-                {selectedPlayerId && (
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Release Timing
-                        </label>
-                        <div className="grid grid-cols-2 gap-4">
-                            <button
-                                type="button"
-                                onClick={() => setReleaseTiming('start')}
-                                disabled={processing}
-                                className={`px-6 py-4 rounded-xl font-semibold transition-all ${releaseTiming === 'start'
-                                    ? 'bg-blue-600 text-white shadow-lg'
-                                    : 'bg-white text-gray-600 border-2 border-gray-300 hover:bg-gray-50'
-                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                            >
-                                <div className="text-center">
-                                    <div className="text-lg">🏁 Season Start</div>
-                                    <div className="text-xs mt-1 opacity-80">
-                                        {userSeasonId}
-                                    </div>
-                                </div>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setReleaseTiming('mid')}
-                                disabled={processing}
-                                className={`px-6 py-4 rounded-xl font-semibold transition-all ${releaseTiming === 'mid'
-                                    ? 'bg-blue-600 text-white shadow-lg'
-                                    : 'bg-white text-gray-600 border-2 border-gray-300 hover:bg-gray-50'
-                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                            >
-                                <div className="text-center">
-                                    <div className="text-lg">⏱️ Mid-Season</div>
-                                    <div className="text-xs mt-1 opacity-80">
-                                        {userSeasonId?.replace(/\D/g, '')}.5
-                                    </div>
-                                </div>
-                            </button>
-                        </div>
+            {/* Release Timing */}
+            {selectedPlayerId && (
+                <div className="font-mono text-xs">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                        Release Timing
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                        <button
+                            type="button"
+                            onClick={() => setReleaseTiming('start')}
+                            disabled={processing}
+                            className={`px-4 py-3 rounded-xl font-bold uppercase tracking-wider transition-all border ${
+                                releaseTiming === 'start'
+                                    ? 'bg-slate-800 text-white border-slate-800'
+                                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                            } disabled:opacity-50`}
+                        >
+                            🏁 Season Start
+                            <span className="block text-[9px] font-medium text-slate-400 mt-0.5 lowercase">{userSeasonId}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setReleaseTiming('mid')}
+                            disabled={processing}
+                            className={`px-4 py-3 rounded-xl font-bold uppercase tracking-wider transition-all border ${
+                                releaseTiming === 'mid'
+                                    ? 'bg-slate-800 text-white border-slate-800'
+                                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                            } disabled:opacity-50`}
+                        >
+                            ⏱️ Mid-Season
+                            <span className="block text-[9px] font-medium text-slate-400 mt-0.5 lowercase">{userSeasonId?.replace(/\D/g, '')}.5</span>
+                        </button>
                     </div>
-                )}
+                </div>
+            )}
 
-                {/* Refund Percentage */}
-                {selectedPlayerId && (
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Refund Percentage
-                        </label>
-                        <div className="grid grid-cols-5 gap-2 mb-3">
-                            {[100, 75, 50, 25, 0].map((percent) => (
-                                <button
-                                    key={percent}
-                                    type="button"
-                                    onClick={() => setRefundPercentage(percent)}
-                                    disabled={processing}
-                                    className={`px-4 py-2 rounded-lg font-semibold transition-all ${refundPercentage === percent
-                                        ? 'bg-purple-600 text-white shadow-lg'
-                                        : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    {percent}%
-                                </button>
-                            ))}
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <label className="text-sm text-gray-600">Custom:</label>
-                            <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="1"
-                                value={refundPercentage}
-                                onChange={(e) => setRefundPercentage(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+            {/* Refund Percentage */}
+            {selectedPlayerId && (
+                <div className="font-mono text-xs">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                        Refund Percentage
+                    </label>
+                    <div className="grid grid-cols-5 gap-2 mb-3">
+                        {[100, 75, 50, 25, 0].map((percent) => (
+                            <button
+                                key={percent}
+                                type="button"
+                                onClick={() => setRefundPercentage(percent)}
                                 disabled={processing}
-                                className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                            />
-                            <span className="text-sm text-gray-600">%</span>
-                        </div>
+                                className={`py-2 rounded-lg font-bold transition-all text-xs border ${
+                                    refundPercentage === percent
+                                        ? 'bg-slate-800 text-white border-slate-800'
+                                        : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                                } disabled:opacity-50`}
+                            >
+                                {percent}%
+                            </button>
+                        ))}
                     </div>
-                )}
+                    <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[10px] font-bold text-slate-450 uppercase">Custom Refund %:</span>
+                        <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={refundPercentage}
+                            onChange={(e) => setRefundPercentage(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                            disabled={processing}
+                            className="w-24 px-3 py-2 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none disabled:opacity-50"
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Preview Card */}
             {preview && selectedPlayer && (
-                <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 border-2 border-blue-200">
-                    <h3 className="text-xl font-bold text-gray-900 mb-4">📊 Release Preview</h3>
+                <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
+                    <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-4">📊 Release Preview</h3>
 
-                    {/* Player Info */}
-                    <div className="bg-white rounded-xl p-4 mb-4">
-                        <h4 className="font-semibold text-gray-900 mb-2">Player Information</h4>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div>
-                                <p className="text-gray-600">Name</p>
-                                <p className="font-semibold">{selectedPlayer.player_name}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-600">Current Team</p>
-                                <p className="font-semibold">{selectedPlayer.team}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-600">Auction Value</p>
-                                <p className="font-semibold text-green-600">${selectedPlayer.auction_value}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-600">Star Rating</p>
-                                <p className="font-semibold">{'⭐'.repeat(selectedPlayer.star_rating || 0)}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        {/* Player Info */}
+                        <div className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm">
+                            <h4 className="font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-3">Player Details</h4>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-slate-400">Name:</span>
+                                    <span className="font-bold text-slate-800 uppercase">{selectedPlayer.player_name}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-slate-400">Team:</span>
+                                    <span className="font-bold text-slate-800 uppercase">{selectedPlayer.team}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-slate-400">Star Rating:</span>
+                                    <span className="font-bold text-slate-800">{'⭐'.repeat(selectedPlayer.star_rating || 0)}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Contract Info */}
-                    <div className="bg-white rounded-xl p-4 mb-4">
-                        <h4 className="font-semibold text-gray-900 mb-2">Contract Details</h4>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div>
-                                <p className="text-gray-600">Original Start</p>
-                                <p className="font-semibold">{selectedPlayer.contract_start_season}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-600">Original End</p>
-                                <p className="font-semibold">{selectedPlayer.contract_end_season}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-600">Release Point</p>
-                                <p className="font-semibold text-amber-600">{preview.releaseSeasonId}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-600">Total Duration</p>
-                                <p className="font-semibold">{preview.totalHalfSeasons} half-seasons</p>
+                        {/* Contract Info */}
+                        <div className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm">
+                            <h4 className="font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-3">Contract Schedule</h4>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-slate-400">Contract End:</span>
+                                    <span className="font-bold text-slate-800 uppercase">{selectedPlayer.contract_end_season}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-slate-400">Release Point:</span>
+                                    <span className="font-extrabold text-amber-600 uppercase">{preview.releaseSeasonId}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-slate-400">Duration:</span>
+                                    <span className="font-bold text-slate-800">{preview.totalHalfSeasons} Half-Seasons</span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Refund Calculation */}
-                    <div className="bg-white rounded-xl p-4">
-                        <h4 className="font-semibold text-gray-900 mb-3">💰 Refund Calculation</h4>
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center pb-2 border-b">
-                                <span className="text-sm text-gray-600">Elapsed Half-Seasons</span>
-                                <span className="font-semibold">{preview.elapsedHalfSeasons}</span>
+                    <div className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm">
+                        <h4 className="font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-3">Refund Calculation</h4>
+                        <div className="space-y-2.5">
+                            <div className="flex justify-between text-slate-600">
+                                <span>Elapsed Contract:</span>
+                                <span className="font-bold">{preview.elapsedHalfSeasons} Half-Seasons</span>
                             </div>
-                            <div className="flex justify-between items-center pb-2 border-b">
-                                <span className="text-sm text-gray-600">Remaining Half-Seasons</span>
-                                <span className="font-semibold text-blue-600">{preview.remainingHalfSeasons}</span>
+                            <div className="flex justify-between text-slate-600">
+                                <span>Remaining Duration:</span>
+                                <span className="font-bold text-slate-850">{preview.remainingHalfSeasons} Half-Seasons</span>
                             </div>
-                            <div className="flex justify-between items-center pb-2 border-b">
-                                <span className="text-sm text-gray-600">Refund Percentage</span>
-                                <span className="font-semibold text-purple-600">
-                                    {(preview.refundPercentage * 100).toFixed(1)}%
-                                </span>
+                            <div className="flex justify-between pt-2 border-t border-slate-100 items-center">
+                                <span className="font-extrabold text-slate-600">Selected Refund %:</span>
+                                <span className="font-extrabold text-amber-600">{(preview.refundPercentage * 100).toFixed(0)}%</span>
                             </div>
-                            <div className="flex justify-between items-center pt-2 bg-green-50 -mx-4 px-4 py-3 rounded-lg">
-                                <span className="font-semibold text-gray-900">Team Refund Amount</span>
-                                <span className="text-2xl font-bold text-green-600">
-                                    ${preview.refundAmount}
-                                </span>
+                            <div className="flex justify-between pt-2.5 border-t border-slate-100 items-center">
+                                <span className="font-extrabold text-slate-600">Original Value:</span>
+                                <span className="font-bold text-slate-800">${selectedPlayer.auction_value}</span>
+                            </div>
+                            <div className="flex justify-between pt-2.5 border-t border-slate-200 items-center bg-emerald-50/50 -mx-4 px-4 py-3 rounded-b-xl">
+                                <span className="font-black text-slate-900 uppercase">Team Refund Amount</span>
+                                <span className="text-xl font-black text-emerald-600">${preview.refundAmount}</span>
                             </div>
                         </div>
                     </div>
@@ -457,13 +445,13 @@ export default function ReleaseRealPlayerForm() {
             )}
 
             {/* Action Button */}
-            <div className="flex justify-end">
+            <div className="flex justify-end mt-4">
                 <button
                     onClick={handleRelease}
                     disabled={!selectedPlayerId || !preview || processing}
-                    className="px-8 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white font-semibold rounded-xl hover:from-red-600 hover:to-orange-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md cursor-pointer text-center"
                 >
-                    {processing ? 'Releasing Player...' : '🔓 Release Player'}
+                    {processing ? 'Releasing Player...' : '🔓 Execute Player Release'}
                 </button>
             </div>
         </div>

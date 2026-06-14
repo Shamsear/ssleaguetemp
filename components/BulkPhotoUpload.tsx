@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { getStorage, ref, uploadBytes, deleteObject, listAll } from 'firebase/storage';
 import { app } from '@/lib/firebase/config';
+import { Camera, UploadCloud, Trash2, Info, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react';
 
 export default function BulkPhotoUpload() {
   const [uploading, setUploading] = useState(false);
@@ -89,24 +90,25 @@ export default function BulkPhotoUpload() {
   };
 
   return (
-    <div className="bg-white/60 rounded-2xl p-6 shadow-md border border-white/20 space-y-6">
+    <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center">
-          <svg className="w-5 h-5 mr-2 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
+        <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+          <Camera className="w-4 h-4 text-amber-500" />
           Bulk Player Photo Management
         </h3>
-        <p className="text-sm text-gray-600">Upload or delete multiple player photos at once</p>
+        <p className="text-[11px] text-slate-400 font-mono">Upload or delete multiple player photos at once</p>
       </div>
 
       {/* Upload Section */}
-      <div className="border-t border-gray-200 pt-4">
-        <h4 className="font-medium text-gray-700 mb-3">📤 Upload Player Photos</h4>
+      <div className="border-t border-slate-100 pt-4 space-y-4 font-mono text-xs">
+        <h4 className="font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+          <UploadCloud className="w-4 h-4 text-amber-500" />
+          Upload Player Photos
+        </h4>
         
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
               Select Photos (Multiple files)
             </label>
             <input
@@ -115,57 +117,75 @@ export default function BulkPhotoUpload() {
               accept="image/jpeg,image/png,image/webp"
               multiple
               onChange={handleFileSelect}
-              className="block w-full text-sm text-gray-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-full file:border-0
-                file:text-sm file:font-semibold
-                file:bg-[#0066FF] file:text-white
-                hover:file:bg-[#0052CC]
+              className="block w-full text-xs text-slate-500 font-mono
+                file:mr-4 file:py-2.5 file:px-4
+                file:rounded-xl file:border file:border-slate-200
+                file:text-xs file:font-bold file:uppercase file:tracking-wide
+                file:bg-slate-50 file:text-slate-700
+                hover:file:bg-slate-100
                 cursor-pointer"
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1.5 text-[10px] text-slate-400 font-bold uppercase">
               {selectedFiles ? `${selectedFiles.length} file(s) selected` : 'No files selected'}
             </p>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs">
-            <p className="font-medium text-blue-800 mb-1">📝 File Naming Instructions:</p>
-            <ul className="list-disc list-inside text-blue-700 space-y-1">
-              <li>Name files as: <code className="bg-blue-100 px-1 rounded">player_id.jpg</code></li>
-              <li>Example: <code className="bg-blue-100 px-1 rounded">12345.jpg</code>, <code className="bg-blue-100 px-1 rounded">67890.png</code></li>
-              <li>Prefix "player_" is optional: <code className="bg-blue-100 px-1 rounded">player_12345.jpg</code></li>
+          <div className="bg-amber-50/50 border border-amber-200/50 rounded-2xl p-4 text-[11px] text-slate-700">
+            <p className="font-extrabold text-amber-800 uppercase tracking-wider mb-2 flex items-center gap-1">
+              <Info className="w-3.5 h-3.5 text-amber-600" />
+              File Naming Instructions
+            </p>
+            <ul className="list-disc list-inside text-slate-500 space-y-1 pl-1">
+              <li>Name files as: <code className="bg-amber-100/50 px-1.5 py-0.5 rounded font-bold">player_id.jpg</code></li>
+              <li>Example: <code className="bg-amber-100/50 px-1.5 py-0.5 rounded font-bold">12345.jpg</code>, <code className="bg-amber-100/50 px-1.5 py-0.5 rounded font-bold">67890.png</code></li>
+              <li>Prefix "player_" is optional: <code className="bg-amber-100/50 px-1.5 py-0.5 rounded font-bold">player_12345.jpg</code></li>
               <li>Supported formats: JPG, PNG, WebP</li>
-              <li>Max 4MB per file</li>
+              <li>Max size limits: 4MB per file</li>
             </ul>
           </div>
 
           <button
             onClick={handleBulkUpload}
             disabled={uploading || !selectedFiles || selectedFiles.length === 0}
-            className="w-full py-2 px-4 bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-xl 
-              disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+            className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl 
+              disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-mono font-bold text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 cursor-pointer"
           >
-            {uploading ? '⏳ Uploading...' : '📤 Upload Photos'}
+            {uploading ? (
+              <>
+                <RefreshCw className="animate-spin h-3.5 w-3.5 text-amber-400" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <UploadCloud className="w-3.5 h-3.5 text-amber-400" />
+                Upload Photos
+              </>
+            )}
           </button>
         </div>
 
         {/* Upload Results */}
         {uploadResult && (
-          <div className={`mt-4 p-4 rounded-xl ${uploadResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-            <p className={`font-medium ${uploadResult.success ? 'text-green-800' : 'text-red-800'}`}>
+          <div className={`p-4 rounded-2xl border font-mono text-[11px] ${uploadResult.success ? 'bg-emerald-50/20 border-emerald-200/50 text-emerald-800' : 'bg-rose-50/20 border-rose-200/50 text-rose-800'}`}>
+            <p className="font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+              {uploadResult.success ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 text-rose-500 animate-bounce" />
+              )}
               {uploadResult.message}
             </p>
             {uploadResult.summary && (
-              <div className="mt-2 text-sm text-gray-700">
+              <div className="mt-2 text-slate-500 space-y-0.5">
                 <p>✅ Success: {uploadResult.summary.success}</p>
                 <p>❌ Failed: {uploadResult.summary.failed}</p>
                 <p>📊 Total: {uploadResult.summary.total}</p>
               </div>
             )}
             {uploadResult.errors && uploadResult.errors.length > 0 && (
-              <details className="mt-2 text-sm">
-                <summary className="cursor-pointer text-red-700 font-medium">View Errors</summary>
-                <ul className="mt-1 space-y-1 text-red-600">
+              <details className="mt-2">
+                <summary className="cursor-pointer font-bold uppercase text-[10px] text-rose-600">View Errors ({uploadResult.errors.length})</summary>
+                <ul className="mt-1.5 space-y-1 text-rose-600 pl-1">
                   {uploadResult.errors.map((err: any, i: number) => (
                     <li key={i}>• {err.fileName}: {err.error}</li>
                   ))}
@@ -177,32 +197,53 @@ export default function BulkPhotoUpload() {
       </div>
 
       {/* Delete Section */}
-      <div className="border-t border-gray-200 pt-4">
-        <h4 className="font-medium text-gray-700 mb-3">🗑️ Delete All Player Photos</h4>
+      <div className="border-t border-slate-100 pt-4 space-y-4 font-mono text-xs">
+        <h4 className="font-extrabold text-rose-500 uppercase tracking-wider flex items-center gap-1.5">
+          <Trash2 className="w-4 h-4 text-rose-500" />
+          Delete All Player Photos
+        </h4>
         
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-          <p className="text-sm text-red-800">
-            <strong>⚠️ Warning:</strong> This will permanently delete ALL player photos from storage. This action cannot be undone!
+        <div className="bg-rose-50/30 border border-rose-200/50 rounded-2xl p-4 text-rose-800">
+          <p className="flex items-start gap-2 text-[11px] leading-relaxed">
+            <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+            <span>
+              <strong className="uppercase font-extrabold tracking-wide">Warning:</strong> This will permanently delete ALL player photos from Cloud Storage. This action cannot be undone!
+            </span>
           </p>
         </div>
 
         <button
           onClick={handleDeleteAll}
           disabled={deleting}
-          className="w-full py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl 
-            disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+          className="w-full py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-xl 
+            disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-mono font-bold text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 cursor-pointer"
         >
-          {deleting ? '⏳ Deleting...' : '🗑️ Delete All Photos'}
+          {deleting ? (
+            <>
+              <RefreshCw className="animate-spin h-3.5 w-3.5 text-white" />
+              Deleting...
+            </>
+          ) : (
+            <>
+              <Trash2 className="w-3.5 h-3.5 text-white" />
+              Delete All Photos
+            </>
+          )}
         </button>
 
         {/* Delete Results */}
         {deleteResult && (
-          <div className={`mt-4 p-4 rounded-xl ${deleteResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-            <p className={`font-medium ${deleteResult.success ? 'text-green-800' : 'text-red-800'}`}>
+          <div className={`p-4 rounded-2xl border font-mono text-[11px] ${deleteResult.success ? 'bg-emerald-50/20 border-emerald-200/50 text-emerald-800' : 'bg-rose-50/20 border-rose-200/50 text-rose-800'}`}>
+            <p className="font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+              {deleteResult.success ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 text-rose-500 animate-bounce" />
+              )}
               {deleteResult.message}
             </p>
             {deleteResult.summary && (
-              <div className="mt-2 text-sm text-gray-700">
+              <div className="mt-2 text-slate-500 space-y-0.5">
                 <p>✅ Deleted: {deleteResult.summary.success}</p>
                 <p>❌ Failed: {deleteResult.summary.failed}</p>
                 <p>📊 Total: {deleteResult.summary.total}</p>

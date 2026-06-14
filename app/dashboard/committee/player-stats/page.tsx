@@ -6,6 +6,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
+import { BarChart2, ArrowLeft, Pencil, Check, Search, Calendar, Users, Trophy, ClipboardList, ShieldAlert } from 'lucide-react';
 
 interface PlayerStats {
   id: string;
@@ -345,12 +346,36 @@ export default function PlayerStatsPage() {
         : (bVal as number) - (aVal as number);
     });
 
+  const SortIcon = ({ field }: { field: keyof PlayerStats }) => {
+    if (sortBy !== field) {
+      return (
+        <svg className="w-3 h-3 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+        </svg>
+      );
+    }
+    if (sortOrder === 'asc') {
+      return (
+        <svg className="w-3 h-3 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 15l7-7 7 7" />
+        </svg>
+      );
+    } else {
+      return (
+        <svg className="w-3 h-3 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+        </svg>
+      );
+    }
+  };
+
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 font-medium">Loading player statistics...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Player Statistics...</p>
         </div>
       </div>
     );
@@ -359,77 +384,101 @@ export default function PlayerStatsPage() {
   if (!user || (user.role !== 'committee_admin' && user.role !== 'super_admin')) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Player Statistics
-              </h1>
-              <p className="text-gray-600 mt-2 flex items-center gap-2">
-                <span>Season player performance data</span>
-              </p>
-            </div>
-            
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6 font-mono">
+        {/* Back Link */}
+        <Link
+          href="/dashboard/committee"
+          className="px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold flex items-center justify-center w-fit mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-1.5 text-slate-600" />
+          Dashboard
+        </Link>
+
+        {/* Header Title Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">
-              {editMode && (
+              <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+                <BarChart2 className="w-6 h-6 text-amber-400" />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wider text-slate-800">
+                  Player Statistics
+                </h1>
+                <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
+                  Track and modify performance details for all league players
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons (Edit Mode / Cancel / Save) */}
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              {editMode ? (
                 <>
                   <button
                     onClick={toggleEditMode}
                     disabled={saving}
-                    className="px-6 py-3 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer disabled:opacity-50 shadow-sm font-mono"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={saveAllChanges}
                     disabled={saving || editedPlayers.size === 0}
-                    className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                    className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl border border-emerald-600 transition-all cursor-pointer disabled:opacity-50 shadow-sm flex items-center gap-1.5 font-mono"
                   >
                     {saving ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
                         Saving...
                       </>
                     ) : (
                       <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                        </svg>
+                        <Check className="w-3.5 h-3.5" />
                         Save Changes {editedPlayers.size > 0 && `(${editedPlayers.size})`}
                       </>
                     )}
                   </button>
                 </>
-              )}
-              {!editMode && (
+              ) : (
                 <button
                   onClick={toggleEditMode}
-                  className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-amber-400 border border-slate-900 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md flex items-center gap-1.5 font-mono"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
+                  <Pencil className="w-3.5 h-3.5" />
                   Edit Mode
                 </button>
               )}
             </div>
           </div>
+        </div>
 
-          {/* Season Filter - Pill Style */}
-          <div className="mb-6">
-            <div className="flex items-center gap-3 mb-3">
-              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Season</h3>
+        {/* Edit mode warning notification */}
+        {editMode && (
+          <div className="console-card bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-4 shadow-sm font-mono flex items-center gap-3">
+            <ShieldAlert className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <p className="text-xs uppercase font-extrabold tracking-wide">
+              Edit mode is active. Modify values directly in the cells. Don't forget to save!
+            </p>
+          </div>
+        )}
+
+        {/* Season & Search Filter Container */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Season Filter */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono">
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="w-4 h-4 text-amber-500" />
+              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Select Season</h3>
             </div>
-            
             {seasons.length === 0 ? (
-              <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-xl">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span className="text-sm text-gray-600">Loading seasons...</span>
+              <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200/40 rounded-xl w-fit">
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-amber-500"></div>
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Loading seasons...</span>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -444,10 +493,10 @@ export default function PlayerStatsPage() {
                       setMatchdayStats(new Map());
                     }}
                     className={`
-                      px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:scale-105
+                      px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer
                       ${selectedSeason === season.id
-                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/50'
-                        : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+                        ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                        : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
                       }
                     `}
                   >
@@ -458,154 +507,544 @@ export default function PlayerStatsPage() {
             )}
           </div>
 
-          {editMode && (
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                <p className="text-sm text-yellow-800 font-medium">
-                  Edit mode is active. Click on any cell to modify values. Don't forget to save your changes!
-                </p>
-              </div>
+          {/* Search Card */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono flex flex-col justify-between">
+            <div className="flex items-center gap-2 mb-3">
+              <Search className="w-4 h-4 text-amber-500" />
+              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Search Player</h3>
             </div>
-          )}
-        </div>
-
-        <div className="mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search by player name or team..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-5 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-            />
-            <svg className="w-5 h-5 text-gray-400 absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <div className="relative flex-1 flex items-center">
+              <input
+                type="text"
+                placeholder="Search player or team name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full py-2 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
+              />
+            </div>
+            <div className="mt-3 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              Filtering {filteredPlayers.length} of {players.length} players
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        {/* Players Table Container */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl overflow-hidden font-mono shadow-sm">
+          <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/40 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="text-lg font-bold">📋</span>
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Player Standings & Stats</h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Click expand button for matchday performance breakdown</p>
+              </div>
+            </div>
+            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              Sorted by <span className="text-slate-800 font-extrabold">{sortBy === 'player_name' ? 'Name' : sortBy.replace('_', ' ').toUpperCase()}</span>
+            </div>
+          </div>
+
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100 text-center font-mono">
+              <thead className="bg-slate-50/50 border-b border-slate-100 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
-                    Expand
+                  <th className="px-4 py-3.5 w-12 text-center">
+                    <span className="sr-only">Expand</span>
                   </th>
-                  <th 
+                  <th
                     onClick={() => handleSort('player_name')}
-                    className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-blue-700 transition-colors"
+                    className="px-4 py-3.5 text-left font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
                   >
-                    Player {sortBy === 'player_name' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <div className="flex items-center gap-1.5">
+                      Player
+                      <SortIcon field="player_name" />
+                    </div>
                   </th>
-                  <th 
+                  <th
                     onClick={() => handleSort('team')}
-                    className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-blue-700 transition-colors"
+                    className="px-4 py-3.5 text-left font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
                   >
-                    Team {sortBy === 'team' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <div className="flex items-center gap-1.5">
+                      Team
+                      <SortIcon field="team" />
+                    </div>
                   </th>
-                  <th 
+                  <th
                     onClick={() => handleSort('points')}
-                    className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-blue-700 transition-colors"
+                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
                   >
-                    Points {sortBy === 'points' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <div className="flex items-center justify-center gap-1.5">
+                      Points
+                      <SortIcon field="points" />
+                    </div>
                   </th>
-                  <th 
+                  <th
                     onClick={() => handleSort('base_points')}
-                    className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-blue-700 transition-colors"
+                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
                   >
-                    Base {sortBy === 'base_points' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <div className="flex items-center justify-center gap-1.5">
+                      Base
+                      <SortIcon field="base_points" />
+                    </div>
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider">
+                  <th className="px-4 py-3.5 font-bold uppercase tracking-wider">
                     Change
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider">
-                    Total Gained
+                  <th className="px-4 py-3.5 font-bold uppercase tracking-wider">
+                    Total
                   </th>
-                  <th 
+                  <th
                     onClick={() => handleSort('matches_played')}
-                    className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-blue-700 transition-colors"
+                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
                   >
-                    MP {sortBy === 'matches_played' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <div className="flex items-center justify-center gap-1.5">
+                      MP
+                      <SortIcon field="matches_played" />
+                    </div>
                   </th>
-                  <th 
+                  <th
                     onClick={() => handleSort('goals_scored')}
-                    className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-blue-700 transition-colors"
+                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
                   >
-                    GS {sortBy === 'goals_scored' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <div className="flex items-center justify-center gap-1.5">
+                      GS
+                      <SortIcon field="goals_scored" />
+                    </div>
                   </th>
-                  <th 
+                  <th
                     onClick={() => handleSort('goals_conceded')}
-                    className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-blue-700 transition-colors"
+                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
                   >
-                    GC {sortBy === 'goals_conceded' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <div className="flex items-center justify-center gap-1.5">
+                      GC
+                      <SortIcon field="goals_conceded" />
+                    </div>
                   </th>
-                  <th 
+                  <th
                     onClick={() => handleSort('goal_difference')}
-                    className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-blue-700 transition-colors"
+                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
                   >
-                    GD {sortBy === 'goal_difference' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <div className="flex items-center justify-center gap-1.5">
+                      GD
+                      <SortIcon field="goal_difference" />
+                    </div>
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider">
+                  <th className="px-4 py-3.5 font-bold uppercase tracking-wider">
                     W-D-L
                   </th>
-                  <th 
+                  <th
                     onClick={() => handleSort('clean_sheets')}
-                    className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-blue-700 transition-colors"
+                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
                   >
-                    CS {sortBy === 'clean_sheets' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <div className="flex items-center justify-center gap-1.5">
+                      CS
+                      <SortIcon field="clean_sheets" />
+                    </div>
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredPlayers.map((player, index) => {
-                  const hasEdits = editedPlayers.has(player.id);
-                  const currentPointsValue = getPlayerValue(player, 'points');
-                  const currentPoints = typeof currentPointsValue === 'string' ? parseInt(currentPointsValue) || 100 : currentPointsValue;
-                  const currentBasePointsValue = getPlayerValue(player, 'base_points');
-                  const currentBasePoints = typeof currentBasePointsValue === 'string' ? parseInt(currentBasePointsValue) || 0 : currentBasePointsValue;
-                  const change = currentBasePoints > 0 ? currentPoints - currentBasePoints : 0;
-                  const predictions = getPredictedChanges(player);
-                  
-                  return (
-                    <React.Fragment key={player.id}>
-                      <tr 
-                        className={`hover:bg-blue-50 transition-colors ${hasEdits ? 'bg-yellow-50' : index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
-                      >
-                        <td className="px-3 py-3">
-                          <button
-                            onClick={() => loadMatchdayStats(player.id)}
-                            disabled={loadingMatchday === player.id}
-                            className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50"
-                            title="View matchday breakdown"
-                          >
-                            {loadingMatchday === player.id ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                            ) : expandedPlayer === player.id ? (
-                              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
-                              </svg>
-                            ) : (
-                              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                              </svg>
-                            )}
-                          </button>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                              {player.player_name.charAt(0)}
+              <tbody className="bg-white/40 divide-y divide-slate-100/60">
+                {filteredPlayers.length === 0 ? (
+                  <tr>
+                    <td colSpan={13} className="px-6 py-12 text-center text-slate-400">
+                      <span className="text-4xl mb-3 block">👤</span>
+                      <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Players Found</h3>
+                      <p className="text-[10px] text-slate-400 uppercase font-semibold">Verify search input or try a different season</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredPlayers.map((player) => {
+                    const hasEdits = editedPlayers.has(player.id);
+                    const currentPointsValue = getPlayerValue(player, 'points');
+                    const currentPoints = typeof currentPointsValue === 'string' ? parseInt(currentPointsValue) || 100 : currentPointsValue;
+                    const currentBasePointsValue = getPlayerValue(player, 'base_points');
+                    const currentBasePoints = typeof currentBasePointsValue === 'string' ? parseInt(currentBasePointsValue) || 0 : currentBasePointsValue;
+                    const change = currentBasePoints > 0 ? currentPoints - currentBasePoints : 0;
+                    const totalPoints = playerTotalPoints.get(player.id) || 0;
+                    const predictions = getPredictedChanges(player);
+
+                    return (
+                      <React.Fragment key={player.id}>
+                        <tr className={`hover:bg-slate-50/50 transition-colors text-center ${hasEdits ? 'bg-amber-50/50' : ''}`}>
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            <button
+                              onClick={() => loadMatchdayStats(player.id)}
+                              disabled={loadingMatchday === player.id}
+                              className="p-1 hover:bg-slate-100 border border-slate-200/60 rounded-lg transition-all disabled:opacity-50 cursor-pointer"
+                            >
+                              {loadingMatchday === player.id ? (
+                                <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-amber-500"></div>
+                              ) : expandedPlayer === player.id ? (
+                                <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 15l7-7 7 7" />
+                                </svg>
+                              ) : (
+                                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                                </svg>
+                              )}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3.5 text-left whitespace-nowrap font-bold text-slate-800">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-shrink-0 w-8 h-8 bg-slate-800 border border-slate-900 rounded-xl flex items-center justify-center text-amber-400 font-extrabold text-xs shadow-md">
+                                {player.player_name.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <span className="text-xs font-black text-slate-800">{player.player_name}</span>
+                              </div>
                             </div>
-                            <span className="text-sm font-semibold text-gray-900 truncate max-w-[150px]">{player.player_name}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600 max-w-[120px] truncate">{player.team || '-'}</td>
-                        <td className="px-4 py-4 text-center">
-                          {editMode ? (
+                          </td>
+                          <td className="px-4 py-3.5 text-left whitespace-nowrap text-xs font-extrabold text-slate-500 uppercase">
+                            {player.team || 'Unassigned'}
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            {editMode ? (
+                              <input
+                                type="number"
+                                min="100"
+                                value={getPlayerValue(player, 'points')}
+                                onChange={(e) => updatePlayerValue(player.id, 'points', e.target.value === '' ? '' : parseInt(e.target.value))}
+                                onBlur={(e) => {
+                                  const val = parseInt(e.target.value);
+                                  if (isNaN(val) || val < 100) {
+                                    updatePlayerValue(player.id, 'points', 100);
+                                  }
+                                }}
+                                className="w-16 px-1.5 py-0.5 text-xs border border-slate-305 rounded text-center font-bold text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 font-mono"
+                                placeholder="100"
+                              />
+                            ) : (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black border uppercase tracking-wider bg-slate-800 text-amber-400 border-slate-900">
+                                {player.points || 0}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap text-xs font-extrabold text-slate-600">
+                            {editMode ? (
+                              <input
+                                type="number"
+                                value={getPlayerValue(player, 'base_points')}
+                                onChange={(e) => updatePlayerValue(player.id, 'base_points', e.target.value === '' ? '' : parseInt(e.target.value))}
+                                onBlur={(e) => {
+                                  const val = parseInt(e.target.value);
+                                  if (isNaN(val)) {
+                                    updatePlayerValue(player.id, 'base_points', 0);
+                                  }
+                                }}
+                                className="w-16 px-1.5 py-0.5 text-xs border border-slate-300 rounded text-center font-semibold text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 font-mono"
+                                placeholder="0"
+                              />
+                            ) : (
+                              player.base_points || 0
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            {player.base_points > 0 ? (
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black border ${
+                                change > 0 
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
+                                  : change < 0
+                                  ? 'bg-rose-50 text-rose-700 border-rose-200/50'
+                                  : 'bg-slate-50 text-slate-600 border-slate-200/50'
+                              }`}>
+                                {change > 0 ? '↑' : change < 0 ? '↓' : '='} 
+                                {change > 0 ? '+' : ''}{change}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-slate-400 font-bold">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            {playerTotalPoints.has(player.id) ? (
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black border uppercase tracking-wider ${
+                                totalPoints > 0 
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
+                                  : totalPoints < 0
+                                  ? 'bg-rose-50 text-rose-700 border-rose-200/50'
+                                  : 'bg-slate-50 text-slate-600 border-slate-200/50'
+                              }`}>
+                                {totalPoints > 0 ? '+' : ''}{totalPoints}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-slate-400 font-bold">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap text-xs font-extrabold text-slate-700">
+                            {editMode ? (
+                              <input
+                                type="number"
+                                value={getPlayerValue(player, 'matches_played')}
+                                onChange={(e) => updatePlayerValue(player.id, 'matches_played', e.target.value === '' ? '' : parseInt(e.target.value))}
+                                onBlur={(e) => {
+                                  const val = parseInt(e.target.value);
+                                  if (isNaN(val)) {
+                                    updatePlayerValue(player.id, 'matches_played', 0);
+                                  }
+                                }}
+                                className="w-12 px-1 py-0.5 text-xs border border-slate-300 rounded text-center text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 font-mono"
+                                placeholder="0"
+                              />
+                            ) : (
+                              player.matches_played || 0
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            {editMode ? (
+                              <input
+                                type="number"
+                                value={getPlayerValue(player, 'goals_scored')}
+                                onChange={(e) => updatePlayerValue(player.id, 'goals_scored', e.target.value === '' ? '' : parseInt(e.target.value))}
+                                onBlur={(e) => {
+                                  const val = parseInt(e.target.value);
+                                  if (isNaN(val)) {
+                                    updatePlayerValue(player.id, 'goals_scored', 0);
+                                  }
+                                }}
+                                className="w-12 px-1 py-0.5 text-xs border border-slate-300 rounded text-center text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 font-mono"
+                                placeholder="0"
+                              />
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-emerald-50 text-emerald-700 border-emerald-200/40">
+                                ⚽ {player.goals_scored || 0}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap text-xs font-semibold text-rose-600">
+                            {editMode ? (
+                              <input
+                                type="number"
+                                value={getPlayerValue(player, 'goals_conceded')}
+                                onChange={(e) => updatePlayerValue(player.id, 'goals_conceded', e.target.value === '' ? '' : parseInt(e.target.value))}
+                                onBlur={(e) => {
+                                  const val = parseInt(e.target.value);
+                                  if (isNaN(val)) {
+                                    updatePlayerValue(player.id, 'goals_conceded', 0);
+                                  }
+                                }}
+                                className="w-12 px-1 py-0.5 text-xs border border-slate-300 rounded text-center text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 font-mono"
+                                placeholder="0"
+                              />
+                            ) : (
+                              player.goals_conceded || 0
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black border ${
+                              player.goal_difference > 0 
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
+                                : player.goal_difference < 0
+                                ? 'bg-rose-50 text-rose-700 border-rose-200/50'
+                                : 'bg-slate-50 text-slate-600 border-slate-200/50'
+                            }`}>
+                              {player.goal_difference > 0 ? '+' : ''}{player.goal_difference || 0}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap text-xs font-extrabold text-slate-600">
+                            <span className="text-emerald-600 font-bold">{getPlayerValue(player, 'wins')}</span>-
+                            <span className="text-slate-400">{getPlayerValue(player, 'draws')}</span>-
+                            <span className="text-rose-600 font-bold">{getPlayerValue(player, 'losses')}</span>
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap text-xs font-extrabold text-slate-700">
+                            {editMode ? (
+                              <input
+                                type="number"
+                                value={getPlayerValue(player, 'clean_sheets')}
+                                onChange={(e) => updatePlayerValue(player.id, 'clean_sheets', e.target.value === '' ? '' : parseInt(e.target.value))}
+                                onBlur={(e) => {
+                                  const val = parseInt(e.target.value);
+                                  if (isNaN(val)) {
+                                    updatePlayerValue(player.id, 'clean_sheets', 0);
+                                  }
+                                }}
+                                className="w-12 px-1 py-0.5 text-xs border border-slate-300 rounded text-center text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 font-mono"
+                                placeholder="0"
+                              />
+                            ) : (
+                              player.clean_sheets || 0
+                            )}
+                          </td>
+                        </tr>
+
+                        {/* Expanded Matchday Stats Drawer inside the table */}
+                        {expandedPlayer === player.id && matchdayStats.has(player.id) && (
+                          <tr className="bg-slate-50/[0.15]">
+                            <td colSpan={13} className="px-6 py-6 border-t border-b border-slate-100">
+                              <div className="console-card bg-white border border-slate-200/60 rounded-xl p-5 shadow-inner font-mono">
+                                <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                                  <span className="text-base">📊</span>
+                                  <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+                                    Matchday Breakdown - {player.player_name}
+                                  </h4>
+                                </div>
+
+                                {matchdayStats.get(player.id)!.length === 0 ? (
+                                  <div className="text-center py-6 text-slate-400">
+                                    <p className="text-[10px] font-bold uppercase">No completed matches in this range</p>
+                                  </div>
+                                ) : (
+                                  <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-slate-100 text-center font-mono">
+                                      <thead className="bg-slate-50/50 border-b border-slate-100 text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                                        <tr>
+                                          <th className="px-3 py-2 text-left">Round</th>
+                                          <th className="px-3 py-2 text-left">Matchup</th>
+                                          <th className="px-3 py-2">Score</th>
+                                          <th className="px-3 py-2">GD</th>
+                                          <th className="px-3 py-2">Points</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-slate-100/50 bg-white/40">
+                                        {matchdayStats.get(player.id)!.map((match, idx) => (
+                                          <tr key={idx} className="hover:bg-slate-50/20 text-xs">
+                                            <td className="px-3 py-2.5 text-left whitespace-nowrap">
+                                              <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-slate-800 text-amber-400 border-slate-900">
+                                                R{match.matchday}
+                                              </span>
+                                              {match.was_substitute && (
+                                                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200/50 uppercase">
+                                                  SUB
+                                                </span>
+                                              )}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-left">
+                                              <div className="text-slate-800 font-medium">
+                                                {match.player_side === 'home' ? (
+                                                  <>
+                                                    <span className="font-extrabold text-slate-800">{match.home_player_name}</span>
+                                                    <span className="text-slate-400 mx-1.5 font-bold">vs</span>
+                                                    <span className="text-slate-500">{match.away_player_name}</span>
+                                                  </>
+                                                ) : (
+                                                  <>
+                                                    <span className="text-slate-500">{match.home_player_name}</span>
+                                                    <span className="text-slate-400 mx-1.5 font-bold">vs</span>
+                                                    <span className="font-extrabold text-slate-800">{match.away_player_name}</span>
+                                                  </>
+                                                )}
+                                                <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">
+                                                  {match.home_team_name} vs {match.away_team_name}
+                                                </div>
+                                              </div>
+                                            </td>
+                                            <td className="px-3 py-2.5 font-bold text-slate-700 whitespace-nowrap">
+                                              {match.goals_scored} - {match.goals_conceded}
+                                            </td>
+                                            <td className="px-3 py-2.5 whitespace-nowrap">
+                                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                                match.goal_difference > 0 
+                                                  ? 'text-emerald-600 font-black' 
+                                                  : match.goal_difference < 0 
+                                                  ? 'text-rose-600 font-black' 
+                                                  : 'text-slate-500'
+                                              }`}>
+                                                {match.goal_difference > 0 ? '+' : ''}{match.goal_difference}
+                                              </span>
+                                            </td>
+                                            <td className="px-3 py-2.5 whitespace-nowrap">
+                                              <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border ${
+                                                match.points > 0 
+                                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
+                                                  : match.points < 0 
+                                                  ? 'bg-rose-50 text-rose-700 border-rose-200/50' 
+                                                  : 'bg-slate-50 text-slate-600 border-slate-200/50'
+                                              }`}>
+                                                {match.points > 0 ? '+' : ''}{match.points}
+                                              </span>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                      <tfoot className="border-t border-slate-200 bg-slate-50/50 font-black text-xs text-slate-800">
+                                        <tr>
+                                          <td colSpan={4} className="px-3 py-3 text-right uppercase tracking-wider font-extrabold text-[10px] text-slate-405">
+                                            Total Points:
+                                          </td>
+                                          <td className="px-3 py-3">
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-xl text-xs font-black border uppercase tracking-wider ${
+                                              matchdayStats.get(player.id)!.reduce((sum, m) => sum + m.points, 0) > 0 
+                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-300' 
+                                                : matchdayStats.get(player.id)!.reduce((sum, m) => sum + m.points, 0) < 0 
+                                                ? 'bg-rose-50 text-rose-700 border-rose-300' 
+                                                : 'bg-slate-50 text-slate-600 border-slate-300'
+                                            }`}>
+                                              {matchdayStats.get(player.id)!.reduce((sum, m) => sum + m.points, 0) > 0 ? '+' : ''}
+                                              {matchdayStats.get(player.id)!.reduce((sum, m) => sum + m.points, 0)}
+                                            </span>
+                                          </td>
+                                        </tr>
+                                      </tfoot>
+                                    </table>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+
+                        {/* Edit Mode preview changes row */}
+                        {editMode && hasEdits && predictions.starRatingChanged && (
+                          <tr key={`${player.id}-preview`} className="bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500 font-mono">
+                            <td colSpan={13} className="px-6 py-3 text-left">
+                              <div className="flex items-center gap-4 text-xs">
+                                <span className="font-extrabold text-slate-700 uppercase tracking-wider">⭐ Star Rating Change:</span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-amber-50 text-amber-700 border border-amber-200">
+                                  {predictions.oldStarRating}⭐
+                                </span>
+                                <span className="text-slate-400 font-bold">→</span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  {predictions.newStarRating}⭐
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile View */}
+          <div className="sm:hidden space-y-4 px-3 pb-4 pt-2">
+            {filteredPlayers.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 bg-white border border-slate-200/60 rounded-xl font-mono">
+                <span className="text-4xl mb-2 block">👤</span>
+                <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Players Found</h3>
+              </div>
+            ) : (
+              filteredPlayers.map((player) => {
+                const isExpanded = expandedPlayer === player.id;
+                const hasEdits = editedPlayers.has(player.id);
+                const currentPointsValue = getPlayerValue(player, 'points');
+                const currentPoints = typeof currentPointsValue === 'string' ? parseInt(currentPointsValue) || 100 : currentPointsValue;
+                const currentBasePointsValue = getPlayerValue(player, 'base_points');
+                const currentBasePoints = typeof currentBasePointsValue === 'string' ? parseInt(currentBasePointsValue) || 0 : currentBasePointsValue;
+                const change = currentBasePoints > 0 ? currentPoints - currentBasePoints : 0;
+                const totalPoints = playerTotalPoints.get(player.id) || 0;
+                const predictions = getPredictedChanges(player);
+
+                return (
+                  <div 
+                    key={player.id} 
+                    className={`console-card bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm relative overflow-hidden font-mono ${hasEdits ? 'bg-amber-50/50 border-amber-300' : ''}`}
+                  >
+                    {/* Player Card Header */}
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex-shrink-0 w-8 h-8 bg-slate-800 border border-slate-900 rounded-xl flex items-center justify-center text-amber-400 font-extrabold text-xs shadow-md">
+                          {player.player_name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-black text-slate-800">{player.player_name}</h3>
+                          <span className="block text-[9px] text-slate-400 font-bold uppercase mt-0.5">{player.team || 'Unassigned'}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {editMode ? (
+                          <div className="flex items-center gap-1 font-mono">
+                            <span className="text-[9px] text-slate-400 font-extrabold uppercase">Pts:</span>
                             <input
                               type="number"
                               min="100"
@@ -617,340 +1056,291 @@ export default function PlayerStatsPage() {
                                   updatePlayerValue(player.id, 'points', 100);
                                 }
                               }}
-                              className="w-16 px-2 py-1 text-sm border-2 border-blue-300 rounded text-center font-bold text-blue-600 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="100"
+                              className="w-14 px-1 py-0.5 text-xs border border-slate-300 rounded text-center text-slate-800 bg-white"
                             />
-                          ) : (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-700">
-                              {player.points || 0}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          {editMode ? (
-                            <input
-                              type="number"
-                              value={getPlayerValue(player, 'base_points')}
-                              onChange={(e) => updatePlayerValue(player.id, 'base_points', e.target.value === '' ? '' : parseInt(e.target.value))}
-                              onBlur={(e) => {
-                                const val = parseInt(e.target.value);
-                                if (isNaN(val)) {
-                                  updatePlayerValue(player.id, 'base_points', 0);
-                                }
-                              }}
-                              className="w-16 px-2 py-1 text-sm border-2 border-gray-300 rounded text-center font-semibold focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="0"
-                            />
-                          ) : (
-                            <span className="text-sm font-semibold text-gray-600">{player.base_points || 0}</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          {currentBasePoints > 0 ? (
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ${
-                              change > 0 
-                                ? 'bg-green-100 text-green-700' 
-                                : change < 0
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {change > 0 ? '↑' : change < 0 ? '↓' : '='} 
-                              {change > 0 ? '+' : ''}{change}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-gray-400">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          {playerTotalPoints.has(player.id) ? (
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
-                              playerTotalPoints.get(player.id)! > 0 
-                                ? 'bg-green-100 text-green-700' 
-                                : playerTotalPoints.get(player.id)! < 0
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {playerTotalPoints.get(player.id)! > 0 ? '+' : ''}{playerTotalPoints.get(player.id)}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-gray-400">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          {editMode ? (
-                            <input
-                              type="number"
-                              value={getPlayerValue(player, 'matches_played')}
-                              onChange={(e) => updatePlayerValue(player.id, 'matches_played', e.target.value === '' ? '' : parseInt(e.target.value))}
-                              onBlur={(e) => {
-                                const val = parseInt(e.target.value);
-                                if (isNaN(val)) {
-                                  updatePlayerValue(player.id, 'matches_played', 0);
-                                }
-                              }}
-                              className="w-12 px-1 py-1 text-sm border-2 border-gray-300 rounded text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="0"
-                            />
-                          ) : (
-                            <span className="text-sm font-medium text-gray-700">{player.matches_played || 0}</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          {editMode ? (
-                            <input
-                              type="number"
-                              value={getPlayerValue(player, 'goals_scored')}
-                              onChange={(e) => updatePlayerValue(player.id, 'goals_scored', e.target.value === '' ? '' : parseInt(e.target.value))}
-                              onBlur={(e) => {
-                                const val = parseInt(e.target.value);
-                                if (isNaN(val)) {
-                                  updatePlayerValue(player.id, 'goals_scored', 0);
-                                }
-                              }}
-                              className="w-12 px-1 py-1 text-sm border-2 border-gray-300 rounded text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="0"
-                            />
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                              ⚽ {player.goals_scored || 0}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          {editMode ? (
-                            <input
-                              type="number"
-                              value={getPlayerValue(player, 'goals_conceded')}
-                              onChange={(e) => updatePlayerValue(player.id, 'goals_conceded', e.target.value === '' ? '' : parseInt(e.target.value))}
-                              onBlur={(e) => {
-                                const val = parseInt(e.target.value);
-                                if (isNaN(val)) {
-                                  updatePlayerValue(player.id, 'goals_conceded', 0);
-                                }
-                              }}
-                              className="w-12 px-1 py-1 text-sm border-2 border-gray-300 rounded text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="0"
-                            />
-                          ) : (
-                            <span className="text-sm font-semibold text-red-600">{player.goals_conceded || 0}</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          <span className={`text-sm font-bold ${
-                            player.goal_difference > 0 ? 'text-green-600' : 
-                            player.goal_difference < 0 ? 'text-red-600' : 'text-gray-600'
-                          }`}>
-                            {player.goal_difference > 0 ? '+' : ''}{player.goal_difference || 0}
+                          </div>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black border uppercase tracking-wider bg-slate-800 text-amber-400 border-slate-900">
+                            {player.points || 0}
                           </span>
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          <span className="text-sm text-gray-600 font-medium">
-                            <span className="text-green-600 font-bold">{getPlayerValue(player, 'wins')}</span>-
-                            <span className="text-gray-500">{getPlayerValue(player, 'draws')}</span>-
-                            <span className="text-red-600 font-bold">{getPlayerValue(player, 'losses')}</span>
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          {editMode ? (
-                            <input
-                              type="number"
-                              value={getPlayerValue(player, 'clean_sheets')}
-                              onChange={(e) => updatePlayerValue(player.id, 'clean_sheets', e.target.value === '' ? '' : parseInt(e.target.value))}
-                              onBlur={(e) => {
-                                const val = parseInt(e.target.value);
-                                if (isNaN(val)) {
-                                  updatePlayerValue(player.id, 'clean_sheets', 0);
-                                }
-                              }}
-                              className="w-12 px-1 py-1 text-sm border-2 border-gray-300 rounded text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="0"
-                            />
+                        )}
+                        <button
+                          onClick={() => loadMatchdayStats(player.id)}
+                          disabled={loadingMatchday === player.id}
+                          className="p-1 hover:bg-slate-100 border border-slate-200/60 rounded-lg transition-all disabled:opacity-50 cursor-pointer"
+                        >
+                          {loadingMatchday === player.id ? (
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-amber-500"></div>
+                          ) : isExpanded ? (
+                            <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 15l7-7 7 7" />
+                            </svg>
                           ) : (
-                            <span className="text-sm font-semibold text-gray-700">{player.clean_sheets || 0}</span>
+                            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                            </svg>
                           )}
-                        </td>
-                      </tr>
-                      {expandedPlayer === player.id && matchdayStats.has(player.id) && (
-                        <tr key={`${player.id}-matchday`} className="bg-gradient-to-r from-blue-50 to-purple-50">
-                          <td colSpan={12} className="px-6 py-6">
-                            <div className="bg-white rounded-xl shadow-lg p-6">
-                              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                                Matchday Breakdown - {player.player_name}
-                              </h3>
-                              <p className="text-sm text-gray-600 mb-4">
-                                Points are based on goal difference in each matchup (max +5 or -5 per match)
-                              </p>
-                              
-                              {matchdayStats.get(player.id)!.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">
-                                  <svg className="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                  </svg>
-                                  <p className="font-medium">No completed matches yet</p>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick Stats Grid */}
+                    <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100 text-center text-xs font-mono">
+                      <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Played</p>
+                        {editMode ? (
+                          <input
+                            type="number"
+                            value={getPlayerValue(player, 'matches_played')}
+                            onChange={(e) => updatePlayerValue(player.id, 'matches_played', e.target.value === '' ? '' : parseInt(e.target.value))}
+                            onBlur={(e) => {
+                              const val = parseInt(e.target.value);
+                              if (isNaN(val)) {
+                                updatePlayerValue(player.id, 'matches_played', 0);
+                              }
+                            }}
+                            className="w-full px-1 py-0.5 text-[11px] border border-slate-300 rounded text-center text-slate-800 bg-white"
+                          />
+                        ) : (
+                          <p className="font-extrabold text-slate-800">{player.matches_played || 0}</p>
+                        )}
+                      </div>
+                      <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Goals</p>
+                        {editMode ? (
+                          <input
+                            type="number"
+                            value={getPlayerValue(player, 'goals_scored')}
+                            onChange={(e) => updatePlayerValue(player.id, 'goals_scored', e.target.value === '' ? '' : parseInt(e.target.value))}
+                            onBlur={(e) => {
+                              const val = parseInt(e.target.value);
+                              if (isNaN(val)) {
+                                updatePlayerValue(player.id, 'goals_scored', 0);
+                              }
+                            }}
+                            className="w-full px-1 py-0.5 text-[11px] border border-slate-300 rounded text-center text-slate-800 bg-white"
+                          />
+                        ) : (
+                          <p className="font-extrabold text-emerald-700">⚽ {player.goals_scored || 0}</p>
+                        )}
+                      </div>
+                      <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">GD</p>
+                        <p className={`font-extrabold ${player.goal_difference > 0 ? 'text-emerald-600' : player.goal_difference < 0 ? 'text-rose-600' : 'text-slate-655'}`}>
+                          {player.goal_difference > 0 ? '+' : ''}{player.goal_difference || 0}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Points Details Row */}
+                    <div className="grid grid-cols-3 gap-2 mt-2 text-center text-xs font-mono">
+                      <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Base</p>
+                        {editMode ? (
+                          <input
+                            type="number"
+                            value={getPlayerValue(player, 'base_points')}
+                            onChange={(e) => updatePlayerValue(player.id, 'base_points', e.target.value === '' ? '' : parseInt(e.target.value))}
+                            onBlur={(e) => {
+                              const val = parseInt(e.target.value);
+                              if (isNaN(val)) {
+                                updatePlayerValue(player.id, 'base_points', 0);
+                              }
+                            }}
+                            className="w-full px-1 py-0.5 text-[11px] border border-slate-300 rounded text-center text-slate-800 bg-white"
+                          />
+                        ) : (
+                          <p className="font-extrabold text-slate-800">{player.base_points || 0}</p>
+                        )}
+                      </div>
+                      <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Change</p>
+                        {currentBasePoints > 0 ? (
+                          <span className={`font-black text-[10px] ${change > 0 ? 'text-emerald-650' : change < 0 ? 'text-rose-650' : 'text-slate-600'}`}>
+                            {change > 0 ? '+' : ''}{change}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-bold">-</span>
+                        )}
+                      </div>
+                      <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Total</p>
+                        <span className={`font-black text-[10px] ${totalPoints > 0 ? 'text-emerald-650' : totalPoints < 0 ? 'text-rose-650' : 'text-slate-700'}`}>
+                          {totalPoints > 0 ? '+' : ''}{totalPoints}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Additional Stats Row */}
+                    <div className="grid grid-cols-3 gap-2 mt-2 text-center text-xs font-mono">
+                      <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40 col-span-2">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">W-D-L</p>
+                        <p className="font-extrabold text-[10px]">
+                          <span className="text-emerald-600">{player.wins}</span>-
+                          <span className="text-slate-400">{player.draws}</span>-
+                          <span className="text-rose-600">{player.losses}</span>
+                        </p>
+                      </div>
+                      <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Clean Sheets</p>
+                        {editMode ? (
+                          <input
+                            type="number"
+                            value={getPlayerValue(player, 'clean_sheets')}
+                            onChange={(e) => updatePlayerValue(player.id, 'clean_sheets', e.target.value === '' ? '' : parseInt(e.target.value))}
+                            onBlur={(e) => {
+                              const val = parseInt(e.target.value);
+                              if (isNaN(val)) {
+                                updatePlayerValue(player.id, 'clean_sheets', 0);
+                              }
+                            }}
+                            className="w-full px-1 py-0.5 text-[11px] border border-slate-300 rounded text-center text-slate-800 bg-white"
+                          />
+                        ) : (
+                          <p className="font-extrabold text-slate-800">{player.clean_sheets || 0}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Mobile Rating Preview */}
+                    {editMode && hasEdits && predictions.starRatingChanged && (
+                      <div className="mt-2.5 p-2 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 text-[10px] flex justify-between items-center font-mono">
+                        <span className="font-bold text-slate-700 uppercase">Star Rating Change:</span>
+                        <span className="font-black text-slate-800">
+                          {predictions.oldStarRating}⭐ → {predictions.newStarRating}⭐
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Expanded breakdown for mobile */}
+                    {isExpanded && matchdayStats.has(player.id) && (
+                      <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
+                        <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-wider mb-2 font-mono">Matchday Log</h4>
+                        {matchdayStats.get(player.id)!.length === 0 ? (
+                          <p className="text-[10px] text-slate-400 font-bold uppercase text-center py-2 font-mono">No completed matches</p>
+                        ) : (
+                          <div className="space-y-2 max-h-60 overflow-y-auto pr-1 font-mono">
+                            {matchdayStats.get(player.id)!.map((match, idx) => (
+                              <div key={idx} className="bg-slate-50/60 p-2.5 rounded-lg border border-slate-100 text-[11px] space-y-1">
+                                <div className="flex justify-between items-center font-bold">
+                                  <span className="inline-flex items-center px-1.5 py-0.2 bg-slate-800 text-amber-400 border border-slate-900 rounded text-[9px]">R{match.matchday}</span>
+                                  <span className={`px-1.5 py-0.2 rounded text-[9px] font-black border ${
+                                    match.points > 0 
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
+                                      : match.points < 0 
+                                      ? 'bg-rose-50 text-rose-700 border-rose-200/50' 
+                                      : 'bg-slate-50 text-slate-600 border-slate-200/50'
+                                  }`}>{match.points > 0 ? '+' : ''}{match.points} pts</span>
                                 </div>
-                              ) : (
-                                <>
-                                  <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                      <thead className="bg-gray-100">
-                                        <tr>
-                                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Matchday</th>
-                                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Matchup</th>
-                                          <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Score</th>
-                                          <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">GD</th>
-                                          <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Points</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody className="divide-y divide-gray-200">
-                                        {matchdayStats.get(player.id)!.map((match, idx) => (
-                                          <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-4 py-3">
-                                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
-                                                Round {match.matchday}
-                                              </span>
-                                              {match.was_substitute && (
-                                                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700" title="Substitute">
-                                                  SUB
-                                                </span>
-                                              )}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                              <div className="text-sm">
-                                                {match.player_side === 'home' ? (
-                                                  <>
-                                                    <span className="font-bold text-blue-600">{match.home_player_name}</span>
-                                                    <span className="text-gray-500 mx-2">vs</span>
-                                                    <span className="text-gray-700">{match.away_player_name}</span>
-                                                  </>
-                                                ) : (
-                                                  <>
-                                                    <span className="text-gray-700">{match.home_player_name}</span>
-                                                    <span className="text-gray-500 mx-2">vs</span>
-                                                    <span className="font-bold text-blue-600">{match.away_player_name}</span>
-                                                  </>
-                                                )}
-                                                <div className="text-xs text-gray-500 mt-1">
-                                                  {match.home_team_name} vs {match.away_team_name}
-                                                </div>
-                                              </div>
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                              <span className="text-sm font-bold">
-                                                {match.goals_scored} - {match.goals_conceded}
-                                              </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ${
-                                                match.goal_difference > 0 
-                                                  ? 'bg-green-100 text-green-700' 
-                                                  : match.goal_difference < 0
-                                                  ? 'bg-red-100 text-red-700'
-                                                  : 'bg-gray-100 text-gray-600'
-                                              }`}>
-                                                {match.goal_difference > 0 ? '+' : ''}{match.goal_difference}
-                                              </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
-                                                match.points > 0 
-                                                  ? 'bg-green-100 text-green-700' 
-                                                  : match.points < 0
-                                                  ? 'bg-red-100 text-red-700'
-                                                  : 'bg-gray-100 text-gray-600'
-                                              }`}>
-                                                {match.points > 0 ? '+' : ''}{match.points}
-                                              </span>
-                                            </td>
-                                          </tr>
-                                        ))}
-                                      </tbody>
-                                      <tfoot className="bg-gradient-to-r from-blue-100 to-purple-100">
-                                        <tr>
-                                          <td colSpan={4} className="px-4 py-3 text-right font-bold text-gray-800">
-                                            Total Points:
-                                          </td>
-                                          <td className="px-4 py-3 text-center">
-                                            <span className={`inline-flex items-center px-4 py-2 rounded-full text-base font-bold ${
-                                              matchdayStats.get(player.id)!.reduce((sum, m) => sum + m.points, 0) > 0
-                                                ? 'bg-green-200 text-green-800' 
-                                                : matchdayStats.get(player.id)!.reduce((sum, m) => sum + m.points, 0) < 0
-                                                ? 'bg-red-200 text-red-800'
-                                                : 'bg-gray-200 text-gray-700'
-                                            }`}>
-                                              {matchdayStats.get(player.id)!.reduce((sum, m) => sum + m.points, 0) > 0 ? '+' : ''}
-                                              {matchdayStats.get(player.id)!.reduce((sum, m) => sum + m.points, 0)}
-                                            </span>
-                                          </td>
-                                        </tr>
-                                      </tfoot>
-                                    </table>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                      {editMode && hasEdits && predictions.starRatingChanged && (
-                        <tr key={`${player.id}-preview`} className="bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500">
-                          <td colSpan={11} className="px-6 py-3">
-                            <div className="flex items-center gap-4 text-sm">
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-gray-700">⭐ Star Rating:</span>
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700">
-                                  {predictions.oldStarRating}⭐
-                                </span>
-                                <span className="text-gray-400">→</span>
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                                  {predictions.newStarRating}⭐
-                                </span>
+                                <div className="flex justify-between items-center text-slate-700">
+                                  <span>
+                                    {match.player_side === 'home' ? (
+                                      <>
+                                        <span className="font-extrabold">{match.home_player_name}</span>
+                                        <span className="text-slate-400 mx-1">vs</span>
+                                        <span className="text-slate-500">{match.away_player_name}</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span className="text-slate-500">{match.home_player_name}</span>
+                                        <span className="text-slate-400 mx-1">vs</span>
+                                        <span className="font-extrabold">{match.away_player_name}</span>
+                                      </>
+                                    )}
+                                  </span>
+                                  <span className="font-black text-slate-800">{match.goals_scored}-{match.goals_conceded}</span>
+                                </div>
+                                <div className="text-[9px] text-slate-400 uppercase font-semibold">
+                                  {match.home_team_name} vs {match.away_team_name}
+                                </div>
                               </div>
+                            ))}
+                            
+                            <div className="flex justify-between items-center bg-slate-100 p-2 rounded-lg border border-slate-200/60 font-black text-xs">
+                              <span className="uppercase text-[9px] text-slate-400">Total Points:</span>
+                              <span className={matchdayStats.get(player.id)!.reduce((sum, m) => sum + m.points, 0) > 0 ? 'text-emerald-600' : matchdayStats.get(player.id)!.reduce((sum, m) => sum + m.points, 0) < 0 ? 'text-rose-600' : 'text-slate-700'}>
+                                {matchdayStats.get(player.id)!.reduce((sum, m) => sum + m.points, 0) > 0 ? '+' : ''}
+                                {matchdayStats.get(player.id)!.reduce((sum, m) => sum + m.points, 0)} pts
+                              </span>
                             </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
         {filteredPlayers.length === 0 && (
-          <div className="text-center py-16 bg-white rounded-2xl shadow-xl mt-6">
-            <svg className="w-20 h-20 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center py-16 bg-white rounded-2xl shadow-xl mt-6 font-mono">
+            <svg className="w-20 h-20 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">No Players Found</h3>
-            <p className="text-gray-500">Try adjusting your search criteria</p>
+            <h3 className="text-xl font-bold text-slate-800 uppercase tracking-wider mb-2">No Players Found</h3>
+            <p className="text-[10px] text-slate-400 uppercase font-semibold">Try adjusting your search criteria</p>
           </div>
         )}
 
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
-            <div className="text-sm font-medium opacity-90">Total Players</div>
-            <div className="text-3xl font-bold mt-2">{filteredPlayers.length}</div>
-          </div>
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
-            <div className="text-sm font-medium opacity-90">Total Goals</div>
-            <div className="text-3xl font-bold mt-2">
-              {filteredPlayers.reduce((sum, p) => sum + (p.goals_scored || 0), 0)}
+        {/* Summary Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <div className="console-card bg-white border border-slate-200/60 rounded-xl p-5 shadow-sm hover:border-amber-400/40 hover:shadow-md transition-all duration-200 font-mono">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Players</p>
+                <p className="text-2xl font-black text-slate-800 mt-1">{filteredPlayers.length}</p>
+              </div>
+              <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
-            <div className="text-sm font-medium opacity-90">Total Matches</div>
-            <div className="text-3xl font-bold mt-2">
-              {filteredPlayers.reduce((sum, p) => sum + (p.matches_played || 0), 0)}
+
+          <div className="console-card bg-white border border-slate-200/60 rounded-xl p-5 shadow-sm hover:border-amber-400/40 hover:shadow-md transition-all duration-200 font-mono">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Goals</p>
+                <p className="text-2xl font-black text-slate-800 mt-1">
+                  {filteredPlayers.reduce((sum, p) => sum + (p.goals_scored || 0), 0)}
+                </p>
+              </div>
+              <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0 font-mono">
+                <span className="text-lg">⚽</span>
+              </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
-            <div className="text-sm font-medium opacity-90">Clean Sheets</div>
-            <div className="text-3xl font-bold mt-2">
-              {filteredPlayers.reduce((sum, p) => sum + (p.clean_sheets || 0), 0)}
+
+          <div className="console-card bg-white border border-slate-200/60 rounded-xl p-5 shadow-sm hover:border-amber-400/40 hover:shadow-md transition-all duration-200 font-mono">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Matches</p>
+                <p className="text-2xl font-black text-slate-800 mt-1">
+                  {filteredPlayers.reduce((sum, p) => sum + (p.matches_played || 0), 0)}
+                </p>
+              </div>
+              <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="console-card bg-white border border-slate-200/60 rounded-xl p-5 shadow-sm hover:border-amber-400/40 hover:shadow-md transition-all duration-200 font-mono">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Clean Sheets</p>
+                <p className="text-2xl font-black text-slate-800 mt-1">
+                  {filteredPlayers.reduce((sum, p) => sum + (p.clean_sheets || 0), 0)}
+                </p>
+              </div>
+              <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0 font-mono">
+                <span className="text-lg">🧤</span>
+              </div>
             </div>
           </div>
         </div>

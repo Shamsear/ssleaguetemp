@@ -4,7 +4,33 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { DollarSign, Users, Filter, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
+import { 
+  DollarSign, 
+  Users, 
+  Filter, 
+  TrendingUp, 
+  TrendingDown, 
+  Calendar,
+  ArrowLeft,
+  Trophy,
+  ClipboardList,
+  Download,
+  Share2,
+  Check,
+  ChevronDown,
+  Award,
+  Gift,
+  Wallet,
+  UserCheck,
+  Gavel,
+  AlertTriangle,
+  ArrowRightLeft,
+  RefreshCw,
+  Undo2,
+  FileText,
+  Settings,
+  Info
+} from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -753,29 +779,30 @@ export default function AllTransactionsPage() {
     return <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-lg">SSCoin</span>;
   };
 
-  const getTransactionIcon = (type: string) => {
-    const icons: Record<string, string> = {
-      'match_reward': '🏆',
-      'position_reward': '🥇',
-      'completion_bonus': '🎉',
-      'knockout_reward': '🏆',
-      'salary_payment': '💰',
-      'salary': '💰',
-      'real_player_fee': '👤',
-      'auction_win': '🔨',
-      'fine': '⚠️',
-      'bonus': '🎁',
-      'transfer_payment': '➡️',
-      'transfer_compensation': '⬅️',
-      'swap_fee_paid': '🔄',
-      'swap_fee_received': '🔁',
-      'release_refund': '↩️',
-      'player_release_refund': '↩️',
-      'release': '↩️',
-      'initial_balance': '🏬',
-      'adjustment': '🔧',
+  const renderTransactionIcon = (type: string) => {
+    const iconClass = "w-4 h-4";
+    const icons: Record<string, React.ReactNode> = {
+      'match_reward': <Trophy className={`${iconClass} text-amber-500`} />,
+      'position_reward': <Award className={`${iconClass} text-amber-500`} />,
+      'completion_bonus': <Gift className={`${iconClass} text-emerald-500`} />,
+      'knockout_reward': <Trophy className={`${iconClass} text-amber-500`} />,
+      'salary_payment': <Wallet className={`${iconClass} text-blue-500`} />,
+      'salary': <Wallet className={`${iconClass} text-blue-500`} />,
+      'real_player_fee': <UserCheck className={`${iconClass} text-purple-500`} />,
+      'auction_win': <Gavel className={`${iconClass} text-amber-600`} />,
+      'fine': <AlertTriangle className={`${iconClass} text-rose-500`} />,
+      'bonus': <Gift className={`${iconClass} text-emerald-500`} />,
+      'transfer_payment': <ArrowRightLeft className={`${iconClass} text-rose-500`} />,
+      'transfer_compensation': <ArrowRightLeft className={`${iconClass} text-emerald-500`} />,
+      'swap_fee_paid': <RefreshCw className={`${iconClass} text-rose-500`} />,
+      'swap_fee_received': <RefreshCw className={`${iconClass} text-emerald-500`} />,
+      'release_refund': <Undo2 className={`${iconClass} text-emerald-500`} />,
+      'player_release_refund': <Undo2 className={`${iconClass} text-emerald-500`} />,
+      'release': <Undo2 className={`${iconClass} text-emerald-500`} />,
+      'initial_balance': <Wallet className={`${iconClass} text-blue-500`} />,
+      'adjustment': <Settings className={`${iconClass} text-slate-500`} />,
     };
-    return icons[type] || '📝';
+    return icons[type] || <FileText className={`${iconClass} text-slate-500`} />;
   };
 
   const formatTransactionType = (type: string) => {
@@ -880,8 +907,12 @@ export default function AllTransactionsPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-500 uppercase tracking-wider font-extrabold">Loading transactions...</p>
+        </div>
       </div>
     );
   }
@@ -889,53 +920,48 @@ export default function AllTransactionsPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Ambient Gold Glow Overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
+        <div className="mb-6">
           <Link
             href="/dashboard/committee"
-            className="inline-flex items-center gap-2 text-sm sm:text-base text-gray-600 hover:text-indigo-600 transition-colors mb-3 sm:mb-4 group"
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-slate-500 hover:text-slate-800 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all shadow-sm cursor-pointer mb-4"
           >
-            <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
+            <ArrowLeft className="w-3.5 h-3.5" />
             Back to Dashboard
           </Link>
-          <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/30 shadow-xl">
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <div className="flex items-center gap-3">
-                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
-                  <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold gradient-text">All Transactions</h1>
-                  <p className="text-xs sm:text-sm text-gray-600 mt-1">Complete financial transaction history</p>
-                </div>
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+                <DollarSign className="w-6 h-6 text-amber-400" />
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={exportToExcel}
-                  disabled={selectedTeamId === 'all' || selectedCurrency === 'all'}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl"
-                  title={selectedTeamId === 'all' || selectedCurrency === 'all' ? 'Select a specific team and currency to export' : 'Export to Excel/Sheets'}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span className="hidden sm:inline">Export to Excel</span>
-                </button>
-                <button
-                  onClick={copyToWhatsApp}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl"
-                  title="Copy summary to WhatsApp"
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                  </svg>
-                  <span className="hidden sm:inline">Copy to WhatsApp</span>
-                </button>
+              <div>
+                <h1 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">All Transactions</h1>
+                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Complete financial transaction history</p>
               </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={exportToExcel}
+                disabled={selectedTeamId === 'all' || selectedCurrency === 'all'}
+                className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 border border-slate-950 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                title={selectedTeamId === 'all' || selectedCurrency === 'all' ? 'Select a specific team and currency to export' : 'Export to Excel/Sheets'}
+              >
+                <Download className="w-4 h-4 text-emerald-500" />
+                <span className="hidden sm:inline">Export to Excel</span>
+              </button>
+              <button
+                onClick={copyToWhatsApp}
+                className="px-3.5 py-1.5 bg-slate-800 text-amber-400 border border-slate-900 hover:bg-slate-900 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                title="Copy summary to WhatsApp"
+              >
+                <Share2 className="w-4 h-4 text-amber-500" />
+                <span className="hidden sm:inline">Copy to WhatsApp</span>
+              </button>
             </div>
           </div>
         </div>
@@ -943,85 +969,79 @@ export default function AllTransactionsPage() {
         {/* Summary Cards */}
         {!showSummary && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="glass rounded-xl p-4 border border-green-200/50 shadow-lg">
-              <div className="text-center">
-                <TrendingUp className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-green-600">{overallStats.totalIncome}</div>
-                <div className="text-xs text-gray-600 mt-1">Total Income</div>
-              </div>
+            <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm text-center">
+              <TrendingUp className="w-5 h-5 text-emerald-500 mx-auto mb-2" />
+              <div className="text-xl font-extrabold text-emerald-600">{overallStats.totalIncome}</div>
+              <div className="text-[10px] text-slate-400 font-bold uppercase mt-1">Total Income</div>
             </div>
 
-            <div className="glass rounded-xl p-4 border border-red-200/50 shadow-lg">
-              <div className="text-center">
-                <TrendingDown className="w-6 h-6 text-red-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-red-600">{overallStats.totalExpense}</div>
-                <div className="text-xs text-gray-600 mt-1">Total Expenses</div>
-              </div>
+            <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm text-center">
+              <TrendingDown className="w-5 h-5 text-rose-500 mx-auto mb-2" />
+              <div className="text-xl font-extrabold text-rose-600">{overallStats.totalExpense}</div>
+              <div className="text-[10px] text-slate-400 font-bold uppercase mt-1">Total Expenses</div>
             </div>
 
-            <div className="glass rounded-xl p-4 border border-blue-200/50 shadow-lg">
-              <div className="text-center">
-                <div className="text-3xl mb-2">🔵</div>
-                <div className="text-2xl font-bold text-blue-600">{overallStats.totalECoin}</div>
-                <div className="text-xs text-gray-600 mt-1">Net eCoin</div>
-              </div>
+            <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm text-center">
+              <span className="inline-block px-2 py-0.5 rounded-md text-[9px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200/50 uppercase mb-2">eCoin</span>
+              <div className="text-xl font-extrabold text-slate-800">{overallStats.totalECoin}</div>
+              <div className="text-[10px] text-slate-400 font-bold uppercase mt-1">Net eCoin Balance</div>
             </div>
 
-            <div className="glass rounded-xl p-4 border border-purple-200/50 shadow-lg">
-              <div className="text-center">
-                <div className="text-3xl mb-2">🟣</div>
-                <div className="text-2xl font-bold text-purple-600">{overallStats.totalSSCoin}</div>
-                <div className="text-xs text-gray-600 mt-1">Net SSCoin</div>
-              </div>
+            <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm text-center">
+              <span className="inline-block px-2 py-0.5 rounded-md text-[9px] font-extrabold text-purple-700 bg-purple-50 border border-purple-200/50 uppercase mb-2">SSCoin</span>
+              <div className="text-xl font-extrabold text-slate-800">{overallStats.totalSSCoin}</div>
+              <div className="text-[10px] text-slate-400 font-bold uppercase mt-1">Net SSCoin Balance</div>
             </div>
           </div>
         )}
 
         {/* View Toggle */}
         <div className="flex justify-center mb-6">
-          <div className="inline-flex rounded-lg bg-white shadow-lg border border-gray-200 p-1">
+          <div className="inline-flex p-1 bg-slate-50 border border-slate-200 rounded-xl">
             <button
               onClick={() => setShowSummary(false)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wider font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
                 !showSummary
-                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
               }`}
             >
-              📋 Detailed View
+              <ClipboardList className="w-3.5 h-3.5" />
+              Detailed View
             </button>
             <button
               onClick={() => setShowSummary(true)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wider font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
                 showSummary
-                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
               }`}
             >
-              📊 Team Summary
+              <Trophy className="w-3.5 h-3.5" />
+              Team Summary
             </button>
           </div>
         </div>
 
         {/* Filters - Only show in detailed view */}
         {!showSummary && (
-          <div className="glass rounded-2xl sm:rounded-3xl border border-white/30 shadow-xl p-4 sm:p-6 mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Filter className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm font-mono mb-6">
+            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
+              <Filter className="w-4 h-4 text-amber-500" />
+              <h2 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Filters</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Season Filter */}
               <div>
-                <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-2">
-                  <Calendar className="w-4 h-4 text-indigo-600" />
+                <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
                   Season
                 </label>
                 <select
                   value={selectedSeasonId}
                   onChange={(e) => setSelectedSeasonId(e.target.value)}
-                  className="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white shadow-sm transition-all"
+                  className="w-full py-2.5 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-bold cursor-pointer"
                 >
                   <option value="current">Current Season</option>
                   <option value="all">All Seasons</option>
@@ -1035,14 +1055,14 @@ export default function AllTransactionsPage() {
 
               {/* Team Filter */}
               <div>
-                <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-2">
-                  <Users className="w-4 h-4 text-indigo-600" />
+                <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  <Users className="w-3.5 h-3.5 text-slate-400" />
                   Team
                 </label>
                 <select
                   value={selectedTeamId}
                   onChange={(e) => setSelectedTeamId(e.target.value)}
-                  className="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white shadow-sm transition-all"
+                  className="w-full py-2.5 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-bold cursor-pointer"
                 >
                   <option value="all">All Teams</option>
                   {teams.map((teamData) => (
@@ -1055,56 +1075,56 @@ export default function AllTransactionsPage() {
 
               {/* Transaction Type Filter */}
               <div>
-                <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-2">
-                  <DollarSign className="w-4 h-4 text-indigo-600" />
+                <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  <DollarSign className="w-3.5 h-3.5 text-slate-400" />
                   Transaction Type
                 </label>
                 <select
                   value={selectedTransactionType}
                   onChange={(e) => setSelectedTransactionType(e.target.value)}
-                  className="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white shadow-sm transition-all"
+                  className="w-full py-2.5 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-bold cursor-pointer"
                 >
                   <option value="all">All Types</option>
                   <optgroup label="Income">
-                    <option value="match_reward">🏆 Match Rewards</option>
-                    <option value="position_reward">🥇 Position Rewards</option>
-                    <option value="completion_bonus">🎉 Completion Bonus</option>
-                    <option value="knockout_reward">🏆 Knockout Rewards</option>
-                    <option value="bonus">🎁 Bonus</option>
+                    <option value="match_reward">Match Rewards</option>
+                    <option value="position_reward">Position Rewards</option>
+                    <option value="completion_bonus">Completion Bonus</option>
+                    <option value="knockout_reward">Knockout Rewards</option>
+                    <option value="bonus">Bonus</option>
                   </optgroup>
                   <optgroup label="Expenses">
-                    <option value="salary_payment">💰 Salary Payments</option>
-                    <option value="real_player_fee">👤 Real Player Fees</option>
-                    <option value="auction_win">🔨 Auction Wins</option>
-                    <option value="fine">⚠️ Fines</option>
+                    <option value="salary_payment">Salary Payments</option>
+                    <option value="real_player_fee">Real Player Fees</option>
+                    <option value="auction_win">Auction Wins</option>
+                    <option value="fine">Fines</option>
                   </optgroup>
                   <optgroup label="Transfers">
-                    <option value="transfer_payment">➡️ Transfer Payments</option>
-                    <option value="transfer_compensation">⬅️ Transfer Compensation</option>
-                    <option value="swap_fee_paid">� Swap Fee Paid</option>
-                    <option value="swap_fee_received">� Swap Fee Received</option>
+                    <option value="transfer_payment">Transfer Payments</option>
+                    <option value="transfer_compensation">Transfer Compensation</option>
+                    <option value="swap_fee_paid">Swap Fee Paid</option>
+                    <option value="swap_fee_received">Swap Fee Received</option>
                   </optgroup>
                   <optgroup label="Other">
-                    <option value="player_release_refund">↩️ Release</option>
-                    <option value="initial_balance">🏬 Initial Balance</option>
+                    <option value="player_release_refund">Release</option>
+                    <option value="initial_balance">Initial Balance</option>
                   </optgroup>
                 </select>
               </div>
 
               {/* Currency Filter */}
               <div>
-                <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-2">
-                  <Filter className="w-4 h-4 text-indigo-600" />
+                <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  <Filter className="w-3.5 h-3.5 text-slate-400" />
                   Currency
                 </label>
                 <select
                   value={selectedCurrency}
                   onChange={(e) => setSelectedCurrency(e.target.value)}
-                  className="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white shadow-sm transition-all"
+                  className="w-full py-2.5 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-bold cursor-pointer"
                 >
                   <option value="all">All Currencies</option>
-                  <option value="football">🔵 eCoin Only</option>
-                  <option value="real">🟣 SSCoin Only</option>
+                  <option value="football">eCoin Only</option>
+                  <option value="real">SSCoin Only</option>
                 </select>
               </div>
             </div>
@@ -1113,106 +1133,106 @@ export default function AllTransactionsPage() {
 
         {/* Loading State */}
         {isFetchingTransactions && (
-          <div className="glass rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center border border-white/30 shadow-xl">
-            <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-4 border-indigo-200 border-t-indigo-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 text-sm sm:text-base font-medium">Loading transactions...</p>
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-8 text-center shadow-sm font-mono">
+            <div className="animate-spin rounded-full h-10 w-10 border-2 border-amber-500 border-t-transparent mx-auto"></div>
+            <p className="text-slate-400 text-xs font-extrabold uppercase tracking-wider mt-4">Loading transactions...</p>
           </div>
         )}
 
         {/* Team Summary View */}
         {!isFetchingTransactions && showSummary && teamSummary.length > 0 && (
-          <div className="glass rounded-2xl sm:rounded-3xl border border-white/30 shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 sm:px-6 py-4 sm:py-5">
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden mb-6 font-mono">
+            <div className="bg-slate-800 text-white border-b border-slate-900 px-5 py-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <DollarSign className="w-6 h-6" />
+                  <div className="p-1.5 bg-slate-900 border border-slate-950 rounded-lg">
+                    <DollarSign className="w-5 h-5 text-amber-400" />
+                  </div>
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-bold">Team Financial Summary</h2>
-                    <p className="text-indigo-100 text-sm">Income vs Expenses by team</p>
+                    <h2 className="text-xs font-extrabold uppercase tracking-wider">Team Financial Summary</h2>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Income vs Expenses by team</p>
                   </div>
                 </div>
                 <button
                   onClick={copyTeamSummaryToWhatsApp}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-lg transition-colors shadow-lg"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-950 text-amber-400 border border-slate-950 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
                   title="Copy summary to clipboard for WhatsApp"
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                  </svg>
+                  <Share2 className="w-3.5 h-3.5 text-amber-500" />
                   <span className="hidden sm:inline">Copy to WhatsApp</span>
                   <span className="sm:hidden">Copy</span>
                 </button>
               </div>
             </div>
 
-            <div className="p-4 sm:p-6">
+            <div className="p-4">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b-2 border-gray-200">
+                  <thead className="bg-slate-50 border-b border-slate-200/60">
                     <tr>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Rank</th>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Team Name</th>
-                      <th className="px-4 lg:px-6 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Income</th>
-                      <th className="px-4 lg:px-6 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Expenses</th>
-                      <th className="px-4 lg:px-6 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Net Balance</th>
-                      <th className="px-4 lg:px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Transactions</th>
+                      <th className="px-4 lg:px-6 py-2.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rank</th>
+                      <th className="px-4 lg:px-6 py-2.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Team Name</th>
+                      <th className="px-4 lg:px-6 py-2.5 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider">Income</th>
+                      <th className="px-4 lg:px-6 py-2.5 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expenses</th>
+                      <th className="px-4 lg:px-6 py-2.5 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider">Net Balance</th>
+                      <th className="px-4 lg:px-6 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">Transactions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
+                  <tbody className="divide-y divide-slate-100 bg-white">
                     {teamSummary.map((team, index) => (
-                      <tr key={team.teamId} className="hover:bg-indigo-50/50 transition-colors">
-                        <td className="px-4 lg:px-6 py-4">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-                            index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' :
-                            index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
-                            index === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-600' :
-                            'bg-gradient-to-br from-indigo-400 to-indigo-600'
+                      <tr key={team.teamId} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 lg:px-6 py-3">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shadow-sm border ${
+                            index === 0 ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                            index === 1 ? 'bg-slate-100 text-slate-600 border-slate-200' :
+                            index === 2 ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                            'bg-slate-50 text-slate-500 border-slate-200'
                           }`}>
                             {index + 1}
                           </div>
                         </td>
-                        <td className="px-4 lg:px-6 py-4">
-                          <div className="font-semibold text-gray-900">{team.teamName}</div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            <span className="text-blue-600">eCoin: +{team.eCoinIncome}/-{team.eCoinExpense}</span>
-                            {' | '}
-                            <span className="text-purple-600">SSCoin: +{team.sSCoinIncome}/-{team.sSCoinExpense}</span>
+                        <td className="px-4 lg:px-6 py-3">
+                          <div className="font-extrabold text-slate-850 text-sm uppercase tracking-wider">{team.teamName}</div>
+                          <div className="text-[9px] text-slate-400 font-bold uppercase mt-1 flex flex-wrap gap-2">
+                            <span>eCoin: <strong className="text-blue-600">+{team.eCoinIncome}/-{team.eCoinExpense}</strong></span>
+                            <span>•</span>
+                            <span>SSCoin: <strong className="text-purple-600">+{team.sSCoinIncome}/-{team.sSCoinExpense}</strong></span>
                           </div>
                         </td>
-                        <td className="px-4 lg:px-6 py-4 text-right">
-                          <span className="font-semibold text-green-600">+{team.totalIncome}</span>
+                        <td className="px-4 lg:px-6 py-3 text-right">
+                          <span className="font-extrabold text-emerald-600">+{team.totalIncome}</span>
                         </td>
-                        <td className="px-4 lg:px-6 py-4 text-right">
-                          <span className="font-semibold text-red-600">-{team.totalExpense}</span>
+                        <td className="px-4 lg:px-6 py-3 text-right">
+                          <span className="font-extrabold text-rose-600">-{team.totalExpense}</span>
                         </td>
-                        <td className="px-4 lg:px-6 py-4 text-right">
-                          <span className={`text-lg font-bold ${team.netBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <td className="px-4 lg:px-6 py-3 text-right">
+                          <span className={`text-base font-black ${team.netBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                             {team.netBalance >= 0 ? '+' : ''}{team.netBalance}
                           </span>
                         </td>
-                        <td className="px-4 lg:px-6 py-4 text-center">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-indigo-100 text-indigo-700">
+                        <td className="px-4 lg:px-6 py-3 text-center">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-slate-50 border border-slate-200 text-slate-700">
                             {team.transactionCount}
                           </span>
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="bg-gradient-to-r from-indigo-50 to-purple-50 border-t-2 border-indigo-200">
+                  <tfoot className="bg-slate-50 border-t border-slate-200/80">
                     <tr>
-                      <td colSpan={2} className="px-4 lg:px-6 py-4 text-right font-bold text-gray-900">
+                      <td colSpan={2} className="px-4 lg:px-6 py-3 text-right font-extrabold text-slate-800 text-xs uppercase tracking-wider">
                         Grand Total:
                       </td>
-                      <td className="px-4 lg:px-6 py-4 text-right font-bold text-green-600">
+                      <td className="px-4 lg:px-6 py-3 text-right font-extrabold text-emerald-600 text-xs sm:text-sm">
                         +{teamSummary.reduce((sum, team) => sum + team.totalIncome, 0)}
                       </td>
-                      <td className="px-4 lg:px-6 py-4 text-right font-bold text-red-600">
+                      <td className="px-4 lg:px-6 py-3 text-right font-extrabold text-rose-600 text-xs sm:text-sm">
                         -{teamSummary.reduce((sum, team) => sum + team.totalExpense, 0)}
                       </td>
-                      <td className="px-4 lg:px-6 py-4 text-right font-bold text-indigo-600 text-xl">
+                      <td className="px-4 lg:px-6 py-3 text-right font-black text-slate-800 text-sm sm:text-base">
                         {teamSummary.reduce((sum, team) => sum + team.netBalance, 0)}
                       </td>
-                      <td className="px-4 lg:px-6 py-4 text-center font-bold text-gray-900">
+                      <td className="px-4 lg:px-6 py-3 text-center font-extrabold text-slate-700 text-xs">
                         {teamSummary.reduce((sum, team) => sum + team.transactionCount, 0)}
                       </td>
                     </tr>
@@ -1225,12 +1245,12 @@ export default function AllTransactionsPage() {
 
         {/* No Transactions */}
         {!isFetchingTransactions && !showSummary && transactions.length === 0 && (
-          <div className="glass rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center border border-white/30 shadow-xl">
-            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 mb-4 sm:mb-6">
-              <DollarSign className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-8 text-center shadow-sm font-mono">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-800 border border-slate-900 shadow-md mb-4">
+              <DollarSign className="w-8 h-8 text-amber-400" />
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">No Transactions Found</h3>
-            <p className="text-sm sm:text-base text-gray-600 max-w-md mx-auto">No transactions found for the selected filters</p>
+            <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Transactions Found</h3>
+            <p className="text-[10px] text-slate-400 font-bold uppercase">No transactions match the selected filters</p>
           </div>
         )}
 
@@ -1251,71 +1271,78 @@ export default function AllTransactionsPage() {
               const sSCoinIncome = incomeTransactions.filter(t => t.currency_type === 'real').reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
               return Object.keys(incomeByTypeCurrency).length > 0 && (
-                <div className="glass rounded-2xl sm:rounded-3xl border border-white/30 shadow-xl overflow-hidden mb-6">
-                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 sm:px-6 py-4 sm:py-5">
+                <div className="console-card bg-white border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden mb-6 font-mono">
+                  <div className="bg-slate-800 text-white border-b border-slate-900 px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <TrendingUp className="w-6 h-6" />
+                      <div className="p-1.5 bg-slate-900 border border-slate-950 rounded-lg">
+                        <TrendingUp className="w-5 h-5 text-emerald-500" />
+                      </div>
                       <div className="flex-1">
-                        <h2 className="text-xl sm:text-2xl font-bold">💰 Income Transactions</h2>
-                        <div className="flex gap-4 mt-1">
-                          <p className="text-green-100 text-sm">🔵 eCoin: +{eCoinIncome.toLocaleString()}</p>
-                          <p className="text-green-100 text-sm">🟣 SSCoin: +{sSCoinIncome.toLocaleString()}</p>
-                          <p className="text-green-100 text-sm font-bold">Total: +{(eCoinIncome + sSCoinIncome).toLocaleString()}</p>
+                        <h2 className="text-xs font-extrabold uppercase tracking-wider">Income Transactions</h2>
+                        <div className="flex flex-wrap gap-3 mt-1.5 text-[9px] font-bold uppercase text-slate-400">
+                          <span>eCoin: <strong className="text-blue-500">+{eCoinIncome.toLocaleString()}</strong></span>
+                          <span>•</span>
+                          <span>SSCoin: <strong className="text-purple-500">+{sSCoinIncome.toLocaleString()}</strong></span>
+                          <span>•</span>
+                          <span>Total: <strong className="text-emerald-500">+{ (eCoinIncome + sSCoinIncome).toLocaleString() }</strong></span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 sm:p-6 space-y-6">
+                  <div className="p-4 space-y-6">
                     {Object.entries(incomeByTypeCurrency).map(([key, data]) => {
                       const typeTotal = data.transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-                      const currencyLabel = data.currency === 'football' ? '🔵 eCoin' : '🟣 SSCoin';
                       return (
-                        <div key={key} className="border border-green-200 rounded-xl overflow-hidden">
-                          <div className="bg-green-50 px-4 py-3 border-b border-green-200">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-2xl">{getTransactionIcon(data.type)}</span>
-                                <h3 className="font-bold text-gray-900">{formatTransactionType(data.type)}</h3>
-                                <span className="px-2 py-1 bg-white rounded-lg text-xs font-bold">{currencyLabel}</span>
-                                <span className="text-sm text-gray-600">({data.transactions.length} transactions)</span>
+                        <div key={key} className="border border-slate-200/60 rounded-2xl overflow-hidden">
+                          <div className="bg-slate-50 px-4 py-3 border-b border-slate-200/60 flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <div className="p-1 bg-white border border-slate-200/60 rounded-lg">
+                                {renderTransactionIcon(data.type)}
                               </div>
-                              <span className="text-lg font-bold text-green-600">+{typeTotal.toLocaleString()}</span>
+                              <h3 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider">{formatTransactionType(data.type)}</h3>
+                              {data.currency === 'football' ? (
+                                <span className="px-1.5 py-0.5 bg-blue-50/50 border border-blue-200 text-blue-600 rounded text-[9px] font-extrabold uppercase">eCoin</span>
+                              ) : (
+                                <span className="px-1.5 py-0.5 bg-purple-50/50 border border-purple-200 text-purple-600 rounded text-[9px] font-extrabold uppercase">SSCoin</span>
+                              )}
+                              <span className="text-[10px] text-slate-400 font-bold uppercase">({data.transactions.length} txs)</span>
                             </div>
+                            <span className="text-sm font-black text-emerald-600">+{typeTotal.toLocaleString()}</span>
                           </div>
                           <div className="overflow-x-auto">
                             <table className="w-full">
-                              <thead className="bg-gray-50">
+                              <thead className="bg-slate-50 border-b border-slate-200/60">
                                 <tr>
-                                  <th className="px-4 py-2 text-left text-xs font-bold text-gray-700">Date</th>
-                                  <th className="px-4 py-2 text-left text-xs font-bold text-gray-700">Team</th>
-                                  <th className="px-4 py-2 text-left text-xs font-bold text-gray-700">Description</th>
-                                  <th className="px-4 py-2 text-right text-xs font-bold text-gray-700">Amount</th>
+                                  <th className="px-4 py-2.5 text-left text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Date</th>
+                                  <th className="px-4 py-2.5 text-left text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Team</th>
+                                  <th className="px-4 py-2.5 text-left text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Description</th>
+                                  <th className="px-4 py-2.5 text-right text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Amount</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-gray-100 bg-white">
+                              <tbody className="divide-y divide-slate-100 bg-white">
                                 {data.transactions.map((txn) => (
-                                  <tr key={txn.id} className="hover:bg-green-50/30 transition-colors">
-                                    <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">{formatDate(txn.created_at)}</td>
-                                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{txn.team_name}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
+                                  <tr key={txn.id} className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="px-4 py-3 text-[10px] font-bold text-slate-400 whitespace-nowrap">{formatDate(txn.created_at)}</td>
+                                    <td className="px-4 py-3 text-xs font-extrabold text-slate-800 uppercase tracking-wider">{txn.team_name}</td>
+                                    <td className="px-4 py-3 text-xs text-slate-600 max-w-xs truncate">
                                       {txn.metadata?.player_name ? (
-                                        <div>
-                                          <span className="font-semibold text-indigo-600">{txn.metadata.player_name}</span>
-                                          <span className="text-gray-500"> - {txn.description}</span>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          <span className="px-1.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 rounded text-[9px] font-extrabold uppercase">{txn.metadata.player_name}</span>
+                                          <span className="text-slate-500">{txn.description}</span>
                                         </div>
                                       ) : (
                                         txn.description
                                       )}
                                     </td>
-                                    <td className="px-4 py-3 text-right text-sm font-bold text-green-600">+{Math.abs(txn.amount).toLocaleString()}</td>
+                                    <td className="px-4 py-3 text-right text-xs font-black text-emerald-600">+{Math.abs(txn.amount).toLocaleString()}</td>
                                   </tr>
                                 ))}
                               </tbody>
-                              <tfoot className="bg-green-50 border-t-2 border-green-200">
+                              <tfoot className="bg-slate-50 border-t border-slate-200/60">
                                 <tr>
-                                  <td colSpan={3} className="px-4 py-2 text-right text-sm font-bold text-gray-900">Subtotal ({currencyLabel}):</td>
-                                  <td className="px-4 py-2 text-right text-base font-bold text-green-600">+{typeTotal.toLocaleString()}</td>
+                                  <td colSpan={3} className="px-4 py-2 text-right text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Subtotal:</td>
+                                  <td className="px-4 py-2 text-right text-xs font-black text-emerald-600">+{typeTotal.toLocaleString()}</td>
                                 </tr>
                               </tfoot>
                             </table>
@@ -1342,71 +1369,78 @@ export default function AllTransactionsPage() {
               const sSCoinExpense = expenseTransactions.filter(t => t.currency_type === 'real').reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
               return Object.keys(expenseByTypeCurrency).length > 0 && (
-                <div className="glass rounded-2xl sm:rounded-3xl border border-white/30 shadow-xl overflow-hidden mb-6">
-                  <div className="bg-gradient-to-r from-red-500 to-orange-600 text-white px-4 sm:px-6 py-4 sm:py-5">
+                <div className="console-card bg-white border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden mb-6 font-mono">
+                  <div className="bg-slate-800 text-white border-b border-slate-900 px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <TrendingDown className="w-6 h-6" />
+                      <div className="p-1.5 bg-slate-900 border border-slate-950 rounded-lg">
+                        <TrendingDown className="w-5 h-5 text-rose-500" />
+                      </div>
                       <div className="flex-1">
-                        <h2 className="text-xl sm:text-2xl font-bold">💸 Expense Transactions</h2>
-                        <div className="flex gap-4 mt-1">
-                          <p className="text-red-100 text-sm">🔵 eCoin: -{eCoinExpense.toLocaleString()}</p>
-                          <p className="text-red-100 text-sm">🟣 SSCoin: -{sSCoinExpense.toLocaleString()}</p>
-                          <p className="text-red-100 text-sm font-bold">Total: -{(eCoinExpense + sSCoinExpense).toLocaleString()}</p>
+                        <h2 className="text-xs font-extrabold uppercase tracking-wider">Expense Transactions</h2>
+                        <div className="flex flex-wrap gap-3 mt-1.5 text-[9px] font-bold uppercase text-slate-400">
+                          <span>eCoin: <strong className="text-blue-500">-{eCoinExpense.toLocaleString()}</strong></span>
+                          <span>•</span>
+                          <span>SSCoin: <strong className="text-purple-500">-{sSCoinExpense.toLocaleString()}</strong></span>
+                          <span>•</span>
+                          <span>Total: <strong className="text-rose-500">-{(eCoinExpense + sSCoinExpense).toLocaleString()}</strong></span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 sm:p-6 space-y-6">
+                  <div className="p-4 space-y-6">
                     {Object.entries(expenseByTypeCurrency).map(([key, data]) => {
                       const typeTotal = data.transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-                      const currencyLabel = data.currency === 'football' ? '🔵 eCoin' : '🟣 SSCoin';
                       return (
-                        <div key={key} className="border border-red-200 rounded-xl overflow-hidden">
-                          <div className="bg-red-50 px-4 py-3 border-b border-red-200">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-2xl">{getTransactionIcon(data.type)}</span>
-                                <h3 className="font-bold text-gray-900">{formatTransactionType(data.type)}</h3>
-                                <span className="px-2 py-1 bg-white rounded-lg text-xs font-bold">{currencyLabel}</span>
-                                <span className="text-sm text-gray-600">({data.transactions.length} transactions)</span>
+                        <div key={key} className="border border-slate-200/60 rounded-2xl overflow-hidden">
+                          <div className="bg-slate-50 px-4 py-3 border-b border-slate-200/60 flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <div className="p-1 bg-white border border-slate-200/60 rounded-lg">
+                                {renderTransactionIcon(data.type)}
                               </div>
-                              <span className="text-lg font-bold text-red-600">-{typeTotal.toLocaleString()}</span>
+                              <h3 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider">{formatTransactionType(data.type)}</h3>
+                              {data.currency === 'football' ? (
+                                <span className="px-1.5 py-0.5 bg-blue-50/50 border border-blue-200 text-blue-600 rounded text-[9px] font-extrabold uppercase">eCoin</span>
+                              ) : (
+                                <span className="px-1.5 py-0.5 bg-purple-50/50 border border-purple-200 text-purple-600 rounded text-[9px] font-extrabold uppercase">SSCoin</span>
+                              )}
+                              <span className="text-[10px] text-slate-400 font-bold uppercase">({data.transactions.length} txs)</span>
                             </div>
+                            <span className="text-sm font-black text-rose-600">-{typeTotal.toLocaleString()}</span>
                           </div>
                           <div className="overflow-x-auto">
                             <table className="w-full">
-                              <thead className="bg-gray-50">
+                              <thead className="bg-slate-50 border-b border-slate-200/60">
                                 <tr>
-                                  <th className="px-4 py-2 text-left text-xs font-bold text-gray-700">Date</th>
-                                  <th className="px-4 py-2 text-left text-xs font-bold text-gray-700">Team</th>
-                                  <th className="px-4 py-2 text-left text-xs font-bold text-gray-700">Description</th>
-                                  <th className="px-4 py-2 text-right text-xs font-bold text-gray-700">Amount</th>
+                                  <th className="px-4 py-2.5 text-left text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Date</th>
+                                  <th className="px-4 py-2.5 text-left text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Team</th>
+                                  <th className="px-4 py-2.5 text-left text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Description</th>
+                                  <th className="px-4 py-2.5 text-right text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Amount</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-gray-100 bg-white">
+                              <tbody className="divide-y divide-slate-100 bg-white">
                                 {data.transactions.map((txn) => (
-                                  <tr key={txn.id} className="hover:bg-red-50/30 transition-colors">
-                                    <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">{formatDate(txn.created_at)}</td>
-                                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{txn.team_name}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
+                                  <tr key={txn.id} className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="px-4 py-3 text-[10px] font-bold text-slate-400 whitespace-nowrap">{formatDate(txn.created_at)}</td>
+                                    <td className="px-4 py-3 text-xs font-extrabold text-slate-800 uppercase tracking-wider">{txn.team_name}</td>
+                                    <td className="px-4 py-3 text-xs text-slate-650 max-w-xs truncate">
                                       {txn.metadata?.player_name ? (
-                                        <div>
-                                          <span className="font-semibold text-indigo-600">{txn.metadata.player_name}</span>
-                                          <span className="text-gray-500"> - {txn.description}</span>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          <span className="px-1.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 rounded text-[9px] font-extrabold uppercase">{txn.metadata.player_name}</span>
+                                          <span className="text-slate-500">{txn.description}</span>
                                         </div>
                                       ) : (
                                         txn.description
                                       )}
                                     </td>
-                                    <td className="px-4 py-3 text-right text-sm font-bold text-red-600">-{Math.abs(txn.amount).toLocaleString()}</td>
+                                    <td className="px-4 py-3 text-right text-xs font-black text-rose-600">-{Math.abs(txn.amount).toLocaleString()}</td>
                                   </tr>
                                 ))}
                               </tbody>
-                              <tfoot className="bg-red-50 border-t-2 border-red-200">
+                              <tfoot className="bg-slate-50 border-t border-slate-200/60">
                                 <tr>
-                                  <td colSpan={3} className="px-4 py-2 text-right text-sm font-bold text-gray-900">Subtotal ({currencyLabel}):</td>
-                                  <td className="px-4 py-2 text-right text-base font-bold text-red-600">-{typeTotal.toLocaleString()}</td>
+                                  <td colSpan={3} className="px-4 py-2 text-right text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Subtotal:</td>
+                                  <td className="px-4 py-2 text-right text-xs font-black text-rose-600">-{typeTotal.toLocaleString()}</td>
                                 </tr>
                               </tfoot>
                             </table>
@@ -1421,41 +1455,41 @@ export default function AllTransactionsPage() {
 
             {/* Pagination Controls - Only show when viewing all teams */}
             {shouldPaginate && totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6 glass rounded-2xl p-4 border border-white/30 shadow-lg">
-                <div className="text-sm text-gray-600">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 console-card bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <div>
                   Page {currentPage} of {totalPages}
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setCurrentPage(1)}
                     disabled={currentPage === 1}
-                    className="px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-slate-500 hover:text-slate-800 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   >
                     First
                   </button>
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-slate-500 hover:text-slate-800 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-slate-500 hover:text-slate-800 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   >
                     Next
                   </button>
                   <button
                     onClick={() => setCurrentPage(totalPages)}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-slate-500 hover:text-slate-800 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   >
                     Last
                   </button>
                 </div>
-                <div className="text-sm text-gray-600">
+                <div>
                   Showing {startIndex + 1}-{Math.min(endIndex, totalTransactions)} of {totalTransactions}
                 </div>
               </div>
@@ -1464,12 +1498,15 @@ export default function AllTransactionsPage() {
         )}
 
         {/* Info Box */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-semibold text-blue-900 mb-2">💡 About Transaction Types:</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-blue-800">
+        <div className="mt-6 console-card bg-amber-50/50 border border-amber-250/60 p-5 rounded-2xl font-mono text-slate-700 relative z-10">
+          <div className="flex items-center gap-2 text-amber-800 mb-3 border-b border-amber-200/50 pb-2">
+            <Info className="w-4 h-4" />
+            <h4 className="font-extrabold text-xs uppercase tracking-wider">About Transaction Types</h4>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <strong>Income:</strong>
-              <ul className="ml-4 mt-1 space-y-1">
+              <strong className="text-amber-800 text-[10px] uppercase tracking-wider block mb-1">Income</strong>
+              <ul className="text-xs font-medium text-slate-600 mt-1 space-y-1">
                 <li>• Match Rewards (Win/Draw/Loss)</li>
                 <li>• Tournament Rewards (Position/Completion/Knockout)</li>
                 <li>• Transfer Compensation</li>
@@ -1477,8 +1514,8 @@ export default function AllTransactionsPage() {
               </ul>
             </div>
             <div>
-              <strong>Expenses:</strong>
-              <ul className="ml-4 mt-1 space-y-1">
+              <strong className="text-amber-800 text-[10px] uppercase tracking-wider block mb-1">Expenses</strong>
+              <ul className="text-xs font-medium text-slate-600 mt-1 space-y-1">
                 <li>• Salary Payments (Real & Football Players)</li>
                 <li>• Real Player Registration Fees</li>
                 <li>• Auction Wins</li>

@@ -479,7 +479,7 @@ export default function TeamBulkRoundPage() {
                 {/* WebSocket Status */}
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider ${
                   isConnected 
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-250' 
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                     : 'bg-slate-50 text-slate-500 border-slate-200'
                 }`}>
                   <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
@@ -589,7 +589,7 @@ export default function TeamBulkRoundPage() {
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   aria-label="Clear search"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -660,12 +660,12 @@ export default function TeamBulkRoundPage() {
                 .map((player) => (
                   <div
                     key={player.id}
-                    className="console-card bg-emerald-50/30 border border-emerald-250 rounded-2xl p-3 sm:p-4 hover:shadow-md transition-shadow font-mono border-l-4 border-l-emerald-500"
+                    className="console-card bg-emerald-50/30 border border-emerald-200 rounded-2xl p-3 sm:p-4 hover:shadow-md transition-shadow font-mono border-l-4 border-l-emerald-500"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1 min-w-0 pr-2">
                         <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-                          <h3 className="font-extrabold text-sm text-slate-850 truncate uppercase tracking-wide">{player.name}</h3>
+                          <h3 className="font-extrabold text-sm text-slate-800 truncate uppercase tracking-wide">{player.name}</h3>
                           {player.is_starred && (
                             <span className="px-1.5 py-0.5 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200/60 rounded-lg">
                               STARRED
@@ -673,7 +673,7 @@ export default function TeamBulkRoundPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-slate-400 uppercase font-bold flex-wrap">
-                          <span className="px-1.5 sm:px-2 py-0.5 bg-slate-100 border border-slate-205 text-slate-600 rounded-lg">
+                          <span className="px-1.5 sm:px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-600 rounded-lg">
                             {player.position}
                           </span>
                           <span className="hidden sm:inline">•</span>
@@ -758,7 +758,7 @@ export default function TeamBulkRoundPage() {
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0 pr-2">
                       <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-                        <h3 className="font-extrabold text-sm text-slate-850 truncate uppercase tracking-wide">{player.name}</h3>
+                        <h3 className="font-extrabold text-sm text-slate-800 truncate uppercase tracking-wide">{player.name}</h3>
                         {player.is_starred && (
                           <span className="px-1.5 py-0.5 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200/60 rounded-lg">
                             STARRED
@@ -771,7 +771,7 @@ export default function TeamBulkRoundPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-slate-400 uppercase font-bold flex-wrap">
-                        <span className="px-1.5 sm:px-2 py-0.5 bg-slate-100 border border-slate-205 text-slate-600 rounded-lg">
+                        <span className="px-1.5 sm:px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-600 rounded-lg">
                           {player.position}
                         </span>
                         <span className="hidden sm:inline">•</span>
@@ -781,7 +781,7 @@ export default function TeamBulkRoundPage() {
                     <div className={`w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-xl border flex items-center justify-center transition-all ${
                       isBidded
                         ? 'bg-emerald-600 border-emerald-600 shadow-md text-white'
-                        : 'border-slate-250 bg-slate-50'
+                        : 'border-slate-200 bg-slate-50'
                     }`}>
                       {isBidded && (
                         <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -810,7 +810,7 @@ export default function TeamBulkRoundPage() {
           <div className="console-card bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full shadow-2xl font-mono">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-slate-50 border border-slate-205">
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-200">
                   <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
@@ -829,7 +829,7 @@ export default function TeamBulkRoundPage() {
 
             <div className="space-y-4">
               {/* Current Status */}
-              <div className="bg-slate-50 border border-slate-150 rounded-2xl p-4">
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
                 <div className="grid grid-cols-2 gap-3 text-[10px] uppercase font-bold text-slate-400">
                   <div>
                     <span>Current Slots:</span>

@@ -555,10 +555,11 @@ function PlayerVerifyContent() {
 
   if (loading || authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0066FF]/5 via-white to-[#00D4FF]/5 flex items-center justify-center p-4">
-        <div className="glass rounded-3xl p-8 shadow-lg border border-white/20 max-w-md w-full text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading registration details...</p>
         </div>
       </div>
     )
@@ -566,20 +567,19 @@ function PlayerVerifyContent() {
 
   if (error && !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0066FF]/5 via-white to-[#00D4FF]/5 flex items-center justify-center p-4">
-        <div className="glass rounded-3xl p-8 shadow-lg border border-white/20 max-w-md w-full">
-          <div className="flex items-center justify-center mb-4">
-            <div className="p-3 rounded-full bg-red-100">
-              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
+      <div className="console-bg min-h-screen flex items-center justify-center relative px-4">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-8 max-w-md w-full mx-auto text-center relative z-10 font-mono">
+          <div className="text-rose-500 mb-4">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">Registration Error</h2>
-          <p className="text-gray-600 text-center mb-6">{error}</p>
+          <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-2">Registration Error</h2>
+          <p className="text-xs text-slate-500 uppercase font-semibold mb-6">{error}</p>
           <button
             onClick={() => router.push('/')}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#00D4FF] text-white font-medium hover:shadow-lg transition-all"
+            className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl text-xs uppercase tracking-wider font-bold transition-all shadow-sm cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
           >
             Return Home
           </button>
@@ -589,39 +589,49 @@ function PlayerVerifyContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0066FF]/5 via-white to-[#00D4FF]/5 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="glass rounded-3xl shadow-lg border border-white/20 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 text-white">
-            <h1 className="text-2xl font-bold flex items-center">
-              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-              Player Registration
-            </h1>
-            {season && <p className="text-green-100 text-sm mt-1">{season.name}</p>}
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative z-10 space-y-6 font-mono">
+        <div className="console-card bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+          {/* Header */}
+          <div className="border-b border-slate-100 p-6 bg-slate-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                Player Registration
+              </h1>
+              {season && (
+                <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
+                  Season: <span className="font-extrabold text-amber-500">{season.name}</span>
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="p-6">
             {user && (
               <>
                 {/* Signed in indicator */}
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-6 border border-green-300">
+                <div className="bg-gradient-to-r from-green-50/50 to-emerald-50/50 rounded-xl p-4 mb-6 border border-green-200/40 font-mono">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-md">
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
                       <div>
-                        <p className="font-bold text-green-900 text-sm">Signed In</p>
-                        <p className="text-xs text-green-700">{user.email}</p>
+                        <p className="font-bold text-green-900 text-xs uppercase tracking-wider">Signed In</p>
+                        <p className="text-[10px] text-green-700 font-mono">{user.email}</p>
                       </div>
                     </div>
                     <button
                       onClick={handleSignOut}
-                      className="px-3 py-1 text-xs bg-white hover:bg-gray-100 border border-green-300 text-green-700 font-medium rounded-lg transition-colors"
+                      className="px-3 py-1.5 text-xs bg-white hover:bg-slate-50 border border-green-200/40 text-green-700 font-bold rounded-lg transition-all cursor-pointer shadow-sm animate-pulse-slow"
                     >
                       Sign Out
                     </button>
@@ -630,68 +640,71 @@ function PlayerVerifyContent() {
 
                 {/* Registration form */}
                 {showForm && (
-                  <div className="bg-orange-50 rounded-xl p-6 border border-orange-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  <div className="bg-amber-500/[0.02] rounded-xl p-6 border border-amber-500/10 font-mono space-y-6">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
                       {isNewPlayer ? 'New Player Registration' : 'Complete Your Profile'}
                     </h3>
+                    
                     {!isNewPlayer && (
-                      <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-4">
-                        <p className="text-sm text-blue-800 mb-1">
-                          <strong>🔒 Profile Update Rules</strong>
+                      <div className="bg-blue-50/60 border border-blue-200/30 text-blue-700 p-4 rounded-xl mb-4 font-mono">
+                        <p className="text-xs uppercase font-extrabold mb-1">
+                          🔒 Profile Update Rules
                         </p>
-                        <p className="text-xs text-blue-700">
+                        <p className="text-[10px] uppercase font-bold leading-relaxed">
                           Fields with existing database values cannot be changed. You can only fill in missing information.
                         </p>
                       </div>
                     )}
+                    
                     {player?.previous_season_team && (
-                      <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-4">
-                        <p className="text-sm font-semibold text-blue-900 mb-1">Previous Season Info</p>
-                        <p className="text-xs text-blue-800">Team: <strong>{player.previous_season_team}</strong></p>
+                      <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 mb-4 font-mono">
+                        <p className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">Previous Season Info</p>
+                        <p className="text-[10px] uppercase font-bold text-slate-505 tracking-wider">Team: <strong className="text-slate-800">{player.previous_season_team}</strong></p>
                         {player.previous_season_category && (
-                          <p className="text-xs text-blue-800">Category: <strong className="capitalize">{player.previous_season_category}</strong></p>
+                          <p className="text-[10px] uppercase font-bold text-slate-505 tracking-wider mt-1">Category: <strong className="text-slate-800 capitalize">{player.previous_season_category}</strong></p>
                         )}
                       </div>
                     )}
-                    <p className="text-sm text-gray-600 mb-4">Please fill in all required information.</p>
+                    
+                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider leading-relaxed">Please fill in all required information.</p>
                     
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5">
                           Full Name *
-                          {player?.name && <span className="text-xs text-green-600 ml-2">(From Database)</span>}
+                          {player?.name && <span className="text-[9px] text-green-600 font-bold ml-2">(From Database)</span>}
                         </label>
                         <input
                           type="text"
                           name="name"
                           value={formData.name}
                           onChange={handleFormChange}
-                          readOnly={!isNewPlayer && player?.name}
-                          className={`w-full px-4 py-2 border rounded-lg outline-none ${
+                          readOnly={!isNewPlayer && !!player?.name}
+                          className={`w-full px-4 py-2.5 border rounded-xl outline-none text-xs font-bold uppercase tracking-wider ${
                             !isNewPlayer && player?.name
-                              ? 'border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed'
-                              : 'border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500'
+                              ? 'border-slate-200/40 bg-slate-100/60 text-slate-400 cursor-not-allowed'
+                              : 'bg-slate-50 border border-slate-200/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80'
                           }`}
                           placeholder="Enter your full name"
                         />
                         {!isNewPlayer && player?.name && (
-                          <p className="text-xs text-gray-500 mt-1">This field cannot be changed as it exists in our database</p>
+                          <p className="text-[9px] text-slate-400 font-bold mt-1.5">This field cannot be changed as it exists in our database</p>
                         )}
                       </div>
 
                       <div className="relative">
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5">
                           District (Kerala) *
-                          {player?.place && <span className="text-xs text-green-600 ml-2">(From Database)</span>}
+                          {player?.place && <span className="text-[9px] text-green-600 font-bold ml-2">(From Database)</span>}
                         </label>
                         
                         {/* Custom Dropdown */}
                         <div className="relative" ref={dropdownRef}>
                           <div
-                            className={`w-full px-4 py-3 border rounded-lg outline-none cursor-pointer transition-all duration-200 flex items-center justify-between ${
+                            className={`w-full px-4 py-2.5 border rounded-xl outline-none cursor-pointer transition-all duration-200 flex items-center justify-between text-xs font-bold uppercase tracking-wider ${
                               !isNewPlayer && player?.place
-                                ? 'border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed'
-                                : 'border-gray-300 hover:border-orange-400 focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-orange-500 bg-white'
+                                ? 'border-slate-200/40 bg-slate-100/60 text-slate-400 cursor-not-allowed'
+                                : 'bg-slate-50 border border-slate-200/60 hover:border-amber-400/40 focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/80 bg-white'
                             }`}
                             onClick={() => {
                               if (!(!isNewPlayer && player?.place)) {
@@ -703,25 +716,25 @@ function PlayerVerifyContent() {
                             <div className="flex-1">
                               {formData.place ? (
                                 <div className="flex items-center gap-3">
-                                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 border border-green-200/40">
+                                    <svg className="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
                                   </div>
-                                  <span className="font-medium text-gray-900">{formData.place}</span>
+                                  <span className="font-bold text-slate-800">{formData.place}</span>
                                   {!isNewPlayer && player?.place && (
-                                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">From Database</span>
+                                    <span className="text-[9px] bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-200/40 font-bold uppercase tracking-wider">From Database</span>
                                   )}
                                 </div>
                               ) : (
-                                <span className="text-gray-500 font-medium">Select your district</span>
+                                <span className="text-slate-400 font-bold">Select your district</span>
                               )}
                             </div>
                             
                             {!(!isNewPlayer && player?.place) && (
                               <svg 
-                                className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                                className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
                                   showDistrictDropdown ? 'rotate-180' : 'rotate-0'
                                 }`} 
                                 fill="none" 
@@ -735,11 +748,11 @@ function PlayerVerifyContent() {
                           
                           {/* Dropdown Menu */}
                           {showDistrictDropdown && !(!isNewPlayer && player?.place) && (
-                            <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-hidden">
+                            <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200/60 rounded-xl shadow-md max-h-80 overflow-hidden font-mono">
                               {/* Search Input */}
-                              <div className="p-3 border-b border-gray-100">
+                              <div className="p-3 border-b border-slate-100">
                                 <div className="relative">
-                                  <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <svg className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                   </svg>
                                   <input
@@ -747,7 +760,7 @@ function PlayerVerifyContent() {
                                     value={districtSearch}
                                     onChange={handleDistrictSearchChange}
                                     placeholder="Search districts..."
-                                    className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                                    className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200/60 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 outline-none text-xs font-bold uppercase tracking-wider"
                                     autoFocus
                                   />
                                 </div>
@@ -760,46 +773,44 @@ function PlayerVerifyContent() {
                                     <div
                                       key={district}
                                       onClick={() => handleDistrictSelect(district)}
-                                      className={`px-4 py-3 cursor-pointer transition-colors flex items-center gap-3 ${
+                                      className={`px-4 py-3 cursor-pointer transition-colors flex items-center gap-3 text-xs uppercase font-bold text-slate-705 ${
                                         formData.place === district 
-                                          ? 'bg-orange-50 text-orange-900 border-l-4 border-orange-500' 
-                                          : 'hover:bg-gray-50 text-gray-700'
+                                          ? 'bg-amber-500/[0.04] text-amber-700 border-l-4 border-amber-500 font-extrabold' 
+                                          : 'hover:bg-slate-50 text-slate-700'
                                       } ${
-                                        index !== filteredDistricts.length - 1 ? 'border-b border-gray-100' : ''
+                                        index !== filteredDistricts.length - 1 ? 'border-b border-slate-100' : ''
                                       }`}
                                     >
-                                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 border ${
                                         formData.place === district 
-                                          ? 'bg-orange-100' 
-                                          : 'bg-gray-100'
+                                          ? 'bg-amber-50 border-amber-200' 
+                                          : 'bg-slate-50 border-slate-200'
                                       }`}>
-                                        <svg className={`w-4 h-4 ${
+                                        <svg className={`w-3.5 h-3.5 ${
                                           formData.place === district 
-                                            ? 'text-orange-600' 
-                                            : 'text-gray-500'
+                                            ? 'text-amber-600' 
+                                            : 'text-slate-500'
                                         }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
                                       </div>
                                       <div className="flex-1">
-                                        <span className="font-medium">{district}</span>
-                                        <div className="text-xs text-gray-500 mt-0.5">Kerala</div>
+                                        <span className="font-bold">{district}</span>
                                       </div>
                                       {formData.place === district && (
-                                        <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                        <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
                                         </svg>
                                       )}
                                     </div>
                                   ))
                                 ) : (
-                                  <div className="px-4 py-8 text-center text-gray-500">
-                                    <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <div className="px-4 py-8 text-center text-slate-400 uppercase tracking-wider font-bold">
+                                    <svg className="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
-                                    <p className="font-medium">No districts found</p>
-                                    <p className="text-sm text-gray-400">Try adjusting your search</p>
+                                    <p className="text-xs">No districts found</p>
                                   </div>
                                 )}
                               </div>
@@ -808,86 +819,86 @@ function PlayerVerifyContent() {
                         </div>
                         
                         {!isNewPlayer && player?.place && (
-                          <p className="text-xs text-gray-500 mt-1">This field cannot be changed as it exists in our database</p>
+                          <p className="text-[9px] text-slate-400 font-bold mt-1.5">This field cannot be changed as it exists in our database</p>
                         )}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5">
                           Date of Birth *
-                          {player?.date_of_birth && <span className="text-xs text-green-600 ml-2">(From Database)</span>}
+                          {player?.date_of_birth && <span className="text-[9px] text-green-600 font-bold ml-2">(From Database)</span>}
                         </label>
                         <input
                           type="date"
                           name="date_of_birth"
                           value={formData.date_of_birth}
                           onChange={handleFormChange}
-                          readOnly={!isNewPlayer && player?.date_of_birth}
-                          className={`w-full px-4 py-2 border rounded-lg outline-none ${
+                          readOnly={!isNewPlayer && !!player?.date_of_birth}
+                          className={`w-full px-4 py-2.5 border rounded-xl outline-none text-xs font-bold uppercase tracking-wider ${
                             !isNewPlayer && player?.date_of_birth
-                              ? 'border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed'
-                              : 'border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500'
+                              ? 'border-slate-200/40 bg-slate-100/60 text-slate-400 cursor-not-allowed'
+                              : 'bg-slate-50 border border-slate-200/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80'
                           }`}
                         />
                         {!isNewPlayer && player?.date_of_birth && (
-                          <p className="text-xs text-gray-500 mt-1">This field cannot be changed as it exists in our database</p>
+                          <p className="text-[9px] text-slate-450 mt-1">This field cannot be changed as it exists in our database</p>
                         )}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5">
                           Email *
-                          {player?.email && <span className="text-xs text-green-600 ml-2">(From Database)</span>}
+                          {player?.email && <span className="text-[9px] text-green-600 font-bold ml-2">(From Database)</span>}
                         </label>
                         <input
                           type="email"
                           name="email"
                           value={formData.email}
                           onChange={handleFormChange}
-                          readOnly={!isNewPlayer && player?.email}
-                          className={`w-full px-4 py-2 border rounded-lg outline-none ${
+                          readOnly={!isNewPlayer && !!player?.email}
+                          className={`w-full px-4 py-2.5 border rounded-xl outline-none text-xs font-bold uppercase tracking-wider ${
                             !isNewPlayer && player?.email
-                              ? 'border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed'
-                              : 'border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500'
+                              ? 'border-slate-200/40 bg-slate-100/60 text-slate-400 cursor-not-allowed'
+                              : 'bg-slate-50 border border-slate-200/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80'
                           }`}
                           placeholder="Enter your email"
                         />
                         {!isNewPlayer && player?.email && (
-                          <p className="text-xs text-gray-500 mt-1">This field cannot be changed as it exists in our database</p>
+                          <p className="text-[9px] text-slate-450 mt-1">This field cannot be changed as it exists in our database</p>
                         )}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5">
                           Phone Number *
-                          {player?.phone && <span className="text-xs text-green-600 ml-2">(From Database)</span>}
+                          {player?.phone && <span className="text-[9px] text-green-600 font-bold ml-2">(From Database)</span>}
                         </label>
                         <input
                           type="tel"
                           name="phone"
                           value={formData.phone}
                           onChange={handleFormChange}
-                          readOnly={!isNewPlayer && player?.phone}
-                          className={`w-full px-4 py-2 border rounded-lg outline-none ${
+                          readOnly={!isNewPlayer && !!player?.phone}
+                          className={`w-full px-4 py-2.5 border rounded-xl outline-none text-xs font-bold uppercase tracking-wider ${
                             !isNewPlayer && player?.phone
-                              ? 'border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed'
-                              : 'border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500'
+                              ? 'border-slate-200/40 bg-slate-100/60 text-slate-400 cursor-not-allowed'
+                              : 'bg-slate-50 border border-slate-200/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80'
                           }`}
                           placeholder="Enter your phone number"
                         />
                         {!isNewPlayer && player?.phone && (
-                          <p className="text-xs text-gray-500 mt-1">This field cannot be changed as it exists in our database</p>
+                          <p className="text-[9px] text-slate-450 mt-1">This field cannot be changed as it exists in our database</p>
                         )}
                       </div>
                     </div>
 
                     {/* Photo Upload - Required for all players */}
-                    <div className="bg-blue-50/50 border-2 border-blue-200 rounded-2xl p-6 mt-4">
-                      <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    <div className="bg-amber-500/[0.02] border border-amber-500/10 rounded-2xl p-6 mt-4">
+                      <label className="block text-[10px] uppercase font-bold text-slate-500 mb-3">
                         Player Photo *
-                        <span className="text-red-500 ml-1">Required</span>
+                        <span className="text-rose-500 font-extrabold ml-1">Required</span>
                       </label>
-                      <p className="text-sm text-gray-600 mb-4">
+                      <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider leading-relaxed mb-4">
                         Please upload a clear photo of yourself. This will be used for your player profile.
                       </p>
                       
@@ -898,7 +909,7 @@ function PlayerVerifyContent() {
                             <img
                               src={photoPreview}
                               alt="Photo preview"
-                              className="w-32 h-32 rounded-xl object-cover border-2 border-blue-300"
+                              className="w-32 h-32 rounded-2xl object-cover border border-slate-200 shadow-sm"
                             />
                             <button
                               type="button"
@@ -906,14 +917,14 @@ function PlayerVerifyContent() {
                                 setPhotoFile(null)
                                 setPhotoPreview(null)
                               }}
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-rose-505 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors"
                             >
                               ×
                             </button>
                           </div>
                         ) : (
-                          <div className="w-32 h-32 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
-                            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="w-32 h-32 rounded-2xl border border-dashed border-slate-200 flex items-center justify-center bg-slate-50/50">
+                            <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                           </div>
@@ -921,43 +932,43 @@ function PlayerVerifyContent() {
                         
                         {/* Upload Button */}
                         <div className="flex-1">
-                          <label className="cursor-pointer inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl">
+                          <label className="cursor-pointer inline-flex items-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm">
                             <input
                               type="file"
                               accept="image/*"
                               onChange={handlePhotoChange}
                               className="hidden"
                             />
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
                             {photoFile ? 'Change Photo' : 'Upload Photo'}
                           </label>
-                          <p className="text-xs text-gray-500 mt-2">
+                          <p className="text-[9px] text-slate-400 font-bold mt-2 uppercase tracking-wider">
                             Max 5MB • JPG, PNG, GIF
                           </p>
                         </div>
                       </div>
                     </div>
-
+                    
                     {/* Season Registration Information */}
-                    <div className="mt-4 bg-blue-50 border-2 border-blue-300 rounded-xl p-4">
+                    <div className="mt-4 bg-blue-50/60 border border-blue-200/30 text-blue-700 p-4 rounded-xl font-mono">
                       <div className="flex items-start space-x-3">
                         <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         <div className="flex-1">
-                          <h4 className="text-sm font-semibold text-blue-900 mb-2">Season Registration</h4>
-                          <p className="text-xs text-blue-800 mb-2">
+                          <h4 className="text-xs uppercase font-extrabold text-blue-900 mb-2">Season Registration</h4>
+                          <p className="text-[10px] uppercase font-bold text-blue-700 leading-relaxed mb-2">
                             By registering, you are signing up for this season:
                           </p>
-                          <ul className="text-xs text-blue-800 space-y-1 ml-4">
+                          <ul className="text-[10px] uppercase font-bold text-blue-700 space-y-1 ml-4">
                             <li className="flex items-center">
                               <span className="mr-2">✓</span>
                               <strong>{season?.name || 'Current Season'}</strong>
                             </li>
                           </ul>
-                          <p className="text-xs text-blue-700 mt-2 italic">
+                          <p className="text-[9px] uppercase font-bold text-blue-600 mt-2 italic">
                             You are registering for this season only
                           </p>
                         </div>
@@ -967,7 +978,7 @@ function PlayerVerifyContent() {
                     <button
                       onClick={handleConfirm}
                       disabled={submitting || uploadingPhoto}
-                      className="w-full mt-4 py-3 px-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full mt-4 py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all shadow-sm hover:-translate-y-0.5 active:translate-y-0 text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {uploadingPhoto ? 'Uploading Photo...' : submitting ? 'Submitting...' : 'Complete Registration'}
                     </button>
@@ -976,33 +987,33 @@ function PlayerVerifyContent() {
 
                 {/* Show confirm button for existing player with complete details */}
                 {player && !showForm && (
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-300">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Player Profile</h3>
-                    <div className="bg-white rounded-lg p-4 mb-4 space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm font-semibold text-gray-700">Player ID:</span>
-                        <span className="text-sm text-gray-900">{player.player_id}</span>
+                  <div className="bg-amber-500/[0.02] rounded-xl p-6 border border-amber-500/10 font-mono space-y-6">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Your Player Profile</h3>
+                    <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 space-y-3">
+                      <div className="flex justify-between text-xs uppercase font-bold">
+                        <span className="text-slate-500">Player ID:</span>
+                        <span className="text-slate-800">{player.player_id}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm font-semibold text-gray-700">Name:</span>
-                        <span className="text-sm text-gray-900">{player.name}</span>
+                      <div className="flex justify-between text-xs uppercase font-bold">
+                        <span className="text-slate-500">Name:</span>
+                        <span className="text-slate-800">{player.name}</span>
                       </div>
                       {player.place && (
-                        <div className="flex justify-between">
-                          <span className="text-sm font-semibold text-gray-700">District:</span>
-                          <span className="text-sm text-gray-900">{player.place}</span>
+                        <div className="flex justify-between text-xs uppercase font-bold">
+                          <span className="text-slate-500">District:</span>
+                          <span className="text-slate-800">{player.place}</span>
                         </div>
                       )}
                       {player.previous_season_team && (
                         <>
-                          <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
-                            <span className="text-sm font-semibold text-gray-700">Previous Team:</span>
-                            <span className="text-sm text-gray-900">{player.previous_season_team}</span>
+                          <div className="flex justify-between border-t border-slate-200/60 pt-3 mt-3 text-xs uppercase font-bold">
+                            <span className="text-slate-500">Previous Team:</span>
+                            <span className="text-slate-800">{player.previous_season_team}</span>
                           </div>
                           {player.previous_season_category && (
-                            <div className="flex justify-between">
-                              <span className="text-sm font-semibold text-gray-700">Previous Category:</span>
-                              <span className="text-sm text-gray-900 capitalize">{player.previous_season_category}</span>
+                            <div className="flex justify-between text-xs uppercase font-bold">
+                              <span className="text-slate-500">Previous Category:</span>
+                              <span className="text-slate-800 capitalize">{player.previous_season_category}</span>
                             </div>
                           )}
                         </>
@@ -1010,12 +1021,12 @@ function PlayerVerifyContent() {
                     </div>
                     
                     {/* Photo Upload - Required for all players */}
-                    <div className="bg-blue-50/50 border-2 border-blue-200 rounded-2xl p-6 mt-4">
-                      <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    <div className="bg-amber-500/[0.02] border border-amber-500/10 rounded-2xl p-6 mt-4">
+                      <label className="block text-[10px] uppercase font-bold text-slate-500 mb-3">
                         Player Photo *
-                        <span className="text-red-500 ml-1">Required</span>
+                        <span className="text-rose-500 font-extrabold ml-1">Required</span>
                       </label>
-                      <p className="text-sm text-gray-600 mb-4">
+                      <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider leading-relaxed mb-4">
                         Please upload a clear photo of yourself. This will be used for your player profile.
                       </p>
                       
@@ -1026,7 +1037,7 @@ function PlayerVerifyContent() {
                             <img
                               src={photoPreview}
                               alt="Photo preview"
-                              className="w-32 h-32 rounded-xl object-cover border-2 border-blue-300"
+                              className="w-32 h-32 rounded-2xl object-cover border border-slate-200 shadow-sm"
                             />
                             <button
                               type="button"
@@ -1034,14 +1045,14 @@ function PlayerVerifyContent() {
                                 setPhotoFile(null)
                                 setPhotoPreview(null)
                               }}
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors font-bold"
                             >
                               ×
                             </button>
                           </div>
                         ) : (
-                          <div className="w-32 h-32 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
-                            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="w-32 h-32 rounded-2xl border border-dashed border-slate-200 flex items-center justify-center bg-slate-50/50">
+                            <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                           </div>
@@ -1049,19 +1060,19 @@ function PlayerVerifyContent() {
                         
                         {/* Upload Button */}
                         <div className="flex-1">
-                          <label className="cursor-pointer inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl">
+                          <label className="cursor-pointer inline-flex items-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm">
                             <input
                               type="file"
                               accept="image/*"
                               onChange={handlePhotoChange}
                               className="hidden"
                             />
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
                             {photoFile ? 'Change Photo' : 'Upload Photo'}
                           </label>
-                          <p className="text-xs text-gray-500 mt-2">
+                          <p className="text-[9px] text-slate-400 font-bold mt-2 uppercase tracking-wider">
                             Max 5MB • JPG, PNG, GIF
                           </p>
                         </div>
@@ -1069,23 +1080,23 @@ function PlayerVerifyContent() {
                     </div>
                     
                     {/* Season Registration Information */}
-                    <div className="mt-4 bg-blue-50 border-2 border-blue-300 rounded-xl p-4">
+                    <div className="mt-4 bg-blue-50/60 border border-blue-200/30 text-blue-700 p-4 rounded-xl font-mono">
                       <div className="flex items-start space-x-3">
                         <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         <div className="flex-1">
-                          <h4 className="text-sm font-semibold text-blue-900 mb-2">Season Registration</h4>
-                          <p className="text-xs text-blue-800 mb-2">
+                          <h4 className="text-xs uppercase font-extrabold text-blue-900 mb-2">Season Registration</h4>
+                          <p className="text-[10px] uppercase font-bold text-blue-700 leading-relaxed mb-2">
                             By registering, you are signing up for this season:
                           </p>
-                          <ul className="text-xs text-blue-800 space-y-1 ml-4">
+                          <ul className="text-[10px] uppercase font-bold text-blue-700 space-y-1 ml-4">
                             <li className="flex items-center">
                               <span className="mr-2">✓</span>
                               <strong>{season?.name || 'Current Season'}</strong>
                             </li>
                           </ul>
-                          <p className="text-xs text-blue-700 mt-2 italic">
+                          <p className="text-[9px] uppercase font-bold text-blue-600 mt-2 italic">
                             You are registering for this season only
                           </p>
                         </div>
@@ -1095,7 +1106,7 @@ function PlayerVerifyContent() {
                     <button
                       onClick={handleConfirm}
                       disabled={submitting || uploadingPhoto}
-                      className="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                      className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all shadow-sm hover:-translate-y-0.5 active:translate-y-0 text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed mt-4"
                     >
                       {uploadingPhoto ? 'Uploading Photo...' : submitting ? 'Registering...' : 'Confirm Registration'}
                     </button>
@@ -1105,14 +1116,20 @@ function PlayerVerifyContent() {
             )}
 
             {success && (
-              <div className="mt-4 p-4 rounded-xl bg-green-50 border border-green-200">
-                <p className="text-green-600 text-sm">{success}</p>
+              <div className="mt-4 p-4 bg-green-50 border border-green-200/40 text-green-800 rounded-xl text-xs uppercase font-bold tracking-wider flex items-center gap-2 font-mono">
+                <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{success}</span>
               </div>
             )}
             
             {error && (
-              <div className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200">
-                <p className="text-red-600 text-sm">{error}</p>
+              <div className="mt-4 p-4 bg-rose-50 border border-rose-200/40 text-rose-800 rounded-xl text-xs uppercase font-bold tracking-wider flex items-center gap-2 font-mono">
+                <svg className="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>{error}</span>
               </div>
             )}
 
@@ -1120,17 +1137,15 @@ function PlayerVerifyContent() {
               <button
                 onClick={handleBack}
                 disabled={submitting}
-                className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/60 font-bold rounded-xl transition-all text-xs uppercase tracking-wider hover:-translate-y-0.5 active:translate-y-0"
               >
                 ← Back to Player Selection
               </button>
             </div>
           </div>
 
-          <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-            <p className="text-sm text-gray-600 text-center">
-              Your information is securely managed by the committee
-            </p>
+          <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 text-[10px] uppercase font-bold text-slate-400 text-center font-mono">
+            Your information is securely managed by the committee
           </div>
         </div>
       </div>
@@ -1142,10 +1157,11 @@ export default function PlayerVerify() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-[#0066FF]/5 via-white to-[#00D4FF]/5 flex items-center justify-center p-4">
-          <div className="glass rounded-3xl p-8 shadow-lg border border-white/20 max-w-md w-full text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
+        <div className="console-bg min-h-screen flex items-center justify-center relative">
+          <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+          <div className="text-center relative z-10 font-mono">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+            <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading registration details...</p>
           </div>
         </div>
       }

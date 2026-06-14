@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import Link from 'next/link';
 
 interface TeamStats {
     team_id: string;
@@ -269,40 +270,52 @@ export default function TournamentPenaltiesPage() {
 
     if (authLoading || !user) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+            <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+                <div className="text-center font-mono">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
+                    <p className="mt-4 text-xs text-slate-450 font-bold uppercase tracking-wider">Loading penalties portal...</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-            <div className="max-w-7xl mx-auto">
+        <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+            {/* Decorative eSports glowing ambient overlay */}
+            <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
+
+            <div className="max-w-7xl mx-auto relative z-10 space-y-6">
                 {/* Header */}
-                <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-                                <span className="text-4xl">⚠️</span>
-                                Tournament Penalties Management
-                            </h1>
-                            <p className="text-gray-600">Apply and manage point deductions for teams</p>
-                        </div>
-                        <div className="bg-gradient-to-r from-red-100 to-orange-100 rounded-xl p-4 border-2 border-red-200">
-                            <p className="text-sm text-red-800 font-semibold">Committee Admin Only</p>
-                        </div>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <Link
+                            href="/dashboard/committee/team-management/tournament"
+                            className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all mb-4"
+                        >
+                            ← Back to Tournament
+                        </Link>
+                        <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight font-mono">
+                            Tournament Penalties Management
+                        </h1>
+                        <p className="text-xs text-slate-400 font-mono mt-1 leading-normal">
+                            Apply and manage point deductions and budget fines for teams
+                        </p>
+                    </div>
+                    
+                    <div className="bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider px-3 py-1.5 rounded-xl border border-slate-700 shadow-sm shrink-0">
+                        COMMITTEE ADMIN ONLY
                     </div>
                 </div>
 
                 {/* Tournament Selector */}
-                <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm font-mono text-xs">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                         Select Tournament
                     </label>
                     <select
                         value={selectedTournament}
                         onChange={(e) => setSelectedTournament(e.target.value)}
-                        className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg font-medium"
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer"
                     >
                         {tournaments.map((tournament) => (
                             <option key={tournament.id} value={tournament.id}>
@@ -314,157 +327,154 @@ export default function TournamentPenaltiesPage() {
 
                 {/* Messages */}
                 {error && (
-                    <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
-                        <div className="flex items-center gap-2 text-red-800">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <span className="font-medium">{error}</span>
+                    <div className="bg-rose-50 border border-rose-250/60 rounded-2xl p-4 font-mono text-xs">
+                        <div className="flex items-center gap-2 text-rose-800">
+                            <span className="font-extrabold">⚠️ ERROR:</span>
+                            <span className="font-bold uppercase tracking-wide">{error}</span>
                         </div>
                     </div>
                 )}
 
                 {success && (
-                    <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-6">
-                        <div className="flex items-center gap-2 text-green-800">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            <span className="font-medium">{success}</span>
+                    <div className="bg-emerald-50 border border-emerald-255/60 rounded-2xl p-4 font-mono text-xs">
+                        <div className="flex items-center gap-2 text-emerald-800">
+                            <span className="font-extrabold">✅ SUCCESS:</span>
+                            <span className="font-bold uppercase tracking-wide">{success}</span>
                         </div>
                     </div>
                 )}
 
                 {/* WhatsApp Message */}
                 {whatsappMessage && (
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6 mb-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-green-900 flex items-center gap-2">
-                                📱 WhatsApp Message
+                    <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm font-mono text-xs space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <h3 className="text-xs font-bold text-slate-855 uppercase tracking-wider flex items-center gap-1.5">
+                                📱 WHATSAPP TRANSMISSION MESSAGE
                             </h3>
                             <button
                                 onClick={() => {
                                     navigator.clipboard.writeText(whatsappMessage);
                                     alert('WhatsApp message copied to clipboard!');
                                 }}
-                                className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all"
                             >
                                 📋 Copy Message
                             </button>
                         </div>
-                        <div className="bg-white border-2 border-green-200 rounded-lg p-4">
-                            <pre className="text-sm whitespace-pre-wrap font-sans text-gray-800">
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                            <pre className="text-xs whitespace-pre-wrap font-mono text-slate-700 leading-relaxed uppercase">
                                 {whatsappMessage}
                             </pre>
                         </div>
-                        <p className="text-xs text-green-700 mt-3">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                             💡 Copy this message and send it to the team owner via WhatsApp
                         </p>
                     </div>
                 )}
 
                 {/* Standings Table */}
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            Tournament Standings & Penalties
-                        </h2>
-                        {selectedTournamentData && (
-                            <p className="text-sm text-blue-100 mt-1">
-                                {selectedTournamentData.tournament_name}
-                            </p>
-                        )}
+                <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm font-mono text-xs">
+                    <div className="bg-slate-850 text-white p-5 border-b border-slate-850">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                                Tournament Standings & Penalties Matrix
+                            </h2>
+                            {selectedTournamentData && (
+                                <span className="text-[10px] font-bold uppercase bg-slate-700 text-amber-400 px-2 py-0.5 rounded border border-slate-650">
+                                    {selectedTournamentData.tournament_name}
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     {isLoading ? (
-                        <div className="flex items-center justify-center py-20">
-                            <svg className="animate-spin h-10 w-10 text-blue-600" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
+                        <div className="flex flex-col items-center justify-center py-20 font-mono">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+                            <span className="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-wider">Syncing standings table...</span>
                         </div>
                     ) : teamStats.length === 0 ? (
-                        <div className="text-center py-20">
-                            <p className="text-gray-500 text-lg">No teams found for this tournament</p>
+                        <div className="text-center py-20 font-mono">
+                            <p className="text-slate-450 text-xs font-bold uppercase tracking-wider">No teams found for this tournament</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50 border-b-2 border-gray-200">
+                            <table className="min-w-full divide-y divide-slate-100">
+                                <thead className="bg-slate-800 text-white uppercase text-[10px] font-bold tracking-wider">
                                     <tr>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Pos</th>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Team</th>
-                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">P</th>
-                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">W</th>
-                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">D</th>
-                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">L</th>
-                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">GF</th>
-                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">GA</th>
-                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">GD</th>
-                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Pts</th>
-                                        <th className="px-6 py-4 text-center text-xs font-bold text-red-700 uppercase tracking-wider">Penalties</th>
-                                        <th className="px-6 py-4 text-center text-xs font-bold text-blue-700 uppercase tracking-wider">Adj Pts</th>
-                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+                                        <th className="px-4 py-3 text-left">Pos</th>
+                                        <th className="px-4 py-3 text-left">Team</th>
+                                        <th className="px-4 py-3 text-center">P</th>
+                                        <th className="px-4 py-3 text-center">W</th>
+                                        <th className="px-4 py-3 text-center">D</th>
+                                        <th className="px-4 py-3 text-center">L</th>
+                                        <th className="px-4 py-3 text-center">GF</th>
+                                        <th className="px-4 py-3 text-center">GA</th>
+                                        <th className="px-4 py-3 text-center">GD</th>
+                                        <th className="px-4 py-3 text-center">Pts</th>
+                                        <th className="px-4 py-3 text-center">Penalties</th>
+                                        <th className="px-4 py-3 text-center">Adj Pts</th>
+                                        <th className="px-4 py-3 text-center">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
+                                <tbody className="divide-y divide-slate-100 bg-white">
                                     {teamStats.map((team, index) => {
                                         const adjustedPoints = team.points - (team.points_deducted || 0);
                                         const isExpanded = expandedTeam === team.team_id;
 
                                         return (
                                             <React.Fragment key={team.team_id}>
-                                                <tr className={`hover:bg-gray-50 transition-colors ${isExpanded ? 'bg-blue-50' : ''}`}>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 font-bold text-sm">
+                                                <tr className={`even:bg-slate-50/40 hover:bg-slate-50 transition-colors ${isExpanded ? 'bg-amber-50/40' : ''}`}>
+                                                    <td className="px-4 py-3">
+                                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-extrabold text-xs">
                                                             {index + 1}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="text-sm font-semibold text-gray-900">{team.team_name}</div>
+                                                    <td className="px-4 py-3">
+                                                        <div className="font-bold text-slate-850 uppercase tracking-wide">{team.team_name}</div>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700">{team.played}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-green-600 font-semibold">{team.won}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600">{team.drawn}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-red-600 font-semibold">{team.lost}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700">{team.goals_for}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700">{team.goals_against}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold">
-                                                        <span className={team.goal_difference >= 0 ? 'text-green-600' : 'text-red-600'}>
+                                                    <td className="px-4 py-3 text-center font-medium text-slate-700">{team.played}</td>
+                                                    <td className="px-4 py-3 text-center font-bold text-emerald-600">{team.won}</td>
+                                                    <td className="px-4 py-3 text-center font-medium text-slate-600">{team.drawn}</td>
+                                                    <td className="px-4 py-3 text-center font-bold text-rose-600">{team.lost}</td>
+                                                    <td className="px-4 py-3 text-center text-slate-655">{team.goals_for}</td>
+                                                    <td className="px-4 py-3 text-center text-slate-655">{team.goals_against}</td>
+                                                    <td className="px-4 py-3 text-center font-extrabold">
+                                                        <span className={team.goal_difference >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
                                                             {team.goal_difference >= 0 ? '+' : ''}{team.goal_difference}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-800">
+                                                    <td className="px-4 py-3 text-center">
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-extrabold bg-slate-100 border border-slate-200 text-slate-750">
                                                             {team.points}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <td className="px-4 py-3 text-center">
                                                         {team.points_deducted > 0 ? (
-                                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-red-100 text-red-800 border border-red-300">
-                                                                -{team.points_deducted}
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-rose-50 border border-rose-250 text-rose-700">
+                                                                -{team.points_deducted} PTS
                                                             </span>
                                                         ) : (
-                                                            <span className="text-gray-400">-</span>
+                                                            <span className="text-slate-400 font-bold">-</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                        <span className="inline-flex items-center px-4 py-1.5 rounded-full text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md">
-                                                            {adjustedPoints}
+                                                    <td className="px-4 py-3 text-center">
+                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider bg-indigo-50 border border-indigo-250 text-indigo-700">
+                                                            {adjustedPoints} PTS
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <td className="px-4 py-3 text-center">
                                                         <div className="flex items-center justify-center gap-2">
                                                             <button
                                                                 onClick={() => togglePenaltyForm(team.team_id)}
                                                                 disabled={authLoading || !user}
-                                                                className={`px-4 py-2 text-white text-xs rounded-lg hover:shadow-lg transition-all font-semibold inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed ${isExpanded && !showHistory
-                                                                    ? 'bg-gradient-to-r from-gray-600 to-gray-700'
-                                                                    : 'bg-gradient-to-r from-red-600 to-orange-600'
-                                                                    }`}
+                                                                className={`px-3 py-1.5 font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all inline-flex items-center gap-1 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                                                                    isExpanded && !showHistory
+                                                                        ? 'bg-slate-750 hover:bg-slate-700 text-white'
+                                                                        : 'bg-rose-600 hover:bg-rose-500 text-white'
+                                                                }`}
                                                             >
                                                                 <span>{isExpanded && !showHistory ? '✕' : '⚠️'}</span>
                                                                 {isExpanded && !showHistory ? 'Cancel' : 'Penalty'}
@@ -472,10 +482,11 @@ export default function TournamentPenaltiesPage() {
                                                             {team.points_deducted > 0 && (
                                                                 <button
                                                                     onClick={() => toggleHistory(team.team_id)}
-                                                                    className={`px-4 py-2 text-white text-xs rounded-lg hover:shadow-lg transition-all font-semibold inline-flex items-center gap-1.5 ${isExpanded && showHistory
-                                                                        ? 'bg-gradient-to-r from-gray-600 to-gray-700'
-                                                                        : 'bg-gradient-to-r from-blue-600 to-indigo-600'
-                                                                        }`}
+                                                                    className={`px-3 py-1.5 font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all inline-flex items-center gap-1 shadow-sm ${
+                                                                        isExpanded && showHistory
+                                                                            ? 'bg-slate-750 hover:bg-slate-700 text-white'
+                                                                            : 'bg-slate-800 hover:bg-slate-750 text-white'
+                                                                    }`}
                                                                 >
                                                                     <span>{isExpanded && showHistory ? '✕' : '📋'}</span>
                                                                     {isExpanded && showHistory ? 'Close' : 'History'}
@@ -489,18 +500,17 @@ export default function TournamentPenaltiesPage() {
                                                 {isExpanded && (
                                                     <tr>
                                                         <td colSpan={13} className="px-0 py-0">
-                                                            <div className="bg-gradient-to-br from-gray-50 to-blue-50 border-t-4 border-blue-500 p-8">
+                                                            <div className="bg-[#f8fafc] border-t border-b border-slate-200/60 p-6 font-mono text-xs">
                                                                 {!showHistory ? (
                                                                     /* Apply Penalty Form */
-                                                                    <div className="max-w-4xl mx-auto">
-                                                                        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                                                                            <span className="text-3xl">⚠️</span>
-                                                                            Apply Penalty to {team.team_name}
+                                                                    <div className="max-w-4xl mx-auto space-y-6">
+                                                                        <h3 className="text-sm font-bold text-slate-850 uppercase tracking-wider flex items-center gap-1.5 mb-4">
+                                                                            ⚠️ APPLY PENALTY TO {team.team_name}
                                                                         </h3>
 
-                                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                                             <div>
-                                                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                                                                                     Points to Deduct *
                                                                                 </label>
                                                                                 <input
@@ -509,12 +519,12 @@ export default function TournamentPenaltiesPage() {
                                                                                     max="50"
                                                                                     value={penaltyPoints}
                                                                                     onChange={(e) => setPenaltyPoints(parseInt(e.target.value) || 1)}
-                                                                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all text-lg font-semibold"
+                                                                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide"
                                                                                 />
                                                                             </div>
 
                                                                             <div>
-                                                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                                                                                     ECoin Fine (Optional)
                                                                                 </label>
                                                                                 <input
@@ -524,13 +534,13 @@ export default function TournamentPenaltiesPage() {
                                                                                     step="0.01"
                                                                                     value={ecoinFine}
                                                                                     onChange={(e) => setEcoinFine(parseFloat(e.target.value) || 0)}
-                                                                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+                                                                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide"
                                                                                     placeholder="0.00"
                                                                                 />
                                                                             </div>
 
                                                                             <div>
-                                                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                                                                                     SSCoin Fine (Optional)
                                                                                 </label>
                                                                                 <input
@@ -540,36 +550,38 @@ export default function TournamentPenaltiesPage() {
                                                                                     step="0.01"
                                                                                     value={sscoinFine}
                                                                                     onChange={(e) => setSscoinFine(parseFloat(e.target.value) || 0)}
-                                                                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-lg"
+                                                                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide"
                                                                                     placeholder="0.00"
                                                                                 />
                                                                             </div>
                                                                         </div>
 
-                                                                        <div className="mb-6">
-                                                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                                        <div>
+                                                                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                                                                                 Reason * (min 10 characters)
                                                                             </label>
                                                                             <textarea
                                                                                 value={penaltyReason}
                                                                                 onChange={(e) => setPenaltyReason(e.target.value)}
-                                                                                rows={4}
-                                                                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"
-                                                                                placeholder="Enter reason for penalty (e.g., Late lineup submission, Misconduct, etc.)"
+                                                                                rows={3}
+                                                                                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide resize-none"
+                                                                                placeholder="ENTER REASON FOR PENALTY (E.G. LATE LINEUP SUBMISSION, MISCONDUCT, ETC.)"
                                                                             />
-                                                                            <p className="text-sm text-gray-500 mt-1">
-                                                                                {penaltyReason.length}/10 characters minimum
-                                                                            </p>
+                                                                            <div className="flex justify-between items-center mt-1">
+                                                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                                                                    {penaltyReason.length}/10 characters minimum
+                                                                                </p>
+                                                                            </div>
                                                                         </div>
 
                                                                         {/* Percentage Calculator */}
-                                                                        <div className="mb-6 bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl p-6">
-                                                                            <h4 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2">
+                                                                        <div className="console-card bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+                                                                            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                                                                                 🧮 Fine Calculator
                                                                             </h4>
 
-                                                                            <div className="mb-4">
-                                                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                                            <div className="space-y-2">
+                                                                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-450">
                                                                                     Percentage of Total Balance
                                                                                 </label>
                                                                                 <div className="flex items-center gap-4">
@@ -579,21 +591,18 @@ export default function TournamentPenaltiesPage() {
                                                                                         max="100"
                                                                                         value={calculatorPercentage}
                                                                                         onChange={(e) => setCalculatorPercentage(parseInt(e.target.value))}
-                                                                                        className="flex-1 h-3 bg-indigo-200 rounded-lg appearance-none cursor-pointer"
-                                                                                        style={{
-                                                                                            background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${calculatorPercentage}%, #e0e7ff ${calculatorPercentage}%, #e0e7ff 100%)`
-                                                                                        }}
+                                                                                        className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
                                                                                     />
-                                                                                    <div className="flex items-center gap-2">
+                                                                                    <div className="flex items-center gap-1.5">
                                                                                         <input
                                                                                             type="number"
                                                                                             min="1"
                                                                                             max="100"
                                                                                             value={calculatorPercentage}
                                                                                             onChange={(e) => setCalculatorPercentage(parseInt(e.target.value) || 1)}
-                                                                                            className="w-20 px-3 py-2 border-2 border-indigo-300 rounded-lg text-center font-bold text-indigo-900"
+                                                                                            className="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-center font-bold text-slate-800 focus:border-slate-800 bg-white"
                                                                                         />
-                                                                                        <span className="text-indigo-900 font-bold">%</span>
+                                                                                        <span className="text-slate-800 font-bold">%</span>
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
@@ -614,50 +623,50 @@ export default function TournamentPenaltiesPage() {
                                                                                         console.error('Error fetching balance:', error);
                                                                                     }
                                                                                 }}
-                                                                                className="w-full px-4 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all mb-4"
+                                                                                className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm"
                                                                             >
                                                                                 📊 Fetch {team.team_name} Balance
                                                                             </button>
 
                                                                             {selectedTeamForCalc && (
-                                                                                <div className="space-y-4">
-                                                                                    <div className="bg-white rounded-lg p-4 border-2 border-indigo-200">
-                                                                                        <h5 className="text-sm font-semibold text-gray-700 mb-3">Current Balance:</h5>
+                                                                                <div className="space-y-4 pt-3 border-t border-slate-200">
+                                                                                    <div className="bg-white rounded-xl p-4 border border-slate-200/60">
+                                                                                        <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Current Balance:</h5>
                                                                                         <div className="grid grid-cols-2 gap-4 mb-4">
-                                                                                            <div>
-                                                                                                <p className="text-xs text-gray-600">ECoin</p>
-                                                                                                <p className="text-lg font-bold text-blue-600">{selectedTeamForCalc.ecoin.toLocaleString()}</p>
+                                                                                            <div className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100">
+                                                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">ECoin</p>
+                                                                                                <p className="text-sm font-extrabold text-blue-600">{selectedTeamForCalc.ecoin.toLocaleString()}</p>
                                                                                             </div>
-                                                                                            <div>
-                                                                                                <p className="text-xs text-gray-600">SSCoin</p>
-                                                                                                <p className="text-lg font-bold text-purple-600">{selectedTeamForCalc.sscoin.toLocaleString()}</p>
+                                                                                            <div className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100">
+                                                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">SSCoin</p>
+                                                                                                <p className="text-sm font-extrabold text-purple-600">{selectedTeamForCalc.sscoin.toLocaleString()}</p>
                                                                                             </div>
                                                                                         </div>
 
-                                                                                        <h5 className="text-sm font-semibold text-gray-700 mb-3">
-                                                                                            {calculatorPercentage}% Fine:
+                                                                                        <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                                                                                            {calculatorPercentage}% Calculated Fine:
                                                                                         </h5>
                                                                                         <div className="grid grid-cols-2 gap-4">
-                                                                                            <div className="bg-blue-50 rounded-lg p-3">
-                                                                                                <p className="text-xs text-blue-700 mb-1">ECoin Fine</p>
-                                                                                                <p className="text-xl font-bold text-blue-900">
+                                                                                            <div className="bg-blue-50/40 rounded-xl p-3 border border-blue-100">
+                                                                                                <p className="text-[9px] font-bold text-blue-600 uppercase tracking-wider mb-1">ECoin Fine</p>
+                                                                                                <p className="text-base font-black text-blue-800">
                                                                                                     {((selectedTeamForCalc.ecoin * calculatorPercentage) / 100).toFixed(2)}
                                                                                                 </p>
                                                                                                 <button
                                                                                                     onClick={() => setEcoinFine(parseFloat(((selectedTeamForCalc.ecoin * calculatorPercentage) / 100).toFixed(2)))}
-                                                                                                    className="mt-2 w-full px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                                                                                                    className="mt-2 w-full px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white font-mono font-bold text-[9px] uppercase tracking-wider rounded-lg transition-colors"
                                                                                                 >
                                                                                                     Use This Amount
                                                                                                 </button>
                                                                                             </div>
-                                                                                            <div className="bg-purple-50 rounded-lg p-3">
-                                                                                                <p className="text-xs text-purple-700 mb-1">SSCoin Fine</p>
-                                                                                                <p className="text-xl font-bold text-purple-900">
+                                                                                            <div className="bg-purple-50/40 rounded-xl p-3 border border-purple-100">
+                                                                                                <p className="text-[9px] font-bold text-purple-600 uppercase tracking-wider mb-1">SSCoin Fine</p>
+                                                                                                <p className="text-base font-black text-purple-800">
                                                                                                     {((selectedTeamForCalc.sscoin * calculatorPercentage) / 100).toFixed(2)}
                                                                                                 </p>
                                                                                                 <button
                                                                                                     onClick={() => setSscoinFine(parseFloat(((selectedTeamForCalc.sscoin * calculatorPercentage) / 100).toFixed(2)))}
-                                                                                                    className="mt-2 w-full px-3 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700 transition-colors"
+                                                                                                    className="mt-2 w-full px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white font-mono font-bold text-[9px] uppercase tracking-wider rounded-lg transition-colors"
                                                                                                 >
                                                                                                     Use This Amount
                                                                                                 </button>
@@ -669,83 +678,85 @@ export default function TournamentPenaltiesPage() {
                                                                         </div>
 
                                                                         {(penaltyPoints > 0 || ecoinFine > 0 || sscoinFine > 0) && penaltyReason.length >= 10 && (
-                                                                            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 mb-6">
-                                                                                <p className="text-sm font-semibold text-yellow-900 mb-2">⚠️ Warning: This will apply the following penalties:</p>
-                                                                                <ul className="text-sm text-yellow-800 space-y-1">
-                                                                                    <li>• <strong>{penaltyPoints}</strong> points deducted from standings</li>
-                                                                                    {ecoinFine > 0 && <li>• <strong>{ecoinFine}</strong> ECoin fine</li>}
-                                                                                    {sscoinFine > 0 && <li>• <strong>{sscoinFine}</strong> SSCoin fine</li>}
+                                                                            <div className="bg-amber-50/60 border border-amber-250 rounded-xl p-4">
+                                                                                <p className="text-[10px] font-black text-amber-800 uppercase tracking-wider mb-2">⚠️ WARNING: THIS WILL APPLY THE FOLLOWING PENALTIES:</p>
+                                                                                <ul className="space-y-1 text-slate-700 font-bold uppercase tracking-wide text-[10px]">
+                                                                                    <li>• <span className="text-slate-900 font-black">{penaltyPoints}</span> standpoint points deduction</li>
+                                                                                    {ecoinFine > 0 && <li>• <span className="text-blue-700 font-black">{ecoinFine}</span> ecoin budget deduction</li>}
+                                                                                    {sscoinFine > 0 && <li>• <span className="text-purple-700 font-black">{sscoinFine}</span> sscoin budget deduction</li>}
                                                                                 </ul>
                                                                             </div>
                                                                         )}
 
-                                                                        <div className="flex gap-4">
+                                                                        <div className="flex gap-3 pt-2">
                                                                             <button
                                                                                 onClick={() => handleSubmitPenalty(team)}
                                                                                 disabled={isSubmitting || penaltyReason.length < 10}
-                                                                                className="flex-1 px-6 py-4 bg-gradient-to-r from-red-600 to-orange-600 text-white text-lg font-bold rounded-xl hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                                className="flex-1 px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                                                             >
-                                                                                {isSubmitting ? 'Applying...' : '⚠️ Apply Penalty'}
+                                                                                {isSubmitting ? 'APPLYING PENALTY...' : '⚠️ APPLY PENALTY'}
                                                                             </button>
                                                                             <button
                                                                                 onClick={() => togglePenaltyForm(team.team_id)}
                                                                                 disabled={isSubmitting}
-                                                                                className="px-6 py-4 bg-gray-200 text-gray-700 text-lg font-semibold rounded-xl hover:bg-gray-300 transition-all disabled:opacity-50"
+                                                                                className="px-6 py-3 bg-white hover:bg-slate-50 border border-slate-255 text-slate-750 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm"
                                                                             >
-                                                                                Cancel
+                                                                                CANCEL
                                                                             </button>
                                                                         </div>
                                                                     </div>
                                                                 ) : (
                                                                     /* Penalty History */
-                                                                    <div className="max-w-4xl mx-auto">
-                                                                        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                                                                            <span className="text-3xl">📋</span>
-                                                                            Penalty History for {team.team_name}
+                                                                    <div className="max-w-4xl mx-auto space-y-6">
+                                                                        <h3 className="text-sm font-bold text-slate-855 uppercase tracking-wider flex items-center gap-1.5 mb-4">
+                                                                            📋 PENALTY HISTORY FOR {team.team_name}
                                                                         </h3>
 
                                                                         {loadingHistory ? (
                                                                             <div className="text-center py-8">
-                                                                                <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto"></div>
+                                                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto"></div>
+                                                                                <p className="mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">Syncing team records...</p>
                                                                             </div>
                                                                         ) : penalties.length === 0 ? (
-                                                                            <div className="text-center py-8 text-gray-500">
-                                                                                <p className="text-lg">No penalties found for this team</p>
+                                                                            <div className="text-center py-8 text-slate-450 font-bold uppercase tracking-wider">
+                                                                                <p>No penalties found for this team</p>
                                                                             </div>
                                                                         ) : (
-                                                                            <div className="space-y-4">
+                                                                            <div className="space-y-6">
                                                                                 {/* Active Penalties */}
                                                                                 {penalties.filter(p => !p.removed_at).length > 0 && (
-                                                                                    <div>
-                                                                                        <h4 className="text-lg font-bold text-red-700 mb-3">Active Penalties</h4>
+                                                                                    <div className="space-y-3">
+                                                                                        <h4 className="text-[10px] font-black text-rose-700 uppercase tracking-wider">Active Penalties</h4>
                                                                                         <div className="space-y-3">
                                                                                             {penalties.filter(p => !p.removed_at).map((penalty) => (
-                                                                                                <div key={penalty.id} className="bg-white border-2 border-red-200 rounded-xl p-4">
-                                                                                                    <div className="flex items-start justify-between">
-                                                                                                        <div className="flex-1">
-                                                                                                            <div className="flex items-center gap-2 mb-2">
-                                                                                                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-red-100 text-red-800">
+                                                                                                <div key={penalty.id} className="bg-white border border-rose-250 rounded-xl p-4 shadow-sm">
+                                                                                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                                                                                                        <div className="flex-1 space-y-2">
+                                                                                                            <div className="flex flex-wrap gap-1.5">
+                                                                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-rose-50 border border-rose-250 text-rose-700">
                                                                                                                     -{penalty.points_deducted} points
                                                                                                                 </span>
                                                                                                                 {penalty.ecoin_fine > 0 && (
-                                                                                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-800">
+                                                                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-blue-50 border border-blue-205 text-blue-700">
                                                                                                                         {penalty.ecoin_fine} ECoin
                                                                                                                     </span>
                                                                                                                 )}
                                                                                                                 {penalty.sscoin_fine > 0 && (
-                                                                                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-purple-100 text-purple-800">
+                                                                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-purple-50 border border-purple-205 text-purple-700">
                                                                                                                         {penalty.sscoin_fine} SSCoin
                                                                                                                     </span>
                                                                                                                 )}
                                                                                                             </div>
-                                                                                                            <p className="text-sm text-gray-700 mb-1"><strong>Reason:</strong> {penalty.reason}</p>
-                                                                                                            <p className="text-xs text-gray-500">
+                                                                                                            <p className="text-xs text-slate-700 leading-normal uppercase">
+                                                                                                                <strong className="text-slate-855 font-black">Reason:</strong> {penalty.reason}
+                                                                                                            </p>
+                                                                                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                                                                                                                 Applied on {new Date(penalty.applied_at).toLocaleDateString()} by {penalty.applied_by}
                                                                                                             </p>
                                                                                                         </div>
                                                                                                         <button
                                                                                                             onClick={() => handleRemovePenalty(penalty.id, team.team_id)}
-                                                                                                            className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-all"
+                                                                                                            className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg shadow-sm transition-all self-start"
                                                                                                         >
                                                                                                             Remove
                                                                                                         </button>
@@ -758,30 +769,34 @@ export default function TournamentPenaltiesPage() {
 
                                                                                 {/* Removed Penalties */}
                                                                                 {penalties.filter(p => p.removed_at).length > 0 && (
-                                                                                    <div>
-                                                                                        <h4 className="text-lg font-bold text-gray-700 mb-3">Removed Penalties</h4>
+                                                                                    <div className="space-y-3">
+                                                                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Removed Penalties</h4>
                                                                                         <div className="space-y-3">
                                                                                             {penalties.filter(p => p.removed_at).map((penalty) => (
-                                                                                                <div key={penalty.id} className="bg-white border-2 border-gray-200 rounded-xl p-4 opacity-60">
-                                                                                                    <div className="flex items-center gap-2 mb-2">
-                                                                                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-gray-100 text-gray-600">
-                                                                                                            -{penalty.points_deducted} points
-                                                                                                        </span>
-                                                                                                        {penalty.ecoin_fine > 0 && (
-                                                                                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-blue-50 text-blue-600">
-                                                                                                                {penalty.ecoin_fine} ECoin
+                                                                                                <div key={penalty.id} className="bg-white border border-slate-200/60 rounded-xl p-4 opacity-60">
+                                                                                                    <div className="space-y-2">
+                                                                                                        <div className="flex flex-wrap gap-1.5">
+                                                                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-slate-100 border border-slate-200 text-slate-500">
+                                                                                                                -{penalty.points_deducted} points
                                                                                                             </span>
-                                                                                                        )}
-                                                                                                        {penalty.sscoin_fine > 0 && (
-                                                                                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-purple-50 text-purple-600">
-                                                                                                                {penalty.sscoin_fine} SSCoin
-                                                                                                            </span>
-                                                                                                        )}
+                                                                                                            {penalty.ecoin_fine > 0 && (
+                                                                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-slate-50 border border-slate-200 text-slate-500">
+                                                                                                                    {penalty.ecoin_fine} ECoin
+                                                                                                                </span>
+                                                                                                            )}
+                                                                                                            {penalty.sscoin_fine > 0 && (
+                                                                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-slate-50 border border-slate-200 text-slate-500">
+                                                                                                                    {penalty.sscoin_fine} SSCoin
+                                                                                                                </span>
+                                                                                                            )}
+                                                                                                        </div>
+                                                                                                        <p className="text-xs text-slate-550 leading-normal uppercase">
+                                                                                                            <strong className="font-bold">Reason:</strong> {penalty.reason}
+                                                                                                        </p>
+                                                                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                                                                                            Removed on {new Date(penalty.removed_at!).toLocaleDateString()} by {penalty.removed_by}
+                                                                                                        </p>
                                                                                                     </div>
-                                                                                                    <p className="text-sm text-gray-600 mb-1"><strong>Reason:</strong> {penalty.reason}</p>
-                                                                                                    <p className="text-xs text-gray-500">
-                                                                                                        Removed on {new Date(penalty.removed_at!).toLocaleDateString()} by {penalty.removed_by}
-                                                                                                    </p>
                                                                                                 </div>
                                                                                             ))}
                                                                                         </div>
@@ -805,19 +820,17 @@ export default function TournamentPenaltiesPage() {
                 </div>
 
                 {/* Info Box */}
-                <div className="mt-6 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
+                <div className="console-card bg-slate-50 border border-slate-200 rounded-2xl p-5 font-mono text-xs">
                     <div className="flex items-start gap-3">
-                        <svg className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                        <div>
-                            <h3 className="text-sm font-bold text-blue-900 mb-2">How Penalties Work</h3>
-                            <ul className="text-sm text-blue-800 space-y-1">
-                                <li>• <strong>Apply Penalty:</strong> Click the "Penalty" button to expand the form inline</li>
-                                <li>• <strong>Adjusted Points:</strong> Teams are ranked by their adjusted points (Points - Penalties)</li>
-                                <li>• <strong>View History:</strong> Click "History" to see all penalties applied to a team</li>
-                                <li>• <strong>Remove Penalty:</strong> Reverse a penalty if an appeal is successful</li>
-                                <li>• <strong>Audit Trail:</strong> All actions are logged with who applied/removed and when</li>
+                        <span className="text-lg">⚙️</span>
+                        <div className="space-y-2">
+                            <h3 className="text-xs font-bold text-slate-850 uppercase tracking-wider">How Penalties Work</h3>
+                            <ul className="space-y-1 text-slate-500 font-bold uppercase tracking-wide text-[10px]">
+                                <li>• <strong className="text-slate-700">Apply Penalty:</strong> Click the "Penalty" button to expand the form inline</li>
+                                <li>• <strong className="text-slate-700">Adjusted Points:</strong> Teams are ranked by their adjusted points (Points - Penalties)</li>
+                                <li>• <strong className="text-slate-700">View History:</strong> Click "History" to see all penalties applied to a team</li>
+                                <li>• <strong className="text-slate-700">Remove Penalty:</strong> Reverse a penalty if an appeal is successful</li>
+                                <li>• <strong className="text-slate-700">Audit Trail:</strong> All actions are logged with who applied/removed and when</li>
                             </ul>
                         </div>
                     </div>
@@ -826,3 +839,4 @@ export default function TournamentPenaltiesPage() {
         </div>
     );
 }
+// end of file

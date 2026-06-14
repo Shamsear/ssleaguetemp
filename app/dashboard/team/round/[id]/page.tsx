@@ -596,10 +596,10 @@ export default function TeamRoundPage() {
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <div className="mb-4 md:mb-0">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-emerald-50 text-emerald-700 border-emerald-250 animate-pulse">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse">
                   Live
                 </span>
-                <h3 className="text-base font-extrabold uppercase tracking-wider text-slate-850">{round.position.includes(',') ? round.position.split(',').join(' + ') : round.position} Round</h3>
+                <h3 className="text-base font-extrabold uppercase tracking-wider text-slate-800">{round.position.includes(',') ? round.position.split(',').join(' + ') : round.position} Round</h3>
               </div>
               <p className="text-xs text-slate-400 uppercase font-bold mt-1.5">
                 You must place exactly {round.max_bids_per_team} bids in this round for your bids to be considered
@@ -675,7 +675,7 @@ export default function TeamRoundPage() {
 
           {/* Submission Status Banner */}
           {hasSubmitted && isLocked && (
-            <div className="mb-4 p-4 bg-emerald-50 border border-emerald-250 rounded-2xl font-mono">
+            <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl font-mono">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="bg-emerald-100 border border-emerald-200 p-2 rounded-xl">

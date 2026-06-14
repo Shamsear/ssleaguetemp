@@ -324,7 +324,7 @@ export default function BulkReleaseFootballPlayerForm() {
   if (loadingPlayers || teamsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-red-600"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500"></div>
       </div>
     );
   }
@@ -333,54 +333,56 @@ export default function BulkReleaseFootballPlayerForm() {
     <div className="space-y-6">
       {/* Alerts */}
       {error && (
-        <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg whitespace-pre-line">
-          <p className="font-semibold">Error</p>
-          <p>{error}</p>
+        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl font-mono text-xs uppercase tracking-wide whitespace-pre-line">
+          <p className="font-extrabold">⚠️ Error</p>
+          <p className="mt-1">{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-lg">
-          <p className="font-semibold">Success!</p>
-          <p>{success}</p>
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl font-mono text-xs uppercase tracking-wide">
+          <p className="font-extrabold">✨ Success</p>
+          <pre className="whitespace-pre-wrap text-[10px] mt-2 font-mono leading-relaxed">{success}</pre>
         </div>
       )}
 
       <form onSubmit={handleBulkRelease} className="space-y-6">
         {/* Release Timing */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <div className="font-mono text-xs">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
             Release Timing
           </label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <button
               type="button"
               onClick={() => setReleaseTiming('start')}
-              className={`py-3 px-4 rounded-lg font-semibold transition-all ${
+              className={`px-4 py-3 rounded-xl font-bold uppercase tracking-wider transition-all border ${
                 releaseTiming === 'start'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                  ? 'bg-slate-800 text-white border-slate-800'
+                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
               }`}
             >
               🏁 Season Start
+              <span className="block text-[9px] font-medium text-slate-400 mt-0.5 lowercase">{userSeasonId}</span>
             </button>
             <button
               type="button"
               onClick={() => setReleaseTiming('mid')}
-              className={`py-3 px-4 rounded-lg font-semibold transition-all ${
+              className={`px-4 py-3 rounded-xl font-bold uppercase tracking-wider transition-all border ${
                 releaseTiming === 'mid'
-                  ? 'bg-purple-600 text-white shadow-lg'
-                  : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                  ? 'bg-slate-800 text-white border-slate-800'
+                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
               }`}
             >
               ⏱️ Mid-Season
+              <span className="block text-[9px] font-medium text-slate-400 mt-0.5 lowercase">{userSeasonId?.replace(/\D/g, '')}.5</span>
             </button>
           </div>
         </div>
 
         {/* Bulk Refund Percentage */}
-        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-          <label className="block text-sm font-semibold text-blue-900 mb-2">
+        <div className="bg-slate-50 border border-slate-200/60 rounded-2xl font-mono text-xs p-5">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
             Default Refund Percentage: {bulkRefundPercentage}%
           </label>
           <input
@@ -390,9 +392,9 @@ export default function BulkReleaseFootballPlayerForm() {
             step="5"
             value={bulkRefundPercentage}
             onChange={(e) => setBulkRefundPercentage(parseInt(e.target.value))}
-            className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
           />
-          <div className="flex justify-between text-xs text-blue-700 mt-1">
+          <div className="flex justify-between text-[10px] text-slate-450 font-bold uppercase mt-1">
             <span>0%</span>
             <span>25%</span>
             <span>50%</span>
@@ -403,15 +405,15 @@ export default function BulkReleaseFootballPlayerForm() {
             type="button"
             onClick={applyBulkRefund}
             disabled={selectedPlayerIds.size === 0}
-            className="mt-3 w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-semibold"
+            className="mt-4 w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer"
           >
             Apply {bulkRefundPercentage}% to All Selected Players
           </button>
         </div>
 
         {/* Search Bar */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <div className="font-mono text-xs">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
             Search Players
           </label>
           <input
@@ -419,30 +421,30 @@ export default function BulkReleaseFootballPlayerForm() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by player name, team, or position..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide"
           />
         </div>
 
         {/* Select All / Deselect All */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center font-mono text-xs">
           <button
             type="button"
             onClick={toggleSelectAll}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all font-medium"
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all font-bold uppercase tracking-wider border border-slate-200 cursor-pointer"
           >
-            {filteredPlayers.every(p => selectedPlayerIds.has(p.id))
+            {filteredPlayers.length > 0 && filteredPlayers.every(p => selectedPlayerIds.has(p.id))
               ? '☑️ Deselect All'
               : '☐ Select All'}
           </button>
-          <span className="text-sm font-semibold text-gray-700">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             {selectedPlayerIds.size} player(s) selected
           </span>
         </div>
 
-        {/* Player List with Individual Refund Controls */}
-        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 max-h-[500px] overflow-y-auto">
+        {/* Player List with Checkboxes and Range Sliders */}
+        <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 max-h-[500px] overflow-y-auto font-mono text-xs">
           {filteredPlayers.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">No players found</p>
+            <p className="text-center text-slate-400 py-8 uppercase font-bold tracking-wider">No players found</p>
           ) : (
             <div className="space-y-3">
               {filteredPlayers.map((player) => {
@@ -453,38 +455,38 @@ export default function BulkReleaseFootballPlayerForm() {
                 return (
                   <div
                     key={player.id}
-                    className={`rounded-lg border-2 transition-all ${
+                    className={`rounded-xl border transition-all duration-200 ${
                       isSelected
-                        ? 'bg-red-50 border-red-300'
-                        : 'bg-white border-gray-200'
+                        ? 'bg-slate-50/50 border-amber-500 shadow-sm'
+                        : 'bg-white border-slate-200/60 hover:border-slate-300'
                     }`}
                   >
-                    <label className="flex items-start gap-3 p-3 cursor-pointer">
+                    <label className="flex items-start gap-4 p-4 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => togglePlayerSelection(player.id)}
-                        className="w-5 h-5 text-red-600 rounded focus:ring-red-500 mt-1"
+                        className="w-4 h-4 text-amber-500 rounded border-slate-300 focus:ring-amber-500 mt-1 cursor-pointer accent-amber-500"
                       />
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <div className="font-semibold text-gray-900">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-2 gap-4">
+                          <div className="min-w-0">
+                            <div className="font-extrabold text-slate-800 uppercase tracking-wide truncate">
                               {player.player_name}
                             </div>
-                            <div className="text-sm text-gray-600">
-                              {player.team_name} • {player.position} • {player.acquisition_value} eCoin
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              Contract: {player.contract_start_season} → {player.contract_end_season}
+                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 space-y-0.5">
+                              <div>Team: <span className="text-slate-700">{player.team_name}</span></div>
+                              <div>Pos: <span className="text-slate-700">{player.position}</span></div>
+                              <div>Value: <span className="text-amber-600">{player.acquisition_value} eCoin</span></div>
+                              <div>Contract: <span className="text-slate-700">{player.contract_start_season} → {player.contract_end_season}</span></div>
                             </div>
                           </div>
                           {isSelected && (
-                            <div className="text-right">
-                              <div className="text-sm font-semibold text-green-600">
-                                {refundAmount} eCoin
+                            <div className="text-right shrink-0">
+                              <div className="text-xs font-black text-emerald-600">
+                                +{refundAmount} eCoin
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
                                 {refundPercentage}% refund
                               </div>
                             </div>
@@ -493,9 +495,9 @@ export default function BulkReleaseFootballPlayerForm() {
 
                         {/* Individual Refund Slider */}
                         {isSelected && (
-                          <div className="mt-2 pt-2 border-t border-gray-200">
+                          <div className="mt-3 pt-3 border-t border-slate-200/60">
                             <div className="flex items-center gap-3">
-                              <label className="text-xs font-semibold text-gray-600 whitespace-nowrap">
+                              <label className="text-[10px] font-bold text-slate-450 uppercase whitespace-nowrap">
                                 Refund: {refundPercentage}%
                               </label>
                               <input
@@ -506,7 +508,7 @@ export default function BulkReleaseFootballPlayerForm() {
                                 value={refundPercentage}
                                 onChange={(e) => setPlayerRefund(player.id, parseInt(e.target.value))}
                                 onClick={(e) => e.stopPropagation()}
-                                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-600"
+                                className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
                               />
                             </div>
                           </div>
@@ -522,36 +524,36 @@ export default function BulkReleaseFootballPlayerForm() {
 
         {/* Selected Players Summary */}
         {selectedPlayerIds.size > 0 && (
-          <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-6 border-2 border-red-200">
-            <h3 className="font-bold text-red-900 mb-4 text-lg">
-              ⚠️ {selectedPlayerIds.size} Player(s) Will Be Released
+          <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
+            <h3 className="font-extrabold text-amber-600 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+              ⚠️ {selectedPlayerIds.size} Player(s) Marked for Release
             </h3>
-            <div className="bg-white rounded-lg p-4 mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-semibold text-gray-700">Total Refund Amount</span>
-                <span className="text-2xl font-bold text-green-600">
+            <div className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm mb-4">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Total Refund Amount</span>
+                <span className="text-xl font-black text-emerald-600">
                   {totalRefund} eCoin
                 </span>
               </div>
-              <div className="text-xs text-gray-600">
-                Across {selectedPlayerIds.size} player(s)
+              <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                To be refunded across {selectedPlayerIds.size} player(s)
               </div>
             </div>
-            <div className="text-sm text-red-800 space-y-1 max-h-32 overflow-y-auto">
+            <div className="space-y-2 max-h-36 overflow-y-auto text-[10px] text-slate-450 uppercase font-bold tracking-wider pt-2 border-t border-slate-100">
               {players
                 .filter(p => selectedPlayerIds.has(p.id))
                 .map(p => {
                   const refundPercentage = getPlayerRefund(p.id);
                   const refundAmount = Math.round(p.acquisition_value * (refundPercentage / 100));
                   return (
-                    <div key={p.id} className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div>• {p.player_name} ({p.team_name})</div>
-                        <div className="text-xs text-gray-600 ml-3">
-                          Contract: {p.contract_start_season} → {p.contract_end_season}
-                        </div>
-                      </div>
-                      <span className="font-semibold whitespace-nowrap ml-2">{refundPercentage}% = {refundAmount} eCoin</span>
+                    <div key={p.id} className="flex justify-between items-start gap-4">
+                       <div className="min-w-0">
+                         <div className="text-slate-700 truncate">• {p.player_name}</div>
+                         <div className="text-[9px] text-slate-400 ml-3 lowercase font-medium">
+                           {p.team_name} | contract: {p.contract_start_season} → {p.contract_end_season}
+                         </div>
+                       </div>
+                       <span className="text-amber-600 font-extrabold shrink-0">{refundPercentage}% = {refundAmount} eCoin</span>
                     </div>
                   );
                 })}
@@ -563,7 +565,7 @@ export default function BulkReleaseFootballPlayerForm() {
         <button
           type="submit"
           disabled={selectedPlayerIds.size === 0 || submitting}
-          className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+          className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md cursor-pointer text-center"
         >
           {submitting
             ? 'Processing Releases...'

@@ -306,24 +306,22 @@ export default function BulkSwapForm() {
       setSubmitting(false);
     }
   };
-
   if (loadingPlayers || teamsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500"></div>
       </div>
     );
   }
 
   const { teamFees, swapBreakdown } = calculateFeesPreview();
-  const totalFee = Array.from(teamFees.values()).reduce((sum, fee) => sum + fee, 0);
 
   return (
     <div className="space-y-6">
       {/* Info Banner */}
-      <div className="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-lg">
-        <h3 className="font-semibold text-purple-900 mb-2">🔄 Bulk Player Swap</h3>
-        <ul className="text-sm text-purple-800 space-y-1">
+      <div className="p-5 bg-slate-50 border border-slate-200/60 rounded-2xl font-mono text-xs">
+        <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-2.5">🔄 Bulk Player Swap</h3>
+        <ul className="space-y-1.5 text-slate-500">
           <li>• Swap multiple players across multiple teams at once</li>
           <li>• First 6 swaps per team are FREE, then 100/125/150</li>
           <li>• Acquisition values are swapped between players</li>
@@ -333,16 +331,16 @@ export default function BulkSwapForm() {
 
       {/* Alerts */}
       {error && (
-        <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg">
-          <p className="font-semibold">Error</p>
-          <p>{error}</p>
+        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl font-mono text-xs uppercase tracking-wide">
+          <p className="font-extrabold">⚠️ Error</p>
+          <p className="mt-1">{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-lg">
-          <p className="font-semibold">Success!</p>
-          <p>{success}</p>
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl font-mono text-xs uppercase tracking-wide">
+          <p className="font-extrabold">✨ Success</p>
+          <pre className="whitespace-pre-wrap text-[10px] mt-2 font-mono leading-relaxed">{success}</pre>
         </div>
       )}
 
@@ -355,16 +353,16 @@ export default function BulkSwapForm() {
             const playerB = players.find(p => p.id === pair.player_b_id);
 
             return (
-              <div key={pair.id} className="bg-gray-50 rounded-xl p-4 border-2 border-gray-200">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-gray-900">Swap {index + 1}</h4>
+              <div key={pair.id} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs relative">
+                <div className="flex items-center justify-between mb-3.5">
+                  <h4 className="font-extrabold text-slate-800 uppercase tracking-wider">Swap Pair #{index + 1}</h4>
                   {swapPairs.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeSwapPair(pair.id)}
-                      className="text-red-600 hover:text-red-800 p-1"
+                      className="text-rose-600 hover:text-rose-800 p-1 border border-slate-200 hover:border-slate-300 rounded-lg bg-white shadow-sm transition-all"
                     >
-                      <X className="w-5 h-5" />
+                      <X className="w-4 h-4" />
                     </button>
                   )}
                 </div>
@@ -382,16 +380,11 @@ export default function BulkSwapForm() {
                       playerType="football"
                     />
                     {playerA && (
-                      <div className="mt-2 text-xs text-gray-600">
-                        <div>Team: {playerA.team_name}</div>
-                        <div>Value: {playerA.acquisition_value}</div>
+                      <div className="mt-2 text-[10px] text-slate-450 uppercase font-bold tracking-wider space-y-0.5">
+                        <div>Team: <span className="text-slate-700">{playerA.team_name}</span></div>
+                        <div>Value: <span className="text-amber-600">{playerA.acquisition_value} eCoin</span></div>
                       </div>
                     )}
-                  </div>
-
-                  {/* Swap Icon */}
-                  <div className="hidden md:flex items-center justify-center">
-                    <ArrowLeftRight className="w-6 h-6 text-gray-400" />
                   </div>
 
                   {/* Player B */}
@@ -406,9 +399,9 @@ export default function BulkSwapForm() {
                       playerType="football"
                     />
                     {playerB && (
-                      <div className="mt-2 text-xs text-gray-600">
-                        <div>Team: {playerB.team_name}</div>
-                        <div>Value: {playerB.acquisition_value}</div>
+                      <div className="mt-2 text-[10px] text-slate-450 uppercase font-bold tracking-wider space-y-0.5">
+                        <div>Team: <span className="text-slate-700">{playerB.team_name}</span></div>
+                        <div>Value: <span className="text-amber-600">{playerB.acquisition_value} eCoin</span></div>
                       </div>
                     )}
                   </div>
@@ -422,63 +415,51 @@ export default function BulkSwapForm() {
         <button
           type="button"
           onClick={addSwapPair}
-          className="w-full py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+          className="w-full py-3 bg-white text-slate-700 border border-dashed border-slate-200 rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-2 font-mono text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer"
         >
-          <Plus className="w-5 h-5" />
-          Add Another Swap
+          <Plus className="w-4 h-4" />
+          Add Another Swap Pair
         </button>
 
         {/* Swap Details Preview */}
         {swapBreakdown.length > 0 && (
-          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6 border-2 border-purple-200">
-            <h3 className="font-bold text-purple-900 mb-4 text-lg">📋 Swap Details</h3>
+          <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
+            <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+              📋 Bulk Swap Summary
+            </h3>
             
             <div className="space-y-3 mb-4">
               {swapBreakdown.map((swap) => (
-                <div key={swap.index} className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-gray-900">Swap {swap.index}</span>
-                    <span className="text-xs text-green-600 font-semibold">
-                      FREE ✨
-                    </span>
+                <div key={swap.index} className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm">
+                  <div className="flex justify-between items-center mb-2.5">
+                    <span className="font-bold text-slate-800 uppercase tracking-wider">Swap Pair #{swap.index}</span>
+                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">FREE ✨</span>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {/* Player A */}
-                    <div className="bg-blue-50 rounded p-3">
-                      <div className="font-semibold text-blue-900 mb-1">{swap.playerA.player_name}</div>
-                      <div className="text-xs text-gray-600 space-y-1">
-                        <div>From: {swap.playerA.team_name}</div>
-                        <div>To: {swap.playerB.team_name}</div>
-                        <div className="font-medium text-blue-700">
-                          Value: {swap.playerA.acquisition_value} → {swap.playerB.acquisition_value}
-                        </div>
-                        <div className="text-xs">
-                          Team Swap #{swap.teamASwapNum}
-                        </div>
+                    <div className="bg-slate-50/50 border border-slate-100 rounded-lg p-3">
+                      <div className="font-bold text-slate-800 uppercase tracking-wide">{swap.playerA.player_name}</div>
+                      <div className="text-[10px] text-slate-450 uppercase font-bold tracking-wider mt-1 space-y-0.5">
+                        <div>From: <span className="text-slate-700">{swap.playerA.team_name}</span></div>
+                        <div>To: <span className="text-slate-700">{swap.playerB.team_name}</span></div>
+                        <div>Value: <span className="text-amber-600">{swap.playerA.acquisition_value} → {swap.playerB.acquisition_value}</span></div>
                       </div>
                     </div>
 
                     {/* Player B */}
-                    <div className="bg-purple-50 rounded p-3">
-                      <div className="font-semibold text-purple-900 mb-1">{swap.playerB.player_name}</div>
-                      <div className="text-xs text-gray-600 space-y-1">
-                        <div>From: {swap.playerB.team_name}</div>
-                        <div>To: {swap.playerA.team_name}</div>
-                        <div className="font-medium text-purple-700">
-                          Value: {swap.playerB.acquisition_value} → {swap.playerA.acquisition_value}
-                        </div>
-                        <div className="text-xs">
-                          Team Swap #{swap.teamBSwapNum}
-                        </div>
+                    <div className="bg-slate-50/50 border border-slate-100 rounded-lg p-3">
+                      <div className="font-bold text-slate-800 uppercase tracking-wide">{swap.playerB.player_name}</div>
+                      <div className="text-[10px] text-slate-450 uppercase font-bold tracking-wider mt-1 space-y-0.5">
+                        <div>From: <span className="text-slate-700">{swap.playerB.team_name}</span></div>
+                        <div>To: <span className="text-slate-700">{swap.playerA.team_name}</span></div>
+                        <div>Value: <span className="text-amber-600">{swap.playerB.acquisition_value} → {swap.playerA.acquisition_value}</span></div>
                       </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-
-            {/* Swaps are free, team summary fees card is removed */}
           </div>
         )}
 
@@ -486,7 +467,7 @@ export default function BulkSwapForm() {
         <button
           type="submit"
           disabled={submitting || !swapPairs.every(p => p.player_a_id && p.player_b_id)}
-          className="w-full py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+          className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md cursor-pointer text-center"
         >
           {submitting ? 'Processing Bulk Swap...' : `🔄 Swap ${swapPairs.length} Player Pair(s)`}
         </button>

@@ -5,7 +5,28 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import BulkPhotoUpload from '@/components/BulkPhotoUpload'
-import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { fetchWithTokenRefresh } from '@/lib/token-refresh'
+import {
+  ArrowLeft,
+  Database,
+  UploadCloud,
+  FileSpreadsheet,
+  DownloadCloud,
+  CheckCircle2,
+  Trash2,
+  Filter,
+  Sparkles,
+  RefreshCw,
+  AlertTriangle,
+  Info,
+  Users,
+  Eye,
+  ChevronDown,
+  ChevronUp,
+  Activity,
+  PlusCircle,
+  ShieldAlert
+} from 'lucide-react'
 
 interface PlayerCount {
   total: number
@@ -440,10 +461,11 @@ export default function DatabaseManagementPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center console-bg font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-500 uppercase tracking-wider font-extrabold">Loading...</p>
         </div>
       </div>
     )
@@ -454,59 +476,75 @@ export default function DatabaseManagementPage() {
   }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-      <div className="glass rounded-3xl p-4 sm:p-6">
-        {/* Header */}
-        <div className="flex items-center mb-6 hidden sm:flex">
-          <div className="mr-4 flex-shrink-0">
-            <div className="h-12 w-12 flex items-center justify-center rounded-full bg-blue-50 border border-blue-200">
-              <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-              </svg>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Decorative eSports glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto relative z-10 space-y-6">
+        {/* Navigation */}
+        <div>
+          <Link
+            href="/dashboard/committee"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
+        </div>
+
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <Database className="w-6 h-6 text-amber-400" />
+            </div>
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">COMMITTEE CONSOLE</span>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                Database Management
+              </h1>
+              <p className="text-xs text-slate-400 font-mono mt-1">
+                Manage player data, backups, photo storage and SQLite import operations.
+              </p>
             </div>
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-dark">Database Management</h2>
-            <p className="text-sm text-gray-500">Manage player data and database operations</p>
+          <div className="bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider px-3.5 py-1.5 rounded-xl border border-slate-700 shadow-sm shrink-0">
+            Total Players: {playerCount.total}
           </div>
         </div>
 
-        <Link
-          href="/dashboard/committee"
-          className="inline-flex items-center px-4 py-2 mb-6 text-sm glass rounded-xl hover:bg-white/90 transition-all duration-300"
-        >
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Dashboard
-        </Link>
-
         {/* Database Status */}
-        <div className="glass-card mb-6 p-4 rounded-xl bg-white/30">
-          <h3 className="font-medium text-dark mb-3">Database Status</h3>
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between p-3 bg-white/50 rounded-lg">
-              <span className="text-gray-600">Current Player Count:</span>
-              <span className="font-medium">{playerCount.total}</span>
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+          <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+            <Activity className="w-4 h-4 text-amber-500" />
+            Database Status
+          </h3>
+          <div className="space-y-3 font-mono text-xs">
+            <div className="flex justify-between items-center p-3 bg-slate-50 border border-slate-200/50 rounded-xl">
+              <span className="text-slate-500 uppercase tracking-wide">Current Player Count:</span>
+              <span className="font-extrabold text-slate-800 bg-white px-2.5 py-0.5 rounded-md border border-slate-200 shadow-sm">{playerCount.total}</span>
             </div>
 
             {Object.keys(playerCount.byPosition).length > 0 && (
-              <div className="p-3 bg-white/50 rounded-lg">
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Player Positions:</span>
+              <div className="p-3 bg-slate-50 border border-slate-200/50 rounded-xl">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-slate-500 uppercase tracking-wide">Player Positions:</span>
                   <button
                     onClick={() => setShowPositions(!showPositions)}
-                    className="text-primary text-xs hover:underline"
+                    className="text-amber-600 hover:text-amber-700 font-extrabold flex items-center gap-1 cursor-pointer transition-colors"
                   >
-                    {showPositions ? 'Hide' : 'Show'}
+                    {showPositions ? (
+                      <>Hide Breakdown <ChevronUp className="w-3 h-3" /></>
+                    ) : (
+                      <>Show Breakdown <ChevronDown className="w-3 h-3" /></>
+                    )}
                   </button>
                 </div>
                 {showPositions && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-1">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-3 pt-3 border-t border-slate-200/50">
                     {Object.entries(playerCount.byPosition).map(([position, count]) => (
-                      <div key={position} className="text-sm bg-white/70 rounded-lg px-3 py-1.5 flex justify-between">
-                        <span className="font-medium">{position}</span>
-                        <span className="text-primary-dark">{count}</span>
+                      <div key={position} className="text-[11px] bg-white border border-slate-200/55 rounded-lg px-2.5 py-1.5 flex justify-between shadow-sm">
+                        <span className="font-extrabold text-slate-600">{position}</span>
+                        <span className="text-amber-600 font-extrabold">{count}</span>
                       </div>
                     ))}
                   </div>
@@ -517,125 +555,152 @@ export default function DatabaseManagementPage() {
         </div>
 
         {/* Upload SQLite Database */}
-        <div className="glass-card mb-6 p-4 rounded-xl bg-white/30">
-          <h3 className="font-medium text-dark mb-3">Upload SQLite Database</h3>
-          <p className="text-sm text-gray-500 mb-4">
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+          <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <FileSpreadsheet className="w-4 h-4 text-amber-500" />
+            Upload SQLite Database
+          </h3>
+          <p className="text-[11px] text-slate-400 font-mono mb-4">
             Upload a SQLite database file (.db) containing player data. The system will automatically detect and import the player table.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch">
             <div className="flex-grow">
               <input
                 type="file"
                 accept=".db"
                 onChange={handleFileSelect}
-                className="block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-full file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-blue-50 file:text-blue-700
-                  hover:file:bg-blue-100"
+                className="block w-full text-xs text-slate-500 font-mono
+                  file:mr-4 file:py-2.5 file:px-4
+                  file:rounded-xl file:border file:border-slate-200
+                  file:text-xs file:font-bold file:uppercase file:tracking-wide
+                  file:bg-slate-50 file:text-slate-700
+                  hover:file:bg-slate-100 file:cursor-pointer"
               />
             </div>
             <button
               onClick={handleSQLUpload}
               disabled={!selectedFile || loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              Parse Database
+              {loading && uploadStatus.includes('Parsing') ? (
+                <>
+                  <RefreshCw className="animate-spin h-3.5 w-3.5 text-amber-400" />
+                  Parsing...
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="w-3.5 h-3.5 text-amber-400" />
+                  Parse Database
+                </>
+              )}
             </button>
           </div>
           {uploadStatus && (
-            <div className="mt-2 text-sm text-gray-700">{uploadStatus}</div>
+            <div className="mt-3 bg-slate-50 border border-slate-200/50 rounded-xl p-3 text-[11px] font-mono text-slate-600 flex items-center gap-2">
+              <Info className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>{uploadStatus}</span>
+            </div>
           )}
         </div>
 
         {/* Import Players */}
-        <div className={`glass-card p-4 rounded-xl ${playerCount.total === 0 ? 'bg-green-50/50 border border-green-100' : 'bg-white/30'} mb-6`}>
-          <h3 className="font-medium text-dark mb-3">Import Players</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Import players from the parsed SQL data. Choose between quick import or enhanced import with preview.
+        <div className={`console-card p-6 sm:p-8 rounded-3xl border ${playerCount.total === 0 ? 'bg-emerald-50/20 border-emerald-200/60' : 'bg-white border-slate-200/60'} shadow-sm space-y-6`}>
+          <div>
+            <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              Import Players
+            </h3>
+            <p className="text-[11px] text-slate-400 font-mono">
+              Import players from the parsed SQL data. Choose between quick import or enhanced import with preview.
+            </p>
             {playerCount.total === 0 && (
-              <span className="block text-green-600 font-medium mt-2">No players found. Import is recommended.</span>
+              <div className="mt-2 bg-emerald-500/10 border border-emerald-200/60 rounded-xl p-3 text-emerald-800 text-[11px] font-mono font-extrabold flex items-center gap-1.5">
+                <Info className="w-4 h-4 text-emerald-500" />
+                No players found in the system. Import is recommended to initialize the database.
+              </div>
             )}
-          </p>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
             {/* Update Stats */}
-            <div className="p-4 rounded-lg bg-orange-50/50 border border-orange-100">
-              <h4 className="text-orange-700 font-medium mb-2 flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Update Stats
-              </h4>
-              <p className="text-sm text-gray-600 mb-3">
-                Preview and update player stats, add new players. Preserves team ownership.
-              </p>
+            <div className="console-card bg-slate-50/40 border border-slate-200/50 rounded-2xl p-5 flex flex-col justify-between">
+              <div>
+                <h4 className="text-amber-700 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                  <RefreshCw className="w-4 h-4 text-amber-500" />
+                  Update Stats
+                </h4>
+                <p className="text-slate-500 text-[11px] mt-2 leading-relaxed">
+                  Preview and update player stats, add new players. Preserves existing team ownership records.
+                </p>
+              </div>
               <button
                 onClick={handleUpdateStats}
                 disabled={loading}
-                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors w-full disabled:bg-gray-400 text-sm"
+                className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-colors w-full disabled:opacity-50 cursor-pointer"
               >
                 Preview Update
               </button>
             </div>
 
             {/* Quick Import */}
-            <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-100">
-              <h4 className="text-blue-700 font-medium mb-2 flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Quick Import
-              </h4>
-              <p className="text-sm text-gray-600 mb-3">
-                Import new players only. Skips duplicates by name.
-              </p>
+            <div className="console-card bg-slate-50/40 border border-slate-200/50 rounded-2xl p-5 flex flex-col justify-between">
+              <div>
+                <h4 className="text-blue-700 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                  <PlusCircle className="w-4 h-4 text-blue-500" />
+                  Quick Import
+                </h4>
+                <p className="text-slate-500 text-[11px] mt-2 leading-relaxed">
+                  Import new players directly. Automatically skips duplicate records by matching player names.
+                </p>
+              </div>
               <button
                 onClick={handleQuickImport}
                 disabled={loading}
-                className={`px-4 py-2 ${playerCount.total === 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-lg transition-colors w-full disabled:bg-gray-400 text-sm`}
+                className={`mt-4 px-4 py-2 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-colors w-full disabled:opacity-50 cursor-pointer ${
+                  playerCount.total === 0 ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-800 hover:bg-slate-700'
+                }`}
               >
                 Quick Import
               </button>
             </div>
 
             {/* Enhanced Import */}
-            <div className="p-4 rounded-lg bg-green-50/50 border border-green-100">
-              <h4 className="text-green-700 font-medium mb-2 flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Enhanced Import
-              </h4>
-              <p className="text-sm text-gray-600 mb-3">
-                Preview and edit player data before importing.
-              </p>
+            <div className="console-card bg-slate-50/40 border border-slate-200/50 rounded-2xl p-5 flex flex-col justify-between">
+              <div>
+                <h4 className="text-emerald-700 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                  <Eye className="w-4 h-4 text-emerald-500" />
+                  Enhanced Import
+                </h4>
+                <p className="text-slate-500 text-[11px] mt-2 leading-relaxed">
+                  Preview, refine, and edit parsed player data line-by-line before running the database import.
+                </p>
+              </div>
               <button
                 onClick={handlePreviewImport}
                 disabled={loading}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors w-full disabled:bg-gray-400 text-sm"
+                className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-colors w-full disabled:opacity-50 cursor-pointer"
               >
                 Preview & Import
               </button>
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-2">
             <Link
               href="/dashboard/committee/players"
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors inline-flex items-center"
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-2"
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              <Users className="w-3.5 h-3.5 text-amber-400" />
               View All Players
             </Link>
           </div>
 
           {importStatus && (
-            <div className="mt-4 text-sm text-gray-700">{importStatus}</div>
+            <div className="bg-slate-50 border border-slate-200/50 rounded-xl p-3 text-[11px] font-mono text-slate-600 flex items-center gap-2">
+              <Info className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+              <span>{importStatus}</span>
+            </div>
           )}
         </div>
 
@@ -643,22 +708,25 @@ export default function DatabaseManagementPage() {
         <BulkPhotoUpload />
 
         {/* Delete All Players */}
-        <div className="glass-card mb-6 p-4 rounded-xl bg-white/30 border border-red-100">
-          <h3 className="font-medium text-dark mb-3">Delete All Players</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            This will permanently delete all players from the database. This action cannot be undone.
+        <div className="console-card bg-white border border-rose-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+          <h3 className="text-xs font-mono font-bold text-rose-500 uppercase tracking-wider flex items-center gap-1.5">
+            <ShieldAlert className="w-4 h-4 text-rose-500" />
+            Delete All Players
+          </h3>
+          <p className="text-[11px] text-slate-400 font-mono leading-relaxed">
+            This will permanently delete all players from the database. This action cannot be undone and will reset the players registry.
           </p>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 id="confirmDelete"
                 checked={deleteConfirmed}
                 onChange={(e) => setDeleteConfirmed(e.target.checked)}
-                className="rounded text-red-500 focus:ring-red-400"
+                className="rounded border-slate-300 text-rose-500 focus:ring-rose-500/20 cursor-pointer"
               />
-              <label htmlFor="confirmDelete" className="text-sm text-red-600">
+              <label htmlFor="confirmDelete" className="text-xs font-mono font-extrabold text-rose-600 select-none cursor-pointer">
                 I understand this will delete all player data
               </label>
             </div>
@@ -666,83 +734,109 @@ export default function DatabaseManagementPage() {
             <button
               onClick={handleDeleteAll}
               disabled={!deleteConfirmed || loading}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               Delete All Players
             </button>
           </div>
           {deleteStatus && (
-            <div className="mt-2 text-sm text-gray-700">{deleteStatus}</div>
+            <div className="bg-rose-50 border border-rose-200/50 rounded-xl p-3 text-[11px] font-mono text-rose-800 flex items-center gap-2">
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0 animate-bounce" />
+              <span>{deleteStatus}</span>
+            </div>
           )}
         </div>
 
         {/* Backup and Restore */}
-        <div className="glass-card mb-6 p-4 rounded-xl bg-white/30">
-          <h3 className="font-medium text-dark mb-3">Backup and Restore</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Create backups of your entire database or restore from a previous backup.
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+          <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <DownloadCloud className="w-4 h-4 text-amber-500" />
+            Backup and Restore
+          </h3>
+          <p className="text-[11px] text-slate-400 font-mono mb-4">
+            Create backups of your entire database or restore from a previous JSON backup file.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono text-xs">
             {/* Backup */}
-            <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-100">
-              <h4 className="text-blue-700 font-medium mb-2">Create Backup</h4>
-              <p className="text-sm text-gray-600 mb-3">
-                Download a complete backup in JSON format.
-              </p>
+            <div className="console-card bg-slate-50/40 border border-slate-200/50 rounded-2xl p-5 flex flex-col justify-between">
+              <div>
+                <h4 className="text-slate-800 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                  <DownloadCloud className="w-4 h-4 text-amber-500" />
+                  Create Backup
+                </h4>
+                <p className="text-slate-500 text-[11px] mt-2 leading-relaxed">
+                  Download a complete JSON database dump containing all players' attributes and parameters.
+                </p>
+              </div>
               <button
                 onClick={handleCreateBackup}
                 disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full disabled:bg-gray-400"
+                className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-colors w-full disabled:opacity-50 cursor-pointer"
               >
                 Create Backup
               </button>
               {backupStatus && (
-                <div className="mt-2 text-sm text-gray-700">{backupStatus}</div>
+                <div className="mt-2 bg-white border border-slate-200/50 rounded-lg p-2.5 text-[11px] font-mono text-slate-600 flex items-center gap-1.5 shadow-sm">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>{backupStatus}</span>
+                </div>
               )}
             </div>
 
             {/* Restore */}
-            <div className="p-4 rounded-lg bg-green-50/50 border border-green-100">
-              <h4 className="text-green-700 font-medium mb-2">Restore from Backup</h4>
-              <p className="text-sm text-gray-600 mb-3">
-                Upload a backup file to restore your database.
-                <span className="text-red-600 font-medium block">This will overwrite existing data.</span>
-              </p>
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleRestoreBackup}
-                disabled={loading}
-                className="block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-full file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-green-50 file:text-green-700
-                  hover:file:bg-green-100
-                  disabled:opacity-50"
-              />
-              {restoreStatus && (
-                <div className="mt-2 text-sm text-gray-700">{restoreStatus}</div>
-              )}
+            <div className="console-card bg-slate-50/40 border border-slate-200/50 rounded-2xl p-5 flex flex-col justify-between">
+              <div>
+                <h4 className="text-amber-700 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                  <RefreshCw className="w-4 h-4 text-amber-500" />
+                  Restore from Backup
+                </h4>
+                <p className="text-slate-500 text-[11px] mt-2 leading-relaxed">
+                  Upload a JSON backup file to restore your database. <strong className="text-rose-600">This will overwrite existing data.</strong>
+                </p>
+              </div>
+              <div className="mt-4 space-y-2">
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleRestoreBackup}
+                  disabled={loading}
+                  className="block w-full text-[11px] text-slate-500
+                    file:mr-4 file:py-2 file:px-3
+                    file:rounded-xl file:border file:border-slate-200
+                    file:text-[10px] file:font-bold file:uppercase file:tracking-wide
+                    file:bg-white file:text-slate-700
+                    hover:file:bg-slate-50 file:cursor-pointer
+                    disabled:opacity-50"
+                />
+                {restoreStatus && (
+                  <div className="mt-2 bg-white border border-slate-200/50 rounded-lg p-2.5 text-[11px] font-mono text-slate-600 flex items-center gap-1.5 shadow-sm">
+                    <Info className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>{restoreStatus}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Enhanced Data Management */}
-        <div className="glass-card p-4 rounded-xl bg-white/30">
-          <h3 className="font-medium text-dark mb-3">Filter Players</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Filter players by position and rating.
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+          <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <Filter className="w-4 h-4 text-amber-500" />
+            Filter Players
+          </h3>
+          <p className="text-[11px] text-slate-400 font-mono mb-4">
+            Quickly query database player matches using custom filters.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 font-mono text-xs">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Position</label>
               <select
                 value={positionFilter}
                 onChange={(e) => setPositionFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-primary focus:border-primary"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-bold cursor-pointer"
               >
                 <option value="">All Positions</option>
                 {Object.keys(playerCount.byPosition).map(pos => (
@@ -752,7 +846,7 @@ export default function DatabaseManagementPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Rating Range</label>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Rating Range</label>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -761,9 +855,9 @@ export default function DatabaseManagementPage() {
                   placeholder="Min"
                   min="1"
                   max="99"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-primary focus:border-primary"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-bold"
                 />
-                <span>to</span>
+                <span className="text-slate-400 font-bold">to</span>
                 <input
                   type="number"
                   value={maxRating}
@@ -771,7 +865,7 @@ export default function DatabaseManagementPage() {
                   placeholder="Max"
                   min="1"
                   max="99"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-primary focus:border-primary"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-bold"
                 />
               </div>
             </div>
@@ -779,13 +873,16 @@ export default function DatabaseManagementPage() {
 
           <button
             onClick={handleFilterPlayers}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
           >
             Filter Players
           </button>
 
           {filteredCount && (
-            <div className="mt-3 text-sm text-gray-700">{filteredCount}</div>
+            <div className="mt-3 bg-slate-50 border border-slate-200/50 rounded-xl p-3 text-[11px] font-mono text-slate-600 flex items-center gap-2">
+              <Info className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>{filteredCount}</span>
+            </div>
           )}
         </div>
       </div>
