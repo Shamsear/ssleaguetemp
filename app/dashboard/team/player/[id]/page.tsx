@@ -449,7 +449,7 @@ export default function PlayerDetailPage() {
         {/* Header with Back Button */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <Link href="/dashboard/team/footballplayers" className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all">
-            ← Back to Player Database
+            {"<-"} Back to Player Database
           </Link>
           
           <div className="bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider px-3 py-1.5 rounded-xl border border-slate-700 shadow-sm shrink-0">

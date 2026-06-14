@@ -1,5 +1,6 @@
 'use client';
 
+import { GloveIcon } from '@/components/ui/CustomIcons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
 import { useRouter } from 'next/navigation';
@@ -371,9 +372,9 @@ export default function PlayerStatsPage() {
             {[
               { tab: 'all', label: '<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> All Players', activeClass: 'bg-slate-800 text-white border-slate-900' },
               { tab: 'golden-boot', label: '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Golden Boot', activeClass: 'bg-yellow-500 text-white border-yellow-600' },
-              { tab: 'golden-glove', label: '🧤 Golden Glove', activeClass: 'bg-emerald-600 text-white border-emerald-700' },
+              { tab: 'golden-glove', label: '<GloveIcon className="w-4 h-4" /> Golden Glove', activeClass: 'bg-emerald-600 text-white border-emerald-700' },
               { tab: 'rankings', label: '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Top Rankings', activeClass: 'bg-blue-600 text-white border-blue-700' },
-              { tab: 'most-improved', label: '📈 Most Improved', activeClass: 'bg-pink-600 text-white border-pink-700' }
+              { tab: 'most-improved', label: '<TrendingUp className="w-4 h-4 text-emerald-500" /> Most Improved', activeClass: 'bg-pink-600 text-white border-pink-700' }
             ].map(({ tab, label, activeClass }) => (
               <button
                 key={tab}
@@ -444,9 +445,9 @@ export default function PlayerStatsPage() {
             <div>
               <h2 className="text-sm font-black uppercase tracking-wider text-slate-950">
                 {activeTab === 'golden-boot' && '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Golden Boot - Top Scorers'}
-                {activeTab === 'golden-glove' && '🧤 Golden Glove - Clean Sheet Leaders'}
+                {activeTab === 'golden-glove' && '<GloveIcon className="w-4 h-4" /> Golden Glove - Clean Sheet Leaders'}
                 {activeTab === 'rankings' && '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Top 20 Rankings'}
-                {activeTab === 'most-improved' && '📈 Most Improved Players'}
+                {activeTab === 'most-improved' && '<TrendingUp className="w-4 h-4 text-emerald-500" /> Most Improved Players'}
                 {activeTab === 'all' && 'Player Performance'}
               </h2>
               <p className="text-[10px] text-slate-500 font-mono mt-0.5">

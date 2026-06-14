@@ -1,5 +1,7 @@
 'use client';
 
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { Crown, Gift, Star, Trophy, User, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -351,14 +353,14 @@ export default function MyFantasyTeamPage() {
                 href={`/dashboard/team/fantasy/all-teams`}
                 className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg"
               >
-                👥 All Teams
+                <Users className="w-4 h-4 text-slate-500" /> All Teams
               </Link>
 
               <Link
                 href={`/dashboard/team/fantasy/leaderboard`}
                 className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all shadow-lg"
               >
-                🏆 Leaderboard
+                <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Leaderboard
               </Link>
             </div>
           </div>
@@ -476,7 +478,7 @@ export default function MyFantasyTeamPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {players.find(p => p.is_captain) && (
                 <div className="flex items-center gap-3 p-4 bg-white/60 rounded-xl border border-yellow-300">
-                  <span className="text-3xl">👑</span>
+                  <span className="text-3xl"><Crown className="w-4 h-4 text-amber-500 fill-amber-500" /></span>
                   <div>
                     <p className="text-sm text-gray-600">Captain (2x Points)</p>
                     <p className="font-bold text-gray-900">
@@ -487,7 +489,7 @@ export default function MyFantasyTeamPage() {
               )}
               {players.find(p => p.is_vice_captain) && (
                 <div className="flex items-center gap-3 p-4 bg-white/60 rounded-xl border border-blue-300">
-                  <span className="text-3xl">⭐</span>
+                  <span className="text-3xl"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /></span>
                   <div>
                     <p className="text-sm text-gray-600">Vice-Captain (1.5x Points)</p>
                     <p className="font-bold text-gray-900">
@@ -508,7 +510,7 @@ export default function MyFantasyTeamPage() {
               href="/dashboard/team/fantasy/all-teams"
               className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
             >
-              View Detailed Stats →
+              View Detailed Stats {"->"}
             </Link>
           </div>
 
@@ -534,12 +536,12 @@ export default function MyFantasyTeamPage() {
                           <p className="font-bold text-gray-900">{player.player_name}</p>
                           {player.is_captain && (
                             <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full border border-yellow-300">
-                              👑 C
+                              <Crown className="w-4 h-4 text-amber-500 fill-amber-500" /> C
                             </span>
                           )}
                           {player.is_vice_captain && (
                             <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-bold rounded-full border border-blue-300">
-                              ⭐ VC
+                              <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> VC
                             </span>
                           )}
                         </div>
@@ -610,7 +612,7 @@ export default function MyFantasyTeamPage() {
                           {/* Admin Bonuses */}
                           {playerMatchStats[player.real_player_id].admin_bonuses && playerMatchStats[player.real_player_id].admin_bonuses.length > 0 && (
                             <div className="mb-4">
-                              <h4 className="font-semibold text-gray-900 mb-2 text-sm">🎁 Admin Bonus Points</h4>
+                              <h4 className="font-semibold text-gray-900 mb-2 text-sm"><Gift className="w-4 h-4 text-rose-500" /> Admin Bonus Points</h4>
                               <div className="space-y-2">
                                 {playerMatchStats[player.real_player_id].admin_bonuses.map((bonus) => (
                                   <div key={bonus.id} className="border-2 border-yellow-300 rounded-lg p-2 bg-gradient-to-r from-yellow-50 to-amber-50">
@@ -644,13 +646,13 @@ export default function MyFantasyTeamPage() {
                                   </div>
                                   <div className="flex gap-4 text-xs">
                                     {match.goals_scored > 0 && (
-                                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded">⚽ {match.goals_scored}</span>
+                                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded"><SoccerBallIcon className="w-4 h-4" /> {match.goals_scored}</span>
                                     )}
                                     {match.clean_sheet && (
                                       <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">🛡️ CS</span>
                                     )}
                                     {match.motm && (
-                                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded">⭐ MOTM</span>
+                                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> MOTM</span>
                                     )}
                                     {match.goals_conceded > 0 && (
                                       <span className="px-2 py-1 bg-red-100 text-red-800 rounded">🥅 -{match.goals_conceded}</span>

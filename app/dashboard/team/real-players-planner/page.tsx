@@ -1,5 +1,7 @@
 'use client';
 
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { AlertCircle, BarChart2, Check, Lightbulb, LogOut, Star, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -76,13 +78,13 @@ const STAR_RATING_POINTS: Record<number, number> = {
 const getMinimumBidForStars = (stars: number): number => {
   const baseValues: Record<number, number> = {
     3: 100,  // Starting minimum
-    4: 140,  // Minimum to stay at 4★
-    5: 195,  // Minimum to stay at 5★
-    6: 250,  // Minimum to stay at 6★
-    7: 305,  // Minimum to stay at 7★
-    8: 360,  // Minimum to stay at 8★
-    9: 440,  // Minimum to stay at 9★
-    10: 710  // Minimum to stay at 10★
+    4: 140,  // Minimum to stay at 4<Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+    5: 195,  // Minimum to stay at 5<Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+    6: 250,  // Minimum to stay at 6<Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+    7: 305,  // Minimum to stay at 7<Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+    8: 360,  // Minimum to stay at 8<Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+    9: 440,  // Minimum to stay at 9<Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+    10: 710  // Minimum to stay at 10<Star className="w-4 h-4 text-amber-400 fill-amber-400" />
   };
   return baseValues[stars] || 100;
 };
@@ -165,7 +167,7 @@ export default function RealPlayersPlannerPage() {
         const response = await fetchWithTokenRefresh(`/api/team/dashboard?season_id=${seasonId}`);
         
         if (!response.ok) {
-          console.error('❌ Dashboard API error:', response.status, response.statusText);
+          console.error('<XCircle className="w-4 h-4 text-rose-500" /> Dashboard API error:', response.status, response.statusText);
           const errorData = await response.json();
           console.error('Error details:', errorData);
           // Use default budget if API fails
@@ -173,7 +175,7 @@ export default function RealPlayersPlannerPage() {
           setTeamSpent(0);
         } else {
           const data = await response.json();
-          console.log('📊 Dashboard API response:', data);
+          console.log('<BarChart2 className="w-4 h-4 text-slate-500" /> Dashboard API response:', data);
 
           if (data.success && data.data) {
             const teamSeason = data.data.seasonParticipation || {};
@@ -210,7 +212,7 @@ export default function RealPlayersPlannerPage() {
             }
           });
           setStarRatingConfig(configMap);
-          console.log('⭐ Star rating config loaded:', configMap);
+          console.log('<Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Star rating config loaded:', configMap);
         }
 
         // Fetch real players
@@ -326,7 +328,7 @@ export default function RealPlayersPlannerPage() {
       return updated;
     }));
 
-    console.log('🚪 Closing dropdown');
+    console.log('<LogOut className="w-4 h-4 text-slate-500" /> Closing dropdown');
     setOpenDropdownIndex(null);
     setSearchTerms({ ...searchTerms, [index]: '' });
   };
@@ -466,7 +468,7 @@ export default function RealPlayersPlannerPage() {
       const pointsIncrement = Math.floor(bidDifference / 5);
       const points = playerCurrentPoints + pointsIncrement;
 
-      // Calculate star rating from points (250 points = 8★, etc.)
+      // Calculate star rating from points (250 points = 8<Star className="w-4 h-4 text-amber-400 fill-amber-400" />, etc.)
       const stars = calculateStarRatingFromPoints(points);
 
       // Check if this increment crosses a star upgrade threshold
@@ -620,14 +622,14 @@ export default function RealPlayersPlannerPage() {
               {Object.entries(UPGRADE_MATRIX).map(([initialStar, upgrades]) => (
                 <div key={initialStar} className="bg-slate-50/50 border border-slate-200/40 rounded-xl p-4 font-mono">
                   <h3 className="font-extrabold text-xs text-amber-600 uppercase tracking-wider mb-3 pb-1.5 border-b border-slate-200/60 flex justify-between items-center">
-                    <span>{initialStar}★ Initial Rating</span>
+                    <span>{initialStar}<Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Initial Rating</span>
                     <span className="bg-slate-800 text-white text-[9px] px-1.5 py-0.5 rounded uppercase font-bold font-mono">Base</span>
                   </h3>
                   <div className="space-y-1.5">
                     {Object.entries(upgrades).map(([amount, finalStar]) => (
                       <div key={amount} className="flex justify-between text-xs py-0.5 border-b border-slate-100 last:border-b-0 font-semibold text-slate-600">
                         <span>Bid SSCoin {amount}</span>
-                        <span className="font-extrabold text-emerald-600">→ {finalStar}★ Rating</span>
+                        <span className="font-extrabold text-emerald-600">{"->"} {finalStar}<Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Rating</span>
                       </div>
                     ))}
                   </div>
@@ -782,7 +784,7 @@ export default function RealPlayersPlannerPage() {
                                         </span>
                                       )}
                                       <span className="px-1.5 py-0.2 text-[8px] font-black uppercase rounded bg-purple-100 text-purple-800 border border-purple-200/50">
-                                        {realPlayer.star_rating || 3}★
+                                        {realPlayer.star_rating || 3}<Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                                       </span>
                                     </div>
                                   </div>
@@ -794,7 +796,7 @@ export default function RealPlayersPlannerPage() {
                                       <div className="text-[8px] text-slate-400 uppercase">Pts</div>
                                     </div>
                                     <div>
-                                      <div className="font-extrabold text-emerald-600">⚽ {realPlayer.goals_scored || 0}</div>
+                                      <div className="font-extrabold text-emerald-600"><SoccerBallIcon className="w-4 h-4" /> {realPlayer.goals_scored || 0}</div>
                                       <div className="text-[8px] text-slate-400 uppercase">Gls</div>
                                     </div>
                                   </div>
@@ -863,7 +865,7 @@ export default function RealPlayersPlannerPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Projected Star rating */}
                       <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 font-mono">
-                        <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-2">⭐ Projected Star Rating</div>
+                        <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-2"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Projected Star Rating</div>
                         {(() => {
                           const currentStarsFromPoints = calculateStarRatingFromPoints(player.currentPoints);
                           const bidDifference = player.bidAmount - player.basePrice;
@@ -876,24 +878,24 @@ export default function RealPlayersPlannerPage() {
                             <div className="flex flex-col gap-1.5">
                               {isUpgraded ? (
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xl font-black text-slate-450">{currentStarsFromPoints}★</span>
+                                  <span className="text-xl font-black text-slate-450">{currentStarsFromPoints}<Star className="w-4 h-4 text-amber-400 fill-amber-400" /></span>
                                   <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                   </svg>
-                                  <span className="text-xl font-black text-emerald-700">{projectedStars}★</span>
+                                  <span className="text-xl font-black text-emerald-700">{projectedStars}<Star className="w-4 h-4 text-amber-400 fill-amber-400" /></span>
                                   <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-700 border border-emerald-200/50 rounded-lg text-[8px] font-black uppercase">
                                     Upgraded!
                                   </span>
                                 </div>
                               ) : (
-                                <div className="text-xl font-black text-slate-700">{currentStarsFromPoints}★</div>
+                                <div className="text-xl font-black text-slate-700">{currentStarsFromPoints}<Star className="w-4 h-4 text-amber-400 fill-amber-400" /></div>
                               )}
                               {nextUpgrade ? (
                                 <span className="text-[8px] text-slate-500 font-bold uppercase mt-1 leading-relaxed">
-                                  💡 Next upgrade at SSCoin {nextUpgrade.amount} → {nextUpgrade.stars}★ ({nextUpgrade.pointsNeeded} pts)
+                                  <Lightbulb className="w-4 h-4 text-amber-500" /> Next upgrade at SSCoin {nextUpgrade.amount} {"->"} {nextUpgrade.stars}<Star className="w-4 h-4 text-amber-400 fill-amber-400" /> ({nextUpgrade.pointsNeeded} pts)
                                 </span>
                               ) : player.player_id ? (
-                                <span className="text-[8px] text-emerald-600 font-bold uppercase mt-1">✓ Max 10★ rating reached</span>
+                                <span className="text-[8px] text-emerald-600 font-bold uppercase mt-1"><Check className="w-4 h-4 text-emerald-500" /> Max 10<Star className="w-4 h-4 text-amber-400 fill-amber-400" /> rating reached</span>
                               ) : null}
                             </div>
                           );
@@ -927,7 +929,7 @@ export default function RealPlayersPlannerPage() {
                                     {increment.isUpgrade && !isCurrentBid && <span className="text-[8px] px-1 bg-emerald-100 text-emerald-700 rounded uppercase font-bold">Up</span>}
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <span className="font-extrabold">{increment.stars}★</span>
+                                    <span className="font-extrabold">{increment.stars}<Star className="w-4 h-4 text-amber-400 fill-amber-400" /></span>
                                     <span className="font-bold">{increment.points} pts</span>
                                   </div>
                                 </div>
@@ -959,7 +961,7 @@ export default function RealPlayersPlannerPage() {
 
         {remainingBudget < 0 && (
           <div className="console-card bg-rose-50/60 border border-rose-200/60 p-4 rounded-xl flex gap-3 items-center">
-            <span className="text-lg flex-shrink-0">🚨</span>
+            <span className="text-lg flex-shrink-0"><AlertCircle className="w-4 h-4 text-rose-500" /></span>
             <div>
               <span className="font-extrabold text-rose-800 text-[10px] uppercase tracking-wider block mb-0.5">Budget Alert</span>
               <p className="text-xs sm:text-sm text-rose-900 leading-relaxed font-semibold">

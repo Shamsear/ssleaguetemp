@@ -5,6 +5,26 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getTeamById } from '@/lib/firebase/teams';
 import { TeamData } from '@/types/team';
+import { 
+  ArrowLeft,
+  Shield,
+  Edit,
+  Trash2,
+  Users,
+  CheckCircle,
+  XCircle,
+  Info,
+  DollarSign,
+  TrendingUp,
+  Settings,
+  Layers,
+  ArrowRightLeft,
+  Mail,
+  User,
+  PlusCircle,
+  Camera,
+  AlertTriangle
+} from 'lucide-react';
 
 interface Player {
   id: string;
@@ -219,10 +239,10 @@ export default function TeamDetailsPage() {
 
   if (loading || loadingData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 text-slate-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
+          <p className="mt-4 text-slate-400 font-mono text-xs tracking-wider uppercase">Loading team statistics & rosters...</p>
         </div>
       </div>
     );
@@ -234,25 +254,23 @@ export default function TeamDetailsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 px-4 text-slate-200">
+        <div className="text-center max-w-md p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md shadow-2xl">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+            <AlertTriangle className="w-8 h-8" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Error Loading Team</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <div className="flex gap-3 justify-center">
+          <h2 className="text-xl font-bold text-slate-100 mb-2">Error Loading Team</h2>
+          <p className="text-slate-400 font-mono text-xs mb-6">{error}</p>
+          <div className="flex gap-3 justify-center font-mono text-xs">
             <button
               onClick={() => loadTeamData()}
-              className="px-4 py-2 bg-[#0066FF] text-white rounded-xl text-sm font-medium hover:bg-[#0066FF]/90 transition-colors"
+              className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-all shadow-lg shadow-indigo-500/20"
             >
               Try Again
             </button>
             <button
               onClick={() => router.push('/dashboard/superadmin/teams')}
-              className="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-5 py-2.5 border border-white/10 rounded-xl text-slate-300 bg-white/5 hover:bg-white/10 transition-all"
             >
               Back to Teams
             </button>
@@ -420,7 +438,7 @@ export default function TeamDetailsPage() {
                 onClick={() => setShowAdjustBalanceModal(true)}
                 className="text-xs text-purple-600 hover:text-purple-700 font-medium mt-4"
               >
-                Adjust Balance →
+                Adjust Balance {"->"}
               </button>
             </div>
           </div>
@@ -499,7 +517,7 @@ export default function TeamDetailsPage() {
                 onClick={() => setShowAdjustBalanceModal(true)}
                 className="text-xs text-purple-600 hover:text-purple-700 font-medium mt-4"
               >
-                Adjust Balance →
+                Adjust Balance {"->"}
               </button>
             </div>
           </div>

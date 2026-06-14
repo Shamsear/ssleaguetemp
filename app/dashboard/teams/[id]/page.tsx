@@ -1,5 +1,6 @@
 'use client';
 
+import { Star, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -589,7 +590,7 @@ export default function TeamDetailPage() {
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-2">
                                 {index < 3 && (
-                                  <span className="text-yellow-500 font-bold text-sm">★</span>
+                                  <span className="text-yellow-500 font-bold text-sm"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /></span>
                                 )}
                                 <span className="font-medium text-gray-900">{player.player_name}</span>
                               </div>
@@ -632,7 +633,7 @@ export default function TeamDetailPage() {
                       ).map((trophy: any) => (
                         <div key={trophy.id} className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg p-4 border-2 border-yellow-300 shadow-sm">
                           <div className="flex items-center gap-3">
-                            <span className="text-3xl">🏆</span>
+                            <span className="text-3xl"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /></span>
                             <div className="flex-1">
                               <h4 className="font-bold text-gray-900 text-lg">{trophy.trophy_name}</h4>
                               {trophy.trophy_position && (
@@ -654,7 +655,7 @@ export default function TeamDetailPage() {
                       currentSeasonData.trophies?.map((trophy: any) => (
                         <div key={trophy.id} className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg p-4 border-2 border-yellow-300 shadow-sm">
                           <div className="flex items-center gap-3">
-                            <span className="text-3xl">🏆</span>
+                            <span className="text-3xl"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /></span>
                             <div className="flex-1">
                               <h4 className="font-bold text-gray-900 text-lg">{trophy.trophy_name}</h4>
                               {trophy.trophy_position && (

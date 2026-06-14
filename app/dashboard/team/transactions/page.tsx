@@ -1,10 +1,11 @@
 'use client';
 
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { DollarSign, TrendingDown, TrendingUp, Calendar, Download } from 'lucide-react';
+import { Calendar, DollarSign, Download, Gavel, Gift, TrendingDown, TrendingUp, Trophy, User } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 
 interface Transaction {
@@ -167,11 +168,11 @@ export default function TransactionsPage() {
     switch (type) {
       case 'salary': return '💰';
       case 'fine': return '⚠️';
-      case 'auction': return '🔨';
-      case 'real_player_fee': return '👤';
-      case 'bonus': return '🎁';
-      case 'match_reward': return '🏆'; // Match reward for Win/Draw/Loss
-      case 'position_reward': return '🥇'; // League position reward
+      case 'auction': return '<Gavel className="w-4 h-4 text-amber-500" />';
+      case 'real_player_fee': return '<User className="w-4 h-4 text-slate-500" />';
+      case 'bonus': return '<Gift className="w-4 h-4 text-rose-500" />';
+      case 'match_reward': return '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />'; // Match reward for Win/Draw/Loss
+      case 'position_reward': return '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />'; // League position reward
       case 'completion_bonus': return '🎉'; // Tournament completion bonus
       case 'adjustment': return '🔧';
       case 'transfer_payment': return '➡️';
@@ -179,7 +180,7 @@ export default function TransactionsPage() {
       case 'swap_fee_paid': return '🔄';
       case 'swap_fee_received': return '🔁';
       case 'player_release_refund': return '↩️';
-      case 'initial_balance': return '🏬';
+      case 'initial_balance': return '<Store className="w-4 h-4 text-slate-500" />';
       default: return '📝';
     }
   };
@@ -505,7 +506,7 @@ export default function TransactionsPage() {
                   : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              ⚽ eCoin Budget
+              <SoccerBallIcon className="w-4 h-4" /> eCoin Budget
             </button>
             <button
               onClick={() => setActiveTab('real_player')}
@@ -543,7 +544,7 @@ export default function TransactionsPage() {
             </li>
             <li className="flex items-start gap-1">
               <span>•</span>
-              <span><strong>🏆 Match Rewards:</strong> Earned automatically after each match based on result (Win/Draw/Loss).</span>
+              <span><strong><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Match Rewards:</strong> Earned automatically after each match based on result (Win/Draw/Loss).</span>
             </li>
             <li className="flex items-start gap-1">
               <span>•</span>

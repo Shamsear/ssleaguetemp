@@ -1,5 +1,6 @@
 'use client';
 
+import { Search, Star, XCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -116,7 +117,7 @@ export default function TeamRoundPage() {
   // Handle round fetch errors (deleted round, not found, etc.)
   useEffect(() => {
     if (isError) {
-      console.error('❌ Round fetch error:', error);
+      console.error('<XCircle className="w-4 h-4 text-rose-500" /> Round fetch error:', error);
       console.log('👉 Redirecting to dashboard due to error');
       router.push('/dashboard/team');
     }
@@ -176,7 +177,7 @@ export default function TeamRoundPage() {
   // Handle round status changes (auto-checked by React Query)
   useEffect(() => {
     if (statusData) {
-      console.log('🔍 Round status data:', statusData);
+      console.log('<Search className="w-4 h-4 text-slate-500" /> Round status data:', statusData);
       
       // Only redirect if we have a valid response AND the round is explicitly not active
       // Don't redirect on API errors (success: false)
@@ -186,14 +187,14 @@ export default function TeamRoundPage() {
       }
       
       if (statusData.active === false) {
-        console.log('⚠️ Round is not active, redirecting...');
+        console.log('[WARNING] Round is not active, redirecting...');
         if (statusData.redirect) {
           router.push(statusData.redirect);
         } else {
           router.push('/dashboard/team');
         }
       } else if (statusData.active === true) {
-        console.log('✅ Round is active');
+        console.log('[SUCCESS] Round is active');
       }
     }
   }, [statusData, router]);
@@ -1338,7 +1339,7 @@ function PlayerCard({
 
             {player.overall_rating && (
               <div className="flex items-center mt-1.5 gap-1.5">
-                <span className="text-xs font-black text-amber-500">★ {player.overall_rating}</span>
+                <span className="text-xs font-black text-amber-500"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.overall_rating}</span>
                 {player.playing_style && <span className="text-[9px] text-slate-400 uppercase font-bold">{player.playing_style}</span>}
               </div>
             )}

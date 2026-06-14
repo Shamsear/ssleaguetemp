@@ -1,5 +1,6 @@
 'use client';
 
+import { Info, Search, XCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -58,7 +59,7 @@ export default function FixtureLineupPage() {
       const teamSeasonsRes = await fetchWithTokenRefresh(`/api/team-seasons?user_id=${user?.uid}&season_id=${fixtureData.fixture.season_id}`);
       const teamSeasonsData = await teamSeasonsRes.json();
       
-      console.log('🔍 DEBUG - Team seasons data:', teamSeasonsData);
+      console.log('<Search className="w-4 h-4 text-slate-500" /> DEBUG - Team seasons data:', teamSeasonsData);
       
       if (!teamSeasonsData.success || !teamSeasonsData.team_season) {
         throw new Error('You are not registered for this season');
@@ -67,7 +68,7 @@ export default function FixtureLineupPage() {
       const actualTeamId = teamSeasonsData.team_season.team_id;
       
       // Determine which team the user belongs to
-      console.log('🔍 DEBUG - Fixture data:', {
+      console.log('<Search className="w-4 h-4 text-slate-500" /> DEBUG - Fixture data:', {
         fixtureId,
         home_team_id: fixtureData.fixture.home_team_id,
         away_team_id: fixtureData.fixture.away_team_id,
@@ -77,7 +78,7 @@ export default function FixtureLineupPage() {
         actual_team_id: actualTeamId
       });
       
-      console.log('🔍 DEBUG - Team matching:', {
+      console.log('<Search className="w-4 h-4 text-slate-500" /> DEBUG - Team matching:', {
         is_home_team: fixtureData.fixture.home_team_id === actualTeamId,
         is_away_team: fixtureData.fixture.away_team_id === actualTeamId
       });
@@ -86,11 +87,11 @@ export default function FixtureLineupPage() {
         ? fixtureData.fixture.home_team_id
         : fixtureData.fixture.away_team_id;
       
-      console.log('🔍 DEBUG - Determined userTeamId:', userTeamId);
+      console.log('<Search className="w-4 h-4 text-slate-500" /> DEBUG - Determined userTeamId:', userTeamId);
       
       // Verify user's team is actually in this fixture
       if (userTeamId !== fixtureData.fixture.home_team_id && userTeamId !== fixtureData.fixture.away_team_id) {
-        console.error('❌ User team not in fixture!');
+        console.error('<XCircle className="w-4 h-4 text-rose-500" /> User team not in fixture!');
         throw new Error('You are not part of this fixture');
       }
       
@@ -106,15 +107,15 @@ export default function FixtureLineupPage() {
 
       // Fetch existing lineup if any - only for the user's team
       const lineupUrl = `/api/lineups?fixture_id=${fixtureId}&team_id=${userTeamId}`;
-      console.log('🔍 DEBUG - Fetching lineup from:', lineupUrl);
+      console.log('<Search className="w-4 h-4 text-slate-500" /> DEBUG - Fetching lineup from:', lineupUrl);
       const lineupRes = await fetchWithTokenRefresh(lineupUrl);
       const lineupData = await lineupRes.json();
       
-      console.log('🔍 DEBUG - Lineup API response:', lineupData);
+      console.log('<Search className="w-4 h-4 text-slate-500" /> DEBUG - Lineup API response:', lineupData);
       
       // Verify the returned lineup belongs to this team
       if (lineupData.success && lineupData.lineups !== null && lineupData.lineups !== undefined) {
-        console.log('🔍 DEBUG - Checking lineup team_id:', {
+        console.log('<Search className="w-4 h-4 text-slate-500" /> DEBUG - Checking lineup team_id:', {
           returned_team_id: lineupData.lineups.team_id,
           expected_team_id: userTeamId,
           match: lineupData.lineups.team_id === userTeamId,
@@ -126,13 +127,13 @@ export default function FixtureLineupPage() {
           console.log('✅ DEBUG - Team ID matches, setting lineup');
           setExistingLineup(lineupData.lineups);
         } else {
-          console.error('❌ CRITICAL - Lineup team_id mismatch!', {
+          console.error('<XCircle className="w-4 h-4 text-rose-500" /> CRITICAL - Lineup team_id mismatch!', {
             returned: lineupData.lineups.team_id,
             expected: userTeamId
           });
         }
       } else {
-        console.log('ℹ️ DEBUG - No existing lineup found for this team (lineups is null/undefined)');
+        console.log('<Info className="w-4 h-4 text-blue-500" /> DEBUG - No existing lineup found for this team (lineups is null/undefined)');
         setExistingLineup(null);
       }
     } catch (error) {

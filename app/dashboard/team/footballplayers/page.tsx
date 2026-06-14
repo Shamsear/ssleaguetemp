@@ -448,7 +448,7 @@ export default function PlayerStatisticsPage() {
             href="/dashboard/team"
             className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
-            ← Back to Dashboard
+            {"<-"} Back to Dashboard
           </Link>
         </div>
 

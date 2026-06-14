@@ -1,5 +1,6 @@
 'use client';
 
+import { Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -158,7 +159,7 @@ export default function FixtureSubstitutePage() {
           <h3 className="text-lg font-bold text-gray-900 mb-4">Current Lineup</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h4 className="text-sm font-semibold text-green-600 mb-2">⭐ Starting XI ({lineup.starting_xi.length})</h4>
+              <h4 className="text-sm font-semibold text-green-600 mb-2"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Starting XI ({lineup.starting_xi.length})</h4>
               <div className="text-xs text-gray-600 space-y-1">
                 {lineup.starting_xi.map((playerId: string, idx: number) => (
                   <div key={playerId} className="bg-green-50 rounded px-2 py-1">

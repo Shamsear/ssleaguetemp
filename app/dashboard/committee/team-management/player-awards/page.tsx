@@ -1,4 +1,5 @@
 'use client';
+import { GloveIcon } from '@/components/ui/CustomIcons';
 import { Trophy, Crown, Star, Activity } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -397,7 +398,7 @@ export default function PlayerAwardsPage() {
             <h3 className="text-sm font-semibold text-yellow-800 mb-2">Award Criteria</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs text-yellow-700">
               <div><strong>Golden Boot <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />:</strong> Most goals scored</div>
-              <div><strong>Golden Glove 🧤:</strong> Most clean sheets</div>
+              <div><strong>Golden Glove <GloveIcon className="w-4 h-4" />:</strong> Most clean sheets</div>
               <div><strong>Golden Ball <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />:</strong> Most POTM awards</div>
               <div><strong>Legend <Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />:</strong> Top Legend category players</div>
               <div><strong>Classic 🎖️:</strong> Top Classic category players</div>

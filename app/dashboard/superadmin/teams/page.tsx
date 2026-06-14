@@ -13,6 +13,24 @@ import {
 } from '@/lib/firebase/teams';
 import { getAllSeasons } from '@/lib/firebase/seasons';
 import { useCachedTeams, useRefreshCache } from '@/hooks/useCachedData';
+import { 
+  PlusCircle, 
+  Search, 
+  Trash2, 
+  Edit, 
+  CheckCircle, 
+  XCircle, 
+  Users, 
+  Shield, 
+  DollarSign, 
+  ArrowLeft,
+  Mail,
+  User,
+  Info,
+  Calendar,
+  Lock,
+  Layers
+} from 'lucide-react';
 
 export default function TeamsManagement() {
   const { user, loading } = useAuth();
@@ -237,10 +255,10 @@ export default function TeamsManagement() {
 
   if (loading || loadingData || teamsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-950 text-slate-100 animate-pulse">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
+          <p className="mt-4 text-slate-400 font-mono text-sm">Loading teams management...</p>
         </div>
       </div>
     );
@@ -251,88 +269,90 @@ export default function TeamsManagement() {
   }
 
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-4">
+    <div className="min-h-screen py-6 sm:py-10 px-4 sm:px-6 bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-950 text-slate-100 animate-fade-in font-sans">
       <div className="container mx-auto max-w-screen-2xl">
+        
         {/* Page Header */}
-        <header className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
+        <header className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-white/10 pb-8">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/dashboard/superadmin')}
-              className="p-2 rounded-xl hover:bg-white/50 transition-colors"
+              className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 transition-all duration-300 hover:scale-105"
             >
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
+              <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-3xl md:text-4xl font-bold gradient-text">Team Management</h1>
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shadow-inner hidden sm:flex">
+                <Shield className="w-8 h-8" />
+              </div>
+              <div>
+                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent mb-2">
+                  Team Management
+                </h1>
+                <p className="text-slate-400 text-sm font-mono">Create, configure, and review registered league teams</p>
+              </div>
+            </div>
           </div>
-          <p className="text-gray-600 text-sm md:text-base ml-14">Manage all teams across seasons</p>
+          <button
+            onClick={() => setShowAddTeamModal(true)}
+            className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold rounded-2xl text-white bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 group w-full md:w-auto justify-center"
+          >
+            <PlusCircle className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-200" />
+            Add Team
+          </button>
         </header>
 
         {/* Error Message */}
         {error && (
-          <div className="glass rounded-2xl p-4 mb-6 bg-red-50 border border-red-200">
-            <div className="flex items-center justify-between">
-              <p className="text-red-800 text-sm">{error}</p>
-              <button
-                onClick={() => setError(null)}
-                className="text-red-600 hover:text-red-800"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+          <div className="rounded-2xl p-4 mb-6 bg-rose-500/10 border border-rose-500/20 text-rose-200 font-mono text-sm flex items-center justify-between">
+            <p>⚠️ {error}</p>
+            <button onClick={() => setError(null)} className="text-rose-400 hover:text-rose-300 transition-colors">
+              <XCircle className="w-5 h-5" />
+            </button>
           </div>
         )}
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          <div className="glass rounded-2xl p-6 shadow-lg backdrop-blur-md border border-white/20">
+        {/* Statistics Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 font-mono">
+          <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md p-6 shadow-xl hover:bg-white/10 transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Total Teams</p>
-                <p className="text-3xl font-bold text-[#0066FF]">{stats.totalTeams}</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Teams</p>
+                <p className="text-3xl font-black text-slate-100">{stats.totalTeams}</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-[#0066FF]/20 to-[#0066FF]/10">
-                <svg className="w-8 h-8 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+              <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                <Users className="w-8 h-8" />
               </div>
             </div>
           </div>
 
-          <div className="glass rounded-2xl p-6 shadow-lg backdrop-blur-md border border-white/20">
+          <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md p-6 shadow-xl hover:bg-white/10 transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Active Teams</p>
-                <p className="text-3xl font-bold text-green-600">{stats.activeTeams}</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Active Teams</p>
+                <p className="text-3xl font-black text-emerald-400">{stats.activeTeams}</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/10">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <CheckCircle className="w-8 h-8" />
               </div>
             </div>
           </div>
 
-          <div className="glass rounded-2xl p-6 shadow-lg backdrop-blur-md border border-white/20">
+          <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md p-6 shadow-xl hover:bg-white/10 transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Inactive Teams</p>
-                <p className="text-3xl font-bold text-gray-600">{stats.inactiveTeams}</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Inactive Teams</p>
+                <p className="text-3xl font-black text-slate-400">{stats.inactiveTeams}</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-gray-400/20 to-gray-400/10">
-                <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                </svg>
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-slate-400">
+                <XCircle className="w-8 h-8" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters and Actions */}
-        <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
+        <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md p-6 mb-8 shadow-xl">
           <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
             {/* Search */}
             <div className="flex-1 w-full lg:max-w-md">
@@ -342,20 +362,18 @@ export default function TeamsManagement() {
                   placeholder="Search teams, codes, or owners..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-white/10 bg-slate-900/60 text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 sm:text-sm font-mono"
                 />
-                <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                <Search className="w-5 h-5 text-slate-500 absolute left-3.5 top-1/2 transform -translate-y-1/2" />
               </div>
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 font-mono">
               <select
                 value={filterSeason}
                 onChange={(e) => setFilterSeason(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all text-sm"
+                className="px-4 py-2 border border-white/10 bg-slate-900 text-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 sm:text-xs"
               >
                 <option value="all">All Seasons</option>
                 {seasons.map(season => (
@@ -366,153 +384,119 @@ export default function TeamsManagement() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all text-sm"
+                className="px-4 py-2 border border-white/10 bg-slate-900 text-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 sm:text-xs"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
-
-              <button
-                onClick={() => setShowAddTeamModal(true)}
-                className="inline-flex items-center px-4 py-2 bg-[#0066FF] text-white rounded-xl hover:bg-[#0066FF]/90 transition-colors text-sm font-medium"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add Team
-              </button>
             </div>
           </div>
         </div>
 
         {/* Teams List */}
-        <div className="glass rounded-3xl shadow-lg backdrop-blur-md border border-white/20 overflow-hidden">
-          <div className="px-6 py-5 bg-gradient-to-r from-[#0066FF]/5 to-[#0066FF]/10 border-b border-[#0066FF]/20">
-            <h3 className="text-xl font-semibold text-[#0066FF] flex items-center justify-between">
-              <span className="flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                All Teams
-              </span>
+        <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md shadow-xl">
+          <div className="px-6 py-5 bg-white/5 border-b border-white/10">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+                <Layers className="w-5 h-5 text-indigo-400" />
+                All Teams Database
+              </h3>
               {filteredTeams.length > 0 && (
-                <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-[#0066FF]/20 text-[#0066FF]">
-                  {filteredTeams.length} {filteredTeams.length === 1 ? 'Team' : 'Teams'}
+                <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
+                  {filteredTeams.length} Total
                 </span>
               )}
-            </h3>
+            </div>
           </div>
 
           {filteredTeams.length > 0 ? (
             <>
               {/* Desktop Table */}
               <div className="hidden lg:block overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50/50">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Team</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Owner</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Season</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                <table className="min-w-full divide-y divide-white/5">
+                  <thead className="bg-white/5">
+                    <tr className="font-mono text-left text-xs font-bold uppercase tracking-wider text-slate-400">
+                      <th className="px-6 py-3.5">Team</th>
+                      <th className="px-6 py-3.5">Owner</th>
+                      <th className="px-6 py-3.5">Season</th>
+                      <th className="px-6 py-3.5">Status</th>
+                      <th className="px-6 py-3.5">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white/30">
+                  <tbody className="divide-y divide-white/5 text-sm text-slate-300">
                     {filteredTeams.map((team) => (
-                      <tr key={team.id} className="hover:bg-white/60 transition-colors">
+                      <tr key={team.id} className="hover:bg-white/5 transition-colors group">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 rounded-xl bg-white flex items-center justify-center">
+                            <div className="flex-shrink-0 h-10 w-10 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center overflow-hidden">
                               {team.logo_url ? (
                                 <img 
                                   src={team.logo_url} 
                                   alt={`${team.team_name} logo`}
                                   className="max-w-full max-h-full object-contain p-1"
                                   onError={(e) => {
-                                    // Fallback to team code if image fails to load
                                     const target = e.target as HTMLElement;
                                     target.style.display = 'none';
                                     const parent = target.parentElement;
                                     if (parent) {
-                                      parent.innerHTML = `<span class="text-[#0066FF] font-bold text-sm">${team.team_code}</span>`;
+                                      parent.innerHTML = `<span class="text-indigo-400 font-bold text-xs font-mono">${team.team_code}</span>`;
                                     }
                                   }}
                                 />
                               ) : (
-                                <span className="text-[#0066FF] font-bold text-sm">{team.team_code}</span>
+                                <span className="text-indigo-400 font-bold text-xs font-mono">{team.team_code}</span>
                               )}
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-semibold text-gray-900">{team.team_name}</div>
-                              <div className="text-xs text-gray-500">Code: {team.team_code}</div>
+                              <div className="text-sm font-bold text-slate-200 group-hover:text-indigo-400 transition-colors">{team.team_name}</div>
+                              <div className="text-xs text-slate-500 font-mono">Code: {team.team_code}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{team.owner_name || 'N/A'}</div>
-                          <div className="text-xs text-gray-500">{team.owner_email || 'N/A'}</div>
+                          <div className="text-sm font-semibold text-slate-300">{team.owner_name || 'N/A'}</div>
+                          <div className="text-xs text-slate-500 font-mono">{team.owner_email || 'N/A'}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        <td className="px-6 py-4 whitespace-nowrap font-mono">
+                          <span className="inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full">
                             {team.season_name}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap font-mono">
                           <button
                             onClick={() => handleToggleStatus(team)}
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors ${
                               team.is_active
-                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                                : 'bg-slate-500/10 text-slate-400 border border-slate-500/20 hover:bg-slate-500/20'
                             }`}
                           >
-                            {team.is_active ? (
-                              <>
-                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Active
-                              </>
-                            ) : (
-                              <>
-                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                </svg>
-                                Inactive
-                              </>
-                            )}
+                            {team.is_active ? 'Active' : 'Inactive'}
                           </button>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex items-center gap-2">
+                        <td className="px-6 py-4 whitespace-nowrap text-xs font-mono">
+                          <div className="flex items-center gap-2 lg:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                             <button
                               onClick={() => handleViewTeamDetails(team)}
-                              className="text-blue-600 hover:text-blue-800 p-1.5 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="p-2 border border-white/10 text-slate-300 bg-white/5 hover:bg-white/10 rounded-xl transition-all"
                               title="View Details"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
+                              <Info className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleEditTeam(team)}
-                              className="text-green-600 hover:text-green-800 p-1.5 hover:bg-green-50 rounded-lg transition-colors"
+                              className="p-2 border border-indigo-500/20 text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 rounded-xl transition-all"
                               title="Edit Team"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
+                              <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteTeam(team)}
-                              className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-2 border border-rose-500/20 text-rose-400 bg-rose-500/5 hover:bg-rose-500/10 rounded-xl transition-all"
                               title="Delete Team"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </td>
@@ -523,84 +507,78 @@ export default function TeamsManagement() {
               </div>
 
               {/* Mobile Cards */}
-              <div className="lg:hidden divide-y divide-gray-200">
+              <div className="lg:hidden divide-y divide-white/5">
                 {filteredTeams.map((team) => (
-                  <div key={team.id} className="p-6 hover:bg-white/30 transition-colors">
+                  <div key={team.id} className="p-6 hover:bg-white/5 transition-colors">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-12 w-12 rounded-xl bg-white flex items-center justify-center mr-3">
+                        <div className="flex-shrink-0 h-12 w-12 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center overflow-hidden mr-3">
                           {team.logo_url ? (
                             <img 
                               src={team.logo_url} 
                               alt={`${team.team_name} logo`}
                               className="max-w-full max-h-full object-contain p-1"
                               onError={(e) => {
-                                // Fallback to team code if image fails to load
                                 const target = e.target as HTMLElement;
                                 target.style.display = 'none';
                                 const parent = target.parentElement;
                                 if (parent) {
-                                  parent.innerHTML = `<span class="text-[#0066FF] font-bold">${team.team_code}</span>`;
+                                  parent.innerHTML = `<span class="text-indigo-400 font-bold font-mono">${team.team_code}</span>`;
                                 }
                               }}
                             />
                           ) : (
-                            <span className="text-[#0066FF] font-bold">{team.team_code}</span>
+                            <span className="text-indigo-400 font-bold font-mono">{team.team_code}</span>
                           )}
                         </div>
                         <div>
-                          <h3 className="text-base font-semibold text-gray-900">{team.team_name}</h3>
-                          <p className="text-sm text-gray-500">{team.owner_name}</p>
+                          <h3 className="text-base font-bold text-slate-200">{team.team_name}</h3>
+                          <p className="text-xs text-slate-400 font-mono">{team.owner_name}</p>
                         </div>
                       </div>
                       <button
                         onClick={() => handleToggleStatus(team)}
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                          team.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        className={`inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full font-mono ${
+                          team.is_active 
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                            : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
                         }`}
                       >
                         {team.is_active ? 'Active' : 'Inactive'}
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-2 gap-4 mb-4 font-mono text-xs">
                       <div>
-                        <p className="text-xs text-gray-500">Season</p>
-                        <p className="text-sm font-semibold text-gray-900">{team.season_name}</p>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wider">Season</p>
+                        <p className="font-semibold text-slate-300">{team.season_name}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500">Created</p>
-                        <p className="text-sm font-semibold text-gray-900">{formatDate(team.created_at)}</p>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wider">Created</p>
+                        <p className="font-semibold text-slate-300">{formatDate(team.created_at)}</p>
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 font-mono text-xs">
                       <button
                         onClick={() => handleViewTeamDetails(team)}
-                        className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                        className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-white/10 rounded-xl text-slate-300 bg-white/5 hover:bg-white/10 transition-all"
                       >
-                        <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
+                        <Info className="w-4 h-4 mr-1.5" />
                         View
                       </button>
                       <button
                         onClick={() => handleEditTeam(team)}
-                        className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-green-300 rounded-lg text-sm font-medium text-green-700 bg-white hover:bg-green-50 transition-colors"
+                        className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-indigo-500/20 rounded-xl text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 transition-all"
                       >
-                        <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
+                        <Edit className="w-4 h-4 mr-1.5" />
                         Edit
                       </button>
                       <button
                         onClick={() => handleDeleteTeam(team)}
-                        className="px-3 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 bg-white hover:bg-red-50 transition-colors"
+                        className="px-3 py-2 border border-rose-500/20 rounded-xl text-rose-400 bg-rose-500/5 hover:bg-rose-500/10 transition-all"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -608,15 +586,13 @@ export default function TeamsManagement() {
               </div>
             </>
           ) : (
-            <div className="px-8 py-16 text-center">
+            <div className="px-8 py-20 text-center animate-fade-in">
               <div className="max-w-sm mx-auto">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-[#0066FF]/20 to-[#0066FF]/10 flex items-center justify-center">
-                  <svg className="w-10 h-10 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
+                <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center animate-pulse text-indigo-400">
+                  <Users className="w-10 h-10" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Teams Found</h3>
-                <p className="text-gray-500 mb-6">
+                <h3 className="text-xl font-bold text-slate-200 mb-2">No Teams Found</h3>
+                <p className="text-slate-400 text-xs font-sans mb-6">
                   {searchQuery || filterSeason !== 'all' || filterStatus !== 'all'
                     ? 'No teams match your search criteria. Try adjusting your filters.'
                     : 'No teams have been created yet. Start by adding your first team.'}
@@ -624,11 +600,9 @@ export default function TeamsManagement() {
                 {!searchQuery && filterSeason === 'all' && filterStatus === 'all' && (
                   <button
                     onClick={() => setShowAddTeamModal(true)}
-                    className="inline-flex items-center px-4 py-2 rounded-xl bg-[#0066FF] text-white text-sm font-medium hover:bg-[#0066FF]/90"
+                    className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold rounded-2xl text-white bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 group"
                   >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
+                    <PlusCircle className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-200" />
                     Add First Team
                   </button>
                 )}
@@ -639,24 +613,22 @@ export default function TeamsManagement() {
 
         {/* Add Team Modal */}
         {showAddTeamModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="glass rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold gradient-text">Add New Team</h2>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+            <div className="relative overflow-hidden rounded-3xl bg-slate-900 border border-white/10 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+                <h2 className="text-xl font-bold text-slate-200">Add New Team</h2>
                 <button
                   onClick={() => setShowAddTeamModal(false)}
-                  className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white/5 rounded-xl transition-colors text-slate-400 hover:text-slate-200"
                 >
-                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <XCircle className="w-6 h-6" />
                 </button>
               </div>
 
-              <form onSubmit={handleAddTeam} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="team_name" className="block text-sm font-medium text-gray-700 mb-2">
+              <form onSubmit={handleAddTeam} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="group">
+                    <label htmlFor="team_name" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 group-focus-within:text-indigo-400 transition-colors font-mono">
                       Team Name *
                     </label>
                     <input
@@ -665,13 +637,13 @@ export default function TeamsManagement() {
                       required
                       value={formData.team_name}
                       onChange={(e) => setFormData({ ...formData, team_name: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                      className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-850 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-sm font-mono"
                       placeholder="e.g., Manchester United FC"
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="team_code" className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="group">
+                    <label htmlFor="team_code" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 group-focus-within:text-indigo-400 transition-colors font-mono">
                       Team Code *
                     </label>
                     <input
@@ -680,14 +652,14 @@ export default function TeamsManagement() {
                       required
                       value={formData.team_code}
                       onChange={(e) => setFormData({ ...formData, team_code: e.target.value.toUpperCase() })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                      className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-850 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-sm font-mono"
                       placeholder="e.g., MUN"
                       maxLength={5}
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="owner_name" className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="group">
+                    <label htmlFor="owner_name" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 group-focus-within:text-indigo-400 transition-colors font-mono">
                       Owner Name
                     </label>
                     <input
@@ -695,13 +667,13 @@ export default function TeamsManagement() {
                       id="owner_name"
                       value={formData.owner_name}
                       onChange={(e) => setFormData({ ...formData, owner_name: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                      className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-850 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-sm font-mono"
                       placeholder="e.g., John Doe"
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="owner_email" className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="group">
+                    <label htmlFor="owner_email" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 group-focus-within:text-indigo-400 transition-colors font-mono">
                       Owner Email
                     </label>
                     <input
@@ -709,13 +681,13 @@ export default function TeamsManagement() {
                       id="owner_email"
                       value={formData.owner_email}
                       onChange={(e) => setFormData({ ...formData, owner_email: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                      className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-850 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-sm font-mono"
                       placeholder="e.g., john@example.com"
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="initial_balance" className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="group">
+                    <label htmlFor="initial_balance" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 group-focus-within:text-indigo-400 transition-colors font-mono">
                       Initial Balance (₹) *
                     </label>
                     <input
@@ -725,13 +697,13 @@ export default function TeamsManagement() {
                       min="0"
                       value={formData.initial_balance}
                       onChange={(e) => setFormData({ ...formData, initial_balance: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                      className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-855 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-sm font-mono"
                       placeholder="10000000"
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="season_id" className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="group">
+                    <label htmlFor="season_id" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 group-focus-within:text-indigo-400 transition-colors font-mono">
                       Season *
                     </label>
                     <select
@@ -739,7 +711,7 @@ export default function TeamsManagement() {
                       required
                       value={formData.season_id}
                       onChange={(e) => setFormData({ ...formData, season_id: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                      className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-800 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-sm font-mono"
                     >
                       <option value="">Select Season</option>
                       {seasons.map(season => (
@@ -749,18 +721,18 @@ export default function TeamsManagement() {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex justify-end gap-3 pt-4 border-t border-white/10 font-mono text-xs">
                   <button
                     type="button"
                     onClick={() => setShowAddTeamModal(false)}
-                    className="px-6 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="inline-flex items-center px-6 py-3 border border-white/10 rounded-xl text-slate-300 bg-white/5 hover:bg-white/10 transition-all"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-6 py-3 bg-[#0066FF] text-white rounded-xl text-sm font-medium hover:bg-[#0066FF]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submitting ? 'Adding...' : 'Add Team'}
                   </button>
@@ -772,27 +744,25 @@ export default function TeamsManagement() {
 
         {/* Edit Team Modal */}
         {showEditTeamModal && selectedTeam && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="glass rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold gradient-text">Edit Team</h2>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+            <div className="relative overflow-hidden rounded-3xl bg-slate-900 border border-white/10 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+                <h2 className="text-xl font-bold text-slate-200">Edit Team</h2>
                 <button
                   onClick={() => {
                     setShowEditTeamModal(false);
                     setSelectedTeam(null);
                   }}
-                  className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white/5 rounded-xl transition-colors text-slate-400 hover:text-slate-200"
                 >
-                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <XCircle className="w-6 h-6" />
                 </button>
               </div>
 
-              <form onSubmit={handleUpdateTeam} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="edit_team_name" className="block text-sm font-medium text-gray-700 mb-2">
+              <form onSubmit={handleUpdateTeam} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="group">
+                    <label htmlFor="edit_team_name" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 group-focus-within:text-indigo-400 transition-colors font-mono">
                       Team Name *
                     </label>
                     <input
@@ -801,12 +771,12 @@ export default function TeamsManagement() {
                       required
                       value={formData.team_name}
                       onChange={(e) => setFormData({ ...formData, team_name: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                      className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-850 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-sm font-mono"
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="edit_team_code" className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="group">
+                    <label htmlFor="edit_team_code" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 group-focus-within:text-indigo-400 transition-colors font-mono">
                       Team Code *
                     </label>
                     <input
@@ -815,13 +785,13 @@ export default function TeamsManagement() {
                       required
                       value={formData.team_code}
                       onChange={(e) => setFormData({ ...formData, team_code: e.target.value.toUpperCase() })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                      className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-850 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-sm font-mono"
                       maxLength={5}
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="edit_owner_name" className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="group">
+                    <label htmlFor="edit_owner_name" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 group-focus-within:text-indigo-400 transition-colors font-mono">
                       Owner Name
                     </label>
                     <input
@@ -829,12 +799,12 @@ export default function TeamsManagement() {
                       id="edit_owner_name"
                       value={formData.owner_name}
                       onChange={(e) => setFormData({ ...formData, owner_name: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                      className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-850 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-sm font-mono"
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="edit_owner_email" className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="group">
+                    <label htmlFor="edit_owner_email" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 group-focus-within:text-indigo-400 transition-colors font-mono">
                       Owner Email
                     </label>
                     <input
@@ -842,12 +812,12 @@ export default function TeamsManagement() {
                       id="edit_owner_email"
                       value={formData.owner_email}
                       onChange={(e) => setFormData({ ...formData, owner_email: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                      className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-850 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-sm font-mono"
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="edit_initial_balance" className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="group">
+                    <label htmlFor="edit_initial_balance" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 group-focus-within:text-indigo-400 transition-colors font-mono">
                       Initial Balance (₹) *
                     </label>
                     <input
@@ -857,12 +827,12 @@ export default function TeamsManagement() {
                       min="0"
                       value={formData.initial_balance}
                       onChange={(e) => setFormData({ ...formData, initial_balance: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                      className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-855 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-sm font-mono"
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="edit_season_id" className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="group">
+                    <label htmlFor="edit_season_id" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 group-focus-within:text-indigo-400 transition-colors font-mono">
                       Season *
                     </label>
                     <select
@@ -870,7 +840,7 @@ export default function TeamsManagement() {
                       required
                       value={formData.season_id}
                       onChange={(e) => setFormData({ ...formData, season_id: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                      className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-800 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-sm font-mono"
                     >
                       <option value="">Select Season</option>
                       {seasons.map(season => (
@@ -880,21 +850,21 @@ export default function TeamsManagement() {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex justify-end gap-3 pt-4 border-t border-white/10 font-mono text-xs">
                   <button
                     type="button"
                     onClick={() => {
                       setShowEditTeamModal(false);
                       setSelectedTeam(null);
                     }}
-                    className="px-6 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="inline-flex items-center px-6 py-3 border border-white/10 rounded-xl text-slate-300 bg-white/5 hover:bg-white/10 transition-all"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-6 py-3 bg-[#0066FF] text-white rounded-xl text-sm font-medium hover:bg-[#0066FF]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submitting ? 'Updating...' : 'Update Team'}
                   </button>

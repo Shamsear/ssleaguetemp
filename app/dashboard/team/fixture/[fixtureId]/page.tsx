@@ -1,5 +1,7 @@
 'use client';
 
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Handshake, Info, Pencil, Save, Search, Star, Trophy, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -227,7 +229,7 @@ export default function FixturePage() {
       }
 
       if (currentPhase !== phase) {
-        console.log(`⏰ Phase auto-transition: ${phase} → ${currentPhase} (status: ${roundDeadlines.status})`);
+        console.log(`⏰ Phase auto-transition: ${phase} {"->"} ${currentPhase} (status: ${roundDeadlines.status})`);
         setPhase(currentPhase);
       }
     };
@@ -322,7 +324,7 @@ export default function FixturePage() {
     // Get MOTM player name from fixture
     const motmName = fixture.motm_player_name || 'Not selected';
 
-    // Extract season number from season_id (e.g., SSPSLS16 -> 16)
+    // Extract season number from season_id (e.g., SSPSLS16 {"->"} 16)
     const seasonMatch = fixture.season_id.match(/\d+$/);
     const seasonNumber = seasonMatch ? seasonMatch[0] : '15';
 
@@ -348,7 +350,7 @@ export default function FixturePage() {
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-${knockoutRoundName ? `*${knockoutRoundName}* 🏆\n\n` : `*MATCHDAY ${fixture.round_number}* - ${fixture.leg === 'first' ? '1st' : '2nd'} Leg\n\n`}*${fixture.home_team_name}*  vs  *${fixture.away_team_name}*
+${knockoutRoundName ? `*${knockoutRoundName}* <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />\n\n` : `*MATCHDAY ${fixture.round_number}* - ${fixture.leg === 'first' ? '1st' : '2nd'} Leg\n\n`}*${fixture.home_team_name}*  vs  *${fixture.away_team_name}*
 
 ${scoringSystem && scoringSystem !== tournamentSystem ? `\n⚡ *${scoringSystem === 'wins' ? 'WIN-BASED' : 'GOAL-BASED'} SCORING*\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -385,10 +387,10 @@ ${hasSubstitutions ? `━━━━━━━━━━━━━━━━━━━�
 ${substitutions.map(m => {
       let subText = [];
       if (m.home_substituted) {
-        subText.push(`⚠️ ${fixture.home_team_name}: ${m.home_original_player_name} → ${m.home_player_name} (+${m.home_sub_penalty || 0} penalty to opponent)`);
+        subText.push(`⚠️ ${fixture.home_team_name}: ${m.home_original_player_name} {"->"} ${m.home_player_name} (+${m.home_sub_penalty || 0} penalty to opponent)`);
       }
       if (m.away_substituted) {
-        subText.push(`⚠️ ${fixture.away_team_name}: ${m.away_original_player_name} → ${m.away_player_name} (+${m.away_sub_penalty || 0} penalty to opponent)`);
+        subText.push(`⚠️ ${fixture.away_team_name}: ${m.away_original_player_name} {"->"} ${m.away_player_name} (+${m.away_sub_penalty || 0} penalty to opponent)`);
       }
       return subText.join('\n');
     }).join('\n')}
@@ -529,7 +531,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         // Set scoring system from fixture (overrides tournament setting for knockout)
         const fixtureScoring = fixtureData.scoring_system || 'goals';
         setScoringSystem(fixtureScoring);
-        console.log('⚽ Fixture scoring system:', fixtureScoring);
+        console.log('<SoccerBallIcon className="w-4 h-4" /> Fixture scoring system:', fixtureScoring);
 
         // Fetch tournament settings to get scoring system
         try {
@@ -539,7 +541,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             // The API returns { settings: {...} }
             const scoringType = tournamentData.settings?.scoring_type || 'goals';
             setTournamentSystem(scoringType);
-            console.log('🏆 Tournament scoring type:', scoringType);
+            console.log('<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Tournament scoring type:', scoringType);
           }
         } catch (error) {
           console.error('Error fetching tournament settings:', error);
@@ -589,7 +591,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         }
 
         // Fetch round deadlines, players, and matchups in parallel from Neon
-        console.log('🔍 Querying players from Neon:', {
+        console.log('<Search className="w-4 h-4 text-slate-500" /> Querying players from Neon:', {
           home_team_id: fixtureData.home_team_id,
           away_team_id: fixtureData.away_team_id,
           season_id: fixtureData.season_id
@@ -717,7 +719,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
           }
         }
 
-        console.log('📋 Lineup Status Check:', {
+        console.log('<ClipboardList className="w-4 h-4 text-slate-500" /> Lineup Status Check:', {
           isHome,
           matchupsExist,
           homeLineupSubmitted: actualHomeLineupSubmitted,
@@ -730,7 +732,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         if (roundResponse.ok) {
           const { roundDeadline } = await roundResponse.json();
 
-          console.log('📅 Round Deadline Data Fetched:', {
+          console.log('<Calendar className="w-4 h-4 text-slate-500" /> Round Deadline Data Fetched:', {
             tournament_id: fixtureData.tournament_id,
             round_number: fixtureData.round_number,
             leg: fixtureData.leg || 'first',
@@ -742,7 +744,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
           if (roundDeadline && roundDeadline.home_fixture_deadline_time && roundDeadline.away_fixture_deadline_time) {
             const deadlines = roundDeadline as RoundDeadlines;
 
-            console.log('✅ Round Deadline Details:', {
+            console.log('[SUCCESS] Round Deadline Details:', {
               id: deadlines.id,
               tournament_id: deadlines.tournament_id,
               round_number: deadlines.round_number,
@@ -822,7 +824,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             });
 
             // Calculate phase based on round status and deadlines
-            console.log('🔍 Round Status Check:', {
+            console.log('<Search className="w-4 h-4 text-slate-500" /> Round Status Check:', {
               status: deadlines.status,
               scheduled_date: deadlines.scheduled_date,
               round_start_time: deadlines.round_start_time,
@@ -835,7 +837,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             if (deadlines.status === 'pending' || deadlines.status === 'scheduled') {
               // Round hasn't started yet - stay in draft mode
               currentPhase = 'draft';
-              console.log('📋 Round status is pending/scheduled - Draft mode');
+              console.log('<ClipboardList className="w-4 h-4 text-slate-500" /> Round status is pending/scheduled - Draft mode');
             } else if (deadlines.status === 'in_progress' || deadlines.status === 'started' || deadlines.status === 'active') {
               // Round is in progress - determine phase by deadlines
               console.log('🎮 Round is active/in progress - checking deadlines');
@@ -851,14 +853,14 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             } else if (deadlines.status === 'completed' || deadlines.status === 'finalized') {
               // Round is completed
               currentPhase = 'closed';
-              console.log('✅ Round status is completed/finalized - Closed');
+              console.log('[SUCCESS] Round status is completed/finalized - Closed');
             } else {
               // Unknown status - default to closed
               currentPhase = 'closed';
               console.warn('⚠️ Unknown round status:', deadlines.status);
             }
 
-            console.log('📊 Final Phase:', currentPhase);
+            console.log('<BarChart2 className="w-4 h-4 text-slate-500" /> Final Phase:', currentPhase);
             setPhase(currentPhase);
 
             // Calculate lineup deadline (round start time - no grace period)
@@ -963,7 +965,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
               // Validate the base date
               if (isNaN(subDate.getTime())) {
-                console.error('❌ Invalid scheduled_date:', deadlines.scheduled_date);
+                console.error('<XCircle className="w-4 h-4 text-rose-500" /> Invalid scheduled_date:', deadlines.scheduled_date);
                 setSubstitutionDeadline(null);
                 setCanMakeSubstitution(false);
               } else {
@@ -973,7 +975,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                 // Validate the final constructed date
                 if (isNaN(substitutionDeadlineTime.getTime())) {
-                  console.error('❌ Invalid substitution deadline construction:', {
+                  console.error('<XCircle className="w-4 h-4 text-rose-500" /> Invalid substitution deadline construction:', {
                     scheduled_date: deadlines.scheduled_date,
                     subTime,
                     subDayOffset,
@@ -1488,7 +1490,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             href="/dashboard/team/matches"
             className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all mb-4"
           >
-            ← Back to Matches
+            {"<-"} Back to Matches
           </Link>
 
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-8 shadow-sm overflow-hidden relative">
@@ -1507,10 +1509,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     <h1 className="text-2xl font-mono font-bold text-slate-800 uppercase tracking-wide">
                       {fixture.knockout_round ? (
                         <>
-                          {fixture.knockout_round === 'quarter_finals' && '⚔️ Quarter Finals'}
-                          {fixture.knockout_round === 'semi_finals' && '🏆 Semi Finals'}
-                          {fixture.knockout_round === 'finals' && '👑 Finals'}
-                          {fixture.knockout_round === 'third_place' && '🥉 Third Place'}
+                          {fixture.knockout_round === 'quarter_finals' && '<Swords className="w-4 h-4 text-rose-500" /> Quarter Finals'}
+                          {fixture.knockout_round === 'semi_finals' && '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Semi Finals'}
+                          {fixture.knockout_round === 'finals' && '<Crown className="w-4 h-4 text-amber-500 fill-amber-500" /> Finals'}
+                          {fixture.knockout_round === 'third_place' && '<Trophy className="w-4 h-4 text-amber-700 fill-amber-700" /> Third Place'}
                         </>
                       ) : (
                         `Round ${fixture.round_number}`
@@ -1619,7 +1621,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     {roundDeadlines && lineupDeadline && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] text-slate-500 uppercase tracking-wider font-bold">
                         <div className="flex items-center gap-2">
-                          <span>📅 Match Date: {roundDeadlines.scheduled_date}</span>
+                          <span><Calendar className="w-4 h-4 text-slate-500" /> Match Date: {roundDeadlines.scheduled_date}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span>⏰ Lineup Deadline: {lineupDeadline.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST</span>
@@ -1677,7 +1679,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       }`}>
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className={`text-[10px] font-bold uppercase tracking-wider ${isOpen ? 'text-emerald-700' : 'text-red-700'}`}>
-                          {isOpen ? '✓ Lineup Submission Open' : '⏰ Lineup Submission Closed'}
+                          {isOpen ? '<Check className="w-4 h-4 text-emerald-500" /> Lineup Submission Open' : '⏰ Lineup Submission Closed'}
                         </span>
                       </div>
                       <p className="text-[10px] font-bold uppercase tracking-wider opacity-85">
@@ -1711,8 +1713,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     </div>
                     <p className={`text-[10px] font-bold uppercase tracking-wider ${homeLineupSubmitted ? 'text-emerald-700' : 'text-slate-400'}`}>
                       {homeLineupSubmitted
-                        ? '✓ Lineup Submitted'
-                        : '⏳ Waiting for lineup'}
+                        ? '<Check className="w-4 h-4 text-emerald-500" /> Lineup Submitted'
+                        : '<Clock className="w-4 h-4 text-slate-500" /> Waiting for lineup'}
                     </p>
                   </div>
 
@@ -1731,8 +1733,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     </div>
                     <p className={`text-[10px] font-bold uppercase tracking-wider ${awayLineupSubmitted ? 'text-emerald-700' : 'text-slate-400'}`}>
                       {awayLineupSubmitted
-                        ? '✓ Lineup Submitted'
-                        : '⏳ Waiting for lineup'}
+                        ? '<Check className="w-4 h-4 text-emerald-500" /> Lineup Submitted'
+                        : '<Clock className="w-4 h-4 text-slate-500" /> Waiting for lineup'}
                     </p>
                   </div>
                 </div>
@@ -1790,7 +1792,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                               <div className="flex-1">
-                                <p className="text-xs font-semibold text-blue-900">ℹ️ Fixture Entry Phase</p>
+                                <p className="text-xs font-semibold text-blue-900"><Info className="w-4 h-4 text-blue-500" /> Fixture Entry Phase</p>
                                 <p className="text-xs text-blue-700 mt-1">
                                   Home team didn't create fixture. Both teams can now edit lineup and create matchups. Your changes are private until you submit. First to submit wins!
                                 </p>
@@ -2280,7 +2282,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             }`}>
                             <div className="text-xs sm:text-sm font-medium mb-1">{fixture.home_team_name}</div>
                             <div className="text-3xl sm:text-4xl font-bold">{homeTotalScore}</div>
-                            {winner === 'home' && <div className="text-xs mt-1 font-semibold">✓ WINNER</div>}
+                            {winner === 'home' && <div className="text-xs mt-1 font-semibold"><Check className="w-4 h-4 text-emerald-500" /> WINNER</div>}
                             {/* Breakdown */}
                             {tournamentSystem === 'wins' ? (
                               // Show W-D-L for win-based system
@@ -2317,7 +2319,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             }`}>
                             <div className="text-xs sm:text-sm font-medium mb-1">{fixture.away_team_name}</div>
                             <div className="text-3xl sm:text-4xl font-bold">{awayTotalScore}</div>
-                            {winner === 'away' && <div className="text-xs mt-1 font-semibold">✓ WINNER</div>}
+                            {winner === 'away' && <div className="text-xs mt-1 font-semibold"><Check className="w-4 h-4 text-emerald-500" /> WINNER</div>}
                             {/* Breakdown */}
                             {tournamentSystem === 'wins' ? (
                               // Show W-D-L for win-based system
@@ -2353,7 +2355,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     <div className="console-card bg-white border border-amber-300 rounded-2xl p-4 font-mono shadow-sm bg-gradient-to-r from-amber-500/5 to-amber-500/10">
                       <div className="flex items-center justify-center gap-3">
                         <div>
-                          <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider text-center">🏆 Man of the Match</div>
+                          <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider text-center"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Man of the Match</div>
                           <div className="text-base font-bold text-slate-800 uppercase tracking-wide text-center mt-0.5">{fixture.motm_player_name}</div>
                         </div>
                       </div>
@@ -2409,13 +2411,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   <p className="font-semibold text-orange-900 mb-1">⚠️ Substitution Penalties Applied</p>
                                   {matchup.home_substituted && (
                                     <p className="text-orange-700 mb-0.5">
-                                      🔁 Home: {matchup.home_original_player_name} → {matchup.home_player_name}
+                                      🔁 Home: {matchup.home_original_player_name} {"->"} {matchup.home_player_name}
                                       <span className="font-bold ml-1">(+{matchup.home_sub_penalty || 0} goals to {fixture.away_team_name})</span>
                                     </p>
                                   )}
                                   {matchup.away_substituted && (
                                     <p className="text-orange-700">
-                                      🔁 Away: {matchup.away_original_player_name} → {matchup.away_player_name}
+                                      🔁 Away: {matchup.away_original_player_name} {"->"} {matchup.away_player_name}
                                       <span className="font-bold ml-1">(+{matchup.away_sub_penalty || 0} goals to {fixture.home_team_name})</span>
                                     </p>
                                   )}
@@ -2450,11 +2452,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                       isDraw ? 'bg-gray-400 text-white' :
                                         'bg-red-100 text-red-700'
                                       }`}>
-                                      {homeWon ? '✓' : isDraw ? '◆' : '✗'}
+                                      {homeWon ? '<Check className="w-4 h-4 text-emerald-500" />' : isDraw ? '◆' : '✗'}
                                       <span className="ml-0.5">{matchup.home_goals}<span className="hidden sm:inline"> goal{matchup.home_goals !== 1 ? 's' : ''}</span></span>
                                     </div>
                                     <p className="text-xs text-gray-600">
-                                      {homeWon ? '🎉 Won' : isDraw ? '🤝 Draw' : '❌ Lost'}
+                                      {homeWon ? '🎉 Won' : isDraw ? '<Handshake className="w-4 h-4 text-emerald-500" /> Draw' : '<XCircle className="w-4 h-4 text-rose-500" /> Lost'}
                                     </p>
                                   </div>
                                 )}
@@ -2508,11 +2510,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                       isDraw ? 'bg-gray-400 text-white' :
                                         'bg-red-100 text-red-700'
                                       }`}>
-                                      {awayWon ? '✓' : isDraw ? '◆' : '✗'}
+                                      {awayWon ? '<Check className="w-4 h-4 text-emerald-500" />' : isDraw ? '◆' : '✗'}
                                       <span className="ml-0.5">{matchup.away_goals}<span className="hidden sm:inline"> goal{matchup.away_goals !== 1 ? 's' : ''}</span></span>
                                     </div>
                                     <p className="text-xs text-gray-600">
-                                      {awayWon ? '🎉 Won' : isDraw ? '🤝 Draw' : '❌ Lost'}
+                                      {awayWon ? '🎉 Won' : isDraw ? '<Handshake className="w-4 h-4 text-emerald-500" /> Draw' : '<XCircle className="w-4 h-4 text-rose-500" /> Lost'}
                                     </p>
                                   </div>
                                 )}
@@ -2562,7 +2564,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       }}
                       className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all"
                     >
-                      {matchups.some(m => m.home_goals !== null) ? '✏️ Edit Results' : '✅ Enter Results'}
+                      {matchups.some(m => m.home_goals !== null) ? '<Pencil className="w-4 h-4 text-slate-500" /> Edit Results' : '✅ Enter Results'}
                     </button>
                   )}
 
@@ -2590,7 +2592,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         </svg>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-800 font-bold uppercase tracking-wider mb-1">⚽ Result Entry Mode</p>
+                        <p className="text-xs text-slate-800 font-bold uppercase tracking-wider mb-1"><SoccerBallIcon className="w-4 h-4" /> Result Entry Mode</p>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Enter goals scored by each player and select Man of the Match</p>
                       </div>
                     </div>
@@ -2743,7 +2745,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           : 'bg-slate-800 hover:bg-slate-700 text-white'
                           }`}
                       >
-                        {swapMode ? '❌ Cancel' : '🔄 Enable'}
+                        {swapMode ? '<XCircle className="w-4 h-4 text-rose-500" /> Cancel' : '🔄 Enable'}
                       </button>
                     </div>
                   </div>
@@ -2848,12 +2850,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs">
                             {matchup.home_substituted && (
                               <div className="text-yellow-800">
-                                🔁 Home: {matchup.home_original_player_name} → {matchup.home_player_name} (+{matchup.home_sub_penalty} to away)
+                                🔁 Home: {matchup.home_original_player_name} {"->"} {matchup.home_player_name} (+{matchup.home_sub_penalty} to away)
                               </div>
                             )}
                             {matchup.away_substituted && (
                               <div className="text-yellow-800">
-                                🔁 Away: {matchup.away_original_player_name} → {matchup.away_player_name} (+{matchup.away_sub_penalty} to home)
+                                🔁 Away: {matchup.away_original_player_name} {"->"} {matchup.away_player_name} (+{matchup.away_sub_penalty} to home)
                               </div>
                             )}
                           </div>
@@ -3273,7 +3275,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   {totalGoals} goals scored • {totalConceded} conceded • {wins}W-{draws}D-{losses}L
                                 </p>
                               </div>
-                              <span className="text-2xl">⭐</span>
+                              <span className="text-2xl"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /></span>
                             </div>
                           </div>
                         );
@@ -3295,10 +3297,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   {isHome ? selectedPlayer?.home_player_name : selectedPlayer?.away_player_name}
                                 </p>
                                 <p className="text-xs text-yellow-700 mt-1">
-                                  {goals} goals scored • {conceded} conceded • {won ? '✓ Won' : draw ? '◆ Draw' : '✗ Lost'}
+                                  {goals} goals scored • {conceded} conceded • {won ? '<Check className="w-4 h-4 text-emerald-500" /> Won' : draw ? '◆ Draw' : '✗ Lost'}
                                 </p>
                               </div>
-                              <span className="text-2xl">⭐</span>
+                              <span className="text-2xl"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /></span>
                             </div>
                           </div>
                         );
@@ -3357,7 +3359,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               showAlert({
                                 type: 'error',
                                 title: 'Deadline Passed',
-                                message: `❌ ${errorData.error}. Results can no longer be submitted.`
+                                message: `<XCircle className="w-4 h-4 text-rose-500" /> ${errorData.error}. Results can no longer be submitted.`
                               });
                               setIsSaving(false);
                               setIsResultMode(false);
@@ -3396,7 +3398,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               showAlert({
                                 type: 'error',
                                 title: 'Deadline Passed',
-                                message: `❌ ${errorData.error}. MOTM can no longer be saved.`
+                                message: `<XCircle className="w-4 h-4 text-rose-500" /> ${errorData.error}. MOTM can no longer be saved.`
                               });
                               setIsSaving(false);
                               setIsResultMode(false);
@@ -3491,10 +3493,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                           if (teamStatsResponse.ok) {
                             const teamStatsData = await teamStatsResponse.json();
-                            console.log('✓ Team stats updated:', teamStatsData.updates);
+                            console.log('<Check className="w-4 h-4 text-emerald-500" /> Team stats updated:', teamStatsData.updates);
                           } else {
                             const errorData = await teamStatsResponse.json();
-                            console.error('❌ Team stats update failed:', errorData);
+                            console.error('<XCircle className="w-4 h-4 text-rose-500" /> Team stats update failed:', errorData);
                             showAlert({
                               type: 'warning',
                               title: 'Team Stats Warning',
@@ -3504,7 +3506,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                           // Calculate fantasy points (auto-trigger)
                           try {
-                            console.log('🏆 Calculating fantasy points...');
+                            console.log('<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Calculating fantasy points...');
                             const fantasyResponse = await fetchWithTokenRefresh('/api/fantasy/calculate-points', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
@@ -3519,7 +3521,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               const fantasyData = await fantasyResponse.json();
                               console.log('✅ Fantasy points calculated:', fantasyData);
                             } else {
-                              console.log('ℹ️ No fantasy league active or fantasy calculation skipped');
+                              console.log('<Info className="w-4 h-4 text-blue-500" /> No fantasy league active or fantasy calculation skipped');
                             }
                           } catch (fantasyError) {
                             console.error('Fantasy points calculation error (non-critical):', fantasyError);
@@ -3551,7 +3553,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               const newsData = await newsResponse.json();
                               console.log('✅ Match result news generated:', newsData);
                             } else {
-                              console.log('ℹ️ News generation skipped or failed');
+                              console.log('<Info className="w-4 h-4 text-blue-500" /> News generation skipped or failed');
                             }
                           } catch (newsError) {
                             console.error('News generation error (non-critical):', newsError);
@@ -3560,7 +3562,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                           // Record player participation from lineups (auto-trigger)
                           try {
-                            console.log('📋 Recording player participation...');
+                            console.log('<ClipboardList className="w-4 h-4 text-slate-500" /> Recording player participation...');
                             const participationResponse = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/record-participation`, {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
@@ -3570,7 +3572,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               const participationData = await participationResponse.json();
                               console.log('✅ Player participation recorded:', participationData.message);
                             } else {
-                              console.log('ℹ️ Player participation recording skipped');
+                              console.log('<Info className="w-4 h-4 text-blue-500" /> Player participation recording skipped');
                             }
                           } catch (participationError) {
                             console.error('Participation recording error (non-critical):', participationError);
@@ -3580,7 +3582,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           showAlert({
                             type: 'success',
                             title: 'Success!',
-                            message: '✓ Results submitted successfully!\n\nFixture marked as COMPLETED.\nPlayer and team stats have been updated.'
+                            message: '<Check className="w-4 h-4 text-emerald-500" /> Results submitted successfully!\n\nFixture marked as COMPLETED.\nPlayer and team stats have been updated.'
                           });
 
                           setIsResultMode(false);
@@ -3614,7 +3616,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           showAlert({
                             type: 'error',
                             title: 'Incomplete Results',
-                            message: '❌ Please enter goals for all matches before saving as draft.'
+                            message: '<XCircle className="w-4 h-4 text-rose-500" /> Please enter goals for all matches before saving as draft.'
                           });
                           return;
                         }
@@ -3678,7 +3680,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       disabled={isSaving}
                       className="flex-1 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50"
                     >
-                      {isSaving ? 'Saving...' : '💾 Save as Draft'}
+                      {isSaving ? 'Saving...' : '<Save className="w-4 h-4 text-slate-500" /> Save as Draft'}
                     </button>
                   </div>
                 </div>
@@ -3744,7 +3746,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 } transition-all`}>
                                 <div className="text-xs sm:text-sm font-medium mb-1">{fixture.home_team_name}</div>
                                 <div className="text-3xl sm:text-4xl font-bold">{homeTotalScore}</div>
-                                {winner === 'home' && <div className="text-xs mt-1 font-semibold">✓ WINNER</div>}
+                                {winner === 'home' && <div className="text-xs mt-1 font-semibold"><Check className="w-4 h-4 text-emerald-500" /> WINNER</div>}
                                 {/* Breakdown */}
                                 {tournamentSystem === 'wins' ? (
                                   // Show W-D-L for win-based system
@@ -3781,7 +3783,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 } transition-all`}>
                                 <div className="text-xs sm:text-sm font-medium mb-1">{fixture.away_team_name}</div>
                                 <div className="text-3xl sm:text-4xl font-bold">{awayTotalScore}</div>
-                                {winner === 'away' && <div className="text-xs mt-1 font-semibold">✓ WINNER</div>}
+                                {winner === 'away' && <div className="text-xs mt-1 font-semibold"><Check className="w-4 h-4 text-emerald-500" /> WINNER</div>}
                                 {/* Breakdown */}
                                 {tournamentSystem === 'wins' ? (
                                   // Show W-D-L for win-based system
@@ -3854,12 +3856,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs">
                                 {matchup.home_substituted && (
                                   <div className="text-yellow-800">
-                                    🔁 Home: {matchup.home_original_player_name} → {matchup.home_player_name} (+{matchup.home_sub_penalty} to away)
+                                    🔁 Home: {matchup.home_original_player_name} {"->"} {matchup.home_player_name} (+{matchup.home_sub_penalty} to away)
                                   </div>
                                 )}
                                 {matchup.away_substituted && (
                                   <div className="text-yellow-800">
-                                    🔁 Away: {matchup.away_original_player_name} → {matchup.away_player_name} (+{matchup.away_sub_penalty} to home)
+                                    🔁 Away: {matchup.away_original_player_name} {"->"} {matchup.away_player_name} (+{matchup.away_sub_penalty} to home)
                                   </div>
                                 )}
                               </div>

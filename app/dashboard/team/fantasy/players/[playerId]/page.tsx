@@ -1,3 +1,4 @@
+import { BarChart2, Calendar, Info, User, Users } from 'lucide-react';
 /**
  * Fantasy Player Analysis Page
  * Detailed player statistics, form, and fixture difficulty
@@ -142,7 +143,7 @@ export default function PlayerAnalysisPage() {
           onClick={() => router.back()}
           className="text-blue-600 hover:text-blue-800 mb-2 flex items-center gap-1"
         >
-          ← Back
+          {"<-"} Back
         </button>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           {player.player_name}
@@ -214,7 +215,7 @@ export default function PlayerAnalysisPage() {
       {/* Performance Graph */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">
-          📊 Performance History (Last 10 Games)
+          <BarChart2 className="w-4 h-4 text-slate-500" /> Performance History (Last 10 Games)
         </h2>
         
         {performances.length === 0 ? (
@@ -276,7 +277,7 @@ export default function PlayerAnalysisPage() {
       {/* Fixture Difficulty (Placeholder) */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">
-          📅 Upcoming Fixtures
+          <Calendar className="w-4 h-4 text-slate-500" /> Upcoming Fixtures
         </h2>
         <div className="text-center py-8 text-gray-500">
           <p>Fixture difficulty data coming soon</p>
@@ -287,7 +288,7 @@ export default function PlayerAnalysisPage() {
       {/* Ownership Stats */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">
-          👥 Ownership Statistics
+          <Users className="w-4 h-4 text-slate-500" /> Ownership Statistics
         </h2>
         <div className="space-y-4">
           <div>
@@ -320,7 +321,7 @@ export default function PlayerAnalysisPage() {
 
       {/* Info Box */}
       <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-semibold text-blue-900 mb-2">ℹ️ About Player Analysis</h3>
+        <h3 className="font-semibold text-blue-900 mb-2"><Info className="w-4 h-4 text-blue-500" /> About Player Analysis</h3>
         <ul className="text-sm text-blue-800 space-y-1">
           <li>• Form status affects points multiplier (0.85x - 1.15x)</li>
           <li>• Based on last 5 game performances</li>

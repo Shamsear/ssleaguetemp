@@ -14,7 +14,7 @@ import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import RoundFixturesShareButton from '@/components/RoundFixturesShareButton';
 import TournamentStandings from '@/components/tournament/TournamentStandings';
-import { ArrowLeft, Settings, Plus, Trash2, Trophy, Calendar, Users, Activity, CheckCircle, AlertTriangle, Info, Clock, Layers, Search, Sparkles, Award, ChevronRight, Shield, Eye, FileText, Play, Share2, HelpCircle, X, ChevronLeft, Download, Shuffle, Check, RefreshCw, DollarSign, XCircle, Star, BarChart2 } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowLeft, Award, Ban, BarChart2, Bot, Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, ClipboardList, Clock, DollarSign, Download, Eye, FileText, Handshake, HeartCrack, HelpCircle, Info, Layers, Lightbulb, Pencil, Play, Plus, RefreshCw, Search, Settings, Share2, Shield, Shuffle, Sparkles, Star, Trash2, Trophy, Users, X, XCircle } from 'lucide-react';
 
 interface Match {
   id: string;
@@ -816,8 +816,8 @@ export default function TournamentDashboardPage() {
       const fixturesForTournament = tournamentFixtures.filter(f => f.tournament_id === tournamentId);
       const knockoutFixtures = fixturesForTournament.filter(f => f.knockout_round);
       
-      console.log('🔍 Loading teams for knockout round:', knockoutRoundType);
-      console.log('📋 Available knockout fixtures:', knockoutFixtures.map(f => ({
+      console.log('[DEBUG] Loading teams for knockout round:', knockoutRoundType);
+      console.log('[INFO] Available knockout fixtures:', knockoutFixtures.map(f => ({
         round: f.knockout_round,
         status: f.status,
         round_number: f.round_number
@@ -840,14 +840,14 @@ export default function TournamentDashboardPage() {
                  roundName.includes('playoff');
         });
         
-        console.log('🎯 Found playoff fixtures:', playoffFixtures.length);
+        console.log('[INFO] Found playoff fixtures:', playoffFixtures.length);
         console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Completed playoff fixtures:', playoffFixtures.filter(f => f.status === 'completed').length);
         
         if (playoffFixtures.length > 0 && playoffFixtures.some(f => f.status === 'completed')) {
           // Semi Finals needs BOTH playoff winners AND top 2 from standings
           // So we'll load playoff winners first, then add top 2 from standings
           expectedPreviousRound = playoffFixtures[0].knockout_round; // Use actual round name
-          console.log('✨ Will load playoff winners + top 2 from standings');
+          console.log('[INFO] Will load playoff winners + top 2 from standings');
         } else {
           console.log('<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> No completed playoff found, will load top 4 from standings');
         }
@@ -874,7 +874,7 @@ export default function TournamentDashboardPage() {
       
       // Try to load from expected previous round
       if (expectedPreviousRound) {
-        console.log('🔎 Looking for fixtures from round:', expectedPreviousRound);
+        console.log('[DEBUG] Looking for fixtures from round:', expectedPreviousRound);
         
         const previousRoundFixtures = knockoutFixtures.filter(f => 
           f.knockout_round === expectedPreviousRound && f.status === 'completed'
@@ -903,7 +903,7 @@ export default function TournamentDashboardPage() {
               matchGroups.get(matchNum)!.push(fixture);
             });
             
-            console.log('🔢 Processing', matchGroups.size, 'two-legged matches');
+            console.log('[INFO] Processing', matchGroups.size, 'two-legged matches');
             
             // Process each match pair
             matchGroups.forEach((fixtures, matchNum) => {
@@ -1662,9 +1662,9 @@ export default function TournamentDashboardPage() {
               { tab: 'overview', label: '<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Overview', activeClass: 'bg-slate-800 text-white border-slate-900' },
               { tab: 'teams', label: '<Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Teams', activeClass: 'bg-slate-800 text-white border-slate-900' },
               { tab: 'groups', label: '🎯 Groups', activeClass: 'bg-slate-800 text-white border-slate-900' },
-              { tab: 'fixtures', label: '📅 Fixtures', activeClass: 'bg-slate-800 text-white border-slate-900' },
+              { tab: 'fixtures', label: '<Calendar className="w-4 h-4 text-slate-500" /> Fixtures', activeClass: 'bg-slate-800 text-white border-slate-900' },
               { tab: 'standings', label: '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Standings', activeClass: 'bg-slate-800 text-white border-slate-900' },
-              { tab: 'management', label: '⚙️ Manage', activeClass: 'bg-slate-800 text-white border-slate-900' }
+              { tab: 'management', label: '<Settings className="w-4 h-4 text-slate-500" /> Manage', activeClass: 'bg-slate-800 text-white border-slate-900' }
             ].map(({ tab, label, activeClass }) => (
               <button
                 key={tab}
@@ -1738,7 +1738,7 @@ export default function TournamentDashboardPage() {
 
                         {tournament.has_knockout_stage && (
                           <div className="text-xs text-purple-600 font-medium">
-                            🥊 Includes Knockout Stage
+                            <Swords className="w-4 h-4 text-rose-500" /> Includes Knockout Stage
                           </div>
                         )}
 
@@ -1757,7 +1757,7 @@ export default function TournamentDashboardPage() {
                           }}
                           className="flex-1 px-3 py-2 bg-blue-50 text-blue-700 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors"
                         >
-                          📅 Fixtures
+                          <Calendar className="w-4 h-4 text-slate-500" /> Fixtures
                         </button>
                         <button
                           onClick={() => {
@@ -2480,7 +2480,7 @@ export default function TournamentDashboardPage() {
               <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-gray-900">
-                    📋 Fixtures ({fixturesForSelectedTournament.length})
+                    <ClipboardList className="w-4 h-4 text-slate-500" /> Fixtures ({fixturesForSelectedTournament.length})
                   </h3>
 
                   {/* Round Selector & Share Button */}
@@ -2646,7 +2646,7 @@ export default function TournamentDashboardPage() {
                   <div className="flex flex-wrap gap-3 mb-6">
                     <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
                       <span className="text-sm font-medium text-blue-900">
-                        📋 Groups: <strong>{numberOfGroups}</strong>
+                        <ClipboardList className="w-4 h-4 text-slate-500" /> Groups: <strong>{numberOfGroups}</strong>
                       </span>
                       <span className="text-xs text-blue-600">(from tournament settings)</span>
                     </div>
@@ -2811,7 +2811,7 @@ export default function TournamentDashboardPage() {
                         <option value="ucl">🌟 Champions League</option>
                         <option value="uel"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Europa League</option>
                         <option value="super_cup">🏅 Super Cup</option>
-                        <option value="league_cup">🥤 League Cup</option>
+                        <option value="league_cup"><Trophy className="w-4 h-4 text-blue-500" /> League Cup</option>
                       </select>
                     </div>
 
@@ -3067,7 +3067,7 @@ export default function TournamentDashboardPage() {
                                   onChange={(e) => setNewTournament({ ...newTournament, group_assignment_mode: e.target.value })}
                                   className="mr-2"
                                 />
-                                <span className="text-sm">🤖 Automatic (evenly distributed)</span>
+                                <span className="text-sm"><Bot className="w-4 h-4 text-slate-500" /> Automatic (evenly distributed)</span>
                               </label>
                               <label className="flex items-center cursor-pointer">
                                 <input
@@ -3124,7 +3124,7 @@ export default function TournamentDashboardPage() {
                       {newTournament.has_knockout_stage && !newTournament.has_group_stage && (
                         <div className="ml-8 p-4 bg-purple-50/50 rounded-xl border border-purple-200 space-y-3">
                           <h4 className="font-semibold text-gray-900 text-sm">Knockout Stage Settings</h4>
-                          <p className="text-xs text-gray-600 mb-2">💡 These settings control the playoff bracket after league stage</p>
+                          <p className="text-xs text-gray-600 mb-2"><Lightbulb className="w-4 h-4 text-amber-500" /> These settings control the playoff bracket after league stage</p>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-gray-700 mb-1">Playoff Teams</label>
@@ -3169,7 +3169,7 @@ export default function TournamentDashboardPage() {
                       {/* Info for Group+Knockout */}
                       {newTournament.has_knockout_stage && newTournament.has_group_stage && (
                         <div className="ml-8 p-4 bg-purple-50/50 rounded-xl border border-purple-200">
-                          <h4 className="font-semibold text-gray-900 text-sm mb-2">ℹ️ Knockout Stage (Auto-configured)</h4>
+                          <h4 className="font-semibold text-gray-900 text-sm mb-2"><Info className="w-4 h-4 text-blue-500" /> Knockout Stage (Auto-configured)</h4>
                           <p className="text-xs text-gray-700">
                             Knockout bracket is automatically created based on group results:
                           </p>
@@ -3322,7 +3322,7 @@ export default function TournamentDashboardPage() {
                             {/* Draw Rewards */}
                             <div className="bg-white/80 rounded-xl p-4 border border-yellow-300">
                               <div className="flex items-center gap-2 mb-3">
-                                <span className="text-2xl">🤝</span>
+                                <span className="text-2xl"><Handshake className="w-4 h-4 text-emerald-500" /></span>
                                 <h5 className="font-semibold text-yellow-700">Draw</h5>
                               </div>
                               <div className="space-y-2">
@@ -3370,7 +3370,7 @@ export default function TournamentDashboardPage() {
                             {/* Loss Rewards */}
                             <div className="bg-white/80 rounded-xl p-4 border border-gray-300">
                               <div className="flex items-center gap-2 mb-3">
-                                <span className="text-2xl">💔</span>
+                                <span className="text-2xl"><HeartCrack className="w-4 h-4 text-rose-500" /></span>
                                 <h5 className="font-semibold text-gray-700">Loss</h5>
                               </div>
                               <div className="space-y-2">
@@ -3671,7 +3671,7 @@ export default function TournamentDashboardPage() {
                               {' '}| <span className="font-bold">Eliminated: {(newTournament.number_of_teams || (newTournament.number_of_groups * newTournament.teams_per_group)) - (newTournament.number_of_groups * newTournament.teams_advancing_per_group)}</span>
                             </p>
                             <p className="text-xs text-yellow-700 mt-1">
-                              💡 These teams are ranked by overall group performance (points, goal difference) and receive consolation rewards
+                              <Lightbulb className="w-4 h-4 text-amber-500" /> These teams are ranked by overall group performance (points, goal difference) and receive consolation rewards
                             </p>
                           </div>
 
@@ -3697,7 +3697,7 @@ export default function TournamentDashboardPage() {
                                 return (
                                   <div key={position} className="bg-white/80 rounded-xl p-4 border border-red-300">
                                     <div className="flex items-center gap-2 mb-3">
-                                      <span className="text-xl">🚫</span>
+                                      <span className="text-xl"><Ban className="w-4 h-4 text-rose-500" /></span>
                                       <h5 className="font-semibold text-red-700">
                                         {position}{position % 10 === 1 && position !== 11 ? 'st' : position % 10 === 2 && position !== 12 ? 'nd' : position % 10 === 3 && position !== 13 ? 'rd' : 'th'} Place
                                       </h5>
@@ -4082,7 +4082,7 @@ export default function TournamentDashboardPage() {
                         <option value="ucl">🌟 Champions League</option>
                         <option value="uel"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Europa League</option>
                         <option value="super_cup">🏅 Super Cup</option>
-                        <option value="league_cup">🥤 League Cup</option>
+                        <option value="league_cup"><Trophy className="w-4 h-4 text-blue-500" /> League Cup</option>
                       </select>
                     </div>
 
@@ -4304,7 +4304,7 @@ export default function TournamentDashboardPage() {
                                   onChange={(e) => setEditingTournament({ ...editingTournament, group_assignment_mode: e.target.value })}
                                   className="mr-2"
                                 />
-                                <span className="text-sm">🤖 Automatic (evenly distributed)</span>
+                                <span className="text-sm"><Bot className="w-4 h-4 text-slate-500" /> Automatic (evenly distributed)</span>
                               </label>
                               <label className="flex items-center cursor-pointer">
                                 <input
@@ -4563,7 +4563,7 @@ export default function TournamentDashboardPage() {
 
                       {/* Draw Rewards */}
                       <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-                        <h4 className="font-semibold text-yellow-800 mb-3">🤝 Draw</h4>
+                        <h4 className="font-semibold text-yellow-800 mb-3"><Handshake className="w-4 h-4 text-emerald-500" /> Draw</h4>
                         <div className="space-y-3">
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">eCoin</label>
@@ -5223,7 +5223,7 @@ export default function TournamentDashboardPage() {
                           <div className="flex flex-wrap gap-2 text-xs">
                             {tournament.has_knockout_stage && (
                               <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded-md font-medium">
-                                🥊 Knockout
+                                <Swords className="w-4 h-4 text-rose-500" /> Knockout
                               </span>
                             )}
                             {tournament.has_group_stage && (
@@ -5361,7 +5361,7 @@ export default function TournamentDashboardPage() {
                             }}
                             className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium"
                           >
-                            ✏️ Edit
+                            <Pencil className="w-4 h-4 text-slate-500" /> Edit
                           </button>
                           <button
                             onClick={() => handleDeleteTournament(tournament.id, tournament.tournament_name)}

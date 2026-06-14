@@ -36,7 +36,7 @@ export default function TeamStandingsPage() {
           const activeSeason = snapshot.docs[0];
           const activeSeasonId = activeSeason.id;
           
-          console.log('📝 [Committee Standings] Found active season:', activeSeasonId);
+          console.log('[INFO] [Committee Standings] Found active season:', activeSeasonId);
           setSeasonId(activeSeasonId);
         } else {
           console.log('<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> [Committee Standings] No active season found');

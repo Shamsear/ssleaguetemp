@@ -105,7 +105,7 @@ export default function TeamMembersPage() {
         );
         const realplayerSnapshot = await getDocs(realplayerQuery);
         
-        console.log(`📋 Fetched ${realplayerSnapshot.docs.length} registered players for season ${userSeasonId}`);
+        console.log(`[INFO] Fetched ${realplayerSnapshot.docs.length} registered players for season ${userSeasonId}`);
         
         const registeredPlayers = realplayerSnapshot.docs.map(doc => {
           const data = doc.data();
@@ -132,7 +132,7 @@ export default function TeamMembersPage() {
         );
         const teamSeasonsSnapshot = await getDocs(teamSeasonsQuery);
         
-        console.log(`📋 Fetched ${teamSeasonsSnapshot.docs.length} registered teams for season ${userSeasonId}`);
+        console.log(`[INFO] Fetched ${teamSeasonsSnapshot.docs.length} registered teams for season ${userSeasonId}`);
         
         // Get team IDs from team_seasons
         const teamIds = teamSeasonsSnapshot.docs.map(doc => doc.data().team_id).filter(Boolean);
@@ -154,7 +154,7 @@ export default function TeamMembersPage() {
           }
         }
         
-        console.log(`📋 Fetched ${teamsData.length} team details`);
+        console.log(`[INFO] Fetched ${teamsData.length} team details`);
         setTeams(teamsData);
         
         // Fetch categories

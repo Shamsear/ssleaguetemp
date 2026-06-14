@@ -9,18 +9,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import TournamentSelector from '@/components/TournamentSelector';
 import PosterStudio from '@/components/PosterStudio';
-import { 
-  BarChart2, 
-  ArrowLeft, 
-  Calendar, 
-  Search, 
-  Trophy, 
-  Users, 
-  Award, 
-  FileSpreadsheet, 
-  Download, 
-  ClipboardList 
-} from 'lucide-react';
+import { ArrowLeft, Award, BarChart2, Calendar, ClipboardList, Download, FileSpreadsheet, Search, Trophy, User, Users } from 'lucide-react';
 
 interface PlayerStats {
   player_id: string;
@@ -648,7 +637,7 @@ export default function PlayerStatsByRoundPage() {
         <div className="console-card bg-white border border-slate-200/60 rounded-2xl overflow-hidden font-mono shadow-sm">
           <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/40 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <span className="text-lg">📋</span>
+              <span className="text-lg"><ClipboardList className="w-4 h-4 text-slate-500" /></span>
               <div>
                 <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Player Stats & Awards</h3>
                 <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Cumulative stats calculated across selected rounds</p>
@@ -689,7 +678,7 @@ export default function PlayerStatsByRoundPage() {
                 {filteredPlayers.length === 0 ? (
                   <tr>
                     <td colSpan={activeTab === 'golden-ball' || activeTab === 'golden-boot' || activeTab === 'golden-glove' ? 18 : 17} className="px-4 py-12 text-center text-slate-400">
-                      <span className="text-4xl mb-3 block">👤</span>
+                      <span className="text-4xl mb-3 block"><User className="w-4 h-4 text-slate-500" /></span>
                       <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Data Available</h3>
                       <p className="text-[10px] text-slate-400 uppercase font-semibold">No players match the current filters for this selection</p>
                     </td>

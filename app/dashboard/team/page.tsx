@@ -1,5 +1,6 @@
 'use client';
 
+import { Calendar, Clock, Star, Trophy, User, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamRegistration } from '@/contexts/TeamRegistrationContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
@@ -35,7 +36,7 @@ export default function TeamDashboard() {
   const [checkingRegistration, setCheckingRegistration] = useState(true);
   const [teamDocId, setTeamDocId] = useState<string>('');
 
-  // ✅ Enable WebSocket for real-time dashboard updates (wallet, notifications)
+  // [INFO] Enable WebSocket for real-time dashboard updates (wallet, notifications)
   // Note: seasonId will be available after seasonStatus is loaded
   const { isConnected } = useDashboardWebSocket(
     seasonStatus?.seasonId || null,
@@ -98,7 +99,7 @@ export default function TeamDashboard() {
           // Found team document
           const teamDoc = querySnapshot.docs[0];
           const teamData = teamDoc.data();
-          console.log('✅ Team document found:', teamDoc.id);
+          console.log('[SUCCESS] Team document found:', teamDoc.id);
           console.log('Team data:', teamData);
           
           // Store team document ID for registration check
@@ -108,27 +109,27 @@ export default function TeamDashboard() {
           const ownerNameValue = teamData.owner_name || teamData.ownerName || teamData.owner;
           if (ownerNameValue) {
             setOwnerName(ownerNameValue);
-            console.log('✅ Owner name set to:', ownerNameValue);
+            console.log('[SUCCESS] Owner name set to:', ownerNameValue);
           }
           
           // Set logo URL from team document or user data
           const logoUrl = teamData.team_logo || teamData.teamLogo || teamData.logo_url || teamData.logoUrl;
           if (logoUrl) {
             setTeamLogoUrl(logoUrl);
-            console.log('✅ Team logo set from team document');
+            console.log('[SUCCESS] Team logo set from team document');
           } else if (user.teamLogoUrl) {
             setTeamLogoUrl(user.teamLogoUrl);
-            console.log('✅ Team logo set from user data');
+            console.log('[SUCCESS] Team logo set from user data');
           }
         } else {
-          console.log('⚠️ No team document found for userId:', user.uid);
+          console.log('[WARNING] No team document found for userId:', user.uid);
           // Fallback to user data if no team document
           if (user.teamLogoUrl) {
             setTeamLogoUrl(user.teamLogoUrl);
           }
         }
       } catch (error) {
-        console.error('❌ Error fetching team data:', error);
+        console.error('[ERROR] Error fetching team data:', error);
         // Fallback to user data
         if (user.teamLogoUrl) {
           setTeamLogoUrl(user.teamLogoUrl);
@@ -221,14 +222,14 @@ export default function TeamDashboard() {
     // IMPORTANT: Wait for teamDocId to be set before checking registration
     // This prevents race conditions where we check before team data is loaded
     if (!teamDocId && (!teamHistory || teamHistory.length === 0)) {
-      console.log('⏳ Waiting for team ID to be set...');
+      console.log('[PENDING] Waiting for team ID to be set...');
       return;
     }
 
     const checkRegistrationStatus = async () => {
       setCheckingRegistration(true);
       try {
-        console.log('🔍 Season Status Debug:', {
+        console.log('[DEBUG] Season Status Debug:', {
           userId: user.uid,
           teamHistory: teamHistory,
           teamHistoryCount: teamHistory?.length || 0,
@@ -249,7 +250,7 @@ export default function TeamDashboard() {
             hasActiveSeason: false,
             isRegistered: false,
           });
-          console.log('📊 Status: No active season');
+          console.log('[INFO] Status: No active season');
           setCheckingRegistration(false);
           return;
         }
@@ -259,7 +260,7 @@ export default function TeamDashboard() {
           (ts: any) => ts.season_id === activeSeason.id
         );
         
-        console.log('🔍 Neon check:', { registeredInNeon: !!registeredInNeon });
+        console.log('[DEBUG] Neon check:', { registeredInNeon: !!registeredInNeon });
         
         let isRegistered = !!registeredInNeon;
         
@@ -276,7 +277,7 @@ export default function TeamDashboard() {
                 ? `${teamHistory[0].team_id}_${activeSeason.id}` 
                 : null);
           
-          console.log('🔍 Firebase fallback check:', { teamSeasonId1, teamSeasonId2, teamDocId });
+          console.log('[DEBUG] Firebase fallback check:', { teamSeasonId1, teamSeasonId2, teamDocId });
           
           const queries = [getDoc(doc(db, 'team_seasons', teamSeasonId1))];
           if (teamSeasonId2 && teamSeasonId2 !== teamSeasonId1) {
@@ -288,13 +289,13 @@ export default function TeamDashboard() {
           
           if (teamSeasonDoc) {
             isRegistered = teamSeasonDoc.data()?.status === 'registered';
-            console.log('📄 Firebase result:', { exists: true, status: teamSeasonDoc.data()?.status });
+            console.log('[INFO] Firebase result:', { exists: true, status: teamSeasonDoc.data()?.status });
           } else {
-            console.log('📄 Firebase result: No document found');
+            console.log('[INFO] Firebase result: No document found');
           }
         }
         
-        console.log('✅ Final registration status:', {
+        console.log('[SUCCESS] Final registration status:', {
           userId: user.uid,
           seasonId: activeSeason.id,
           registeredInNeon: !!registeredInNeon,
@@ -310,7 +311,7 @@ export default function TeamDashboard() {
             seasonId: activeSeason.id,
           });
           setIsRegistered(true); // Notify context
-          console.log('✅ Status: Registered in active season');
+          console.log('[SUCCESS] Status: Registered in active season');
         } else {
           // Active season exists but not registered
           setSeasonStatus({
@@ -320,7 +321,7 @@ export default function TeamDashboard() {
             seasonId: activeSeason.id,
           });
           setIsRegistered(false); // Notify context - HIDE NAVIGATION
-          console.log('📊 Status: Active season available, not registered');
+          console.log('[INFO] Status: Active season available, not registered');
         }
       } catch (err) {
         console.error('Error processing season status:', err);
@@ -481,7 +482,7 @@ export default function TeamDashboard() {
                 </p>
                 <div className="mt-3">
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-50 border border-amber-200 text-amber-800 uppercase tracking-wide">
-                    ★ REGISTERED TEAM
+                    <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> REGISTERED TEAM
                   </span>
                 </div>
               </div>
@@ -514,7 +515,7 @@ export default function TeamDashboard() {
                 </p>
                 <div className="flex items-center text-xs font-mono font-bold text-slate-400">
                   <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-200 text-slate-600 mr-2 uppercase">
-                    ⏳ WAITING
+                    <Clock className="w-4 h-4 text-slate-500" /> WAITING
                   </span>
                   <span>Check back later for updates</span>
                 </div>
@@ -536,7 +537,7 @@ export default function TeamDashboard() {
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-xl">
-                  🏆
+                  <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />
                 </div>
                 <div>
                   <h3 className="text-lg font-extrabold text-slate-900 leading-tight">Season Registration Available!</h3>
@@ -579,7 +580,7 @@ export default function TeamDashboard() {
                     href={`/register/team?season=${seasonStatus.seasonId}`}
                     className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-mono font-bold text-xs uppercase tracking-wider"
                   >
-                    Go to Registration →
+                    Go to Registration {"->"}
                   </Link>
                 )}
               </div>
@@ -635,7 +636,7 @@ export default function TeamDashboard() {
                 <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:border-amber-400/40 transition-all duration-250 group">
                   <div className="p-4 flex items-center justify-between">
                     <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-xl">
-                      📅
+                      <Calendar className="w-4 h-4 text-slate-500" />
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] text-slate-400 font-mono font-bold uppercase tracking-wider">Seasons Played</span>
@@ -649,7 +650,7 @@ export default function TeamDashboard() {
                 <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:border-amber-400/40 transition-all duration-250 group">
                   <div className="p-4 flex items-center justify-between">
                     <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-xl">
-                      👥
+                      <Users className="w-4 h-4 text-slate-500" />
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] text-slate-400 font-mono font-bold uppercase tracking-wider">Total Players</span>
@@ -663,7 +664,7 @@ export default function TeamDashboard() {
                 <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:border-amber-400/40 transition-all duration-250 group">
                   <div className="p-4 flex items-center justify-between">
                     <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-xl">
-                      🏆
+                      <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] text-slate-400 font-mono font-bold uppercase tracking-wider">Championships</span>
@@ -722,22 +723,22 @@ export default function TeamDashboard() {
                   {historicalStats.summary.cups > 0 && (
                     <div className="p-4 bg-amber-50/50 border border-amber-200/60 rounded-2xl">
                       <p className="text-xs font-mono font-bold text-amber-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                        <span>🏆</span> TROPHY CABINET
+                        <span><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /></span> TROPHY CABINET
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {historicalStats.summary.championships > 0 && (
                           <span className="px-3 py-1 bg-amber-100 border border-amber-200 text-amber-800 rounded-full text-xs font-mono font-bold uppercase">
-                            🥇 {historicalStats.summary.championships} Championship{historicalStats.summary.championships > 1 ? 's' : ''}
+                            <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> {historicalStats.summary.championships} Championship{historicalStats.summary.championships > 1 ? 's' : ''}
                           </span>
                         )}
                         {historicalStats.summary.runnerUps > 0 && (
                           <span className="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 rounded-full text-xs font-mono font-bold uppercase">
-                            🥈 {historicalStats.summary.runnerUps} Runner-up{historicalStats.summary.runnerUps > 1 ? 's' : ''}
+                            <Trophy className="w-4 h-4 text-slate-400 fill-slate-400" /> {historicalStats.summary.runnerUps} Runner-up{historicalStats.summary.runnerUps > 1 ? 's' : ''}
                           </span>
                         )}
                         {historicalStats.summary.cups > 0 && (
                           <span className="px-3 py-1 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-mono font-bold uppercase">
-                            🏆 {historicalStats.summary.cups} Cup{historicalStats.summary.cups > 1 ? 's' : ''}
+                            <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> {historicalStats.summary.cups} Cup{historicalStats.summary.cups > 1 ? 's' : ''}
                           </span>
                         )}
                       </div>
@@ -819,10 +820,10 @@ export default function TeamDashboard() {
                         </div>
                         <div className="flex items-center space-x-4">
                           {teamSeason.position === 1 && (
-                            <span className="text-xl">🏆</span>
+                            <span className="text-xl"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /></span>
                           )}
                           {teamSeason.position === 2 && (
-                            <span className="text-xl">🥈</span>
+                            <span className="text-xl"><Trophy className="w-4 h-4 text-slate-400 fill-slate-400" /></span>
                           )}
                           {teamSeason.cup_achievement && (
                             <span className="px-2.5 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-[10px] font-mono font-bold uppercase">
@@ -908,12 +909,12 @@ export default function TeamDashboard() {
                                         <div className="flex flex-wrap gap-1">
                                           {player.category_trophies?.map((trophy: string, idx: number) => (
                                             <span key={idx} className="text-[9px] font-mono font-bold px-2 py-0.5 bg-amber-100 border border-amber-200 text-amber-800 rounded-full uppercase">
-                                              🏆 {trophy}
+                                              <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> {trophy}
                                             </span>
                                           ))}
                                           {player.individual_trophies?.map((trophy: string, idx: number) => (
                                             <span key={idx} className="text-[9px] font-mono font-bold px-2 py-0.5 bg-purple-50 border border-purple-100 text-purple-700 rounded-full uppercase">
-                                              ⭐ {trophy}
+                                              <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {trophy}
                                             </span>
                                           ))}
                                         </div>

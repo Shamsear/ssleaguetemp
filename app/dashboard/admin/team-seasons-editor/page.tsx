@@ -121,15 +121,15 @@ export default function TeamSeasonsEditorPage() {
       const response = await fetch(`/api/admin/team-seasons-neon?season_id=${selectedSeasonId}`);
       const neonData = response.ok ? await response.json() : { teams: [] };
       
-      console.log('🔥 Neon API Response:', neonData);
-      console.log('📊 Neon teams count:', neonData.teams?.length || 0);
+      console.log('[INFO] Neon API Response:', neonData);
+      console.log('[INFO] Neon teams count:', neonData.teams?.length || 0);
       
       // Use 'id' field from Neon (team ID like SSPSLT0002) to match with Firebase team_id
       const neonBudgetMap = new Map(neonData.teams?.map((t: any) => [t.id, t.football_budget]) || []);
       const neonSpentMap = new Map(neonData.teams?.map((t: any) => [t.id, t.football_spent]) || []);
 
-      console.log('🗺️ Neon budget map size:', neonBudgetMap.size);
-      console.log('🗺️ Neon spent map size:', neonSpentMap.size);
+      console.log('[INFO] Neon budget map size:', neonBudgetMap.size);
+      console.log('[INFO] Neon spent map size:', neonSpentMap.size);
       if (neonData.teams?.length > 0) {
         console.log('Sample Neon team:', neonData.teams[0]);
       }
@@ -222,10 +222,10 @@ export default function TeamSeasonsEditorPage() {
 
       setEditingId(null);
       setEditForm({});
-      alert('✅ Team season updated successfully!');
+      alert('[SUCCESS] Team season updated successfully!');
     } catch (error) {
       console.error('Error saving team season:', error);
-      alert('❌ Failed to save changes');
+      alert('[ERROR] Failed to save changes');
     } finally {
       setIsSaving(false);
     }

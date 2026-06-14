@@ -1,5 +1,6 @@
 'use client';
 
+import { Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -310,7 +311,7 @@ export default function TeamPlayersPage() {
             href="/dashboard/team"
             className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
-            ← Back to Dashboard
+            {"<-"} Back to Dashboard
           </Link>
         </div>
 
@@ -513,7 +514,7 @@ export default function TeamPlayersPage() {
                     >
                       <option value="all">All Star Ratings</option>
                       {starRatings.map(rating => (
-                        <option key={rating} value={rating}>{rating} ⭐</option>
+                        <option key={rating} value={rating}>{rating} <Star className="w-4 h-4 text-amber-400 fill-amber-400" /></option>
                       ))}
                     </select>
                     <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -620,7 +621,7 @@ export default function TeamPlayersPage() {
                               {(player as TournamentPlayer).category || 'N/A'}
                             </span>
                             <span className="text-[9px] px-2 py-0.5 bg-amber-50 text-amber-700 font-bold rounded uppercase border border-amber-200/50">
-                              {(player as TournamentPlayer).star_rating}⭐
+                              {(player as TournamentPlayer).star_rating}<Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                             </span>
                             <span className="text-[9px] px-2 py-0.5 bg-blue-50 text-blue-700 font-bold rounded uppercase border border-blue-200/50">
                               {(player as TournamentPlayer).points} pts
@@ -806,7 +807,7 @@ export default function TeamPlayersPage() {
                               <span className={`inline-flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold border shadow-sm ${getStarRatingColor((player as TournamentPlayer).star_rating)}`}>
                                 {(player as TournamentPlayer).star_rating}
                               </span>
-                              <span className="ml-1 text-amber-500 text-[10px]">⭐</span>
+                              <span className="ml-1 text-amber-500 text-[10px]"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /></span>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">

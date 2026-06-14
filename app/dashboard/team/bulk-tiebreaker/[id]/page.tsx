@@ -1,5 +1,6 @@
 'use client';
 
+import { Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState, useCallback, useRef } from 'react';
@@ -90,14 +91,14 @@ export default function TeamBulkTiebreakerPage() {
 
     setIsLoading(true);
     try {
-      console.log('🔍 Fetching bulk tiebreaker:', tiebreakerId);
+      console.log('[DEBUG] Fetching bulk tiebreaker:', tiebreakerId);
       const response = await fetchWithTokenRefresh(`/api/team/bulk-tiebreakers/${tiebreakerId}`);
       const result = await response.json();
-      console.log('📦 API Response:', result);
+      console.log('[INFO] API Response:', result);
       const { success, data } = result;
 
       if (success && data) {
-        console.log('✅ Bulk tiebreaker data loaded:', data);
+        console.log('[SUCCESS] Bulk tiebreaker data loaded:', data);
         
         // For bulk tiebreakers, data structure is different
         const tiebreakerData = data;
@@ -181,7 +182,7 @@ export default function TeamBulkTiebreakerPage() {
         
         if (myTeam && myTeam.status === 'active' && currentBalance < minRequiredBalance) {
           // Team can't afford to participate anymore - auto-withdraw
-          console.log(`⚠️ Auto-withdrawing: Balance £${currentBalance} < Required £${minRequiredBalance}`);
+          console.log(`[WARNING] Auto-withdrawing: Balance £${currentBalance} < Required £${minRequiredBalance}`);
           
           // Call withdraw API
           fetchWithTokenRefresh(`/api/team/bulk-tiebreakers/${tiebreakerId}/withdraw`, {
@@ -189,7 +190,7 @@ export default function TeamBulkTiebreakerPage() {
           }).then(async (response) => {
             const result = await response.json();
             if (result.success) {
-              console.log('✅ Auto-withdrawal successful');
+              console.log('[SUCCESS] Auto-withdrawal successful');
               showAlert({
                 type: 'warning',
                 title: 'Automatically Withdrawn',
@@ -200,15 +201,15 @@ export default function TeamBulkTiebreakerPage() {
               setTimeout(() => router.push('/dashboard/team'), 3000);
             }
           }).catch((err) => {
-            console.error('❌ Auto-withdrawal failed:', err);
+            console.error('[ERROR] Auto-withdrawal failed:', err);
           });
         }
       } else {
-        console.error('❌ API returned error:', result);
+        console.error('[ERROR] API returned error:', result);
         setFetchError(result.error || 'Failed to load tiebreaker data');
       }
     } catch (err) {
-      console.error('❌ Error fetching data:', err);
+      console.error('[ERROR] Error fetching data:', err);
       setFetchError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -220,7 +221,7 @@ export default function TeamBulkTiebreakerPage() {
     fetchDataRef.current = fetchData;
   }, [fetchData]);
 
-  // ✅ Enable WebSocket for real-time tiebreaker bid updates
+  // [INFO] Enable WebSocket for real-time tiebreaker bid updates
   const { isConnected } = useWebSocket({
     channel: seasonId ? `updates/${seasonId}/tiebreakers/${tiebreakerId}` : `tiebreaker:${tiebreakerId}`,
     enabled: !!tiebreakerId && !!seasonId,
@@ -263,7 +264,7 @@ export default function TeamBulkTiebreakerPage() {
       } else if (message.type === 'tiebreaker_withdraw' && message.data) {
         // Someone withdrew - check if we're now the winner
         const withdrawData = message.data;
-        console.log('🚺 Team withdrew:', withdrawData);
+        console.log('[INFO] Team withdrew:', withdrawData);
         
         if (withdrawData.is_winner_determined && withdrawData.winner_team_id) {
           // Winner determined - show winner page
@@ -279,7 +280,7 @@ export default function TeamBulkTiebreakerPage() {
       } else if (message.type === 'tiebreaker_finalized' && message.data) {
         // Tiebreaker completed - show winner modal
         const finalData = message.data;
-        console.log('🏆 Tiebreaker finalized:', finalData);
+        console.log('[SUCCESS] Tiebreaker finalized:', finalData);
         
         setWinnerData({
           playerName: finalData.player_name,
@@ -407,7 +408,7 @@ export default function TeamBulkTiebreakerPage() {
       if (result && result.current_highest_bid) {
         // Someone else bid in the meantime - update only the bid amount
         // Don't update bidder name to avoid showing wrong info
-        console.log('⚠️ Race condition detected - updating to latest bid:', result.current_highest_bid);
+        console.log('[WARNING] Race condition detected - updating to latest bid:', result.current_highest_bid);
         
         // Update ONLY the bid amount, keep old bidder info to avoid confusion
         // WebSocket will provide the correct bidder info shortly
@@ -711,7 +712,7 @@ export default function TeamBulkTiebreakerPage() {
                   {player.position}
                 </span>
                 <span>{player.team_name}</span>
-                <span>Rating: ★{player.overall_rating}</span>
+                <span>Rating: <Star className="w-4 h-4 text-amber-400 fill-amber-400" />{player.overall_rating}</span>
               </div>
               <div className="mt-3 text-[10px] uppercase font-bold text-slate-400 space-y-0.5">
                 <p>Original bid: <span className="text-slate-800">£{tiebreaker.original_amount}</span></p>

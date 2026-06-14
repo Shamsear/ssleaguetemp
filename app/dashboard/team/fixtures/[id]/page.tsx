@@ -674,7 +674,7 @@ export default function FixtureManagementPage() {
         <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-6">Create Player Matchups</h2>
           <p className="text-gray-600 mb-6">
-            Matchups are arranged by category priority (Red → Black → Blue → White). Select away team players for each matchup.
+            Matchups are arranged by category priority (Red {"->"} Black {"->"} Blue {"->"} White). Select away team players for each matchup.
           </p>
           
           <form onSubmit={handleCreateMatchups}>

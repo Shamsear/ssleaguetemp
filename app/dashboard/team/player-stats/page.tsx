@@ -1,11 +1,12 @@
 'use client';
 
+import { GloveIcon, SoccerBallIcon } from '@/components/ui/CustomIcons';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
-import { BarChart2, ArrowLeft, Calendar, Search } from 'lucide-react';
+import { ArrowLeft, BarChart2, Calendar, ClipboardList, Search, User } from 'lucide-react';
 
 interface PlayerStats {
   id: string;
@@ -352,7 +353,7 @@ export default function TeamPlayerStatsPage() {
         <div className="console-card bg-white border border-slate-200/60 rounded-2xl overflow-hidden font-mono shadow-sm">
           <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/40 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <span className="text-lg font-bold">📋</span>
+              <span className="text-lg font-bold"><ClipboardList className="w-4 h-4 text-slate-500" /></span>
               <div>
                 <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Player Standings & Stats</h3>
                 <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Click expand button for matchday performance breakdown</p>
@@ -466,7 +467,7 @@ export default function TeamPlayerStatsPage() {
                 {filteredPlayers.length === 0 ? (
                   <tr>
                     <td colSpan={13} className="px-6 py-12 text-center text-slate-400">
-                      <span className="text-4xl mb-3 block">👤</span>
+                      <span className="text-4xl mb-3 block"><User className="w-4 h-4 text-slate-500" /></span>
                       <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Players Found</h3>
                       <p className="text-[10px] text-slate-400 uppercase font-semibold">Verify search input or try a different season</p>
                     </td>
@@ -554,7 +555,7 @@ export default function TeamPlayerStatsPage() {
                           </td>
                           <td className="px-4 py-3.5 whitespace-nowrap">
                             <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-emerald-50 text-emerald-700 border-emerald-200/40">
-                              ⚽ {player.goals_scored || 0}
+                              <SoccerBallIcon className="w-4 h-4" /> {player.goals_scored || 0}
                             </span>
                           </td>
                           <td className="px-4 py-3.5 whitespace-nowrap text-xs font-semibold text-rose-600">
@@ -587,7 +588,7 @@ export default function TeamPlayerStatsPage() {
                             <td colSpan={13} className="px-6 py-6 border-t border-b border-slate-100">
                               <div className="console-card bg-white border border-slate-200/60 rounded-xl p-5 shadow-inner">
                                 <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
-                                  <span className="text-base">📊</span>
+                                  <span className="text-base"><BarChart2 className="w-4 h-4 text-slate-500" /></span>
                                   <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
                                     Matchday Breakdown - {player.player_name}
                                   </h4>
@@ -708,7 +709,7 @@ export default function TeamPlayerStatsPage() {
           <div className="sm:hidden space-y-4 px-3 pb-4 pt-2">
             {filteredPlayers.length === 0 ? (
               <div className="text-center py-8 text-slate-400 bg-white border border-slate-200/60 rounded-xl">
-                <span className="text-4xl mb-2 block">👤</span>
+                <span className="text-4xl mb-2 block"><User className="w-4 h-4 text-slate-500" /></span>
                 <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Players Found</h3>
               </div>
             ) : (
@@ -764,7 +765,7 @@ export default function TeamPlayerStatsPage() {
                       </div>
                       <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
                         <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Goals</p>
-                        <p className="font-extrabold text-emerald-700">⚽ {player.goals_scored || 0}</p>
+                        <p className="font-extrabold text-emerald-700"><SoccerBallIcon className="w-4 h-4" /> {player.goals_scored || 0}</p>
                       </div>
                       <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
                         <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">GD</p>
@@ -901,7 +902,7 @@ export default function TeamPlayerStatsPage() {
                 </p>
               </div>
               <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <span className="text-lg">⚽</span>
+                <span className="text-lg"><SoccerBallIcon className="w-4 h-4" /></span>
               </div>
             </div>
           </div>
@@ -931,7 +932,7 @@ export default function TeamPlayerStatsPage() {
                 </p>
               </div>
               <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <span className="text-lg">🧤</span>
+                <span className="text-lg"><GloveIcon className="w-4 h-4" /></span>
               </div>
             </div>
           </div>

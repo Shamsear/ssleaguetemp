@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { ArrowLeft, CheckCircle, AlertCircle, X, Layers, Info, ChevronRight, Plus, Trophy, Crown, Star } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle, ChevronRight, Crown, Flame, Info, Layers, Plus, Star, Trophy, X } from 'lucide-react';
 
 export default function NewCategoryPage() {
   const { user, loading } = useAuth();
@@ -200,7 +200,7 @@ export default function NewCategoryPage() {
 
                   {/* Icon Grid */}
                   <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 p-3 bg-slate-55 rounded-xl border border-slate-200">
-                    {['<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />', '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />', '<Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />', '💎', '🔥', '⚡', '🎯', '🌟', '💫', '✨', '<Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />', '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />', '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />', '🎖️', '🏅', '🔰'].map((emoji) => (
+                    {['<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />', '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />', '<Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />', '💎', '<Flame className="w-4 h-4 text-orange-500" />', '⚡', '🎯', '🌟', '💫', '✨', '<Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />', '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />', '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />', '🎖️', '🏅', '🔰'].map((emoji) => (
                       <button
                         key={emoji}
                         type="button"

@@ -1,5 +1,7 @@
 'use client';
 
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { Star, Trophy, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, use } from 'react';
@@ -348,7 +350,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
                 <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
                   <span className="text-slate-400 text-[8px] mb-1">Squad Players</span>
                   <span className="text-slate-700 font-extrabold text-xs">
-                    ⚽ {players.filter((p: any) => p.type === 'footballplayer').length} + 👤 {players.filter((p: any) => p.type === 'realplayer').length}
+                    <SoccerBallIcon className="w-4 h-4" /> {players.filter((p: any) => p.type === 'footballplayer').length} + <User className="w-4 h-4 text-slate-500" /> {players.filter((p: any) => p.type === 'realplayer').length}
                   </span>
                 </div>
 
@@ -441,7 +443,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6 font-mono flex-wrap gap-2">
                 <h2 className="text-lg font-extrabold flex items-center gap-2 uppercase tracking-wider text-slate-800">
-                  <span>⚽</span>
+                  <span><SoccerBallIcon className="w-4 h-4" /></span>
                   <span>eFootball Players</span>
                 </h2>
                 <span className="text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200/60 px-2.5 py-1 rounded-xl uppercase tracking-wider">
@@ -471,7 +473,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
                                 </span>
                               )}
                               {player.overall_rating && (
-                                <span className="text-xs font-black text-amber-500">★ {player.overall_rating}</span>
+                                <span className="text-xs font-black text-amber-500"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.overall_rating}</span>
                               )}
                             </div>
                           </div>
@@ -510,7 +512,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6 font-mono flex-wrap gap-2">
                 <h2 className="text-lg font-extrabold flex items-center gap-2 uppercase tracking-wider text-slate-800">
-                  <span>🏆</span>
+                  <span><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /></span>
                   <span>Tournament Players</span>
                 </h2>
                 <span className="text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200/60 px-2.5 py-1 rounded-xl uppercase tracking-wider">
@@ -545,7 +547,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
                             <h3 className="font-extrabold text-slate-800 truncate text-sm uppercase tracking-wide">{player.name}</h3>
                             <div className="flex items-center gap-1.5 flex-wrap mt-1">
                               {player.star_rating && (
-                                <span className="text-xs font-black text-amber-500">⭐ {player.star_rating}</span>
+                                <span className="text-xs font-black text-amber-500"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.star_rating}</span>
                               )}
                               {player.category && (
                                 <span className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-150 uppercase tracking-wider">
@@ -660,7 +662,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">Matches Played</div>
                     </div>
                     <div className="text-center p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col justify-between">
-                      <div className="text-3xl font-black text-purple-600">★ {teamProfile.averageRating.toFixed(1)}</div>
+                      <div className="text-3xl font-black text-purple-600"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {teamProfile.averageRating.toFixed(1)}</div>
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">Squad Avg Rating</div>
                     </div>
                   </div>

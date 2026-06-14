@@ -1,5 +1,6 @@
 'use client';
 
+import { BarChart2, Calendar, Globe, Lightbulb, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -49,7 +50,7 @@ export default function TeamStatisticsPage() {
         {/* Page Header */}
         <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-6 border border-gray-100/20">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-4xl">📊</span>
+            <span className="text-4xl"><BarChart2 className="w-4 h-4 text-slate-500" /></span>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Team Statistics</h1>
               <p className="text-sm text-gray-600">View your team's performance across tournaments and seasons</p>
@@ -71,7 +72,7 @@ export default function TeamStatisticsPage() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              🌍 All Time
+              <Globe className="w-4 h-4 text-slate-500" /> All Time
             </button>
             <button
               onClick={() => setViewMode('season')}
@@ -81,7 +82,7 @@ export default function TeamStatisticsPage() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              📅 By Season
+              <Calendar className="w-4 h-4 text-slate-500" /> By Season
             </button>
             <button
               onClick={() => setViewMode('tournament')}
@@ -91,7 +92,7 @@ export default function TeamStatisticsPage() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              🏆 By Tournament
+              <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> By Tournament
             </button>
           </div>
         </div>
@@ -139,7 +140,7 @@ export default function TeamStatisticsPage() {
         {/* Info Card */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
           <div className="flex items-start gap-3">
-            <span className="text-2xl">💡</span>
+            <span className="text-2xl"><Lightbulb className="w-4 h-4 text-amber-500" /></span>
             <div>
               <h3 className="text-sm font-semibold text-blue-800 mb-2">About Statistics</h3>
               <ul className="text-xs text-blue-700 space-y-1">

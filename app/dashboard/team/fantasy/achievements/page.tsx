@@ -1,3 +1,5 @@
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { ClipboardList, Handshake, TrendingUp, Trophy } from 'lucide-react';
 /**
  * Fantasy Achievements Page
  * Displays all achievements with unlock status and progress
@@ -88,12 +90,12 @@ export default function AchievementsPage() {
 
   const categories: { value: AchievementCategory | 'all'; label: string; emoji: string }[] = [
     { value: 'all', label: 'All', emoji: '🎯' },
-    { value: 'scoring', label: 'Scoring', emoji: '⚽' },
-    { value: 'lineup', label: 'Lineup', emoji: '📋' },
-    { value: 'trading', label: 'Trading', emoji: '🤝' },
-    { value: 'consistency', label: 'Consistency', emoji: '📈' },
+    { value: 'scoring', label: 'Scoring', emoji: '<SoccerBallIcon className="w-4 h-4" />' },
+    { value: 'lineup', label: 'Lineup', emoji: '<ClipboardList className="w-4 h-4 text-slate-500" />' },
+    { value: 'trading', label: 'Trading', emoji: '<Handshake className="w-4 h-4 text-emerald-500" />' },
+    { value: 'consistency', label: 'Consistency', emoji: '<TrendingUp className="w-4 h-4 text-emerald-500" />' },
     { value: 'special', label: 'Special', emoji: '✨' },
-    { value: 'season', label: 'Season', emoji: '🏆' }
+    { value: 'season', label: 'Season', emoji: '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />' }
   ];
 
   const rarities = [
@@ -150,7 +152,7 @@ export default function AchievementsPage() {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">🏆 Achievements</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Achievements</h1>
         <p className="text-gray-600">
           Unlock achievements to earn bonus points and showcase your fantasy prowess
         </p>
@@ -249,7 +251,7 @@ export default function AchievementsPage() {
             {achievement.is_unlocked && (
               <div className="absolute top-2 right-2">
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  ✓ Unlocked
+                  Unlocked
                 </span>
               </div>
             )}

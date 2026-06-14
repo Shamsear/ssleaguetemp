@@ -1,5 +1,7 @@
 'use client';
 
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { Calendar, Search, Trophy, User, UserCheck, Users, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -102,11 +104,11 @@ export default function EditTeamProfilePage() {
       console.log('✅ User found, fetching data...');
       try {
         const activeSeasonId = activeSeasons[0].id;
-        console.log('📅 Active season ID:', activeSeasonId);
+        console.log('<Calendar className="w-4 h-4 text-slate-500" /> Active season ID:', activeSeasonId);
         setSeasonId(activeSeasonId);
 
         // Fetch dashboard data
-        console.log('🔍 Fetching dashboard data...');
+        console.log('<Search className="w-4 h-4 text-slate-500" /> Fetching dashboard data...');
         const response = await fetch(`/api/team/dashboard?season_id=${activeSeasonId}`);
         const result = await response.json();
         console.log('📦 Full API response:', result);
@@ -114,10 +116,10 @@ export default function EditTeamProfilePage() {
 
         if (success && data) {
           console.log('✅ Data received successfully');
-          console.log('👤 Team data:', data.team);
-          console.log('🏆 Owner data:', data.owner);
-          console.log('⚽ Manager data:', data.manager);
-          console.log('👥 Real players data:', data.realPlayers);
+          console.log('<User className="w-4 h-4 text-slate-500" /> Team data:', data.team);
+          console.log('<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Owner data:', data.owner);
+          console.log('<SoccerBallIcon className="w-4 h-4" /> Manager data:', data.manager);
+          console.log('<Users className="w-4 h-4 text-slate-500" /> Real players data:', data.realPlayers);
           // Team data
           setTeamId(data.team.id);
           setTeamName(data.team.name);
@@ -148,11 +150,11 @@ export default function EditTeamProfilePage() {
           if (data.manager) {
             console.log('✅ Manager data exists:', data.manager);
             if (data.manager.is_player) {
-              console.log('👤 Manager is a player, searching for player_id:', data.manager.player_id);
+              console.log('<User className="w-4 h-4 text-slate-500" /> Manager is a player, searching for player_id:', data.manager.player_id);
               setManagerMode('player');
               // Find the real player in the squad
               const managerPlayer = data.realPlayers?.find((p: any) => p.player_id === data.manager.player_id);
-              console.log('🔍 Manager player found:', managerPlayer);
+              console.log('<Search className="w-4 h-4 text-slate-500" /> Manager player found:', managerPlayer);
               if (managerPlayer) {
                 setSelectedPlayer(managerPlayer);
                 console.log('✅ Selected player set:', managerPlayer.name);
@@ -160,7 +162,7 @@ export default function EditTeamProfilePage() {
                 console.log('⚠️ Manager player not found in real players squad');
               }
             } else {
-              console.log('👔 Manager is non-playing');
+              console.log('<UserCheck className="w-4 h-4 text-blue-500" /> Manager is non-playing');
               setManagerMode('non-player');
               setManagerName(data.manager.name || '');
               setManagerEmail(data.manager.email || '');
@@ -178,18 +180,18 @@ export default function EditTeamProfilePage() {
           
           // Real Players list - filter out any players with null/undefined critical fields
           console.log('🔄 Setting real players list...');
-          console.log('👥 Real players count:', data.realPlayers?.length || 0);
-          console.log('👥 Real players data:', data.realPlayers);
+          console.log('<Users className="w-4 h-4 text-slate-500" /> Real players count:', data.realPlayers?.length || 0);
+          console.log('<Users className="w-4 h-4 text-slate-500" /> Real players data:', data.realPlayers);
           const validPlayers = (data.realPlayers || []).filter((p: any) => 
             p && p.id && p.player_id && p.name
           );
           setRealPlayers(validPlayers);
           console.log('✅ Real players state updated, valid players:', validPlayers.length);
         } else {
-          console.log('❌ API returned error:', result.error);
+          console.log('[ERROR] API returned error:', result.error);
         }
       } catch (error) {
-        console.error('❌ Error fetching data:', error);
+        console.error('[ERROR] Error fetching data:', error);
       }
     };
 
@@ -365,8 +367,8 @@ export default function EditTeamProfilePage() {
         router.push('/dashboard/team/profile');
       }, 2000);
     } catch (err: any) {
-      console.error('❌ Error updating profile:', err);
-      console.error('❌ Error stack:', err.stack);
+      console.error('<XCircle className="w-4 h-4 text-rose-500" /> Error updating profile:', err);
+      console.error('<XCircle className="w-4 h-4 text-rose-500" /> Error stack:', err.stack);
       setError(err.message || 'Failed to update profile');
     } finally {
       setIsSubmitting(false);

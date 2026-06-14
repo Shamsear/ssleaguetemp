@@ -1,10 +1,11 @@
 'use client';
 
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Users, ChevronDown, Trophy, Target, Award, TrendingUp } from 'lucide-react';
+import { Award, ChevronDown, Star, Target, TrendingUp, Trophy, Users } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 
 interface Player {
@@ -269,7 +270,7 @@ export default function FantasyPlayersPage() {
                   >
                     <div className="flex items-center gap-4 mb-2 sm:mb-0">
                       <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-                        {'⭐'.repeat(player.star_rating || 3)}
+                        {'<Star className="w-4 h-4 text-amber-400 fill-amber-400" />'.repeat(player.star_rating || 3)}
                       </div>
                       <div className="text-left">
                         <p className="font-bold text-gray-900">{player.player_name}</p>
@@ -326,7 +327,7 @@ export default function FantasyPlayersPage() {
                                     <div className="flex gap-2 mt-1">
                                       {match.goals_scored > 0 && (
                                         <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
-                                          ⚽ {match.goals_scored}
+                                          <SoccerBallIcon className="w-4 h-4" /> {match.goals_scored}
                                         </span>
                                       )}
                                       {match.is_clean_sheet && (
@@ -336,7 +337,7 @@ export default function FantasyPlayersPage() {
                                       )}
                                       {match.is_motm && (
                                         <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
-                                          ⭐ MOTM
+                                          <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> MOTM
                                         </span>
                                       )}
                                       <span

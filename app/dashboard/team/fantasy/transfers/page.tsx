@@ -5,19 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import {
-  ArrowLeftRight,
-  DollarSign,
-  X,
-  Check,
-  Filter,
-  AlertCircle,
-  Calendar,
-  Users,
-  TrendingUp,
-  Star,
-  Search,
-} from 'lucide-react';
+import { AlertCircle, ArrowLeftRight, Calendar, Check, DollarSign, Filter, Search, Star, TrendingUp, Users, X, XCircle } from 'lucide-react';
 
 interface Player {
   squad_id?: string;
@@ -233,7 +221,7 @@ export default function TeamTransfersPage() {
         const errorMsg = data.error || 'Transfer failed';
         const details = data.details ? `\n\nDetails: ${data.details}` : '';
         const message = data.message ? `\n${data.message}` : '';
-        alert(`❌ ${errorMsg}${message}${details}`);
+        alert(`<XCircle className="w-4 h-4 text-rose-500" /> ${errorMsg}${message}${details}`);
         return;
       }
 
@@ -284,7 +272,7 @@ export default function TeamTransfersPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(`❌ ${data.error || 'Failed to update captains'}`);
+        alert(`<XCircle className="w-4 h-4 text-rose-500" /> ${data.error || 'Failed to update captains'}`);
         return;
       }
 
@@ -630,7 +618,7 @@ export default function TeamTransfersPage() {
                 {captainId === viceCaptainId && captainId && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-sm text-red-800">
-                      ❌ Captain and Vice-Captain must be different players
+                      <XCircle className="w-4 h-4 text-rose-500" /> Captain and Vice-Captain must be different players
                     </p>
                   </div>
                 )}
@@ -758,10 +746,10 @@ export default function TeamTransfersPage() {
             {!canExecuteTransfer() && (selectedOut || selectedIn) && (
               <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-sm text-red-800">
-                  {selectedIn && newBudget < 0 && '❌ Insufficient budget'}
-                  {transfersRemaining <= 0 && '❌ No transfers remaining'}
-                  {selectedIn && !selectedOut && teamInfo.squad_size >= teamInfo.max_squad_size && '❌ Squad full - release a player first'}
-                  {selectedOut && !selectedIn && teamInfo.squad_size <= teamInfo.min_squad_size && `❌ Cannot release - minimum squad size is ${teamInfo.min_squad_size}`}
+                  {selectedIn && newBudget < 0 && '<XCircle className="w-4 h-4 text-rose-500" /> Insufficient budget'}
+                  {transfersRemaining <= 0 && '<XCircle className="w-4 h-4 text-rose-500" /> No transfers remaining'}
+                  {selectedIn && !selectedOut && teamInfo.squad_size >= teamInfo.max_squad_size && '<XCircle className="w-4 h-4 text-rose-500" /> Squad full - release a player first'}
+                  {selectedOut && !selectedIn && teamInfo.squad_size <= teamInfo.min_squad_size && `<XCircle className="w-4 h-4 text-rose-500" /> Cannot release - minimum squad size is ${teamInfo.min_squad_size}`}
                 </p>
               </div>
             )}

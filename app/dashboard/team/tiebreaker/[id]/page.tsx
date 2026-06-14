@@ -1,5 +1,6 @@
 'use client';
 
+import { Clock, Search, Star, Trophy, Type } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -98,7 +99,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
       const response = await fetchWithTokenRetry(`/api/tiebreakers/${tiebreakerId}`);
       const result = await response.json();
       
-      console.log('🔍 Tiebreaker API response:', result);
+      console.log('<Search className="w-4 h-4 text-slate-500" /> Tiebreaker API response:', result);
       
       if (result.success) {
         // Find the current user's team data using is_current_user flag
@@ -389,7 +390,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
                     )}
                     {tiebreaker.player.overall_rating && (
                       <div className="flex items-center gap-1">
-                        <span className="text-xs font-black text-amber-500">★ {tiebreaker.player.overall_rating}</span>
+                        <span className="text-xs font-black text-amber-500"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {tiebreaker.player.overall_rating}</span>
                       </div>
                     )}
                   </div>
@@ -460,7 +461,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
                         setHasUserModifiedBid(true);
                         const value = e.target.value;
                         const parsedValue = value === '' ? 0 : Math.floor(parseFloat(value));
-                        console.log('🔤 Input changed:', { rawValue: value, parsedValue, currentBidAmount: bidAmount });
+                        console.log('<Type className="w-4 h-4 text-slate-500" /> Input changed:', { rawValue: value, parsedValue, currentBidAmount: bidAmount });
                         setBidAmount(parsedValue);
                       }}
                       min={Math.floor(tiebreaker.original_amount)}
@@ -659,13 +660,13 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
                 <div className="space-y-3">
                   {userBidsInRound.map((bid) => {
                     const statusConfig = {
-                      won: { icon: '🏆', color: 'text-emerald-600', bg: 'bg-emerald-50/30 border-emerald-200', label: 'You Won' },
+                      won: { icon: '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />', color: 'text-emerald-600', bg: 'bg-emerald-50/30 border-emerald-200', label: 'You Won' },
                       allocated_to_other: { icon: '💀', color: 'text-rose-600', bg: 'bg-rose-50/30 border-rose-200', label: `Won by ${bid.allocated_to_team}` },
                       lost: { icon: '💀', color: 'text-rose-600', bg: 'bg-rose-50/30 border-rose-200', label: 'Lost' },
                       tiebreaker: { icon: '⚖️', color: 'text-amber-600', bg: 'bg-amber-50/30 border-amber-200', label: 'Current Tiebreaker' },
                       tiebreaker_other: { icon: '⚖️', color: 'text-amber-600', bg: 'bg-amber-50/30 border-amber-200', label: 'Other Tiebreaker' },
                       available: { icon: '✨', color: 'text-blue-600', bg: 'bg-slate-50 border-slate-200', label: 'Still Available' },
-                      pending: { icon: '⏳', color: 'text-slate-500', bg: 'bg-slate-50 border-slate-200', label: 'Pending' },
+                      pending: { icon: '<Clock className="w-4 h-4 text-slate-500" />', color: 'text-slate-500', bg: 'bg-slate-50 border-slate-200', label: 'Pending' },
                     };
                     
                     const config = statusConfig[bid.allocation_status];
@@ -686,7 +687,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
                                 {bid.position}
                               </span>
                               {bid.overall_rating && (
-                                <span className="text-[10px] text-amber-500 font-black">★ {bid.overall_rating}</span>
+                                <span className="text-[10px] text-amber-500 font-black"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {bid.overall_rating}</span>
                               )}
                             </div>
                             <p className={`text-[10px] ${config.color} font-bold mt-1 uppercase tracking-wider`}>

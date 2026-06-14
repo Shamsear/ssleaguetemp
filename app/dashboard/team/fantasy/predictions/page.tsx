@@ -1,3 +1,5 @@
+import { CrystalBallIcon } from '@/components/ui/CustomIcons';
+import { Info, Pencil } from 'lucide-react';
 /**
  * Fantasy Predictions List Page
  * View all rounds and access prediction submission
@@ -124,7 +126,7 @@ export default function PredictionsListPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          🔮 Match Predictions
+          <CrystalBallIcon className="w-4 h-4" /> Match Predictions
         </h1>
         <p className="text-gray-600">
           Predict H2H matchup outcomes to earn bonus points
@@ -213,7 +215,7 @@ export default function PredictionsListPage() {
                         </span>
                       ) : (
                         <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
-                          ✏️ Editable
+                          <Pencil className="w-4 h-4 text-slate-500" /> Editable
                         </span>
                       )}
                     </div>
@@ -265,7 +267,7 @@ export default function PredictionsListPage() {
 
       {/* Info Box */}
       <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">ℹ️ Tips</h3>
+        <h3 className="font-semibold text-gray-900 mb-2"><Info className="w-4 h-4 text-blue-500" /> Tips</h3>
         <ul className="text-sm text-gray-600 space-y-1">
           <li>• Submit predictions before the round deadline</li>
           <li>• You can edit predictions until they are locked</li>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Trophy } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -119,9 +120,9 @@ export default function FantasyLeaderboardPage() {
   };
 
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉';
+    if (rank === 1) return '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />';
+    if (rank === 2) return '<Trophy className="w-4 h-4 text-slate-400 fill-slate-400" />';
+    if (rank === 3) return '<Trophy className="w-4 h-4 text-amber-700 fill-amber-700" />';
     return `#${rank}`;
   };
 
@@ -147,7 +148,7 @@ export default function FantasyLeaderboardPage() {
               </svg>
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">🏆 {leagueName}</h1>
+              <h1 className="text-3xl font-bold text-gray-900"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> {leagueName}</h1>
               <p className="text-gray-600 mt-1">Fantasy League Standings</p>
             </div>
           </div>
@@ -162,7 +163,7 @@ export default function FantasyLeaderboardPage() {
                 {/* 2nd Place */}
                 <div className="text-center pt-8">
                   <div className={`w-16 h-16 mx-auto bg-gradient-to-br ${getRankColor(2)} rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg mb-3`}>
-                    🥈
+                    <Trophy className="w-4 h-4 text-slate-400 fill-slate-400" />
                   </div>
                   <p className={`font-bold text-gray-900 mb-1 ${leaderboard[1].fantasy_team_id === myTeamId ? 'text-indigo-600' : ''}`}>
                     {leaderboard[1].team_name}
@@ -174,7 +175,7 @@ export default function FantasyLeaderboardPage() {
                 {/* 1st Place */}
                 <div className="text-center">
                   <div className={`w-20 h-20 mx-auto bg-gradient-to-br ${getRankColor(1)} rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-xl mb-3`}>
-                    🥇
+                    <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />
                   </div>
                   <p className={`font-bold text-gray-900 mb-1 ${leaderboard[0].fantasy_team_id === myTeamId ? 'text-indigo-600' : ''}`}>
                     {leaderboard[0].team_name}
@@ -186,7 +187,7 @@ export default function FantasyLeaderboardPage() {
                 {/* 3rd Place */}
                 <div className="text-center pt-8">
                   <div className={`w-16 h-16 mx-auto bg-gradient-to-br ${getRankColor(3)} rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg mb-3`}>
-                    🥉
+                    <Trophy className="w-4 h-4 text-amber-700 fill-amber-700" />
                   </div>
                   <p className={`font-bold text-gray-900 mb-1 ${leaderboard[2].fantasy_team_id === myTeamId ? 'text-indigo-600' : ''}`}>
                     {leaderboard[2].team_name}

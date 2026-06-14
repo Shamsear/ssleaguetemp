@@ -1,3 +1,4 @@
+import { Crown, Flame, Info, Star, Trophy } from 'lucide-react';
 /**
  * Fantasy Challenges Page
  * View active challenges, track progress, and see completed challenges
@@ -127,14 +128,14 @@ export default function ChallengesPage() {
 
   const getChallengeIcon = (type: string) => {
     switch (type) {
-      case 'captain_masterclass': return '👑';
+      case 'captain_masterclass': return '<Crown className="w-4 h-4 text-amber-500 fill-amber-500" />';
       case 'underdog_hero': return '🦸';
-      case 'perfect_lineup': return '⭐';
+      case 'perfect_lineup': return '<Star className="w-4 h-4 text-amber-400 fill-amber-400" />';
       case 'differential_pick': return '🎯';
       case 'budget_genius': return '💰';
-      case 'clean_sweep': return '🧹';
-      case 'comeback_king': return '🔥';
-      default: return '🏆';
+      case 'clean_sweep': return '<Wind className="w-4 h-4 text-amber-500" />';
+      case 'comeback_king': return '<Flame className="w-4 h-4 text-orange-500" />';
+      default: return '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />';
     }
   };
 
@@ -189,7 +190,7 @@ export default function ChallengesPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          🏆 Weekly Challenges
+          <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Weekly Challenges
         </h1>
         <p className="text-gray-600">
           Complete challenges to earn bonus points and badges
@@ -264,7 +265,7 @@ export default function ChallengesPage() {
                       index === 2 ? 'text-orange-600' :
                       'text-gray-400'
                     }`}>
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                      {index === 0 ? '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />' : index === 1 ? '<Trophy className="w-4 h-4 text-slate-400 fill-slate-400" />' : index === 2 ? '<Trophy className="w-4 h-4 text-amber-700 fill-amber-700" />' : `#${index + 1}`}
                     </div>
                     <div>
                       <div className="font-semibold text-gray-900">
@@ -337,7 +338,7 @@ export default function ChallengesPage() {
                         </div>
                         {completed && (
                           <span className="px-3 py-1 bg-green-600 text-white rounded-full text-sm font-medium">
-                            ✓ Done
+                            Done
                           </span>
                         )}
                       </div>
@@ -366,7 +367,7 @@ export default function ChallengesPage() {
                       {completed && completionDate && (
                         <div className="mt-4 pt-4 border-t border-green-200">
                           <div className="text-sm text-green-700">
-                            ✓ Completed on {completionDate.toLocaleDateString()}
+                            Completed on {completionDate.toLocaleDateString()}
                           </div>
                         </div>
                       )}
@@ -431,7 +432,7 @@ export default function ChallengesPage() {
 
       {/* Info Box */}
       <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-semibold text-blue-900 mb-2">ℹ️ How Challenges Work</h3>
+        <h3 className="font-semibold text-blue-900 mb-2"><Info className="w-4 h-4 text-blue-500" /> How Challenges Work</h3>
         <ul className="text-sm text-blue-800 space-y-1">
           <li>• New challenges are released weekly</li>
           <li>• Complete challenges automatically by meeting requirements</li>

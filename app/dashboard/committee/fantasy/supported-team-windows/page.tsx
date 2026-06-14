@@ -1,5 +1,6 @@
 'use client';
 
+import { Info, Lightbulb } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'next/navigation';
@@ -70,7 +71,7 @@ export default function SupportedTeamWindowsPage() {
                 {/* Info Card */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
                     <h3 className="text-lg font-semibold text-blue-900 mb-3">
-                        ℹ️ About This Feature
+                        <Info className="w-4 h-4 text-blue-500" /> About This Feature
                     </h3>
                     <ul className="space-y-2 text-sm text-blue-800">
                         <li className="flex items-start">
@@ -98,7 +99,7 @@ export default function SupportedTeamWindowsPage() {
                 {/* Help Section */}
                 <div className="mt-8 bg-white border border-gray-200 rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        💡 How to Use
+                        <Lightbulb className="w-4 h-4 text-amber-500" /> How to Use
                     </h3>
                     <div className="space-y-4 text-sm text-gray-700">
                         <div>

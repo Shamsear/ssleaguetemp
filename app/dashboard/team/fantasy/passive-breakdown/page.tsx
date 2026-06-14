@@ -1,5 +1,6 @@
 'use client';
 
+import { BarChart2, Gift } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -108,7 +109,7 @@ export default function PassiveBreakdownPage() {
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
           <p className="text-red-600 font-medium">{error || 'Failed to load data'}</p>
           <Link href="/dashboard/team/fantasy/my-team" className="mt-4 inline-block text-blue-600 hover:underline">
-            ← Back to My Team
+            {"<-"} Back to My Team
           </Link>
         </div>
       </div>
@@ -123,7 +124,7 @@ export default function PassiveBreakdownPage() {
       {/* Header */}
       <div className="mb-6">
         <Link href="/dashboard/team/fantasy/my-team" className="text-blue-600 hover:underline mb-2 inline-block">
-          ← Back to My Team
+          {"<-"} Back to My Team
         </Link>
         <h1 className="text-3xl font-bold text-gray-900">Passive Points Breakdown</h1>
         <p className="text-gray-600 mt-1">Detailed breakdown of all passive points earned</p>
@@ -198,7 +199,7 @@ export default function PassiveBreakdownPage() {
       {data.admin_bonuses.length > 0 && (
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <span>🎁</span> Admin Bonus Points
+            <span><Gift className="w-4 h-4 text-rose-500" /></span> Admin Bonus Points
           </h2>
           <div className="space-y-3">
             {data.admin_bonuses.map((bonus) => (
@@ -228,7 +229,7 @@ export default function PassiveBreakdownPage() {
       {/* Round-by-Round Breakdown */}
       <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <span>📊</span> Round-by-Round Team Performance Bonuses
+          <span><BarChart2 className="w-4 h-4 text-slate-500" /></span> Round-by-Round Team Performance Bonuses
         </h2>
         
         {data.rounds.length === 0 ? (

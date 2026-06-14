@@ -1,5 +1,6 @@
 'use client';
 
+import { Flame } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
@@ -12,7 +13,7 @@ interface FantasyTeam {
   league_id: string;
 }
 
-const EMOJI_OPTIONS = ['👍', '❤️', '😂', '🎉', '🔥', '👏', '😮', '😢'];
+const EMOJI_OPTIONS = ['👍', '❤️', '😂', '🎉', '<Flame className="w-4 h-4 text-orange-500" />', '👏', '😮', '😢'];
 
 export default function FantasyChatPage() {
   const { user, loading } = useAuth();

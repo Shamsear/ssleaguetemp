@@ -1,5 +1,6 @@
 'use client';
 
+import { Info } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import SupportedTeamChanger from '@/components/fantasy/SupportedTeamChanger';
@@ -74,7 +75,7 @@ export default function ChangeSupportedTeamPage() {
                         href="/dashboard/team/fantasy/my-team"
                         className="text-blue-600 hover:text-blue-700 text-sm font-medium mb-4 inline-flex items-center"
                     >
-                        ← Back to My Team
+                        {"<-"} Back to My Team
                     </Link>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2 mt-4">
                         Change Supported Team
@@ -87,7 +88,7 @@ export default function ChangeSupportedTeamPage() {
                 {/* Info Card */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
                     <h3 className="text-lg font-semibold text-blue-900 mb-3">
-                        ℹ️ What is a Supported Team?
+                        <Info className="w-4 h-4 text-blue-500" /> What is a Supported Team?
                     </h3>
                     <div className="space-y-2 text-sm text-blue-800">
                         <p>
@@ -155,7 +156,7 @@ export default function ChangeSupportedTeamPage() {
                         href="/dashboard/team/fantasy/passive-breakdown"
                         className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                     >
-                        View My Passive Points Breakdown →
+                        View My Passive Points Breakdown {"->"}
                     </Link>
                 </div>
             </div>

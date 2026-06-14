@@ -1,3 +1,5 @@
+import { CrystalBallIcon } from '@/components/ui/CustomIcons';
+import { Clock, Info, Save } from 'lucide-react';
 /**
  * Fantasy Predictions Page
  * Submit predictions for H2H matchups to earn bonus points
@@ -230,10 +232,10 @@ export default function PredictionsPage() {
           onClick={() => router.back()}
           className="text-blue-600 hover:text-blue-800 mb-2 flex items-center gap-1"
         >
-          ← Back
+          {"<-"} Back
         </button>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          🔮 Round {roundId} Predictions
+          <CrystalBallIcon className="w-4 h-4" /> Round {roundId} Predictions
         </h1>
         <p className="text-gray-600">
           Predict match outcomes to earn bonus points
@@ -464,12 +466,12 @@ export default function PredictionsPage() {
           >
             {submitting ? (
               <>
-                <span className="animate-spin">⏳</span>
+                <span className="animate-spin"><Clock className="w-4 h-4 text-slate-500" /></span>
                 Submitting...
               </>
             ) : (
               <>
-                💾 Submit Predictions
+                <Save className="w-4 h-4 text-slate-500" /> Submit Predictions
               </>
             )}
           </button>
@@ -478,7 +480,7 @@ export default function PredictionsPage() {
 
       {/* Info Box */}
       <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-semibold text-blue-900 mb-2">ℹ️ How It Works</h3>
+        <h3 className="font-semibold text-blue-900 mb-2"><Info className="w-4 h-4 text-blue-500" /> How It Works</h3>
         <ul className="text-sm text-blue-800 space-y-1">
           <li>• Predict the winner and score for each H2H matchup</li>
           <li>• Submit before the deadline to earn bonus points</li>

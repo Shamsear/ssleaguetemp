@@ -1,5 +1,6 @@
 'use client';
 
+import { Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -63,7 +64,7 @@ export default function TeamBulkRoundPage() {
   const [purchasedSlots, setPurchasedSlots] = useState(0);
   const [showSlotPurchase, setShowSlotPurchase] = useState(false);
 
-  // ✅ Enable WebSocket for real-time bid updates and round updates
+  // [INFO] Enable WebSocket for real-time bid updates and round updates
   const { isConnected, lastMessage } = useAuctionWebSocket(roundId, true);
 
   useEffect(() => {
@@ -80,13 +81,13 @@ export default function TeamBulkRoundPage() {
     const fetchData = async () => {
       // Wait for auth to be ready and user to be loaded
       if (!roundId || loading || !user) {
-        console.log('⏳ Waiting for auth...', { roundId: !!roundId, loading, user: !!user });
+        console.log('[PENDING] Waiting for auth...', { roundId: !!roundId, loading, user: !!user });
         return;
       }
 
       setIsLoading(true);
       try {
-        console.log(`🚀 Fetching bulk round ${roundId}...`);
+        console.log(`[LAUNCH] Fetching bulk round ${roundId}...`);
         
         // Fetch round details and players
         const response = await fetchWithTokenRetry(`/api/team/bulk-rounds/${roundId}`);
@@ -96,11 +97,11 @@ export default function TeamBulkRoundPage() {
           throw new Error(error || 'Failed to fetch round data');
         }
 
-        console.log('✅ Round data fetched successfully');
+        console.log('[SUCCESS] Round data fetched successfully');
         
         // Check if round is completed/finalized - redirect immediately
         if (data.round.status === 'completed' || data.round.status === 'cancelled' || data.round.status === 'pending_tiebreakers') {
-          console.log(`⚠️ Round is ${data.round.status} - redirecting to dashboard`);
+          console.log(`[WARNING] Round is ${data.round.status} - redirecting to dashboard`);
           const statusMessage = data.round.status === 'pending_tiebreakers' 
             ? 'has been finalized and tiebreakers have been created'
             : `has been ${data.round.status}`;
@@ -158,15 +159,15 @@ export default function TeamBulkRoundPage() {
 
     try {
       const message = JSON.parse(lastMessage);
-      console.log('📨 WebSocket message received:', message);
+      console.log('[INFO] WebSocket message received:', message);
 
       // Handle round update (timer extension, etc.)
       if (message.type === 'round_updated') {
-        console.log('🔄 Round metadata updated via WebSocket', message);
+        console.log('[SYNC] Round metadata updated via WebSocket', message);
         
         // If round is completed/finalized, redirect to dashboard
         if (message.status === 'completed' || message.status === 'pending_tiebreakers') {
-          console.log(`✅ Round ${message.status} - redirecting to dashboard...`);
+          console.log(`[SUCCESS] Round ${message.status} - redirecting to dashboard...`);
           const statusMessage = message.status === 'pending_tiebreakers'
             ? 'has been finalized. Tiebreakers have been created for contested players.'
             : 'has been completed.';
@@ -183,7 +184,7 @@ export default function TeamBulkRoundPage() {
         
         setBulkRound(prev => {
           if (!prev) return prev;
-          console.log('🔄 Updating round state', { old: prev.end_time, new: message.end_time });
+          console.log('[SYNC] Updating round state', { old: prev.end_time, new: message.end_time });
           return {
             ...prev,
             end_time: message.end_time || prev.end_time,
@@ -195,7 +196,7 @@ export default function TeamBulkRoundPage() {
 
       // Handle bid updates
       if (message.type === 'bid_added' || message.type === 'bid_removed') {
-        console.log('💰 Bid update via WebSocket:', message.type);
+        console.log('[INFO] Bid update via WebSocket:', message.type);
         // Refetch bids to stay in sync
         fetchWithTokenRetry(`/api/team/bulk-rounds/${roundId}/bids`)
           .then(res => res.json())
@@ -224,7 +225,7 @@ export default function TeamBulkRoundPage() {
         
         // Auto-redirect when timer reaches 0
         if (remaining === 0) {
-          console.log('⏰ Timer reached 0 - round should be completed');
+          console.log('[INFO] Timer reached 0 - round should be completed');
           showAlert({
             type: 'info',
             title: 'Round Ended',
@@ -242,7 +243,7 @@ export default function TeamBulkRoundPage() {
     
     try {
       if (isBidded) {
-        // ✨ OPTIMISTIC UPDATE: Remove immediately for instant feedback
+        // [INFO] OPTIMISTIC UPDATE: Remove immediately for instant feedback
         const newBidded = new Set(biddedPlayers);
         newBidded.delete(playerId);
         setBiddedPlayers(newBidded);
@@ -289,7 +290,7 @@ export default function TeamBulkRoundPage() {
           return;
         }
         
-        // ✨ OPTIMISTIC UPDATE: Add immediately for instant feedback
+        // [INFO] OPTIMISTIC UPDATE: Add immediately for instant feedback
         const newBidded = new Set(biddedPlayers);
         newBidded.add(playerId);
         setBiddedPlayers(newBidded);
@@ -692,7 +693,7 @@ export default function TeamBulkRoundPage() {
                       </button>
                     </div>
                     <div className="flex items-center justify-between text-xs mt-2">
-                      <span className="text-slate-400 font-bold">★ {player.overall_rating}</span>
+                      <span className="text-slate-400 font-bold"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.overall_rating}</span>
                       <span className="text-emerald-600 font-black">£{bulkRound?.base_price}</span>
                     </div>
                   </div>
@@ -766,7 +767,7 @@ export default function TeamBulkRoundPage() {
                         )}
                         {isBidded && (
                           <span className="px-1.5 py-0.5 text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-lg whitespace-nowrap">
-                            ✓ BID
+                            BID
                           </span>
                         )}
                       </div>
@@ -791,7 +792,7 @@ export default function TeamBulkRoundPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-xs mt-2">
-                    <span className="text-slate-400 font-bold">★ {player.overall_rating}</span>
+                    <span className="text-slate-400 font-bold"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.overall_rating}</span>
                     {player.playing_style && (
                       <span className="text-[9px] text-slate-400 uppercase font-bold truncate max-w-[100px] sm:max-w-none">{player.playing_style}</span>
                     )}

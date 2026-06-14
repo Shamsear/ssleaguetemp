@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
-import { Crown, Star, ChevronDown, Target, Award, TrendingUp, Shield as ShieldIcon, XCircle, CheckCircle, Trophy, Activity, BarChart2, AlertTriangle } from 'lucide-react';
+import { Activity, AlertTriangle, Award, BarChart2, CheckCircle, ChevronDown, Crown, Gift, Handshake, Shield as ShieldIcon, Star, Target, TrendingUp, Trophy, XCircle } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import ShareableTeamCard from '@/components/fantasy/ShareableTeamCard';
 
@@ -462,7 +462,7 @@ export default function FantasyTeamsPage() {
                                 {/* Admin Bonus Points */}
                                 {passiveData.admin_bonuses && passiveData.admin_bonuses.length > 0 && (
                                   <div className="mb-4">
-                                    <h4 className="font-bold text-gray-900 mb-3">🎁 Admin Bonus Points</h4>
+                                    <h4 className="font-bold text-gray-900 mb-3"><Gift className="w-4 h-4 text-rose-500" /> Admin Bonus Points</h4>
                                     <div className="space-y-2">
                                       {passiveData.admin_bonuses.map((bonus: any) => (
                                         <div key={bonus.id} className="border-2 border-yellow-300 rounded-lg p-3 bg-gradient-to-r from-yellow-50 to-amber-50">
@@ -690,7 +690,7 @@ export default function FantasyTeamsPage() {
                                                     {match.opponent_name || 'vs Opponent'}
                                                   </p>
                                                   <p className="text-xs text-gray-600">
-                                                    {actualResult === 'win' ? '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Win' : actualResult === 'draw' ? '🤝 Draw' : '<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Loss'}
+                                                    {actualResult === 'win' ? '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Win' : actualResult === 'draw' ? '<Handshake className="w-4 h-4 text-emerald-500" /> Draw' : '<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Loss'}
                                                     {` • ${playerGoals}-${opponentGoals}`}
                                                   </p>
                                                 </div>
@@ -753,7 +753,7 @@ export default function FantasyTeamsPage() {
                                                 {resultPoints !== 0 && (
                                                   <div className="flex items-center justify-between px-2 py-1 bg-purple-50 rounded">
                                                     <span className="text-gray-700">
-                                                      {actualResult === 'win' ? '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Win' : '🤝 Draw'}
+                                                      {actualResult === 'win' ? '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Win' : '<Handshake className="w-4 h-4 text-emerald-500" /> Draw'}
                                                     </span>
                                                     <span className="font-semibold text-purple-700">{resultPoints}pts</span>
                                                   </div>

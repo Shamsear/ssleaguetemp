@@ -47,13 +47,13 @@ export default function ClaimFantasyTeamPage() {
         throw new Error(data.error || 'Failed to claim team');
       }
 
-      setMessage('✅ Success! Redirecting to your fantasy team...');
+      setMessage('[SUCCESS] Success! Redirecting to your fantasy team...');
       setTimeout(() => {
         router.push('/dashboard/team/fantasy/my-team');
       }, 2000);
 
     } catch (error) {
-      setMessage(`❌ ${error instanceof Error ? error.message : 'Failed to claim team'}`);
+      setMessage(`[ERROR] ${error instanceof Error ? error.message : 'Failed to claim team'}`);
     } finally {
       setClaiming(false);
     }
@@ -121,7 +121,7 @@ export default function ClaimFantasyTeamPage() {
 
           {message && (
             <div className={`p-3 rounded-lg text-sm ${
-              message.startsWith('✅') 
+              message.startsWith('[SUCCESS]') 
                 ? 'bg-green-50 text-green-800 border border-green-200' 
                 : 'bg-red-50 text-red-800 border border-red-200'
             }`}>
@@ -134,7 +134,7 @@ export default function ClaimFantasyTeamPage() {
               href="/dashboard/team/fantasy/my-team"
               className="block text-center text-indigo-600 hover:text-indigo-700 font-medium"
             >
-              Already claimed? Go to My Team →
+              Already claimed? Go to My Team {"->"}
             </Link>
           </div>
         </div>

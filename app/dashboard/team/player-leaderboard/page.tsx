@@ -1,5 +1,7 @@
 'use client';
 
+import { GloveIcon, SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { BarChart2, Globe, Star, TrendingUp, Trophy, User, Users, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
 import { useRouter } from 'next/navigation';
@@ -128,7 +130,7 @@ export default function PlayerLeaderboardPage() {
           console.log('⚠️ [Player Leaderboard] No active season found');
         }
       } catch (error) {
-        console.error('❌ [Player Leaderboard] Error fetching team season:', error);
+        console.error('<XCircle className="w-4 h-4 text-rose-500" /> [Player Leaderboard] Error fetching team season:', error);
       }
     };
 
@@ -472,7 +474,7 @@ export default function PlayerLeaderboardPage() {
                 : 'bg-white text-slate-700 border border-slate-200/60 hover:border-amber-400/40 hover:text-amber-600'
             }`}
           >
-            {showOverall ? '🌍 Overall Stats' : '🏆 Tournament Stats'}
+            {showOverall ? '<Globe className="w-4 h-4 text-slate-500" /> Overall Stats' : '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Tournament Stats'}
           </button>
         </div>
 
@@ -491,7 +493,7 @@ export default function PlayerLeaderboardPage() {
                   : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              👥 All Players
+              <Users className="w-4 h-4 text-slate-500" /> All Players
             </button>
             <button
               onClick={() => setActiveTab('golden-boot')}
@@ -501,7 +503,7 @@ export default function PlayerLeaderboardPage() {
                   : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              ⚽ Golden Boot
+              <SoccerBallIcon className="w-4 h-4" /> Golden Boot
             </button>
             <button
               onClick={() => setActiveTab('golden-glove')}
@@ -511,7 +513,7 @@ export default function PlayerLeaderboardPage() {
                   : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              🧤 Golden Glove
+              <GloveIcon className="w-4 h-4" /> Golden Glove
             </button>
             <button
               onClick={() => setActiveTab('rankings')}
@@ -521,7 +523,7 @@ export default function PlayerLeaderboardPage() {
                   : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              🏆 Top Rankings
+              <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Top Rankings
             </button>
             <button
               onClick={() => setActiveTab('most-improved')}
@@ -531,7 +533,7 @@ export default function PlayerLeaderboardPage() {
                   : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              📈 Most Improved
+              <TrendingUp className="w-4 h-4 text-emerald-500" /> Most Improved
             </button>
           </div>
         </div>
@@ -579,11 +581,11 @@ export default function PlayerLeaderboardPage() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
                   <span className="text-xl">
-                    {activeTab === 'golden-boot' && '⚽'}
-                    {activeTab === 'golden-glove' && '🧤'}
-                    {activeTab === 'rankings' && '🏆'}
-                    {activeTab === 'most-improved' && '📈'}
-                    {activeTab === 'all' && '👥'}
+                    {activeTab === 'golden-boot' && '<SoccerBallIcon className="w-4 h-4" />'}
+                    {activeTab === 'golden-glove' && '<GloveIcon className="w-4 h-4" />'}
+                    {activeTab === 'rankings' && '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />'}
+                    {activeTab === 'most-improved' && '<TrendingUp className="w-4 h-4 text-emerald-500" />'}
+                    {activeTab === 'all' && '<Users className="w-4 h-4 text-slate-500" />'}
                   </span>
                 </div>
                 <div>
@@ -701,7 +703,7 @@ export default function PlayerLeaderboardPage() {
                 {filteredPlayers.length === 0 ? (
                   <tr>
                     <td colSpan={13} className="px-6 py-12 text-center text-slate-400 font-mono">
-                      <span className="text-4xl mb-3 block">👤</span>
+                      <span className="text-4xl mb-3 block"><User className="w-4 h-4 text-slate-500" /></span>
                       <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Players Found</h3>
                       <p className="text-[10px] text-slate-450 uppercase font-semibold">Try adjusting your filters</p>
                     </td>
@@ -719,9 +721,9 @@ export default function PlayerLeaderboardPage() {
                         className={`hover:bg-slate-50/50 transition-colors text-center ${rankClass}`}
                       >
                         <td className="px-4 py-3.5 whitespace-nowrap text-left text-xs font-black text-slate-800">
-                          {index === 0 && <span className="text-lg">🥇</span>}
-                          {index === 1 && <span className="text-lg">🥈</span>}
-                          {index === 2 && <span className="text-lg">🥉</span>}
+                          {index === 0 && <span className="text-lg"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /></span>}
+                          {index === 1 && <span className="text-lg"><Trophy className="w-4 h-4 text-slate-400 fill-slate-400" /></span>}
+                          {index === 2 && <span className="text-lg"><Trophy className="w-4 h-4 text-amber-700 fill-amber-700" /></span>}
                           {index > 2 && <span className="text-slate-400">#{index + 1}</span>}
                         </td>
                         <td className="px-4 py-3.5 text-left">
@@ -750,7 +752,7 @@ export default function PlayerLeaderboardPage() {
                                 {player.points_change > 0 ? '+' : ''}{player.points_change}
                               </span>
                               <span className="text-[9px] text-slate-400 font-semibold uppercase">
-                                {player.base_points} → {player.points}
+                                {player.base_points} {"->"} {player.points}
                               </span>
                             </div>
                           ) : (
@@ -778,7 +780,7 @@ export default function PlayerLeaderboardPage() {
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-emerald-50 text-emerald-700 border-emerald-200/40">
-                            ⚽ {player.goals || 0}
+                            <SoccerBallIcon className="w-4 h-4" /> {player.goals || 0}
                           </span>
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
@@ -789,7 +791,7 @@ export default function PlayerLeaderboardPage() {
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-amber-50 text-amber-700 border-amber-200/40">
-                            ⭐ {player.potm || 0}
+                            <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.potm || 0}
                           </span>
                         </td>
                       </tr>
@@ -804,7 +806,7 @@ export default function PlayerLeaderboardPage() {
           <div className="md:hidden space-y-4 px-2 pb-4">
             {filteredPlayers.length === 0 ? (
               <div className="text-center py-12 text-slate-400 font-mono">
-                <span className="text-4xl mb-3 block">👤</span>
+                <span className="text-4xl mb-3 block"><User className="w-4 h-4 text-slate-500" /></span>
                 <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Players Found</h3>
                 <p className="text-[10px] text-slate-450 uppercase font-semibold">Try adjusting your filters</p>
               </div>
@@ -824,9 +826,9 @@ export default function PlayerLeaderboardPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2.5">
                         <div className="text-xl font-bold flex-shrink-0">
-                          {index === 0 && '🥇'}
-                          {index === 1 && '🥈'}
-                          {index === 2 && '🥉'}
+                          {index === 0 && '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />'}
+                          {index === 1 && '<Trophy className="w-4 h-4 text-slate-400 fill-slate-400" />'}
+                          {index === 2 && '<Trophy className="w-4 h-4 text-amber-700 fill-amber-700" />'}
                           {index > 2 && <span className="text-xs text-slate-400 font-bold">#{index + 1}</span>}
                         </div>
                         <div>
@@ -851,7 +853,7 @@ export default function PlayerLeaderboardPage() {
                             {player.points_change > 0 ? '+' : ''}{player.points_change}
                           </span>
                           <p className="text-[9px] text-slate-450 font-semibold uppercase mt-0.5">
-                            {player.base_points} → {player.points}
+                            {player.base_points} {"->"} {player.points}
                           </p>
                         </div>
                       ) : (
@@ -887,7 +889,7 @@ export default function PlayerLeaderboardPage() {
                       </div>
                       <div className="text-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
                         <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Goals</p>
-                        <p className="text-xs font-extrabold text-emerald-700">⚽ {player.goals || 0}</p>
+                        <p className="text-xs font-extrabold text-emerald-700"><SoccerBallIcon className="w-4 h-4" /> {player.goals || 0}</p>
                       </div>
                       <div className="text-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
                         <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Conceded</p>
@@ -895,11 +897,11 @@ export default function PlayerLeaderboardPage() {
                       </div>
                       <div className="text-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
                         <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Clean</p>
-                        <p className="text-xs font-extrabold text-sky-600">🧤 {player.clean_sheets || 0}</p>
+                        <p className="text-xs font-extrabold text-sky-600"><GloveIcon className="w-4 h-4" /> {player.clean_sheets || 0}</p>
                       </div>
                       <div className="text-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
                         <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">POTM</p>
-                        <p className="text-xs font-extrabold text-amber-700">⭐ {player.potm || 0}</p>
+                        <p className="text-xs font-extrabold text-amber-700"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.potm || 0}</p>
                       </div>
                     </div>
                   </div>
@@ -913,7 +915,7 @@ export default function PlayerLeaderboardPage() {
         <div className="console-card mt-6 bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm font-mono">
           <div className="flex items-start gap-3.5">
             <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <span className="text-xl">📊</span>
+              <span className="text-xl"><BarChart2 className="w-4 h-4 text-slate-500" /></span>
             </div>
             <div>
               <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-3">Leaderboard Legend</h3>
@@ -951,7 +953,7 @@ export default function PlayerLeaderboardPage() {
                   <span className="font-semibold text-slate-450 normal-case">Player of the Match awards</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-slate-800 font-extrabold min-w-[50px]">🥇🥈🥉:</span> 
+                  <span className="text-slate-800 font-extrabold min-w-[50px]"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /><Trophy className="w-4 h-4 text-slate-400 fill-slate-400" /><Trophy className="w-4 h-4 text-amber-700 fill-amber-700" />:</span> 
                   <span className="font-semibold text-slate-450 normal-case">Top 3 player ranks highlighted</span>
                 </div>
               </div>

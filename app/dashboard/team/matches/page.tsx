@@ -1,5 +1,6 @@
 'use client';
 
+import { BarChart2, Search, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -82,7 +83,7 @@ export default function TeamMatchesPage() {
         const { db } = await import('@/lib/firebase/config');
         const { collection, query, where, getDocs, limit, orderBy, doc, getDoc } = await import('firebase/firestore');
 
-        console.log('🔍 Fetching team registration...');
+        console.log('<Search className="w-4 h-4 text-slate-500" /> Fetching team registration...');
         // Get team's registered season(s)
         const teamSeasonsSnapshot = await getDocs(
           query(
@@ -94,7 +95,7 @@ export default function TeamMatchesPage() {
         );
 
         if (teamSeasonsSnapshot.empty) {
-          console.log('❌ No registered season found for team');
+          console.log('<XCircle className="w-4 h-4 text-rose-500" /> No registered season found for team');
           setIsLoading(false);
           return;
         }
@@ -103,7 +104,7 @@ export default function TeamMatchesPage() {
         let currentSeasonId: string | null = null;
         let teamId: string | null = null;
 
-        console.log('🔍 Checking registered seasons status...');
+        console.log('<Search className="w-4 h-4 text-slate-500" /> Checking registered seasons status...');
         // Check each registered season and find one that's not completed
         for (const teamSeasonDoc of teamSeasonsSnapshot.docs) {
           const teamSeasonData = teamSeasonDoc.data();
@@ -157,7 +158,7 @@ export default function TeamMatchesPage() {
         }
 
         // Fetch fixtures from Neon database
-        console.log('🔍 Fetching fixtures from Neon for season:', currentSeasonId, 'team:', teamId);
+        console.log('<Search className="w-4 h-4 text-slate-500" /> Fetching fixtures from Neon for season:', currentSeasonId, 'team:', teamId);
 
         const fixturesResponse = await fetchWithTokenRefresh(`/api/fixtures/team?team_id=${teamId}&season_id=${currentSeasonId}`);
 
@@ -169,7 +170,7 @@ export default function TeamMatchesPage() {
         }
 
         const { fixtures: fixturesList } = await fixturesResponse.json();
-        console.log('📊 Found fixtures from Neon:', fixturesList.length);
+        console.log('<BarChart2 className="w-4 h-4 text-slate-500" /> Found fixtures from Neon:', fixturesList.length);
 
         const allMatches: Match[] = [];
 
@@ -352,8 +353,8 @@ export default function TeamMatchesPage() {
           return a.match_number - b.match_number;
         });
 
-        console.log('📊 Total matches found for user:', allMatches.length);
-        console.log('📊 Match statuses:', allMatches.map(m => ({ round: m.round_number, status: m.status })));
+        console.log('<BarChart2 className="w-4 h-4 text-slate-500" /> Total matches found for user:', allMatches.length);
+        console.log('<BarChart2 className="w-4 h-4 text-slate-500" /> Match statuses:', allMatches.map(m => ({ round: m.round_number, status: m.status })));
         console.log(`🔌 WebSocket connected: ${wsConnected}`);
         setMatches(allMatches);
       } catch (error) {
@@ -449,7 +450,7 @@ export default function TeamMatchesPage() {
             href="/dashboard/team"
             className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
-            ← Back to Dashboard
+            {"<-"} Back to Dashboard
           </Link>
           
           {seasonId && (

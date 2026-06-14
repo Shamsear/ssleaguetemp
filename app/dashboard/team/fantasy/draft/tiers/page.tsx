@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { ArrowLeft, Clock, DollarSign, AlertCircle, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle, ChevronDown, ChevronUp, Clock, DollarSign, Lightbulb } from 'lucide-react';
 
 // Custom scrollbar styles
 const customScrollbarStyles = `
@@ -654,7 +654,7 @@ export default function DraftTierBiddingPage() {
               </p>
             </div>
             <p className="text-sm text-orange-600 font-semibold mb-6 bg-orange-50 p-3 rounded-lg border border-orange-200">
-              💡 You can edit your bid until the admin processes this tier.
+              <Lightbulb className="w-4 h-4 text-amber-500" /> You can edit your bid until the admin processes this tier.
             </p>
             <div className="flex space-x-3">
               <button

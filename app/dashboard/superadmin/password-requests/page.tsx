@@ -10,6 +10,23 @@ import {
   deleteResetRequest 
 } from '@/lib/firebase/passwordResetRequests';
 import { PasswordResetRequest } from '@/types/passwordResetRequest';
+import { 
+  KeyRound, 
+  Mail, 
+  Calendar, 
+  Check, 
+  X, 
+  Trash2, 
+  RefreshCw, 
+  Copy, 
+  ExternalLink, 
+  FileText, 
+  ArrowLeft, 
+  Clock, 
+  CheckCircle2, 
+  XCircle, 
+  Shield 
+} from 'lucide-react';
 
 export default function PasswordRequestsManagement() {
   const { user, loading } = useAuth();
@@ -136,24 +153,24 @@ export default function PasswordRequestsManagement() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
       case 'approved':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
       case 'rejected':
-        return 'bg-red-100 text-red-800';
+        return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
       case 'completed':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
     }
   };
 
   if (loading || loadingRequests) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-950 text-slate-100 animate-pulse">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading requests...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
+          <p className="mt-4 text-slate-400 font-mono text-sm">Loading requests...</p>
         </div>
       </div>
     );
@@ -164,78 +181,77 @@ export default function PasswordRequestsManagement() {
   }
 
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-4">
+    <div className="min-h-screen py-6 sm:py-10 px-4 sm:px-6 bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-950 text-slate-100 animate-fade-in">
       <div className="container mx-auto max-w-screen-2xl">
+        
         {/* Page Header */}
-        <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
-          <div className="flex justify-between items-center">
+        <header className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-white/10 pb-8">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push('/dashboard/superadmin')}
+              className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 transition-all duration-300 hover:scale-105"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <button
-                  onClick={() => router.push('/dashboard/superadmin')}
-                  className="p-2 rounded-xl hover:bg-white/50 transition-colors"
-                >
-                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <h1 className="text-3xl md:text-4xl font-bold gradient-text">Password Reset Requests</h1>
-              </div>
-              <p className="text-gray-600 text-sm md:text-base ml-14">
-                Review and manage password reset requests
+              <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent mb-2">
+                Password Requests
+              </h1>
+              <p className="text-slate-400 text-sm font-mono">
+                Review and process account recovery requests
               </p>
             </div>
+          </div>
+          <div className="flex items-center gap-2">
             <button
               onClick={fetchRequests}
-              className="hidden md:flex items-center px-4 py-2 bg-white/50 hover:bg-white/80 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-xs font-semibold uppercase tracking-wider text-slate-300 transition-all duration-300"
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
+              <RefreshCw className="w-4 h-4" />
               Refresh
             </button>
           </div>
-        </div>
+        </header>
 
         {/* Filter Tabs */}
-        <div className="glass rounded-2xl p-4 mb-6 shadow-lg backdrop-blur-md border border-white/20">
+        <div className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md p-4 mb-6 shadow-md">
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wider uppercase transition-all ${
                 filter === 'all'
-                  ? 'bg-[#0066FF] text-white shadow-md'
-                  : 'bg-white/50 text-gray-700 hover:bg-white/80'
+                  ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
+                  : 'bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10'
               }`}
             >
               All ({requests.length})
             </button>
             <button
               onClick={() => setFilter('pending')}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wider uppercase transition-all ${
                 filter === 'pending'
-                  ? 'bg-yellow-500 text-white shadow-md'
-                  : 'bg-white/50 text-gray-700 hover:bg-white/80'
+                  ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25'
+                  : 'bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10'
               }`}
             >
               Pending ({requests.filter(r => r.status === 'pending').length})
             </button>
             <button
               onClick={() => setFilter('approved')}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wider uppercase transition-all ${
                 filter === 'approved'
-                  ? 'bg-green-500 text-white shadow-md'
-                  : 'bg-white/50 text-gray-700 hover:bg-white/80'
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
+                  : 'bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10'
               }`}
             >
               Approved ({requests.filter(r => r.status === 'approved').length})
             </button>
             <button
               onClick={() => setFilter('rejected')}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wider uppercase transition-all ${
                 filter === 'rejected'
-                  ? 'bg-red-500 text-white shadow-md'
-                  : 'bg-white/50 text-gray-700 hover:bg-white/80'
+                  ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/25'
+                  : 'bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10'
               }`}
             >
               Rejected ({requests.filter(r => r.status === 'rejected').length})
@@ -244,74 +260,68 @@ export default function PasswordRequestsManagement() {
         </div>
 
         {/* Requests List */}
-        <div className="glass rounded-3xl shadow-lg backdrop-blur-md border border-white/20 overflow-hidden">
+        <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md shadow-xl">
           {filteredRequests.length > 0 ? (
-            <div className="divide-y divide-gray-200/50">
+            <div className="divide-y divide-white/5">
               {filteredRequests.map((request) => (
-                <div key={request.id} className="px-6 py-5 hover:bg-white/30 transition-all duration-200 group">
+                <div key={request.id} className="px-6 py-5 hover:bg-white/5 transition-all duration-200 group">
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0066FF]/20 to-[#0066FF]/10 flex items-center justify-center">
-                          <span className="text-[#0066FF] font-bold text-lg">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shadow-inner">
+                          <span className="text-indigo-400 font-black text-lg">
                             {request.username[0].toUpperCase()}
                           </span>
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{request.username}</h3>
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(request.status)}`}>
+                          <h3 className="text-lg font-bold text-slate-200">{request.username}</h3>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(request.status)}`}>
                             {request.status.toUpperCase()}
                           </span>
                         </div>
                       </div>
 
-                      <div className="space-y-2 text-sm text-gray-600">
+                      <div className="space-y-2 text-xs text-slate-400 font-mono">
                         <div className="flex items-center">
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
+                          <Mail className="w-4 h-4 mr-2 text-slate-500" />
                           {request.userEmail}
                         </div>
                         {request.teamName && (
                           <div className="flex items-center">
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            Team: {request.teamName}
+                            <Shield className="w-4 h-4 mr-2 text-slate-500" />
+                            Team: <span className="text-slate-300 font-semibold">{request.teamName}</span>
                           </div>
                         )}
                         <div className="flex items-center">
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                          <Calendar className="w-4 h-4 mr-2 text-slate-500" />
                           Requested: {formatDate(request.requestedAt)}
                         </div>
                         {request.reason && (
-                          <div className="mt-2 p-3 bg-blue-50/50 rounded-lg border border-blue-100">
-                            <p className="text-sm"><strong>Reason:</strong> {request.reason}</p>
+                          <div className="mt-2 p-3 bg-indigo-500/5 border border-indigo-500/10 rounded-xl">
+                            <p className="text-xs text-slate-300"><strong className="text-indigo-400">Reason:</strong> {request.reason}</p>
                           </div>
                         )}
                         {request.adminNotes && (
-                          <div className="mt-2 p-3 bg-gray-50/50 rounded-lg border border-gray-200">
-                            <p className="text-sm"><strong>Admin Notes:</strong> {request.adminNotes}</p>
+                          <div className="mt-2 p-3 bg-white/5 border border-white/10 rounded-xl">
+                            <p className="text-xs text-slate-300"><strong className="text-slate-400">Admin Notes:</strong> {request.adminNotes}</p>
                           </div>
                         )}
                         {request.resetLink && request.status === 'approved' && (
-                          <div className="mt-2 p-3 bg-green-50/50 rounded-lg border border-green-200">
+                          <div className="mt-2 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
                             <div className="flex items-center justify-between">
-                              <p className="text-sm font-medium text-green-800">Reset Link Generated</p>
+                              <p className="text-xs font-bold text-emerald-400">Reset Link Generated</p>
                               <button
                                 onClick={() => {
                                   setGeneratedLink(request.resetLink!);
                                   setShowLinkModal(true);
                                 }}
-                                className="text-xs text-green-600 hover:text-green-800 underline"
+                                className="text-xs text-emerald-400 hover:text-emerald-300 underline font-semibold flex items-center gap-1"
                               >
-                                View Link
+                                <ExternalLink className="w-3.5 h-3.5" /> View Link
                               </button>
                             </div>
                             {request.resetLinkExpiresAt && (
-                              <p className="text-xs text-gray-600 mt-1">
+                              <p className="text-[10px] text-slate-500 mt-1">
                                 Expires: {formatDate(request.resetLinkExpiresAt)}
                               </p>
                             )}
@@ -321,25 +331,21 @@ export default function PasswordRequestsManagement() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 md:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       {request.status === 'pending' && (
                         <>
                           <button
                             onClick={() => handleApprove(request.id)}
-                            className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors text-sm font-medium"
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-bold rounded-xl text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
                           >
-                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <Check className="w-4 h-4 mr-1.5" />
                             Approve
                           </button>
                           <button
                             onClick={() => handleReject(request.id)}
-                            className="inline-flex items-center px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors text-sm font-medium"
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-bold rounded-xl text-white bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 transition-all duration-200 shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
                           >
-                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <X className="w-4 h-4 mr-1.5" />
                             Reject
                           </button>
                         </>
@@ -347,11 +353,9 @@ export default function PasswordRequestsManagement() {
                       {request.status !== 'pending' && (
                         <button
                           onClick={() => handleDelete(request.id)}
-                          className="inline-flex items-center px-4 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors text-sm font-medium"
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-bold rounded-xl text-white bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 transition-all duration-200 shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
                         >
-                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          <Trash2 className="w-4 h-4 mr-1.5" />
                           Delete
                         </button>
                       )}
@@ -361,14 +365,12 @@ export default function PasswordRequestsManagement() {
               ))}
             </div>
           ) : (
-            <div className="px-8 py-16 text-center">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-[#0066FF]/20 to-[#0066FF]/10 flex items-center justify-center">
-                <svg className="w-10 h-10 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                </svg>
+            <div className="px-8 py-20 text-center animate-fade-in">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center animate-pulse">
+                <KeyRound className="w-10 h-10 text-indigo-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Requests Found</h3>
-              <p className="text-gray-500">
+              <h3 className="text-xl font-bold text-slate-200 mb-2">No Requests Found</h3>
+              <p className="text-slate-400 text-xs font-sans">
                 {filter === 'all' 
                   ? 'There are no password reset requests yet.'
                   : `There are no ${filter} password reset requests.`}
@@ -380,40 +382,36 @@ export default function PasswordRequestsManagement() {
 
       {/* Reset Link Modal */}
       {showLinkModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowLinkModal(false)}>
-          <div className="glass rounded-2xl p-6 max-w-2xl w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold gradient-text">Password Reset Link</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" onClick={() => setShowLinkModal(false)}>
+          <div className="relative overflow-hidden rounded-3xl bg-slate-900 border border-white/10 p-6 max-w-2xl w-full shadow-2xl animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-5 pb-3 border-b border-white/5">
+              <h3 className="text-xl font-black text-slate-200 flex items-center gap-2">
+                <KeyRound className="w-5 h-5 text-indigo-400" /> Password Reset Link
+              </h3>
               <button
                 onClick={() => setShowLinkModal(false)}
-                className="p-2 rounded-lg hover:bg-gray-200 transition-colors"
+                className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 transition-all"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-              <p className="text-sm text-yellow-800">
-                <strong>Important:</strong> Copy and send this link to the user via a secure channel. The link will expire in 24 hours.
-              </p>
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 mb-5 text-xs text-amber-200 font-sans leading-relaxed">
+              <strong>Important security notice:</strong> Copy and send this link to the user via a secure channel. The link will expire in 24 hours.
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4 break-all font-mono text-sm">
+            <div className="bg-white/5 p-4 rounded-2xl border border-white/10 mb-5 break-all font-mono text-xs text-slate-300 shadow-inner">
               {generatedLink}
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={() => copyToClipboard(generatedLink)}
-                className="flex-1 px-4 py-2 bg-[#0066FF] text-white rounded-xl hover:bg-[#0066FF]/90 transition-colors flex items-center justify-center"
+                className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl transition-all duration-300 flex items-center justify-center font-bold text-sm shadow-lg shadow-indigo-600/25 transform hover:-translate-y-0.5"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                </svg>
+                <Copy className="w-4 h-4 mr-2" />
                 Copy Link
               </button>
               <button
                 onClick={() => setShowLinkModal(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
+                className="px-4 py-3 bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 rounded-2xl transition-all duration-300 text-sm font-semibold"
               >
                 Close
               </button>

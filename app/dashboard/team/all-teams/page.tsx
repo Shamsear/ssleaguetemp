@@ -1,5 +1,7 @@
 'use client';
 
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { Star, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -362,7 +364,7 @@ export default function AllTeamsPage() {
                     <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
                       <span className="text-slate-400 text-[8px] mb-1">Squad Players</span>
                       <span className="text-slate-700 flex items-center gap-1 font-mono">
-                        ⚽ {teamData.footballPlayersCount} / {maxPlayers}
+                        <SoccerBallIcon className="w-4 h-4" /> {teamData.footballPlayersCount} / {maxPlayers}
                       </span>
                     </div>
 
@@ -370,7 +372,7 @@ export default function AllTeamsPage() {
                       <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
                         <span className="text-slate-400 text-[8px] mb-1">Real Players</span>
                         <span className="text-slate-700 flex items-center gap-1 font-mono">
-                          👤 {teamData.realPlayersCount}
+                          <User className="w-4 h-4 text-slate-500" /> {teamData.realPlayersCount}
                         </span>
                       </div>
                     )}
@@ -427,7 +429,7 @@ export default function AllTeamsPage() {
                       <div className="flex items-center justify-between font-mono">
                         <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Squad Avg Rating</span>
                         <span className="text-lg font-black text-amber-500">
-                          ★ {teamData.avgRating.toFixed(1)}
+                          <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {teamData.avgRating.toFixed(1)}
                         </span>
                       </div>
                     </div>

@@ -1,5 +1,5 @@
 'use client';
-import { XCircle, Trophy, Crown, Activity, AlertTriangle } from 'lucide-react';
+import { Activity, AlertTriangle, ClipboardList, Crown, Pencil, Save, Settings, Trophy, XCircle } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -406,7 +406,7 @@ export default function CommitteeFixtureDetailPage() {
           <p className="text-gray-600">
             {(fixture as any).knockout_round ? (
               <>
-                {(fixture as any).knockout_round === 'quarter_finals' && '⚔️ Quarter Finals'}
+                {(fixture as any).knockout_round === 'quarter_finals' && '<Swords className="w-4 h-4 text-rose-500" /> Quarter Finals'}
                 {(fixture as any).knockout_round === 'semi_finals' && '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Semi Finals'}
                 {(fixture as any).knockout_round === 'finals' && '<Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /> Finals'}
                 {(fixture as any).knockout_round === 'third_place' && '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" /> Third Place Playoff'}
@@ -470,7 +470,7 @@ export default function CommitteeFixtureDetailPage() {
                     onClick={() => setShowLineupEditor('home')}
                     className="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 font-medium"
                   >
-                    ✏️ Edit Lineup
+                    <Pencil className="w-4 h-4 text-slate-500" /> Edit Lineup
                   </button>
                 </div>
                 <p className="text-sm text-gray-500">Home Team</p>
@@ -490,7 +490,7 @@ export default function CommitteeFixtureDetailPage() {
                     onClick={() => setShowMatchupCreator(true)}
                     className="mt-3 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm rounded-lg hover:from-green-700 hover:to-emerald-700 font-medium block mx-auto"
                   >
-                    ⚔️ Add Matchups
+                    <Swords className="w-4 h-4 text-rose-500" /> Add Matchups
                   </button>
                 )}
               </div>
@@ -500,7 +500,7 @@ export default function CommitteeFixtureDetailPage() {
                     onClick={() => setShowLineupEditor('away')}
                     className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 font-medium"
                   >
-                    ✏️ Edit Lineup
+                    <Pencil className="w-4 h-4 text-slate-500" /> Edit Lineup
                   </button>
                   <h2 className="text-2xl font-bold text-gray-900">{fixture.away_team_name}</h2>
                 </div>
@@ -544,7 +544,7 @@ export default function CommitteeFixtureDetailPage() {
                   onClick={() => setIsEditMode(true)}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                 >
-                  ✏️ Edit Results
+                  <Pencil className="w-4 h-4 text-slate-500" /> Edit Results
                 </button>
               )}
               {isEditMode && (
@@ -563,7 +563,7 @@ export default function CommitteeFixtureDetailPage() {
                     disabled={isSaving}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                   >
-                    {isSaving ? 'Saving...' : '💾 Save Changes'}
+                    {isSaving ? 'Saving...' : '<Save className="w-4 h-4 text-slate-500" /> Save Changes'}
                   </button>
                 </div>
               )}
@@ -632,7 +632,7 @@ export default function CommitteeFixtureDetailPage() {
                 onClick={() => setShowTimeline(true)}
                 className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 font-medium flex items-center justify-center"
               >
-                📋 View Complete Timeline
+                <ClipboardList className="w-4 h-4 text-slate-500" /> View Complete Timeline
               </button>
 
               {/* Create Matchups Button - Only show if matchups don't exist */}
@@ -642,7 +642,7 @@ export default function CommitteeFixtureDetailPage() {
                     onClick={() => setShowMatchupCreator(true)}
                     className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 font-medium flex items-center justify-center gap-2"
                   >
-                    ⚔️ Create Matchups
+                    <Swords className="w-4 h-4 text-rose-500" /> Create Matchups
                   </button>
                   
                   {/* Round Robin Auto-Generate Button */}
@@ -654,7 +654,7 @@ export default function CommitteeFixtureDetailPage() {
                     >
                       {isGeneratingRoundRobin ? (
                         <>
-                          <span className="animate-spin">⚙️</span> Generating...
+                          <span className="animate-spin"><Settings className="w-4 h-4 text-slate-500" /></span> Generating...
                         </>
                       ) : (
                         <>

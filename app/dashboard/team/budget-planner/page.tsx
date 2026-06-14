@@ -1,5 +1,7 @@
 'use client';
 
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { ClipboardList, Lightbulb, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -244,7 +246,7 @@ export default function BudgetPlannerPage() {
                   : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              ⚽ Virtual Players (eCoin)
+              <SoccerBallIcon className="w-4 h-4" /> Virtual Players (eCoin)
             </button>
             <button
               onClick={() => setActiveTab('real')}
@@ -365,7 +367,7 @@ export default function BudgetPlannerPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
             <div>
               <h2 className="text-base font-black text-slate-800 uppercase tracking-wider">
-                {activeTab === 'football' ? '⚽ Virtual Player Cost Estimates' : '🎮 Real Member Cost Estimates'}
+                {activeTab === 'football' ? '<SoccerBallIcon className="w-4 h-4" /> Virtual Player Cost Estimates' : '🎮 Real Member Cost Estimates'}
               </h2>
               <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
                 Set estimates and analyze overall salary impact
@@ -384,7 +386,7 @@ export default function BudgetPlannerPage() {
 
           {currentPlayers.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
-              <span className="text-4xl mb-3 block">📋</span>
+              <span className="text-4xl mb-3 block"><ClipboardList className="w-4 h-4 text-slate-500" /></span>
               <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Estimates Added Yet</h3>
               <p className="text-[10px] text-slate-400 uppercase font-semibold">Click "Add Player" to start plotting your roster budget</p>
             </div>
@@ -445,7 +447,7 @@ export default function BudgetPlannerPage() {
                           className="w-full py-2 px-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono cursor-pointer"
                         >
                           {STAR_RATINGS.map(star => (
-                            <option key={star} value={star}>{star}★</option>
+                            <option key={star} value={star}>{star}<Star className="w-4 h-4 text-amber-400 fill-amber-400" /></option>
                           ))}
                         </select>
                       </div>
@@ -488,7 +490,7 @@ export default function BudgetPlannerPage() {
           {/* Card 1: Tips */}
           <div className="console-card bg-white border border-slate-200/60 border-l-4 border-l-amber-500 rounded-2xl p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-base">💡</span>
+              <span className="text-base"><Lightbulb className="w-4 h-4 text-amber-500" /></span>
               <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Pro Budget Tips</h4>
             </div>
             <ul className="text-xs text-slate-650 space-y-2 leading-relaxed font-semibold">
@@ -510,7 +512,7 @@ export default function BudgetPlannerPage() {
           {/* Card 2: Slots & Contracts Guidelines */}
           <div className="console-card bg-white border border-slate-200/60 border-l-4 border-l-sky-500 rounded-2xl p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-base">📋</span>
+              <span className="text-base"><ClipboardList className="w-4 h-4 text-slate-500" /></span>
               <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Slot & Contract Guidelines</h4>
             </div>
             <ul className="text-xs text-slate-650 space-y-2 leading-relaxed font-semibold">

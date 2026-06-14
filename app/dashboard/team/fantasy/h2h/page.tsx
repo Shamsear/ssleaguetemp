@@ -1,3 +1,4 @@
+import { Info, Trophy } from 'lucide-react';
 /**
  * Fantasy H2H (Head-to-Head) Page
  * View H2H standings, current matchup, and fixture history
@@ -178,7 +179,7 @@ export default function H2HPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          ⚔️ Head-to-Head
+          <Swords className="w-4 h-4 text-rose-500" /> Head-to-Head
         </h1>
         <p className="text-gray-600">
           Weekly matchups and H2H league standings
@@ -360,9 +361,9 @@ export default function H2HPage() {
                           }`}>
                             {index + 1}
                           </span>
-                          {index === 0 && <span className="ml-1">🥇</span>}
-                          {index === 1 && <span className="ml-1">🥈</span>}
-                          {index === 2 && <span className="ml-1">🥉</span>}
+                          {index === 0 && <span className="ml-1"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /></span>}
+                          {index === 1 && <span className="ml-1"><Trophy className="w-4 h-4 text-slate-400 fill-slate-400" /></span>}
+                          {index === 2 && <span className="ml-1"><Trophy className="w-4 h-4 text-amber-700 fill-amber-700" /></span>}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -484,7 +485,7 @@ export default function H2HPage() {
 
       {/* Info Box */}
       <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-semibold text-blue-900 mb-2">ℹ️ How H2H Works</h3>
+        <h3 className="font-semibold text-blue-900 mb-2"><Info className="w-4 h-4 text-blue-500" /> How H2H Works</h3>
         <ul className="text-sm text-blue-800 space-y-1">
           <li>• Each week you're matched against another team</li>
           <li>• Team with higher weekly points wins the matchup</li>

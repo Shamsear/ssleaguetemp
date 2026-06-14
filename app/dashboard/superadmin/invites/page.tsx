@@ -14,6 +14,27 @@ import { AdminInvite } from '@/types/invite';
 import { Season } from '@/types/season';
 import { collection, query, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { 
+  PlusCircle, 
+  Link2, 
+  Trash2, 
+  Calendar, 
+  User, 
+  Check, 
+  ExternalLink, 
+  Eye, 
+  Settings, 
+  ArrowLeft, 
+  Clock, 
+  UserCheck, 
+  Users, 
+  CheckCircle2, 
+  KeyRound, 
+  Copy, 
+  X, 
+  Activity,
+  RefreshCw 
+} from 'lucide-react';
 
 interface SeasonAdmin {
   seasonId: string;
@@ -289,10 +310,10 @@ export default function AdminInvites() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-950 text-slate-100 animate-pulse">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
+          <p className="mt-4 text-slate-400 font-mono text-sm">Loading...</p>
         </div>
       </div>
     );
@@ -303,54 +324,49 @@ export default function AdminInvites() {
   }
 
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-4">
+    <div className="min-h-screen py-6 sm:py-10 px-4 sm:px-6 bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-950 text-slate-100 animate-fade-in">
       <div className="container mx-auto max-w-screen-2xl">
+        
         {/* Page Header */}
-        <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/dashboard/superadmin')}
-                className="p-2 rounded-xl hover:bg-white/50 transition-colors"
-              >
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-[#9580FF]/20 to-[#9580FF]/10 text-[#9580FF]">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
+        <header className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-white/10 pb-8">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push('/dashboard/superadmin')}
+              className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 transition-all duration-300 hover:scale-105"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shadow-inner hidden sm:flex">
+                <Link2 className="w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2">Admin Invitations</h1>
-                <p className="text-gray-600 text-sm md:text-base">Create and manage committee admin invitation codes</p>
+                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent mb-2">
+                  Admin Invitations
+                </h1>
+                <p className="text-slate-400 text-sm font-mono">Create and manage committee admin invitation links</p>
               </div>
             </div>
-            <button
-              onClick={() => setShowCreateForm(!showCreateForm)}
-              className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold rounded-2xl text-white bg-gradient-to-r from-[#9580FF] to-[#0066FF] hover:from-[#9580FF]/90 hover:to-[#0066FF]/90 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 group w-full md:w-auto justify-center"
-            >
-              <svg className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              {showCreateForm ? 'Cancel' : 'Create Invite'}
-            </button>
           </div>
-        </div>
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold rounded-2xl text-white bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 group w-full md:w-auto justify-center"
+          >
+            <PlusCircle className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-200" />
+            {showCreateForm ? 'Cancel' : 'Create Invite'}
+          </button>
+        </header>
 
         {/* Season-Based Admin Overview */}
-        <div className="glass rounded-3xl shadow-lg backdrop-blur-md border border-white/20 overflow-hidden mb-8">
-          <div className="px-6 py-5 bg-gradient-to-r from-[#9580FF]/5 to-[#9580FF]/10 border-b border-[#9580FF]/20">
+        <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md shadow-xl mb-8">
+          <div className="px-6 py-5 bg-white/5 border-b border-white/10">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-[#9580FF] flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+              <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+                <Users className="w-5 h-5 text-indigo-400" />
                 Season Administrators
               </h3>
               {seasonAdmins.length > 0 && (
-                <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-[#9580FF]/20 text-[#9580FF]">
+                <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
                   {seasonAdmins.length} Seasons
                 </span>
               )}
@@ -358,30 +374,25 @@ export default function AdminInvites() {
           </div>
           
           {seasonAdmins.length > 0 ? (
-            <div className="divide-y divide-gray-200/50">
+            <div className="divide-y divide-white/5">
               {seasonAdmins.map((season) => (
                 <div key={season.seasonId}>
                   {/* Season Header */}
-                  <div className="px-6 py-4 bg-gray-50/50">
+                  <div className="px-6 py-4 bg-white/5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#9580FF]/20 to-[#9580FF]/10 flex items-center justify-center mr-3">
-                          <svg className="w-4 h-4 text-[#9580FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mr-3">
+                          <Calendar className="w-4 h-4 text-indigo-400" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900">{season.seasonName} ({season.seasonYear})</h4>
-                          <div className="flex items-center space-x-3 text-sm text-gray-500">
+                          <h4 className="font-bold text-slate-200">{season.seasonName} ({season.seasonYear})</h4>
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-1 font-mono">
                             {season.isActive ? (
-                              <span className="flex items-center px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">
-                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
+                              <span className="flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
                                 Active Season
                               </span>
                             ) : (
-                              <span className="flex items-center px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs">
+                              <span className="flex items-center px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-400 border border-slate-500/20 text-[10px] font-bold">
                                 Previous Season
                               </span>
                             )}
@@ -395,22 +406,20 @@ export default function AdminInvites() {
                   
                   {/* Admins List */}
                   {season.admins.map((admin, idx) => (
-                    <div key={idx} className="px-6 py-3 pl-16 border-l-2 border-[#9580FF]/20 ml-6">
+                    <div key={idx} className="px-6 py-3 pl-16 border-l-2 border-indigo-500/20 ml-6 hover:bg-white/5 transition-all">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
-                            <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
+                          <div className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mr-3">
+                            <UserCheck className="w-3.5 h-3.5 text-indigo-400" />
                           </div>
                           <div>
-                            <span className="font-medium text-gray-900">{admin.username}</span>
-                            <div className="flex items-center space-x-2 text-xs text-gray-500">
+                            <span className="font-bold text-slate-200 text-sm">{admin.username}</span>
+                            <div className="flex items-center space-x-2 text-[10px] text-slate-400 font-mono mt-0.5">
                               <span>{admin.email}</span>
                               {admin.isActive ? (
-                                <span className="px-1.5 py-0.5 rounded bg-green-100 text-green-700">Active</span>
+                                <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Active</span>
                               ) : (
-                                <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700">Inactive</span>
+                                <span className="px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">Inactive</span>
                               )}
                               <span>Joined: {formatDate(admin.createdAt).split(',')[0]}</span>
                             </div>
@@ -423,33 +432,28 @@ export default function AdminInvites() {
               ))}
             </div>
           ) : (
-            <div className="px-8 py-16 text-center">
+            <div className="px-8 py-20 text-center">
               <div className="max-w-sm mx-auto">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-[#9580FF]/20 to-[#9580FF]/10 flex items-center justify-center">
-                  <svg className="w-10 h-10 text-[#9580FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
+                <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <Settings className="w-10 h-10 text-indigo-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Season Data Found</h3>
-                <p className="text-gray-500 mb-6">Create seasons and invite administrators to get started.</p>
+                <h3 className="text-xl font-bold text-slate-200 mb-2">No Season Data Found</h3>
+                <p className="text-slate-400 text-xs font-sans mb-6">Create seasons and invite administrators to get started.</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Active Invites */}
-        <div className="glass rounded-3xl shadow-lg backdrop-blur-md border border-white/20 overflow-hidden">
-          <div className="px-6 py-5 bg-gradient-to-r from-[#9580FF]/5 to-[#9580FF]/10 border-b border-[#9580FF]/20">
+        <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md shadow-xl">
+          <div className="px-6 py-5 bg-white/5 border-b border-white/10">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-[#9580FF] flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
+              <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+                <Link2 className="w-5 h-5 text-indigo-400" />
                 Active Invitations
               </h3>
               {invites.filter(inv => inv.isActive && inv.usedCount < inv.maxUses).length > 0 && (
-                <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-[#9580FF]/20 text-[#9580FF]">
+                <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
                   {invites.filter(inv => inv.isActive && inv.usedCount < inv.maxUses).length} Active
                 </span>
               )}
@@ -458,17 +462,17 @@ export default function AdminInvites() {
           
           {/* Create Invite Form */}
           {showCreateForm && (
-            <div className="border-b border-gray-200/50 animate-slideDown">
-              <form onSubmit={handleCreateInvite} className="p-4 space-y-4 bg-gradient-to-br from-[#9580FF]/5 to-blue-50/30">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="border-b border-white/10 animate-fade-in">
+              <form onSubmit={handleCreateInvite} className="p-6 space-y-4 bg-white/5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="group">
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
                       Season *
                     </label>
                     <select
                       value={formData.seasonId}
                       onChange={(e) => setFormData({ ...formData, seasonId: e.target.value })}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-[#9580FF]/20 focus:border-[#9580FF] transition-all"
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-white/10 bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-200 transition-all font-sans"
                       required
                     >
                       <option value="">Select season</option>
@@ -481,20 +485,20 @@ export default function AdminInvites() {
                   </div>
                   
                   <div className="group">
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
                       Description
                     </label>
                     <input
                       type="text"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-[#9580FF]/20 focus:border-[#9580FF] transition-all"
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-white/10 bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-200 transition-all font-sans placeholder-slate-600"
                       placeholder="Brief description"
                     />
                   </div>
                   
                   <div className="group">
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
                       Max Uses
                     </label>
                     <input
@@ -502,12 +506,12 @@ export default function AdminInvites() {
                       value={formData.maxUses}
                       onChange={(e) => setFormData({ ...formData, maxUses: parseInt(e.target.value) || 1 })}
                       min="1"
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-[#9580FF]/20 focus:border-[#9580FF] transition-all"
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-white/10 bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-200 transition-all font-mono"
                     />
                   </div>
                   
                   <div className="group">
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
                       Expires (Hours)
                     </label>
                     <input
@@ -515,37 +519,32 @@ export default function AdminInvites() {
                       value={formData.expiresInHours}
                       onChange={(e) => setFormData({ ...formData, expiresInHours: parseInt(e.target.value) || 24 })}
                       min="1"
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-[#9580FF]/20 focus:border-[#9580FF] transition-all"
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-white/10 bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-200 transition-all font-mono"
                     />
                   </div>
                 </div>
                 
-                <div className="flex justify-end space-x-2 col-span-full">
+                <div className="flex justify-end space-x-2 pt-2">
                   <button
                     type="button"
                     onClick={() => setShowCreateForm(false)}
-                    className="px-4 py-2 border border-gray-300 text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all"
+                    className="px-4 py-2 border border-white/10 text-xs font-semibold uppercase tracking-wider rounded-xl text-slate-300 bg-white/5 hover:bg-white/10 transition-all"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isCreating || !formData.seasonId}
-                    className="px-4 py-2 text-xs font-semibold rounded-lg text-white bg-gradient-to-r from-[#9580FF] to-[#0066FF] hover:from-[#9580FF]/90 hover:to-[#0066FF]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                    className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl text-white bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
                   >
                     {isCreating ? (
                       <>
-                        <svg className="animate-spin w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <RefreshCw className="animate-spin w-3.5 h-3.5 mr-1.5" />
                         Creating...
                       </>
                     ) : (
                       <>
-                        <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
+                        <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
                         Create
                       </>
                     )}
@@ -556,56 +555,43 @@ export default function AdminInvites() {
           )}
           
           {invites.filter(inv => inv.isActive && inv.usedCount < inv.maxUses).length > 0 || showCreateForm ? (
-            <div className="divide-y divide-gray-200/50">
+            <div className="divide-y divide-white/5">
               {invites.filter(inv => inv.isActive && inv.usedCount < inv.maxUses).map((invite) => (
-                <div key={invite.id} className="px-6 py-5 hover:bg-white/30 transition-all duration-200 group">
+                <div key={invite.id} className="px-6 py-5 hover:bg-white/5 transition-all duration-200 group">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center mb-3">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#9580FF]/20 to-[#9580FF]/10 flex items-center justify-center mr-3">
-                          <svg className="w-5 h-5 text-[#9580FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                          </svg>
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mr-3 shadow-inner animate-pulse">
+                          <Link2 className="w-5 h-5 text-indigo-400" />
                         </div>
                         <div className="flex-1">
-                          <h4 className="text-lg font-semibold text-gray-900 group-hover:text-[#9580FF] transition-colors">
+                          <h4 className="text-lg font-bold text-slate-200 group-hover:text-indigo-400 transition-colors">
                             {invite.description || 'Admin Invitation'}
-                            {invite.seasonName && <span className="text-sm font-normal text-gray-600 ml-2">for {invite.seasonName}</span>}
+                            {invite.seasonName && <span className="text-xs font-normal text-slate-400 ml-2">for {invite.seasonName}</span>}
                           </h4>
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mt-1">
-                          <span className={`flex items-center px-3 py-1.5 rounded-lg ${seasons.find(s => s.id === invite.seasonId)?.isActive ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-amber-100 text-amber-800 border border-amber-200'}`}>
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <span className="font-medium">{invite.seasonName}</span>
-                            {invite.seasonYear && <span className="ml-1 text-xs opacity-75">({invite.seasonYear})</span>}
-                            {seasons.find(s => s.id === invite.seasonId)?.isActive && (
-                              <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-500 text-white">
-                                <svg className="w-2.5 h-2.5 mr-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                                Active
-                              </span>
-                            )}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-4 text-xs mt-1">
+                            <span className={`flex items-center px-3 py-1 rounded-full border ${seasons.find(s => s.id === invite.seasonId)?.isActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+                              <Calendar className="w-3.5 h-3.5 mr-1.5 text-slate-500" />
+                              <span className="font-bold">{invite.seasonName}</span>
+                              {invite.seasonYear && <span className="ml-1 opacity-75 font-mono">({invite.seasonYear})</span>}
+                              {seasons.find(s => s.id === invite.seasonId)?.isActive && (
+                                <span className="ml-2 inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500 text-white uppercase tracking-wider">
+                                  Active
+                                </span>
+                              )}
+                            </span>
                           </div>
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mt-2">
+                          <div className="flex flex-wrap items-center gap-4 text-[10px] text-slate-400 font-mono mt-3">
                             <span className="flex items-center">
-                              <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
+                              <User className="w-3.5 h-3.5 mr-1 text-slate-500" />
                               Created by: {invite.createdByUsername}
                             </span>
                             <span className="flex items-center">
-                              <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
+                              <Clock className="w-3.5 h-3.5 mr-1 text-slate-500" />
                               Expires: {formatDate(invite.expiresAt)}
                             </span>
                             <span className="flex items-center">
-                              <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                              </svg>
+                              <Settings className="w-3.5 h-3.5 mr-1 text-slate-500" />
                               Uses: {invite.usedCount}/{invite.maxUses}
                             </span>
                           </div>
@@ -613,24 +599,22 @@ export default function AdminInvites() {
                       </div>
                       
                       {/* Invite URL Display */}
-                      <div className="bg-gray-50/80 backdrop-blur-sm rounded-2xl p-4 border border-gray-200/50">
-                        <label className="block text-xs font-medium text-gray-600 mb-2">Invitation URL</label>
+                      <div className="bg-white/5 rounded-2xl p-4 border border-white/10 mt-3 shadow-inner">
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Invitation URL</label>
                         <div className="flex items-center space-x-2 flex-wrap gap-2">
                           <input
                             type="text"
                             readOnly
                             value={getInviteUrl(invite.code, invite.seasonId)}
                             onClick={(e) => e.currentTarget.select()}
-                            className="flex-1 min-w-0 text-sm bg-white border border-gray-200 rounded-xl px-3 py-2 font-mono text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0066FF]/20 focus:border-[#0066FF]"
+                            className="flex-1 min-w-0 text-xs bg-slate-900 border border-white/10 rounded-xl px-3 py-2 font-mono text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                           />
                           {invite.usedCount < invite.maxUses && (
                             <button
                               onClick={() => copyToClipboard(getInviteUrl(invite.code, invite.seasonId), invite.id)}
-                              className="inline-flex items-center px-3 py-2 text-xs font-medium rounded-xl text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                              className="inline-flex items-center px-3 py-2 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                             >
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                              </svg>
+                              <Copy className="w-3.5 h-3.5 mr-1" />
                               {copiedUrl === invite.id ? 'Copied!' : 'Copy'}
                             </button>
                           )}
@@ -638,20 +622,16 @@ export default function AdminInvites() {
                             href={getInviteUrl(invite.code, invite.seasonId)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-2 text-xs font-medium rounded-xl text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                            className="inline-flex items-center px-3 py-2 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                           >
-                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
+                            <ExternalLink className="w-3.5 h-3.5 mr-1" />
                             Test
                           </a>
                           <button
                             onClick={() => handleDeleteInvite(invite.code, invite.description || 'Unnamed invite', invite.seasonName || 'Unknown Season')}
-                            className="inline-flex items-center px-3 py-2 text-xs font-medium rounded-xl text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                            className="inline-flex items-center px-3 py-2 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                           >
-                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            <Trash2 className="w-3.5 h-3.5 mr-1" />
                             Delete
                           </button>
                         </div>
@@ -662,22 +642,18 @@ export default function AdminInvites() {
               ))}
             </div>
           ) : (
-            <div className="px-8 py-16 text-center">
+            <div className="px-8 py-20 text-center animate-fade-in">
               <div className="max-w-sm mx-auto">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-[#9580FF]/20 to-[#9580FF]/10 flex items-center justify-center">
-                  <svg className="w-10 h-10 text-[#9580FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
+                <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center animate-pulse">
+                  <Link2 className="w-10 h-10 text-indigo-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Active Invitations</h3>
-                <p className="text-gray-500 mb-6">Create invitation codes to allow new administrators to join the system.</p>
+                <h3 className="text-xl font-bold text-slate-200 mb-2">No Active Invitations</h3>
+                <p className="text-slate-400 text-xs font-sans mb-6">Create invitation codes to allow new administrators to join the system.</p>
                 <button
                   onClick={() => setShowCreateForm(true)}
-                  className="inline-flex items-center px-4 py-2 rounded-xl bg-[#9580FF]/10 text-[#9580FF] text-sm font-medium hover:bg-[#9580FF]/20 transition-all duration-200"
+                  className="inline-flex items-center px-4 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider hover:bg-indigo-500/20 transition-all duration-200"
                 >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
+                  <PlusCircle className="w-4 h-4 mr-2" />
                   Create First Invite
                 </button>
               </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Star, Trophy } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -331,7 +332,7 @@ export default function AuctionResultsPage() {
                               <div className="flex items-center gap-2 flex-wrap">
                                 <h3 className="font-extrabold text-slate-800 text-base uppercase tracking-wide">{player.player_name}</h3>
                                 <span className="text-xs font-black text-amber-500">
-                                  ★ {player.overall_rating}
+                                  <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.overall_rating}
                                 </span>
                                 {player.player_team && (
                                   <span className="text-xs text-slate-400 uppercase font-bold">{player.player_team}</span>
@@ -453,7 +454,7 @@ export default function AuctionResultsPage() {
                                   </span>
                                   {bid.is_winner && (
                                     <span className="px-2 py-0.5 rounded-md bg-green-600 text-white text-xs font-bold">
-                                      🏆 WINNER
+                                      <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> WINNER
                                     </span>
                                   )}
                                 </div>

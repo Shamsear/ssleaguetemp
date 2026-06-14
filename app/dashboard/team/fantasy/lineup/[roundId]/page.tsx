@@ -1,5 +1,6 @@
 'use client';
 
+import { Flame, TrendingDown, TrendingUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -307,10 +308,10 @@ export default function WeeklyLineupSelector() {
 
   const getFormIcon = (formStatus?: string) => {
     switch (formStatus) {
-      case 'fire': return '🔥';
-      case 'hot': return '📈';
+      case 'fire': return '<Flame className="w-4 h-4 text-orange-500" />';
+      case 'hot': return '<TrendingUp className="w-4 h-4 text-emerald-500" />';
       case 'steady': return '➡️';
-      case 'cold': return '📉';
+      case 'cold': return '<TrendingDown className="w-4 h-4 text-rose-550" />';
       case 'frozen': return '❄️';
       default: return '';
     }

@@ -1,5 +1,7 @@
 'use client';
 
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { AlertCircle, BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Flame, Info, Settings, Star, TrendingUp, Trophy, User, Users } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
@@ -327,26 +329,26 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
 
     const { listenToSeasonRoundUpdates, listenToSquadUpdates, listenToWalletUpdates } = require('@/lib/realtime/listeners');
 
-    console.log('🔴 [Team Dashboard] Setting up Firebase listeners for season:', seasonStatus.seasonId);
+    console.log('[INFO] [Team Dashboard] Setting up Firebase listeners for season:', seasonStatus.seasonId);
 
     // Listen to round updates (started, finalized, status changes)
     const unsubRounds = listenToSeasonRoundUpdates(seasonStatus.seasonId, (message: any) => {
-      console.log('🔴 [Team Dashboard] Round update:', message.type, message);
+      console.log('[INFO] [Team Dashboard] Round update:', message.type, message);
 
       // Handle finalization completion event
       if (message.event_type === 'finalization_complete' && message.finalized) {
-        console.log('🎉 [Team Dashboard] Round finalization completed:', message.round_id);
+        console.log('[SUCCESS] [Team Dashboard] Round finalization completed:', message.round_id);
 
         // Show notification to user
         showAlert({
           type: 'success',
-          title: 'Round Finalized! 🎉',
+          title: 'Round Finalized!',
           message: `Auction results are now available. ${message.allocations_count || 0} player(s) have been allocated. Check your dashboard for updates!`,
         });
 
         // Also try browser notification if available
         if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          new Notification('Round Finalized! 🎉', {
+          new Notification('Round Finalized!', {
             body: `Auction results are now available. Check your dashboard for updates!`,
             icon: '/logo.png',
             tag: `round-finalized-${message.round_id}`,
@@ -370,7 +372,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
 
     // Listen to squad updates (player acquired/refunded)
     const unsubSquads = listenToSquadUpdates(seasonStatus.seasonId, (event: any) => {
-      console.log('📦 [Team Dashboard] Squad update:', event);
+      console.log('[INFO] [Team Dashboard] Squad update:', event);
 
       // Refetch if it's for this team or affects any team (could be tiebreaker result)
       if (!dashboardData?.team?.id || event.team_id === dashboardData.team.id) {
@@ -380,7 +382,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
 
     // Listen to wallet updates (balance changes)
     const unsubWallets = listenToWalletUpdates(seasonStatus.seasonId, (event: any) => {
-      console.log('💰 [Team Dashboard] Wallet update:', event);
+      console.log('[INFO] [Team Dashboard] Wallet update:', event);
 
       // Refetch if it's for this team
       if (!dashboardData?.team?.id || event.team_id === dashboardData.team.id) {
@@ -389,7 +391,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
     });
 
     return () => {
-      console.log('🔴 [Team Dashboard] Cleaning up Firebase listeners');
+      console.log('[INFO] [Team Dashboard] Cleaning up Firebase listeners');
       unsubRounds();
       unsubSquads();
       unsubWallets();
@@ -687,13 +689,13 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-3 text-xs font-mono text-slate-500">
                 {dashboardData?.owner && (
                   <div className="flex items-center gap-1.5">
-                    <span>👑 Owner:</span>
+                    <span><Crown className="w-4 h-4 text-amber-500 fill-amber-500" /> Owner:</span>
                     <span className="font-bold text-slate-700">{dashboardData.owner.name}</span>
                   </div>
                 )}
                 {dashboardData?.manager && (
                   <div className="flex items-center gap-1.5">
-                    <span>⚽ Manager:</span>
+                    <span><SoccerBallIcon className="w-4 h-4" /> Manager:</span>
                     <span className="font-bold text-slate-700">{dashboardData.manager.name}</span>
                   </div>
                 )}
@@ -746,7 +748,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-xl">
-                  👑
+                  <Crown className="w-4 h-4 text-amber-500 fill-amber-500" />
                 </div>
                 <div>
                   <h3 className="text-lg font-extrabold text-slate-900 leading-tight">Register Your Team Owner</h3>
@@ -787,7 +789,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-xl">
-                  ⚽
+                  <SoccerBallIcon className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-lg font-extrabold text-slate-900 leading-tight">Register Your Team Manager</h3>
@@ -828,7 +830,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm hover:border-amber-400/40 transition-all duration-250">
             <div className="flex items-center gap-3 mb-4 border-b border-slate-100 pb-3">
               <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-lg">
-                🔥
+                <Flame className="w-4 h-4 text-orange-500" />
               </div>
               <h3 className="font-extrabold text-slate-900 uppercase tracking-tight text-sm">Auction</h3>
             </div>
@@ -840,7 +842,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   href={`/dashboard/team/round/${round.id}`}
                   className="block w-full px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center"
                 >
-                  🔥 Round #{round.round_number}{round.position ? ` - ${round.position.includes(',') ? round.position.split(',').join(' + ') : round.position}` : ''}
+                  <Flame className="w-4 h-4 text-orange-500" /> Round #{round.round_number}{round.position ? ` - ${round.position.includes(',') ? round.position.split(',').join(' + ') : round.position}` : ''}
                 </Link>
               ))}
 
@@ -860,7 +862,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   key={round.id}
                   className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 text-xs font-mono font-bold uppercase tracking-wider text-center cursor-not-allowed"
                 >
-                  ⏳ Round #{round.round_number} - Pending
+                  <Clock className="w-4 h-4 text-slate-500" /> Round #{round.round_number} - Pending
                 </div>
               ))}
 
@@ -890,13 +892,13 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   href={`/dashboard/team/bulk-tiebreaker/${tiebreaker.id}`}
                   className="block w-full px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center animate-pulse"
                 >
-                  🚨 Bulk Tiebreaker - {tiebreaker.player.name}
+                  <AlertCircle className="w-4 h-4 text-rose-500" /> Bulk Tiebreaker - {tiebreaker.player.name}
                 </Link>
               ))}
 
               {activeBids.length > 0 && (
                 <button onClick={() => setActiveTab('auctions')} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                  📋 {activeBids.length} Active Bid{activeBids.length > 1 ? 's' : ''}
+                  <ClipboardList className="w-4 h-4 text-slate-500" /> {activeBids.length} Active Bid{activeBids.length > 1 ? 's' : ''}
                 </button>
               )}
 
@@ -906,7 +908,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
 
               {roundResults.length > 0 && (
                 <button onClick={() => setActiveTab('results')} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                  📊 View Results
+                  <BarChart2 className="w-4 h-4 text-slate-500" /> View Results
                 </button>
               )}
 
@@ -920,22 +922,22 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm hover:border-amber-400/40 transition-all duration-250">
             <div className="flex items-center gap-3 mb-4 border-b border-slate-100 pb-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-lg">
-                ⚽
+                <SoccerBallIcon className="w-4 h-4" />
               </div>
               <h3 className="font-extrabold text-slate-900 uppercase tracking-tight text-sm">Team</h3>
             </div>
             <div className="space-y-2">
               <button onClick={() => setActiveTab('squad')} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                ⚽ My Squad ({stats.playerCount}/{team.football_total_slots || MAX_PLAYERS_PER_TEAM})
+                <SoccerBallIcon className="w-4 h-4" /> My Squad ({stats.playerCount}/{team.football_total_slots || MAX_PLAYERS_PER_TEAM})
               </button>
               <Link href="/dashboard/team/real-players" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                👥 Real Players
+                <Users className="w-4 h-4 text-slate-500" /> Real Players
               </Link>
               <Link href="/dashboard/team/footballplayers" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
                 🏈 Auction Players
               </Link>
               <Link href="/dashboard/team/players-database" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                📊 My Players
+                <BarChart2 className="w-4 h-4 text-slate-500" /> My Players
               </Link>
             </div>
           </div>
@@ -944,37 +946,37 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm hover:border-amber-400/40 transition-all duration-250">
             <div className="flex items-center gap-3 mb-4 border-b border-slate-100 pb-3">
               <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-lg">
-                🏆
+                <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />
               </div>
               <h3 className="font-extrabold text-slate-900 uppercase tracking-tight text-sm">Competition</h3>
             </div>
             <div className="space-y-2">
               <Link href="/dashboard/team/matches" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                📅 Matches
+                <Calendar className="w-4 h-4 text-slate-500" /> Matches
               </Link>
               <Link href="/dashboard/team/all-teams" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                👥 All Teams
+                <Users className="w-4 h-4 text-slate-500" /> All Teams
               </Link>
               <Link href="/dashboard/team/team-leaderboard" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                🏆 Team Standings
+                <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Team Standings
               </Link>
               <Link href="/dashboard/team/player-leaderboard" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                📋 Player Stats
+                <ClipboardList className="w-4 h-4 text-slate-500" /> Player Stats
               </Link>
               <Link href={`/awards/season/${seasonStatus.seasonId}`} className="block w-full px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
                 🏅 Season Awards
               </Link>
               <Link href="/dashboard/team/player-stats" className="block w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                ⭐ Player Point Change
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Player Point Change
               </Link>
               <Link href="/dashboard/team/my-player-stats" className="block w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                📊 My Player Stats
+                <BarChart2 className="w-4 h-4 text-slate-500" /> My Player Stats
               </Link>
               <Link href="/dashboard/team/fantasy/my-team" className="block w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                ⭐ Fantasy
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Fantasy
               </Link>
               <Link href="/rules" className="block w-full px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                📋 Rules
+                <ClipboardList className="w-4 h-4 text-slate-500" /> Rules
               </Link>
             </div>
           </div>
@@ -983,7 +985,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm hover:border-amber-400/40 transition-all duration-250">
             <div className="flex items-center gap-3 mb-4 border-b border-slate-100 pb-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-lg">
-                ⚙️
+                <Settings className="w-4 h-4 text-slate-500" />
               </div>
               <h3 className="font-extrabold text-slate-900 uppercase tracking-tight text-sm">Planning</h3>
             </div>
@@ -992,13 +994,13 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 💰 Budget Planner
               </Link>
               <Link href="/dashboard/team/real-players-planner" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                👥 Real Players Planner
+                <Users className="w-4 h-4 text-slate-500" /> Real Players Planner
               </Link>
               <Link href="/dashboard/team/transactions" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
                 💳 Transactions
               </Link>
               <Link href="/dashboard/team/profile/edit" className="block w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                ⚙️ Settings
+                <Settings className="w-4 h-4 text-slate-500" /> Settings
               </Link>
             </div>
           </div>
@@ -1010,7 +1012,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-xl">
-                  🚨
+                  <AlertCircle className="w-4 h-4 text-rose-500" />
                 </div>
                 <div>
                   <h2 className="text-lg font-extrabold text-rose-600 uppercase tracking-tight">URGENT: Active Tiebreakers</h2>
@@ -1063,7 +1065,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
             }`}
           >
-            🔥 Auctions {(activeRounds.length > 0 || activeBids.length > 0 || (pendingRounds && pendingRounds.length > 0)) && `(${activeRounds.length + activeBids.length + (pendingRounds?.length || 0)})`}
+            <Flame className="w-4 h-4 text-orange-500" /> Auctions {(activeRounds.length > 0 || activeBids.length > 0 || (pendingRounds && pendingRounds.length > 0)) && `(${activeRounds.length + activeBids.length + (pendingRounds?.length || 0)})`}
           </button>
           <button
             onClick={() => setActiveTab('squad')}
@@ -1073,7 +1075,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
             }`}
           >
-            ⚽ Squad {players.length > 0 && `(${players.length})`}
+            <SoccerBallIcon className="w-4 h-4" /> Squad {players.length > 0 && `(${players.length})`}
           </button>
           <button
             onClick={() => setActiveTab('results')}
@@ -1083,7 +1085,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
             }`}
           >
-            📊 Results {roundResults.length > 0 && `(${roundResults.length})`}
+            <BarChart2 className="w-4 h-4 text-slate-500" /> Results {roundResults.length > 0 && `(${roundResults.length})`}
           </button>
           <button
             onClick={() => setActiveTab('overview')}
@@ -1093,7 +1095,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
             }`}
           >
-            📈 Overview
+            <TrendingUp className="w-4 h-4 text-emerald-500" /> Overview
           </button>
           {dashboardData?.hasFantasyTeam && (
             <button
@@ -1104,7 +1106,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
               }`}
             >
-              ⭐ Fantasy
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Fantasy
             </button>
           )}
         </div>
@@ -1143,11 +1145,11 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                             )}
                             {round.submission_status?.submitted ? (
                               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 uppercase tracking-wide">
-                                ✓ Submitted ({round.submission_status.bid_count} bids)
+                                Submitted ({round.submission_status.bid_count} bids)
                               </div>
                             ) : (
                               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-50 border border-amber-200 text-amber-800 uppercase tracking-wide animate-pulse">
-                                ⚠️ Not Submitted
+                                Not Submitted
                               </div>
                             )}
                           </div>
@@ -1171,7 +1173,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                         href={round.round_type === 'bulk' ? `/dashboard/team/bulk-round/${round.id}` : `/dashboard/team/round/${round.id}`}
                         className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider"
                       >
-                        {round.round_type === 'bulk' ? 'Enter Bulk Round →' : 'Enter Round →'}
+                        {round.round_type === 'bulk' ? 'Enter Bulk Round {"->"}' : 'Enter Round {"->"}'}
                       </Link>
                     </div>
                   ))}
@@ -1186,7 +1188,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                               Round #{round.round_number}{round.position ? ` - ${round.position.includes(',') ? round.position.split(',').join(' + ') : round.position}` : ''}
                             </h3>
                             <span className="inline-flex items-center px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-800 text-xs font-mono font-bold uppercase">
-                              ⏳ PENDING
+                              <Clock className="w-4 h-4 text-slate-500" /> PENDING
                             </span>
                           </div>
                           <p className="text-xs text-slate-400 font-sans mt-1">
@@ -1195,7 +1197,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 p-4 rounded-xl bg-amber-50 border border-amber-100">
-                        <span className="text-lg">⏳</span>
+                        <span className="text-lg"><Clock className="w-4 h-4 text-slate-500" /></span>
                         <p className="text-xs text-amber-800 font-sans leading-relaxed">
                           <span className="font-bold">Results Pending:</span> The committee is reviewing the auction results. They will be published soon.
                         </p>
@@ -1211,7 +1213,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                           <h3 className="text-lg font-extrabold text-slate-900 uppercase tracking-tight">My Active Bids ({activeBids.length})</h3>
                           <div className="flex items-center gap-2 mt-1">
                             <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 uppercase tracking-wide">
-                              ✓ {activeBids.length} bid{activeBids.length > 1 ? 's' : ''} submitted & confirmed
+                              <Check className="w-4 h-4 text-emerald-500" /> {activeBids.length} bid{activeBids.length > 1 ? 's' : ''} submitted & confirmed
                             </div>
                           </div>
                         </div>
@@ -1371,7 +1373,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   {team.real_players && team.real_players.length > 0 && (
                     <div className="mt-8 pt-8 border-t border-slate-200/40">
                       <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
-                        <span>👥 Real Players (SS Members)</span>
+                        <span><Users className="w-4 h-4 text-slate-500" /> Real Players (SS Members)</span>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-50 border border-amber-200 text-amber-800 uppercase tracking-wide">
                           {team.real_players.length}
                         </span>
@@ -1387,10 +1389,10 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                                     ? 'bg-amber-100 border border-amber-200 text-amber-800'
                                     : 'bg-slate-200 border border-slate-300 text-slate-700'
                                     }`}>
-                                    {player.category === 'legend' ? '⭐ Legend' : 'Classic'}
+                                    {player.category === 'legend' ? '<Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Legend' : 'Classic'}
                                   </span>
                                   <span className="text-[10px] text-amber-500 tracking-wider">
-                                    {'★'.repeat(player.starRating)}{'☆'.repeat(10 - player.starRating)}
+                                    {'<Star className="w-4 h-4 text-amber-400 fill-amber-400" />'.repeat(player.starRating)}{'<Star className="w-4 h-4 text-slate-300" />'.repeat(10 - player.starRating)}
                                   </span>
                                 </div>
                               </div>
@@ -1648,7 +1650,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider font-mono mb-3">Quick Links</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-center">
                   <Link href="/dashboard/team/profile" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
-                    <div className="text-3xl mb-2">👤</div>
+                    <div className="text-3xl mb-2"><User className="w-4 h-4 text-slate-500" /></div>
                     <div className="font-bold text-slate-800 text-sm uppercase">Team Profile</div>
                   </Link>
                   <Link href="/dashboard/team/budget-planner" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
@@ -1656,11 +1658,11 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                     <div className="font-bold text-slate-800 text-sm uppercase">Budget Planner</div>
                   </Link>
                   <Link href="/dashboard/team/real-players-planner" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
-                    <div className="text-3xl mb-2">👥</div>
+                    <div className="text-3xl mb-2"><Users className="w-4 h-4 text-slate-500" /></div>
                     <div className="font-bold text-slate-800 text-sm uppercase">Real Players Planner</div>
                   </Link>
                   <Link href="/dashboard/team/matches" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
-                    <div className="text-3xl mb-2">📅</div>
+                    <div className="text-3xl mb-2"><Calendar className="w-4 h-4 text-slate-500" /></div>
                     <div className="font-bold text-slate-800 text-sm uppercase">Match Schedule</div>
                   </Link>
                 </div>
@@ -1677,7 +1679,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   href="/dashboard/team/fantasy/my-team"
                   className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
                 >
-                  View Full Stats →
+                  View Full Stats {"->"}
                 </Link>
               </div>
 
@@ -1691,7 +1693,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   href="/dashboard/team/fantasy/my-team"
                   className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250 border-l-4 border-amber-500"
                 >
-                  <div className="text-3xl mb-2">⚽</div>
+                  <div className="text-3xl mb-2"><SoccerBallIcon className="w-4 h-4" /></div>
                   <div className="font-bold text-slate-800 text-sm uppercase">My Fantasy Team</div>
                   <div className="text-xs text-slate-400 mt-1 font-sans">View your squad and stats</div>
                 </Link>
@@ -1700,7 +1702,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   href="/dashboard/team/fantasy/leaderboard"
                   className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250 border-l-4 border-amber-500"
                 >
-                  <div className="text-3xl mb-2">🏆</div>
+                  <div className="text-3xl mb-2"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /></div>
                   <div className="font-bold text-slate-800 text-sm uppercase">Leaderboard</div>
                   <div className="text-xs text-slate-400 mt-1 font-sans">Check your ranking</div>
                 </Link>
@@ -1727,7 +1729,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   href="/dashboard/team/fantasy/all-teams"
                   className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250 border-l-4 border-rose-500"
                 >
-                  <div className="text-3xl mb-2">👥</div>
+                  <div className="text-3xl mb-2"><Users className="w-4 h-4 text-slate-500" /></div>
                   <div className="font-bold text-slate-800 text-sm uppercase">All Teams</div>
                   <div className="text-xs text-slate-400 mt-1 font-sans">View all fantasy teams</div>
                 </Link>
@@ -1737,7 +1739,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 border-l-4 border-amber-500">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-lg shrink-0">
-                    ℹ️
+                    <Info className="w-4 h-4 text-blue-500" />
                   </div>
                   <div className="flex-1 font-sans">
                     <h4 className="font-bold text-slate-800 text-sm mb-1">About Fantasy League</h4>

@@ -1,5 +1,7 @@
 'use client';
 
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { BarChart2, Trophy } from 'lucide-react';
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -135,7 +137,7 @@ export default function TeamPointsBreakdownPage() {
                         href="/dashboard/team/fantasy/my-team"
                         className="text-blue-600 hover:text-blue-700 font-semibold"
                     >
-                        ← Back to My Team
+                        {"<-"} Back to My Team
                     </Link>
                 </div>
             </div>
@@ -171,7 +173,7 @@ export default function TeamPointsBreakdownPage() {
                         <p className="text-blue-100 text-sm mb-3">Owner: {team.owner_name}</p>
                         {team.supported_team_name && (
                             <p className="text-blue-100 text-sm mb-3">
-                                🏆 Supporting: <span className="font-semibold">{team.supported_team_name}</span>
+                                <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Supporting: <span className="font-semibold">{team.supported_team_name}</span>
                             </p>
                         )}
                         <div className="grid grid-cols-3 gap-4 text-center">
@@ -194,7 +196,7 @@ export default function TeamPointsBreakdownPage() {
 
                     {/* Round-by-Round Breakdown */}
                     <div className="p-6">
-                        <h3 className="text-xl font-bold text-gray-900 mb-4">📊 Round-by-Round Breakdown</h3>
+                        <h3 className="text-xl font-bold text-gray-900 mb-4"><BarChart2 className="w-4 h-4 text-slate-500" /> Round-by-Round Breakdown</h3>
 
                         <div className="space-y-4">
                             {team.round_totals.map((roundTotal) => {
@@ -239,7 +241,7 @@ export default function TeamPointsBreakdownPage() {
                                                 {passiveData && passiveData.matches.length > 0 && (
                                                     <div className="mb-4">
                                                         <h4 className="font-semibold text-gray-900 mb-3">
-                                                            🏆 Passive Points (Team Bonuses)
+                                                            <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Passive Points (Team Bonuses)
                                                         </h4>
                                                         <div className="space-y-2">
                                                             {passiveData.matches.map((match, idx) => (
@@ -281,7 +283,7 @@ export default function TeamPointsBreakdownPage() {
                                                 {/* Active Points (Player Performance) */}
                                                 <div>
                                                     <h4 className="font-semibold text-gray-900 mb-3">
-                                                        ⚽ Active Points (Player Performance)
+                                                        <SoccerBallIcon className="w-4 h-4" /> Active Points (Player Performance)
                                                     </h4>
                                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                                                         {team.players

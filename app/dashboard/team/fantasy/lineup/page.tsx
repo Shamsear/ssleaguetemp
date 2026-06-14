@@ -1,5 +1,6 @@
 'use client';
 
+import { Star, Trophy } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -218,7 +219,7 @@ export default function LineupPage() {
                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
                     >
-                      {captainId === player.real_player_id ? '⭐ C' : 'C'}
+                      {captainId === player.real_player_id ? '<Star className="w-4 h-4 text-amber-400 fill-amber-400" /> C' : 'C'}
                     </button>
                     
                     <button
@@ -230,7 +231,7 @@ export default function LineupPage() {
                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
                     >
-                      {viceCaptainId === player.real_player_id ? '🥈 VC' : 'VC'}
+                      {viceCaptainId === player.real_player_id ? '<Trophy className="w-4 h-4 text-slate-400 fill-slate-400" /> VC' : 'VC'}
                     </button>
                     
                     <button

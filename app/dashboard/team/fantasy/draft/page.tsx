@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Shield, DollarSign, Users, TrendingUp, Sparkles, Check, X, Filter, Trash2, Lock, Edit } from 'lucide-react';
+import { Check, DollarSign, Edit, Filter, Lock, Save, Shield, Sparkles, Star, Trash2, TrendingUp, Trophy, Users, X } from 'lucide-react';
 import { useAutoCloseDraft } from '@/hooks/useAutoCloseDraft';
 // Firebase Realtime DB handles draft status updates automatically
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
@@ -319,7 +319,7 @@ export default function TeamDraftPage() {
       });
 
       if (res.ok) {
-        alert('✅ Captain and Vice-Captain saved successfully!');
+        alert('[SUCCESS] Captain and Vice-Captain saved successfully!');
         await loadDraftData();
       } else {
         const error = await res.json();
@@ -338,18 +338,18 @@ export default function TeamDraftPage() {
 
     // Validation 1: Minimum players (at least 1)
     if (mySquad.length === 0) {
-      alert('❌ Please draft at least one player before submitting');
+      alert('[ERROR] Please draft at least one player before submitting');
       return;
     }
 
     // Validation 2: Passive team selection (supported team)
     if (!myTeam.supported_team_id || !myTeam.supported_team_name) {
-      alert('❌ Please select a Supported Team for passive points before submitting.\n\nScroll down to the "Select Your Supported Team" section.');
+      alert('[ERROR] Please select a Supported Team for passive points before submitting.\n\nScroll down to the "Select Your Supported Team" section.');
       return;
     }
 
     // Show summary before confirming
-    const confirmMessage = `Submit your draft?\n\n✓ Players: ${mySquad.length}\n✓ Supported Team: ${myTeam.supported_team_name}\n\n⚠️ Remember to set your lineup (5 starters + captain/VC) after submitting!`;
+    const confirmMessage = `Submit your draft?\n\nPlayers: ${mySquad.length}\nSupported Team: ${myTeam.supported_team_name}\n\n[WARNING] Remember to set your lineup (5 starters + captain/VC) after submitting!`;
     
     if (!confirm(confirmMessage)) {
       return;
@@ -733,7 +733,7 @@ export default function TeamDraftPage() {
                   <option value="all">All Stars</option>
                   {starRatings.map(rating => (
                     <option key={rating} value={rating}>
-                      {rating}★ Stars
+                      {rating}<Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Stars
                     </option>
                   ))}
                 </select>
@@ -857,7 +857,7 @@ export default function TeamDraftPage() {
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
-                        {captainId === player.real_player_id ? '⭐ Captain' : 'Captain'}
+                        {captainId === player.real_player_id ? '<Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Captain' : 'Captain'}
                       </button>
                       <button
                         onClick={() => setViceCaptainId(player.real_player_id)}
@@ -867,7 +867,7 @@ export default function TeamDraftPage() {
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
-                        {viceCaptainId === player.real_player_id ? '🥈 Vice' : 'Vice'}
+                        {viceCaptainId === player.real_player_id ? '<Trophy className="w-4 h-4 text-slate-400 fill-slate-400" /> Vice' : 'Vice'}
                       </button>
                     </div>
                   </div>
@@ -886,7 +886,7 @@ export default function TeamDraftPage() {
                     disabled={isSavingCaptains || !captainId || !viceCaptainId}
                     className="w-full px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isSavingCaptains ? 'Saving...' : '💾 Save Captain & Vice-Captain'}
+                    {isSavingCaptains ? 'Saving...' : '<Save className="w-4 h-4 text-slate-500" /> Save Captain & Vice-Captain'}
                   </button>
                   <p className="text-xs text-gray-500 mt-2 text-center">
                     Captain gets 2x points • Vice-Captain gets 1.5x points
@@ -909,7 +909,7 @@ export default function TeamDraftPage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">⭐ Don't Forget Captain & Vice-Captain!</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Don't Forget Captain & Vice-Captain!</h3>
                   <p className="text-sm text-gray-600">
                     Select your captain (2x points) and vice-captain (1.5x points) from your squad above, then click "Save Captain & Vice-Captain" to lock in your choices.
                   </p>

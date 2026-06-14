@@ -1,5 +1,7 @@
 'use client';
 
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { Star, User, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -202,7 +204,7 @@ export default function RealPlayersPage() {
             href="/dashboard/team"
             className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
-            ← Back to Dashboard
+            {"<-"} Back to Dashboard
           </Link>
         </div>
 
@@ -249,7 +251,7 @@ export default function RealPlayersPage() {
               >
                 <option value="all">All Stars</option>
                 {uniqueStarRatings.map(rating => (
-                  <option key={rating} value={rating}>{rating} ⭐</option>
+                  <option key={rating} value={rating}>{rating} <Star className="w-4 h-4 text-amber-400 fill-amber-400" /></option>
                 ))}
               </select>
             </div>
@@ -296,7 +298,7 @@ export default function RealPlayersPage() {
         <div className="block lg:hidden">
           {filteredPlayers.length === 0 ? (
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-12 text-center shadow-sm max-w-md mx-auto">
-              <div className="text-4xl mb-3">👥</div>
+              <div className="text-4xl mb-3"><Users className="w-4 h-4 text-slate-500" /></div>
               <h3 className="text-lg font-extrabold text-slate-900 leading-tight">No Players Found</h3>
               <p className="text-xs text-slate-400 font-sans mt-1">
                 {searchTerm || starFilter !== 'all' || teamFilter !== 'all'
@@ -363,7 +365,7 @@ export default function RealPlayersPage() {
                         <span className="text-[10px] text-slate-400 uppercase font-bold">PTS</span>
                       </div>
                       <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800">
-                        <span>⚽</span>
+                        <span><SoccerBallIcon className="w-4 h-4" /></span>
                         <span className="font-bold">{player.goals_scored || 0}</span>
                       </div>
                       <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-700">
@@ -372,7 +374,7 @@ export default function RealPlayersPage() {
                       </div>
                       <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
                         <span className="font-bold">{player.star_rating || 3}</span>
-                        <span>⭐</span>
+                        <span><Star className="w-4 h-4 text-amber-400 fill-amber-400" /></span>
                       </div>
                     </div>
                   </div>
@@ -391,7 +393,7 @@ export default function RealPlayersPage() {
         <div className="hidden lg:block">
           {filteredPlayers.length === 0 ? (
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-12 text-center shadow-sm max-w-md mx-auto">
-              <div className="text-4xl mb-3">👥</div>
+              <div className="text-4xl mb-3"><Users className="w-4 h-4 text-slate-500" /></div>
               <h3 className="text-lg font-extrabold text-slate-900 leading-tight">No Players Found</h3>
               <p className="text-xs text-slate-400 font-sans mt-1">
                 {searchTerm || starFilter !== 'all' || teamFilter !== 'all'
@@ -453,7 +455,7 @@ export default function RealPlayersPage() {
                           </span>
                         )}
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-50 border border-amber-200 text-amber-800">
-                          {player.star_rating || 3} ⭐
+                          {player.star_rating || 3} <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                         </span>
                       </div>
                     </div>

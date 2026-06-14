@@ -1,5 +1,6 @@
 'use client';
 
+import { XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
 import { useRouter } from 'next/navigation';
@@ -60,7 +61,7 @@ export default function TeamLeaderboardPage() {
           console.log('⚠️ [Leaderboard] No active season found');
         }
       } catch (error) {
-        console.error('❌ [Leaderboard] Error fetching team season:', error);
+        console.error('<XCircle className="w-4 h-4 text-rose-500" /> [Leaderboard] Error fetching team season:', error);
       }
     };
 

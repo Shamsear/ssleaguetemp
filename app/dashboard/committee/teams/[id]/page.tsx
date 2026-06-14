@@ -1,4 +1,5 @@
 'use client';
+import { ECoinIcon, SSCoinIcon } from '@/components/ui/CustomIcons';
 import { DollarSign, Star, Activity } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -335,7 +336,7 @@ export default function TeamDetailPage() {
             <>
               <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
                 <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">eCoin Budget Left</span>
-                <div className="text-xl font-black text-blue-600">💶 {(team.euro_balance || 0).toLocaleString()}</div>
+                <div className="text-xl font-black text-blue-600"><ECoinIcon className="w-4 h-4" /> {(team.euro_balance || 0).toLocaleString()}</div>
                 <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-1">
                   Spent: {(team.euro_spent || 0).toLocaleString()}
                 </div>
@@ -343,7 +344,7 @@ export default function TeamDetailPage() {
 
               <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
                 <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">SSCoin Budget Left</span>
-                <div className="text-xl font-black text-purple-600">🪙 {(team.dollar_balance || 0).toLocaleString()}</div>
+                <div className="text-xl font-black text-purple-600"><SSCoinIcon className="w-4 h-4" /> {(team.dollar_balance || 0).toLocaleString()}</div>
                 <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-1">
                   Spent: {(team.dollar_spent || 0).toLocaleString()}
                 </div>
