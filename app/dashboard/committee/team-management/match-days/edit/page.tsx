@@ -10,6 +10,15 @@ import { getISTToday, parseISTDate, createISTDateTime, formatISTDateTime } from 
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  AlertTriangle,
+  Info,
+  Save,
+  Check
+} from 'lucide-react';
 
 function EditRoundDeadlinesContent() {
   const { user, loading } = useAuth();
@@ -254,8 +263,8 @@ function EditRoundDeadlinesContent() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading...</p>
         </div>
       </div>
     );
@@ -266,40 +275,49 @@ function EditRoundDeadlinesContent() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-          <div className="mb-4 sm:mb-0">
-            <h1 className="text-3xl md:text-4xl font-bold gradient-text">Edit Match Round Deadlines</h1>
-            <p className="text-gray-500 mt-1">
-              Round {roundNumber} ({leg === 'first' ? '1st' : '2nd'} Leg) - {seasonName}
-            </p>
-          </div>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Decorative glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative z-10 space-y-6">
+        {/* Navigation & Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <Link
             href="/dashboard/committee/team-management/match-days"
-            className="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Dashboard
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
           </Link>
         </div>
 
-        {/* Edit Form */}
-        <div className="bg-white/90 backdrop-blur-md shadow-xl rounded-2xl overflow-hidden border border-gray-100">
-          <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 px-6 py-4 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-800">Deadline Configuration</h2>
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <Clock className="w-6 h-6 text-amber-400" />
+            </div>
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">DEADLINE OVERRIDE</span>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                Edit Match Round Deadlines
+              </h1>
+              <p className="text-xs text-slate-550 font-mono mt-1">
+                Round {roundNumber} ({leg === 'first' ? '1st' : '2nd'} Leg) — {seasonName || 'Active Season'}
+              </p>
+            </div>
           </div>
-          <div className="p-6">
-            <form onSubmit={handleSubmit}>
+        </div>
+
+        {/* Edit Form Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+          <div className="border-b border-slate-100 pb-4 mb-6">
+            <h2 className="text-base font-extrabold text-slate-900 tracking-tight uppercase">Deadline Configuration</h2>
+          </div>
+          <div className="p-0">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="home_deadline_time" className="block text-sm font-medium text-gray-700 mb-2">
-                    <svg className="inline w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
+                  <label htmlFor="home_deadline_time" className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2 flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-blue-500" />
                     Home Fixture Deadline Time
                   </label>
                   <input
@@ -307,17 +325,15 @@ function EditRoundDeadlinesContent() {
                     id="home_deadline_time"
                     value={homeTime}
                     onChange={(e) => setHomeTime(e.target.value)}
-                    className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white/80"
+                    className="block w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-1">Daily time when home teams can no longer create fixtures</p>
+                  <p className="text-[10px] text-slate-500 mt-1 font-mono">Daily time when home teams can no longer create fixtures</p>
                 </div>
 
                 <div>
-                  <label htmlFor="away_deadline_time" className="block text-sm font-medium text-gray-700 mb-2">
-                    <svg className="inline w-4 h-4 mr-1 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
+                  <label htmlFor="away_deadline_time" className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2 flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-cyan-500" />
                     Away Fixture Deadline Time
                   </label>
                   <input
@@ -325,26 +341,24 @@ function EditRoundDeadlinesContent() {
                     id="away_deadline_time"
                     value={awayTime}
                     onChange={(e) => setAwayTime(e.target.value)}
-                    className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white/80"
+                    className="block w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-1">Daily time when away teams can no longer modify fixtures</p>
+                  <p className="text-[10px] text-slate-500 mt-1 font-mono">Daily time when away teams can no longer modify fixtures</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="result_deadline_day_offset" className="block text-sm font-medium text-gray-700 mb-2">
-                    <svg className="inline w-4 h-4 mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                  <label htmlFor="result_deadline_day_offset" className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2 flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-emerald-500" />
                     Result Entry Day Offset
                   </label>
                   <select
                     id="result_deadline_day_offset"
                     value={resultDayOffset}
                     onChange={(e) => setResultDayOffset(parseInt(e.target.value))}
-                    className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white/80"
+                    className="block w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all cursor-pointer"
                     required
                   >
                     <option value="0">Same day (Day 0)</option>
@@ -354,14 +368,12 @@ function EditRoundDeadlinesContent() {
                     <option value="4">4 days later (Day 4)</option>
                     <option value="7">1 week later (Day 7)</option>
                   </select>
-                  <p className="text-xs text-gray-500 mt-1">How many days after match day results are due</p>
+                  <p className="text-[10px] text-slate-500 mt-1 font-mono">How many days after match day results are due</p>
                 </div>
 
                 <div>
-                  <label htmlFor="result_deadline_time" className="block text-sm font-medium text-gray-700 mb-2">
-                    <svg className="inline w-4 h-4 mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                  <label htmlFor="result_deadline_time" className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2 flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-emerald-500" />
                     Result Entry Deadline Time
                   </label>
                   <input
@@ -369,18 +381,16 @@ function EditRoundDeadlinesContent() {
                     id="result_deadline_time"
                     value={resultTime}
                     onChange={(e) => setResultTime(e.target.value)}
-                    className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white/80"
+                    className="block w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-1">Time when results are due on the deadline day (IST)</p>
+                  <p className="text-[10px] text-slate-500 mt-1 font-mono">Time when results are due on the deadline day (IST)</p>
                 </div>
               </div>
 
-              <div className="mt-6">
-                <label htmlFor="scheduled_date" className="block text-sm font-medium text-gray-700 mb-2">
-                  <svg className="inline w-4 h-4 mr-1 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
+              <div>
+                <label htmlFor="scheduled_date" className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2 flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4 text-amber-500" />
                   Scheduled Date
                 </label>
                 <div className="flex gap-2">
@@ -389,132 +399,113 @@ function EditRoundDeadlinesContent() {
                     id="scheduled_date"
                     value={scheduledDate}
                     onChange={(e) => setScheduledDate(e.target.value)}
-                    className="block flex-1 rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white/80"
+                    className="block flex-1 px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setScheduledDate(getISTToday())}
-                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-xl transition-colors duration-200 whitespace-nowrap"
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase rounded-xl transition-all cursor-pointer whitespace-nowrap border border-slate-900"
                   >
                     Today
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">When this round is planned to be played (used for deadline calculations in IST)</p>
+                <p className="text-[10px] text-slate-500 mt-1 font-mono">When this round is planned to be played (used for deadline calculations in IST)</p>
               </div>
 
               {/* Deadline Preview */}
-              <div className="mt-8 p-4 bg-blue-50/50 border border-blue-200/50 rounded-xl">
-                <div className="flex items-center mb-3">
-                  <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <h3 className="text-sm font-medium text-blue-800">Deadline Preview</h3>
+              <div className="mt-8 p-5 bg-slate-50 border border-slate-200/60 rounded-3xl space-y-4">
+                <div className="flex items-center gap-2 border-b border-slate-200/60 pb-3">
+                  <Info className="w-4.5 h-4.5 text-blue-500" />
+                  <h3 className="text-xs font-extrabold uppercase text-slate-800 tracking-wider">Deadline Preview</h3>
                 </div>
-                
+
                 {calculatedDeadlines ? (
-                  <div className="space-y-4">
-                    <div className="text-sm text-blue-700">
-                      <div className="mb-2"><strong>Scheduled Match Day:</strong></div>
-                      <div className="pl-2 text-blue-900 font-medium">{calculatedDeadlines.scheduledDateFormatted}</div>
+                  <div className="space-y-4 font-mono">
+                    <div className="text-xs text-slate-650">
+                      <div className="mb-1 uppercase font-black tracking-wider text-[10px] text-slate-500">Scheduled Match Day:</div>
+                      <div className="pl-3 text-slate-900 font-extrabold text-sm border-l-2 border-amber-500">{calculatedDeadlines.scheduledDateFormatted}</div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-start p-3 bg-white/50 border border-blue-200/30 rounded-lg">
-                        <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                          </svg>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="bg-white border border-slate-200/60 p-3 rounded-2xl space-y-1 shadow-sm">
+                        <div className="text-[9px] font-black uppercase text-blue-700 tracking-wider mb-1 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                          Home Deadline
                         </div>
-                        <div className="flex-1">
-                          <div className="text-xs font-medium text-blue-800 mb-1">Home Fixture Deadline</div>
-                          <div className="text-sm font-semibold text-blue-900">
-                            {calculatedDeadlines.home.toLocaleDateString('en-IN', { 
-                              weekday: 'short',
-                              month: 'short',
-                              day: 'numeric',
-                              timeZone: 'Asia/Kolkata'
-                            })}
-                            {' at '}
-                            {calculatedDeadlines.home.toLocaleTimeString('en-IN', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              timeZone: 'Asia/Kolkata'
-                            })}
-                            {' IST'}
-                          </div>
-                          <div className="text-xs text-blue-600 mt-1">Home teams must create fixtures before this time</div>
+                        <div className="text-xs font-black text-slate-900">
+                          {calculatedDeadlines.home.toLocaleDateString('en-IN', {
+                            month: 'short',
+                            day: 'numeric',
+                            timeZone: 'Asia/Kolkata'
+                          })}
+                          {' @ '}
+                          {calculatedDeadlines.home.toLocaleTimeString('en-IN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                            timeZone: 'Asia/Kolkata'
+                          })}
                         </div>
+                        <div className="text-[8px] text-slate-500 leading-tight mt-1">Home teams must create fixtures before this time</div>
                       </div>
 
-                      <div className="flex items-start p-3 bg-white/50 border border-cyan-200/30 rounded-lg">
-                        <div className="flex-shrink-0 w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center mr-3">
-                          <svg className="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                          </svg>
+                      <div className="bg-white border border-slate-200/60 p-3 rounded-2xl space-y-1 shadow-sm">
+                        <div className="text-[9px] font-black uppercase text-cyan-700 tracking-wider mb-1 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></span>
+                          Away Deadline
                         </div>
-                        <div className="flex-1">
-                          <div className="text-xs font-medium text-cyan-800 mb-1">Away Fixture Deadline</div>
-                          <div className="text-sm font-semibold text-cyan-900">
-                            {calculatedDeadlines.away.toLocaleDateString('en-IN', { 
-                              weekday: 'short',
-                              month: 'short',
-                              day: 'numeric',
-                              timeZone: 'Asia/Kolkata'
-                            })}
-                            {' at '}
-                            {calculatedDeadlines.away.toLocaleTimeString('en-IN', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              timeZone: 'Asia/Kolkata'
-                            })}
-                            {' IST'}
-                          </div>
-                          <div className="text-xs text-cyan-600 mt-1">Away teams can modify fixtures until this time</div>
+                        <div className="text-xs font-black text-slate-900">
+                          {calculatedDeadlines.away.toLocaleDateString('en-IN', {
+                            month: 'short',
+                            day: 'numeric',
+                            timeZone: 'Asia/Kolkata'
+                          })}
+                          {' @ '}
+                          {calculatedDeadlines.away.toLocaleTimeString('en-IN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                            timeZone: 'Asia/Kolkata'
+                          })}
                         </div>
+                        <div className="text-[8px] text-slate-500 leading-tight mt-1">Away teams can modify fixtures until this time</div>
                       </div>
 
-                      <div className="flex items-start p-3 bg-white/50 border border-green-200/30 rounded-lg">
-                        <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                      <div className="bg-white border border-slate-200/60 p-3 rounded-2xl space-y-1 shadow-sm">
+                        <div className="text-[9px] font-black uppercase text-emerald-700 tracking-wider mb-1 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          Result Deadline
                         </div>
-                        <div className="flex-1">
-                          <div className="text-xs font-medium text-green-800 mb-1">Result Entry Deadline</div>
-                          <div className="text-sm font-semibold text-green-900">
-                            {calculatedDeadlines.result.toLocaleDateString('en-IN', { 
-                              weekday: 'short',
-                              month: 'short',
-                              day: 'numeric',
-                              timeZone: 'Asia/Kolkata'
-                            })}
-                            {' at '}
-                            {calculatedDeadlines.result.toLocaleTimeString('en-IN', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              timeZone: 'Asia/Kolkata'
-                            })}
-                            {' IST'}
-                          </div>
-                          <div className="text-xs text-green-600 mt-1">
-                            Results must be entered by this time ({resultDayOffset} {resultDayOffset === 1 ? 'day' : 'days'} after match day)
-                          </div>
+                        <div className="text-xs font-black text-slate-900">
+                          {calculatedDeadlines.result.toLocaleDateString('en-IN', {
+                            month: 'short',
+                            day: 'numeric',
+                            timeZone: 'Asia/Kolkata'
+                          })}
+                          {' @ '}
+                          {calculatedDeadlines.result.toLocaleTimeString('en-IN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                            timeZone: 'Asia/Kolkata'
+                          })}
+                        </div>
+                        <div className="text-[8px] text-slate-500 leading-tight mt-1">
+                          Results due {resultDayOffset} {resultDayOffset === 1 ? 'day' : 'days'} after match day
                         </div>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-sm text-blue-700 space-y-3">
-                    <div className="flex items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <svg className="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
+                  <div className="text-xs text-slate-655 space-y-3 font-mono">
+                    <div className="flex items-center gap-3 p-3 bg-amber-50/50 border border-amber-200/50 rounded-2xl">
+                      <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
                       <div>
-                        <div className="font-medium text-yellow-800 mb-1">Set Scheduled Date</div>
-                        <div className="text-xs text-yellow-700">Please set a scheduled date above to see calculated deadline times</div>
+                        <div className="font-extrabold text-amber-800">Set Scheduled Date</div>
+                        <div className="text-[10px] text-amber-600 mt-0.5">Please set a scheduled date above to see calculated deadline times</div>
                       </div>
                     </div>
-                    <div className="text-xs text-blue-600 space-y-1 pl-2 border-l-2 border-blue-200">
+                    <div className="text-[10px] text-slate-500 space-y-1 pl-3 border-l-2 border-slate-200">
                       <div><strong>Current Configuration:</strong></div>
                       <div>• Home fixture deadline: <strong>{homeTime}</strong> on match day</div>
                       <div>• Away fixture deadline: <strong>{awayTime}</strong> on match day</div>
@@ -524,35 +515,27 @@ function EditRoundDeadlinesContent() {
                 )}
               </div>
 
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-8 pt-6 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-slate-100 pt-6">
                 <Link
                   href="/dashboard/committee/team-management/match-days"
-                  className="inline-flex items-center px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase rounded-xl transition-all shadow-sm cursor-pointer border border-slate-200"
                 >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
                   Cancel
                 </Link>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="inline-flex items-center px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors duration-200 shadow-sm hover:shadow-md disabled:opacity-50"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 cursor-pointer shadow-md"
                 >
                   {isSaving ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Saving...
+                      <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
+                      <span>Saving...</span>
                     </>
                   ) : (
                     <>
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h2m5-4V9a1 1 0 00-1-1H6a1 1 0 00-1 1v4h4.5L15 9h3a2 2 0 012 2v9a2 2 0 01-2 2h-2" />
-                      </svg>
-                      Update Deadlines
+                      <Save className="w-3.5 h-3.5" />
+                      <span>Update Deadlines</span>
                     </>
                   )}
                 </button>
@@ -580,8 +563,8 @@ export default function EditRoundDeadlinesPage() {
       fallback={
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading deadline editor...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+            <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading deadline editor...</p>
           </div>
         </div>
       }

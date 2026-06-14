@@ -5,7 +5,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useCachedTeams } from '@/hooks/useCachedData';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import SearchablePlayerSelect from '@/components/ui/SearchablePlayerSelect';
-import { X, Plus, ArrowLeftRight } from 'lucide-react';
+import { X, Plus, ArrowLeftRight, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Player {
   id: string;
@@ -252,7 +252,7 @@ export default function BulkSwapForm() {
     const swapSummary = swapPairs.map((pair, idx) => {
       const playerA = players.find(p => p.id === pair.player_a_id)!;
       const playerB = players.find(p => p.id === pair.player_b_id)!;
-      return `${idx + 1}. ${playerA.player_name} (${playerA.team_name}, ${playerA.acquisition_value}) ↔ ${playerB.player_name} (${playerB.team_name}, ${playerB.acquisition_value})`;
+      return `${idx + 1}. ${playerA.player_name} (${playerA.team_name}, ${playerA.acquisition_value}) &harr; ${playerB.player_name} (${playerB.team_name}, ${playerB.acquisition_value})`;
     }).join('\n');
 
     const confirmMessage = `Perform ${swapPairs.length} swap(s)?\n\n${swapSummary}\n\nThis operation is completely free. Acquisition values will be swapped.`;
@@ -286,7 +286,7 @@ export default function BulkSwapForm() {
 
       // Show detailed success message
       const successDetails = result.data.swap_details.map((swap: any) => 
-        `✅ Swap ${swap.swap_number}: ${swap.player_a.name} (${swap.player_a.old_value}→${swap.player_a.new_value}) ↔ ${swap.player_b.name} (${swap.player_b.old_value}→${swap.player_b.new_value})`
+        `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Swap ${swap.swap_number}: ${swap.player_a.name} (${swap.player_a.old_value} &rarr; ${swap.player_a.new_value}) &harr; ${swap.player_b.name} (${swap.player_b.old_value} &rarr; ${swap.player_b.new_value})`
       ).join('\n');
 
       setSuccess(`Successfully swapped ${swapPairs.length} player pair(s)!\n\n${successDetails}`);
@@ -320,7 +320,7 @@ export default function BulkSwapForm() {
     <div className="space-y-6">
       {/* Info Banner */}
       <div className="p-5 bg-slate-50 border border-slate-200/60 rounded-2xl font-mono text-xs">
-        <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-2.5">🔄 Bulk Player Swap</h3>
+        <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-2.5"><RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Bulk Player Swap</h3>
         <ul className="space-y-1.5 text-slate-500">
           <li>• Swap multiple players across multiple teams at once</li>
           <li>• First 6 swaps per team are FREE, then 100/125/150</li>
@@ -332,7 +332,7 @@ export default function BulkSwapForm() {
       {/* Alerts */}
       {error && (
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl font-mono text-xs uppercase tracking-wide">
-          <p className="font-extrabold">⚠️ Error</p>
+          <p className="font-extrabold"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Error</p>
           <p className="mt-1">{error}</p>
         </div>
       )}
@@ -443,7 +443,7 @@ export default function BulkSwapForm() {
                       <div className="text-[10px] text-slate-450 uppercase font-bold tracking-wider mt-1 space-y-0.5">
                         <div>From: <span className="text-slate-700">{swap.playerA.team_name}</span></div>
                         <div>To: <span className="text-slate-700">{swap.playerB.team_name}</span></div>
-                        <div>Value: <span className="text-amber-600">{swap.playerA.acquisition_value} → {swap.playerB.acquisition_value}</span></div>
+                        <div>Value: <span className="text-amber-600">{swap.playerA.acquisition_value} &rarr; {swap.playerB.acquisition_value}</span></div>
                       </div>
                     </div>
 
@@ -453,7 +453,7 @@ export default function BulkSwapForm() {
                       <div className="text-[10px] text-slate-450 uppercase font-bold tracking-wider mt-1 space-y-0.5">
                         <div>From: <span className="text-slate-700">{swap.playerB.team_name}</span></div>
                         <div>To: <span className="text-slate-700">{swap.playerA.team_name}</span></div>
-                        <div>Value: <span className="text-amber-600">{swap.playerB.acquisition_value} → {swap.playerA.acquisition_value}</span></div>
+                        <div>Value: <span className="text-amber-600">{swap.playerB.acquisition_value} &rarr; {swap.playerA.acquisition_value}</span></div>
                       </div>
                     </div>
                   </div>
@@ -469,7 +469,7 @@ export default function BulkSwapForm() {
           disabled={submitting || !swapPairs.every(p => p.player_a_id && p.player_b_id)}
           className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md cursor-pointer text-center"
         >
-          {submitting ? 'Processing Bulk Swap...' : `🔄 Swap ${swapPairs.length} Player Pair(s)`}
+          {submitting ? 'Processing Bulk Swap...' : `<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Swap ${swapPairs.length} Player Pair(s)`}
         </button>
       </form>
     </div>

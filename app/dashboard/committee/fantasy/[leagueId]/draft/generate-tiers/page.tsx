@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, AlertTriangle, RefreshCw, BarChart2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -371,7 +372,7 @@ export default function GenerateDraftTiersPage() {
 
               {/* Player Pool Summary */}
               <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6 mb-6 border border-indigo-200">
-                <h3 className="font-bold text-gray-900 mb-4 text-lg">📊 Player Pool</h3>
+                <h3 className="font-bold text-gray-900 mb-4 text-lg"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Player Pool</h3>
                 {isLoadingPlayers ? (
                   <div className="text-center py-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
@@ -494,7 +495,7 @@ export default function GenerateDraftTiersPage() {
             <div className="space-y-6">
               {/* Summary */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
-                <h3 className="font-bold text-gray-900 mb-4 text-lg">📊 Tier Generation Preview</h3>
+                <h3 className="font-bold text-gray-900 mb-4 text-lg"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Tier Generation Preview</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white rounded-lg p-4">
                     <p className="text-sm text-gray-600 mb-1">Total Players</p>
@@ -518,7 +519,7 @@ export default function GenerateDraftTiersPage() {
               {/* Warnings */}
               {previewData.warnings.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-bold text-gray-900 text-lg">⚠️ Warnings</h3>
+                  <h3 className="font-bold text-gray-900 text-lg"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Warnings</h3>
                   {previewData.warnings.map((warning: any, idx: number) => (
                     <div key={idx} className={`border rounded-lg p-4 ${
                       warning.severity === 'critical' ? 'bg-red-50 border-red-300 text-red-800' :
@@ -609,13 +610,13 @@ export default function GenerateDraftTiersPage() {
                   disabled={isGenerating || !previewData.can_generate}
                   className="flex-1 px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white font-semibold rounded-lg hover:from-violet-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isGenerating ? 'Generating...' : '✅ Confirm & Generate Tiers'}
+                  {isGenerating ? 'Generating...' : '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Confirm & Generate Tiers'}
                 </button>
               </div>
 
               {!previewData.can_generate && (
                 <p className="text-sm text-red-600 text-center">
-                  ⚠️ Cannot generate due to critical warnings. Please adjust settings first.
+                  <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cannot generate due to critical warnings. Please adjust settings first.
                 </p>
               )}
             </div>
@@ -634,7 +635,7 @@ export default function GenerateDraftTiersPage() {
                   }}
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
                 >
-                  🔄 Regenerate
+                  <RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Regenerate
                 </button>
               </div>
 

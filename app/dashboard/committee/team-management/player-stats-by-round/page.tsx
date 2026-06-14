@@ -364,7 +364,7 @@ export default function PlayerStatsByRoundPage() {
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading player statistics...</p>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading player statistics...</p>
         </div>
       </div>
     );
@@ -440,7 +440,7 @@ export default function PlayerStatsByRoundPage() {
                 </button>
               </div>
             </div>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-3">
+            <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-3">
               {new URLSearchParams(window.location.search).get('view') === 'full-season'
                 ? 'Showing combined stats from all tournaments in the season'
                 : 'Showing stats for the selected tournament only'}
@@ -467,7 +467,7 @@ export default function PlayerStatsByRoundPage() {
               </div>
               <TournamentSelector />
             </div>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-3">
+            <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-3">
               {new URLSearchParams(window.location.search).get('view') === 'full-season'
                 ? 'Tournament selection is disabled during season view'
                 : 'Stats will filter by the active tournament'}

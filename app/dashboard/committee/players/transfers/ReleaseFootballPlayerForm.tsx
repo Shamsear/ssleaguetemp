@@ -1,4 +1,5 @@
 'use client';
+import { DollarSign, CheckCircle, BarChart2, AlertTriangle, Unlock } from 'lucide-react';
 
 import { useState, useEffect, useMemo } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -166,7 +167,7 @@ export default function ReleaseFootballPlayerForm() {
     contractStart: string,
     contractEnd: string
   ) => {
-    return `🔓 *Player Release Notification*
+    return `<Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> *Player Release Notification*
  
 ━━━━━━━━━━━━━━━━━━━━
  
@@ -175,7 +176,7 @@ export default function ReleaseFootballPlayerForm() {
  
 *Release Details:*
 • Timing: ${timing === 'start' ? 'Season Start' : 'Mid-Season'}
-• Original Contract: ${contractStart} → ${contractEnd}
+• Original Contract: ${contractStart} &rarr; ${contractEnd}
 • New Contract End: ${releaseSeason}
 • Original Value: ${acquisitionValue} eCoin
  
@@ -185,8 +186,8 @@ export default function ReleaseFootballPlayerForm() {
  
 ━━━━━━━━━━━━━━━━━━━━
  
-✅ Player is now a free agent
-💰 ${refundAmount} eCoin added to ${teamName}'s football budget`;
+<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Player is now a free agent
+<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${refundAmount} eCoin added to ${teamName}'s football budget`;
   };
 
   // Handle release submission
@@ -227,7 +228,7 @@ export default function ReleaseFootballPlayerForm() {
         throw new Error(result.error || 'Failed to release player');
       }
 
-      setSuccess(`✅ ${selectedPlayer.player_name} released successfully! Refund: ${refundAmount} eCoin`);
+      setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${selectedPlayer.player_name} released successfully! Refund: ${refundAmount} eCoin`);
 
       // Generate WhatsApp message
       const whatsappMessage = generateWhatsAppMessage(
@@ -245,7 +246,7 @@ export default function ReleaseFootballPlayerForm() {
       // Copy to clipboard
       try {
         await navigator.clipboard.writeText(whatsappMessage);
-        setSuccess(`✅ ${selectedPlayer.player_name} released successfully! Refund: ${refundAmount} eCoin\n\n📋 WhatsApp message copied to clipboard!`);
+        setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${selectedPlayer.player_name} released successfully! Refund: ${refundAmount} eCoin\n\n📋 WhatsApp message copied to clipboard!`);
       } catch (clipboardError) {
         console.error('Failed to copy to clipboard:', clipboardError);
       }
@@ -280,7 +281,7 @@ export default function ReleaseFootballPlayerForm() {
     <div className="space-y-6">
       {/* Info Banner */}
       <div className="p-5 bg-slate-50 border border-slate-200/60 rounded-2xl font-mono text-xs">
-          <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-2.5">🔓 Player Release System</h3>
+          <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-2.5"><Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Player Release System</h3>
           <ul className="space-y-1.5 text-slate-500">
               <li>• Release players at season start or mid-season (X.5)</li>
               <li>• <strong className="text-slate-800">Manual refund percentage selection</strong> (0-100%)</li>
@@ -292,7 +293,7 @@ export default function ReleaseFootballPlayerForm() {
       {/* Alerts */}
       {error && (
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl font-mono text-xs uppercase tracking-wide">
-          <p className="font-extrabold">⚠️ Error</p>
+          <p className="font-extrabold"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Error</p>
           <p className="mt-1">{error}</p>
         </div>
       )}
@@ -342,7 +343,7 @@ export default function ReleaseFootballPlayerForm() {
                     : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
                 } disabled:opacity-50`}
               >
-                🏁 Season Start
+                Season Start
                 <span className="block text-[9px] font-medium text-slate-400 mt-0.5 lowercase">{userSeasonId}</span>
               </button>
               <button
@@ -355,7 +356,7 @@ export default function ReleaseFootballPlayerForm() {
                     : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
                 } disabled:opacity-50`}
               >
-                ⏱️ Mid-Season
+                Mid-Season
                 <span className="block text-[9px] font-medium text-slate-400 mt-0.5 lowercase">{userSeasonId?.replace(/\D/g, '')}.5</span>
               </button>
             </div>
@@ -404,7 +405,7 @@ export default function ReleaseFootballPlayerForm() {
         {/* Preview Card */}
         {preview && selectedPlayer && (
           <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
-            <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-4">📊 Release Preview</h3>
+            <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-4"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Release Preview</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               {/* Player Info */}
@@ -482,7 +483,7 @@ export default function ReleaseFootballPlayerForm() {
             disabled={!selectedPlayerId || submitting}
             className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md cursor-pointer text-center"
           >
-            {submitting ? 'Releasing Player...' : '🔓 Execute Player Release'}
+            {submitting ? 'Releasing Player...' : '<Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Execute Player Release'}
           </button>
         </div>
       </form>

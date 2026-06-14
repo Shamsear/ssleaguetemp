@@ -1,4 +1,5 @@
 'use client';
+import { DollarSign, Star, Activity } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -231,7 +232,7 @@ export default function TeamDetailPage() {
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10 font-mono">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Team Details...</p>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading Team Details...</p>
         </div>
       </div>
     );
@@ -323,8 +324,8 @@ export default function TeamDetailPage() {
           {/* Total Players Card */}
           <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
             <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">Squad Players</span>
-            <div className="text-xl font-black text-slate-700">⚽ {players.length} / {maxPlayers}</div>
-            <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1">
+            <div className="text-xl font-black text-slate-700"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> {players.length} / {maxPlayers}</div>
+            <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-1">
               {realPlayers.length} Real · {footballPlayers.length} Football
             </div>
           </div>
@@ -335,7 +336,7 @@ export default function TeamDetailPage() {
               <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
                 <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">eCoin Budget Left</span>
                 <div className="text-xl font-black text-blue-600">💶 {(team.euro_balance || 0).toLocaleString()}</div>
-                <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1">
+                <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-1">
                   Spent: {(team.euro_spent || 0).toLocaleString()}
                 </div>
               </div>
@@ -343,7 +344,7 @@ export default function TeamDetailPage() {
               <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
                 <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">SSCoin Budget Left</span>
                 <div className="text-xl font-black text-purple-600">🪙 {(team.dollar_balance || 0).toLocaleString()}</div>
-                <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1">
+                <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-1">
                   Spent: {(team.dollar_spent || 0).toLocaleString()}
                 </div>
               </div>
@@ -352,12 +353,12 @@ export default function TeamDetailPage() {
             <>
               <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
                 <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">Total value</span>
-                <div className="text-xl font-black text-emerald-600">💰 {teamData.totalValue.toLocaleString()}</div>
+                <div className="text-xl font-black text-emerald-600"><DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> {teamData.totalValue.toLocaleString()}</div>
               </div>
 
               <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
                 <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">Wallet Balance</span>
-                <div className="text-xl font-black text-amber-600">💰 {team.balance.toLocaleString()}</div>
+                <div className="text-xl font-black text-amber-600"><DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> {team.balance.toLocaleString()}</div>
               </div>
             </>
           )}
@@ -365,7 +366,7 @@ export default function TeamDetailPage() {
           {/* Average Rating */}
           <div className="console-card bg-white rounded-xl p-4 border border-slate-200/60">
             <span className="text-slate-400 text-[8px] uppercase tracking-wider font-bold block mb-1">Avg Rating</span>
-            <div className="text-xl font-black text-amber-500">★ {teamData.avgRating.toFixed(1)}</div>
+            <div className="text-xl font-black text-amber-500"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> {teamData.avgRating.toFixed(1)}</div>
           </div>
         </div>
 
@@ -479,7 +480,7 @@ export default function TeamDetailPage() {
                                 <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2 rounded-xl">
                                   <span className="text-slate-400 text-[8px]">Rating</span>
                                   <span className="text-amber-500 font-extrabold">
-                                    ★ {player.rating.toFixed(1)}
+                                    <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> {player.rating.toFixed(1)}
                                   </span>
                                 </div>
                                 {player.category && (
@@ -510,7 +511,7 @@ export default function TeamDetailPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                       </svg>
                       <h3 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-1">No Players</h3>
-                      <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">No players found in this category</p>
+                      <p className="text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">No players found in this category</p>
                     </div>
                   );
                 })()}
@@ -520,7 +521,7 @@ export default function TeamDetailPage() {
                 {loadingStats ? (
                   <div className="text-center py-16">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-                    <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Loading statistics...</p>
+                    <p className="text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">Loading statistics...</p>
                   </div>
                 ) : (
                   <>
@@ -667,7 +668,7 @@ export default function TeamDetailPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                           </svg>
                           <h3 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-1">No Statistics</h3>
-                          <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">This team hasn't played any matches yet this season</p>
+                          <p className="text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">This team hasn't played any matches yet this season</p>
                         </div>
                       )
                     )}

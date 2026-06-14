@@ -1,4 +1,5 @@
 'use client';
+import { Trophy, Crown, Star, Activity } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
@@ -207,12 +208,12 @@ export default function PlayerAwardsPage() {
 
   const getAwardIcon = (awardType: AwardType) => {
     switch (awardType) {
-      case 'golden-boot': return '⚽';
-      case 'golden-glove': return '🧤';
-      case 'golden-ball': return '⭐';
-      case 'legend-category': return '👑';
+      case 'golden-boot': return <Activity className="w-3.5 h-3.5 text-red-500 inline-block" />;
+      case 'golden-glove': return <Activity className="w-3.5 h-3.5 text-yellow-500 inline-block" />;
+      case 'golden-ball': return '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />';
+      case 'legend-category': return '<Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />';
       case 'classic-category': return '🎖️';
-      case 'overall': return '🏆';
+      case 'overall': return '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />';
       default: return '🏅';
     }
   };
@@ -277,7 +278,7 @@ export default function PlayerAwardsPage() {
               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
-              View All Stats →
+              View All Stats  &rarr; 
             </Link>
           </div>
         </div>
@@ -347,9 +348,9 @@ export default function PlayerAwardsPage() {
                 {filteredPlayers.map((player, index) => (
                   <tr key={player.player_id} className={`hover:bg-yellow-50/50 transition-colors ${index < 3 ? 'bg-yellow-50/30' : ''}`}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                      {index === 0 && <span className="text-2xl">🥇</span>}
-                      {index === 1 && <span className="text-2xl">🥈</span>}
-                      {index === 2 && <span className="text-2xl">🥉</span>}
+                      {index === 0 && <span className="text-2xl"><Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /></span>}
+                      {index === 1 && <span className="text-2xl"><Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" /></span>}
+                      {index === 2 && <span className="text-2xl"><Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" /></span>}
                       {index > 2 && `#${index + 1}`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -377,9 +378,9 @@ export default function PlayerAwardsPage() {
                         {player.win_rate.toFixed(1)}%
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">⚽ {player.goals}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> {player.goals}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">🛡️ {player.clean_sheets}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">⭐ {player.potm}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> {player.potm}</td>
                   </tr>
                 ))}
               </tbody>
@@ -391,16 +392,16 @@ export default function PlayerAwardsPage() {
       {/* Awards Info */}
       <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
         <div className="flex items-start gap-3">
-          <span className="text-2xl">🏆</span>
+          <span className="text-2xl"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></span>
           <div>
             <h3 className="text-sm font-semibold text-yellow-800 mb-2">Award Criteria</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs text-yellow-700">
-              <div><strong>Golden Boot ⚽:</strong> Most goals scored</div>
+              <div><strong>Golden Boot <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />:</strong> Most goals scored</div>
               <div><strong>Golden Glove 🧤:</strong> Most clean sheets</div>
-              <div><strong>Golden Ball ⭐:</strong> Most POTM awards</div>
-              <div><strong>Legend 👑:</strong> Top Legend category players</div>
+              <div><strong>Golden Ball <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />:</strong> Most POTM awards</div>
+              <div><strong>Legend <Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />:</strong> Top Legend category players</div>
               <div><strong>Classic 🎖️:</strong> Top Classic category players</div>
-              <div><strong>Overall 🏆:</strong> Best overall performance</div>
+              <div><strong>Overall <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />:</strong> Best overall performance</div>
             </div>
           </div>
         </div>

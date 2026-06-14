@@ -1,4 +1,5 @@
 'use client';
+import { Crown, Star } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -492,7 +493,7 @@ export default function DraftResultsPage() {
                               ? 'bg-green-400 text-green-900' 
                               : 'bg-green-100 text-green-700'
                           }`}>
-                            ✓ Submitted
+                            Yes Submitted
                           </span>
                         )}
                       </div>
@@ -539,13 +540,13 @@ export default function DraftResultsPage() {
                       <div className="flex flex-wrap gap-3 mt-3 mb-3">
                         {captain && (
                           <div className="px-3 py-1 bg-yellow-100 border border-yellow-300 rounded-lg text-sm">
-                            <span className="font-bold text-yellow-700">👑 Captain:</span>
+                            <span className="font-bold text-yellow-700"><Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /> Captain:</span>
                             <span className="text-gray-900 ml-1">{captain.player_name}</span>
                           </div>
                         )}
                         {viceCaptain && (
                           <div className="px-3 py-1 bg-blue-100 border border-blue-300 rounded-lg text-sm">
-                            <span className="font-bold text-blue-700">⭐ Vice-Captain:</span>
+                            <span className="font-bold text-blue-700"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Vice-Captain:</span>
                             <span className="text-gray-900 ml-1">{viceCaptain.player_name}</span>
                           </div>
                         )}
@@ -602,7 +603,7 @@ export default function DraftResultsPage() {
                               </td>
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-1">
-                                  <span className="text-yellow-500">★</span>
+                                  <span className="text-yellow-500"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /></span>
                                   <span className="font-medium">{player.star_rating}</span>
                                 </div>
                               </td>

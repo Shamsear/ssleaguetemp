@@ -46,7 +46,7 @@ export default async function Image({ params }: { params: { id: string } }) {
             textAlign: 'center',
           }}
         >
-          <div style={{ fontSize: 80, fontWeight: 'bold', marginBottom: 20 }}>⚽</div>
+          <div style={{ fontSize: 80, fontWeight: 'bold', marginBottom: 20 }}>NEWS</div>
           <div style={{ fontWeight: 'bold', marginBottom: 20 }}>{title}</div>
           <div style={{ fontSize: 30, opacity: 0.9 }}>SS Super League</div>
         </div>

@@ -1,4 +1,5 @@
 'use client';
+import { AlertTriangle, Star, Unlock, BarChart2 } from 'lucide-react';
 
 import { useState, useEffect, useMemo } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -240,7 +241,7 @@ export default function ReleaseRealPlayerForm() {
         <div className="space-y-6">
             {/* Info Banner */}
             <div className="p-5 bg-slate-50 border border-slate-200/60 rounded-2xl font-mono text-xs">
-                <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-2.5">🔓 Player Release System</h3>
+                <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-2.5"><Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Player Release System</h3>
                 <ul className="space-y-1.5 text-slate-500">
                     <li>• Release players at season start or mid-season (X.5)</li>
                     <li>• <strong className="text-slate-800">Manual refund percentage selection</strong> (0-100%)</li>
@@ -252,7 +253,7 @@ export default function ReleaseRealPlayerForm() {
             {/* Success/Error Messages */}
             {error && (
                 <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl font-mono text-xs uppercase tracking-wide">
-                    <p className="font-extrabold">⚠️ Error</p>
+                    <p className="font-extrabold"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Error</p>
                     <p className="mt-1">{error}</p>
                 </div>
             )}
@@ -311,7 +312,7 @@ export default function ReleaseRealPlayerForm() {
                                     : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
                             } disabled:opacity-50`}
                         >
-                            🏁 Season Start
+                            Season Start
                             <span className="block text-[9px] font-medium text-slate-400 mt-0.5 lowercase">{userSeasonId}</span>
                         </button>
                         <button
@@ -324,7 +325,7 @@ export default function ReleaseRealPlayerForm() {
                                     : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
                             } disabled:opacity-50`}
                         >
-                            ⏱️ Mid-Season
+                            Mid-Season
                             <span className="block text-[9px] font-medium text-slate-400 mt-0.5 lowercase">{userSeasonId?.replace(/\D/g, '')}.5</span>
                         </button>
                     </div>
@@ -373,7 +374,7 @@ export default function ReleaseRealPlayerForm() {
             {/* Preview Card */}
             {preview && selectedPlayer && (
                 <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
-                    <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-4">📊 Release Preview</h3>
+                    <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-4"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Release Preview</h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         {/* Player Info */}
@@ -390,7 +391,7 @@ export default function ReleaseRealPlayerForm() {
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-slate-400">Star Rating:</span>
-                                    <span className="font-bold text-slate-800">{'⭐'.repeat(selectedPlayer.star_rating || 0)}</span>
+                                    <span className="font-bold text-slate-800">{'<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />'.repeat(selectedPlayer.star_rating || 0)}</span>
                                 </div>
                             </div>
                         </div>
@@ -451,7 +452,7 @@ export default function ReleaseRealPlayerForm() {
                     disabled={!selectedPlayerId || !preview || processing}
                     className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md cursor-pointer text-center"
                 >
-                    {processing ? 'Releasing Player...' : '🔓 Execute Player Release'}
+                    {processing ? 'Releasing Player...' : '<Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Execute Player Release'}
                 </button>
             </div>
         </div>

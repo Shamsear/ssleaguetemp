@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useAuctionWebSocket } from '@/hooks/useWebSocket';
 import { useAutoFinalize } from '@/hooks/useAutoFinalize';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { ArrowLeft, Trash2, ShieldAlert, CheckCircle2, AlertTriangle, Info, Sparkles, Plus, Clock, Users, ChevronRight, ChevronDown, RefreshCw, Play, DollarSign, Check, FileText, Settings, Calendar, ArrowRight, Download, CheckCircle, XCircle } from 'lucide-react';
 
 interface Bid {
   id: string;
@@ -44,7 +45,7 @@ interface TeamBids {
       name: string;
     };
     bids: Array<{
-      player: { id: string; name: string; position: string };
+      player: { id: string; name: string; position: string; overall_rating: number };
       amount: number;
       timestamp: string;
       won: boolean;
@@ -65,6 +66,7 @@ interface Round {
   updated_at: string;
   bids: Bid[];
   round_type?: string; // 'bulk' or 'regular'
+  finalization_mode?: 'auto' | 'manual';
 }
 
 interface TeamBidCount {
@@ -73,6 +75,7 @@ interface TeamBidCount {
   bid_count: number;
   required_bids: number;
 }
+
 
 export default function RoundDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { user, loading } = useAuth();
@@ -84,7 +87,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
   const [teamBidCounts, setTeamBidCounts] = useState<TeamBidCount[]>([]);
 
-  // ✅ Enable WebSocket for real-time bid updates
+  // <CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Enable WebSocket for real-time bid updates
   const { isConnected } = useAuctionWebSocket(roundId, true);
 
   // Fetch round details function (moved up for use in auto-finalize)
@@ -121,27 +124,80 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  // ✅ Enable auto-finalization when timer reaches zero
+  // <CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Enable auto-finalization when timer reaches zero
   const { timeRemaining, isFinalizing } = useAutoFinalize({
     roundId,
     endTime: round?.end_time || null,
     finalizationMode: round?.finalization_mode || 'auto',
     enabled: round?.status === 'active',
     onFinalizationStart: () => {
-      console.log('🔄 Auto-finalization started');
+      console.log('<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Auto-finalization started');
       setShowLoadingOverlay(true);
     },
     onFinalizationComplete: () => {
-      console.log('✅ Auto-finalization completed');
+      console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Auto-finalization completed');
       setShowLoadingOverlay(false);
       fetchRound(); // Refresh round data
     },
     onFinalizationError: (error) => {
-      console.error('❌ Auto-finalization error:', error);
+      console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Auto-finalization error:', error);
       setShowLoadingOverlay(false);
       alert(`Finalization failed: ${error}`);
     },
   });
+  const handleUpdateStatus = async (newStatus: string) => {
+    if (!round) return;
+
+    const confirmMessage = `Are you sure you want to change the round status to "${newStatus}"?`;
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const response = await fetchWithTokenRefresh(`/api/rounds/${round.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const { success, data } = await response.json();
+
+      if (success) {
+        setRound({ ...round, ...data });
+        alert(`Round status updated to ${newStatus}`);
+      }
+    } catch (err) {
+      console.error('Error updating status:', err);
+      alert('Failed to update status');
+    }
+  };
+
+  const handleDeleteRound = async () => {
+    if (!round) return;
+
+    if (round.status === 'active' || round.status === 'completed') {
+      alert('Cannot delete active or completed rounds');
+      return;
+    }
+
+    const confirmMessage = 'Are you sure you want to delete this round? This action cannot be undone.';
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const response = await fetchWithTokenRefresh(`/api/rounds/${round.id}`, {
+        method: 'DELETE',
+      });
+
+      const { success } = await response.json();
+
+      if (success) {
+        alert('Round deleted successfully');
+        router.push('/dashboard/committee/rounds');
+      }
+    } catch (err) {
+      console.error('Error deleting round:', err);
+      alert('Failed to delete round');
+    }
+  };
+
 
   useEffect(() => {
     if (!loading && !user) {
@@ -287,6 +343,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const handleExport = async () => {
+    if (!round) return;
     setShowLoadingOverlay(true);
     try {
       const ExcelJS = (await import('exceljs')).default;
@@ -443,10 +500,11 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
 
   if (loading || isLoading || !round) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/30 border-t-primary mx-auto mb-4"></div>
-          <p className="text-gray-700 font-medium">Loading data...</p>
+      <div className="min-h-screen flex items-center justify-center console-bg font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto animate-duration-1000"></div>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading round details...</p>
         </div>
       </div>
     );
@@ -461,200 +519,170 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
     <>
       {/* Loading Overlay */}
       {showLoadingOverlay && (
-        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-300">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-300 font-mono">
           <div className="flex flex-col items-center">
-            <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-700 font-medium">Exporting data...</p>
+            <RefreshCw className="w-12 h-12 text-amber-400 animate-spin mb-4" />
+            <p className="text-white font-bold text-xs uppercase tracking-wider">Exporting round data...</p>
           </div>
         </div>
       )}
 
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <div className="glass rounded-3xl p-4 sm:p-6 shadow-lg border border-gray-100/30">
-          {/* Header & Navigation - hidden on mobile */}
-          <div className="flex flex-col gap-4 mb-5 hidden sm:flex">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-center">
-                <h2 className="text-2xl font-bold text-dark gradient-text flex items-center">
-                  Round Details
-                  <span className="ml-2 inline-flex items-center justify-center bg-primary/10 text-primary px-2.5 py-1 rounded-full text-sm font-medium">
-                    #{round.id.substring(0, 8)}
-                  </span>
-                  {/* WebSocket Status */}
-                  <span className={`ml-3 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                    isConnected 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    <span className={`w-2 h-2 rounded-full mr-1.5 ${
-                      isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
-                    }`}></span>
-                    {isConnected ? 'Live' : 'Offline'}
-                  </span>
-                </h2>
-                <span
-                  className={`ml-3 inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                    round.status === 'active'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-blue-100 text-blue-800'
-                  }`}
-                >
-                  {round.status === 'active' ? 'Active' : 'Completed'}
-                </span>
+      <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+        {/* Decorative glowing ambient overlay */}
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto relative z-10 space-y-6">
+          {/* Navigation */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <Link
+              href="/dashboard/committee/rounds"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Rounds
+            </Link>
+
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-100" /> Export to Excel
+            </button>
+          </div>
+
+          {/* Header Card */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+                <Settings className="w-6 h-6 text-amber-400" />
               </div>
-              <div className="text-sm text-gray-600 italic">
-                {round.created_at && new Date(round.created_at).toLocaleString()}
+              <div>
+                <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">COMMITTEE CONSOLE</span>
+                <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                  Round Details
+                </h1>
+                <p className="text-xs text-slate-400 font-mono mt-1">
+                  Manage players and control auction round #{round.id.substring(0, 8)}.
+                </p>
               </div>
             </div>
+            
+            <div className="flex flex-wrap items-center gap-2">
+              {/* WebSocket Status */}
+              <span className={`inline-flex items-center px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase font-mono shadow-sm ${
+                isConnected 
+                  ? 'bg-green-50 border-green-200 text-green-800' 
+                  : 'bg-slate-50 border-slate-200 text-slate-600'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full mr-2 ${
+                  isConnected ? 'bg-green-500 animate-pulse' : 'bg-slate-400'
+                }`}></span>
+                {isConnected ? 'Live Sync' : 'Offline'}
+              </span>
 
-            {/* Navigation Links */}
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/dashboard/committee/rounds"
-                className="inline-flex items-center px-4 py-2.5 rounded-xl bg-white/60 text-gray-700 hover:bg-white/80 transition-all duration-200 backdrop-blur-sm border border-gray-200/50 shadow-sm touch-action-manipulation transform hover:scale-[1.01] active:scale-[0.99]"
-              >
-                <svg
-                  className="w-5 h-5 mr-1.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                  />
-                </svg>
-                Back to Rounds
-              </Link>
-
-              <button
-                onClick={handleExport}
-                className="inline-flex items-center px-4 py-2.5 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-sm touch-action-manipulation transform hover:scale-[1.01] active:scale-[0.99]"
-              >
-                <svg
-                  className="w-5 h-5 mr-1.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                Export to Excel
-              </button>
+              <span className={`inline-flex px-3 py-1.5 rounded-full text-[10px] font-bold uppercase border font-mono shadow-sm ${
+                round.status === 'active'
+                  ? 'bg-green-50 border-green-200 text-green-800'
+                  : 'bg-blue-50 border-blue-200 text-blue-800'
+              }`}>
+                {round.status}
+              </span>
             </div>
           </div>
 
-          {/* Round Summary */}
-          <div className="glass rounded-2xl p-4 sm:p-5 mb-5 border border-gray-100/20 bg-white/10 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300">
-            <h3 className="text-lg font-semibold mb-4 text-dark flex items-center">
-              <svg
-                className="w-5 h-5 mr-2 text-primary"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              Round Summary
+          {/* Round Info Card */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+            <h3 className="text-sm font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
+              <Info className="w-4 h-4 text-blue-500" />
+              Round Information
             </h3>
 
-            <div className={`grid grid-cols-1 ${round.round_type === 'bulk' ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-3 sm:gap-4`}>
-              {round.round_type !== 'bulk' && (
-                <div className="glass rounded-xl p-4 backdrop-blur-sm bg-white/30 hover:bg-white/40 transition-all shadow-sm">
-                  <h4 className="font-medium mb-1.5 text-gray-600 text-sm">Position</h4>
-                  <p className="text-lg font-semibold">{round.position}</p>
-                </div>
-              )}
-
-              <div className="glass rounded-xl p-4 backdrop-blur-sm bg-white/30 hover:bg-white/40 transition-all shadow-sm">
-                <h4 className="font-medium mb-1.5 text-gray-600 text-sm">
-                  {round.round_type === 'bulk' ? 'Type' : 'Status'}
-                </h4>
-                <p className="text-lg">
-                  {round.round_type === 'bulk' ? (
-                    <span className="px-2 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                      Bulk Auction
-                    </span>
-                  ) : (
-                    <span
-                      className={`px-2 py-1 rounded-full text-sm font-medium ${
-                        round.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}
-                    >
-                      {round.status === 'active' ? 'Active' : 'Completed'}
-                    </span>
-                  )}
-                </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                <div className="text-[10px] text-slate-400 font-bold uppercase">Position</div>
+                <div className="text-base font-extrabold text-slate-800 mt-1">{round.position}</div>
               </div>
-
-              <div className="glass rounded-xl p-4 backdrop-blur-sm bg-white/30 hover:bg-white/40 transition-all shadow-sm">
-                <h4 className="font-medium mb-1.5 text-gray-600 text-sm">
-                  {round.round_type === 'bulk' ? 'Status' : 'Date/Time'}
-                </h4>
-                <p className="text-lg">
-                  {round.round_type === 'bulk' ? (
-                    <span
-                      className={`px-2 py-1 rounded-full text-sm font-medium ${
-                        round.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}
-                    >
-                      {round.status === 'active' ? 'Active' : 'Completed'}
-                    </span>
-                  ) : (
-                    round.created_at && new Date(round.created_at).toLocaleString()
-                  )}
-                </p>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                <div className="text-[10px] text-slate-400 font-bold uppercase">Max Bids Per Team</div>
+                <div className="text-base font-extrabold text-slate-800 mt-1">{round.max_bids_per_team}</div>
               </div>
-
-              {round.round_type === 'bulk' && (
-                <div className="glass rounded-xl p-4 backdrop-blur-sm bg-white/30 hover:bg-white/40 transition-all shadow-sm">
-                  <h4 className="font-medium mb-1.5 text-gray-600 text-sm">Date/Time</h4>
-                  <p className="text-lg">
-                    {round.created_at && new Date(round.created_at).toLocaleString()}
-                  </p>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                <div className="text-[10px] text-slate-400 font-bold uppercase">Total Bids Placed</div>
+                <div className="text-base font-extrabold text-slate-800 mt-1">{round.bids?.length || 0}</div>
+              </div>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                <div className="text-[10px] text-slate-400 font-bold uppercase">Unique Players</div>
+                <div className="text-base font-extrabold text-slate-800 mt-1">
+                  {new Set(round.bids?.map(b => b.player_id) || []).size}
                 </div>
-              )}
+              </div>
+            </div>
+
+            {/* Status Controls */}
+            <div className="pt-6 border-t border-slate-100 space-y-3">
+              <div className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider block">Round Status Controls</div>
+              <div className="flex flex-wrap items-center gap-3">
+                {round.status === 'draft' && (
+                  <>
+                    <button
+                      onClick={() => handleUpdateStatus('scheduled')}
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                    >
+                      Schedule Round
+                    </button>
+                    <button
+                      onClick={() => handleUpdateStatus('active')}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                    >
+                      Start Round Now
+                    </button>
+                  </>
+                )}
+                {round.status === 'scheduled' && (
+                  <>
+                    <button
+                      onClick={() => handleUpdateStatus('active')}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                    >
+                      Start Round
+                    </button>
+                    <button
+                      onClick={() => handleUpdateStatus('draft')}
+                      className="px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all cursor-pointer"
+                    >
+                      Back to Draft
+                    </button>
+                  </>
+                )}
+                {round.status === 'active' && (
+                  <button
+                    onClick={() => handleUpdateStatus('completed')}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                  >
+                    Complete Round
+                  </button>
+                )}
+                {(round.status === 'draft' || round.status === 'scheduled') && (
+                  <button
+                    onClick={handleDeleteRound}
+                    className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer ml-auto"
+                  >
+                    Delete Round
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Winning Bids Section - Only show if completed */}
+          {/* Winning Bids Section */}
           {isCompleted && winningBids.length > 0 && (
-            <div className="glass rounded-2xl p-4 sm:p-5 mb-5 border border-gray-100/20 bg-white/10 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300">
-              <h3 className="text-lg font-semibold mb-4 text-dark flex items-center">
-                <svg
-                  className="w-5 h-5 mr-2 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+              <h3 className="text-sm sm:text-base font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                 Winning Bids
               </h3>
 
-              {/* Mobile-friendly card view for small screens */}
-              <div className="block md:hidden space-y-3">
+              {/* Mobile-friendly card view */}
+              <div className="block md:hidden space-y-3 font-mono text-xs">
                 {winningBids.map((playerData, index) => {
                   const bid = playerData.winningBid!;
                   const isIncomplete = bid.phase === 'incomplete';
@@ -662,73 +690,47 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
                   return (
                     <div
                       key={playerData.player.id}
-                      className="glass rounded-xl p-4 backdrop-blur-sm border-l-4 border-green-400/40 hover:shadow-md transition-all duration-200 animate-fade-in"
-                      style={{ animationDelay: `${index * 50}ms` }}
+                      className="p-4 bg-slate-50 border border-slate-200 rounded-2xl border-l-4 border-l-emerald-500 space-y-3"
                     >
-                      <div className="flex flex-col space-y-3">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center">
-                            <div className="h-8 w-8 flex-shrink-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mr-2">
-                              <span className="text-xs font-medium text-gray-700">
-                                {playerData.player.name.substring(0, 2)}
-                              </span>
-                            </div>
-                            <div className="font-medium truncate mr-2 text-base">
-                              {playerData.player.name}
-                            </div>
-                          </div>
-                          <div className="text-sm rounded-full px-2.5 py-0.5 bg-white/60 backdrop-blur-sm">
-                            {playerData.player.position}
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-200/60">
+                        <div className="font-bold text-slate-800 text-sm">{playerData.player.name}</div>
+                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold uppercase text-[9px] border border-slate-200">
+                          {playerData.player.position}
+                        </span>
+                      </div>
+                      {isIncomplete && teamInfo && round.round_type !== 'bulk' && (
+                        <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-[10px] text-orange-800 flex items-start gap-1.5 font-bold">
+                          <AlertTriangle className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                          <div>
+                            <strong>Incomplete Bid:</strong> {bid.team_name} only submitted {teamInfo.bid_count}/{teamInfo.required_bids} bids. Player assigned at average price of £{bid.amount.toLocaleString()}
+                            {bid.actual_bid_amount && (
+                              <span className="block mt-1 text-orange-700">Original bid: £{bid.actual_bid_amount.toLocaleString()}</span>
+                            )}
                           </div>
                         </div>
-                        {isIncomplete && teamInfo && round.round_type !== 'bulk' && (
-                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-2.5 text-xs">
-                            <div className="flex items-start gap-1.5">
-                              <svg className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                              </svg>
-                              <div className="text-orange-800">
-                                <strong>Incomplete Bid:</strong> {bid.team_name} only submitted {teamInfo.bid_count}/{teamInfo.required_bids} bids. Player assigned at average price of £{bid.amount.toLocaleString()}
-                                {bid.actual_bid_amount && (
-                                  <span className="block mt-1 text-orange-700">
-                                    Original bid: £{bid.actual_bid_amount.toLocaleString()}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+                      )}
+                      <div className="grid grid-cols-2 gap-2 text-[10px]">
+                        <div className="bg-white p-2 rounded-lg border border-slate-200">
+                          <div className="text-slate-400 font-bold uppercase">Team</div>
+                          <div className="font-bold text-slate-800 truncate">{bid.team_name}</div>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-slate-200">
+                          <div className="text-slate-400 font-bold uppercase">Amount</div>
+                          <div className="font-bold text-emerald-700">£{bid.amount.toLocaleString()}</div>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-slate-200">
+                          <div className="text-slate-400 font-bold uppercase">Rating</div>
+                          <div>
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase border ${getRatingColor(playerData.player.overall_rating)}`}>
+                              {playerData.player.overall_rating}
+                            </span>
                           </div>
-                        )}
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="glass rounded-lg p-2.5 bg-white/40">
-                            <div className="text-xs text-gray-600 mb-0.5">Team</div>
-                            <div className="font-medium truncate">{bid.team_name}</div>
-                          </div>
-                          <div className="glass rounded-lg p-2.5 bg-white/40">
-                            <div className="text-xs text-gray-600 mb-0.5">Amount</div>
-                            <div className="font-semibold text-primary">
-                              £{bid.amount.toLocaleString()}
-                            </div>
-                          </div>
-                          <div className="glass rounded-lg p-2.5 bg-white/40">
-                            <div className="text-xs text-gray-600 mb-0.5">Rating</div>
-                            <div className="flex items-center">
-                              <span
-                                className={`px-1.5 py-0.5 rounded-md ${getRatingColor(
-                                  playerData.player.overall_rating
-                                )}`}
-                              >
-                                {playerData.player.overall_rating}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="glass rounded-lg p-2.5 bg-white/40">
-                            <div className="text-xs text-gray-600 mb-0.5">Status</div>
-                            <div>
-                              <span className="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                Won
-                              </span>
-                            </div>
-                          </div>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-slate-200">
+                          <div className="text-slate-400 font-bold uppercase">Status</div>
+                          <span className="px-2 py-0.5 inline-flex text-[9px] leading-5 font-extrabold rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">
+                            Won
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -737,31 +739,19 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
               </div>
 
               {/* Table for larger screens */}
-              <div className="hidden md:block overflow-x-auto rounded-xl shadow-sm border border-gray-100/20">
-                <table className="min-w-full divide-y divide-gray-200/50">
-                  <thead className="bg-white/50">
+              <div className="hidden md:block overflow-hidden rounded-2xl border border-slate-200 shadow-sm bg-white">
+                <table className="min-w-full divide-y divide-slate-100 font-mono text-xs">
+                  <thead className="bg-slate-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Player
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Position
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Team
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Bid Amount
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Overall Rating
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Player</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Position</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Team</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bid Amount</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Overall Rating</th>
+                      <th className="px-4 py-3 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white/30 divide-y divide-gray-200/50">
+                  <tbody className="divide-y divide-slate-100">
                     {winningBids.map((playerData, index) => {
                       const bid = playerData.winningBid!;
                       const isIncomplete = bid.phase === 'incomplete';
@@ -769,68 +759,48 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
                       return (
                         <tr
                           key={playerData.player.id}
-                          className={`hover:bg-white/50 transition-colors animate-fade-in ${isIncomplete ? 'bg-orange-50/30' : ''}`}
-                          style={{ animationDelay: `${index * 50}ms` }}
+                          className={`hover:bg-slate-50/50 transition-colors ${isIncomplete ? 'bg-orange-50/10' : ''}`}
                         >
                           <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="h-8 w-8 flex-shrink-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mr-2">
-                                <span className="text-xs font-medium text-gray-700">
-                                  {playerData.player.name.substring(0, 2)}
-                                </span>
-                              </div>
-                              <div>
-                                <div className="font-medium">{playerData.player.name}</div>
-                                {isIncomplete && teamInfo && round.round_type !== 'bulk' && (
-                                  <div className="text-xs text-orange-600 flex items-center gap-1 mt-0.5">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                    Incomplete ({teamInfo.bid_count}/{teamInfo.required_bids})
-                                  </div>
-                                )}
-                              </div>
+                            <div className="flex flex-col">
+                              <div className="font-bold text-slate-800">{playerData.player.name}</div>
+                              {isIncomplete && teamInfo && round.round_type !== 'bulk' && (
+                                <div className="text-[10px] text-orange-600 flex items-center gap-1 mt-0.5 font-bold">
+                                  <AlertTriangle className="w-3.5 h-3.5 text-orange-500" />
+                                  Incomplete ({teamInfo.bid_count}/{teamInfo.required_bids})
+                                </div>
+                              )}
                             </div>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPositionColor(
-                                playerData.player.position
-                              )}`}
-                            >
+                            <span className={`px-2 py-0.5 inline-flex text-[9px] font-extrabold uppercase rounded-full ${getPositionColor(playerData.player.position)}`}>
                               {playerData.player.position}
                             </span>
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap">{bid.team_name}</td>
+                          <td className="px-4 py-3 whitespace-nowrap font-bold text-slate-700">{bid.team_name}</td>
                           <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="font-semibold text-primary">
+                            <div className="font-bold text-emerald-700">
                               £{bid.amount.toLocaleString()}
                               {round.round_type === 'bulk' && (
-                                <span className="text-blue-600 text-xs block font-normal">
-                                  (Base price)
-                                </span>
+                                <span className="text-blue-600 text-[9px] block font-bold uppercase mt-0.5">(Base price)</span>
                               )}
                               {isIncomplete && round.round_type !== 'bulk' && (
-                                <span className="text-orange-600 text-xs block font-normal">
+                                <span className="text-orange-600 text-[9px] block font-bold uppercase mt-0.5">
                                   (Average price)
                                   {bid.actual_bid_amount && (
-                                    <span className="block">Bid: £{bid.actual_bid_amount.toLocaleString()}</span>
+                                    <span className="block mt-0.5">Bid: £{bid.actual_bid_amount.toLocaleString()}</span>
                                   )}
                                 </span>
                               )}
                             </div>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-md ${getRatingColor(
-                                playerData.player.overall_rating
-                              )}`}
-                            >
+                            <span className={`px-2 py-0.5 inline-flex text-[9px] font-extrabold uppercase rounded border ${getRatingColor(playerData.player.overall_rating)}`}>
                               {playerData.player.overall_rating}
                             </span>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-center">
-                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            <span className="px-2 py-0.5 inline-flex text-[9px] font-extrabold uppercase rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">
                               Won
                             </span>
                           </td>
@@ -844,25 +814,13 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
           )}
 
           {/* All Bids Section */}
-          <div className="glass rounded-2xl p-4 sm:p-5 mb-5 border border-gray-100/20 bg-white/10 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300">
-            <h3 className="text-lg font-semibold mb-4 text-dark flex items-center">
-              <svg
-                className="w-5 h-5 mr-2 text-primary"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+            <h3 className="text-sm font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
+              <Users className="w-4 h-4 text-blue-500" />
               All Bids by Team
             </h3>
 
-            <div className="space-y-4">
+            <div className="space-y-4 font-mono">
               {Object.keys(teamBids).length > 0 ? (
                 Object.entries(teamBids).map(([teamId, teamData], index) => {
                   const isExpanded = expandedTeams.has(teamId);
@@ -871,165 +829,89 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
                   return (
                     <div
                       key={teamId}
-                      className="glass rounded-xl overflow-hidden backdrop-blur-sm hover:shadow-md transition-all duration-200 border border-gray-100/20 animate-fade-in"
-                      style={{ animationDelay: `${index * 100}ms` }}
+                      className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/10"
                     >
                       {/* Expandable header */}
                       <div
-                        className="p-4 bg-white/30 flex justify-between items-center cursor-pointer relative hover:bg-white/40 transition-colors"
+                        className="p-4 bg-slate-50 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors"
                         onClick={() => toggleTeam(teamId)}
                       >
-                        <h4 className="text-base font-semibold flex items-center gap-2">
-                          <svg
-                            className="w-5 h-5 text-primary"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                            />
-                          </svg>
+                        <h4 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                          <Users className="w-4 h-4 text-slate-500 shrink-0" />
                           {teamData.team.name}
                         </h4>
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full bg-white/30">
-                            <svg
-                              className="w-4 h-4 text-primary"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"
-                              />
-                            </svg>
-                            <span className="text-sm font-medium">{teamData.bids.length}</span>
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-slate-200 bg-white text-[10px] font-bold text-slate-605">
+                            <FileText className="w-3.5 h-3.5 text-slate-400" />
+                            <span>{teamData.bids.length} bids</span>
                           </div>
                           {wonCount > 0 && (
-                            <div className="flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full bg-green-100/60">
-                              <svg
-                                className="w-4 h-4 text-green-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                              </svg>
-                              <span className="text-sm font-medium text-green-700">
-                                {wonCount}
-                              </span>
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-emerald-200 bg-emerald-50 text-[10px] font-bold text-emerald-700">
+                              <Check className="w-3.5 h-3.5 text-emerald-500" />
+                              <span>{wonCount} won</span>
                             </div>
                           )}
-                          <div
-                            className={`bg-white/40 rounded-full h-7 w-7 flex items-center justify-center transition-transform duration-300 ${
-                              isExpanded ? 'rotate-180' : ''
+                          <ChevronRight
+                            className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${
+                              isExpanded ? 'rotate-90' : ''
                             }`}
-                          >
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M19 9l-7 7-7-7"
-                              />
-                            </svg>
-                          </div>
+                          />
                         </div>
                       </div>
 
                       {/* Collapsible content */}
                       {isExpanded && (
-                        <div className="divide-y divide-gray-100/30 bg-white/5">
+                        <div className="divide-y divide-slate-100 bg-white">
                           {teamData.bids
                             .sort((a, b) => b.amount - a.amount)
                             .map((bid, bidIndex) => (
                               <div
                                 key={bidIndex}
-                                className={`p-4 hover:bg-white/10 transition-colors duration-200 ${
-                                  bid.won ? 'border-l-4 border-green-400/40' : ''
+                                className={`p-4 hover:bg-slate-50/30 transition-colors flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs ${
+                                  bid.won ? 'border-l-4 border-l-emerald-500' : ''
                                 }`}
                               >
-                                <div className="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-2 sm:gap-0">
-                                  <div className="flex items-start">
-                                    <div className="h-8 w-8 flex-shrink-0 bg-gradient-to-br from-gray-50/30 to-gray-100/30 rounded-full flex items-center justify-center mr-2 mt-0.5">
-                                      <span className="text-xs font-medium text-gray-700">
-                                        {bid.player.name.substring(0, 2)}
-                                      </span>
-                                    </div>
-                                    <div className="flex flex-col">
-                                      <div className="font-medium flex items-center gap-2">
-                                        {bid.player.name}
-                                        {bid.won && (
-                                          <span className="inline-flex items-center justify-center bg-green-100/70 text-green-800 text-xs px-1.5 py-0.5 rounded-full">
-                                            Won
-                                          </span>
-                                        )}
-                                        {!bid.won && bid.lossReason && (
-                                          <span className="inline-flex items-center justify-center bg-orange-100/70 text-orange-800 text-xs px-1.5 py-0.5 rounded-full">
-                                            Cancelled
-                                          </span>
-                                        )}
-                                      </div>
-                                      <div className="text-xs text-gray-500 flex items-center gap-1.5">
-                                        <span
-                                          className={`px-1.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getPositionColor(
-                                            bid.player.position
-                                          )}`}
-                                        >
-                                          {bid.player.position}
+                                <div className="flex items-start gap-3">
+                                  <div className="h-8 w-8 flex-shrink-0 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center font-bold text-slate-600">
+                                    {bid.player.name.substring(0, 2)}
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <div className="font-bold text-slate-800 flex items-center gap-2">
+                                      {bid.player.name}
+                                      {bid.won && (
+                                        <span className="inline-flex items-center justify-center bg-emerald-50 border border-emerald-200 text-emerald-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">
+                                          Won
                                         </span>
-                                        <span className="flex items-center">
-                                          <svg
-                                            className="w-3.5 h-3.5 mr-0.5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth="2"
-                                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                            />
-                                          </svg>
-                                          {new Date(bid.timestamp).toLocaleTimeString()}
+                                      )}
+                                      {!bid.won && bid.lossReason && (
+                                        <span className="inline-flex items-center justify-center bg-orange-50 border border-orange-200 text-orange-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">
+                                          Cancelled
                                         </span>
-                                      </div>
-                                      {bid.lossReason && (
-                                        <div className="text-xs text-orange-600 mt-1 italic">
-                                          {bid.lossReason}
-                                        </div>
                                       )}
                                     </div>
+                                    <div className="text-[10px] text-slate-400 font-bold uppercase mt-1 flex items-center gap-2 flex-wrap">
+                                      <span className={`px-2 py-0.5 rounded-full ${getPositionColor(bid.player.position)}`}>
+                                        {bid.player.position}
+                                      </span>
+                                      <span className="flex items-center gap-1">
+                                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                        {new Date(bid.timestamp).toLocaleTimeString()}
+                                      </span>
+                                    </div>
+                                    {bid.lossReason && (
+                                      <div className="text-[10px] text-orange-600 mt-1 font-bold italic flex items-center gap-1">
+                                        <AlertTriangle className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                                        {bid.lossReason}
+                                      </div>
+                                    )}
                                   </div>
-                                  <div className="flex flex-col items-end">
-                                    <div
-                                      className={`text-lg sm:text-xl font-semibold ${
-                                        bid.won ? 'text-green-600' : 'text-gray-700'
-                                      }`}
-                                    >
-                                      £{bid.amount.toLocaleString()}
-                                    </div>
-                                    <div className="text-xs text-gray-500">
-                                      {new Date(bid.timestamp).toLocaleDateString()}
-                                    </div>
+                                </div>
+                                <div className="flex flex-col items-end shrink-0 ml-auto sm:ml-0">
+                                  <div className={`text-base font-black ${bid.won ? 'text-emerald-700' : 'text-slate-800'}`}>
+                                    £{bid.amount.toLocaleString()}
+                                  </div>
+                                  <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">
+                                    {new Date(bid.timestamp).toLocaleDateString()}
                                   </div>
                                 </div>
                               </div>
@@ -1040,51 +922,17 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
                   );
                 })
               ) : (
-                <div className="text-center py-8 glass rounded-xl bg-white/40 backdrop-blur-sm">
-                  <svg
-                    className="w-12 h-12 mx-auto text-gray-400 mb-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <h3 className="text-base font-medium text-gray-600 mb-1">No bids found</h3>
-                  <p className="text-sm text-gray-500">This round has no bidding activity.</p>
+                <div className="text-center py-12 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 font-mono text-xs">
+                  <FileText className="w-10 h-10 mx-auto text-slate-300" />
+                  <h3 className="font-extrabold text-slate-500 uppercase tracking-wide">No bids found</h3>
+                  <p className="text-slate-400">This round has no bidding activity.</p>
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
-
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          opacity: 0;
-          animation: fadeIn 0.5s ease forwards;
-        }
-        .glass {
-          transition: all 0.3s ease;
-        }
-        .glass:hover {
-          box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.1);
-        }
-      `}</style>
     </>
   );
+
 }

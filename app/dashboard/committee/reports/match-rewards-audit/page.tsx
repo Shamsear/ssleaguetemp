@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, RefreshCw, BarChart2 } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -68,7 +68,7 @@ export default function MatchRewardsAuditPage() {
   const SSCOIN_LOSS = 2;
 
   const createAllMissingTransactions = async () => {
-    if (!confirm('⚠️ This will fix ALL issues:\n\n• Create missing transactions\n• Create correcting transactions for wrong amounts\n• DELETE duplicate transactions (keeping oldest)\n\nContinue?')) {
+    if (!confirm('<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> This will fix ALL issues:\n\n• Create missing transactions\n• Create correcting transactions for wrong amounts\n• DELETE duplicate transactions (keeping oldest)\n\nContinue?')) {
       return;
     }
 
@@ -276,13 +276,13 @@ export default function MatchRewardsAuditPage() {
         }
       }
 
-      alert(`✅ Bulk fix complete!\n\nTransactions created: ${successCount}\nDuplicates deleted: ${deletedCount}\nFailed: ${errorCount}\n\n${deletedCount > 0 ? 'Duplicate transactions have been removed.' : ''}`);
+      alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Bulk fix complete!\n\nTransactions created: ${successCount}\nDuplicates deleted: ${deletedCount}\nFailed: ${errorCount}\n\n${deletedCount > 0 ? 'Duplicate transactions have been removed.' : ''}`);
       
       // Reload the audit data
       loadAuditData();
     } catch (error) {
       console.error('Error in bulk fix:', error);
-      alert('❌ Error during bulk fix. Check console for details.');
+      alert('[ERROR]  Error during bulk fix. Check console for details.');
     } finally {
       setCreatingAllMissing(false);
     }
@@ -318,16 +318,16 @@ export default function MatchRewardsAuditPage() {
       });
 
       if (response.ok) {
-        alert(`✅ Transaction created successfully!\n${amount} ${currencyType === 'football' ? 'eCoin' : 'SSCoin'} added to ${teamName}`);
+        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Transaction created successfully!\n${amount} ${currencyType === 'football' ? 'eCoin' : 'SSCoin'} added to ${teamName}`);
         // Reload the audit data
         loadAuditData();
       } else {
         const error = await response.json();
-        alert(`❌ Failed to create transaction: ${error.error || 'Unknown error'}`);
+        alert(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Failed to create transaction: ${error.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error creating transaction:', error);
-      alert('❌ Error creating transaction. Check console for details.');
+      alert('[ERROR]  Error creating transaction. Check console for details.');
     } finally {
       setCreatingTransaction(null);
     }
@@ -715,16 +715,16 @@ export default function MatchRewardsAuditPage() {
       const completeCount = auditResults.filter(r => r.status === 'complete').length;
 
       message += `*SUMMARY*\n`;
-      message += `✅ Complete: ${completeCount}\n`;
-      message += `⚠️ Partial: ${partialCount}\n`;
-      message += `❌ Missing: ${missingCount}\n\n`;
+      message += `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Complete: ${completeCount}\n`;
+      message += `<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Partial: ${partialCount}\n`;
+      message += `<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Missing: ${missingCount}\n\n`;
       message += `──────────────────────────────\n\n`;
 
       if (filteredResults.length > 0) {
         message += `*DETAILS*\n\n`;
 
         filteredResults.forEach((team, index) => {
-          const statusEmoji = team.status === 'complete' ? '✅' : team.status === 'partial' ? '⚠️' : '❌';
+          const statusEmoji = team.status === 'complete' ? '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />' : team.status === 'partial' ? '<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />' : '<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" />';
           
           message += `${index + 1}. ${statusEmoji} *${team.teamName}*\n`;
           message += `   Matches: ${team.matchesPlayed} (W${team.wins} D${team.draws} L${team.losses})\n\n`;
@@ -748,18 +748,18 @@ export default function MatchRewardsAuditPage() {
       }
 
       message += `──────────────────────────────\n`;
-      message += `📊 ${filteredResults.length} teams\n`;
+      message += `<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> ${filteredResults.length} teams\n`;
       message += `🕐 ${new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}\n`;
 
       navigator.clipboard.writeText(message).then(() => {
-        alert('✅ Audit report copied to clipboard!\nPaste in WhatsApp.');
+        alert('[SUCCESS]  Audit report copied to clipboard!\nPaste in WhatsApp.');
       }).catch(err => {
         console.error('Failed to copy:', err);
-        alert('❌ Failed to copy. Please try again.');
+        alert('[ERROR]  Failed to copy. Please try again.');
       });
     } catch (error) {
       console.error('Error generating WhatsApp message:', error);
-      alert('❌ Error generating report.');
+      alert('[ERROR]  Error generating report.');
     }
   };
 
@@ -890,7 +890,7 @@ export default function MatchRewardsAuditPage() {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              ✅ Complete ({completeCount})
+              <CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Complete ({completeCount})
             </button>
             <button
               onClick={() => setFilterStatus('partial')}
@@ -900,7 +900,7 @@ export default function MatchRewardsAuditPage() {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              ⚠️ Partial ({partialCount})
+              <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Partial ({partialCount})
             </button>
             <button
               onClick={() => setFilterStatus('missing')}
@@ -910,7 +910,7 @@ export default function MatchRewardsAuditPage() {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              ❌ Missing ({missingCount})
+              <XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Missing ({missingCount})
             </button>
           </div>
         </div>
@@ -1083,7 +1083,7 @@ export default function MatchRewardsAuditPage() {
                                           {match.duplicateECoinTransactions && match.duplicateECoinTransactions.length > 0 && (
                                             <div className="flex items-center gap-2">
                                               <span className="px-2 py-1 text-xs font-bold rounded bg-red-100 text-red-700">
-                                                🔄 {match.duplicateECoinTransactions.length} duplicate eCoin transaction{match.duplicateECoinTransactions.length > 1 ? 's' : ''}
+                                                <RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> {match.duplicateECoinTransactions.length} duplicate eCoin transaction{match.duplicateECoinTransactions.length > 1 ? 's' : ''}
                                               </span>
                                               <button
                                                 onClick={async () => {
@@ -1120,12 +1120,12 @@ export default function MatchRewardsAuditPage() {
                                                           deleted++;
                                                         }
                                                         
-                                                        alert(`✅ Fixed!\n${updated > 0 ? `Updated: ${updated}\n` : ''}Deleted: ${deleted}`);
+                                                        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Fixed!\n${updated > 0 ? `Updated: ${updated}\n` : ''}Deleted: ${deleted}`);
                                                         loadAuditData();
                                                       }
                                                     } catch (error) {
                                                       console.error('Error fixing duplicates:', error);
-                                                      alert('❌ Error fixing duplicates. Check console.');
+                                                      alert('[ERROR]  Error fixing duplicates. Check console.');
                                                     }
                                                   }
                                                 }}
@@ -1167,7 +1167,7 @@ export default function MatchRewardsAuditPage() {
                                           {match.duplicateSSCoinTransactions && match.duplicateSSCoinTransactions.length > 0 && (
                                             <div className="flex items-center gap-2">
                                               <span className="px-2 py-1 text-xs font-bold rounded bg-red-100 text-red-700">
-                                                🔄 {match.duplicateSSCoinTransactions.length} duplicate SSCoin transaction{match.duplicateSSCoinTransactions.length > 1 ? 's' : ''}
+                                                <RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> {match.duplicateSSCoinTransactions.length} duplicate SSCoin transaction{match.duplicateSSCoinTransactions.length > 1 ? 's' : ''}
                                               </span>
                                               <button
                                                 onClick={async () => {
@@ -1204,12 +1204,12 @@ export default function MatchRewardsAuditPage() {
                                                           deleted++;
                                                         }
                                                         
-                                                        alert(`✅ Fixed!\n${updated > 0 ? `Updated: ${updated}\n` : ''}Deleted: ${deleted}`);
+                                                        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Fixed!\n${updated > 0 ? `Updated: ${updated}\n` : ''}Deleted: ${deleted}`);
                                                         loadAuditData();
                                                       }
                                                     } catch (error) {
                                                       console.error('Error fixing duplicates:', error);
-                                                      alert('❌ Error fixing duplicates. Check console.');
+                                                      alert('[ERROR]  Error fixing duplicates. Check console.');
                                                     }
                                                   }
                                                 }}
@@ -1228,7 +1228,7 @@ export default function MatchRewardsAuditPage() {
                             </div>
                           ) : (
                             <div className="text-sm text-gray-600 p-4 bg-yellow-50 border border-yellow-200 rounded">
-                              <p className="font-semibold text-yellow-800 mb-2">⚠️ Match details not available</p>
+                              <p className="font-semibold text-yellow-800 mb-2"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Match details not available</p>
                               <p className="mb-2">Based on team statistics, this team is missing rewards:</p>
                               <ul className="list-disc list-inside space-y-1 text-sm">
                                 <li>Expected: {team.expectedECoin} eCoin, {team.expectedSSCoin} SSCoin</li>

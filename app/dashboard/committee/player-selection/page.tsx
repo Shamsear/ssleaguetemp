@@ -1,4 +1,5 @@
 'use client'
+import { CheckCircle, RefreshCw } from 'lucide-react';
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
@@ -64,7 +65,7 @@ export default function PlayerSelectionPage() {
     const fetchPlayers = async () => {
       setLoading(true)
       try {
-        console.log('🔄 Fetching ALL players from Neon database via API')
+        console.log('<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Fetching ALL players from Neon database via API')
         
         // Fetch without limit to get all players
         const response = await fetchWithTokenRefresh('/api/players?limit=999999')
@@ -74,7 +75,7 @@ export default function PlayerSelectionPage() {
           throw new Error('Failed to fetch players')
         }
         
-        console.log(`✅ Fetched ${data.length} players from Neon`)
+        console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Fetched ${data.length} players from Neon`)
         
         setPlayers(data)
         setFilteredPlayers(data)
@@ -494,7 +495,7 @@ export default function PlayerSelectionPage() {
       showAlert({
         type: 'success',
         title: 'Export Successful',
-        message: `✅ Exported ${positionPlayers.length} ${position} players to Excel\n\nThe file includes:\n• Yes/No dropdowns in the Eligible column\n• Color coding (Green=Yes, Red=No)\n• All player information\n\nEdit the file and upload it back to apply changes in bulk!`
+        message: `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Exported ${positionPlayers.length} ${position} players to Excel\n\nThe file includes:\n• Yes/No dropdowns in the Eligible column\n• Color coding (Green=Yes, Red=No)\n• All player information\n\nEdit the file and upload it back to apply changes in bulk!`
       })
     } catch (err) {
       console.error('Error exporting:', err)
@@ -701,7 +702,7 @@ export default function PlayerSelectionPage() {
                     className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   />
                   {selectedFile && (
-                    <p className="text-xs text-green-600">✓ {selectedFile.name} selected</p>
+                    <p className="text-xs text-green-600">Yes {selectedFile.name} selected</p>
                   )}
                   <button
                     onClick={handleFileUpload}
@@ -809,9 +810,9 @@ export default function PlayerSelectionPage() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                <option value="all">🔵 All Players ({stats.total})</option>
-                <option value="eligible">✅ Eligible Only ({stats.eligible})</option>
-                <option value="not_eligible">❌ Not Eligible Only ({stats.notEligible})</option>
+                <option value="all">All Players ({stats.total})</option>
+                <option value="eligible">Eligible Only ({stats.eligible})</option>
+                <option value="not_eligible">Not Eligible Only ({stats.notEligible})</option>
               </select>
             </div>
             <div className="flex items-end">

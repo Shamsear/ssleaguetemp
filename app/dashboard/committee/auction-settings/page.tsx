@@ -264,7 +264,7 @@ export default function AuctionSettingsPage() {
       <div className="min-h-screen flex items-center justify-center console-bg">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600 font-mono text-sm">Loading auction settings...</p>
+          <p className="mt-4 text-slate-550 font-mono font-extrabold uppercase tracking-wider text-xs">Loading auction settings...</p>
         </div>
       </div>
     );
@@ -326,7 +326,7 @@ export default function AuctionSettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
               <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Rounds</p>
+                <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Total Rounds</p>
                 <div className="flex items-baseline gap-1 mt-2">
                   <span className="text-2xl font-black text-amber-600">{stats.total_rounds}</span>
                   <span className="text-slate-400 text-xs">/ {formData.max_rounds}</span>
@@ -337,7 +337,7 @@ export default function AuctionSettingsPage() {
 
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
               <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Completed Rounds</p>
+                <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Completed Rounds</p>
                 <div className="flex items-baseline gap-1 mt-2">
                   <span className="text-2xl font-black text-green-600">{stats.completed_rounds}</span>
                   <span className="text-slate-400 text-xs">/ {formData.max_rounds}</span>
@@ -348,7 +348,7 @@ export default function AuctionSettingsPage() {
 
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
               <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Remaining Rounds</p>
+                <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Remaining Rounds</p>
                 <div className="flex items-baseline gap-1 mt-2">
                   <span className="text-2xl font-black text-blue-600">{stats.remaining_rounds}</span>
                   <span className="text-slate-400 text-xs">/ {formData.max_rounds}</span>
@@ -385,11 +385,11 @@ export default function AuctionSettingsPage() {
                     required
                     className="pl-10 w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold appearance-none cursor-pointer"
                   >
-                    <option value="season_start">🏆 Season Start</option>
-                    <option value="transfer_window">🔄 Transfer Window</option>
+                    <option value="season_start">Season Start</option>
+                    <option value="transfer_window">Transfer Window</option>
                     <option value="mid_season">⚡ Mid-Season</option>
-                    <option value="winter_window">❄️ Winter Window</option>
-                    <option value="summer_window">☀️ Summer Window</option>
+                    <option value="winter_window">Winter Window</option>
+                    <option value="summer_window">Summer Window</option>
                   </select>
                 </div>
                 <p className="mt-1.5 text-[10px] text-slate-400 font-mono">Select the type of auction window these settings apply to</p>

@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, Trophy, AlertTriangle } from 'lucide-react';
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -152,7 +153,7 @@ export default function PlayerEligibilityPage() {
             <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
                 <div className="text-center font-mono">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
-                    <p className="mt-4 text-xs text-slate-450 font-bold uppercase tracking-wider">Loading eligibility matrix...</p>
+                    <p className="mt-4 text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">Loading eligibility matrix...</p>
                 </div>
             </div>
         );
@@ -165,7 +166,7 @@ export default function PlayerEligibilityPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
                 <div className="text-center max-w-md mx-auto p-8 font-mono">
-                    <div className="text-4xl mb-4">🏆</div>
+                    <div className="text-4xl mb-4"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></div>
                     <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">No Season Selected</h2>
                     <p className="text-xs text-slate-450 mt-2 mb-6 uppercase font-bold tracking-wider leading-relaxed">
                         Please select a season from the tournament management panel to load eligibility rules.
@@ -194,7 +195,7 @@ export default function PlayerEligibilityPage() {
                             href="/dashboard/committee/team-management/tournament"
                             className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all mb-4"
                         >
-                            ← Back to Tournament
+                            &larr; Back to Tournament
                         </Link>
                         <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight font-mono">
                             Player Eligibility Checker
@@ -261,7 +262,7 @@ export default function PlayerEligibilityPage() {
                             </div>
                         </div>
 
-                        <div className="mt-4 flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                        <div className="mt-4 flex items-center gap-2 text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                             {loading && !initialLoad ? (
                                 <>
                                     <div className="animate-spin rounded-full h-3 w-3 border-b border-amber-500"></div>
@@ -303,8 +304,8 @@ export default function PlayerEligibilityPage() {
                                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer"
                             >
                                 <option value="all">All Players</option>
-                                <option value="eligible">✅ Eligible Only</option>
-                                <option value="ineligible">⚠️ Ineligible Only</option>
+                                <option value="eligible">Eligible Only</option>
+                                <option value="ineligible">Ineligible Only</option>
                             </select>
                         </div>
                     </div>
@@ -333,11 +334,11 @@ export default function PlayerEligibilityPage() {
                         <div className="text-2xl font-black text-slate-800 mt-2">{filteredPlayers.length}</div>
                     </div>
                     <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">✅ Eligible</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider"><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Eligible</span>
                         <div className="text-2xl font-black text-emerald-600 mt-2">{eligibleCount}</div>
                     </div>
                     <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">⚠️ Ineligible</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Ineligible</span>
                         <div className="text-2xl font-black text-amber-600 mt-2">{ineligibleCount}</div>
                     </div>
                     <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
@@ -361,43 +362,43 @@ export default function PlayerEligibilityPage() {
                                         onClick={() => handleSort('player_name')}
                                         className="px-4 py-3 text-left cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        Player {sortBy === 'player_name' && (sortOrder === 'asc' ? '▲' : '▼')}
+                                        Player {sortBy === 'player_name' && (sortOrder === 'asc' ? '^' : 'v')}
                                     </th>
                                     <th
                                         onClick={() => handleSort('team_name')}
                                         className="px-4 py-3 text-left cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        Team {sortBy === 'team_name' && (sortOrder === 'asc' ? '▲' : '▼')}
+                                        Team {sortBy === 'team_name' && (sortOrder === 'asc' ? '^' : 'v')}
                                     </th>
                                     <th
                                         onClick={() => handleSort('matches_played')}
                                         className="px-4 py-3 text-center cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        Games {sortBy === 'matches_played' && (sortOrder === 'asc' ? '▲' : '▼')}
+                                        Games {sortBy === 'matches_played' && (sortOrder === 'asc' ? '^' : 'v')}
                                     </th>
                                     <th
                                         onClick={() => handleSort('wins')}
                                         className="px-4 py-3 text-center cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        W {sortBy === 'wins' && (sortOrder === 'asc' ? '▲' : '▼')}
+                                        W {sortBy === 'wins' && (sortOrder === 'asc' ? '^' : 'v')}
                                     </th>
                                     <th
                                         onClick={() => handleSort('draws')}
                                         className="px-4 py-3 text-center cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        D {sortBy === 'draws' && (sortOrder === 'asc' ? '▲' : '▼')}
+                                        D {sortBy === 'draws' && (sortOrder === 'asc' ? '^' : 'v')}
                                     </th>
                                     <th
                                         onClick={() => handleSort('losses')}
                                         className="px-4 py-3 text-center cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        L {sortBy === 'losses' && (sortOrder === 'asc' ? '▲' : '▼')}
+                                        L {sortBy === 'losses' && (sortOrder === 'asc' ? '^' : 'v')}
                                     </th>
                                     <th
                                         onClick={() => handleSort('goal_difference')}
                                         className="px-4 py-3 text-center cursor-pointer hover:bg-slate-700 transition-colors"
                                     >
-                                        GD {sortBy === 'goal_difference' && (sortOrder === 'asc' ? '▲' : '▼')}
+                                        GD {sortBy === 'goal_difference' && (sortOrder === 'asc' ? '^' : 'v')}
                                     </th>
                                 </tr>
                             </thead>
@@ -409,11 +410,11 @@ export default function PlayerEligibilityPage() {
                                             <td className="px-4 py-3">
                                                 {isEligible ? (
                                                     <span className="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-50 border border-emerald-250 text-emerald-700">
-                                                        ✅ Eligible
+                                                        <CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Eligible
                                                     </span>
                                                 ) : (
                                                     <span className="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-50 border border-amber-250 text-amber-700">
-                                                        ⚠️ Ineligible
+                                                        <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Ineligible
                                                     </span>
                                                 )}
                                             </td>

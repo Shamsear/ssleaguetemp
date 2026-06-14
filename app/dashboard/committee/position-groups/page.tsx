@@ -7,16 +7,7 @@ import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { 
-  ArrowLeft, 
-  Shuffle, 
-  RefreshCw, 
-  AlertTriangle, 
-  Info, 
-  Layers, 
-  Activity, 
-  Sparkles 
-} from 'lucide-react';
+import { ArrowLeft, Shuffle, RefreshCw, AlertTriangle, Info, Layers, Activity, Sparkles, CheckCircle, BarChart2 } from 'lucide-react';
 
 // Only these positions are used for position groups
 const POSITION_GROUP_POSITIONS = ['CB', 'DMF', 'CMF', 'AMF', 'CF'] as const;
@@ -101,7 +92,7 @@ export default function PositionGroupsPage() {
       const { data: players, success } = await response.json();
 
       if (success) {
-        console.log(`📊 [Position Groups] Fetched ${players.length} total players`);
+        console.log(`<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Position Groups] Fetched ${players.length} total players`);
         
         // Filter to only show players with the specified positions
         // Don't filter by is_auction_eligible - we want to group ALL players
@@ -109,7 +100,7 @@ export default function PositionGroupsPage() {
           POSITION_GROUP_POSITIONS.includes(p.position?.toUpperCase() as any)
         );
         
-        console.log(`📊 [Position Groups] Filtered to ${relevantPlayers.length} players in CB/DMF/CMF/AMF/CF positions`);
+        console.log(`<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Position Groups] Filtered to ${relevantPlayers.length} players in CB/DMF/CMF/AMF/CF positions`);
 
         setAllPlayers(relevantPlayers);
         calculateStats(relevantPlayers);
@@ -176,7 +167,7 @@ export default function PositionGroupsPage() {
 
       await Promise.all(updates);
       
-      console.log(`✅ [Position Groups] Updated ${sortedPlayers.length} players with position_group`);
+      console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> [Position Groups] Updated ${sortedPlayers.length} players with position_group`);
       
       // Refresh data from database
       await fetchPlayers();
@@ -197,7 +188,7 @@ export default function PositionGroupsPage() {
         
         // Now update the position view with fresh data
         const posPlayers = relevantPlayers.filter((p: Player) => p.position?.toUpperCase() === selectedPosition);
-        console.log(`📊 [Position Groups] Found ${posPlayers.length} ${selectedPosition} players after division`);
+        console.log(`<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Position Groups] Found ${posPlayers.length} ${selectedPosition} players after division`);
         
         setGroupedPlayers({
           group1: posPlayers.filter((p: Player) => p.position_group === `${selectedPosition}-1`),
@@ -272,7 +263,7 @@ export default function PositionGroupsPage() {
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-xs text-slate-500 uppercase tracking-wider font-extrabold">Loading position groups...</p>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading position groups...</p>
         </div>
       </div>
     );
@@ -416,7 +407,7 @@ export default function PositionGroupsPage() {
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-slate-150">
                     <thead>
-                      <tr className="bg-slate-100/60 font-mono text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                      <tr className="bg-slate-100/60 font-mono text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                         <th className="px-3 py-2 text-left">Player</th>
                         <th className="px-3 py-2 text-center">Rating</th>
                         <th className="px-3 py-2 text-center w-16">Swap</th>
@@ -469,7 +460,7 @@ export default function PositionGroupsPage() {
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-slate-150">
                     <thead>
-                      <tr className="bg-slate-100/60 font-mono text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                      <tr className="bg-slate-100/60 font-mono text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                         <th className="px-3 py-2 text-left">Player</th>
                         <th className="px-3 py-2 text-center">Rating</th>
                         <th className="px-3 py-2 text-center w-16">Swap</th>

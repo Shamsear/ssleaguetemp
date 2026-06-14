@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { Trophy as TrophyIcon, Settings, ArrowLeft, Info, Calendar, Clock, Lock, Plus, Trash2, CheckCircle, AlertCircle, Sparkles, X, ChevronRight, Award, Crown, Trophy, Star } from 'lucide-react';
 
 interface Trophy {
   id: number;
@@ -181,7 +183,7 @@ export default function TrophyManagementPage() {
       
       const data = await res.json();
       if (data.success) {
-        setSuccess(`✅ Awarded ${data.trophiesAwarded} trophies!`);
+        setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Awarded ${data.trophiesAwarded} trophies!`);
         fetchTrophies();
         fetchPreview();
       } else {
@@ -275,69 +277,98 @@ export default function TrophyManagementPage() {
       setError('Failed to add trophy');
     }
   };
-
   const getTrophyBadgeColor = (type: string) => {
     switch (type) {
-      case 'league': return 'from-yellow-500 to-amber-600';
-      case 'runner_up': return 'from-gray-400 to-gray-500';
-      case 'cup': return 'from-blue-500 to-indigo-600';
-      case 'special': return 'from-purple-500 to-purple-600';
-      default: return 'from-gray-500 to-gray-600';
+      case 'league': return 'border-yellow-200 bg-yellow-50/50 text-yellow-800';
+      case 'runner_up': return 'border-slate-200 bg-slate-50/50 text-slate-700';
+      case 'cup': return 'border-blue-200 bg-blue-50/50 text-blue-800';
+      case 'special': return 'border-purple-200 bg-purple-50/50 text-purple-800';
+      default: return 'border-slate-200 bg-slate-50/50 text-slate-600';
     }
   };
 
   const getTrophyIcon = (type: string) => {
     switch (type) {
-      case 'league': return '🏆';
-      case 'runner_up': return '🥈';
-      case 'cup': return '🏆';
-      case 'special': return '⭐';
-      default: return '🏅';
+      case 'league': return <Crown className="w-5 h-5 text-amber-500" />;
+      case 'runner_up': return <Award className="w-5 h-5 text-slate-400" />;
+      case 'cup': return <TrophyIcon className="w-5 h-5 text-blue-500" />;
+      case 'special': return <Sparkles className="w-5 h-5 text-purple-500" />;
+      default: return <Award className="w-5 h-5 text-slate-500" />;
     }
   };
 
   if (authLoading || !user || !isCommitteeAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center console-bg font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono font-mono">Loading trophies console...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-2 sm:px-4 bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-4 sm:mb-8">
-          <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent mb-2">
-            🏆 Trophy Management
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600">
-            Award and manage team trophies • Season: <span className="font-semibold">{userSeasonId}</span>
-          </p>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Decorative glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative z-10 space-y-6">
+        
+        {/* Navigation */}
+        <div>
+          <Link
+            href="/dashboard/committee"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
+        </div>
+
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <TrophyIcon className="w-6 h-6 text-amber-400" />
+            </div>
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">SYSTEM CONTROL</span>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                Trophy Management
+              </h1>
+              <p className="text-xs text-slate-550 font-mono mt-1">
+                Award and manage team trophies for the current season.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Messages */}
         {error && (
-          <div className="mb-4 p-3 sm:p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-            <p className="text-sm sm:text-base text-red-800">{error}</p>
+          <div className="console-card bg-rose-50 border border-rose-200 rounded-3xl p-5 shadow-sm flex items-center gap-3 text-rose-800">
+            <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0" />
+            <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
           </div>
         )}
-        
+
         {success && (
-          <div className="mb-4 p-3 sm:p-4 bg-green-50 border-l-4 border-green-500 rounded-lg">
-            <p className="text-sm sm:text-base text-green-800">{success}</p>
+          <div className="console-card bg-emerald-50/30 border border-emerald-200 rounded-3xl p-5 shadow-sm flex items-center gap-3 text-emerald-800">
+            <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+            <p className="text-xs font-bold uppercase tracking-wide">{success}</p>
           </div>
         )}
 
         {/* Auto-Award Section */}
         {preview.length > 0 && (
-          <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-6 border-2 border-blue-200">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-2xl sm:text-3xl">🤖</span>
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-6">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="w-10 h-10 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-amber-500 animate-pulse" />
+              </div>
               <div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Auto-Award Trophies</h2>
-                <p className="text-xs sm:text-sm text-gray-600">Based on tournament standings</p>
+                <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Auto-Award Trophies</h2>
+                <p className="text-[10px] text-slate-500 font-mono">Based on tournament standings</p>
               </div>
             </div>
             
@@ -349,33 +380,39 @@ export default function TrophyManagementPage() {
                 return acc;
               }, {} as Record<string, TrophyPreview[]>)
             ).map(([tournamentName, trophies]) => (
-              <div key={tournamentName} className="mb-4">
-                <h3 className="text-sm sm:text-base font-bold text-gray-800 mb-2 px-2">
-                  🏆 {tournamentName}
+              <div key={tournamentName} className="space-y-3">
+                <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5 px-1">
+                  <ChevronRight className="w-3.5 h-3.5 text-amber-550" /> {tournamentName}
                 </h3>
-                <div className="space-y-2 sm:space-y-3">
-                  {trophies.map((p, localIndex) => {
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {trophies.map((p) => {
                     const globalIndex = preview.findIndex(item => item === p);
                     const isSelected = selectedTrophies.has(`${globalIndex}`);
                     return (
                       <div 
                         key={`${p.team_name}-${p.trophy_name}`} 
-                        className={`flex items-center gap-3 bg-white p-3 sm:p-4 rounded-xl border-2 transition-all ${
-                          isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                        } ${p.alreadyAwarded ? 'opacity-60' : ''}`}
+                        onClick={() => !p.alreadyAwarded && toggleTrophySelection(globalIndex)}
+                        className={`flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border transition-all cursor-pointer ${
+                          isSelected ? 'border-amber-500 bg-amber-50/35 shadow-sm' : 'border-slate-200 hover:border-slate-300'
+                        } ${p.alreadyAwarded ? 'opacity-60 cursor-not-allowed' : ''}`}
                       >
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => toggleTrophySelection(globalIndex)}
+                          onChange={() => !p.alreadyAwarded && toggleTrophySelection(globalIndex)}
                           disabled={p.alreadyAwarded}
-                          className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-4 h-4 rounded border-slate-350 text-amber-500 focus:ring-amber-500 disabled:opacity-50 cursor-pointer"
                         />
-                        <div className="flex-1">
-                          <p className="text-sm sm:text-base font-bold text-gray-900">{p.team_name}</p>
-                          <p className="text-xs sm:text-sm text-gray-600">{p.trophy_name}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-extrabold text-sm text-slate-800 truncate">{p.team_name}</p>
+                          <p className="text-xs text-slate-500 font-mono mt-0.5 font-bold">{p.trophy_name}</p>
                         </div>
-                        {p.alreadyAwarded && <span className="text-green-600 text-xs sm:text-sm font-semibold">✅ Awarded</span>}
+                        {p.alreadyAwarded && (
+                          <span className="flex-shrink-0 flex items-center gap-1 text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded uppercase font-black tracking-wide">
+                            <CheckCircle className="w-3 h-3 text-emerald-500" /> Awarded
+                          </span>
+                        )}
                       </div>
                     );
                   })}
@@ -383,14 +420,15 @@ export default function TrophyManagementPage() {
               </div>
             ))}
             
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
               <button
+                type="button"
                 onClick={toggleAllTrophies}
-                className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
+                className="text-xs text-slate-550 hover:text-slate-800 font-extrabold uppercase tracking-wider transition-colors cursor-pointer"
               >
                 {selectedTrophies.size === preview.length ? '☐ Deselect All' : '☑ Select All'}
               </button>
-              <span className="text-sm text-gray-600">
+              <span className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                 {selectedTrophies.size} of {preview.length} selected
               </span>
             </div>
@@ -398,42 +436,61 @@ export default function TrophyManagementPage() {
             <button
               onClick={handleAutoAward}
               disabled={awarding || selectedTrophies.size === 0}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 mt-4"
+              className="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
             >
-              {awarding ? 'Awarding...' : `⚡ Award Selected Trophies (${selectedTrophies.size})`}
+              {awarding ? (
+                <>
+                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
+                  <span>Awarding Trophies...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Award Selected Trophies ({selectedTrophies.size})</span>
+                </>
+              )}
             </button>
           </div>
         )}
 
         {/* Awarded Trophies List */}
-        <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-              🏅 Awarded Trophies ({trophies.length})
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b border-slate-100 pb-4">
+            <h2 className="text-sm font-extrabold text-slate-950 uppercase tracking-tight flex items-center gap-2">
+              <TrophyIcon className="w-5 h-5 text-amber-500" /> Awarded Trophies ({trophies.length})
             </h2>
             <button
               onClick={() => setShowAddForm(!showAddForm)}
-              className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+              className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 showAddForm
-                  ? 'bg-gray-200 text-gray-700'
-                  : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:shadow-lg'
+                  ? 'bg-slate-105 hover:bg-slate-200 text-slate-700 border border-slate-300'
+                  : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-900'
               }`}
             >
-              {showAddForm ? '✕ Cancel' : '+ Add Trophy'}
+              {showAddForm ? (
+                <>
+                  <X className="w-3.5 h-3.5" /> Close Form
+                </>
+              ) : (
+                <>
+                  <Plus className="w-3.5 h-3.5" /> Add Trophy
+                </>
+              )}
             </button>
           </div>
 
           {/* Add Trophy Form */}
           {showAddForm && (
-            <form onSubmit={handleAddTrophy} className="mb-6 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border-2 border-green-200">
-              <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Add New Trophy</h3>
+            <form onSubmit={handleAddTrophy} className="mb-6 p-4 sm:p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+              <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider">Add New Trophy</h3>
+              
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Team Name *</label>
+                  <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Team Name *</label>
                   <select
                     value={newTrophy.team_name}
                     onChange={(e) => setNewTrophy({ ...newTrophy, team_name: e.target.value })}
-                    className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                     required
                   >
                     <option value="">-- Select Team --</option>
@@ -444,25 +501,25 @@ export default function TrophyManagementPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Trophy Type *</label>
+                  <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Trophy Type *</label>
                   <select
                     value={newTrophy.trophy_type}
                     onChange={(e) => setNewTrophy({ ...newTrophy, trophy_type: e.target.value })}
-                    className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                   >
-                    <option value="cup">🏆 Cup</option>
-                    <option value="special">⭐ Special Award</option>
-                    <option value="league">🏆 League</option>
-                    <option value="runner_up">🥈 Runner Up</option>
+                    <option value="cup"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cup</option>
+                    <option value="special"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Special Award</option>
+                    <option value="league"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> League</option>
+                    <option value="runner_up"><Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" /> Runner Up</option>
                   </select>
                 </div>
                 
                 <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Trophy Name *</label>
+                  <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Trophy Name *</label>
                   <select
                     value={newTrophy.trophy_name}
                     onChange={(e) => setNewTrophy({ ...newTrophy, trophy_name: e.target.value })}
-                    className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                     required
                   >
                     <option value="">-- Select Trophy --</option>
@@ -477,44 +534,45 @@ export default function TrophyManagementPage() {
                       type="text"
                       placeholder="Enter custom trophy name"
                       onChange={(e) => setNewTrophy({ ...newTrophy, trophy_name: e.target.value })}
-                      className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 mt-2"
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all mt-2"
                     />
                   )}
                 </div>
                 
                 <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Position *</label>
+                  <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Position *</label>
                   <select
                     value={newTrophy.position}
                     onChange={(e) => setNewTrophy({ ...newTrophy, position: e.target.value })}
-                    className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                     required
                   >
                     <option value="">-- Select Position --</option>
-                    <option value="Winner">🏆 Winner</option>
-                    <option value="Runner Up">🥈 Runner Up</option>
-                    <option value="Champions">🏆 Champions</option>
-                    <option value="Third Place">🥉 Third Place</option>
+                    <option value="Winner"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Winner</option>
+                    <option value="Runner Up"><Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" /> Runner Up</option>
+                    <option value="Champions"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Champions</option>
+                    <option value="Third Place"><Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" /> Third Place</option>
                   </select>
                 </div>
                 
-                <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Notes (Optional)</label>
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Notes (Optional)</label>
                   <input
                     type="text"
-                    value={newTrophy.notes}
+                    value={newTrophy.notes || ''}
                     onChange={(e) => setNewTrophy({ ...newTrophy, notes: e.target.value })}
-                    className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500"
-                    placeholder="Additional info"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
+                    placeholder="e.g. Awarded for unbeaten run"
                   />
                 </div>
               </div>
               
               <button
                 type="submit"
-                className="w-full mt-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transition-all"
+                className="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-4"
               >
-                ✨ Add Trophy
+                <Plus className="w-3.5 h-3.5 text-amber-400" />
+                <span>Add & Register Trophy</span>
               </button>
             </form>
           )}
@@ -522,12 +580,20 @@ export default function TrophyManagementPage() {
           {/* Trophies List */}
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
+              <p className="mt-3 text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">Loading awarded trophies...</p>
             </div>
           ) : trophies.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p className="text-lg">No trophies awarded yet</p>
-              <p className="text-sm mt-2">Use auto-award or add manually</p>
+            <div className="text-center py-12 text-slate-400 border border-dashed border-slate-200 rounded-2xl">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-4">
+                <Info className="w-6 h-6 text-slate-400" />
+              </div>
+              <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">
+                No Trophies Awarded Yet
+              </h3>
+              <p className="text-xs text-slate-500 font-mono">
+                Trophies have not been distributed. Use auto-award or add a trophy manually.
+              </p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -539,44 +605,48 @@ export default function TrophyManagementPage() {
                   return acc;
                 }, {} as Record<string, Trophy[]>)
               ).map(([tournamentName, tournamentTrophies]) => (
-                <div key={tournamentName} className="border-l-4 border-blue-500 pl-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3">
-                    🏆 {tournamentName}
+                <div key={tournamentName} className="space-y-3">
+                  <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5 px-1">
+                    <TrophyIcon className="w-3.5 h-3.5 text-amber-500/70" /> {tournamentName}
                   </h3>
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 gap-3">
                     {tournamentTrophies.map((trophy) => (
-                      <div key={trophy.id} className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 hover:shadow-md transition-all">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className="text-2xl">{getTrophyIcon(trophy.trophy_type)}</span>
-                              <div className={`px-3 py-1 rounded-lg text-white text-xs font-semibold bg-gradient-to-r ${getTrophyBadgeColor(trophy.trophy_type)}`}>
-                                {trophy.trophy_type.toUpperCase()}
-                              </div>
-                              <span className="font-bold text-gray-900 text-sm sm:text-base">
-                                {trophy.trophy_position || trophy.trophy_name}
-                              </span>
+                      <div key={trophy.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 hover:shadow-sm transition-all duration-300">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="flex items-start gap-3.5">
+                            <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                              {getTrophyIcon(trophy.trophy_type)}
                             </div>
-                            <div className="flex flex-wrap gap-2 text-xs text-gray-600 ml-11">
-                              <span>Team: <strong className="text-gray-900">{trophy.team_name}</strong></span>
-                              <span>•</span>
-                              <span>By: {trophy.awarded_by}</span>
-                              {trophy.position && (
-                                <>
-                                  <span>•</span>
-                                  <span>Position: {trophy.position}</span>
-                                </>
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className={`border text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${getTrophyBadgeColor(trophy.trophy_type)}`}>
+                                  {trophy.trophy_type}
+                                </span>
+                                <span className="font-extrabold text-sm text-slate-800">
+                                  {trophy.trophy_position || trophy.trophy_name}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                                <span>Team: <strong className="text-slate-800 font-bold">{trophy.team_name}</strong></span>
+                                {trophy.position && (
+                                  <>
+                                    <span>•</span>
+                                    <span>Position: <strong className="text-slate-800 font-bold">{trophy.position}</strong></span>
+                                  </>
+                                )}
+                                <span>•</span>
+                                <span>Awarded By: {trophy.awarded_by}</span>
+                              </div>
+                              {trophy.notes && (
+                                <p className="text-[11px] text-slate-400 italic mt-1 font-medium">“{trophy.notes}”</p>
                               )}
                             </div>
-                            {trophy.notes && (
-                              <p className="text-xs text-gray-500 mt-2 ml-11 italic">{trophy.notes}</p>
-                            )}
                           </div>
                           <button
                             onClick={() => handleDeleteTrophy(trophy.id)}
-                            className="px-3 sm:px-4 py-2 bg-red-500 text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-red-600 transition-all self-end sm:self-center"
+                            className="w-full sm:w-auto px-4 py-2 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-500 hover:text-rose-600 rounded-xl font-mono text-xs uppercase font-extrabold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer self-end sm:self-center"
                           >
-                            🗑️ Delete
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
                           </button>
                         </div>
                       </div>

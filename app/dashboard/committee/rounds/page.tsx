@@ -3,7 +3,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { adminDb } from '@/lib/firebase/admin-client';
 import { extractIdNumberAsInt } from '@/lib/id-utils';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
@@ -13,6 +12,8 @@ import { MultiRoundAutoFinalize } from '@/components/MultiRoundAutoFinalize';
 import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { ArrowLeft, Trash2, ShieldAlert, CheckCircle2, AlertTriangle, Info, Sparkles, Plus, Clock, Users, ChevronRight, ChevronDown, RefreshCw, Play, DollarSign, Check, FileText, Settings, Calendar, ArrowRight, Layers, HelpCircle, XCircle, CheckCircle, BarChart2 } from 'lucide-react';
+
 
 interface Round {
   id: string;
@@ -28,7 +29,7 @@ interface Round {
   teams_bid: number;
   start_time?: string;
   player_count?: number;
-  finalization_mode?: string;
+  finalization_mode?: 'auto' | 'manual';
   has_pending_allocations?: boolean;
 }
 
@@ -163,7 +164,7 @@ export default function RoundsManagementPage() {
         
         // Set loading state for each active round
         const loadingMap: {[key: string]: boolean} = {};
-        activeRounds.forEach(r => { loadingMap[r.id] = true; });
+        activeRounds.forEach((r: Round) => { loadingMap[r.id] = true; });
         setLoadingSubmissions(prev => ({ ...prev, ...loadingMap }));
         
         // Use Promise.all to wait for all submissions to be fetched
@@ -174,14 +175,14 @@ export default function RoundsManagementPage() {
             const subData = await subResponse.json();
             console.log(`🔍 [fetchRounds] Submissions response for round ${r.id}:`, subData);
             if (subData.success) {
-              console.log(`✅ [fetchRounds] Setting submissions for round ${r.id}:`, subData);
+              console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> [fetchRounds] Setting submissions for round ${r.id}:`, subData);
               return { roundId: r.id, data: subData };
             } else {
-              console.error(`❌ [fetchRounds] Failed to fetch submissions for round ${r.id}:`, subData.error);
+              console.error(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [fetchRounds] Failed to fetch submissions for round ${r.id}:`, subData.error);
               return null;
             }
           } catch (err) {
-            console.error(`❌ [fetchRounds] Error fetching submissions for round ${r.id}:`, err);
+            console.error(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [fetchRounds] Error fetching submissions for round ${r.id}:`, err);
             return null;
           }
         });
@@ -201,7 +202,7 @@ export default function RoundsManagementPage() {
         
         // Clear loading state
         const clearedLoadingMap: {[key: string]: boolean} = {};
-        activeRounds.forEach(r => { clearedLoadingMap[r.id] = false; });
+        activeRounds.forEach((r: Round) => { clearedLoadingMap[r.id] = false; });
         setLoadingSubmissions(prev => ({ ...prev, ...clearedLoadingMap }));
         }
       }
@@ -221,12 +222,12 @@ export default function RoundsManagementPage() {
         
         // Create map of which positions have groups
         const positionsWithGroups = new Set(
-          positionGroups.map(pg => pg.split('-')[0]) // Extract position from "CB-1" -> "CB"
+          positionGroups.map(pg => pg.split('-')[0]) // Extract position from "CB-1" &rarr; "CB"
         );
         
-        console.log('📊 [Positions] All positions:', allPositions);
-        console.log('📊 [Positions] Position groups found:', positionGroups);
-        console.log('📊 [Positions] Positions with groups:', Array.from(positionsWithGroups));
+        console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Positions] All positions:', allPositions);
+        console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Positions] Position groups found:', positionGroups);
+        console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Positions] Positions with groups:', Array.from(positionsWithGroups));
         
         // Build final list: use groups if they exist, otherwise use base position
         const finalPositions: string[] = [];
@@ -242,7 +243,7 @@ export default function RoundsManagementPage() {
           }
         });
         
-        console.log('📊 [Positions] Final dropdown options:', finalPositions);
+        console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Positions] Final dropdown options:', finalPositions);
         setAvailablePositions(finalPositions.sort());
       }
 
@@ -313,7 +314,7 @@ export default function RoundsManagementPage() {
         
         // Set loading state for each active round
         const loadingMap: {[key: string]: boolean} = {};
-        activeRounds.forEach(r => { loadingMap[r.id] = true; });
+        activeRounds.forEach((r: Round) => { loadingMap[r.id] = true; });
         setLoadingSubmissions(loadingMap);
         
         // Use Promise.all to wait for all submissions to be fetched
@@ -324,14 +325,14 @@ export default function RoundsManagementPage() {
             const subData = await subResponse.json();
             console.log(`🔍 [fetchAllData] Submissions response for round ${r.id}:`, subData);
             if (subData.success) {
-              console.log(`✅ [fetchAllData] Setting submissions for round ${r.id}:`, subData);
+              console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> [fetchAllData] Setting submissions for round ${r.id}:`, subData);
               return { roundId: r.id, data: subData };
             } else {
-              console.error(`❌ [fetchAllData] Failed to fetch submissions for round ${r.id}:`, subData.error);
+              console.error(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [fetchAllData] Failed to fetch submissions for round ${r.id}:`, subData.error);
               return null;
             }
           } catch (err) {
-            console.error(`❌ [fetchAllData] Error fetching submissions for round ${r.id}:`, err);
+            console.error(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [fetchAllData] Error fetching submissions for round ${r.id}:`, err);
             return null;
           }
         });
@@ -351,7 +352,7 @@ export default function RoundsManagementPage() {
         
         // Clear loading state
         const clearedLoadingMap: {[key: string]: boolean} = {};
-        activeRounds.forEach(r => { clearedLoadingMap[r.id] = false; });
+        activeRounds.forEach((r: Round) => { clearedLoadingMap[r.id] = false; });
         setLoadingSubmissions(clearedLoadingMap);
       }
       
@@ -408,7 +409,7 @@ export default function RoundsManagementPage() {
     const { realtimeDb } = require('@/lib/firebase/config');
 
     if (!realtimeDb) {
-      console.error('❌ [Realtime] Firebase Realtime Database not initialized!');
+      console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [Realtime] Firebase Realtime Database not initialized!');
       return;
     }
 
@@ -423,12 +424,12 @@ export default function RoundsManagementPage() {
       
       const unsubscribe = onValue(
         roundRef,
-        (snapshot) => {
+        (snapshot: any) => {
           const data = snapshot.val();
           console.log('📡 [Realtime] Data received for round', round.id, ':', data);
           
           if (data && data.type === 'submission') {
-            console.log('📊 [Realtime] ✅ Submission update detected!', {
+            console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Realtime] <CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Submission update detected!', {
               round: round.id,
               action: data.action,
               team: data.team_id,
@@ -436,12 +437,12 @@ export default function RoundsManagementPage() {
             });
             
             // Refetch submissions for this round
-            console.log('🔄 [Realtime] Refetching submissions for round:', round.id);
+            console.log('<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Realtime] Refetching submissions for round:', round.id);
             fetchWithTokenRefresh(`/api/admin/rounds/${round.id}/submissions`)
               .then(res => res.json())
               .then(subData => {
                 if (subData.success) {
-                  console.log('✅ [Realtime] Updated submissions for round:', round.id, subData.stats);
+                  console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> [Realtime] Updated submissions for round:', round.id, subData.stats);
                   setRoundSubmissions(prev => {
                     const updated = {
                       ...prev,
@@ -450,22 +451,22 @@ export default function RoundsManagementPage() {
                         teams: subData.teams
                       }
                     };
-                    console.log('📊 [Realtime] New submission state:', updated);
+                    console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Realtime] New submission state:', updated);
                     return updated;
                   });
                 } else {
-                  console.error('❌ [Realtime] API returned error:', subData.error);
+                  console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [Realtime] API returned error:', subData.error);
                 }
               })
-              .catch(err => console.error('❌ [Realtime] Failed to fetch submissions:', err));
+              .catch(err => console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [Realtime] Failed to fetch submissions:', err));
           } else if (data) {
             console.log('ℹ️ [Realtime] Received data but type is not "submission":', data.type);
           } else {
             console.log('ℹ️ [Realtime] Received null/empty data for round:', round.id);
           }
         },
-        (error) => {
-          console.error('❌ [Realtime] Error listening to round', round.id, ':', error);
+        (error: any) => {
+          console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [Realtime] Error listening to round', round.id, ':', error);
         }
       );
 
@@ -506,7 +507,7 @@ export default function RoundsManagementPage() {
             .then(res => res.json())
             .then(subData => {
               if (subData.success) {
-                console.log('✅ [Firebase] Updated submissions for round:', roundId);
+                console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> [Firebase] Updated submissions for round:', roundId);
                 setRoundSubmissions(prev => ({
                   ...prev,
                   [roundId]: {
@@ -518,7 +519,7 @@ export default function RoundsManagementPage() {
               setLoadingSubmissions(prev => ({ ...prev, [roundId]: false }));
             })
             .catch(err => {
-              console.error('❌ [Firebase] Error fetching submissions:', err);
+              console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [Firebase] Error fetching submissions:', err);
               setLoadingSubmissions(prev => ({ ...prev, [roundId]: false }));
             });
         }
@@ -529,7 +530,7 @@ export default function RoundsManagementPage() {
         message.type === 'round_status_changed'
       ) {
         // For round status changes, refetch all rounds data immediately
-        console.log('🔄 [Firebase] Refetching all rounds due to:', message.type);
+        console.log('<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Firebase] Refetching all rounds due to:', message.type);
         fetchRounds(false);
       }
     });
@@ -543,7 +544,7 @@ export default function RoundsManagementPage() {
 
     // Listen to wallet updates (balance changes during bidding/finalization)
     const unsubWallets = listenToWalletUpdates(currentSeasonId, (event: any) => {
-      console.log('💰 [Committee Rounds] Wallet update:', event);
+      console.log('<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> [Committee Rounds] Wallet update:', event);
       // Wallet changes might affect submission status
       fetchRounds(false);
     });
@@ -1129,137 +1130,135 @@ export default function RoundsManagementPage() {
 
   if (loading || !user || user.role !== 'committee_admin' || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center console-bg font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading round console...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-4">
-      {/* ✅ Auto-finalize all active rounds */}
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Decorative glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      {/* <CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Auto-finalize all active rounds */}
       <MultiRoundAutoFinalize 
         rounds={rounds} 
         onFinalizationComplete={() => fetchRounds(false)}
       />
       
-      <div className="container mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="glass rounded-3xl p-4 sm:p-6 mb-4 backdrop-blur-md border border-white/20 shadow-xl">
-          <div className="flex flex-col gap-4 mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center">
-                <Link
-                  href="/dashboard/committee"
-                  className="inline-flex items-center justify-center p-2 mr-3 rounded-xl bg-white/60 text-gray-700 hover:bg-white/80 transition-all duration-200 backdrop-blur-sm border border-gray-200/50 shadow-sm"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                </Link>
-                <div>
-                  <h2 className="text-2xl font-bold gradient-text">Round Management</h2>
-                  <p className="text-sm text-gray-600 mt-1">Create and manage auction rounds</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center">
-                <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
-                  <span className="flex-shrink-0 w-2 h-2 rounded-full bg-blue-500 mr-1.5"></span>
-                  <span>{activeRounds.length} Active</span>
-                </span>
-              </div>
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
+        {/* Navigation */}
+        <div>
+          <Link
+            href="/dashboard/committee"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
+        </div>
+
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <Settings className="w-6 h-6 text-amber-400" />
+            </div>
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">COMMITTEE CONSOLE</span>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                Round Management
+              </h1>
+              <p className="text-xs text-slate-405 font-mono mt-1">
+                Create and manage auction rounds and bidding sessions.
+              </p>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-805 text-xs font-semibold uppercase font-mono shadow-sm">
+              <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-blue-500 mr-2 animate-pulse"></span>
+              <span>{activeRounds.length} Active</span>
+            </span>
+          </div>
+        </div>
 
-          {/* Start New Round Form */}
-          <div className="glass rounded-2xl p-4 sm:p-6 mb-6 border border-white/20 transform transition-all duration-300 hover:shadow-lg backdrop-blur-sm">
-            <h2 className="text-lg sm:text-xl font-bold mb-4 gradient-text flex items-center">
-              <svg className="w-5 h-5 mr-2 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Start New Round
-            </h2>
-            <form onSubmit={handleStartRound} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Position(s)
-                    <span className="ml-2 text-xs text-gray-500">(Select multiple for combined rounds)</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute top-3 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                      </svg>
-                    </span>
-                    <div className="pl-10 min-h-[48px] w-full py-2 bg-white/60 border border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-[#0066FF]/30 focus-within:border-[#0066FF] transition-all duration-200 shadow-sm">
-                      {/* Selected positions */}
-                      {selectedPositions.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 px-2 mb-2">
-                          {selectedPositions.map(pos => (
-                            <span key={pos} className="inline-flex items-center px-2 py-1 rounded-lg bg-blue-100 text-blue-800 text-sm font-medium">
-                              {pos}
-                              <button
-                                type="button"
-                                onClick={() => setSelectedPositions(prev => prev.filter(p => p !== pos))}
-                                className="ml-1.5 text-blue-600 hover:text-blue-800"
-                              >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      {/* Dropdown */}
-                      <select
-                        id="position"
-                        value=""
-                        onChange={(e) => {
-                          if (e.target.value && !selectedPositions.includes(e.target.value)) {
-                            setSelectedPositions(prev => [...prev, e.target.value]);
-                          }
-                        }}
-                        className="w-full px-2 py-1 bg-transparent border-none focus:ring-0 outline-none text-base"
-                      >
-                        <option value="">+ Add position</option>
-                        {availablePositions
-                          .filter(pos => !selectedPositions.includes(pos))
-                          .map(position => (
-                            <option key={position} value={position}>{position}</option>
-                          ))
+        {/* Start New Round Form */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
+          <h2 className="text-sm sm:text-base font-extrabold mb-4 uppercase text-slate-900 tracking-wide flex items-center gap-2">
+            <Plus className="w-4 h-4 text-amber-500" />
+            Start New Round
+          </h2>
+          <form onSubmit={handleStartRound} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="position" className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mb-1.5 block">
+                  Position(s) <span className="text-slate-400/70 lowercase font-normal">(Select multiple for combined rounds)</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute top-3.5 left-3 flex items-center pointer-events-none text-slate-405">
+                    <Layers className="w-4 h-4" />
+                  </span>
+                  <div className="pl-10 min-h-[48px] w-full py-2 bg-white border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500 transition-all duration-200 shadow-sm">
+                    {/* Selected positions */}
+                    {selectedPositions.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 px-2 mb-2">
+                        {selectedPositions.map(pos => (
+                          <span key={pos} className="inline-flex items-center px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold font-mono">
+                            {pos}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedPositions(prev => prev.filter(p => p !== pos))}
+                              className="ml-1 text-amber-600 hover:text-amber-850 font-bold"
+                            >
+                              ✕
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {/* Dropdown */}
+                    <select
+                      id="position"
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value && !selectedPositions.includes(e.target.value)) {
+                          setSelectedPositions(prev => [...prev, e.target.value]);
                         }
-                      </select>
-                    </div>
+                      }}
+                      className="w-full px-2 py-1 bg-transparent border-none focus:ring-0 outline-none text-sm font-bold font-mono text-slate-700 pl-10"
+                    >
+                      <option value="">+ Add position</option>
+                      {availablePositions
+                        .filter(pos => !selectedPositions.includes(pos))
+                        .map(position => (
+                          <option key={position} value={position}>{position}</option>
+                        ))
+                      }
+                    </select>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Select one position for regular rounds, or multiple for combined rounds (e.g., LB + LWF)</p>
                 </div>
+                <p className="mt-1 text-[10px] text-slate-400 font-mono">Select one position for regular rounds, or multiple for combined rounds (e.g. LB + LWF)</p>
               </div>
 
               {/* Auction Settings Selector */}
-              <div className="mt-4">
-                <label htmlFor="auction_settings" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Auction Settings
-                  <span className="ml-2 text-xs text-gray-500">(Window Type)</span>
+              <div>
+                <label htmlFor="auction_settings" className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mb-1.5 block">
+                  Auction Settings <span className="text-slate-400/70 lowercase font-normal">(Window Type)</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                  <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                    <Settings className="w-4 h-4" />
                   </span>
                   <select
                     id="auction_settings"
                     value={selectedAuctionSettingsId}
                     onChange={(e) => setSelectedAuctionSettingsId(e.target.value)}
                     required
-                    className="pl-10 w-full py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 text-base shadow-sm"
+                    className="pl-10 w-full py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all duration-200 text-sm font-bold font-mono shadow-sm text-slate-700"
                   >
                     <option value="">Select auction settings...</option>
                     {auctionSettings.map(setting => {
@@ -1275,1036 +1274,871 @@ export default function RoundsManagementPage() {
                     })}
                   </select>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-[10px] text-slate-400 font-mono">
                   Choose settings based on auction type. 
                   {auctionSettings.length === 0 && (
-                    <Link href="/dashboard/committee/auction-settings" className="text-blue-600 hover:text-blue-800 ml-1">
-                      Create settings first →
+                    <Link href="/dashboard/committee/auction-settings" className="text-amber-600 hover:text-amber-800 font-bold ml-1">
+                      Create settings first  &rarr; 
                     </Link>
                   )}
                 </p>
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Duration</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </span>
-                        <input
-                          type="number"
-                          id="duration_hours"
-                          value={formData.duration_hours}
-                          onChange={(e) => setFormData({ ...formData, duration_hours: e.target.value })}
-                          min="0"
-                          max="24"
-                          required
-                          className="pl-10 pr-12 w-full py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 text-base shadow-sm"
-                        />
-                        <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-sm text-gray-500 font-medium">
-                          hrs
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          id="duration_minutes"
-                          value={formData.duration_minutes}
-                          onChange={(e) => setFormData({ ...formData, duration_minutes: e.target.value })}
-                          min="0"
-                          max="59"
-                          className="pr-12 w-full py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 text-base shadow-sm"
-                        />
-                        <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-sm text-gray-500 font-medium">
-                          min
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-2 space-y-1">
-                    <p className="text-xs text-gray-500">Recommended: 2-3 hours</p>
-                    {(() => {
-                      const hours = parseFloat(formData.duration_hours) || 0;
-                      const minutes = parseFloat(formData.duration_minutes) || 0;
-                      if (hours > 0 || minutes > 0) {
-                        const now = new Date();
-                        const endTime = new Date(now.getTime() + (hours * 60 + minutes) * 60 * 1000);
-                        return (
-                          <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p className="text-xs font-medium text-blue-900">
-                              Round will end at: <span className="font-bold">{endTime.toLocaleString('en-US', { 
-                                weekday: 'short',
-                                month: 'short', 
-                                day: 'numeric',
-                                year: 'numeric',
-                                hour: '2-digit', 
-                                minute: '2-digit',
-                                hour12: true 
-                              })}</span>
-                            </p>
-                            <p className="text-xs text-blue-700 mt-0.5">
-                              ({endTime.toLocaleString('en-US', { timeZoneName: 'short' })})
-                            </p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
-                  </div>
-                </div>
-                
-                <div>
-                  <label htmlFor="max_bids" className="block text-sm font-medium text-gray-700 mb-1.5">Required Bids Per Team</label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+              {/* Duration */}
+              <div className="md:col-span-2">
+                <label className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mb-1.5 block">Duration</label>
+                <div className="grid grid-cols-2 gap-3">
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
+                    <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                      <Clock className="w-4 h-4" />
                     </span>
                     <input
                       type="number"
-                      id="max_bids"
-                      value={formData.max_bids_per_team}
-                      onChange={(e) => setFormData({ ...formData, max_bids_per_team: e.target.value })}
-                      min="1"
+                      id="duration_hours"
+                      value={formData.duration_hours}
+                      onChange={(e) => setFormData({ ...formData, duration_hours: e.target.value })}
+                      min="0"
+                      max="24"
                       required
-                      className="pl-10 w-full py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 text-base shadow-sm"
+                      className="pl-10 pr-12 w-full py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all duration-200 text-sm font-bold font-mono shadow-sm text-slate-800"
                     />
+                    <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[10px] text-slate-400 font-bold uppercase">
+                      hrs
+                    </span>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Teams must bid exactly this many players</p>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      id="duration_minutes"
+                      value={formData.duration_minutes}
+                      onChange={(e) => setFormData({ ...formData, duration_minutes: e.target.value })}
+                      min="0"
+                      max="59"
+                      className="pr-12 w-full py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all duration-200 text-sm font-bold font-mono shadow-sm text-slate-800"
+                    />
+                    <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[10px] text-slate-400 font-bold uppercase">
+                      min
+                    </span>
+                  </div>
                 </div>
-              </div>
-
-              {/* Finalization Mode Selector */}
-              <div className="mt-4">
-                <label htmlFor="finalization_mode" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Finalization Mode
-                  <span className="ml-2 text-xs text-gray-500">(How results are published)</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </span>
-                  <select
-                    id="finalization_mode"
-                    value={formData.finalization_mode}
-                    onChange={(e) => setFormData({ ...formData, finalization_mode: e.target.value })}
-                    className="pl-10 w-full py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 text-base shadow-sm"
-                  >
-                    <option value="auto">Auto-Finalize (when timer ends)</option>
-                    <option value="manual">Manual Finalization (preview first)</option>
-                  </select>
+                <div className="mt-2 space-y-1">
+                  <p className="text-[10px] text-slate-400 font-mono">Recommended: 2-3 hours</p>
+                  {(() => {
+                    const hours = parseFloat(formData.duration_hours) || 0;
+                    const minutes = parseFloat(formData.duration_minutes) || 0;
+                    if (hours > 0 || minutes > 0) {
+                      const now = new Date();
+                      const endTime = new Date(now.getTime() + (hours * 60 + minutes) * 60 * 1000);
+                      return (
+                        <div className="p-3 bg-amber-50/50 border border-amber-200/60 rounded-xl text-xs">
+                          <p className="font-bold text-amber-900 font-mono">
+                            Round will end at: <span className="text-amber-700">{endTime.toLocaleString('en-US', { 
+                              weekday: 'short',
+                              month: 'short', 
+                              day: 'numeric',
+                              year: 'numeric',
+                              hour: '2-digit', 
+                              minute: '2-digit',
+                              hour12: true 
+                            })}</span>
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            ({endTime.toLocaleString('en-US', { timeZoneName: 'short' })})
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  {formData.finalization_mode === 'auto' 
-                    ? 'Round will automatically finalize when timer expires' 
-                    : 'Round will wait for committee approval before publishing results'}
-                </p>
               </div>
               
-              <div className="flex justify-end mt-2">
-                <button
-                  type="submit"
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white font-medium hover:from-[#0052CC] hover:to-[#0066FF] transform hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 shadow-md flex items-center"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Start Round
-                </button>
-              </div>
-            </form>
-          </div>
-
-          {/* Active Rounds Section */}
-          <div className="glass rounded-2xl p-4 sm:p-6 mb-6 border border-white/20 backdrop-blur-sm">
-            <h2 className="text-lg sm:text-xl font-bold mb-4 gradient-text flex items-center">
-              <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Active Rounds
-              {activeRounds.length > 0 && (
-                <span className="ml-2 px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-medium">
-                  {activeRounds.length}
-                </span>
-              )}
-            </h2>
-            
-            <div className="space-y-4">
-              {activeRounds.length === 0 ? (
-                <div className="text-center py-8 glass rounded-xl border border-gray-100/20 bg-white/5">
-                  <svg className="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <h3 className="mt-2 text-lg font-medium text-gray-500">No active rounds</h3>
-                  <p className="mt-1 text-gray-500">Start a new round using the form above</p>
+              {/* Required Bids Per Team */}
+              <div>
+                <label htmlFor="max_bids" className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mb-1.5 block">Required Bids Per Team</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                    <Users className="w-4 h-4" />
+                  </span>
+                  <input
+                    type="number"
+                    id="max_bids"
+                    value={formData.max_bids_per_team}
+                    onChange={(e) => setFormData({ ...formData, max_bids_per_team: e.target.value })}
+                    min="1"
+                    required
+                    className="pl-10 w-full py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all duration-200 text-sm font-bold font-mono shadow-sm text-slate-800"
+                  />
                 </div>
-              ) : (
-                activeRounds.map(round => (
-                  <div
-                    key={round.id}
-                    className="glass rounded-xl p-4 sm:p-5 border border-green-200/30 hover:shadow-lg transition-all duration-300 backdrop-blur-sm relative overflow-hidden"
-                  >
-                    <div className="absolute top-0 right-0 bg-green-500 text-white px-3 py-1 text-xs font-medium rounded-bl-lg">
-                      Active
+                <p className="mt-1 text-[10px] text-slate-400 font-mono">Teams must bid exactly this many players</p>
+              </div>
+            </div>
+
+            {/* Finalization Mode Selector */}
+            <div className="mt-4">
+              <label htmlFor="finalization_mode" className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mb-1.5 block">
+                Finalization Mode
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                  <CheckCircle2 className="w-4 h-4" />
+                </span>
+                <select
+                  id="finalization_mode"
+                  value={formData.finalization_mode}
+                  onChange={(e) => setFormData({ ...formData, finalization_mode: e.target.value })}
+                  className="pl-10 w-full py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all duration-200 text-sm font-bold font-mono shadow-sm text-slate-700"
+                >
+                  <option value="auto">Auto-Finalize (when timer ends)</option>
+                  <option value="manual">Manual Finalization (preview first)</option>
+                </select>
+              </div>
+              <p className="mt-1 text-[10px] text-slate-400 font-mono">
+                {formData.finalization_mode === 'auto' 
+                  ? 'Round will automatically finalize when timer expires' 
+                  : 'Round will wait for committee approval before publishing results'}
+              </p>
+            </div>
+            
+            <div className="flex justify-end mt-4">
+              <button
+                type="submit"
+                className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Play className="w-4 h-4 text-amber-400" /> Start Round
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Active Rounds Section */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <h2 className="text-sm sm:text-base font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
+            <Play className="w-4 h-4 text-emerald-500" />
+            Active Rounds
+            {activeRounds.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-emerald-5 border border-emerald-200 text-emerald-805 text-[10px] font-extrabold font-mono shadow-sm">
+                {activeRounds.length}
+              </span>
+            )}
+          </h2>
+          
+          <div className="space-y-4">
+            {activeRounds.length === 0 ? (
+              <div className="text-center py-12 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 font-mono text-xs">
+                <Clock className="w-10 h-10 mx-auto text-slate-300" />
+                <h3 className="font-extrabold text-slate-500 uppercase tracking-wide">No active rounds</h3>
+                <p className="text-slate-400">Start a new round using the form above</p>
+              </div>
+            ) : (
+              activeRounds.map(round => (
+                <div
+                  key={round.id}
+                  className="p-5 rounded-2xl border border-slate-200 hover:border-amber-400 transition-all relative overflow-hidden space-y-4"
+                >
+                  <div className="absolute top-0 right-0 bg-emerald-500 text-white px-3 py-1 text-[10px] font-bold uppercase rounded-bl-xl tracking-wider font-mono">
+                    Active
+                  </div>
+                  
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0 mr-3 border border-emerald-100">
+                          <Layers className="w-5 h-5 text-emerald-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-extrabold text-slate-800">
+                            {round.position} Round #{round.round_number || extractIdNumberAsInt(round.id)}
+                          </h3>
+                          <div className="flex flex-wrap gap-2 mt-1.5 text-[10px] font-bold font-mono">
+                            {(() => {
+                              const settings = auctionSettings.find(s => String(s.id) === String(selectedAuctionSettingsId));
+                              if (!settings || !round.round_number) return null;
+                              
+                              let phase = 'Phase 3';
+                              let phaseColor = 'bg-purple-50 text-purple-700 border border-purple-100';
+                              
+                              if (round.round_number <= settings.phase_1_end_round) {
+                                phase = 'Phase 1';
+                                phaseColor = 'bg-blue-50 text-blue-700 border border-blue-100';
+                              } else if (round.round_number <= settings.phase_2_end_round) {
+                                phase = 'Phase 2';
+                                phaseColor = 'bg-orange-50 text-orange-700 border border-orange-100';
+                              }
+                              
+                              return (
+                                <span className={`px-2 py-0.5 rounded-md uppercase ${phaseColor}`}>
+                                  {phase}
+                                </span>
+                              );
+                            })()}
+                            {round.finalization_mode === 'manual' && (
+                              <span className="px-2 py-0.5 rounded-md uppercase bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1">
+                                <Settings className="w-3 h-3 text-amber-500" /> Manual Finalization
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 text-white shadow-sm font-mono text-xs font-bold shrink-0">
+                        <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                        <span>{formatTime(timeRemaining[round.id] || 0)}</span>
+                      </div>
                     </div>
                     
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mr-3">
-                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <h3 className="text-base sm:text-lg font-semibold">
-                              {round.position} Round #{round.round_number || extractIdNumberAsInt(round.id)}
-                            </h3>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                              {(() => {
-                                // Determine phase based on round number and auction settings
-                                const settings = auctionSettings.find(s => String(s.id) === String(selectedAuctionSettingsId));
-                                if (!settings || !round.round_number) return null;
-                                
-                                let phase = 'Phase 3';
-                                let phaseColor = 'bg-purple-100 text-purple-700';
-                                
-                                if (round.round_number <= settings.phase_1_end_round) {
-                                  phase = 'Phase 1';
-                                  phaseColor = 'bg-blue-100 text-blue-700';
-                                } else if (round.round_number <= settings.phase_2_end_round) {
-                                  phase = 'Phase 2';
-                                  phaseColor = 'bg-orange-100 text-orange-700';
-                                }
-                                
-                                return (
-                                  <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-semibold ${phaseColor}`}>
-                                    {phase}
-                                  </span>
-                                );
-                              })()}
-                              {round.finalization_mode === 'manual' && (
-                                <span className="inline-block px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-100 text-amber-700 flex items-center gap-1">
-                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                  </svg>
-                                  Manual Finalization
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="relative flex-1 max-w-[120px]">
+                          <input
+                            type="number"
+                            value={addTimeInputs[round.id] || '10'}
+                            onChange={(e) => setAddTimeInputs({ ...addTimeInputs, [round.id]: e.target.value })}
+                            min="5"
+                            className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none text-xs font-bold font-mono shadow-sm text-slate-800"
+                          />
+                          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[10px] text-slate-400 font-bold uppercase">min</span>
                         </div>
-                        <div className="text-sm font-medium px-4 py-2 rounded-xl bg-white/80 backdrop-blur-sm shadow-sm flex items-center">
-                          <svg className="w-4 h-4 mr-2 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="font-mono">{formatTime(timeRemaining[round.id] || 0)}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="glass rounded-xl p-3 backdrop-blur-sm flex items-center gap-4">
-                          <div className="relative flex-1 max-w-[120px]">
-                            <input
-                              type="number"
-                              value={addTimeInputs[round.id] || '10'}
-                              onChange={(e) => setAddTimeInputs({ ...addTimeInputs, [round.id]: e.target.value })}
-                              min="5"
-                              className="w-full py-2.5 px-3 rounded-xl bg-white border border-gray-200 focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none text-base shadow-sm"
-                            />
-                            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-500">min</span>
-                          </div>
-                          <button
-                            onClick={() => handleAddTime(round.id)}
-                            className="bg-[#0066FF]/90 text-white px-4 py-2.5 rounded-xl hover:bg-[#0066FF] transition-all duration-200 text-sm whitespace-nowrap flex items-center justify-center"
-                          >
-                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            Add Time
-                          </button>
-                        </div>
-                        
-                        {/* Only show Finalize Round button for auto-finalize mode */}
-                        {round.finalization_mode !== 'manual' && (
-                          <button
-                            onClick={() => handleFinalizeRound(round.id)}
-                            className="bg-green-500 text-white px-4 py-3 rounded-xl hover:bg-green-600 transition-all duration-200 font-medium flex items-center justify-center"
-                          >
-                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            Finalize Round
-                          </button>
-                        )}
-                        {/* For manual finalization, show early finalize option */}
-                        {round.finalization_mode === 'manual' && (
-                          <button
-                            onClick={() => handleFinalizeImmediately(round.id)}
-                            className="bg-orange-500 text-white px-4 py-3 rounded-xl hover:bg-orange-600 transition-all duration-200 font-medium flex items-center justify-center"
-                          >
-                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            Finalize Early (Skip Preview)
-                          </button>
-                        )}
-                      </div>
-                      
-                      {/* Submission Status */}
-                      {console.log(`🔍 [Render] Round ${round.id} submission data:`, roundSubmissions[round.id])}
-                      {loadingSubmissions[round.id] ? (
-                        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="w-5 h-5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
-                            <div>
-                              <h4 className="font-semibold text-blue-800">Loading Team Submissions...</h4>
-                              <p className="text-sm text-blue-600">Fetching submission status</p>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            {[1, 2, 3].map((i) => (
-                              <div key={i} className="h-12 bg-white/60 rounded-lg animate-pulse" />
-                            ))}
-                          </div>
-                        </div>
-                      ) : roundSubmissions[round.id] && (
-                        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                          <div className="flex items-center gap-3 mb-4">
-                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div>
-                              <h4 className="font-semibold text-blue-800">Team Submissions</h4>
-                              <p className="text-sm text-blue-600">
-                                {roundSubmissions[round.id].submitted} of {roundSubmissions[round.id].total_teams} teams submitted ({roundSubmissions[round.id].submission_rate}%)
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Mobile-optimized: Card view for small screens */}
-                          <div className="block lg:hidden space-y-2">
-                            {roundSubmissions[round.id].teams?.map((team: any, idx: number) => (
-                              <div
-                                key={team.team_id || idx}
-                                className={`flex items-center justify-between p-3 rounded-lg border ${
-                                  team.has_submitted
-                                    ? 'bg-green-50 border-green-200'
-                                    : 'bg-orange-50 border-orange-200'
-                                }`}
-                              >
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                    team.has_submitted ? 'bg-green-500' : 'bg-orange-500'
-                                  }`} />
-                                  <span className="font-medium text-gray-900 truncate">{team.team_name}</span>
-                                </div>
-                                <span className={`px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${
-                                  team.has_submitted
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-orange-100 text-orange-800'
-                                }`}>
-                                  {team.has_submitted ? '✓ Submitted' : 'Pending'}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Desktop-optimized: Table view for large screens */}
-                          <div className="hidden lg:block overflow-hidden rounded-lg border border-blue-200">
-                            <table className="min-w-full divide-y divide-blue-200">
-                              <thead className="bg-blue-100">
-                                <tr>
-                                  <th className="px-4 py-3 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">
-                                    Team Name
-                                  </th>
-                                  <th className="px-4 py-3 text-center text-xs font-semibold text-blue-900 uppercase tracking-wider">
-                                    Status
-                                  </th>
-                                  <th className="px-4 py-3 text-center text-xs font-semibold text-blue-900 uppercase tracking-wider">
-                                    Bids
-                                  </th>
-                                  <th className="px-4 py-3 text-center text-xs font-semibold text-blue-900 uppercase tracking-wider">
-                                    Submitted At
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody className="bg-white divide-y divide-blue-100">
-                                {roundSubmissions[round.id].teams?.map((team: any, idx: number) => (
-                                  <tr
-                                    key={team.team_id || idx}
-                                    className={`hover:bg-blue-50 transition-colors ${
-                                      team.has_submitted ? 'bg-green-50/30' : 'bg-orange-50/30'
-                                    }`}
-                                  >
-                                    <td className="px-4 py-3 whitespace-nowrap">
-                                      <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${
-                                          team.has_submitted ? 'bg-green-500' : 'bg-orange-500'
-                                        }`} />
-                                        <span className="font-medium text-gray-900">{team.team_name}</span>
-                                      </div>
-                                    </td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-center">
-                                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                                        team.has_submitted
-                                          ? 'bg-green-100 text-green-800'
-                                          : 'bg-orange-100 text-orange-800'
-                                      }`}>
-                                        {team.has_submitted ? '✓ Submitted' : 'Pending'}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-700">
-                                      {team.has_submitted ? team.bid_count : '-'}
-                                    </td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-500">
-                                      {team.has_submitted && team.submitted_at
-                                        ? new Date(team.submitted_at).toLocaleString('en-US', {
-                                            month: 'short',
-                                            day: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                          })
-                                        : '-'
-                                      }
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Tiebreakers Section - Show when round has tiebreakers */}
-                      {roundTiebreakers[round.id] && roundTiebreakers[round.id].length > 0 && (
-                        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-                          <div className="flex items-center mb-3">
-                            <svg className="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            <h4 className="font-semibold text-yellow-800">Active Tiebreakers ({roundTiebreakers[round.id].length})</h4>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            {roundTiebreakers[round.id].map((tb: Tiebreaker) => (
-                              <div key={tb.id} className="bg-white p-3 rounded-lg border border-yellow-300">
-                                <div className="flex justify-between items-start gap-3">
-                                  <div className="flex-1">
-                                    <p className="font-medium text-gray-900">{tb.player_name}</p>
-                                    <p className="text-sm text-gray-600">{tb.position} - £{tb.original_amount.toLocaleString()}</p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      {tb.submitted_count}/{tb.teams_count} teams submitted
-                                    </p>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => handleResolveTiebreaker(tb.id, round.id)}
-                                      disabled={tb.submitted_count < tb.teams_count}
-                                      className={`px-3 py-1.5 text-white text-sm rounded-lg transition-colors flex items-center ${
-                                        tb.submitted_count < tb.teams_count
-                                          ? 'bg-gray-400 cursor-not-allowed'
-                                          : 'bg-green-600 hover:bg-green-700'
-                                      }`}
-                                      title={tb.submitted_count < tb.teams_count ? 'Waiting for all teams to submit' : 'Resolve tiebreaker'}
-                                    >
-                                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                      </svg>
-                                      Resolve
-                                    </button>
-                                    <Link 
-                                      href="/dashboard/committee/tiebreakers"
-                                      className="px-3 py-1.5 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 transition-colors flex items-center"
-                                    >
-                                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                      </svg>
-                                      View
-                                    </Link>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                          
-                          <div className="mt-3 flex items-start gap-2 text-xs text-yellow-700 bg-yellow-100/50 p-2 rounded-lg">
-                            <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Tiebreakers have no time limit. Teams can submit bids when ready. Resolve tiebreakers before finalizing the round.</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Finalizing Rounds Section (rounds with tiebreakers) */}
-          {finalizingRounds.length > 0 && (
-            <div className="glass rounded-2xl p-4 sm:p-6 mb-6 border border-yellow-200/30 backdrop-blur-sm">
-              <h2 className="text-lg sm:text-xl font-bold mb-4 gradient-text flex items-center">
-                <svg className="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                Finalizing Rounds (Tiebreakers Pending)
-                <span className="ml-2 px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-800 text-xs font-medium">
-                  {finalizingRounds.length}
-                </span>
-              </h2>
-              
-              <div className="space-y-4">
-                {finalizingRounds.map(round => {
-                  console.log(`🔍 Rendering finalizing round ${round.id}, tiebreakers:`, roundTiebreakers[round.id]);
-                  return (
-                  <div
-                    key={round.id}
-                    className="glass rounded-xl p-4 sm:p-5 border border-yellow-200/30 hover:shadow-lg transition-all duration-300 backdrop-blur-sm"
-                  >
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0 mr-3">
-                            <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <h3 className="text-base sm:text-lg font-semibold">
-                              {round.position} Round #{round.round_number || extractIdNumberAsInt(round.id)}
-                            </h3>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                              {(() => {
-                                const settings = auctionSettings.find(s => String(s.id) === String(selectedAuctionSettingsId));
-                                if (!settings || !round.round_number) return null;
-                                let phase = 'Phase 3';
-                                let phaseColor = 'bg-purple-100 text-purple-700';
-                                if (round.round_number <= settings.phase_1_end_round) {
-                                  phase = 'Phase 1';
-                                  phaseColor = 'bg-blue-100 text-blue-700';
-                                } else if (round.round_number <= settings.phase_2_end_round) {
-                                  phase = 'Phase 2';
-                                  phaseColor = 'bg-orange-100 text-orange-700';
-                                }
-                                return <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-semibold ${phaseColor}`}>{phase}</span>;
-                              })()}
-                              {round.finalization_mode === 'manual' && (
-                                <span className="inline-block px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-100 text-amber-700 flex items-center gap-1">
-                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                  </svg>
-                                  Manual Finalization
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-medium">
-                          Resolving Tiebreakers
-                        </span>
-                      </div>
-                      
-                      {/* Tiebreakers */}
-                      {roundTiebreakers[round.id] && roundTiebreakers[round.id].length > 0 && (
-                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-                          <div className="flex items-center mb-3">
-                            <h4 className="font-semibold text-yellow-800">Tiebreakers ({roundTiebreakers[round.id].length})</h4>
-                          </div>
-                          <div className="space-y-2">
-                            {roundTiebreakers[round.id].map((tb: Tiebreaker) => (
-                              <div key={tb.id} className="bg-white p-3 rounded-lg border border-yellow-300">
-                                <div className="flex justify-between items-start gap-3">
-                                  <div className="flex-1">
-                                    <p className="font-medium text-gray-900">{tb.player_name}</p>
-                                    <p className="text-sm text-gray-600">{tb.position} - £{tb.original_amount.toLocaleString()}</p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      {tb.submitted_count}/{tb.teams_count} teams submitted
-                                    </p>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => handleResolveTiebreaker(tb.id, round.id)}
-                                      disabled={tb.submitted_count < tb.teams_count}
-                                      className={`px-3 py-1.5 text-white text-sm rounded-lg transition-colors flex items-center ${
-                                        tb.submitted_count < tb.teams_count
-                                          ? 'bg-gray-400 cursor-not-allowed'
-                                          : 'bg-green-600 hover:bg-green-700'
-                                      }`}
-                                    >
-                                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                      </svg>
-                                      Resolve
-                                    </button>
-                                    <Link 
-                                      href="/dashboard/committee/tiebreakers"
-                                      className="px-3 py-1.5 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 transition-colors flex items-center"
-                                    >
-                                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                      </svg>
-                                      View
-                                    </Link>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Expired Rounds Section (rounds that failed finalization) */}
-          {expiredRounds.length > 0 && (
-            <div className="glass rounded-2xl p-4 sm:p-6 mb-6 border border-orange-200/30 backdrop-blur-sm">
-              <h2 className="text-lg sm:text-xl font-bold mb-4 gradient-text flex items-center">
-                <svg className="w-5 h-5 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Expired Rounds (Needs Manual Finalization)
-                <span className="ml-2 px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800 text-xs font-medium">
-                  {expiredRounds.length}
-                </span>
-              </h2>
-              
-              <div className="space-y-4">
-                {expiredRounds.map(round => (
-                  <div
-                    key={round.id}
-                    className="glass rounded-xl p-4 sm:p-5 border border-orange-200/30 hover:shadow-lg transition-all duration-300 backdrop-blur-sm"
-                  >
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 mr-3">
-                            <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <h3 className="text-base sm:text-lg font-semibold">
-                              {round.position} Round #{round.round_number || extractIdNumberAsInt(round.id)}
-                            </h3>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                              {(() => {
-                                const settings = auctionSettings.find(s => String(s.id) === String(selectedAuctionSettingsId));
-                                if (!settings || !round.round_number) return null;
-                                let phase = 'Phase 3';
-                                let phaseColor = 'bg-purple-100 text-purple-700';
-                                if (round.round_number <= settings.phase_1_end_round) {
-                                  phase = 'Phase 1';
-                                  phaseColor = 'bg-blue-100 text-blue-700';
-                                } else if (round.round_number <= settings.phase_2_end_round) {
-                                  phase = 'Phase 2';
-                                  phaseColor = 'bg-orange-100 text-orange-700';
-                                }
-                                return <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-semibold ${phaseColor}`}>{phase}</span>;
-                              })()}
-                              {round.finalization_mode === 'manual' && (
-                                <span className="inline-block px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-100 text-amber-700 flex items-center gap-1">
-                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                  </svg>
-                                  Manual Finalization
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-medium">
-                            {round.status === 'expired_pending_finalization' ? 'Awaiting Preview' : 'Expired'}
-                          </span>
-                          {round.status === 'pending_finalization' && (
-                            <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
-                              Results Pending
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2">
-                        {/* For expired_pending_finalization status (manual mode, timer expired, not yet previewed) */}
-                        {/* For expired rounds with manual finalization - show preview/finalize immediately options */}
-                        {(round.status === 'expired' || round.status === 'expired_pending_finalization') && round.finalization_mode === 'manual' && (
-                          <>
-                            <button
-                              onClick={() => handlePreviewFinalization(round.id)}
-                              disabled={loadingSubmissions[round.id]}
-                              className="bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition-all duration-200 text-sm flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                              {loadingSubmissions[round.id] ? 'Creating Preview...' : 'Preview Results'}
-                            </button>
-                            <button
-                              onClick={() => handleFinalizeImmediately(round.id)}
-                              className="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600 transition-all duration-200 text-sm flex items-center"
-                            >
-                              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                              </svg>
-                              Finalize Immediately
-                            </button>
-                          </>
-                        )}
-                        
-                        {/* For pending_finalization status (preview created, waiting for approval) */}
-                        {round.status === 'pending_finalization' && (
-                          <>
-                            <button
-                              onClick={() => handleViewPendingResults(round.id)}
-                              className="bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition-all duration-200 text-sm flex items-center"
-                            >
-                              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                              View Pending Results
-                            </button>
-                            <button
-                              onClick={() => handleApplyPendingAllocations(round.id)}
-                              className="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600 transition-all duration-200 text-sm flex items-center"
-                            >
-                              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                              </svg>
-                              Finalize for Real
-                            </button>
-                            <button
-                              onClick={() => handleCancelPending(round.id)}
-                              className="bg-orange-500/10 text-orange-600 px-4 py-2 rounded-xl hover:bg-orange-500/20 transition-all duration-200 text-sm flex items-center"
-                            >
-                              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                              Cancel Pending
-                            </button>
-                          </>
-                        )}
-                        
-                        {/* For regular expired status (auto mode or old rounds without manual finalization) */}
-                        {round.status === 'expired' && round.finalization_mode !== 'manual' && (
-                          <button
-                            onClick={() => handleFinalizeRound(round.id)}
-                            className="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600 transition-all duration-200 text-sm flex items-center"
-                          >
-                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            Finalize Round
-                          </button>
-                        )}
-                        
-                        {/* Delete button always available */}
                         <button
-                          onClick={() => handleDeleteRound(round.id)}
-                          className="bg-red-500/10 text-red-500 px-4 py-2 rounded-xl hover:bg-red-500/20 transition-all duration-200 text-sm flex items-center"
+                          onClick={() => handleAddTime(round.id)}
+                          className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1"
                         >
-                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                          Delete
+                          <Plus className="w-3 h-3 text-amber-400" /> Add Time
                         </button>
                       </div>
+                      
+                      <div className="flex justify-end items-center gap-2">
+                        {round.finalization_mode !== 'manual' ? (
+                          <button
+                            onClick={() => handleFinalizeRound(round.id)}
+                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                          >
+                            <Check className="w-3.5 h-3.5" /> Finalize Round
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleFinalizeImmediately(round.id)}
+                            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                          >
+                            <Play className="w-3.5 h-3.5" /> Finalize Early (Skip Preview)
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+                    
+                    {/* Submission Status */}
+                    {loadingSubmissions[round.id] ? (
+                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col items-center justify-center gap-3">
+                        <RefreshCw className="w-6 h-6 text-amber-500 animate-spin" />
+                        <span className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider font-mono">Loading Team Submissions...</span>
+                      </div>
+                    ) : roundSubmissions[round.id] && (
+                      <div className="p-4 bg-slate-50 border border-slate-200/60 rounded-2xl space-y-3 font-mono text-xs">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2 border-b border-slate-200/60">
+                          <div className="flex items-center gap-1.5 text-slate-700 font-extrabold uppercase text-[10px]">
+                            <Users className="w-4 h-4 text-slate-500" />
+                            Team Submissions
+                          </div>
+                          <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-extrabold uppercase font-mono shadow-sm">
+                            {roundSubmissions[round.id].submitted} of {roundSubmissions[round.id].total_teams} teams ({roundSubmissions[round.id].submission_rate}%)
+                          </span>
+                        </div>
 
-          {/* Completed Rounds Section */}
-          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20 backdrop-blur-sm">
-            <h2 className="text-lg sm:text-xl font-bold mb-4 gradient-text flex items-center">
-              <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
-              Completed Rounds
-              {completedRounds.length > 0 && (
-                <span className="ml-2 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
-                  {completedRounds.length}
-                </span>
-              )}
+                        {/* Mobile view */}
+                        <div className="block lg:hidden space-y-2">
+                          {roundSubmissions[round.id].teams?.map((team: any, idx: number) => (
+                            <div
+                              key={team.team_id || idx}
+                              className={`flex items-center justify-between p-3 rounded-xl border ${
+                                team.has_submitted
+                                  ? 'bg-emerald-50/50 border-emerald-200/60 text-emerald-800'
+                                  : 'bg-orange-50/50 border-orange-200/60 text-orange-800'
+                              }`}
+                            >
+                              <span className="font-bold truncate max-w-[200px]">{team.team_name}</span>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
+                                team.has_submitted
+                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                                  : 'bg-orange-100 text-orange-850 border-orange-200'
+                              }`}>
+                                {team.has_submitted ? 'Yes Submitted' : 'Pending'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Desktop view */}
+                        <div className="hidden lg:block overflow-hidden rounded-xl border border-slate-200/60 bg-white">
+                          <table className="min-w-full divide-y divide-slate-100">
+                            <thead className="bg-slate-50">
+                              <tr>
+                                <th className="px-4 py-2.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Team Name</th>
+                                <th className="px-4 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                                <th className="px-4 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bids</th>
+                                <th className="px-4 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">Submitted At</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 font-mono text-xs">
+                              {roundSubmissions[round.id].teams?.map((team: any, idx: number) => (
+                                <tr
+                                  key={team.team_id || idx}
+                                  className={`hover:bg-slate-50/50 transition-colors ${
+                                    team.has_submitted ? 'bg-emerald-50/10' : 'bg-orange-50/10'
+                                  }`}
+                                >
+                                  <td className="px-4 py-2.5 whitespace-nowrap font-bold text-slate-800">
+                                    {team.team_name}
+                                  </td>
+                                  <td className="px-4 py-2.5 whitespace-nowrap text-center">
+                                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase border ${
+                                      team.has_submitted
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                        : 'bg-orange-50 text-orange-700 border-orange-200'
+                                    }`}>
+                                      {team.has_submitted ? 'Yes Submitted' : 'Pending'}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-2.5 whitespace-nowrap text-center text-slate-700 font-bold">
+                                    {team.has_submitted ? team.bid_count : '-'}
+                                  </td>
+                                  <td className="px-4 py-2.5 whitespace-nowrap text-center text-slate-400">
+                                    {team.has_submitted && team.submitted_at
+                                      ? new Date(team.submitted_at).toLocaleString('en-US', {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })
+                                      : '-'
+                                    }
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tiebreakers Section */}
+                    {roundTiebreakers[round.id] && roundTiebreakers[round.id].length > 0 && (
+                      <div className="p-4 bg-amber-50/20 border border-amber-200/60 rounded-2xl space-y-3">
+                        <div className="flex items-center gap-1.5 text-amber-800 font-bold uppercase text-[10px]">
+                          <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                          Active Tiebreakers ({roundTiebreakers[round.id].length})
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {roundTiebreakers[round.id].map((tb: Tiebreaker) => (
+                            <div key={tb.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between gap-3">
+                              <div>
+                                <p className="font-extrabold text-slate-800 text-xs">{tb.player_name}</p>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{tb.position} • £{tb.original_amount.toLocaleString()}</p>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-2">
+                                  {tb.submitted_count} of {tb.teams_count} teams submitted
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleResolveTiebreaker(tb.id, round.id)}
+                                  disabled={tb.submitted_count < tb.teams_count}
+                                  className={`px-3 py-1.5 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg transition-colors flex items-center gap-1 ${
+                                    tb.submitted_count < tb.teams_count
+                                      ? 'bg-slate-200 text-slate-500 border border-slate-300 cursor-not-allowed'
+                                      : 'bg-emerald-600 hover:bg-emerald-700 cursor-pointer'
+                                  }`}
+                                  title={tb.submitted_count < tb.teams_count ? 'Waiting for all teams to submit' : 'Resolve tiebreaker'}
+                                >
+                                  <Check className="w-3.5 h-3.5" /> Resolve
+                                </button>
+                                <Link 
+                                  href="/dashboard/committee/tiebreakers"
+                                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg shadow-sm transition-all flex items-center gap-1"
+                                >
+                                  <ArrowRight className="w-3.5 h-3.5 text-amber-400" /> View
+                                </Link>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <div className="flex gap-1.5 items-start text-[10px] text-amber-800 bg-amber-50/50 p-3 rounded-xl border border-amber-100">
+                          <Info className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <span>Tiebreakers have no time limit. Teams can submit bids when ready. Resolve tiebreakers before finalization.</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Finalizing Rounds Section (rounds with tiebreakers) */}
+        {finalizingRounds.length > 0 && (
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+            <h2 className="text-sm sm:text-base font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-500 animate-pulse" />
+              Finalizing Rounds (Tiebreakers Pending)
+              <span className="px-2 py-0.5 rounded-full bg-amber-5 border border-amber-200 text-amber-800 text-[10px] font-extrabold font-mono shadow-sm">
+                {finalizingRounds.length}
+              </span>
             </h2>
             
             <div className="space-y-4">
-              {completedRounds.length === 0 ? (
-                <div className="text-center py-8 glass rounded-xl bg-white/10 backdrop-blur-sm border border-gray-100/20">
-                  <svg className="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                  </svg>
-                  <h3 className="mt-2 text-lg font-medium text-gray-500">No completed rounds yet</h3>
-                  <p className="mt-1 text-gray-500">Past rounds will appear here once they're finalized</p>
-                </div>
-              ) : (
-                completedRounds.map(round => (
-                  <div
-                    key={round.id}
-                    className="glass rounded-xl p-4 sm:p-5 border border-blue-100/30 transform transition-all duration-300 hover:shadow-lg backdrop-blur-sm"
-                  >
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mr-3">
-                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <h3 className="text-base sm:text-lg font-semibold">
-                              {round.position} Round #{extractIdNumberAsInt(round.id)}
-                            </h3>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {round.created_at && new Date(round.created_at).toLocaleString('en-US', { 
-                                year: 'numeric', 
-                                month: '2-digit', 
-                                day: '2-digit', 
-                                hour: '2-digit', 
-                                minute: '2-digit'
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <span className="text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center">
-                            <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            {round.total_bids || 0} bids from {round.teams_bid || 0} teams
+              {finalizingRounds.map(round => (
+                <div
+                  key={round.id}
+                  className="p-5 rounded-2xl border border-amber-200 bg-amber-50/5 relative overflow-hidden space-y-4"
+                >
+                  <div className="absolute top-0 right-0 bg-amber-500 text-white px-3 py-1 text-[10px] font-bold uppercase rounded-bl-xl tracking-wider font-mono">
+                    Tiebreakers Pending
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-805 flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-amber-500 shrink-0" />
+                        {round.position} Round #{round.round_number || extractIdNumberAsInt(round.id)}
+                      </h3>
+                      <div className="flex flex-wrap gap-2 mt-1.5 text-[10px] font-bold font-mono">
+                        {(() => {
+                          const settings = auctionSettings.find(s => String(s.id) === String(selectedAuctionSettingsId));
+                          if (!settings || !round.round_number) return null;
+                          let phase = 'Phase 3';
+                          let phaseColor = 'bg-purple-50 text-purple-700 border border-purple-100';
+                          if (round.round_number <= settings.phase_1_end_round) {
+                            phase = 'Phase 1';
+                            phaseColor = 'bg-blue-50 text-blue-700 border border-blue-100';
+                          } else if (round.round_number <= settings.phase_2_end_round) {
+                            phase = 'Phase 2';
+                            phaseColor = 'bg-orange-50 text-orange-700 border border-orange-100';
+                          }
+                          return <span className={`px-2 py-0.5 rounded-md uppercase ${phaseColor}`}>{phase}</span>;
+                        })()}
+                        {round.finalization_mode === 'manual' && (
+                          <span className="px-2 py-0.5 rounded-md uppercase bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1">
+                            <Settings className="w-3 h-3 text-amber-500" /> Manual Finalization
                           </span>
-                          <span className="text-xs text-[#0066FF] bg-[#0066FF]/10 px-3 py-1.5 rounded-lg flex items-center">
-                            <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {round.status.charAt(0).toUpperCase() + round.status.slice(1)}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-wrap justify-end gap-2 mt-1">
-                        <Link
-                          href={`/dashboard/committee/rounds/${round.id}`}
-                          className="inline-flex items-center px-4 py-2.5 rounded-xl bg-[#0066FF]/10 text-[#0066FF] hover:bg-[#0066FF]/20 transition-colors text-sm shadow-sm"
-                        >
-                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          View Details
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteRound(round.id)}
-                          className="inline-flex items-center px-4 py-2.5 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors text-sm shadow-sm"
-                        >
-                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                          Delete
-                        </button>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))
-              )}
+                  
+                  {/* Tiebreakers */}
+                  {roundTiebreakers[round.id] && roundTiebreakers[round.id].length > 0 && (
+                    <div className="p-4 bg-white border border-amber-200 rounded-xl space-y-2">
+                      <div className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider pb-1.5 border-b border-slate-100">
+                        Tiebreakers ({roundTiebreakers[round.id].length})
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1.5">
+                        {roundTiebreakers[round.id].map((tb: Tiebreaker) => (
+                          <div key={tb.id} className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex flex-col justify-between gap-3 font-mono text-xs">
+                            <div>
+                              <p className="font-extrabold text-slate-800">{tb.player_name}</p>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{tb.position} • £{tb.original_amount.toLocaleString()}</p>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">
+                                {tb.submitted_count} of {tb.teams_count} teams submitted
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleResolveTiebreaker(tb.id, round.id)}
+                                disabled={tb.submitted_count < tb.teams_count}
+                                className={`px-3 py-1.5 text-white font-bold text-[10px] uppercase tracking-wider rounded-lg transition-colors flex items-center gap-1 ${
+                                  tb.submitted_count < tb.teams_count
+                                    ? 'bg-slate-200 text-slate-500 border border-slate-300 cursor-not-allowed'
+                                    : 'bg-emerald-600 hover:bg-emerald-700 cursor-pointer'
+                                }`}
+                              >
+                                <Check className="w-3.5 h-3.5" /> Resolve
+                              </button>
+                              <Link 
+                                href="/dashboard/committee/tiebreakers"
+                                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-[10px] uppercase tracking-wider rounded-lg shadow-sm transition-all flex items-center gap-1"
+                              >
+                                <ArrowRight className="w-3.5 h-3.5 text-amber-400" /> View
+                              </Link>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
+        )}
 
-          {/* Round Finalization Details Section - NEW */}
-          {completedRounds.length > 0 && (
-            <div className="glass rounded-2xl p-4 sm:p-6 mt-6 border border-white/20 backdrop-blur-sm">
-              <h2 className="text-lg sm:text-xl font-bold mb-4 gradient-text flex items-center">
-                <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-                Round Finalization Details
-              </h2>
-              
-              <div className="space-y-3">
-                {completedRounds.map(round => {
-                  const isRoundExpanded = expandedRounds.has(round.id);
-                  const details = roundDetails[round.id];
-                  const bidsByPlayer = details?.bids ? organizeBidsByPlayer(details.bids) : {};
-                  
-                  return (
-                    <div key={round.id} className="glass rounded-xl border border-gray-200/30 overflow-hidden">
-                      {/* Round Header */}
-                      <button
-                        onClick={() => toggleRound(round.id)}
-                        className="w-full p-4 flex items-center justify-between hover:bg-white/30 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <svg 
-                            className={`w-5 h-5 text-gray-600 transition-transform ${
-                              isRoundExpanded ? 'rotate-90' : ''
-                            }`}
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                          </svg>
-                          <span className="font-semibold text-gray-900">
-                            {round.position} Round #{extractIdNumberAsInt(round.id)}
+        {/* Expired Rounds Section (rounds that failed finalization) */}
+        {expiredRounds.length > 0 && (
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+            <h2 className="text-sm sm:text-base font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
+              <Clock className="w-4 h-4 text-orange-500 animate-pulse" />
+              Expired Rounds (Needs Manual Finalization)
+              <span className="px-2 py-0.5 rounded-full bg-orange-5 border border-orange-200 text-orange-850 text-[10px] font-extrabold font-mono shadow-sm">
+                {expiredRounds.length}
+              </span>
+            </h2>
+            
+            <div className="space-y-4">
+              {expiredRounds.map(round => (
+                <div
+                  key={round.id}
+                  className="p-5 rounded-2xl border border-orange-200 bg-orange-50/5 relative overflow-hidden space-y-4"
+                >
+                  <div className="absolute top-0 right-0 bg-orange-500 text-white px-3 py-1 text-[10px] font-bold uppercase rounded-bl-xl tracking-wider font-mono">
+                    Expired
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-amber-500 shrink-0" />
+                        {round.position} Round #{round.round_number || extractIdNumberAsInt(round.id)}
+                      </h3>
+                      <div className="flex flex-wrap gap-2 mt-1.5 text-[10px] font-bold font-mono">
+                        {(() => {
+                          const settings = auctionSettings.find(s => String(s.id) === String(selectedAuctionSettingsId));
+                          if (!settings || !round.round_number) return null;
+                          let phase = 'Phase 3';
+                          let phaseColor = 'bg-purple-50 text-purple-700 border border-purple-100';
+                          if (round.round_number <= settings.phase_1_end_round) {
+                            phase = 'Phase 1';
+                            phaseColor = 'bg-blue-50 text-blue-700 border border-blue-100';
+                          } else if (round.round_number <= settings.phase_2_end_round) {
+                            phase = 'Phase 2';
+                            phaseColor = 'bg-orange-50 text-orange-700 border border-orange-100';
+                          }
+                          return <span className={`px-2 py-0.5 rounded-md uppercase ${phaseColor}`}>{phase}</span>;
+                        })()}
+                        {round.finalization_mode === 'manual' && (
+                          <span className="px-2 py-0.5 rounded-md uppercase bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1">
+                            <Settings className="w-3 h-3 text-amber-500" /> Manual Finalization
                           </span>
-                          {details && (
-                            <span className="text-sm text-gray-500">
-                              ({Object.keys(bidsByPlayer).length} players)
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-xs text-gray-500">
-                          {new Date(round.created_at).toLocaleDateString()}
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2 font-mono text-[10px]">
+                      <span className="px-2.5 py-1 rounded-lg bg-orange-50 border border-orange-200 text-orange-800 font-extrabold uppercase shadow-sm">
+                        {round.status === 'expired_pending_finalization' ? 'Awaiting Preview' : 'Expired'}
+                      </span>
+                      {round.status === 'pending_finalization' && (
+                        <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 font-extrabold uppercase shadow-sm">
+                          Results Pending
                         </span>
-                      </button>
-
-                      {/* Round Content - Players List */}
-                      {isRoundExpanded && details && (
-                        <div className="border-t border-gray-200/30 bg-white/20">
-                          {Object.keys(bidsByPlayer).length === 0 ? (
-                            <div className="p-4 text-center text-gray-500">
-                              <p>No bids found for this round</p>
-                            </div>
-                          ) : (
-                            <div className="divide-y divide-gray-200/30">
-                              {Object.entries(bidsByPlayer).map(([playerId, playerBids]: [string, any]) => {
-                                const playerKey = `${round.id}_${playerId}`;
-                                const isPlayerExpanded = expandedPlayers.has(playerKey);
-                                const firstBid = playerBids[0];
-                                const wonBid = playerBids.find((b: any) => b.status === 'won');
-                                
-                                return (
-                                  <div key={playerKey}>
-                                    {/* Player Header */}
-                                    <button
-                                      onClick={() => togglePlayer(playerKey)}
-                                      className="w-full p-3 pl-8 flex items-center justify-between hover:bg-white/40 transition-colors"
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        <svg 
-                                          className={`w-4 h-4 text-gray-500 transition-transform ${
-                                            isPlayerExpanded ? 'rotate-90' : ''
-                                          }`}
-                                          fill="none" 
-                                          stroke="currentColor" 
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                        </svg>
-                                        <span className="font-medium text-gray-900">
-                                          {firstBid.player_name}
-                                        </span>
-                                        <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">
-                                          {firstBid.position}
-                                        </span>
-                                        {wonBid && (
-                                          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800">
-                                            Won by {wonBid.team_name}
-                                          </span>
-                                        )}
-                                      </div>
-                                      <span className="text-sm text-gray-600">
-                                        {playerBids.length} bid{playerBids.length > 1 ? 's' : ''}
-                                      </span>
-                                    </button>
-
-                                    {/* Player Bids - Sorted List */}
-                                    {isPlayerExpanded && (
-                                      <div className="bg-gray-50/50 px-4 py-3">
-                                        <div className="space-y-2">
-                                          {playerBids.map((bid: any, index: number) => (
-                                            <div 
-                                              key={bid.id}
-                                              className={`flex items-center justify-between p-3 rounded-lg border ${
-                                                bid.status === 'won'
-                                                  ? 'bg-green-50 border-green-300'
-                                                  : 'bg-white border-gray-200'
-                                              }`}
-                                            >
-                                              <div className="flex items-center gap-3">
-                                                <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                                                  bid.status === 'won'
-                                                    ? 'bg-green-500 text-white'
-                                                    : 'bg-gray-200 text-gray-600'
-                                                }`}>
-                                                  {index + 1}
-                                                </span>
-                                                <div>
-                                                  <div className="font-medium text-gray-900">
-                                                    {bid.team_name}
-                                                  </div>
-                                                  <div className="text-xs text-gray-500">
-                                                    {new Date(bid.created_at).toLocaleString()}
-                                                  </div>
-                                                </div>
-                                              </div>
-                                              <div className="flex items-center gap-3">
-                                                <span className={`font-bold text-lg ${
-                                                  bid.status === 'won'
-                                                    ? 'text-green-600'
-                                                    : 'text-gray-600'
-                                                }`}>
-                                                  £{bid.amount.toLocaleString()}
-                                                </span>
-                                                {bid.status === 'won' && (
-                                                  <span className="flex items-center gap-1 text-xs font-semibold text-green-600">
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                    WON
-                                                  </span>
-                                                )}
-                                              </div>
-                                            </div>
-                                          ))}
-                                        </div>
-                                        
-                                        {/* Summary */}
-                                        <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                                          <div className="text-xs text-blue-800">
-                                            <strong>Highest Bid:</strong> £{playerBids[0].amount.toLocaleString()} by {playerBids[0].team_name}
-                                            {wonBid && wonBid.id === playerBids[0].id && ' ✓ Won'}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
                       )}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200/40">
+                    {(round.status === 'expired' || round.status === 'expired_pending_finalization') && round.finalization_mode === 'manual' && (
+                      <>
+                        <button
+                          onClick={() => handlePreviewFinalization(round.id)}
+                          disabled={loadingSubmissions[round.id]}
+                          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-amber-400" />
+                          {loadingSubmissions[round.id] ? 'Creating Preview...' : 'Preview Results'}
+                        </button>
+                        <button
+                          onClick={() => handleFinalizeImmediately(round.id)}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Play className="w-3.5 h-3.5" />
+                          Finalize Immediately
+                        </button>
+                      </>
+                    )}
+                    
+                    {round.status === 'pending_finalization' && (
+                      <>
+                        <button
+                          onClick={() => handleViewPendingResults(round.id)}
+                          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-amber-400" />
+                          View Pending Results
+                        </button>
+                        <button
+                          onClick={() => handleApplyPendingAllocations(round.id)}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          Finalize for Real
+                        </button>
+                        <button
+                          onClick={() => handleCancelPending(round.id)}
+                          className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 font-bold text-[10px] uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                        >
+                          Cancel Pending
+                        </button>
+                      </>
+                    )}
+                    
+                    {round.status === 'expired' && round.finalization_mode !== 'manual' && (
+                      <button
+                        onClick={() => handleFinalizeRound(round.id)}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        Finalize Round
+                      </button>
+                    )}
+                    
+                    <button
+                      onClick={() => handleDeleteRound(round.id)}
+                      className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-[10px] uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
+        )}
+
+        {/* Completed Rounds Section */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <h2 className="text-sm sm:text-base font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            Completed Rounds
+            {completedRounds.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-emerald-5 border border-emerald-200 text-emerald-800 text-[10px] font-extrabold font-mono shadow-sm">
+                {completedRounds.length}
+              </span>
+            )}
+          </h2>
+          
+          <div className="space-y-4">
+            {completedRounds.length === 0 ? (
+              <div className="text-center py-12 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 font-mono text-xs">
+                <CheckCircle2 className="w-10 h-10 mx-auto text-slate-300" />
+                <h3 className="font-extrabold text-slate-500 uppercase tracking-wide">No completed rounds yet</h3>
+                <p className="text-slate-400">Past rounds will appear here once they're finalized</p>
+              </div>
+            ) : (
+              completedRounds.map(round => (
+                <div
+                  key={round.id}
+                  className="p-5 rounded-2xl border border-slate-200 hover:border-amber-400 transition-all space-y-4"
+                >
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0">
+                        <Layers className="w-5 h-5 text-slate-500" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-extrabold text-slate-800">
+                          {round.position} Round #{extractIdNumberAsInt(round.id)}
+                        </h3>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 flex items-center gap-1 font-mono">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          {round.created_at && new Date(round.created_at).toLocaleString('en-US', { 
+                            year: 'numeric', 
+                            month: '2-digit', 
+                            day: '2-digit', 
+                            hour: '2-digit', 
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2 text-[10px] font-mono font-bold">
+                      <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-100 text-blue-700 flex items-center gap-1 shadow-sm">
+                        <Users className="w-3.5 h-3.5 text-blue-500" />
+                        {round.total_bids || 0} bids from {round.teams_bid || 0} teams
+                      </span>
+                      <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-slate-705 uppercase flex items-center gap-1 shadow-sm">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                        {round.status}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                    <Link
+                      href={`/dashboard/committee/rounds/${round.id}`}
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-[10px] uppercase tracking-wider rounded-lg shadow-sm transition-all flex items-center gap-1"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-amber-400" />
+                      View Details
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteRound(round.id)}
+                      className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-[10px] uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
+
+        {/* Round Finalization Details Section */}
+        {completedRounds.length > 0 && (
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+            <h2 className="text-sm sm:text-base font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-violet-500" />
+              Round Finalization Details
+            </h2>
+            
+            <div className="space-y-3 font-mono">
+              {completedRounds.map(round => {
+                const isRoundExpanded = expandedRounds.has(round.id);
+                const details = roundDetails[round.id];
+                const bidsByPlayer = details?.bids ? organizeBidsByPlayer(details.bids) : {};
+                
+                return (
+                  <div key={round.id} className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/10">
+                    {/* Round Header */}
+                    <button
+                      onClick={() => toggleRound(round.id)}
+                      className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer text-left font-mono"
+                    >
+                      <div className="flex items-center gap-3">
+                        <ChevronRight 
+                          className={`w-4 h-4 text-slate-500 transition-transform ${
+                            isRoundExpanded ? 'rotate-90' : ''
+                          }`}
+                        />
+                        <span className="font-extrabold text-slate-805 text-sm">
+                          {round.position} Round #{extractIdNumberAsInt(round.id)}
+                        </span>
+                        {details && (
+                          <span className="text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded uppercase">
+                            {Object.keys(bidsByPlayer).length} players
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase">
+                        {new Date(round.created_at).toLocaleDateString()}
+                      </span>
+                    </button>
+
+                    {/* Round Content - Players List */}
+                    {isRoundExpanded && details && (
+                      <div className="border-t border-slate-200 bg-white">
+                        {Object.keys(bidsByPlayer).length === 0 ? (
+                          <div className="p-6 text-center text-slate-400 text-xs">
+                            No bids found for this round
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-slate-100">
+                            {Object.entries(bidsByPlayer).map(([playerId, playerBids]: [string, any]) => {
+                              const playerKey = `${round.id}_${playerId}`;
+                              const isPlayerExpanded = expandedPlayers.has(playerKey);
+                              const firstBid = playerBids[0];
+                              const wonBid = playerBids.find((b: any) => b.status === 'won');
+                              
+                              return (
+                                <div key={playerKey} className="text-xs">
+                                  {/* Player Header */}
+                                  <button
+                                    onClick={() => togglePlayer(playerKey)}
+                                    className="w-full p-3.5 pl-8 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer text-left font-mono"
+                                  >
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                      <ChevronRight 
+                                        className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
+                                          isPlayerExpanded ? 'rotate-90' : ''
+                                        }`}
+                                      />
+                                      <span className="font-extrabold text-slate-800">
+                                        {firstBid.player_name}
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-650 font-bold uppercase text-[9px] border border-slate-200">
+                                        {firstBid.position}
+                                      </span>
+                                      {wonBid && (
+                                        <span className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 font-extrabold text-[9px] uppercase">
+                                          Won by {wonBid.team_name}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                      {playerBids.length} bid{playerBids.length > 1 ? 's' : ''}
+                                    </span>
+                                  </button>
+
+                                  {/* Player Bids - Sorted List */}
+                                  {isPlayerExpanded && (
+                                    <div className="bg-slate-50/50 px-6 py-4 border-t border-b border-slate-100 space-y-3 font-mono">
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {playerBids.map((bid: any, index: number) => (
+                                          <div 
+                                            key={bid.id}
+                                            className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 ${
+                                              bid.status === 'won'
+                                                ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900 font-extrabold'
+                                                : 'bg-white border-slate-200 text-slate-700'
+                                            }`}
+                                          >
+                                            <div className="flex items-center gap-3 min-w-0">
+                                              <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${
+                                                bid.status === 'won'
+                                                  ? 'bg-emerald-600 text-white'
+                                                  : 'bg-slate-200 text-slate-600'
+                                              }`}>
+                                                {index + 1}
+                                              </span>
+                                              <div className="min-w-0">
+                                                <div className="font-bold truncate">{bid.team_name}</div>
+                                                <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">
+                                                  {new Date(bid.created_at).toLocaleString()}
+                                                </div>
+                                              </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                              <span className={`font-black text-sm ${
+                                                bid.status === 'won' ? 'text-emerald-700' : 'text-slate-800'
+                                              }`}>
+                                                £{bid.amount.toLocaleString()}
+                                              </span>
+                                              {bid.status === 'won' && (
+                                                <span className="flex items-center text-[9px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 px-1.5 py-0.5 rounded uppercase">
+                                                  WON
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      
+                                      {/* Summary */}
+                                      <div className="p-3 bg-blue-50/50 border border-blue-200/60 rounded-xl flex items-center gap-2 text-blue-900 font-bold text-xs">
+                                        <Info className="w-4 h-4 text-blue-600 shrink-0" />
+                                        <span>
+                                          Highest Bid: <strong className="text-blue-950 font-black">£{playerBids[0].amount.toLocaleString()}</strong> by {playerBids[0].team_name}
+                                          {wonBid && wonBid.id === playerBids[0].id && ' Yes (Allocated)'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Finalization Progress Modal */}
@@ -2337,4 +2171,5 @@ export default function RoundsManagementPage() {
       />
     </div>
   );
+
 }

@@ -1,4 +1,5 @@
 'use client';
+import { DollarSign, Star, Activity, BarChart2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -122,7 +123,7 @@ export default function CommitteeTeamsPage() {
 
   const copyBalancesToWhatsApp = () => {
     try {
-      let message = '💰 *TEAM BALANCES*\n\n';
+      let message = '<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> *TEAM BALANCES*\n\n';
       message += `📅 Season: ${seasonName || userSeasonId}\n`;
       message += `──────────────────────────────\n\n`;
 
@@ -136,9 +137,9 @@ export default function CommitteeTeamsPage() {
         if (seasonType === 'multi' || teamData.currencySystem === 'dual') {
           message += `   💶 eCoin Budget Left: ${(teamData.footballBudget || 0).toLocaleString()}\n`;
           message += `   🪙 SSCoin Budget Left: ${(teamData.realPlayerBudget || 0).toLocaleString()}\n`;
-          message += `   💰 Master Wallet Balance: ${(teamData.team.balance ?? 0).toLocaleString()}\n\n`;
+          message += `   <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Master Wallet Balance: ${(teamData.team.balance ?? 0).toLocaleString()}\n\n`;
         } else {
-          message += `   💰 Balance: ${(teamData.team.balance ?? 0).toLocaleString()}\n\n`;
+          message += `   <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Balance: ${(teamData.team.balance ?? 0).toLocaleString()}\n\n`;
         }
       });
 
@@ -153,24 +154,24 @@ export default function CommitteeTeamsPage() {
         
         message += `💶 Total eCoin Left: ${totalFootballLeft.toLocaleString()}\n`;
         message += `🪙 Total SSCoin Left: ${totalRealLeft.toLocaleString()}\n`;
-        message += `💰 Total Wallet: ${totalWallet.toLocaleString()}\n\n`;
+        message += `<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Total Wallet: ${totalWallet.toLocaleString()}\n\n`;
       } else {
         const totalBalance = sortedTeams.reduce((sum, t) => sum + (t.team.balance ?? 0), 0);
-        message += `💰 Total Balance: ${totalBalance.toLocaleString()}\n\n`;
+        message += `<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Total Balance: ${totalBalance.toLocaleString()}\n\n`;
       }
       
-      message += `📊 ${sortedTeams.length} teams\n`;
+      message += `<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> ${sortedTeams.length} teams\n`;
       message += `🕐 ${new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}\n`;
 
       navigator.clipboard.writeText(message).then(() => {
-        alert('✅ Team balances copied to clipboard!\nPaste in WhatsApp.');
+        alert('[SUCCESS]  Team balances copied to clipboard!\nPaste in WhatsApp.');
       }).catch(err => {
         console.error('Failed to copy:', err);
-        alert('❌ Failed to copy. Please try again.');
+        alert('[ERROR]  Failed to copy. Please try again.');
       });
     } catch (error) {
       console.error('Error generating WhatsApp message:', error);
-      alert('❌ Error generating summary.');
+      alert('[ERROR]  Error generating summary.');
     }
   };
 
@@ -180,7 +181,7 @@ export default function CommitteeTeamsPage() {
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10 font-mono">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Teams...</p>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading Teams...</p>
         </div>
       </div>
     );
@@ -279,7 +280,7 @@ export default function CommitteeTeamsPage() {
             </div>
             <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Avg Rating</div>
             <div className="text-2xl font-black text-amber-500 flex items-center gap-1">
-              ★ {teams.length > 0 
+              <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> {teams.length > 0 
                 ? (teams.reduce((sum, team) => sum + team.avgRating, 0) / teams.length).toFixed(1)
                 : '0.0'
               }
@@ -390,7 +391,7 @@ export default function CommitteeTeamsPage() {
                       <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
                         <span className="text-slate-400 text-[8px] mb-1">Squad Players</span>
                         <span className="text-slate-700 flex items-center gap-1 font-mono">
-                          ⚽ {teamData.totalPlayers} / {maxPlayers}
+                          <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> {teamData.totalPlayers} / {maxPlayers}
                         </span>
                       </div>
 
@@ -446,7 +447,7 @@ export default function CommitteeTeamsPage() {
                         <div className="flex items-center justify-between font-mono">
                           <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Squad Avg Rating</span>
                           <span className="text-lg font-black text-amber-500">
-                            ★ {teamData.avgRating.toFixed(1)}
+                            <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> {teamData.avgRating.toFixed(1)}
                           </span>
                         </div>
                       </div>

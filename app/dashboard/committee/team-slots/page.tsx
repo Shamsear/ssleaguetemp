@@ -1,12 +1,30 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
+import {
+  ArrowLeft,
+  Settings,
+  Search,
+  Plus,
+  Minus,
+  ChevronDown,
+  ChevronRight,
+  History,
+  Info,
+  Sparkles,
+  Layers,
+  Calendar,
+  AlertCircle,
+  CheckCircle,
+  DollarSign
+} from 'lucide-react'
+
 
 interface Team {
   id: string
@@ -103,7 +121,7 @@ export default function TeamSlotsManagementPage() {
         })
         
         const neonData = response.ok ? await response.json() : { teams: [] }
-        const neonTeamsMap = new Map(neonData.teams?.map((t: any) => [t.id, t.football_players_count]) || [])
+        const neonTeamsMap = new Map<string, number>(neonData.teams?.map((t: any) => [t.id, t.football_players_count]) || [])
 
         // Fetch slot purchase history
         const historyResponse = await fetchWithTokenRefresh('/api/committee/slot-history', {
@@ -283,10 +301,11 @@ export default function TeamSlotsManagementPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading teams...</p>
+      <div className="min-h-screen flex items-center justify-center console-bg font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono font-mono">Loading teams...</p>
         </div>
       </div>
     )
@@ -297,206 +316,270 @@ export default function TeamSlotsManagementPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      {/* Header */}
-      <div className="glass rounded-3xl p-6 mb-8 shadow-lg">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold gradient-text mb-2">🎯 Team Slot Management</h1>
-            <p className="text-gray-600">Manage football player slots for teams in {seasonName}</p>
-          </div>
-          <div className="flex gap-3">
-            <Link
-              href="/dashboard/committee/football-slot-settings"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
-              ⚙️ Settings
-            </Link>
-            <Link
-              href="/dashboard/committee"
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-            >
-              ← Back
-            </Link>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Decorative glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
+        
+        {/* Navigation */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <Link
+            href="/dashboard/committee"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
+
+          <Link
+            href="/dashboard/committee/football-slot-settings"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer border border-blue-500/20"
+          >
+            <Settings className="w-3.5 h-3.5 text-blue-100" /> Settings
+          </Link>
+        </div>
+
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <Layers className="w-6 h-6 text-amber-400" />
+            </div>
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">COMMITTEE PANEL</span>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                Team Slot Management
+              </h1>
+              <p className="text-xs text-slate-400 font-mono mt-1">
+                Manage football player registration slots for teams in {seasonName}.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Message */}
-      {message && (
-        <div className={`glass rounded-xl p-4 mb-6 ${
-          message.type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-        } border`}>
-          <p className={message.type === 'success' ? 'text-green-800' : 'text-red-800'}>
-            {message.text}
-          </p>
+        {/* Message Banner */}
+        {message && (
+          <div className={`console-card p-4 rounded-2xl border font-mono flex items-center gap-3 ${
+            message.type === 'success' 
+              ? 'bg-emerald-50/30 border-emerald-250 text-emerald-800' 
+              : 'bg-rose-50 border-rose-250 text-rose-805'
+          }`}>
+            {message.type === 'success' ? (
+              <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0" />
+            )}
+            <p className="text-xs uppercase font-bold tracking-wide">{message.text}</p>
+          </div>
+        )}
+
+        {/* Current Settings Banner */}
+        <div className="console-card bg-indigo-50/40 border border-indigo-200 rounded-3xl p-6 shadow-sm">
+          <h3 className="text-sm font-extrabold text-indigo-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <Info className="w-4 h-4 text-indigo-500" /> Current Settings
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white border border-indigo-100 rounded-2xl p-4 flex justify-between items-center shadow-sm">
+              <div>
+                <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-wider font-mono">CONFIG</span>
+                <h3 className="text-xs sm:text-sm font-extrabold text-slate-800 mt-0.5">Base Slots</h3>
+              </div>
+              <span className="bg-indigo-50 border border-indigo-150 text-indigo-750 text-base font-extrabold px-3 py-0.5 rounded-xl font-mono">
+                {slotSettings.base_slots}
+              </span>
+            </div>
+
+            <div className="bg-white border border-indigo-100 rounded-2xl p-4 flex justify-between items-center shadow-sm">
+              <div>
+                <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-wider font-mono">LIMIT</span>
+                <h3 className="text-xs sm:text-sm font-extrabold text-slate-800 mt-0.5">Max Purchasable</h3>
+              </div>
+              <span className="bg-indigo-50 border border-indigo-150 text-indigo-750 text-base font-extrabold px-3 py-0.5 rounded-xl font-mono">
+                {slotSettings.max_purchasable}
+              </span>
+            </div>
+
+            <div className="bg-white border border-indigo-100 rounded-2xl p-4 flex justify-between items-center shadow-sm">
+              <div>
+                <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-wider font-mono">PRICE</span>
+                <h3 className="text-xs sm:text-sm font-extrabold text-slate-800 mt-0.5">Slot Price</h3>
+              </div>
+              <span className="bg-indigo-50 border border-indigo-150 text-indigo-750 text-base font-extrabold px-3 py-0.5 rounded-xl font-mono">
+                ₡{slotSettings.slot_price}
+              </span>
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Info Box */}
-      <div className="glass rounded-xl p-6 mb-6 bg-blue-50/50 border border-blue-200">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">📊 Current Settings</h3>
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div>
-            <span className="text-blue-700">Base Slots:</span>
-            <span className="ml-2 font-bold text-blue-900">{slotSettings.base_slots}</span>
-          </div>
-          <div>
-            <span className="text-blue-700">Max Purchasable:</span>
-            <span className="ml-2 font-bold text-blue-900">{slotSettings.max_purchasable}</span>
-          </div>
-          <div>
-            <span className="text-blue-700">Price Per Slot:</span>
-            <span className="ml-2 font-bold text-blue-900">₡{slotSettings.slot_price}</span>
-          </div>
+        {/* Search */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 shadow-sm flex items-center relative">
+          <Search className="w-5 h-5 text-slate-400 absolute left-8 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search teams..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold"
+          />
         </div>
-      </div>
 
-      {/* Search */}
-      <div className="glass rounded-xl p-4 mb-6">
-        <input
-          type="text"
-          placeholder="Search teams..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
-
-      {/* Teams Table */}
-      <div className="glass rounded-3xl overflow-hidden shadow-lg">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gradient-to-r from-blue-50 to-purple-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Team</th>
-                <th className="px-6 py-4 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Current Players</th>
-                <th className="px-6 py-4 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Base Slots</th>
-                <th className="px-6 py-4 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Purchased</th>
-                <th className="px-6 py-4 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Total Slots</th>
-                <th className="px-6 py-4 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Available</th>
-                <th className="px-6 py-4 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTeams.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                    No teams found
-                  </td>
+        {/* Teams Table */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead>
+                <tr className="bg-slate-50/40 font-mono">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">Team</th>
+                  <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">Players</th>
+                  <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">Base</th>
+                  <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">Purchased</th>
+                  <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">Total</th>
+                  <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">Available</th>
+                  <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">Actions</th>
                 </tr>
-              ) : (
-                filteredTeams.map((team) => [
-                  <tr key={`team-${team.id}`} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        {team.purchase_history && team.purchase_history.length > 0 && (
-                          <button
-                            onClick={() => toggleTeamExpansion(team.id)}
-                            className="text-gray-400 hover:text-gray-600 transition-colors"
-                          >
-                            {expandedTeams.has(team.id) ? (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                              </svg>
-                            ) : (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                              </svg>
-                            )}
-                          </button>
-                        )}
-                        <div className="text-sm font-medium text-gray-900">{team.name}</div>
-                      </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredTeams.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 uppercase tracking-wider font-extrabold text-xs">
+                      No teams found
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="text-sm font-semibold text-gray-900">{team.current_players}</span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="text-sm text-gray-600">{team.base_slots}</span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                        team.purchased_slots > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        +{team.purchased_slots}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="text-sm font-bold text-gray-900">{team.total_slots}</span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                        team.available_slots > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {team.available_slots}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => handleAddSlots(team.id, 1)}
-                          disabled={team.purchased_slots >= slotSettings.max_purchasable}
-                          className="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Add 1 slot"
-                        >
-                          +1
-                        </button>
-                        <button
-                          onClick={() => handleRemoveSlots(team.id, 1)}
-                          disabled={team.purchased_slots === 0 || team.total_slots - 1 < team.current_players}
-                          className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Remove 1 slot"
-                        >
-                          -1
-                        </button>
-                      </div>
-                    </td>
-                  </tr>,
-                  
-                  // Expanded History Row
-                  expandedTeams.has(team.id) && team.purchase_history && team.purchase_history.length > 0 && (
-                    <tr key={`history-${team.id}`} className="bg-gray-50">
-                      <td colSpan={7} className="px-6 py-4">
-                        <div className="ml-8">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-3">📜 Slot Purchase History</h4>
-                          <div className="space-y-2">
-                            {team.purchase_history.map((purchase) => (
-                              <div key={purchase.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                                <div className="flex items-center gap-4">
-                                  <div className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                    purchase.slots_purchased > 0 
-                                      ? 'bg-green-100 text-green-700' 
-                                      : 'bg-red-100 text-red-700'
-                                  }`}>
-                                    {purchase.slots_purchased > 0 ? '+' : ''}{purchase.slots_purchased} slot{Math.abs(purchase.slots_purchased) !== 1 ? 's' : ''}
-                                  </div>
-                                  <div className="text-sm text-gray-600">
-                                    <span className="font-medium text-gray-800">By:</span> {purchase.purchased_by}
-                                  </div>
-                                  <div className="text-sm text-gray-600">
-                                    <span className="font-medium text-gray-800">Cost:</span> ₡{Math.abs(purchase.total_cost)}
-                                  </div>
-                                  <div className="text-sm text-gray-600">
-                                    <span className="font-medium text-gray-800">Date:</span> {new Date(purchase.purchased_at).toLocaleDateString()}
-                                  </div>
-                                </div>
-                                {purchase.notes && (
-                                  <div className="text-xs text-gray-500 italic">
-                                    {purchase.notes}
-                                  </div>
+                  </tr>
+                ) : (
+                  filteredTeams.map((team) => {
+                    const hasHistory = team.purchase_history && team.purchase_history.length > 0;
+                    const isExpanded = expandedTeams.has(team.id);
+                    
+                    return (
+                      <React.Fragment key={team.id}>
+                        <tr className="hover:bg-slate-50/40 transition-colors font-mono text-slate-700">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-1.5">
+                                {hasHistory ? (
+                                  <button
+                                    onClick={() => toggleTeamExpansion(team.id)}
+                                    className="text-slate-400 hover:text-amber-600 transition-colors cursor-pointer"
+                                  >
+                                    {isExpanded ? (
+                                      <ChevronDown className="w-4 h-4 text-amber-500" />
+                                    ) : (
+                                      <ChevronRight className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                ) : (
+                                  <div className="w-4" />
                                 )}
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                ])
-              )}
-            </tbody>
-          </table>
+                              <div className="w-8 h-8 rounded-xl flex items-center justify-center border border-slate-200 bg-slate-50 text-slate-650 font-extrabold text-sm uppercase">
+                                {team.name.charAt(0)}
+                              </div>
+                              <div className="text-sm font-extrabold text-slate-800 uppercase tracking-wide">{team.name}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-sm font-bold text-slate-800">{team.current_players}</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-xs text-slate-505">{team.base_slots}</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-bold border uppercase ${
+                              team.purchased_slots > 0 
+                                ? 'bg-blue-50 border-blue-250 text-blue-700' 
+                                : 'bg-slate-50 border-slate-200 text-slate-500'
+                            }`}>
+                              +{team.purchased_slots}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-sm font-black text-slate-800">{team.total_slots}</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-bold border uppercase ${
+                              team.available_slots > 0 
+                                ? 'bg-emerald-50 border-emerald-250 text-emerald-700' 
+                                : 'bg-rose-50 border-rose-200 text-rose-700'
+                            }`}>
+                              {team.available_slots}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => handleAddSlots(team.id, 1)}
+                                disabled={team.purchased_slots >= slotSettings.max_purchasable}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-slate-250 hover:border-emerald-400 hover:text-emerald-600 rounded-xl text-[10px] uppercase font-bold shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                                title="Add 1 slot"
+                              >
+                                <Plus className="w-3 h-3" /> 1 Slot
+                              </button>
+                              <button
+                                onClick={() => handleRemoveSlots(team.id, 1)}
+                                disabled={team.purchased_slots === 0 || team.total_slots - 1 < team.current_players}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-slate-250 hover:border-rose-400 hover:text-rose-600 rounded-xl text-[10px] uppercase font-bold shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                                title="Remove 1 slot"
+                              >
+                                <Minus className="w-3 h-3" /> 1 Slot
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        
+                        {/* Expanded History Row */}
+                        {isExpanded && team.purchase_history && team.purchase_history.length > 0 && (
+                          <tr className="bg-slate-50/30">
+                            <td colSpan={7} className="px-6 py-4 border-t border-slate-100">
+                              <div className="ml-8 font-mono">
+                                <h4 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                                  <History className="w-3.5 h-3.5 text-slate-400" /> Transaction History
+                                </h4>
+                                <div className="space-y-2 max-w-4xl">
+                                  {team.purchase_history.map((purchase) => {
+                                    const isPurchase = purchase.slots_purchased > 0;
+                                    return (
+                                      <div key={purchase.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3.5 bg-white rounded-xl border border-slate-200 shadow-sm gap-2">
+                                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-650">
+                                          <div className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black border uppercase ${
+                                            isPurchase 
+                                              ? 'bg-emerald-50 border-emerald-250 text-emerald-700' 
+                                              : 'bg-rose-50 border-rose-200 text-rose-700'
+                                          }`}>
+                                            {isPurchase ? '+' : ''}{purchase.slots_purchased} slot{Math.abs(purchase.slots_purchased) !== 1 ? 's' : ''}
+                                          </div>
+                                          <div>
+                                            <span className="font-bold text-slate-400 uppercase text-[9px] mr-1">ADMIN:</span>
+                                            <span className="font-semibold text-slate-800">{purchase.purchased_by}</span>
+                                          </div>
+                                          <div className="flex items-center gap-1">
+                                            <DollarSign className="w-3.5 h-3.5 text-slate-400" />
+                                            <span className="font-bold text-slate-850">₡{Math.abs(purchase.total_cost)}</span>
+                                          </div>
+                                          <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                                            <Calendar className="w-3.5 h-3.5" />
+                                            <span>{new Date(purchase.purchased_at).toLocaleDateString()}</span>
+                                          </div>
+                                        </div>
+                                        {purchase.notes && (
+                                          <div className="text-[10px] text-slate-500 italic bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 max-w-md">
+                                            {purchase.notes}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

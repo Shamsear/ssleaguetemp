@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { History, Download, Filter } from 'lucide-react';
+import { History, Download, Filter, Star, Activity } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { usePermissions } from '@/hooks/usePermissions';
 
@@ -201,16 +201,16 @@ export default function TransferHistoryPage() {
       
       if (tx.transaction_type === 'transfer') {
         players = tx.player?.name || '';
-        teamsList = `${tx.old_team_id} → ${tx.new_team_id}`;
-        valuesStr = `${tx.values?.old_value} → ${tx.values?.new_value}`;
+        teamsList = `${tx.old_team_id} &rarr; ${tx.new_team_id}`;
+        valuesStr = `${tx.values?.old_value} &rarr; ${tx.values?.new_value}`;
         feesStr = tx.financial?.committee_fee?.toFixed(2) || '';
-        starChanges = `${tx.star_rating?.old}⭐ → ${tx.star_rating?.new}⭐`;
+        starChanges = `${tx.star_rating?.old}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> &rarr; ${tx.star_rating?.new}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />`;
       } else if (tx.transaction_type === 'swap') {
-        players = `${tx.player_a?.name} ↔ ${tx.player_b?.name}`;
-        teamsList = `${tx.teams?.team_a_id} ↔ ${tx.teams?.team_b_id}`;
-        valuesStr = `${tx.player_a?.old_value}/${tx.player_b?.old_value} → ${tx.player_a?.new_value}/${tx.player_b?.new_value}`;
+        players = `${tx.player_a?.name} &harr; ${tx.player_b?.name}`;
+        teamsList = `${tx.teams?.team_a_id} &harr; ${tx.teams?.team_b_id}`;
+        valuesStr = `${tx.player_a?.old_value}/${tx.player_b?.old_value} &rarr; ${tx.player_a?.new_value}/${tx.player_b?.new_value}`;
         feesStr = tx.financial?.total_committee_fees?.toFixed(2) || '';
-        starChanges = `${tx.player_a?.old_star}⭐→${tx.player_a?.new_star}⭐ / ${tx.player_b?.old_star}⭐→${tx.player_b?.new_star}⭐`;
+        starChanges = `${tx.player_a?.old_star}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> &rarr; ${tx.player_a?.new_star}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> / ${tx.player_b?.old_star}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> &rarr; ${tx.player_b?.new_star}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />`;
       }
       
       return [date, type, players, teamsList, valuesStr, feesStr, starChanges, tx.processed_by_name];
@@ -246,7 +246,7 @@ export default function TransferHistoryPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center font-mono">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-xs text-slate-400 font-bold uppercase tracking-wider">Loading history data...</p>
+          <p className="mt-4 text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">Loading history data...</p>
         </div>
       </div>
     );
@@ -266,7 +266,7 @@ export default function TransferHistoryPage() {
             href="/dashboard/committee/players/transfers"
             className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
-            ← Back to Transfers
+            &larr; Back to Transfers
           </Link>
           
           <div className="bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider px-3 py-1.5 rounded-xl border border-slate-700 shadow-sm shrink-0">
@@ -371,7 +371,7 @@ export default function TransferHistoryPage() {
               >
                 <option value="">All Player Types</option>
                 <option value="real">👤 Real Players</option>
-                <option value="football">⚽ eFootball Players</option>
+                <option value="football"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> eFootball Players</option>
               </select>
             </div>
           </div>
@@ -413,14 +413,14 @@ export default function TransferHistoryPage() {
                     <div className="space-y-4">
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Player Released</p>
+                          <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Player Released</p>
                           <p className="text-base font-extrabold text-slate-900 mt-0.5">{tx.player_name}</p>
                           <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 leading-none">
-                            {tx.player_type === 'real' ? '👤 Real Player' : '⚽ Football Player'}
+                            {tx.player_type === 'real' ? '👤 Real Player' : '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Football Player'}
                           </p>
                         </div>
                         <div className="text-left sm:text-right">
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Team roster</p>
+                          <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Team roster</p>
                           <p className="text-sm font-extrabold text-slate-850 mt-0.5">{tx.team_name}</p>
                           <p className="text-[9px] text-slate-350 font-bold uppercase tracking-wider">{tx.team_id}</p>
                         </div>
@@ -456,16 +456,16 @@ export default function TransferHistoryPage() {
                     <div className="space-y-4">
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Transferred Player</p>
+                          <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Transferred Player</p>
                           <p className="text-base font-extrabold text-slate-900 mt-0.5">{tx.player?.name}</p>
                           <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 leading-none">
-                            {tx.player?.type === 'real' ? '👤 Real Player' : '⚽ Football Player'}
+                            {tx.player?.type === 'real' ? '👤 Real Player' : '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Football Player'}
                           </p>
                         </div>
                         <div className="text-left sm:text-right">
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Transfer Path</p>
+                          <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Transfer Path</p>
                           <p className="text-sm font-extrabold text-slate-850 mt-0.5">
-                            {tx.old_team_id} → {tx.new_team_id}
+                            {tx.old_team_id} &rarr; {tx.new_team_id}
                           </p>
                         </div>
                       </div>
@@ -485,7 +485,7 @@ export default function TransferHistoryPage() {
                         <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-inner">
                           <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide mb-1">Star Rating</p>
                           <p className="text-sm font-extrabold text-yellow-600">
-                            {tx.star_rating?.old}⭐ → {tx.star_rating?.new}⭐
+                            {tx.star_rating?.old}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> &rarr; {tx.star_rating?.new}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />
                           </p>
                         </div>
                       </div>
@@ -500,10 +500,10 @@ export default function TransferHistoryPage() {
                           <p className="font-extrabold text-slate-900 text-sm mt-2 mb-1">{tx.player_a?.name}</p>
                           <div className="text-[10px] space-y-1 text-slate-500 mt-2">
                             {tx.player_a?.old_value > 0 && (
-                              <p>Value: £{tx.player_a?.old_value?.toLocaleString()} → £{tx.player_a?.new_value?.toLocaleString()}</p>
+                              <p>Value: £{tx.player_a?.old_value?.toLocaleString()} &rarr; £{tx.player_a?.new_value?.toLocaleString()}</p>
                             )}
                             {tx.player_a?.old_star > 0 && (
-                              <p>Stars: {tx.player_a?.old_star}⭐ → {tx.player_a?.new_star}⭐</p>
+                              <p>Stars: {tx.player_a?.old_star}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> &rarr; {tx.player_a?.new_star}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /></p>
                             )}
                             <p>Team: {tx.teams?.team_a_id}</p>
                             {tx.teams?.team_a_pays > 0 && (
@@ -517,10 +517,10 @@ export default function TransferHistoryPage() {
                           <p className="font-extrabold text-slate-900 text-sm mt-2 mb-1">{tx.player_b?.name}</p>
                           <div className="text-[10px] space-y-1 text-slate-500 mt-2">
                             {tx.player_b?.old_value > 0 && (
-                              <p>Value: £{tx.player_b?.old_value?.toLocaleString()} → £{tx.player_b?.new_value?.toLocaleString()}</p>
+                              <p>Value: £{tx.player_b?.old_value?.toLocaleString()} &rarr; £{tx.player_b?.new_value?.toLocaleString()}</p>
                             )}
                             {tx.player_b?.old_star > 0 && (
-                              <p>Stars: {tx.player_b?.old_star}⭐ → {tx.player_b?.new_star}⭐</p>
+                              <p>Stars: {tx.player_b?.old_star}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> &rarr; {tx.player_b?.new_star}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /></p>
                             )}
                             <p>Team: {tx.teams?.team_b_id}</p>
                             {tx.teams?.team_b_pays > 0 && (
@@ -532,7 +532,7 @@ export default function TransferHistoryPage() {
 
                       <div className="flex items-center justify-center py-2">
                         <span className="px-4 py-1.5 bg-slate-800 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">
-                          {tx.player_a?.name} ↔ {tx.player_b?.name}
+                          {tx.player_a?.name} &harr; {tx.player_b?.name}
                         </span>
                       </div>
 

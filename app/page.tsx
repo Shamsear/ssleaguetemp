@@ -5,17 +5,7 @@ import HeroSection from './components/HeroSection';
 import HallOfFameSelector from '././components/HallOfFameSelector';
 import { useEffect, useState } from 'react';
 import { useResolvedTeamData } from '@/hooks/useResolveTeamNames';
-import { 
-  Trophy, 
-  Activity, 
-  ArrowRight, 
-  Zap,
-  Shield, 
-  Award,
-  Flame,
-  Target,
-  RotateCcw
-} from 'lucide-react';
+import { Activity, ArrowRight, Award, Crown, Flame, Medal, RotateCcw, Shield, Star, Target, TrendingUp, Trophy, Zap } from 'lucide-react';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -214,7 +204,7 @@ export default function Home() {
                             <td className="p-3">
                               <Link href={`/teams/${team.team_id}`} className="font-bold text-slate-900 text-sm hover:text-amber-600 transition-colors flex items-center gap-2">
                                 {team.team_name}
-                                {isTop && <span className="text-xs">👑</span>}
+                                {isTop && <Crown className="w-3.5 h-3.5 inline text-amber-500 fill-amber-500" />}
                               </Link>
                             </td>
                             <td className="p-3 text-center text-xs text-slate-600 hidden sm:table-cell">{team.matches_played}</td>
@@ -349,7 +339,7 @@ export default function Home() {
         <div className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
           <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">Honours Ledger</span>
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-0.5 mb-8 tracking-tight">
-            📈 League Records & Milestones
+            <TrendingUp className="w-6 h-6 inline-block text-amber-500 mr-2 align-text-bottom" /> League Records & Milestones
           </h2>
 
           {loading ? (
@@ -442,7 +432,7 @@ export default function Home() {
             <div className="flex items-center justify-between mb-8 flex-wrap gap-4 mt-0.5">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                  🏆 League Hall of Champions
+                  <Trophy className="w-6 h-6 inline-block text-amber-500 mr-2 align-text-bottom" /> League Hall of Champions
                 </h2>
                 <p className="text-slate-500 text-xs mt-1">Celebrating our historical league champions.</p>
               </div>
@@ -465,8 +455,8 @@ export default function Home() {
                         {champion.team_name}
                       </h3>
                     </div>
-                    <div className="text-2xl text-[#D4AF37]">
-                      🏆
+                    <div className="text-2xl text-amber-500">
+                      <Trophy className="w-6 h-6" />
                     </div>
                   </div>
 
@@ -519,7 +509,7 @@ export default function Home() {
           <div className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
             <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">Shield Honours</span>
             <h2 className="text-2xl font-bold text-slate-900 mt-0.5 mb-6 tracking-tight">
-              🎖️ Tournament Cup Winners
+              <Medal className="w-6 h-6 inline-block text-amber-500 mr-2 align-text-bottom" /> Tournament Cup Winners
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {displayCupWinners.slice(0, 6).map((team: any) => (
@@ -598,7 +588,7 @@ export default function Home() {
                             )}
                           </div>
                           <div className="text-right flex-shrink-0 ml-3">
-                            <div className="text-sm">⭐</div>
+                            <div className="text-amber-400 flex justify-end"><Star className="w-4 h-4 fill-amber-400" /></div>
                           </div>
                         </div>
                       );

@@ -196,13 +196,13 @@ export default function FixDuplicatePointsPage() {
                         -{dup.points_difference}
                       </td>
                       <td className="text-right p-4 text-gray-700">
-                        {dup.current_goals} → {dup.correct_goals}
+                        {dup.current_goals} &rarr; {dup.correct_goals}
                       </td>
                       <td className="text-right p-4 text-gray-700">
-                        {dup.current_assists} → {dup.correct_assists}
+                        {dup.current_assists} &rarr; {dup.correct_assists}
                       </td>
                       <td className="text-right p-4 text-gray-700">
-                        {dup.recorded_fixtures} → {dup.actual_fixtures}
+                        {dup.recorded_fixtures} &rarr; {dup.actual_fixtures}
                       </td>
                     </tr>
                   ))}

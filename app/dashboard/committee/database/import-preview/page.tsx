@@ -1,4 +1,5 @@
 'use client'
+import { Users } from 'lucide-react';
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
@@ -246,7 +247,7 @@ export default function ImportPreviewPage() {
       <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2">👥 Player Import Preview</h1>
+            <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2"><Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Player Import Preview</h1>
             <p className="text-gray-600 text-sm md:text-base">Review and edit players before importing to database</p>
           </div>
           <div className="flex items-center">

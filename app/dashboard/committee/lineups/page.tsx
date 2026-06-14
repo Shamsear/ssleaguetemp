@@ -1,4 +1,5 @@
 'use client';
+import { Lock, XCircle, AlertTriangle } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -382,19 +383,19 @@ export default function CommitteeLineupMonitoringPage() {
                     <td className="px-6 py-4 text-center">
                       {status.home_lineup_locked ? (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-400 text-white">
-                          🔒 Locked
+                          <Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Locked
                         </span>
                       ) : status.home_lineup_submitted ? (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
-                          ✓ Submitted
+                          Yes Submitted
                         </span>
                       ) : status.home_warning_given ? (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-500 text-white">
-                          ⚠️ Warning
+                          <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Warning
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-500 text-white animate-pulse">
-                          ❌ Missing
+                          <XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Missing
                         </span>
                       )}
                     </td>
@@ -404,19 +405,19 @@ export default function CommitteeLineupMonitoringPage() {
                     <td className="px-6 py-4 text-center">
                       {status.away_lineup_locked ? (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-400 text-white">
-                          🔒 Locked
+                          <Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Locked
                         </span>
                       ) : status.away_lineup_submitted ? (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
-                          ✓ Submitted
+                          Yes Submitted
                         </span>
                       ) : status.away_warning_given ? (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-500 text-white">
-                          ⚠️ Warning
+                          <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Warning
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-500 text-white animate-pulse">
-                          ❌ Missing
+                          <XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Missing
                         </span>
                       )}
                     </td>

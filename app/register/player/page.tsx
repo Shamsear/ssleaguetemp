@@ -1,5 +1,6 @@
 'use client'
 
+import { Crown, Lock, Medal, Star, TrendingUp, Trophy } from 'lucide-react';
 import { Suspense, useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { db, auth } from '@/lib/firebase/config'
@@ -225,7 +226,7 @@ function PlayerSearchContent() {
     try {
       const provider = new GoogleAuthProvider()
       await signInWithPopup(auth, provider)
-      setSuccess('✅ Signed in successfully!')
+      setSuccess('[SUCCESS] Signed in successfully!')
     } catch (err: any) {
       console.error('Sign in error:', err)
       if (err.code === 'auth/popup-closed-by-user') {
@@ -334,7 +335,7 @@ function PlayerSearchContent() {
               
               <div className="bg-blue-50/60 border border-blue-200/30 text-blue-700 p-4 rounded-xl mb-4 font-mono">
                 <p className="text-xs uppercase font-extrabold mb-1">
-                  🔒 Secure Authentication Required
+                  <span className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-slate-500" /> Secure Authentication Required</span>
                 </p>
                 <p className="text-[10px] uppercase font-bold leading-relaxed">
                   Sign in with your Gmail account to begin registration.

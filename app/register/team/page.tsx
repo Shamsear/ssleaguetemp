@@ -1,5 +1,6 @@
 'use client';
 
+import { CheckCircle, DollarSign, Gamepad2, Sparkles, Target, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
@@ -333,11 +334,11 @@ function SeasonRegistrationContent() {
               <div className="glass rounded-2xl p-6 border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 text-center">
                 <div className="flex items-center justify-center mb-4">
                   <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center mr-3">
-                    <span className="text-2xl">💰</span>
+                    <span className="text-2xl text-emerald-550"><DollarSign className="w-6 h-6 inline" /></span>
                   </div>
                   <div>
                     <dt className="text-sm font-semibold text-blue-900">Starting Budget</dt>
-                    <dd className="text-3xl font-bold text-blue-900">💰{(season.starting_balance || 15000).toLocaleString()}</dd>
+                    <dd className="text-3xl font-bold text-blue-900">{(season.starting_balance || 15000).toLocaleString()}</dd>
                   </div>
                 </div>
                 <p className="text-xs text-blue-700">For all players and team management</p>
@@ -353,16 +354,16 @@ function SeasonRegistrationContent() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-semibold text-blue-900 mb-2">✅ As a Participant:</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2"><span className="flex items-center gap-1.5 text-blue-900 font-semibold"><CheckCircle className="w-4 h-4 text-emerald-500" /> As a Participant:</span></h4>
                   <ul className="text-blue-800 text-sm space-y-1">
-                    <li>• Receive 💰{(season.starting_balance || 15000).toLocaleString()} starting budget</li>
+                    <li>• Receive {(season.starting_balance || 15000).toLocaleString()} starting budget</li>
                     <li>• Build your squad with top players</li>
                     <li>• Track your team's performance throughout the season</li>
                     <li>• Compete with other teams in the league</li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-blue-900 mb-2">🎯 Season Features:</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2"><span className="flex items-center gap-1.5 text-blue-900 font-semibold"><Target className="w-4 h-4 text-rose-500" /> Season Features:</span></h4>
                   <ul className="text-blue-800 text-sm space-y-1">
                     <li>• Single currency system - unified budget for all players</li>
                     <li>• Season leaderboards and comprehensive statistics</li>
@@ -387,14 +388,14 @@ function SeasonRegistrationContent() {
                     <strong>{user.teamName || 'Your team'}</strong> has already joined <strong>{season.name}</strong>.
                   </p>
                   <div className="bg-green-50 border border-green-200 rounded-2xl p-6 mb-8">
-                    <p className="text-green-800 font-medium mb-2">✓ Registration Confirmed</p>
+                    <p className="text-green-800 font-medium mb-2">Registration Confirmed</p>
                     <p className="text-green-700 text-sm mb-3">
                       Your starting budget has been allocated:
                     </p>
                     <div className="flex justify-center mb-3">
                       <div className="bg-white rounded-lg px-4 py-2">
                         <p className="text-xs text-blue-600 font-medium">Starting Balance</p>
-                        <p className="text-lg font-bold text-blue-900">💰{(season.starting_balance || 15000).toLocaleString()}</p>
+                        <p className="text-lg font-bold text-blue-900">{(season.starting_balance || 15000).toLocaleString()}</p>
                       </div>
                     </div>
                     <p className="text-green-700 text-sm">
@@ -512,7 +513,7 @@ function SeasonRegistrationContent() {
                         />
                         <label htmlFor="registerOwnerNow" className="ml-3 cursor-pointer">
                           <span className="block text-base font-semibold text-blue-900 mb-1">
-                            👤 Register Team Owner Now (Optional)
+                            <span className="flex items-center gap-1.5"><User className="w-4 h-4 text-slate-500" /> Register Team Owner Now (Optional)</span>
                           </span>
                           <span className="block text-sm text-blue-700">
                             Add owner information now, or you can do this later from your dashboard.
@@ -533,7 +534,7 @@ function SeasonRegistrationContent() {
                         />
                         <label htmlFor="joinFantasy" className="ml-3 cursor-pointer">
                           <span className="block text-base font-semibold text-purple-900 mb-1">
-                            🎮 Join Fantasy League
+                            <span className="flex items-center gap-1.5"><Gamepad2 className="w-4 h-4 text-indigo-500" /> Join Fantasy League</span>
                           </span>
                           <span className="block text-sm text-purple-700">
                             Participate in the fantasy league! Draft players, set your captain & vice-captain, earn points based on real match performance, and compete against other managers.
@@ -543,7 +544,7 @@ function SeasonRegistrationContent() {
                       
                       {joinFantasy && (
                         <div className="mt-4 pl-8 bg-white/60 rounded-xl p-4 border border-purple-100">
-                          <p className="text-sm font-semibold text-purple-900 mb-2">✨ Fantasy Features:</p>
+                          <p className="text-sm font-semibold text-purple-900 mb-2"><span className="flex items-center gap-1.5 text-purple-900 font-semibold"><Sparkles className="w-4 h-4 text-purple-500" /> Fantasy Features:</span></p>
                           <ul className="text-xs text-purple-800 space-y-1">
                             <li>• Draft players from your real team's roster</li>
                             <li>• Set weekly lineups with Captain/Vice-Captain</li>

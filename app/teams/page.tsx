@@ -3,14 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Search,
-  Shield,
-  TrendingUp,
-  Activity,
-  ChevronRight,
-  Filter
-} from 'lucide-react';
+import { Activity, ChevronRight, Crown, Filter, Medal, Search, Shield, Star, TrendingUp, Trophy } from 'lucide-react';
 
 interface Team {
   id: string;
@@ -230,7 +223,7 @@ function TeamsContent() {
                   <option value="all">All Seasons (Aggregate)</option>
                   {seasons.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name} {s.status === 'active' && '🟢'}
+                      {s.name} {s.status === 'active' && <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block ml-1.5" />}
                     </option>
                   ))}
                 </select>

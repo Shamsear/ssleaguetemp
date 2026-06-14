@@ -1,4 +1,5 @@
 'use client';
+import { Star, Trophy, Crown, Activity, BarChart2 } from 'lucide-react';
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -207,7 +208,7 @@ export default function FantasyPointsBreakdownPage() {
                                     <p className="text-blue-100 text-sm mb-3">Owner: {team.owner_name}</p>
                                     {team.supported_team_name && (
                                         <p className="text-blue-100 text-sm mb-3">
-                                            🏆 Supporting: <span className="font-semibold">{team.supported_team_name}</span>
+                                            <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Supporting: <span className="font-semibold">{team.supported_team_name}</span>
                                         </p>
                                     )}
                                     <div className="grid grid-cols-3 gap-4 text-center">
@@ -236,7 +237,7 @@ export default function FantasyPointsBreakdownPage() {
                                         {/* Active Players Summary */}
                                         <div className="bg-white rounded-xl shadow-md p-4 border-2 border-green-200">
                                             <h4 className="text-lg font-bold text-green-700 mb-3 flex items-center gap-2">
-                                                <span>⚽</span>
+                                                <span><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /></span>
                                                 <span>Active Players ({team.players.length})</span>
                                             </h4>
                                             <div className="space-y-2">
@@ -281,7 +282,7 @@ export default function FantasyPointsBreakdownPage() {
                                         {/* Passive Team Summary */}
                                         <div className="bg-white rounded-xl shadow-md p-4 border-2 border-blue-200">
                                             <h4 className="text-lg font-bold text-blue-700 mb-3 flex items-center gap-2">
-                                                <span>🏆</span>
+                                                <span><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></span>
                                                 <span>Passive Team(s)</span>
                                             </h4>
                                             <div className="space-y-2">
@@ -404,7 +405,7 @@ export default function FantasyPointsBreakdownPage() {
 
                                 {/* Round-by-Round Breakdown */}
                                 <div className="p-6">
-                                    <h3 className="text-xl font-bold text-gray-900 mb-4">📊 Round-by-Round Breakdown</h3>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-4"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Round-by-Round Breakdown</h3>
 
                                     {/* Group by Tournament */}
                                     {tournaments.map((tournament) => {
@@ -418,7 +419,7 @@ export default function FantasyPointsBreakdownPage() {
                                             <div key={tournament.tournament_id} className="mb-6">
                                                 <h4 className="text-lg font-bold text-indigo-700 mb-3 flex items-center gap-2">
                                                     <span className="bg-indigo-100 px-3 py-1 rounded-lg">
-                                                        🏆 {tournament.tournament_name}
+                                                        <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> {tournament.tournament_name}
                                                     </span>
                                                 </h4>
 
@@ -467,7 +468,7 @@ export default function FantasyPointsBreakdownPage() {
                                                                         {passiveData && passiveData.matches.length > 0 && (
                                                                             <div className="mb-4">
                                                                                 <h4 className="font-semibold text-gray-900 mb-3">
-                                                                                    🏆 Passive Points (Team Bonuses)
+                                                                                    <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Passive Points (Team Bonuses)
                                                                                 </h4>
                                                                                 <div className="space-y-2">
                                                                                     {passiveData.matches.map((match, idx) => (
@@ -509,7 +510,7 @@ export default function FantasyPointsBreakdownPage() {
                                                                         {/* Active Points (Player Performance) */}
                                                                         <div>
                                                                             <h4 className="font-semibold text-gray-900 mb-3">
-                                                                                ⚽ Active Points (Player Performance)
+                                                                                <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Active Points (Player Performance)
                                                                             </h4>
                                                                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                                                                                 {team.players
@@ -582,24 +583,24 @@ export default function FantasyPointsBreakdownPage() {
                                                 const awardRound = reasonParts[2] || '';
                                                 
                                                 // Determine award icon and color
-                                                let awardIcon = '🏆';
+                                                let awardIcon = '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />';
                                                 let gradientClass = 'from-purple-500 to-pink-500';
                                                 let bgClass = 'from-purple-50 to-pink-50';
                                                 
                                                 if (awardType.includes('TOD')) {
-                                                    awardIcon = '🏆';
+                                                    awardIcon = '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />';
                                                     gradientClass = 'from-blue-500 to-cyan-500';
                                                     bgClass = 'from-blue-50 to-cyan-50';
                                                 } else if (awardType.includes('TOW')) {
-                                                    awardIcon = '👑';
+                                                    awardIcon = '<Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />';
                                                     gradientClass = 'from-yellow-500 to-orange-500';
                                                     bgClass = 'from-yellow-50 to-orange-50';
                                                 } else if (awardType.includes('POTD')) {
-                                                    awardIcon = '⚽';
+                                                    awardIcon = <Activity className="w-3.5 h-3.5 text-red-500 inline-block" />;
                                                     gradientClass = 'from-green-500 to-emerald-500';
                                                     bgClass = 'from-green-50 to-emerald-50';
                                                 } else if (awardType.includes('POTW')) {
-                                                    awardIcon = '⭐';
+                                                    awardIcon = '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />';
                                                     gradientClass = 'from-indigo-500 to-purple-500';
                                                     bgClass = 'from-indigo-50 to-purple-50';
                                                 }
@@ -639,7 +640,7 @@ export default function FantasyPointsBreakdownPage() {
                                                                 {awardTarget && (
                                                                     <div className="flex items-center gap-2">
                                                                         <span className="text-xs font-medium text-gray-500">
-                                                                            {bonus.type === 'player' ? '⚽' : '🏆'}
+                                                                            {bonus.type === 'player' ? <Activity className="w-3.5 h-3.5 text-red-500 inline-block" /> : '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />'}
                                                                         </span>
                                                                         <span className="text-sm font-bold text-gray-900 truncate">
                                                                             {awardTarget}

@@ -87,7 +87,7 @@ export default function TestNewsPage() {
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            🧪 News Generation Test
+            News Generation Test
           </h1>
           <p className="text-gray-600">
             Test AI news generation with images. Click any button to generate a news item.
@@ -136,7 +136,7 @@ export default function TestNewsPage() {
         {/* Error */}
         {error && (
           <div className="bg-red-50 border-2 border-red-200 rounded-2xl shadow-xl p-6">
-            <h3 className="text-xl font-bold text-red-800 mb-2">❌ Error</h3>
+            <h3 className="text-xl font-bold text-red-800 mb-2">Error</h3>
             <p className="text-red-600">{error}</p>
           </div>
         )}
@@ -145,7 +145,7 @@ export default function TestNewsPage() {
         {result && (
           <div className="bg-white rounded-2xl shadow-xl p-6">
             <h2 className="text-2xl font-bold text-green-600 mb-4">
-              ✅ News Generated Successfully!
+              News Generated Successfully!
             </h2>
 
             {/* Image Preview */}
@@ -188,10 +188,10 @@ export default function TestNewsPage() {
                   {result.news?.category}
                 </span>
                 <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-semibold">
-                  {result.news?.generated_by === 'ai' ? '🤖 AI Generated' : 'Manual'}
+                  {result.news?.generated_by === 'ai' ? 'AI Generated' : 'Manual'}
                 </span>
                 <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-                  {result.news?.is_published ? '✓ Published' : '📝 Draft'}
+                  {result.news?.is_published ? 'Published' : 'Draft'}
                 </span>
               </div>
             </div>
@@ -203,14 +203,14 @@ export default function TestNewsPage() {
                 target="_blank"
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
               >
-                View on Public Page →
+                View on Public Page {"->"}
               </a>
               <a
                 href="/admin/news"
                 target="_blank"
                 className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
               >
-                View in Admin Panel →
+                View in Admin Panel {"->"}
               </a>
             </div>
 
@@ -228,7 +228,7 @@ export default function TestNewsPage() {
 
         {/* Instructions */}
         <div className="mt-6 bg-blue-50 border-2 border-blue-200 rounded-2xl p-6">
-          <h3 className="font-bold text-blue-900 mb-2">📖 How to Use:</h3>
+          <h3 className="font-bold text-blue-900 mb-2">How to Use:</h3>
           <ol className="list-decimal list-inside space-y-1 text-blue-800">
             <li>Click any test button above</li>
             <li>Wait 5-10 seconds for generation (AI text + image)</li>
@@ -237,7 +237,7 @@ export default function TestNewsPage() {
             <li>Click "View in Admin Panel" to edit/manage</li>
           </ol>
           <p className="mt-4 text-sm text-blue-700">
-            💡 <strong>Note:</strong> Make sure you've added your Hugging Face API token to
+            Note: Make sure you've added your Hugging Face API token to
             .env.local for image generation to work!
           </p>
         </div>

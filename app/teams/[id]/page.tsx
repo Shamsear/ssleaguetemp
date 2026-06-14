@@ -3,17 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Shield,
-  Activity,
-  ChevronRight,
-  Award as AwardIcon,
-  Zap,
-  Flame,
-  Users,
-  Target,
-  Trophy as TrophyIcon
-} from 'lucide-react';
+import { Activity, Award as AwardIcon, ChevronRight, Crown, Flame, Medal, Shield, Star, Target, TrendingUp, Trophy, Trophy as TrophyIcon, Users, Zap } from 'lucide-react';
 
 interface FootballPlayer {
   player_id: string;
@@ -289,7 +279,7 @@ function TeamDetailContent() {
             href={querySeasonId ? `/teams?season=${querySeasonId}` : '/teams'}
             className="inline-flex items-center gap-1.5 border border-slate-250 bg-slate-50 hover:bg-slate-100 text-slate-700 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm font-mono"
           >
-            ← BACK TO TEAMS
+            {"<-"} BACK TO TEAMS
           </Link>
         </div>
       </div>
@@ -342,7 +332,7 @@ function TeamDetailContent() {
             href={querySeasonId ? `/teams?season=${querySeasonId}` : '/teams'}
             className="inline-flex items-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm font-mono"
           >
-            ← BACK TO TEAMS
+            {"<-"} BACK TO TEAMS
           </Link>
 
           <div className="flex items-center gap-2 font-mono text-xs">
@@ -714,7 +704,7 @@ function TeamDetailContent() {
                                         href={`/players/${player.player_id}`}
                                         className="hover:text-amber-650 hover:underline flex items-center gap-1.5"
                                       >
-                                        {index < 3 && <span className="text-amber-500">★</span>}
+                                        {index < 3 && <Star className="w-4 h-4 text-amber-500 fill-amber-500 inline" />}
                                         {player.player_name}
                                       </Link>
                                     </td>

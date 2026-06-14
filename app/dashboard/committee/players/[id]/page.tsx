@@ -1,4 +1,5 @@
 'use client';
+import { Trophy, Crown, Star, RefreshCw } from 'lucide-react';
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
@@ -503,7 +504,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
         {/* Header with Back Button */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <Link href="/dashboard/committee/players" className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all">
-            ← Back to Player List
+            &larr; Back to Player List
           </Link>
           
           <div className="bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider px-3 py-1.5 rounded-xl border border-slate-700 shadow-sm shrink-0">
@@ -574,7 +575,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                       {player.position}
                     </span>
                     {player.nfl_team && (
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{player.nfl_team}</span>
+                      <span className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">{player.nfl_team}</span>
                     )}
                   </div>
                 </div>
@@ -583,7 +584,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                 <div className="space-y-2.5 text-xs border-t border-slate-100 pt-4 font-mono">
                   {(player.club || player.team_name) && (
                     <div className="flex justify-between items-center bg-blue-50/50 -mx-3 px-3 py-2 rounded">
-                      <span className="text-slate-400 font-bold uppercase tracking-wider flex items-center">
+                      <span className="text-slate-550 font-mono font-extrabold uppercase tracking-wider flex items-center">
                         Real Club:
                         <span className="ml-1 text-[10px] text-slate-350 cursor-help" title="Player's real-world club">
                           ⓘ
@@ -593,19 +594,19 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                     </div>
                   )}
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider">Nationality:</span>
+                    <span className="text-slate-550 font-mono font-extrabold uppercase tracking-wider">Nationality:</span>
                     <span className="font-extrabold text-slate-800">{player.nationality || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider">Playing Style:</span>
+                    <span className="text-slate-550 font-mono font-extrabold uppercase tracking-wider">Playing Style:</span>
                     <span className="font-extrabold text-slate-800">{player.playing_style || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider">Preferred Foot:</span>
+                    <span className="text-slate-550 font-mono font-extrabold uppercase tracking-wider">Preferred Foot:</span>
                     <span className="font-extrabold text-slate-800">{player.foot || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider">Age:</span>
+                    <span className="text-slate-550 font-mono font-extrabold uppercase tracking-wider">Age:</span>
                     <span className="font-extrabold text-slate-800">{player.age || 'N/A'}</span>
                   </div>
                 </div>
@@ -682,12 +683,12 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                     {awards.map((award) => (
                       <div key={award.id} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 shadow-inner flex items-center gap-3">
                         <span className="text-2xl shrink-0">
-                          {award.award_type === 'POTD' && '⭐'}
+                          {award.award_type === 'POTD' && '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />'}
                           {award.award_type === 'POTW' && '🌟'}
                           {award.award_type === 'TOD' && '🏅'}
-                          {award.award_type === 'TOW' && '🏆'}
-                          {award.award_type === 'POTS' && '👑'}
-                          {award.award_type === 'TOTS' && '🏆'}
+                          {award.award_type === 'TOW' && '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />'}
+                          {award.award_type === 'POTS' && '<Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />'}
+                          {award.award_type === 'TOTS' && '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />'}
                         </span>
                         <div className="min-w-0">
                           <p className="font-extrabold text-slate-800 text-sm leading-tight">
@@ -698,7 +699,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                             {award.award_type === 'POTS' && 'Player of the Season'}
                             {award.award_type === 'TOTS' && 'Team of the Season'}
                           </p>
-                          <p className="text-[10px] text-slate-450 font-bold uppercase tracking-wider mt-1.5 leading-none">
+                          <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-1.5 leading-none">
                             {award.round_number && `Round ${award.round_number}`}
                             {award.week_number && `Week ${award.week_number}`}
                             {award.selected_at && ` • ${new Date(award.selected_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`}
@@ -875,7 +876,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                                 </p>
                               </div>
                               <div className="text-left sm:text-right shrink-0">
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Winning Bid</p>
+                                <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mb-0.5">Winning Bid</p>
                                 <p className="text-xl font-bold text-green-600 font-mono">
                                   £{(bid.winning_bid || 0).toLocaleString()}
                                 </p>
@@ -929,7 +930,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                             <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] rounded-lg">
                               {seasonId}
                             </span>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                            <span className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                               {bids.length} {bids.length === 1 ? 'bid' : 'bids'}
                             </span>
                           </div>
@@ -1074,7 +1075,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                     <div className="flex sm:block shrink-0">
                       <div className="bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 font-mono">
                         <div className="text-2xl font-black text-amber-600">{playerHistory.roadmap.length}</div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Teams</div>
+                        <div className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Total Teams</div>
                       </div>
                     </div>
                   </div>
@@ -1121,7 +1122,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                                   <h3 className="text-base sm:text-lg font-extrabold text-slate-805 truncate leading-tight">{contract.team_name}</h3>
                                 </div>
                                 <span className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider text-white ${statusStyle} shrink-0 text-center`}>
-                                  {contract.status === 'released' ? '🔴 Released' : contract.status === 'swapped' ? '🔄 Swapped' : contract.status === 'takeover' ? '🔄 Takeover' : '🟢 Active'}
+                                  {contract.status === 'released' ? '🔴 Released' : contract.status === 'swapped' ? '<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Swapped' : contract.status === 'takeover' ? '<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Takeover' : '🟢 Active'}
                                 </span>
                               </div>
                             </div>

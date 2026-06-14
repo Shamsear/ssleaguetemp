@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, Users, Lock } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -175,7 +176,7 @@ export default function RegistrationManagementPage() {
             <div className="grid grid-cols-1 gap-6 mb-8">
               {/* Total Registrations */}
               <div className="glass rounded-2xl p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-                <h3 className="text-sm font-semibold text-blue-900 mb-2">👥 Total Registrations</h3>
+                <h3 className="text-sm font-semibold text-blue-900 mb-2"><Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Total Registrations</h3>
                 <p className="text-5xl font-bold text-blue-600 mb-1">
                   {stats.total_registrations}
                 </p>
@@ -193,11 +194,11 @@ export default function RegistrationManagementPage() {
                 <div className="flex items-center gap-2">
                   {currentSeason?.is_player_registration_open ? (
                     <span className="px-4 py-2 bg-green-500 text-white rounded-lg font-bold">
-                      ✅ Registration Open
+                      <CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Registration Open
                     </span>
                   ) : (
                     <span className="px-4 py-2 bg-red-500 text-white rounded-lg font-bold">
-                      🔒 Registration Closed
+                      <Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Registration Closed
                     </span>
                   )}
                 </div>

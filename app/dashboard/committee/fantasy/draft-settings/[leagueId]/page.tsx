@@ -1,4 +1,5 @@
 'use client';
+import { DollarSign, Users } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -180,14 +181,14 @@ export default function DraftSettingsPage() {
         <form onSubmit={handleSave} className="space-y-6">
           {/* Budget Configuration */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">💰 Budget Configuration</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4"><DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Budget Configuration</h2>
             
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Budget Per Team
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-3 text-gray-500">💰</span>
+                <span className="absolute left-4 top-3 text-gray-500"><DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /></span>
                 <input
                   type="number"
                   value={settings.budget_per_team || ''}
@@ -206,7 +207,7 @@ export default function DraftSettingsPage() {
 
           {/* Squad Size */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">👥 Squad Size Limits</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4"><Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Squad Size Limits</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>

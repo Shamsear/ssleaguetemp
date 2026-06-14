@@ -226,7 +226,7 @@ export default function FantasyPricingPage() {
               {saved ? (
                 <>
                   <Check className="w-5 h-5" />
-                  Saved to Database ✓
+                  Saved to Database Yes
                 </>
               ) : saving ? (
                 <>

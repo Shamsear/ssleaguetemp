@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, AlertTriangle, BarChart2 } from 'lucide-react';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -218,7 +219,7 @@ export default function TournamentPenaltiesPage() {
 
             const data = await response.json();
             if (data.success) {
-                setSuccess(`✅ Penalty applied to ${team.team_name}`);
+                setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Penalty applied to ${team.team_name}`);
                 setWhatsappMessage(data.whatsapp_message || '');
                 fetchTeamStats();
                 // Don't auto-close so user can copy the WhatsApp message
@@ -254,7 +255,7 @@ export default function TournamentPenaltiesPage() {
 
             const data = await response.json();
             if (data.success) {
-                setSuccess('✅ Penalty removed');
+                setSuccess('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Penalty removed');
                 fetchTeamStats();
                 fetchPenaltyHistory(teamId);
             } else {
@@ -273,7 +274,7 @@ export default function TournamentPenaltiesPage() {
             <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
                 <div className="text-center font-mono">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
-                    <p className="mt-4 text-xs text-slate-450 font-bold uppercase tracking-wider">Loading penalties portal...</p>
+                    <p className="mt-4 text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">Loading penalties portal...</p>
                 </div>
             </div>
         );
@@ -292,7 +293,7 @@ export default function TournamentPenaltiesPage() {
                             href="/dashboard/committee/team-management/tournament"
                             className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all mb-4"
                         >
-                            ← Back to Tournament
+                            &larr; Back to Tournament
                         </Link>
                         <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight font-mono">
                             Tournament Penalties Management
@@ -329,7 +330,7 @@ export default function TournamentPenaltiesPage() {
                 {error && (
                     <div className="bg-rose-50 border border-rose-250/60 rounded-2xl p-4 font-mono text-xs">
                         <div className="flex items-center gap-2 text-rose-800">
-                            <span className="font-extrabold">⚠️ ERROR:</span>
+                            <span className="font-extrabold"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> ERROR:</span>
                             <span className="font-bold uppercase tracking-wide">{error}</span>
                         </div>
                     </div>
@@ -338,7 +339,7 @@ export default function TournamentPenaltiesPage() {
                 {success && (
                     <div className="bg-emerald-50 border border-emerald-255/60 rounded-2xl p-4 font-mono text-xs">
                         <div className="flex items-center gap-2 text-emerald-800">
-                            <span className="font-extrabold">✅ SUCCESS:</span>
+                            <span className="font-extrabold"><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> SUCCESS:</span>
                             <span className="font-bold uppercase tracking-wide">{success}</span>
                         </div>
                     </div>
@@ -366,7 +367,7 @@ export default function TournamentPenaltiesPage() {
                                 {whatsappMessage}
                             </pre>
                         </div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                        <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                             💡 Copy this message and send it to the team owner via WhatsApp
                         </p>
                     </div>
@@ -393,7 +394,7 @@ export default function TournamentPenaltiesPage() {
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-20 font-mono">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
-                            <span className="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-wider">Syncing standings table...</span>
+                            <span className="mt-4 text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Syncing standings table...</span>
                         </div>
                     ) : teamStats.length === 0 ? (
                         <div className="text-center py-20 font-mono">
@@ -476,7 +477,7 @@ export default function TournamentPenaltiesPage() {
                                                                         : 'bg-rose-600 hover:bg-rose-500 text-white'
                                                                 }`}
                                                             >
-                                                                <span>{isExpanded && !showHistory ? '✕' : '⚠️'}</span>
+                                                                <span>{isExpanded && !showHistory ? '✕' : '<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />'}</span>
                                                                 {isExpanded && !showHistory ? 'Cancel' : 'Penalty'}
                                                             </button>
                                                             {team.points_deducted > 0 && (
@@ -505,7 +506,7 @@ export default function TournamentPenaltiesPage() {
                                                                     /* Apply Penalty Form */
                                                                     <div className="max-w-4xl mx-auto space-y-6">
                                                                         <h3 className="text-sm font-bold text-slate-850 uppercase tracking-wider flex items-center gap-1.5 mb-4">
-                                                                            ⚠️ APPLY PENALTY TO {team.team_name}
+                                                                            <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> APPLY PENALTY TO {team.team_name}
                                                                         </h3>
 
                                                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -568,7 +569,7 @@ export default function TournamentPenaltiesPage() {
                                                                                 placeholder="ENTER REASON FOR PENALTY (E.G. LATE LINEUP SUBMISSION, MISCONDUCT, ETC.)"
                                                                             />
                                                                             <div className="flex justify-between items-center mt-1">
-                                                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                                                                <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                                                                                     {penaltyReason.length}/10 characters minimum
                                                                                 </p>
                                                                             </div>
@@ -625,7 +626,7 @@ export default function TournamentPenaltiesPage() {
                                                                                 }}
                                                                                 className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm"
                                                                             >
-                                                                                📊 Fetch {team.team_name} Balance
+                                                                                <BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Fetch {team.team_name} Balance
                                                                             </button>
 
                                                                             {selectedTeamForCalc && (
@@ -679,7 +680,7 @@ export default function TournamentPenaltiesPage() {
 
                                                                         {(penaltyPoints > 0 || ecoinFine > 0 || sscoinFine > 0) && penaltyReason.length >= 10 && (
                                                                             <div className="bg-amber-50/60 border border-amber-250 rounded-xl p-4">
-                                                                                <p className="text-[10px] font-black text-amber-800 uppercase tracking-wider mb-2">⚠️ WARNING: THIS WILL APPLY THE FOLLOWING PENALTIES:</p>
+                                                                                <p className="text-[10px] font-black text-amber-800 uppercase tracking-wider mb-2"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> WARNING: THIS WILL APPLY THE FOLLOWING PENALTIES:</p>
                                                                                 <ul className="space-y-1 text-slate-700 font-bold uppercase tracking-wide text-[10px]">
                                                                                     <li>• <span className="text-slate-900 font-black">{penaltyPoints}</span> standpoint points deduction</li>
                                                                                     {ecoinFine > 0 && <li>• <span className="text-blue-700 font-black">{ecoinFine}</span> ecoin budget deduction</li>}
@@ -694,7 +695,7 @@ export default function TournamentPenaltiesPage() {
                                                                                 disabled={isSubmitting || penaltyReason.length < 10}
                                                                                 className="flex-1 px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                                                             >
-                                                                                {isSubmitting ? 'APPLYING PENALTY...' : '⚠️ APPLY PENALTY'}
+                                                                                {isSubmitting ? 'APPLYING PENALTY...' : '<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> APPLY PENALTY'}
                                                                             </button>
                                                                             <button
                                                                                 onClick={() => togglePenaltyForm(team.team_id)}
@@ -715,10 +716,10 @@ export default function TournamentPenaltiesPage() {
                                                                         {loadingHistory ? (
                                                                             <div className="text-center py-8">
                                                                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto"></div>
-                                                                                <p className="mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">Syncing team records...</p>
+                                                                                <p className="mt-2 text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Syncing team records...</p>
                                                                             </div>
                                                                         ) : penalties.length === 0 ? (
-                                                                            <div className="text-center py-8 text-slate-450 font-bold uppercase tracking-wider">
+                                                                            <div className="text-center py-8 text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                                                                                 <p>No penalties found for this team</p>
                                                                             </div>
                                                                         ) : (
@@ -750,7 +751,7 @@ export default function TournamentPenaltiesPage() {
                                                                                                             <p className="text-xs text-slate-700 leading-normal uppercase">
                                                                                                                 <strong className="text-slate-855 font-black">Reason:</strong> {penalty.reason}
                                                                                                             </p>
-                                                                                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                                                                                            <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                                                                                                                 Applied on {new Date(penalty.applied_at).toLocaleDateString()} by {penalty.applied_by}
                                                                                                             </p>
                                                                                                         </div>
@@ -793,7 +794,7 @@ export default function TournamentPenaltiesPage() {
                                                                                                         <p className="text-xs text-slate-550 leading-normal uppercase">
                                                                                                             <strong className="font-bold">Reason:</strong> {penalty.reason}
                                                                                                         </p>
-                                                                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                                                                                        <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                                                                                                             Removed on {new Date(penalty.removed_at!).toLocaleDateString()} by {penalty.removed_by}
                                                                                                         </p>
                                                                                                     </div>

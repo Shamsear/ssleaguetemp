@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
-import { Activity, Shield } from 'lucide-react';
+import { Activity, Crown, Medal, Shield, Star, TrendingUp, Trophy } from 'lucide-react';
 
 interface Fixture {
   id: string;
@@ -153,7 +153,7 @@ function FixturesContent() {
           href="/"
           className="inline-flex items-center text-xs font-mono font-bold text-slate-500 hover:text-amber-600 transition-colors"
         >
-          ← BACK_TO_HOME
+          {"<-"} BACK_TO_HOME
         </Link>
 
         {/* Header Title Panel */}
@@ -322,7 +322,7 @@ function FixturesContent() {
                           {/* MOTM Award */}
                           {fixture.status === 'completed' && fixture.motm_player_name && (
                             <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center justify-center gap-1.5 font-mono text-[9px] text-slate-500 select-none">
-                              <span className="text-amber-500">★</span>
+                              <Star className="w-4 h-4 text-amber-500 fill-amber-500 inline align-middle" />
                               <span>MOTM: <span className="font-extrabold text-slate-700">{fixture.motm_player_name}</span></span>
                             </div>
                           )}

@@ -4,16 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
-import { 
-  Coins, 
-  RefreshCw, 
-  RotateCcw, 
-  Save, 
-  ArrowLeft, 
-  Info, 
-  Pencil, 
-  HelpCircle
-} from 'lucide-react'
+import { Coins, RefreshCw, RotateCcw, Save, ArrowLeft, Info, Pencil, HelpCircle, CheckCircle } from 'lucide-react'
 
 interface TeamBudget {
   teamId: string
@@ -114,7 +105,7 @@ export default function BudgetSyncPage() {
       const data = await response.json()
 
       if (data.success) {
-        alert(`✅ Successfully updated ${data.updated} team(s)!`)
+        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Successfully updated ${data.updated} team(s)!`)
         await loadTeams()
       } else {
         alert(`Error: ${data.error}`)
@@ -146,7 +137,7 @@ export default function BudgetSyncPage() {
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-xs text-slate-500 uppercase tracking-wider font-extrabold">Loading budgets...</p>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading budgets...</p>
         </div>
       </div>
     )
@@ -216,7 +207,7 @@ export default function BudgetSyncPage() {
         </div>
 
         {lastChecked && (
-          <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-4 text-right">
+          <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mb-4 text-right">
             Last loaded: {lastChecked.toLocaleTimeString()}
           </div>
         )}

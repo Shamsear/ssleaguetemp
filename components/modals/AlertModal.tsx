@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Info
+} from 'lucide-react';
 
 interface AlertModalProps {
   isOpen: boolean;
@@ -60,34 +66,26 @@ export default function AlertModal({
     switch (type) {
       case 'success':
         return (
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-            <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-            </svg>
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600">
+            <CheckCircle className="h-6 w-6" />
           </div>
         );
       case 'error':
         return (
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-            <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 border border-rose-100 text-rose-600">
+            <XCircle className="h-6 w-6" />
           </div>
         );
       case 'warning':
         return (
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
-            <svg className="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 border border-amber-100 text-amber-600">
+            <AlertTriangle className="h-6 w-6" />
           </div>
         );
       default:
         return (
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-            <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 border border-blue-100 text-blue-600">
+            <Info className="h-6 w-6" />
           </div>
         );
     }
@@ -95,19 +93,19 @@ export default function AlertModal({
 
   const getColorClass = () => {
     switch (type) {
-      case 'success': return 'text-green-600';
-      case 'error': return 'text-red-600';
-      case 'warning': return 'text-yellow-600';
-      default: return 'text-blue-600';
+      case 'success': return 'text-emerald-600';
+      case 'error': return 'text-rose-600';
+      case 'warning': return 'text-amber-600';
+      default: return 'text-slate-800';
     }
   };
 
   // Portal renders to dedicated container
   return createPortal(
-    <div style={{ pointerEvents: 'auto', position: 'relative', width: '100%', height: '100%' }}>
+    <div style={{ pointerEvents: 'auto', position: 'relative', width: '100%', height: '100%' }} className="font-mono">
       {/* Backdrop - full viewport overlay */}
       <div
-        className="bg-black/20 backdrop-blur-sm"
+        className="bg-black/25 backdrop-blur-sm"
         onClick={onClose}
         style={{
           position: 'absolute',
@@ -122,7 +120,7 @@ export default function AlertModal({
 
       {/* Modal - absolutely centered */}
       <div 
-        className="w-[calc(100%-2rem)] sm:w-auto sm:min-w-[400px] sm:max-w-md md:max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl"
+        className="w-[calc(100%-2rem)] sm:w-auto sm:min-w-[400px] sm:max-w-md md:max-w-lg max-h-[90vh] overflow-y-auto console-card bg-white border border-slate-200/80 rounded-3xl shadow-2xl relative"
         style={{
           position: 'absolute',
           top: '50%',
@@ -139,11 +137,11 @@ export default function AlertModal({
           <div>
             {getIcon()}
             <div className="mt-3 text-center sm:mt-5">
-              <h3 className={`text-lg font-semibold leading-6 ${getColorClass()}`}>
+              <h3 className={`text-base font-bold uppercase tracking-wider ${getColorClass()}`}>
                 {title || (type === 'success' ? 'Success' : type === 'error' ? 'Error' : type === 'warning' ? 'Warning' : 'Information')}
               </h3>
               <div className="mt-2">
-                <p className="text-sm text-gray-500 whitespace-pre-line">
+                <p className="text-xs text-slate-550 font-bold whitespace-pre-line leading-relaxed">
                   {message}
                 </p>
               </div>
@@ -153,11 +151,11 @@ export default function AlertModal({
             <button
               type="button"
               onClick={onClose}
-              className={`inline-flex w-full justify-center rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                type === 'success' ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500' :
-                type === 'error' ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' :
-                type === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500' :
-                'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+              className={`inline-flex w-full justify-center px-5 py-2.5 font-bold uppercase tracking-wider text-xs rounded-xl shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02] cursor-pointer ${
+                type === 'success' ? 'bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700' :
+                type === 'error' ? 'bg-rose-600 hover:bg-rose-700 text-white border border-rose-700' :
+                type === 'warning' ? 'bg-amber-500 hover:bg-amber-600 text-white border border-amber-600' :
+                'bg-slate-800 hover:bg-slate-700 text-white border border-slate-900'
               }`}
             >
               OK

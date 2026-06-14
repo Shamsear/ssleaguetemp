@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useLanguage } from '@/contexts/LanguageContext'
 import NewsReactions from '@/components/NewsReactions'
-import { Shield, Clock, Send, ChevronLeft } from 'lucide-react'
+import { Activity, Calendar, ChevronLeft, Clock, DollarSign, Gamepad2, Megaphone, Send, Shield, Target, Trophy, Users } from 'lucide-react'
 
 interface NewsItem {
   id: string
@@ -42,14 +42,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   milestone: 'bg-amber-100 border-amber-300 text-amber-900',
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
-  registration: '👥',
-  team: '🏆',
-  auction: '💰',
-  fantasy: '🎮',
-  match: '⚽',
-  announcement: '📢',
-  milestone: '🎯',
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  registration: <Users className="w-3.5 h-3.5 text-purple-650" />,
+  team: <Trophy className="w-3.5 h-3.5 text-amber-550 fill-amber-550" />,
+  auction: <DollarSign className="w-3.5 h-3.5 text-emerald-550" />,
+  fantasy: <Gamepad2 className="w-3.5 h-3.5 text-indigo-505" />,
+  match: <Activity className="w-3.5 h-3.5 text-rose-500" />,
+  announcement: <Megaphone className="w-3.5 h-3.5 text-blue-500" />,
+  milestone: <Target className="w-3.5 h-3.5 text-rose-500" />,
 }
 
 export default function NewsArticlePage() {
@@ -225,7 +225,7 @@ export default function NewsArticlePage() {
           href="/news"
           className="inline-flex items-center text-xs font-mono font-bold text-slate-500 hover:text-amber-600 transition-colors"
         >
-          ← BACK_TO_NEWSROOM
+          {"<-"} BACK_TO_NEWSROOM
         </Link>
 
         {/* Action Panel: Language & Share */}
@@ -326,7 +326,7 @@ export default function NewsArticlePage() {
             {news.season_name && (
               <div className="pt-6 border-t border-slate-100">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl">
-                  <span className="text-xs">📅</span>
+                  <Calendar className="w-3.5 h-3.5 text-slate-400 inline" />
                   <span className="text-[10px] font-mono font-bold text-slate-900 uppercase">
                     Season: {news.season_name}
                   </span>
@@ -342,7 +342,7 @@ export default function NewsArticlePage() {
             href="/news"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-mono font-bold text-xs shadow-sm transition-all"
           >
-            ← RETURN TO ALL NEWS
+            {"<-"} RETURN TO ALL NEWS
           </Link>
         </div>
       </div>

@@ -1,4 +1,5 @@
 'use client';
+import { Trophy, Star, Activity, BarChart2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
@@ -321,9 +322,9 @@ export default function StatsLeaderboardPage() {
                   {teamStats.map((team, index) => (
                     <tr key={team.team_id} className={`hover:bg-blue-50/50 transition-colors ${index < 3 ? 'bg-green-50/30' : ''}`}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                        {index === 0 && <span className="text-2xl">🥇</span>}
-                        {index === 1 && <span className="text-2xl">🥈</span>}
-                        {index === 2 && <span className="text-2xl">🥉</span>}
+                        {index === 0 && <span className="text-2xl"><Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /></span>}
+                        {index === 1 && <span className="text-2xl"><Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" /></span>}
+                        {index === 2 && <span className="text-2xl"><Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" /></span>}
                         {index > 2 && `#${index + 1}`}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -402,7 +403,7 @@ export default function StatsLeaderboardPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold text-red-600">{player.losses}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          ⚽ {player.goals}
+                          <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> {player.goals}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -417,7 +418,7 @@ export default function StatsLeaderboardPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                          ⭐ {player.potm}
+                          <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> {player.potm}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -436,7 +437,7 @@ export default function StatsLeaderboardPage() {
 
       {/* Legend */}
       <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <p className="text-xs text-blue-800 font-medium mb-2">📊 Legend</p>
+        <p className="text-xs text-blue-800 font-medium mb-2"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Legend</p>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 text-xs text-blue-700">
           <div><strong>MP</strong> = Matches Played</div>
           <div><strong>W</strong> = Wins</div>

@@ -1,4 +1,5 @@
 'use client';
+import { XCircle, AlertTriangle } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
@@ -38,10 +39,10 @@ export default function TeamStandingsPage() {
           console.log('📝 [Committee Standings] Found active season:', activeSeasonId);
           setSeasonId(activeSeasonId);
         } else {
-          console.log('⚠️ [Committee Standings] No active season found');
+          console.log('<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> [Committee Standings] No active season found');
         }
       } catch (error) {
-        console.error('❌ [Committee Standings] Error fetching active season:', error);
+        console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [Committee Standings] Error fetching active season:', error);
       }
     };
 
@@ -96,7 +97,7 @@ export default function TeamStandingsPage() {
               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              View Player Stats →
+              View Player Stats  &rarr; 
             </Link>
           </div>
         </div>
@@ -110,7 +111,7 @@ export default function TeamStandingsPage() {
         <TournamentStandings tournamentId={selectedTournamentId} />
       ) : (
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
-          <span className="text-4xl mb-2 block">⚠️</span>
+          <span className="text-4xl mb-2 block"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></span>
           <h3 className="text-lg font-semibold text-yellow-800 mb-2">No Tournament Selected</h3>
           <p className="text-sm text-yellow-600">Please select a tournament to view standings</p>
         </div>

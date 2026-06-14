@@ -169,7 +169,7 @@ export default function EmailVerificationRequests({ seasonId }: EmailVerificatio
                 disabled={processing === request.id}
                 className="flex-1 py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 text-sm"
               >
-                {processing === request.id ? 'Processing...' : '✓ Approve & Register'}
+                {processing === request.id ? 'Processing...' : 'Approve & Register'}
               </button>
               <button
                 onClick={() => handleReject(request.id)}

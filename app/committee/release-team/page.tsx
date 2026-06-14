@@ -1,5 +1,6 @@
 'use client';
 
+import { ArrowRight, CheckCircle, Clipboard, Crown, Medal, Star, TrendingUp, Trophy, Unlock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 interface Team {
@@ -148,7 +149,7 @@ export default function ReleaseTeamPage() {
       return;
     }
 
-    if (!confirm(`⚠️ Are you SURE you want to release ALL players from this team?\n\nThis will:\n- Release ${previewResult?.summary.totalPlayers} players (${previewResult?.summary.realPlayers} SS Members + ${previewResult?.summary.footballPlayers} Football Players)\n- Mark the team as withdrawn\n- Make all players available for next auction\n\nThis action is PERMANENT!`)) {
+    if (!confirm(`[WARNING] Are you SURE you want to release ALL players from this team?\n\nThis will:\n- Release ${previewResult?.summary.totalPlayers} players (${previewResult?.summary.realPlayers} SS Members + ${previewResult?.summary.footballPlayers} Football Players)\n- Mark the team as withdrawn\n- Make all players available for next auction\n\nThis action is PERMANENT!`)) {
       return;
     }
 
@@ -190,7 +191,7 @@ export default function ReleaseTeamPage() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-6 border border-white/20">
-          <h1 className="text-4xl font-bold text-white mb-2">🔓 Release Team Mid-Season</h1>
+          <h1 className="text-4xl font-bold text-white mb-2"><span className="flex items-center gap-2"><Unlock className="w-7 h-7 text-emerald-500" /> Release Team Mid-Season</span></h1>
           <p className="text-blue-200">
             Force release ALL players when a team withdraws mid-season. Both SS Members and Football Players will become free agents.
           </p>
@@ -251,7 +252,7 @@ export default function ReleaseTeamPage() {
               disabled={loading}
               className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all"
             >
-              {loading ? '⏳ Loading...' : '👁️ Preview Release'}
+              {loading ? 'Loading...' : 'Preview Release'}
             </button>
             {previewResult && (
               <button
@@ -259,7 +260,7 @@ export default function ReleaseTeamPage() {
                 disabled={loading}
                 className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all"
               >
-                {loading ? '⏳ Executing...' : '🔓 Execute Release'}
+                {loading ? 'Executing...' : 'Execute Release'}
               </button>
             )}
           </div>
@@ -268,14 +269,14 @@ export default function ReleaseTeamPage() {
         {/* Error Display */}
         {error && (
           <div className="bg-red-500/20 border border-red-500 rounded-lg p-4 mb-6">
-            <p className="text-red-200">❌ {error}</p>
+            <p className="text-red-200">[ERROR] {error}</p>
           </div>
         )}
 
         {/* Preview Results */}
         {previewResult && (
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-6 border border-white/20">
-            <h2 className="text-2xl font-bold text-white mb-4">📋 Preview Results</h2>
+            <h2 className="text-2xl font-bold text-white mb-4"><span className="flex items-center gap-2"><Clipboard className="w-5 h-5 text-amber-500" /> Preview Results</span></h2>
             
             {/* Summary Cards */}
             <div className="grid grid-cols-3 gap-4 mb-6">
@@ -323,7 +324,7 @@ export default function ReleaseTeamPage() {
                           <div className="text-sm text-gray-300">
                             <span className="text-gray-400">Contract: </span>
                             <span className="line-through text-red-400">{player.contract_original}</span>
-                            <span className="mx-2">→</span>
+                            <ArrowRight className="w-4 h-4 inline mx-2 text-slate-400" />
                             <span className="text-yellow-400">{player.contract_cut_to}</span>
                           </div>
                         </div>
@@ -338,7 +339,7 @@ export default function ReleaseTeamPage() {
             )}
 
             <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-400 rounded-lg">
-              <p className="text-yellow-200">⚠️ {previewResult.message}</p>
+              <p className="text-yellow-200">[WARNING] {previewResult.message}</p>
             </div>
           </div>
         )}
@@ -346,7 +347,7 @@ export default function ReleaseTeamPage() {
         {/* Execute Results */}
         {executeResult && (
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold text-white mb-4">✅ Execution Complete</h2>
+            <h2 className="text-2xl font-bold text-white mb-4"><span className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-emerald-500" /> Execution Complete</span></h2>
             
             {/* Summary Cards */}
             <div className="grid grid-cols-3 gap-4 mb-6">
@@ -373,7 +374,7 @@ export default function ReleaseTeamPage() {
 
             {executeResult.results.errors && executeResult.results.errors.length > 0 && (
               <div className="mt-4 p-4 bg-red-500/20 border border-red-400 rounded-lg">
-                <p className="text-red-200 font-semibold mb-2">⚠️ Some errors occurred:</p>
+                <p className="text-red-200 font-semibold mb-2">[WARNING] Some errors occurred:</p>
                 <ul className="text-red-300 text-sm space-y-1">
                   {executeResult.results.errors.map((err, idx) => (
                     <li key={idx}>• {err}</li>

@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, AlertTriangle, Star, BarChart2 } from 'lucide-react';
 
 import { useState, useEffect, useMemo } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -284,7 +285,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
 
       // Build detailed success message
       const calc = result.calculation;
-      let successMessage = `✅ ${selectedPlayer.player_name} successfully transferred to ${buyingTeam.name}!`;
+      let successMessage = `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${selectedPlayer.player_name} successfully transferred to ${buyingTeam.name}!`;
       
       if (calc) {
         successMessage += `\n\nTransaction Details:`;
@@ -294,7 +295,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
         successMessage += `\n• Committee fee: $${calc.committeeFee.toFixed(2)}`;
         
         if (calc.newStarRating > selectedPlayer.star_rating) {
-          successMessage += `\n• ⭐ Star rating upgraded: ${selectedPlayer.star_rating}⭐ → ${calc.newStarRating}⭐`;
+          successMessage += `\n• <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Star rating upgraded: ${selectedPlayer.star_rating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> &rarr; ${calc.newStarRating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />`;
         }
       }
       
@@ -346,7 +347,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
       {/* Alerts */}
       {error && (
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl font-mono text-xs uppercase tracking-wide">
-          <p className="font-extrabold">⚠️ Error</p>
+          <p className="font-extrabold"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Error</p>
           <p className="mt-1">{error}</p>
         </div>
       )}
@@ -387,7 +388,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
               </div>
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Star Rating</span>
-                <p className="font-extrabold text-slate-800 mt-0.5">{'⭐'.repeat(selectedPlayer.star_rating || 0)}</p>
+                <p className="font-extrabold text-slate-800 mt-0.5">{'<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />'.repeat(selectedPlayer.star_rating || 0)}</p>
               </div>
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Points</span>
@@ -416,7 +417,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
             </div>
             {sellingTeamLimit.remaining === 0 && (
               <p className="text-[10px] text-rose-600 font-bold mt-2">
-                ⚠️ Warning: Zero transfer slots remaining
+                <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Warning: Zero transfer slots remaining
               </p>
             )}
           </div>
@@ -455,7 +456,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
         {calculation && selectedPlayer && newTeamId && (
           <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
             <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-              📊 Transfer Preview
+              <BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Transfer Preview
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -489,7 +490,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
                 </div>
                 {calculation.newStarRating > selectedPlayer.star_rating && (
                   <div className="bg-amber-50/50 border border-amber-200/50 rounded-lg p-2 mt-3 text-[10px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5 justify-center">
-                    ⭐ Upgraded to {calculation.newStarRating}⭐ (+{calculation.pointsAdded} Points)
+                    <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Upgraded to {calculation.newStarRating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> (+{calculation.pointsAdded} Points)
                   </div>
                 )}
               </div>
@@ -541,7 +542,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
             {/* Warnings */}
             {hasInsufficientFunds && (
               <div className="mt-4 bg-rose-50 border border-rose-200 rounded-xl p-4 text-rose-700">
-                <p className="font-extrabold">⚠️ Insufficient Budget</p>
+                <p className="font-extrabold"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Insufficient Budget</p>
                 <p className="text-[10px] mt-1 font-bold">
                   {buyingTeamName} has ${buyingTeamBalance?.toFixed(2)} but needs ${calculation.buyingTeamPays.toFixed(2)}
                 </p>

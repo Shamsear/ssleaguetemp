@@ -1,5 +1,6 @@
 'use client';
 
+import { Crown, Medal, Star, TrendingUp, Trophy } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
@@ -19,7 +20,7 @@ export default function TestNotificationsPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string>('');
   const [customUserId, setCustomUserId] = useState('');
-  const [title, setTitle] = useState('Test Notification 🔔');
+  const [title, setTitle] = useState('Test Notification');
   const [body, setBody] = useState('This is a test push notification!');
   const [notificationUsers, setNotificationUsers] = useState<NotificationUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -42,11 +43,11 @@ export default function TestNotificationsPage() {
       } else {
         const errorData = await response.json();
         console.error('Failed to load notification users:', response.status, errorData);
-        setResult(`❌ Failed to load users: ${errorData.error || 'Unknown error'}`);
+        setResult(`[ERROR] Failed to load users: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error: any) {
       console.error('Error loading notification users:', error);
-      setResult(`❌ Error: ${error.message}`);
+      setResult(`[ERROR] Error: ${error.message}`);
     } finally {
       setLoadingUsers(false);
     }
@@ -54,12 +55,12 @@ export default function TestNotificationsPage() {
 
   const sendTestNotification = async (targetUserId?: string) => {
     if (!user) {
-      setResult('❌ You must be logged in');
+      setResult('[ERROR]  You must be logged in');
       return;
     }
 
     setLoading(true);
-    setResult('📤 Sending notification...');
+    setResult('[SENDING] Sending notification...');
 
     try {
       const response = await fetchWithTokenRefresh('/api/notifications/send', {
@@ -81,12 +82,12 @@ export default function TestNotificationsPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setResult(`✅ Success! Sent to ${data.sentToDevices} device(s)\n${data.failedDevices > 0 ? `⚠️ Failed on ${data.failedDevices} device(s)` : ''}`);
+        setResult(`[SUCCESS] Success! Sent to ${data.sentToDevices} device(s)\n${data.failedDevices > 0 ? `[WARNING] Failed on ${data.failedDevices} device(s)` : ''}`);
       } else {
-        setResult(`❌ Error: ${data.error}`);
+        setResult(`[ERROR] Error: ${data.error}`);
       }
     } catch (error: any) {
-      setResult(`❌ Failed: ${error.message}`);
+      setResult(`[ERROR] Failed: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -108,7 +109,7 @@ export default function TestNotificationsPage() {
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            🔔 Test Push Notifications
+            Test Push Notifications
           </h1>
           <p className="text-gray-600 mb-8">
             Send test notifications to check if FCM is working properly
@@ -173,7 +174,7 @@ export default function TestNotificationsPage() {
                       const data = await response.json();
                       setTokenStatus(data);
                     } catch (error: any) {
-                      setResult(`❌ Error: ${error.message}`);
+                      setResult(`[ERROR] Error: ${error.message}`);
                     }
                   }}
                   className="text-xs px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium"
@@ -183,11 +184,11 @@ export default function TestNotificationsPage() {
               </div>
               {tokenStatus && (
                 <div className="text-sm text-gray-600 space-y-1">
-                  <p>✅ Active Tokens: <strong className="text-green-600">{tokenStatus.activeTokens}</strong></p>
-                  <p>❌ Inactive Tokens: <strong className="text-gray-500">{tokenStatus.inactiveTokens}</strong></p>
-                  <p>📊 Total: {tokenStatus.totalTokens}</p>
+                  <p>Active Tokens: <strong className="text-green-600">{tokenStatus.activeTokens}</strong></p>
+                  <p>Inactive Tokens: <strong className="text-gray-500">{tokenStatus.inactiveTokens}</strong></p>
+                  <p>Total: {tokenStatus.totalTokens}</p>
                   {tokenStatus.totalTokens === 0 && (
-                    <p className="mt-2 text-red-600 font-medium">⚠️ No FCM tokens registered! Enable notifications on a device first.</p>
+                    <p className="mt-2 text-red-600 font-medium">[WARNING] No FCM tokens registered! Enable notifications on a device first.</p>
                   )}
                 </div>
               )}
@@ -200,16 +201,16 @@ export default function TestNotificationsPage() {
                 disabled={loading}
                 className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
               >
-                {loading ? 'Sending...' : '📤 Send to Myself'}
+                {loading ? 'Sending...' : 'Send to Myself'}
               </button>
               <button
                 onClick={async () => {
                   if (!seasonId) {
-                    setResult('❌ No active season found');
+                    setResult('[ERROR]  No active season found');
                     return;
                   }
                   setLoading(true);
-                  setResult('📤 Sending test round start notification...');
+                  setResult('[SENDING] Sending test round start notification...');
                   try {
                     const response = await fetchWithTokenRefresh('/api/notifications/test-round-start', {
                       method: 'POST',
@@ -218,12 +219,12 @@ export default function TestNotificationsPage() {
                     });
                     const data = await response.json();
                     if (response.ok) {
-                      setResult(`✅ Round Start: Sent to ${data.sentCount} device(s)\n${data.failedCount > 0 ? `⚠️ Failed: ${data.failedCount}` : ''}`);
+                      setResult(`[SUCCESS] Round Start: Sent to ${data.sentCount} device(s)\n${data.failedCount > 0 ? `[WARNING] Failed: ${data.failedCount}` : ''}`);
                     } else {
-                      setResult(`❌ Error: ${data.error}`);
+                      setResult(`[ERROR] Error: ${data.error}`);
                     }
                   } catch (error: any) {
-                    setResult(`❌ Failed: ${error.message}`);
+                    setResult(`[ERROR] Failed: ${error.message}`);
                   } finally {
                     setLoading(false);
                   }
@@ -231,7 +232,7 @@ export default function TestNotificationsPage() {
                 disabled={loading || !seasonId}
                 className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-lg font-medium hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
               >
-                {loading ? 'Sending...' : '🎯 Test Round Start'}
+                {loading ? 'Sending...' : 'Test Round Start'}
               </button>
             </div>
 
@@ -239,11 +240,11 @@ export default function TestNotificationsPage() {
             <button
               onClick={async () => {
                 if (!seasonId) {
-                  setResult('❌ No active season found');
+                  setResult('[ERROR]  No active season found');
                   return;
                 }
                 setLoading(true);
-                setResult('📤 Sending test round finalize notifications...');
+                setResult('[SENDING] Sending test round finalize notifications...');
                 try {
                   const response = await fetchWithTokenRefresh('/api/notifications/test-round-finalize', {
                     method: 'POST',
@@ -252,12 +253,12 @@ export default function TestNotificationsPage() {
                   });
                   const data = await response.json();
                   if (response.ok) {
-                    setResult(`✅ Round Finalize: Sent ${data.winnerCount} winner + ${data.loserCount} loser notifications`);
+                    setResult(`[SUCCESS] Round Finalize: Sent ${data.winnerCount} winner + ${data.loserCount} loser notifications`);
                   } else {
-                    setResult(`❌ Error: ${data.error}`);
+                    setResult(`[ERROR] Error: ${data.error}`);
                   }
                 } catch (error: any) {
-                  setResult(`❌ Failed: ${error.message}`);
+                  setResult(`[ERROR] Failed: ${error.message}`);
                 } finally {
                   setLoading(false);
                 }
@@ -265,7 +266,7 @@ export default function TestNotificationsPage() {
               disabled={loading || !seasonId}
               className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
             >
-              {loading ? 'Sending...' : '🏆 Test Round Finalize (Win/Loss)'}
+              {loading ? 'Sending...' : 'Test Round Finalize (Win/Loss)'}
             </button>
 
             {/* Users with Notifications Enabled */}
@@ -338,8 +339,8 @@ export default function TestNotificationsPage() {
             {/* Result Display */}
             {result && (
               <div className={`p-4 rounded-lg ${
-                result.startsWith('✅') ? 'bg-green-50 border border-green-200' :
-                result.startsWith('❌') ? 'bg-red-50 border border-red-200' :
+                result.startsWith('[SUCCESS]') ? 'bg-green-50 border border-green-200' :
+                result.startsWith('[ERROR]') ? 'bg-red-50 border border-red-200' :
                 'bg-yellow-50 border border-yellow-200'
               }`}>
                 <pre className="text-sm whitespace-pre-wrap font-mono">{result}</pre>
@@ -349,7 +350,7 @@ export default function TestNotificationsPage() {
 
           {/* Instructions */}
           <div className="mt-8 pt-6 border-t border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-3">📋 Instructions:</h3>
+            <h3 className="font-semibold text-gray-900 mb-3">Instructions:</h3>
             <ol className="space-y-2 text-sm text-gray-600 list-decimal list-inside">
               <li>Make sure you've enabled notifications on this device</li>
               <li>Click "Send to Myself" to test</li>
@@ -360,7 +361,7 @@ export default function TestNotificationsPage() {
 
           {/* Troubleshooting */}
           <div className="mt-6 bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">🔧 Troubleshooting:</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">Troubleshooting:</h3>
             <ul className="space-y-1 text-sm text-gray-600 list-disc list-inside">
               <li>If you see "Unauthorized" - make sure you're logged in as committee/admin</li>
               <li>If "User has not enabled notifications" - enable notifications first</li>

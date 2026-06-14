@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, XCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,7 +45,7 @@ export default function RecalculateFantasyPointsPage() {
         setSummary(null);
 
         try {
-            addLog('🔄 Starting passive points recalculation...', 'info');
+            addLog('<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Starting passive points recalculation...', 'info');
 
             const response = await fetch('/api/fantasy/recalculate-passive-points', {
                 method: 'POST',
@@ -62,11 +63,11 @@ export default function RecalculateFantasyPointsPage() {
             // Add logs from the response
             if (data.logs && Array.isArray(data.logs)) {
                 data.logs.forEach((log: string) => {
-                    if (log.includes('✅')) {
+                    if (log.includes('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />')) {
                         addLog(log, 'success');
-                    } else if (log.includes('❌') || log.includes('Error')) {
+                    } else if (log.includes('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" />') || log.includes('Error')) {
                         addLog(log, 'error');
-                    } else if (log.includes('⚠️')) {
+                    } else if (log.includes('<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />')) {
                         addLog(log, 'warning');
                     } else {
                         addLog(log, 'info');
@@ -77,11 +78,11 @@ export default function RecalculateFantasyPointsPage() {
             // Set summary
             if (data.summary) {
                 setSummary(data.summary);
-                addLog('✅ Recalculation completed successfully!', 'success');
+                addLog('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Recalculation completed successfully!', 'success');
             }
 
         } catch (error: any) {
-            addLog(`❌ Error: ${error.message}`, 'error');
+            addLog(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Error: ${error.message}`, 'error');
         } finally {
             setIsRecalculating(false);
         }
@@ -116,7 +117,7 @@ export default function RecalculateFantasyPointsPage() {
                             href="/dashboard/committee"
                             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all"
                         >
-                            ← Back
+                            &larr; Back
                         </Link>
                     </div>
 
@@ -235,7 +236,7 @@ export default function RecalculateFantasyPointsPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                         <div className="text-sm text-amber-900">
-                            <p className="font-semibold mb-1">⚠️ Important Notes:</p>
+                            <p className="font-semibold mb-1"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Important Notes:</p>
                             <ul className="list-disc list-inside space-y-1">
                                 <li>This operation will reset ALL passive points and recalculate from scratch</li>
                                 <li>The process may take a few moments depending on the number of fixtures</li>

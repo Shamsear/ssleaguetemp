@@ -1,4 +1,5 @@
 'use client';
+import { Trophy } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
@@ -486,9 +487,9 @@ export default function PlayerLeaderboardPage() {
                           ${index === 2 ? 'text-orange-600' : ''}
                           ${index > 2 ? 'text-gray-600' : ''}
                         `}>
-                          {index === 0 && '🥇'}
-                          {index === 1 && '🥈'}
-                          {index === 2 && '🥉'}
+                          {index === 0 && '<Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />'}
+                          {index === 1 && '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />'}
+                          {index === 2 && '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />'}
                           {index > 2 && `#${index + 1}`}
                         </span>
                       </div>

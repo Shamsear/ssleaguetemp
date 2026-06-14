@@ -14,16 +14,7 @@ import {
   getUrgencyLevel,
   isCountdownUrgent,
 } from '@/lib/utils/tiebreakerUtils';
-import {
-  ArrowLeft,
-  Clock,
-  TrendingUp,
-  Users,
-  Trophy,
-  AlertCircle,
-  History,
-  UserX,
-} from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowLeft, Clock, Crown, History, Medal, Sparkles, Star, TrendingUp, Trophy, UserX, Users } from 'lucide-react';
 
 export default function TiebreakerDetailPage() {
   const params = useParams();
@@ -230,7 +221,7 @@ export default function TiebreakerDetailPage() {
                 {tiebreaker.time_remaining}
               </p>
               {isUrgent && (
-                <p className="text-sm text-red-600 mt-2">⚠️ Hurry! Time is running out</p>
+                <p className="text-sm text-red-600 mt-2"><AlertTriangle className="w-4 h-4 text-rose-500 inline animate-bounce" /> Hurry! Time is running out</p>
               )}
             </div>
           )}
@@ -258,7 +249,7 @@ export default function TiebreakerDetailPage() {
                       <p className="text-sm text-gray-600">Position</p>
                       <p className="text-xl font-bold">
                         {my_status.you_are_highest ? (
-                          <span className="text-green-700">🏆 Leading!</span>
+                          <span className="text-green-700"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500 inline mr-1" /> Leading!</span>
                         ) : (
                           <span className="text-gray-700">Not leading</span>
                         )}
@@ -288,7 +279,7 @@ export default function TiebreakerDetailPage() {
 
                   {my_status.you_are_highest && tiebreaker.status === 'active' && (
                     <p className="text-sm text-green-700 mt-3">
-                      💡 You&apos;re leading! You cannot withdraw until someone outbids you.
+                      <Sparkles className="w-4 h-4 text-amber-400 inline mr-1" /> You&apos;re leading! You cannot withdraw until someone outbids you.
                     </p>
                   )}
                 </>

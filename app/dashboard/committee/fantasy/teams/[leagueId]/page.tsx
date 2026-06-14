@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
-import { Crown, Star, ChevronDown, Target, Award, TrendingUp, Shield as ShieldIcon } from 'lucide-react';
+import { Crown, Star, ChevronDown, Target, Award, TrendingUp, Shield as ShieldIcon, XCircle, CheckCircle, Trophy, Activity, BarChart2, AlertTriangle } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import ShareableTeamCard from '@/components/fantasy/ShareableTeamCard';
 
@@ -126,7 +126,7 @@ export default function FantasyTeamsPage() {
         setTeams(data.teams || []);
         
         // Debug: Check budget values
-        console.log('📊 Teams loaded:', data.teams?.slice(0, 3).map((t: any) => ({
+        console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Teams loaded:', data.teams?.slice(0, 3).map((t: any) => ({
           name: t.team_name,
           budget: t.budget_remaining,
           points: t.total_points
@@ -690,7 +690,7 @@ export default function FantasyTeamsPage() {
                                                     {match.opponent_name || 'vs Opponent'}
                                                   </p>
                                                   <p className="text-xs text-gray-600">
-                                                    {actualResult === 'win' ? '✅ Win' : actualResult === 'draw' ? '🤝 Draw' : '❌ Loss'}
+                                                    {actualResult === 'win' ? '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Win' : actualResult === 'draw' ? '🤝 Draw' : '<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Loss'}
                                                     {` • ${playerGoals}-${opponentGoals}`}
                                                   </p>
                                                 </div>
@@ -735,7 +735,7 @@ export default function FantasyTeamsPage() {
                                                 {concedePoints !== 0 && (
                                                   <div className="flex items-center justify-between px-2 py-1 bg-red-50 rounded">
                                                     <span className="text-gray-700 flex items-center gap-1">
-                                                      <span className="text-red-600">⚠️</span>
+                                                      <span className="text-red-600"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></span>
                                                       Conceded 4+ Goals
                                                     </span>
                                                     <span className="font-semibold text-red-700">{concedePoints}pts</span>
@@ -753,14 +753,14 @@ export default function FantasyTeamsPage() {
                                                 {resultPoints !== 0 && (
                                                   <div className="flex items-center justify-between px-2 py-1 bg-purple-50 rounded">
                                                     <span className="text-gray-700">
-                                                      {actualResult === 'win' ? '🏆 Win' : '🤝 Draw'}
+                                                      {actualResult === 'win' ? '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Win' : '🤝 Draw'}
                                                     </span>
                                                     <span className="font-semibold text-purple-700">{resultPoints}pts</span>
                                                   </div>
                                                 )}
                                                 {appearancePoints !== 0 && (
                                                   <div className="flex items-center justify-between px-2 py-1 bg-gray-50 rounded">
-                                                    <span className="text-gray-700">⚽ Appearance</span>
+                                                    <span className="text-gray-700"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Appearance</span>
                                                     <span className="font-semibold text-gray-700">{appearancePoints}pt</span>
                                                   </div>
                                                 )}

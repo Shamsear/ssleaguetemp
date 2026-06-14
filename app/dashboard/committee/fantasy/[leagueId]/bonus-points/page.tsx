@@ -1,4 +1,5 @@
 'use client'
+import { Star } from 'lucide-react';
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
@@ -490,7 +491,7 @@ export default function BonusPointsPage() {
                             {targetType === 'player' && (
                               <div className="text-xs text-gray-500">
                                 {item.position} • {item.team || item.real_team_name}
-                                {item.star_rating && ` • ${item.star_rating}★`}
+                                {item.star_rating && ` • ${item.star_rating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />`}
                               </div>
                             )}
                             {targetType === 'team' && item.fantasy_teams_count !== undefined && (

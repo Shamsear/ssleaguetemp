@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import NewsCard from '@/components/NewsCard'
 import Link from 'next/link'
-import { Calendar, Tag, Globe, ArrowRight, Shield } from 'lucide-react'
+import { Activity, ArrowRight, Calendar, DollarSign, Gamepad2, Globe, Megaphone, Shield, Tag, Target, Trophy, Users } from 'lucide-react'
 
 interface NewsItem {
   id: string
@@ -38,14 +38,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   milestone: 'bg-amber-100 border-amber-300 text-amber-900',
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
-  registration: '👥',
-  team: '🏆',
-  auction: '💰',
-  fantasy: '🎮',
-  match: '⚽',
-  announcement: '📢',
-  milestone: '🎯',
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  registration: <Users className="w-3.5 h-3.5 text-purple-650" />,
+  team: <Trophy className="w-3.5 h-3.5 text-amber-550 fill-amber-550" />,
+  auction: <DollarSign className="w-3.5 h-3.5 text-emerald-550" />,
+  fantasy: <Gamepad2 className="w-3.5 h-3.5 text-indigo-505" />,
+  match: <Activity className="w-3.5 h-3.5 text-rose-500" />,
+  announcement: <Megaphone className="w-3.5 h-3.5 text-blue-500" />,
+  milestone: <Target className="w-3.5 h-3.5 text-rose-500" />,
 }
 
 function NewsContent() {
@@ -159,7 +159,7 @@ function NewsContent() {
           href="/"
           className="inline-flex items-center text-xs font-mono font-bold text-slate-500 hover:text-amber-600 transition-colors"
         >
-          ← BACK_TO_HOME
+          {"<-"} BACK_TO_HOME
         </Link>
 
         {/* Title Panel */}

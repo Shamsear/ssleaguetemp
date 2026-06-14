@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { ArrowLeft, Plus, CheckCircle, AlertCircle, Trash2, Edit2, Info, X, Layers, Star } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -35,7 +36,7 @@ function CategoriesPageContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   // Modal system
   const { alertState, showAlert, closeAlert } = useModal();
@@ -117,10 +118,11 @@ function CategoriesPageContent() {
 
   if (loading || isLoadingCategories) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto"></div>
-          <p className="mt-4 text-gray-600 font-medium">Loading categories...</p>
+      <div className="min-h-screen flex items-center justify-center console-bg font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono font-mono">Loading categories console...</p>
         </div>
       </div>
     );
@@ -131,222 +133,196 @@ function CategoriesPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 py-4 sm:py-8 px-3 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
-                </div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Categories
-                </h1>
-              </div>
-              <p className="text-gray-600 text-sm sm:text-base ml-14">Manage player tiers and point distribution</p>
-              <Link 
-                href="/dashboard/committee/team-management" 
-                className="inline-flex items-center ml-14 mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Dashboard
-              </Link>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Decorative glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto relative z-10 space-y-6">
+        
+        {/* Navigation */}
+        <div className="flex justify-between items-center">
+          <Link
+            href="/dashboard/committee/team-management"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
+          
+          <Link 
+            href="/dashboard/committee/team-management/categories/new" 
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono text-xs uppercase font-extrabold shadow-sm transition-all cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 text-amber-400" /> New Category
+          </Link>
+        </div>
+
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <Layers className="w-6 h-6 text-amber-400" />
             </div>
-            <Link 
-              href="/dashboard/committee/team-management/categories/new" 
-              className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <span className="hidden sm:inline">New Category</span>
-              <span className="sm:hidden">New</span>
-            </Link>
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">SYSTEM CONTROL</span>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                Categories Console
+              </h1>
+              <p className="text-xs text-slate-550 font-mono mt-1">
+                Manage player skill categories, colors, and priority-based scoring offsets.
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Success Message */}
         {successMessage && (
-          <div className="mb-6 bg-green-50 border-l-4 border-green-500 rounded-xl p-4 shadow-sm animate-fade-in">
-            <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div className="flex-1">
-                <h4 className="text-sm font-semibold text-green-800">Success</h4>
-                <p className="text-sm text-green-700 mt-1">{successMessage}</p>
-              </div>
-              <button onClick={() => setSuccessMessage(null)} className="text-green-400 hover:text-green-600">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+          <div className="console-card bg-emerald-50/30 border border-emerald-200 rounded-3xl p-5 shadow-sm flex items-center justify-between gap-3 text-emerald-800">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+              <p className="text-xs font-bold uppercase tracking-wide">{successMessage}</p>
             </div>
+            <button onClick={() => setSuccessMessage(null)} className="text-emerald-500 hover:text-emerald-700">
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
 
         {/* Categories Grid/List */}
         {categories.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
-            <div className="max-w-md mx-auto">
-              <div className="bg-gradient-to-br from-blue-100 to-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">No Categories Yet</h3>
-              <p className="text-gray-600 mb-6">Create your first category to start organizing players into skill tiers.</p>
-              <Link
-                href="/dashboard/committee/team-management/categories/new"
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Create First Category
-              </Link>
+          <div className="text-center py-12 text-slate-400 border border-dashed border-slate-200 rounded-2xl bg-white p-12">
+            <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-4">
+              <Info className="w-6 h-6 text-slate-400" />
             </div>
+            <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">
+              No Categories Found
+            </h3>
+            <p className="text-xs text-slate-550 font-mono mb-6">
+              Create your first skill category to start organizing players into tiers.
+            </p>
+            <Link
+              href="/dashboard/committee/team-management/categories/new"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-mono text-xs uppercase font-extrabold shadow-sm transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4 text-amber-400" /> Create First Category
+            </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {categories.map((category) => (
-              <div key={category.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300">
-                {/* Card Header */}
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="text-4xl">{category.icon || '⭐'}</div>
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900">{category.name}</h3>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 mt-1">
-                          Priority {category.priority}
-                        </span>
-                      </div>
+              <div key={category.id} className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-350">
+                
+                {/* Category Header */}
+                <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm flex-shrink-0">
+                      {category.icon || '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />'}
+                    </span>
+                    <div>
+                      <h3 className="font-extrabold text-slate-900 text-sm uppercase tracking-wide truncate max-w-[140px]">{category.name}</h3>
+                      <span className="inline-flex text-[9px] font-black uppercase bg-slate-200/60 text-slate-750 border border-slate-300 px-1.5 py-0.5 rounded mt-1">
+                        Priority {category.priority}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Card Body */}
+                {/* Category Details Breakdown */}
                 <div className="p-6 space-y-4">
                   {/* Win Points */}
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-3 border border-green-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 bg-green-600 rounded-md">
-                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                  <div className="bg-emerald-50/10 border border-emerald-100/80 rounded-2xl p-3.5">
+                    <h4 className="text-[10px] font-black uppercase text-emerald-800 tracking-wider flex items-center gap-1 mb-2">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Win Points
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                        <span className="text-slate-500 text-[10px]">Same:</span>
+                        <span className="font-bold text-emerald-700">{category.points_same_category}</span>
                       </div>
-                      <h4 className="text-xs font-bold text-green-900 uppercase">Win Points</h4>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="flex items-center justify-between bg-white/60 rounded px-2 py-1">
-                        <span className="text-gray-600">Same:</span>
-                        <span className="font-bold text-green-700">{category.points_same_category}</span>
+                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                        <span className="text-slate-500 text-[10px]">+1 diff:</span>
+                        <span className="font-bold text-emerald-700">{category.points_one_level_diff}</span>
                       </div>
-                      <div className="flex items-center justify-between bg-white/60 rounded px-2 py-1">
-                        <span className="text-gray-600">+1:</span>
-                        <span className="font-bold text-green-700">{category.points_one_level_diff}</span>
+                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                        <span className="text-slate-500 text-[10px]">+2 diff:</span>
+                        <span className="font-bold text-emerald-700">{category.points_two_level_diff}</span>
                       </div>
-                      <div className="flex items-center justify-between bg-white/60 rounded px-2 py-1">
-                        <span className="text-gray-600">+2:</span>
-                        <span className="font-bold text-green-700">{category.points_two_level_diff}</span>
-                      </div>
-                      <div className="flex items-center justify-between bg-white/60 rounded px-2 py-1">
-                        <span className="text-gray-600">+3:</span>
-                        <span className="font-bold text-green-700">{category.points_three_level_diff}</span>
+                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                        <span className="text-slate-500 text-[10px]">+3 diff:</span>
+                        <span className="font-bold text-emerald-700">{category.points_three_level_diff}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Draw Points */}
-                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-3 border border-blue-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 bg-blue-600 rounded-md">
-                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <h4 className="text-xs font-bold text-blue-900 uppercase">Draw Points</h4>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="flex items-center justify-between bg-white/60 rounded px-2 py-1">
-                        <span className="text-gray-600">Same:</span>
+                  <div className="bg-blue-50/10 border border-blue-100/80 rounded-2xl p-3.5">
+                    <h4 className="text-[10px] font-black uppercase text-blue-800 tracking-wider flex items-center gap-1 mb-2">
+                      <Info className="w-3.5 h-3.5 text-blue-500" /> Draw Points
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                        <span className="text-slate-500 text-[10px]">Same:</span>
                         <span className="font-bold text-blue-700">{category.draw_same_category}</span>
                       </div>
-                      <div className="flex items-center justify-between bg-white/60 rounded px-2 py-1">
-                        <span className="text-gray-600">+1:</span>
+                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                        <span className="text-slate-500 text-[10px]">+1 diff:</span>
                         <span className="font-bold text-blue-700">{category.draw_one_level_diff}</span>
                       </div>
-                      <div className="flex items-center justify-between bg-white/60 rounded px-2 py-1">
-                        <span className="text-gray-600">+2:</span>
+                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                        <span className="text-slate-500 text-[10px]">+2 diff:</span>
                         <span className="font-bold text-blue-700">{category.draw_two_level_diff}</span>
                       </div>
-                      <div className="flex items-center justify-between bg-white/60 rounded px-2 py-1">
-                        <span className="text-gray-600">+3:</span>
+                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                        <span className="text-slate-500 text-[10px]">+3 diff:</span>
                         <span className="font-bold text-blue-700">{category.draw_three_level_diff}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Loss Points */}
-                  <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-lg p-3 border border-red-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 bg-red-600 rounded-md">
-                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                  <div className="bg-rose-50/10 border border-rose-100/80 rounded-2xl p-3.5">
+                    <h4 className="text-[10px] font-black uppercase text-rose-800 tracking-wider flex items-center gap-1 mb-2">
+                      <AlertCircle className="w-3.5 h-3.5 text-rose-500" /> Loss Points
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                        <span className="text-slate-500 text-[10px]">Same:</span>
+                        <span className="font-bold text-rose-700">{category.loss_same_category}</span>
                       </div>
-                      <h4 className="text-xs font-bold text-red-900 uppercase">Loss Points</h4>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="flex items-center justify-between bg-white/60 rounded px-2 py-1">
-                        <span className="text-gray-600">Same:</span>
-                        <span className="font-bold text-red-700">{category.loss_same_category}</span>
+                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                        <span className="text-slate-500 text-[10px]">-1 diff:</span>
+                        <span className="font-bold text-rose-700">{category.loss_one_level_diff}</span>
                       </div>
-                      <div className="flex items-center justify-between bg-white/60 rounded px-2 py-1">
-                        <span className="text-gray-600">-1:</span>
-                        <span className="font-bold text-red-700">{category.loss_one_level_diff}</span>
+                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                        <span className="text-slate-500 text-[10px]">-2 diff:</span>
+                        <span className="font-bold text-rose-700">{category.loss_two_level_diff}</span>
                       </div>
-                      <div className="flex items-center justify-between bg-white/60 rounded px-2 py-1">
-                        <span className="text-gray-600">-2:</span>
-                        <span className="font-bold text-red-700">{category.loss_two_level_diff}</span>
-                      </div>
-                      <div className="flex items-center justify-between bg-white/60 rounded px-2 py-1">
-                        <span className="text-gray-600">-3:</span>
-                        <span className="font-bold text-red-700">{category.loss_three_level_diff}</span>
+                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                        <span className="text-slate-500 text-[10px]">-3 diff:</span>
+                        <span className="font-bold text-rose-700">{category.loss_three_level_diff}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Card Footer */}
-                <div className="bg-gray-50 px-6 py-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                {/* Footer Controls */}
+                <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
                   <Link
                     href={`/dashboard/committee/team-management/categories/${category.id}/edit`}
-                    className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-extrabold text-blue-600 hover:text-blue-700 bg-white border border-slate-200 hover:border-blue-200 rounded-xl uppercase transition-all"
                   >
-                    <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
+                    <Edit2 className="w-3.5 h-3.5" /> Edit
                   </Link>
                   {deleteConfirm === category.id ? (
-                    <div className="flex gap-1">
+                    <div className="flex gap-1.5">
                       <button
                         onClick={() => handleDelete(category.id)}
-                        className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-all"
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-black text-white bg-rose-600 hover:bg-rose-700 rounded-xl uppercase transition-all cursor-pointer"
                       >
                         Confirm
                       </button>
                       <button
                         onClick={() => setDeleteConfirm(null)}
-                        className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all"
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-black text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl uppercase transition-all cursor-pointer"
                       >
                         Cancel
                       </button>
@@ -354,12 +330,9 @@ function CategoriesPageContent() {
                   ) : (
                     <button
                       onClick={() => setDeleteConfirm(category.id)}
-                      className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-extrabold text-rose-600 hover:text-rose-700 bg-white border border-slate-200 hover:border-rose-200 rounded-xl uppercase transition-all cursor-pointer"
                     >
-                      <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      Delete
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
                     </button>
                   )}
                 </div>
@@ -385,10 +358,11 @@ export default function CategoriesPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto"></div>
-            <p className="mt-4 text-gray-600 font-medium">Loading categories...</p>
+        <div className="min-h-screen flex items-center justify-center console-bg font-mono">
+          <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+          <div className="text-center relative z-10">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+            <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono font-mono">Loading categories console...</p>
           </div>
         </div>
       }

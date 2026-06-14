@@ -7,6 +7,20 @@ import Link from 'next/link';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import {
+  ArrowLeft,
+  Clock,
+  DollarSign,
+  Users,
+  Check,
+  Calendar,
+  ChevronRight,
+  Info,
+  Sparkles,
+  Plus,
+  Play,
+  Layers
+} from 'lucide-react';
 
 interface BulkRound {
   id: number;
@@ -206,10 +220,11 @@ export default function BulkRoundsPage() {
 
   if (loading || !user || user.role !== 'committee_admin') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center console-bg font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono font-mono">Initializing Console...</p>
         </div>
       </div>
     );
@@ -218,257 +233,273 @@ export default function BulkRoundsPage() {
   const activeRound = getActiveRound();
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="container mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Link
-              href="/dashboard/committee"
-              className="text-gray-500 hover:text-[#0066FF] transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </Link>
-            <h1 className="text-3xl md:text-4xl font-bold gradient-text flex items-center">
-              <svg className="w-8 h-8 mr-3 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Bulk Bidding Rounds
-            </h1>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Decorative glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
+        {/* Navigation */}
+        <div>
+          <Link
+            href="/dashboard/committee"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
+        </div>
+
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <Layers className="w-6 h-6 text-amber-400" />
+            </div>
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">SYSTEM CONTROL</span>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5 animate-duration-500">
+                Bulk Bidding Rounds
+              </h1>
+              <p className="text-xs text-slate-400 font-mono mt-1">
+                Manage bulk bidding rounds where teams can bid on multiple players simultaneously.
+              </p>
+            </div>
           </div>
-          <p className="text-gray-600">Manage bulk bidding rounds where teams can bid on multiple players simultaneously</p>
+          {activeRound && (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold uppercase font-mono shadow-sm">
+                <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
+                <span>Active Round Open</span>
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Active Round Alert */}
         {activeRound && (
-          <div className="glass rounded-2xl p-6 mb-6 border-2 border-green-300 bg-green-50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-green-500 text-white">
-                  <svg className="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-green-900">Active Bulk Round</h3>
-                  <p className="text-green-700">Round {activeRound.round_number} is currently active with {activeRound.player_count} players</p>
-                </div>
+          <div className="console-card bg-emerald-50 border border-emerald-200/60 rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-emerald-600 border border-emerald-700 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+                <Sparkles className="w-5 h-5 text-emerald-100 animate-pulse" />
               </div>
-              <Link
-                href={`/dashboard/committee/bulk-rounds/${activeRound.id}`}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
-              >
-                Manage Round
-              </Link>
+              <div>
+                <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider font-mono">ACTIVE BULK ROUND</span>
+                <h3 className="text-sm sm:text-base font-extrabold text-emerald-900 mt-0.5">Round {activeRound.round_number} is currently active</h3>
+                <p className="text-xs text-emerald-705 font-mono mt-0.5">
+                  Active with {activeRound.player_count} players. Bidding is open.
+                </p>
+              </div>
             </div>
+            <Link
+              href={`/dashboard/committee/bulk-rounds/${activeRound.id}`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+            >
+              <Play className="w-3.5 h-3.5 text-emerald-105" /> Manage Round
+            </Link>
           </div>
         )}
 
         {/* Info Card */}
-        <div className="glass rounded-2xl p-6 mb-6 border border-white/20">
-          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
+          <h2 className="text-sm sm:text-base font-extrabold mb-4 uppercase text-slate-900 tracking-wide flex items-center gap-2">
+            <Info className="w-4 h-4 text-amber-500" />
             How Bulk Bidding Works
           </h2>
-          <div className="space-y-3">
-            <div className="flex items-start">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0066FF]/20 text-[#0066FF] flex items-center justify-center text-sm font-bold mr-3 mt-0.5">1</span>
-              <p className="text-gray-700">
-                <strong>Fixed Price Bidding:</strong> Teams can bid on multiple players at a fixed base price during the round duration.
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-amber-600 font-mono uppercase bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Step 1</span>
+              <h4 className="text-xs font-bold text-slate-900 mt-1">Fixed Price Bidding</h4>
+              <p className="text-xs text-slate-500 font-mono leading-relaxed">
+                Teams can bid on multiple players at a fixed base price during the round duration.
               </p>
             </div>
-            <div className="flex items-start">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0066FF]/20 text-[#0066FF] flex items-center justify-center text-sm font-bold mr-3 mt-0.5">2</span>
-              <p className="text-gray-700">
-                <strong>Conflict Resolution:</strong> If multiple teams bid for the same player, a tiebreaker auction will be held.
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-amber-600 font-mono uppercase bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Step 2</span>
+              <h4 className="text-xs font-bold text-slate-900 mt-1">Conflict Resolution</h4>
+              <p className="text-xs text-slate-500 font-mono leading-relaxed">
+                If multiple teams bid for the same player, a tiebreaker auction will be held to resolve it.
               </p>
             </div>
-            <div className="flex items-start">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0066FF]/20 text-[#0066FF] flex items-center justify-center text-sm font-bold mr-3 mt-0.5">3</span>
-              <p className="text-gray-700">
-                <strong>Quick Assignment:</strong> This helps teams fill remaining slots efficiently and ensures all players get assigned.
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-amber-600 font-mono uppercase bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Step 3</span>
+              <h4 className="text-xs font-bold text-slate-900 mt-1">Quick Assignment</h4>
+              <p className="text-xs text-slate-500 font-mono leading-relaxed">
+                This helps teams fill remaining slots efficiently and ensures all remaining eligible players get assigned.
               </p>
             </div>
           </div>
         </div>
 
         {/* Actions Bar */}
-        <div className="glass rounded-2xl p-4 mb-6 border border-white/20">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">Filter:</span>
-              {['all', 'draft', 'scheduled', 'active', 'completed'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                    filterStatus === status
-                      ? 'bg-[#0066FF] text-white'
-                      : 'bg-white/50 text-gray-700 hover:bg-white/80'
-                  }`}
-                >
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setShowCreateForm(!showCreateForm)}
-              disabled={!!activeRound}
-              className="inline-flex items-center px-4 py-2 bg-[#0066FF] text-white rounded-lg hover:bg-[#0052CC] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              title={activeRound ? 'Cannot create while a round is active' : 'Create new bulk round'}
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Create Bulk Round
-            </button>
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mr-2">Filter:</span>
+            {['all', 'draft', 'scheduled', 'active', 'completed'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all duration-200 border cursor-pointer ${
+                  filterStatus === status
+                    ? 'bg-slate-800 border-slate-900 text-white shadow-sm'
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
           </div>
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            disabled={!!activeRound}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            title={activeRound ? 'Cannot create while a round is active' : 'Create new bulk round'}
+          >
+            <Plus className="w-3.5 h-3.5 text-emerald-100" /> Create Bulk Round
+          </button>
         </div>
 
         {/* Create Form */}
         {showCreateForm && (
-          <div className="glass rounded-2xl p-6 mb-6 border border-white/20">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Create New Bulk Bidding Round</h2>
-            <form onSubmit={handleCreateBulkRound} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Auction Settings Selector */}
-              <div className="md:col-span-2">
-                <label htmlFor="auction_settings" className="block text-sm font-medium text-gray-700 mb-1">
-                  Auction Settings
-                  <span className="ml-2 text-xs text-gray-500">(Window Type)</span>
-                </label>
-                <select
-                  id="auction_settings"
-                  value={selectedAuctionSettingsId}
-                  onChange={(e) => setSelectedAuctionSettingsId(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-[#0066FF]"
-                >
-                  <option value="">Select auction settings...</option>
-                  {auctionSettings.map(setting => {
-                    const windowLabel = setting.auction_window
-                      .split('_')
-                      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                      .join(' ');
-                    return (
-                      <option key={setting.id} value={setting.id}>
-                        {windowLabel} (Max {setting.max_rounds} rounds, {setting.max_squad_size} players)
-                      </option>
-                    );
-                  })}
-                </select>
-                <p className="mt-1 text-xs text-gray-500">
-                  Choose settings based on auction type.
-                  {auctionSettings.length === 0 && (
-                    <Link href="/dashboard/committee/auction-settings" className="text-blue-600 hover:text-blue-800 ml-1">
-                      Create settings first →
-                    </Link>
-                  )}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Base Price (£)</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500">£</span>
-                  </div>
-                  <input
-                    type="number"
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm animate-in fade-in slide-in-from-top-4 duration-200">
+            <h2 className="text-sm sm:text-base font-extrabold mb-6 uppercase text-slate-900 tracking-wide flex items-center gap-2">
+              <Plus className="w-4 h-4 text-amber-500" />
+              Create New Bulk Bidding Round
+            </h2>
+            <form onSubmit={handleCreateBulkRound} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Auction Settings Selector */}
+                <div className="md:col-span-2">
+                  <label htmlFor="auction_settings" className="block text-xs font-bold text-slate-700 uppercase font-mono mb-2">
+                    Auction Settings <span className="text-[10px] text-slate-400 font-normal">(Window Type)</span>
+                  </label>
+                  <select
+                    id="auction_settings"
+                    value={selectedAuctionSettingsId}
+                    onChange={(e) => setSelectedAuctionSettingsId(e.target.value)}
                     required
-                    value={formData.base_price}
-                    onChange={(e) => setFormData({ ...formData, base_price: e.target.value })}
-                    className="w-full pl-10 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-[#0066FF]"
-                    min="1"
-                  />
-                </div>
-                <p className="mt-1 text-xs text-gray-500">Fixed price for all players in this round</p>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <svg className="inline h-5 w-5 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Round Duration
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Hours</label>
-                    <input
-                      type="number"
-                      value={formData.duration_hours}
-                      onChange={(e) => setFormData({ ...formData, duration_hours: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-[#0066FF] text-center"
-                      min="0"
-                      max="72"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Minutes</label>
-                    <input
-                      type="number"
-                      value={formData.duration_minutes}
-                      onChange={(e) => setFormData({ ...formData, duration_minutes: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-[#0066FF] text-center"
-                      min="0"
-                      max="59"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Seconds</label>
-                    <input
-                      type="number"
-                      value={formData.duration_seconds}
-                      onChange={(e) => setFormData({ ...formData, duration_seconds: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-[#0066FF] text-center"
-                      min="0"
-                      max="59"
-                    />
-                  </div>
-                </div>
-                <div className="mt-2 space-y-1">
-                  <p className="text-xs text-gray-500">
-                    Total: {parseInt(formData.duration_hours) * 3600 + parseInt(formData.duration_minutes) * 60 + parseInt(formData.duration_seconds)} seconds
-                    ({parseInt(formData.duration_hours)}h {parseInt(formData.duration_minutes)}m {parseInt(formData.duration_seconds)}s)
-                  </p>
-                  <p className="text-xs font-medium text-blue-600">
-                    Timer will end at: {(() => {
-                      const totalSeconds = parseInt(formData.duration_hours) * 3600 + parseInt(formData.duration_minutes) * 60 + parseInt(formData.duration_seconds);
-                      const endTime = new Date(Date.now() + totalSeconds * 1000);
-                      return endTime.toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                      });
-                    })()} (Local Time)
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono text-sm"
+                  >
+                    <option value="">Select auction settings...</option>
+                    {auctionSettings.map(setting => {
+                      const windowLabel = setting.auction_window
+                        .split('_')
+                        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+                      return (
+                        <option key={setting.id} value={setting.id}>
+                          {windowLabel} (Max {setting.max_rounds} rounds, {setting.max_squad_size} players)
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p className="mt-1.5 text-xs text-slate-400 font-mono">
+                    Choose settings based on auction type.
+                    {auctionSettings.length === 0 && (
+                      <Link href="/dashboard/committee/auction-settings" className="text-blue-600 hover:underline ml-1.5">
+                        Create settings first  &rarr; 
+                      </Link>
+                    )}
                   </p>
                 </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase font-mono mb-2">Base Price</label>
+                  <div className="relative rounded-xl shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <span className="text-slate-400 font-mono text-xs">£</span>
+                    </div>
+                    <input
+                      type="number"
+                      required
+                      value={formData.base_price}
+                      onChange={(e) => setFormData({ ...formData, base_price: e.target.value })}
+                      className="w-full pl-8 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono text-sm"
+                      min="1"
+                    />
+                  </div>
+                  <p className="mt-1.5 text-xs text-slate-400 font-mono">Fixed price for all players in this round</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase font-mono mb-2 flex items-center gap-1.5">
+                    <Clock className="h-4 w-4 text-slate-400" />
+                    Round Duration
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-mono text-slate-400 mb-1 text-center uppercase">Hours</label>
+                      <input
+                        type="number"
+                        value={formData.duration_hours}
+                        onChange={(e) => setFormData({ ...formData, duration_hours: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-2 py-3 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-center font-mono text-sm"
+                        min="0"
+                        max="72"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono text-slate-400 mb-1 text-center uppercase">Mins</label>
+                      <input
+                        type="number"
+                        value={formData.duration_minutes}
+                        onChange={(e) => setFormData({ ...formData, duration_minutes: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-2 py-3 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-center font-mono text-sm"
+                        min="0"
+                        max="59"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono text-slate-400 mb-1 text-center uppercase">Secs</label>
+                      <input
+                        type="number"
+                        value={formData.duration_seconds}
+                        onChange={(e) => setFormData({ ...formData, duration_seconds: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-2 py-3 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-center font-mono text-sm"
+                        min="0"
+                        max="59"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2 space-y-1 bg-slate-50 border border-slate-100 p-3 rounded-xl font-mono text-xs text-slate-500">
+                    <p>
+                      Total: <span className="font-bold text-slate-700">{parseInt(formData.duration_hours) * 3600 + parseInt(formData.duration_minutes) * 60 + parseInt(formData.duration_seconds)}</span> seconds
+                      ({parseInt(formData.duration_hours)}h {parseInt(formData.duration_minutes)}m {parseInt(formData.duration_seconds)}s)
+                    </p>
+                    <p className="text-amber-600 font-bold flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Timer ends: {(() => {
+                        const totalSeconds = parseInt(formData.duration_hours) * 3600 + parseInt(formData.duration_minutes) * 60 + parseInt(formData.duration_seconds);
+                        const endTime = new Date(Date.now() + totalSeconds * 1000);
+                        return endTime.toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true
+                        });
+                      })()}
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="md:col-span-2 flex justify-end gap-3">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowCreateForm(false)}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all font-mono text-xs uppercase tracking-wider font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isCreating}
-                  className="px-6 py-2 bg-[#0066FF] text-white rounded-lg hover:bg-[#0052CC] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all font-mono text-xs uppercase tracking-wider font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
                 >
                   {isCreating ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      Creating... (Adding players, please wait)
+                      <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent"></div>
+                      Creating...
                     </>
                   ) : (
                     'Create Bulk Round'
@@ -480,78 +511,84 @@ export default function BulkRoundsPage() {
         )}
 
         {/* Rounds List */}
-        <div className="glass rounded-2xl p-6 border border-white/20">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">All Bulk Rounds</h2>
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+            <h2 className="text-sm sm:text-base font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
+              <Layers className="w-4.5 h-4.5 text-amber-500" />
+              All Bulk Rounds
+            </h2>
+            <span className="bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-mono px-2.5 py-1 rounded-full uppercase tracking-wider font-bold">
+              {bulkRounds.length} Total
+            </span>
+          </div>
 
           {isLoading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading bulk rounds...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto"></div>
+              <p className="mt-4 text-xs text-slate-400 uppercase tracking-wider font-bold font-mono">Loading bulk rounds...</p>
             </div>
           ) : bulkRounds.length === 0 ? (
-            <div className="text-center py-12">
-              <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <h3 className="text-xl font-medium text-gray-600 mb-2">No bulk rounds found</h3>
-              <p className="text-gray-500">Create your first bulk bidding round to get started</p>
+            <div className="text-center py-12 border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+              <Layers className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+              <h3 className="text-sm font-bold text-slate-400 font-mono uppercase tracking-wider mb-1">No bulk rounds found</h3>
+              <p className="text-slate-400 text-xs font-mono">Create your first bulk bidding round to get started</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {bulkRounds.map((round) => (
                 <Link
                   key={round.id}
                   href={`/dashboard/committee/bulk-rounds/${round.id}`}
-                  className="block glass p-4 rounded-xl border border-white/10 hover:border-[#0066FF]/30 transition-all hover:shadow-lg"
+                  className="block bg-slate-50/40 hover:bg-slate-50/90 border border-slate-200 hover:border-amber-500/30 rounded-2xl p-5 transition-all duration-200 group hover:shadow-md"
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-bold text-gray-800">Bulk Round {round.round_number}</h3>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(round.status)}`}>
+                      <div className="flex items-center gap-3 mb-2.5">
+                        <h3 className="text-sm font-extrabold text-slate-800 font-mono uppercase tracking-wide group-hover:text-amber-600 transition-colors">
+                          Bulk Round {round.round_number}
+                        </h3>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border ${
+                          round.status === 'active'
+                            ? 'bg-green-50 text-green-700 border-green-200 animate-pulse'
+                            : round.status === 'completed'
+                            ? 'bg-purple-50 text-purple-700 border-purple-200'
+                            : round.status === 'scheduled'
+                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                            : round.status === 'cancelled'
+                            ? 'bg-red-50 text-red-700 border-red-200'
+                            : 'bg-gray-50 text-gray-700 border-gray-200'
+                        }`}>
                           {round.status}
                         </span>
                       </div>
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                        <span className="flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-500 font-mono">
+                        <span className="flex items-center gap-1.5">
+                          <DollarSign className="w-3.5 h-3.5 text-slate-400" />
                           £{round.base_price}
                         </span>
-                        <span className="flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
                           {round.duration_seconds}s
                         </span>
-                        <span className="flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                          </svg>
+                        <span className="flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-slate-400" />
                           {round.player_count} players
                         </span>
                         {round.sold_count > 0 && (
-                          <span className="flex items-center text-green-600">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                          <span className="flex items-center gap-1.5 text-green-700 font-bold">
+                            <Check className="w-3.5 h-3.5 text-green-500" />
                             {round.sold_count} sold
                           </span>
                         )}
                         {round.start_time && (
-                          <span className="flex items-center text-gray-500">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            {new Date(round.start_time).toLocaleDateString()}
+                          <span className="flex items-center gap-1.5 text-slate-400">
+                            <Calendar className="w-3.5 h-3.5 text-slate-300" />
+                            {new Date(round.start_time).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                           </span>
                         )}
                       </div>
                     </div>
-                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                    </svg>
+                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </Link>
               ))}

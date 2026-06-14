@@ -1,4 +1,5 @@
 'use client';
+import { Lock, Unlock } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -469,9 +470,9 @@ export default function FantasyLeagueDashboard() {
               {isTogglingLock ? (
                 'Processing...'
               ) : isLineupLocked ? (
-                '🔓 Unlock Lineups'
+                '<Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Unlock Lineups'
               ) : (
-                '🔒 Lock Lineups'
+                '<Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Lock Lineups'
               )}
             </button>
           </div>

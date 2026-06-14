@@ -4,33 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { 
-  DollarSign, 
-  Users, 
-  Filter, 
-  TrendingUp, 
-  TrendingDown, 
-  Calendar,
-  ArrowLeft,
-  Trophy,
-  ClipboardList,
-  Download,
-  Share2,
-  Check,
-  ChevronDown,
-  Award,
-  Gift,
-  Wallet,
-  UserCheck,
-  Gavel,
-  AlertTriangle,
-  ArrowRightLeft,
-  RefreshCw,
-  Undo2,
-  FileText,
-  Settings,
-  Info
-} from 'lucide-react';
+import { DollarSign, Users, Filter, TrendingUp, TrendingDown, Calendar, ArrowLeft, Trophy, ClipboardList, Download, Share2, Check, ChevronDown, Award, Gift, Wallet, UserCheck, Gavel, AlertTriangle, ArrowRightLeft, RefreshCw, Undo2, FileText, Settings, Info, CheckCircle, BarChart2 } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -232,12 +206,12 @@ export default function AllTransactionsPage() {
   const exportToExcel = () => {
     // Validate that single team and single currency are selected
     if (selectedTeamId === 'all') {
-      alert('⚠️ Please select a specific team to export.\n\nExport works for one team at a time.');
+      alert('[WARNING]  Please select a specific team to export.\n\nExport works for one team at a time.');
       return;
     }
     
     if (selectedCurrency === 'all') {
-      alert('⚠️ Please select a specific currency (eCoin or SSCoin) to export.\n\nExport works for one currency at a time.');
+      alert('[WARNING]  Please select a specific currency (eCoin or SSCoin) to export.\n\nExport works for one currency at a time.');
       return;
     }
     
@@ -303,16 +277,16 @@ export default function AllTransactionsPage() {
       link.click();
       document.body.removeChild(link);
       
-      alert(`✅ Exported ${transactions.length} transactions to ${filename}\n\nNote: The file will open correctly in Excel and Google Sheets with proper character encoding.`);
+      alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Exported ${transactions.length} transactions to ${filename}\n\nNote: The file will open correctly in Excel and Google Sheets with proper character encoding.`);
     } catch (error) {
       console.error('Error exporting to Excel:', error);
-      alert('❌ Error exporting data. Check console for details.');
+      alert('[ERROR]  Error exporting data. Check console for details.');
     }
   };
 
   const copyToWhatsApp = () => {
     try {
-      let message = '*📊 Transaction Summary*\n\n';
+      let message = '*<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Transaction Summary*\n\n';
       
       // Add filters info
       const seasonName = selectedSeasonId === 'current' ? userSeasonId : selectedSeasonId === 'all' ? 'All Seasons' : selectedSeasonId;
@@ -419,19 +393,19 @@ export default function AllTransactionsPage() {
       }
       
       message += `━━━━━━━━━━━━━━━━━━━━\n`;
-      message += `📊 ${totalTransactions} total\n`;
+      message += `<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> ${totalTransactions} total\n`;
       message += `🕐 ${new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}\n`;
       
       // Copy to clipboard
       navigator.clipboard.writeText(message).then(() => {
-        alert('✅ Copied to clipboard!\nPaste in WhatsApp.');
+        alert('[SUCCESS]  Copied to clipboard!\nPaste in WhatsApp.');
       }).catch(err => {
         console.error('Failed to copy:', err);
-        alert('❌ Failed to copy. Please try again.');
+        alert('[ERROR]  Failed to copy. Please try again.');
       });
     } catch (error) {
       console.error('Error generating WhatsApp message:', error);
-      alert('❌ Error generating summary.');
+      alert('[ERROR]  Error generating summary.');
     }
   };
 
@@ -841,11 +815,11 @@ export default function AllTransactionsPage() {
   const copyTeamSummaryToWhatsApp = () => {
     if (teamSummary.length === 0) return;
 
-    let message = `*💰 COMPLETE TRANSACTION SUMMARY*\n`;
+    let message = `*<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> COMPLETE TRANSACTION SUMMARY*\n`;
     message += `━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
     teamSummary.forEach((team, index) => {
-      const rank = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+      const rank = index === 0 ? '<Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />' : index === 1 ? '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />' : index === 2 ? '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />' : `${index + 1}.`;
 
       message += `${rank} *${team.teamName}*\n`;
       message += `   💵 Net Balance: ${team.netBalance >= 0 ? '+' : ''}${team.netBalance}\n\n`;
@@ -860,7 +834,7 @@ export default function AllTransactionsPage() {
       message += `      🟣 SSCoin: -${team.sSCoinExpense}\n`;
       message += `      Total: -${team.totalExpense}\n\n`;
       
-      message += `   📊 Transactions: ${team.transactionCount}\n\n`;
+      message += `   <BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Transactions: ${team.transactionCount}\n\n`;
     });
 
     message += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
@@ -870,9 +844,9 @@ export default function AllTransactionsPage() {
     message += `Teams: ${teamSummary.length}`;
 
     navigator.clipboard.writeText(message).then(() => {
-      alert('✅ Summary copied to clipboard! You can now paste it in WhatsApp.');
+      alert('[SUCCESS]  Summary copied to clipboard! You can now paste it in WhatsApp.');
     }).catch(() => {
-      alert('❌ Failed to copy to clipboard');
+      alert('[ERROR]  Failed to copy to clipboard');
     });
   };
 
@@ -911,7 +885,7 @@ export default function AllTransactionsPage() {
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-xs text-slate-500 uppercase tracking-wider font-extrabold">Loading transactions...</p>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading transactions...</p>
         </div>
       </div>
     );

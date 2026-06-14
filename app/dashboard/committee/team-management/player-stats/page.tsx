@@ -9,6 +9,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { usePlayerStats } from '@/hooks';
 import { useTournament } from '@/hooks/useTournaments';
 import TournamentSelector from '@/components/TournamentSelector';
+import { ArrowLeft, TrendingUp, Activity, Trophy, Download, Search, Award, Shield, Star, Crown, ChevronRight, Info, CheckCircle, X, Flame, BarChart2 } from 'lucide-react';
 
 interface PlayerStats {
   player_id: string;
@@ -48,7 +49,7 @@ export default function PlayerStatsPage() {
 
   // Use React Query hook for player stats from Neon - fetches from player_seasons table
   const { data: playerStatsData, isLoading: statsLoading, isFetching } = usePlayerStats({
-    tournamentId: selectedTournamentId,
+    tournamentId: selectedTournamentId || undefined,
     seasonId: userSeasonId || '',
   });
   
@@ -134,7 +135,7 @@ export default function PlayerStatsPage() {
           ...p,
           points_change: p.points - (p.base_points || 0)
         }))
-        .sort((a, b) => b.points_change - a.points_change)
+        .sort((a, b) => (b as any).points_change - (a as any).points_change)
         .slice(0, 10);
     }
 
@@ -150,8 +151,8 @@ export default function PlayerStatsPage() {
     // Sort (only for 'all' tab)
     if (activeTab === 'all') {
       filtered.sort((a, b) => {
-        const aVal = a[sortField];
-        const bVal = b[sortField];
+        const aVal = a[sortField] || 0;
+        const bVal = b[sortField] || 0;
         
         if (sortOrder === 'asc') {
           return aVal > bVal ? 1 : -1;
@@ -229,14 +230,14 @@ export default function PlayerStatsPage() {
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Player Stats');
 
       // Generate filename with tournament and date
-      const tournamentName = tournament?.name || 'Tournament';
+      const tournamentName = tournament?.tournament_name || 'Tournament';
       const date = new Date().toISOString().split('T')[0];
       const filename = `${tournamentName}_Player_Stats_${date}.xlsx`;
 
       // Save file
       XLSX.writeFile(workbook, filename);
       
-      console.log(`✅ Exported ${exportData.length} players to ${filename}`);
+      console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Exported ${exportData.length} players to ${filename}`);
     } catch (error) {
       console.error('Error exporting to Excel:', error);
       alert('Failed to export to Excel. Please try again.');
@@ -245,10 +246,11 @@ export default function PlayerStatsPage() {
 
   if (loading || statsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading player stats...</p>
+      <div className="min-h-screen flex items-center justify-center console-bg font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading player stats console...</p>
         </div>
       </div>
     );
@@ -265,229 +267,189 @@ export default function PlayerStatsPage() {
   const highestStars = [...playerStats].sort((a, b) => b.star_rating - a.star_rating)[0];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold gradient-text">Player Statistics</h1>
-          <p className="text-gray-500 mt-1">Individual player performance metrics</p>
-          <div className="flex gap-4 mt-2">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Decorative glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto relative z-10 space-y-6">
+        
+        {/* Navigation & Selector */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-wrap gap-3">
             <Link
               href="/dashboard/committee/team-management"
-              className="inline-flex items-center text-[#0066FF] hover:text-[#0052CC] text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
             >
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Back to Team Management
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Team Management
             </Link>
             <Link
               href="/dashboard/committee/team-management/team-standings"
-              className="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-705 font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
             >
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              View Team Standings →
+              <TrendingUp className="w-3.5 h-3.5 text-slate-600" /> View Team Standings
             </Link>
           </div>
-        </div>
-        <div>
-          <TournamentSelector />
-        </div>
-      </div>
-
-      {/* Top Performers */}
-      {playerStats.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {topScorer && topScorer.goals > 0 && (
-            <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">⚽</span>
-                <h3 className="text-sm font-semibold text-gray-700">Top Scorer</h3>
-              </div>
-              <p className="text-lg font-bold text-gray-900">{topScorer.name}</p>
-              <p className="text-2xl font-extrabold text-yellow-600">{topScorer.goals} Goals</p>
-              <p className="text-xs text-gray-600 mt-1">{topScorer.team_name}</p>
-            </div>
-          )}
-          
-          {mostPOTM && mostPOTM.potm > 0 && (
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">⭐</span>
-                <h3 className="text-sm font-semibold text-gray-700">Most POTM</h3>
-              </div>
-              <p className="text-lg font-bold text-gray-900">{mostPOTM.name}</p>
-              <p className="text-2xl font-extrabold text-purple-600">{mostPOTM.potm} POTM</p>
-              <p className="text-xs text-gray-600 mt-1">{mostPOTM.team_name}</p>
-            </div>
-          )}
-          
-          {highestPoints && highestPoints.points > 0 && (
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">💎</span>
-                <h3 className="text-sm font-semibold text-gray-700">Highest Points</h3>
-              </div>
-              <p className="text-lg font-bold text-gray-900">{highestPoints.name}</p>
-              <p className="text-2xl font-extrabold text-green-600">{highestPoints.points}p</p>
-              <p className="text-xs text-gray-600 mt-1">{highestPoints.team_name} • {highestPoints.star_rating}⭐</p>
-            </div>
-          )}
-          
-          {highestStars && highestStars.star_rating > 0 && (
-            <div className="bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">🌟</span>
-                <h3 className="text-sm font-semibold text-gray-700">Top Rated</h3>
-              </div>
-              <p className="text-lg font-bold text-gray-900">{highestStars.name}</p>
-              <p className="text-2xl font-extrabold text-orange-600">{highestStars.star_rating}⭐</p>
-              <p className="text-xs text-gray-600 mt-1">{highestStars.team_name} • {highestStars.points}p</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-xl p-2 border border-gray-100/20 mb-6">
-        <div className="flex gap-2 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-              activeTab === 'all'
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            📊 All Players
-          </button>
-          <button
-            onClick={() => setActiveTab('golden-boot')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-              activeTab === 'golden-boot'
-                ? 'bg-gradient-to-r from-yellow-500 to-amber-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            ⚽ Golden Boot
-          </button>
-          <button
-            onClick={() => setActiveTab('golden-glove')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-              activeTab === 'golden-glove'
-                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            🧤 Golden Glove
-          </button>
-          <button
-            onClick={() => setActiveTab('rankings')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-              activeTab === 'rankings'
-                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            🏆 Top Rankings
-          </button>
-          <button
-            onClick={() => setActiveTab('most-improved')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-              activeTab === 'most-improved'
-                ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            📈 Most Improved
-          </button>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      {activeTab === 'all' && (
-        <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-xl p-4 border border-gray-100/20 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <input
-                type="text"
-                placeholder="Search players by name, ID, or team..."
-                value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            />
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => handleSort('matches_played')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                sortField === 'matches_played' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              Sort by MP {sortField === 'matches_played' && (sortOrder === 'desc' ? '↓' : '↑')}
-            </button>
-            <button
-              onClick={() => handleSort('goals')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                sortField === 'goals' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              Sort by Goals {sortField === 'goals' && (sortOrder === 'desc' ? '↓' : '↑')}
-            </button>
-            <button
-              onClick={() => handleSort('win_rate')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                sortField === 'win_rate' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              Sort by Win% {sortField === 'win_rate' && (sortOrder === 'desc' ? '↓' : '↑')}
-            </button>
-            <button
-              onClick={() => handleSort('points')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                sortField === 'points' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              Sort by Points {sortField === 'points' && (sortOrder === 'desc' ? '↓' : '↑')}
-            </button>
-            <button
-              onClick={() => handleSort('star_rating')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                sortField === 'star_rating' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              Sort by Stars {sortField === 'star_rating' && (sortOrder === 'desc' ? '↓' : '↑')}
-            </button>
-            <button
-              onClick={exportToExcel}
-              className="px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-green-600 text-white hover:bg-green-700 flex items-center gap-2"
-              title="Export to Excel"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Export Excel
-            </button>
+          <div>
+            <TournamentSelector />
           </div>
         </div>
-      </div>
-      )}
 
-      {/* Player Stats Table */}
-      <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl overflow-hidden border border-gray-100/20">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
-          <div className="flex justify-between items-center">
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <Activity className="w-6 h-6 text-amber-400" />
+            </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                {activeTab === 'golden-boot' && '⚽ Golden Boot - Top Scorers'}
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">SYSTEM CONTROL</span>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                Player Statistics
+              </h1>
+              <p className="text-xs text-slate-550 font-mono mt-1">
+                Detailed metrics for all players across active tournaments.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Top Performers Highlights */}
+        {playerStats.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {topScorer && topScorer.goals > 0 && (
+              <div className="bg-yellow-50/10 border border-yellow-250/60 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="p-1 rounded-md bg-yellow-500 text-white"><Flame className="w-3.5 h-3.5" /></span>
+                  <h3 className="text-[10px] font-black uppercase text-yellow-800 tracking-wider">Top Scorer</h3>
+                </div>
+                <p className="font-extrabold text-sm text-slate-900 truncate mt-1">{topScorer.name}</p>
+                <p className="text-xl font-black text-yellow-600 font-mono mt-1">{topScorer.goals} Goals</p>
+                <p className="text-[10px] text-slate-500 font-mono mt-0.5">{topScorer.team_name}</p>
+              </div>
+            )}
+            
+            {mostPOTM && mostPOTM.potm > 0 && (
+              <div className="bg-purple-50/10 border border-purple-250/60 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="p-1 rounded-md bg-purple-500 text-white"><Award className="w-3.5 h-3.5" /></span>
+                  <h3 className="text-[10px] font-black uppercase text-purple-800 tracking-wider">Most POTM</h3>
+                </div>
+                <p className="font-extrabold text-sm text-slate-900 truncate mt-1">{mostPOTM.name}</p>
+                <p className="text-xl font-black text-purple-600 font-mono mt-1">{mostPOTM.potm} Awards</p>
+                <p className="text-[10px] text-slate-500 font-mono mt-0.5">{mostPOTM.team_name}</p>
+              </div>
+            )}
+            
+            {highestPoints && highestPoints.points > 0 && (
+              <div className="bg-emerald-50/10 border border-emerald-250/60 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="p-1 rounded-md bg-emerald-500 text-white"><Crown className="w-3.5 h-3.5" /></span>
+                  <h3 className="text-[10px] font-black uppercase text-emerald-800 tracking-wider">Highest Points</h3>
+                </div>
+                <p className="font-extrabold text-sm text-slate-900 truncate mt-1">{highestPoints.name}</p>
+                <p className="text-xl font-black text-emerald-600 font-mono mt-1">{highestPoints.points} Pts</p>
+                <p className="text-[10px] text-slate-500 font-mono mt-0.5">{highestPoints.team_name} • {highestStars.star_rating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /></p>
+              </div>
+            )}
+            
+            {highestStars && highestStars.star_rating > 0 && (
+              <div className="bg-amber-50/10 border border-amber-250/60 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="p-1 rounded-md bg-amber-500 text-white"><Star className="w-3.5 h-3.5 text-white" /></span>
+                  <h3 className="text-[10px] font-black uppercase text-amber-800 tracking-wider">Top Rated</h3>
+                </div>
+                <p className="font-extrabold text-sm text-slate-900 truncate mt-1">{highestStars.name}</p>
+                <p className="text-xl font-black text-amber-600 font-mono mt-1">{highestStars.star_rating} <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /></p>
+                <p className="text-[10px] text-slate-500 font-mono mt-0.5">{highestStars.team_name} • {highestStars.points} Pts</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tabs Selector */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-2 shadow-sm">
+          <div className="flex gap-2 overflow-x-auto font-mono scrollbar-thin">
+            {[
+              { tab: 'all', label: '<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> All Players', activeClass: 'bg-slate-800 text-white border-slate-900' },
+              { tab: 'golden-boot', label: '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Golden Boot', activeClass: 'bg-yellow-500 text-white border-yellow-600' },
+              { tab: 'golden-glove', label: '🧤 Golden Glove', activeClass: 'bg-emerald-600 text-white border-emerald-700' },
+              { tab: 'rankings', label: '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Top Rankings', activeClass: 'bg-blue-600 text-white border-blue-700' },
+              { tab: 'most-improved', label: '📈 Most Improved', activeClass: 'bg-pink-600 text-white border-pink-700' }
+            ].map(({ tab, label, activeClass }) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as TabType)}
+                className={`px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap border cursor-pointer ${
+                  activeTab === tab
+                    ? `${activeClass} shadow-sm`
+                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Search & Sort Panel */}
+        {activeTab === 'all' && (
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="Search players by name, ID, or team..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2.5 pl-11 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
+                />
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-405">
+                  <Search className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="flex gap-2 flex-wrap items-center">
+                {[
+                  { field: 'matches_played', label: 'MP' },
+                  { field: 'goals', label: 'Goals' },
+                  { field: 'win_rate', label: 'Win%' },
+                  { field: 'points', label: 'Points' },
+                  { field: 'star_rating', label: 'Stars' }
+                ].map(({ field, label }) => (
+                  <button
+                    key={field}
+                    onClick={() => handleSort(field as SortField)}
+                    className={`px-3 py-2 text-xs font-extrabold uppercase rounded-xl transition-all border cursor-pointer ${
+                      sortField === field
+                        ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-900 shadow-sm'
+                        : 'bg-white hover:bg-slate-100 text-slate-650 border-slate-200'
+                    }`}
+                  >
+                    Sort by {label} {sortField === field && (sortOrder === 'desc' ? '↓' : '↑')}
+                  </button>
+                ))}
+                <button
+                  onClick={exportToExcel}
+                  className="px-4 py-2 text-xs font-extrabold uppercase rounded-xl transition-all bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700 flex items-center gap-1.5 cursor-pointer ml-auto md:ml-0"
+                  title="Export to Excel"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export Excel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Player Stats Table */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-wider text-slate-950">
+                {activeTab === 'golden-boot' && '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Golden Boot - Top Scorers'}
                 {activeTab === 'golden-glove' && '🧤 Golden Glove - Clean Sheet Leaders'}
-                {activeTab === 'rankings' && '🏆 Top 20 Rankings'}
+                {activeTab === 'rankings' && '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Top 20 Rankings'}
                 {activeTab === 'most-improved' && '📈 Most Improved Players'}
                 {activeTab === 'all' && 'Player Performance'}
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-[10px] text-slate-500 font-mono mt-0.5">
                 {activeTab === 'golden-boot' && 'Top 10 players by goals scored'}
                 {activeTab === 'golden-glove' && 'Top 10 players by clean sheets'}
                 {activeTab === 'rankings' && 'Top 20 players by points'}
@@ -496,161 +458,161 @@ export default function PlayerStatsPage() {
                 {roundRange !== 'all' && ` (Rounds ${roundRange})`}
               </p>
             </div>
-            <div className="text-sm text-gray-600">
-              <span className="font-semibold">{filteredPlayers.length}</span> / {playerStats.length} Players
+            <div className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
+              <span className="text-slate-800 font-black">{filteredPlayers.length}</span> / {playerStats.length} Players
             </div>
           </div>
+
+          {filteredPlayers.length === 0 ? (
+            <div className="text-center py-12 text-slate-400 p-8">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-4">
+                <Info className="w-6 h-6 text-slate-400" />
+              </div>
+              <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">
+                No Player Stats Found
+              </h3>
+              <p className="text-xs text-slate-550 font-mono">
+                {searchTerm ? 'Try a different search term.' : 'Player statistics will appear once matches are completed.'}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto scrollbar-thin">
+              <table className="min-w-full divide-y divide-slate-100 font-mono text-xs">
+                <thead className="bg-slate-50/50">
+                  <tr className="text-slate-500 font-black uppercase text-[10px] tracking-wider">
+                    <th className="px-6 py-4 text-left sticky left-0 bg-slate-50/90 backdrop-blur-sm z-15 border-r border-slate-100">Player</th>
+                    <th className="px-6 py-4 text-left">Team</th>
+                    <th className="px-4 py-4 text-center cursor-pointer hover:bg-slate-100" onClick={() => handleSort('matches_played')}>
+                      MP {sortField === 'matches_played' && (sortOrder === 'desc' ? '↓' : '↑')}
+                    </th>
+                    <th className="px-4 py-4 text-center cursor-pointer hover:bg-slate-100" onClick={() => handleSort('wins')}>
+                      W {sortField === 'wins' && (sortOrder === 'desc' ? '↓' : '↑')}
+                    </th>
+                    <th className="px-4 py-4 text-center">D</th>
+                    <th className="px-4 py-4 text-center">L</th>
+                    <th className="px-4 py-4 text-center cursor-pointer hover:bg-slate-100" onClick={() => handleSort('goals')}>
+                      Goals {sortField === 'goals' && (sortOrder === 'desc' ? '↓' : '↑')}
+                    </th>
+                    <th className="px-4 py-4 text-center cursor-pointer hover:bg-slate-100" onClick={() => handleSort('goals_conceded')}>
+                      GC {sortField === 'goals_conceded' && (sortOrder === 'desc' ? '↓' : '↑')}
+                    </th>
+                    <th className="px-4 py-4 text-center">CS</th>
+                    <th className="px-4 py-4 text-center cursor-pointer hover:bg-slate-100" onClick={() => handleSort('potm')}>
+                      POTM {sortField === 'potm' && (sortOrder === 'desc' ? '↓' : '↑')}
+                    </th>
+                    <th className="px-4 py-4 text-center cursor-pointer hover:bg-slate-100" onClick={() => handleSort('win_rate')}>
+                      Win % {sortField === 'win_rate' && (sortOrder === 'desc' ? '↓' : '↑')}
+                    </th>
+                    <th className="px-4 py-4 text-center cursor-pointer hover:bg-slate-100" onClick={() => handleSort('points')}>
+                      Points {sortField === 'points' && (sortOrder === 'desc' ? '↓' : '↑')}
+                    </th>
+                    <th className="px-4 py-4 text-center">Base</th>
+                    <th className="px-4 py-4 text-center">Change</th>
+                    <th className="px-6 py-4 text-center cursor-pointer hover:bg-slate-100" onClick={() => handleSort('star_rating')}>
+                      Stars {sortField === 'star_rating' && (sortOrder === 'desc' ? '↓' : '↑')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {filteredPlayers.map((player, index) => (
+                    <tr key={player.player_id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap sticky left-0 bg-white border-r border-slate-100">
+                        <div className="flex items-center gap-2">
+                          {index === 0 && <span className="text-base flex-shrink-0"><Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /></span>}
+                          {index === 1 && <span className="text-base flex-shrink-0"><Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" /></span>}
+                          {index === 2 && <span className="text-base flex-shrink-0"><Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" /></span>}
+                          <div>
+                            <div className="text-xs font-bold text-slate-850">{player.name}</div>
+                            <div className="text-[10px] text-slate-450 font-mono mt-0.5">{player.player_id}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-700 font-bold uppercase">{player.team_name}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-center text-slate-900 font-black">{player.matches_played}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-center text-emerald-650 font-black">{player.wins}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-center text-slate-550 font-bold">{player.draws}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-center text-rose-600 font-black">{player.losses}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-center">
+                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-yellow-50 text-yellow-800 border border-yellow-100 font-bold">
+                          <Flame className="w-3 h-3 text-yellow-600" /> {player.goals}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-center">
+                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-100 font-bold">
+                          <Shield className="w-3 h-3 text-rose-500" /> {player.goals_conceded || 0}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-center">
+                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-emerald-50/55 text-emerald-800 border border-emerald-100 font-bold">
+                          <CheckCircle className="w-3 h-3 text-emerald-500" /> {player.clean_sheets}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-center">
+                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-100 font-bold">
+                          <Award className="w-3 h-3 text-purple-600" /> {player.potm}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-center">
+                        <span className={`font-black ${player.win_rate >= 50 ? 'text-emerald-650' : 'text-slate-600'}`}>
+                          {player.win_rate.toFixed(1)}%
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-center">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded bg-slate-800 text-white font-mono font-black">
+                          {player.points}p
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-center text-slate-500 font-bold font-mono">
+                        {player.base_points || 0}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-center font-mono">
+                        {player.base_points !== undefined && player.base_points > 0 ? (
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black ${
+                            player.points - player.base_points > 0 
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                              : player.points - player.base_points < 0
+                              ? 'bg-rose-50 text-rose-750 border border-rose-100'
+                              : 'bg-slate-100 text-slate-600 border border-slate-200'
+                          }`}>
+                            {player.points - player.base_points > 0 ? '↑' : player.points - player.base_points < 0 ? '↓' : '='} 
+                            {player.points - player.base_points > 0 ? '+' : ''}{player.points - player.base_points}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-slate-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-amber-50 text-amber-850 border border-amber-200 font-black font-mono">
+                          {player.star_rating} <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
-        {filteredPlayers.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <h3 className="text-lg font-medium text-gray-600 mb-2">No Player Stats Found</h3>
-            <p className="text-sm">{searchTerm ? 'Try a different search term' : 'Player statistics will appear once matches are completed'}</p>
+        {/* Legend Notice */}
+        <div className="console-card bg-slate-50 border border-slate-200 rounded-3xl p-5">
+          <h3 className="text-xs font-black uppercase text-slate-850 tracking-wider flex items-center gap-1.5 mb-3">
+            <Info className="w-4 h-4 text-slate-500" /> Glossary Legend
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 text-[10px] font-mono text-slate-550">
+            <div><strong>MP</strong>: Matches Played</div>
+            <div><strong>W</strong>: Wins</div>
+            <div><strong>D</strong>: Draws</div>
+            <div><strong>L</strong>: Losses</div>
+            <div><strong>GC</strong>: Goals Conceded</div>
+            <div><strong>CS</strong>: Clean Sheets</div>
+            <div><strong>POTM</strong>: Player of Match</div>
+            <div><strong>Win %</strong>: Win Percentage</div>
+            <div><strong>Points</strong>: Current Points</div>
+            <div><strong>Base</strong>: Starting Points</div>
+            <div><strong>Change</strong>: Points Delta</div>
+            <div><strong>Stars</strong>: Star Rating</div>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50/50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50">Player</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('matches_played')}>
-                    MP {sortField === 'matches_played' && (sortOrder === 'desc' ? '↓' : '↑')}
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('wins')}>
-                    W {sortField === 'wins' && (sortOrder === 'desc' ? '↓' : '↑')}
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">D</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">L</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('goals')}>
-                    Goals {sortField === 'goals' && (sortOrder === 'desc' ? '↓' : '↑')}
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('goals_conceded')}>
-                    GC {sortField === 'goals_conceded' && (sortOrder === 'desc' ? '↓' : '↑')}
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">CS</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('potm')}>
-                    POTM {sortField === 'potm' && (sortOrder === 'desc' ? '↓' : '↑')}
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('win_rate')}>
-                    Win % {sortField === 'win_rate' && (sortOrder === 'desc' ? '↓' : '↑')}
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('points')}>
-                    Points {sortField === 'points' && (sortOrder === 'desc' ? '↓' : '↑')}
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Base Pts
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Change
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('star_rating')}>
-                    Stars {sortField === 'star_rating' && (sortOrder === 'desc' ? '↓' : '↑')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white/60 divide-y divide-gray-200/50">
-                {filteredPlayers.map((player, index) => (
-                  <tr key={player.player_id} className="hover:bg-purple-50/50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap sticky left-0 bg-white">
-                      <div className="flex items-center gap-2">
-                        {index === 0 && <span className="text-lg">🥇</span>}
-                        {index === 1 && <span className="text-lg">🥈</span>}
-                        {index === 2 && <span className="text-lg">🥉</span>}
-                        <div>
-                          <div className="text-sm font-bold text-gray-900">{player.name}</div>
-                          <div className="text-xs text-gray-500">{player.player_id}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{player.team_name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-900">{player.matches_played}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold text-green-600">{player.wins}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600">{player.draws}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold text-red-600">{player.losses}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        ⚽ {player.goals}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        🥅 {player.goals_conceded || 0}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        🛡️ {player.clean_sheets}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                        ⭐ {player.potm}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className={`text-sm font-semibold ${player.win_rate >= 50 ? 'text-green-600' : 'text-gray-600'}`}>
-                        {player.win_rate.toFixed(1)}%
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800">
-                        💎 {player.points}p
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="text-sm font-medium text-gray-600">
-                        {player.base_points || 0}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      {player.base_points !== undefined && player.base_points > 0 ? (
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ${
-                          player.points - player.base_points > 0 
-                            ? 'bg-green-100 text-green-700' 
-                            : player.points - player.base_points < 0
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {player.points - player.base_points > 0 ? '↑' : player.points - player.base_points < 0 ? '↓' : '='} 
-                          {player.points - player.base_points > 0 ? '+' : ''}{player.points - player.base_points}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-800">
-                        {'⭐'.repeat(Math.min(player.star_rating, 10))}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Legend */}
-      <div className="mt-6 bg-purple-50 border border-purple-200 rounded-xl p-4">
-        <p className="text-xs text-purple-800 font-medium mb-2">📊 Legend</p>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs text-purple-700">
-          <div><strong>MP</strong> = Matches Played</div>
-          <div><strong>W</strong> = Wins</div>
-          <div><strong>D</strong> = Draws</div>
-          <div><strong>L</strong> = Losses</div>
-          <div><strong>GC</strong> = Goals Conceded</div>
-          <div><strong>CS</strong> = Clean Sheets</div>
-          <div><strong>POTM</strong> = Player of the Match</div>
-          <div><strong>Win %</strong> = Win Percentage</div>
-          <div><strong>Points</strong> = Current Season Points (Max ±5/match)</div>
-          <div><strong>Base Pts</strong> = Starting Points (from previous season)</div>
-          <div><strong>Change</strong> = Points gained/lost this season (Current - Base)</div>
-          <div><strong>Stars</strong> = Star Rating (3☆-10☆)</div>
         </div>
       </div>
     </div>

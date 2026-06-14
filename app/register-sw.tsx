@@ -14,10 +14,10 @@ export default function RegisterServiceWorker() {
       navigator.serviceWorker
         .register('/firebase-messaging-sw.js')
         .then((registration) => {
-          console.log('✅ Service Worker registered successfully:', registration.scope);
+          console.log('[SUCCESS] Service Worker registered successfully:', registration.scope);
         })
         .catch((error) => {
-          console.error('❌ Service Worker registration failed:', error);
+          console.error('[ERROR] Service Worker registration failed:', error);
         });
     } else {
       console.warn('Service Worker not supported in this browser');
@@ -25,7 +25,7 @@ export default function RegisterServiceWorker() {
 
     // Listen for foreground messages (when app is open)
     onForegroundMessage((payload) => {
-      console.log('📬 Received foreground message:', payload);
+      console.log('[INFO] Received foreground message:', payload);
       
       // You can show a toast notification here
       // or update UI based on the notification

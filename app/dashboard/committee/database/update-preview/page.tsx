@@ -1,4 +1,5 @@
 'use client'
+import { XCircle, RefreshCw, CheckCircle, Lock, BarChart2, AlertTriangle, Plus } from 'lucide-react';
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -110,16 +111,16 @@ export default function UpdatePreviewPage() {
     const confirmMessage = `This will update ${comparison.summary.willUpdate} players and create ${playersToCreate.length} new entries.
 
 WHAT WILL BE UPDATED:
-✅ Player stats (ratings, speed, shooting, passing, etc.)
-✅ Position, playing style, nationality, age
-✅ Club name (real-world team)
+<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Player stats (ratings, speed, shooting, passing, etc.)
+<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Position, playing style, nationality, age
+<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Club name (real-world team)
 
 WHAT WILL BE PRESERVED (NOT changed):
-🔒 Team assignments (team_id, team_name)
-🔒 Ownership status (is_sold)
-🔒 Purchase price (acquisition_value)
-🔒 Season ID and Round ID
-🔒 Contract information
+<Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Team assignments (team_id, team_name)
+<Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Ownership status (is_sold)
+<Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Purchase price (acquisition_value)
+<Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Season ID and Round ID
+<Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Contract information
 
 Continue?`;
     
@@ -159,7 +160,7 @@ Continue?`;
         ...comparison.toCreate.filter((player: any) => !excludedPlayerIds.has(player.player_id?.toString())).map((p: any) => playerDataMap.get(p.player_id.toString())).filter(Boolean)
       ];
 
-      console.log(`📊 Processing ${playersToProcess.length} players (${comparison.toUpdate.length} updates + ${comparison.toCreate.filter((p: any) => !excludedPlayerIds.has(p.player_id?.toString())).length} creates)`);
+      console.log(`<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Processing ${playersToProcess.length} players (${comparison.toUpdate.length} updates + ${comparison.toCreate.filter((p: any) => !excludedPlayerIds.has(p.player_id?.toString())).length} creates)`);
 
       const response = await fetchWithTokenRefresh('/api/players/bulk', {
         method: 'POST',
@@ -234,14 +235,14 @@ Continue?`;
       <div className="glass rounded-3xl p-6 mb-8 shadow-lg">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold gradient-text mb-2">📊 Update Stats Preview</h1>
+            <h1 className="text-3xl font-bold gradient-text mb-2"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Update Stats Preview</h1>
             <p className="text-gray-600">Review changes before updating the database</p>
           </div>
           <Link
             href="/dashboard/committee/database"
             className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
           >
-            ← Back
+            &larr; Back
           </Link>
         </div>
       </div>
@@ -285,7 +286,7 @@ Continue?`;
                 : 'text-gray-600 hover:bg-gray-50'
             }`}
           >
-            🔄 Will Update ({comparison.summary.willUpdate})
+            <RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Will Update ({comparison.summary.willUpdate})
           </button>
           <button
             onClick={() => setActiveTab('create')}
@@ -305,7 +306,7 @@ Continue?`;
                 : 'text-gray-600 hover:bg-gray-50'
             }`}
           >
-            ✓ Unchanged ({comparison.summary.unchanged})
+            Yes Unchanged ({comparison.summary.unchanged})
           </button>
           <button
             onClick={() => setActiveTab('notfound')}
@@ -315,7 +316,7 @@ Continue?`;
                 : 'text-gray-600 hover:bg-gray-50'
             }`}
           >
-            ⚠️ Not in Upload ({comparison.summary.notFound})
+            <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Not in Upload ({comparison.summary.notFound})
           </button>
         </div>
 
@@ -342,7 +343,7 @@ Continue?`;
                     <div key={idx} className="glass rounded-lg p-3 border border-orange-200 hover:shadow-md transition-shadow">
                       {/* Player Name Header */}
                       <div className="font-bold text-lg mb-2 text-gray-900 flex items-center gap-2">
-                        <span className="text-orange-600">🔄</span>
+                        <span className="text-orange-600"><RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /></span>
                         {player.name}
                       </div>
                       
@@ -351,7 +352,7 @@ Continue?`;
                         {/* OLD VALUES - Compact */}
                         <div className="bg-red-50/70 rounded-md p-2 border border-red-200">
                           <div className="text-xs font-semibold text-red-700 mb-1.5 flex items-center gap-1">
-                            <span>❌</span>
+                            <span><XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /></span>
                             <span>Current</span>
                           </div>
                           <div className="grid grid-cols-3 gap-x-2 gap-y-1 text-xs">
@@ -475,7 +476,7 @@ Continue?`;
                         {/* NEW VALUES - Compact */}
                         <div className="bg-green-50/70 rounded-md p-2 border border-green-200">
                           <div className="text-xs font-semibold text-green-700 mb-1.5 flex items-center gap-1">
-                            <span>✅</span>
+                            <span><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /></span>
                             <span>Updated</span>
                           </div>
                           <div className="grid grid-cols-3 gap-x-2 gap-y-1 text-xs">
@@ -653,7 +654,7 @@ Continue?`;
                   <strong>These players will be CREATED:</strong> New entries will be added to the database.
                   {comparison.toCreate.some((p: any) => p.hasDuplicates) && (
                     <span className="block mt-2 text-orange-700 font-medium">
-                      ⚠️ Some players have potential duplicates (same name). Uncheck to skip creation.
+                      <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Some players have potential duplicates (same name). Uncheck to skip creation.
                     </span>
                   )}
                 </p>
@@ -699,7 +700,7 @@ Continue?`;
                       }}
                       className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all shadow-sm"
                     >
-                      ✓ Select All {showOnlyDuplicates ? 'Duplicates' : 'Visible'}
+                      Yes Select All {showOnlyDuplicates ? 'Duplicates' : 'Visible'}
                     </button>
                     <button
                       onClick={() => {
@@ -710,7 +711,7 @@ Continue?`;
                       }}
                       className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-all shadow-sm"
                     >
-                      ✗ Deselect All {showOnlyDuplicates ? 'Duplicates' : 'Visible'}
+                      No Deselect All {showOnlyDuplicates ? 'Duplicates' : 'Visible'}
                     </button>
                     {showOnlyDuplicates && (
                       <button
@@ -772,7 +773,7 @@ Continue?`;
                         <div className="flex-1">
                           <div className="font-bold text-base text-gray-900 flex items-center gap-2 flex-wrap">
                             <span className={hasDuplicates ? "text-orange-600" : "text-green-600"}>
-                              {hasDuplicates ? "⚠️" : "➕"}
+                              {hasDuplicates ? <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> : <Plus className="w-4 h-4 inline-block text-green-500 mr-1 align-text-bottom" />}
                             </span>
                             {player.name}
                             {hasDuplicates && (
@@ -934,7 +935,7 @@ Continue?`;
                           {player.position} • Rating: {player.overall_rating} • Team: {player.team_name || 'None'}
                         </div>
                       </div>
-                      <div className="text-xs text-green-600 font-medium">✓ Up to date</div>
+                      <div className="text-xs text-green-600 font-medium">Yes Up to date</div>
                     </div>
                   ))}
                 </div>

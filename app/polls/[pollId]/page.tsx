@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Shield, Clock, Vote, ArrowLeft, Award, CheckCircle } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Award, CheckCircle, Clock, Crown, FileText, Medal, Shield, Star, TrendingUp, Trophy, Vote, XCircle } from 'lucide-react';
 
 interface PollOption {
     id: string;
@@ -103,7 +103,7 @@ export default function PollPage() {
                 const result = await getRedirectResult(auth);
 
                 if (result && mounted) {
-                    console.log('✅ Redirect sign-in successful:', result.user.email);
+                    console.log('[SUCCESS] Redirect sign-in successful:', result.user.email);
 
                     // Set the token
                     const idToken = await result.user.getIdToken(true);
@@ -114,7 +114,7 @@ export default function PollPage() {
                     });
 
                     if (tokenResponse.ok) {
-                        console.log('✅ Token set successfully');
+                        console.log('[SUCCESS] Token set successfully');
 
                         // Show success and reload after a delay with cache busting
                         setSuccess('Successfully signed in! Reloading...');
@@ -249,7 +249,7 @@ export default function PollPage() {
             const data = await response.json();
 
             if (data.success) {
-                setSuccess('✅ Vote submitted successfully!');
+                setSuccess('[SUCCESS] Vote submitted successfully!');
                 setHasVoted(true);
                 loadPoll(); // Reload to get updated vote counts
             } else {
@@ -278,7 +278,7 @@ export default function PollPage() {
         return (
             <div className="min-h-screen console-bg flex items-center justify-center p-4">
                 <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-sm max-w-md w-full space-y-4">
-                    <div className="text-4xl">❌</div>
+                    <div className="text-4xl text-rose-500 flex justify-center"><XCircle className="w-12 h-12" /></div>
                     <h1 className="text-xl font-bold text-slate-900">Poll Not Found</h1>
                     <p className="text-xs text-slate-500 font-mono">{error}</p>
                     <button
@@ -315,7 +315,7 @@ export default function PollPage() {
                     href="/polls"
                     className="inline-flex items-center text-xs font-mono font-bold text-slate-500 hover:text-amber-600 transition-colors"
                 >
-                    ← BACK_TO_POLLS
+                    {"<-"} BACK_TO_POLLS
                 </Link>
 
                 {/* Header Title Panel */}
@@ -398,7 +398,7 @@ export default function PollPage() {
                                     ? 'bg-amber-50 border-amber-200 text-amber-800'
                                     : 'bg-slate-50 border-slate-200 text-slate-500'
                             }`}>
-                                {hasVoted ? '✅ ALREADY VOTED' : canVote ? '⏳ WAITING FOR VOTE' : '🔒 POLL CLOSED'}
+                                {hasVoted ? 'ALREADY VOTED' : canVote ? 'WAITING FOR VOTE' : 'POLL CLOSED'}
                             </span>
                         </div>
                     </div>
@@ -407,7 +407,7 @@ export default function PollPage() {
                 {/* Messages */}
                 {error && (
                     <div className="p-4 bg-rose-50 border border-rose-250/60 rounded-2xl flex items-start gap-3 animate-fade-in">
-                        <span className="text-lg">⚠️</span>
+                        <AlertTriangle className="w-5 h-5 text-amber-500 inline-block" />
                         <div className="text-xs font-mono font-bold text-rose-800 uppercase tracking-wide">
                             {error}
                         </div>
@@ -416,7 +416,7 @@ export default function PollPage() {
 
                 {success && (
                     <div className="p-4 bg-emerald-50 border border-emerald-250/60 rounded-2xl flex items-start gap-3 animate-fade-in">
-                        <span className="text-lg">✅</span>
+                        <CheckCircle className="w-5 h-5 text-emerald-500 inline-block" />
                         <div className="text-xs font-mono font-bold text-emerald-800 uppercase tracking-wide">
                             {success}
                         </div>
@@ -552,7 +552,7 @@ export default function PollPage() {
                 {/* Name Input for Voting */}
                 {canVote && (
                     <div className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm text-center space-y-4">
-                        <div className="text-4xl">✍️</div>
+                        <div className="text-4xl text-amber-500 flex justify-center"><FileText className="w-12 h-12" /></div>
                         <div>
                             <h3 className="text-xl font-extrabold text-slate-900">
                                 Verify Identity & Vote
@@ -586,7 +586,7 @@ export default function PollPage() {
                             </span>
                         ) : (
                             <>
-                                🗳️ SUBMIT VOTE
+                                <Vote className="w-4 h-4 inline mr-1.5 align-middle" /> SUBMIT VOTE
                             </>
                         )}
                     </button>

@@ -4,18 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
-import { 
-  Coins, 
-  Award, 
-  ArrowLeft, 
-  Info, 
-  HelpCircle, 
-  Save, 
-  Wallet, 
-  TrendingUp, 
-  Sparkles, 
-  TrendingDown
-} from 'lucide-react'
+import { Coins, Award, ArrowLeft, Info, HelpCircle, Save, Wallet, TrendingUp, Sparkles, TrendingDown, CheckCircle } from 'lucide-react'
 
 interface Team {
   teamId: string
@@ -111,7 +100,7 @@ export default function RefundsPage() {
       const data = await response.json()
 
       if (data.success) {
-        alert(`✅ Refund sent successfully!\n\nTeam: ${team.teamName}\nAmount: £${amountNum.toFixed(2)}\nType: ${refundType === 'football' ? 'Football' : 'Real Player'}`)
+        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Refund sent successfully!\n\nTeam: ${team.teamName}\nAmount: £${amountNum.toFixed(2)}\nType: ${refundType === 'football' ? 'Football' : 'Real Player'}`)
         
         // Reset form
         setSelectedTeam('')
@@ -137,7 +126,7 @@ export default function RefundsPage() {
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-xs text-slate-500 uppercase tracking-wider font-extrabold">Loading teams...</p>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading teams...</p>
         </div>
       </div>
     )

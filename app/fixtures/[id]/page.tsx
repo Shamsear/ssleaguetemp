@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Shield, Activity } from 'lucide-react';
+import { Activity, Crown, Medal, Repeat, Shield, Star, TrendingUp, Trophy } from 'lucide-react';
 
 interface Matchup {
   home_player_id: string;
@@ -181,7 +181,7 @@ export default function PublicFixtureDetailPage() {
           href="/fixtures"
           className="inline-flex items-center text-xs font-mono font-bold text-slate-500 hover:text-amber-600 transition-colors"
         >
-          ← BACK_TO_FIXTURES
+          {"<-"} BACK_TO_FIXTURES
         </Link>
 
         {/* Match Header Panel */}
@@ -256,7 +256,7 @@ export default function PublicFixtureDetailPage() {
           {/* MOTM */}
           {hasResults && fixture.motm_player_name && (
             <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-center gap-2 font-mono text-xs">
-              <span className="text-amber-500 text-base">★</span>
+              <Star className="w-4 h-4 text-amber-500 fill-amber-500 inline align-middle" />
               <span className="font-bold text-slate-800 uppercase tracking-wide">
                 Man of the Match: <span className="text-amber-600 font-black">{fixture.motm_player_name}</span>
               </span>
@@ -285,7 +285,7 @@ export default function PublicFixtureDetailPage() {
                       </p>
                       {matchup.home_substituted && (
                         <p className="text-[10px] text-amber-650 font-mono mt-0.5">
-                          🔁 SUB: {matchup.home_original_player_name}
+                          <Repeat className="w-3.5 h-3.5 text-slate-500 inline mr-1 align-text-bottom" /> SUB: {matchup.home_original_player_name}
                           {matchup.home_sub_penalty ? ` (-${matchup.home_sub_penalty} PTS)` : ''}
                         </p>
                       )}
@@ -321,7 +321,7 @@ export default function PublicFixtureDetailPage() {
                       </p>
                       {matchup.away_substituted && (
                         <p className="text-[10px] text-amber-655 font-mono mt-0.5">
-                          🔁 SUB: {matchup.away_original_player_name}
+                          <Repeat className="w-3.5 h-3.5 text-slate-500 inline mr-1 align-text-bottom" /> SUB: {matchup.away_original_player_name}
                           {matchup.away_sub_penalty ? ` (-${matchup.away_sub_penalty} PTS)` : ''}
                         </p>
                       )}

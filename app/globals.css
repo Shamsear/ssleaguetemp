@@ -534,16 +534,16 @@ html {
   border: 1px solid rgba(15, 23, 42, 0.15) !important;
 }
 
-/* Override container cards inside forms */
-.console-card .bg-blue-50,
-.console-card .bg-purple-50,
-.console-card .bg-green-50,
-.console-card .bg-red-50,
-.console-card .bg-gray-50,
-.console-card .bg-slate-50,
-.console-card .bg-gradient-to-br,
-.console-card .border-2,
-.console-card .border-slate-150 {
+/* Override container cards inside forms (excluding small icon wrappers and badges) */
+.console-card .bg-blue-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
+.console-card .bg-purple-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
+.console-card .bg-green-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
+.console-card .bg-red-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
+.console-card .bg-gray-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
+.console-card .bg-slate-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
+.console-card .bg-gradient-to-br:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
+.console-card .border-2:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
+.console-card .border-slate-150:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16) {
   background-color: #f8fafc !important; /* bg-slate-50 */
   background-image: none !important;
   border: 1px solid rgba(15, 23, 42, 0.06) !important; /* border-slate-100 */

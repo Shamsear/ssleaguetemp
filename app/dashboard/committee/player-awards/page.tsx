@@ -409,7 +409,7 @@ export default function PlayerAwardsManagementPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 self-start sm:self-center bg-slate-55 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/40">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Season:</span>
+            <span className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Active Season:</span>
             <span className="text-xs font-extrabold text-amber-500">{userSeasonId}</span>
           </div>
         </div>
@@ -564,7 +564,7 @@ export default function PlayerAwardsManagementPage() {
                   <div key={idx} className="bg-white p-3 rounded-lg border border-slate-200/40 flex items-center justify-between text-xs">
                     <div>
                       <span className="font-extrabold text-slate-800">{award.award_type}</span>
-                      <span className="mx-2 text-slate-400">→</span>
+                      <span className="mx-2 text-slate-400"> &rarr; </span>
                       <span className="text-amber-500 font-extrabold">{award.player_name}</span>
                     </div>
                     <div className="text-[10px] text-slate-500 font-bold uppercase">

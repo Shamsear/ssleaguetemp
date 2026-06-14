@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, DollarSign, AlertTriangle, BarChart2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -157,7 +158,7 @@ export default function RealPlayersPage() {
                 console.log(`Player ${data.player_name}: auction_value was 0, set to ${auctionValue} (${category})`);
               }
 
-              console.log(`Player ${data.player_name}: auction_value=${data.auction_value} (${typeof data.auction_value}) -> parsed=${auctionValue}, team_id=${data.team_id}`);
+              console.log(`Player ${data.player_name}: auction_value=${data.auction_value} (${typeof data.auction_value}) &rarr; parsed=${auctionValue}, team_id=${data.team_id}`);
 
               const player: Player = {
                 id: data.player_id || data.id,
@@ -366,7 +367,7 @@ export default function RealPlayersPage() {
       setAvailablePlayers(prev => prev.filter(p => p.id !== quickAssignPlayer.id));
 
       const teamName = teams.find(t => t.id === quickAssignTeam)?.name || 'Team';
-      setSuccess(`✅ ${quickAssignPlayer.playerName} assigned to ${teamName} for 💰${auctionValue.toLocaleString()}!`);
+      setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${quickAssignPlayer.playerName} assigned to ${teamName} for <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />${auctionValue.toLocaleString()}!`);
 
       // Reset form
       setQuickAssignPlayer(null);
@@ -433,7 +434,7 @@ export default function RealPlayersPage() {
         throw new Error(result.error || 'Failed to save team');
       }
 
-      setSuccess(`✅ Successfully saved ${team.name} with ${team.assignedPlayers.length} players!`);
+      setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Successfully saved ${team.name} with ${team.assignedPlayers.length} players!`);
 
       setTimeout(() => {
         setSuccess(null);
@@ -450,7 +451,7 @@ export default function RealPlayersPage() {
       <div className="console-bg min-h-screen flex items-center justify-center">
         <div className="text-center font-mono">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-xs text-slate-400 font-bold uppercase tracking-wider">Loading team databases...</p>
+          <p className="mt-4 text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">Loading team databases...</p>
         </div>
       </div>
     );
@@ -480,7 +481,7 @@ export default function RealPlayersPage() {
               onClick={() => router.push('/dashboard/committee')}
               className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all mb-4"
             >
-              ← Back to Panel
+              &larr; Back to Panel
             </button>
             <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight font-mono">
               🎯 SS Members Team Assignment
@@ -524,7 +525,7 @@ export default function RealPlayersPage() {
                     : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600'
                 }`}
               >
-                💰 Actual Balance
+                <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Actual Balance
               </button>
               <button
                 onClick={() => setShowActualBudget(false)}
@@ -534,10 +535,10 @@ export default function RealPlayersPage() {
                     : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600'
                 }`}
               >
-                📊 Max Limit
+                <BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Max Limit
               </button>
             </div>
-            <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+            <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
               {showActualBudget ? 'Active balance loaded from database' : 'Initial budget minus locally calculated costs'}
             </div>
           </div>
@@ -547,7 +548,7 @@ export default function RealPlayersPage() {
         {error && (
           <div className="bg-rose-50 border border-rose-200/60 rounded-2xl p-4 font-mono text-xs">
             <div className="flex items-center gap-2 text-rose-800">
-              <span className="font-extrabold">⚠️ ERROR:</span>
+              <span className="font-extrabold"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> ERROR:</span>
               <span className="font-bold uppercase tracking-wide">{error}</span>
             </div>
           </div>
@@ -556,7 +557,7 @@ export default function RealPlayersPage() {
         {success && (
           <div className="bg-emerald-50 border border-emerald-200/60 rounded-2xl p-4 font-mono text-xs">
             <div className="flex items-center gap-2 text-emerald-800">
-              <span className="font-extrabold">✅ SUCCESS:</span>
+              <span className="font-extrabold"><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> SUCCESS:</span>
               <span className="font-bold uppercase tracking-wide">{success}</span>
             </div>
           </div>
@@ -572,7 +573,7 @@ export default function RealPlayersPage() {
                 </svg>
                 Quick Assign - Live Auction
               </h2>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Assign players instantly as WhatsApp auction happens</p>
+              <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5">Assign players instantly as WhatsApp auction happens</p>
             </div>
             <div className="px-2 py-0.5 bg-rose-600/90 text-white font-extrabold text-[9px] uppercase tracking-wider rounded border border-rose-500 animate-pulse">
               🔴 LIVE
@@ -600,7 +601,7 @@ export default function RealPlayersPage() {
                     .sort((a, b) => a.playerName.localeCompare(b.playerName))
                     .map(player => (
                       <option key={player.id} value={player.id}>
-                        {player.playerName} ({player.category}) - Min 💰250
+                        {player.playerName} ({player.category}) - Min <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />250
                       </option>
                     ))}
                 </select>
@@ -609,7 +610,7 @@ export default function RealPlayersPage() {
                     <span className="text-[9px] font-extrabold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded uppercase">
                       {quickAssignPlayer.category}
                     </span>
-                    <span className="text-[10px] font-black text-slate-600">MIN 💰250</span>
+                    <span className="text-[10px] font-black text-slate-600">MIN <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />250</span>
                   </div>
                 )}
               </div>
@@ -650,7 +651,7 @@ export default function RealPlayersPage() {
                         <>
                           <span className="text-[10px] text-slate-500 font-bold uppercase">BUDGET LEFT:</span>
                           <span className={`text-[10px] font-black ${remaining < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                            💰{remaining.toLocaleString()}
+                            <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{remaining.toLocaleString()}
                           </span>
                         </>
                       );
@@ -663,7 +664,7 @@ export default function RealPlayersPage() {
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">3. Auction Value</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-semibold">💰</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-semibold"><DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /></span>
                   <input
                     type="number"
                     value={quickAssignAuction}
@@ -678,7 +679,7 @@ export default function RealPlayersPage() {
                   <div className="mt-2 px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
                     <span className="text-[10px] text-slate-500 font-bold uppercase">FINAL PRICE:</span>
                     <span className="text-[10px] font-black text-blue-600">
-                      💰{(parseInt(quickAssignAuction) || 0).toLocaleString()}
+                      <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{(parseInt(quickAssignAuction) || 0).toLocaleString()}
                     </span>
                   </div>
                 )}
@@ -722,7 +723,7 @@ export default function RealPlayersPage() {
                   </svg>
                   Available SS Members
                 </h2>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{availablePlayers.length} unassigned players</p>
+                <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5">{availablePlayers.length} unassigned players</p>
 
                 <div className="mt-4">
                   <input
@@ -737,7 +738,7 @@ export default function RealPlayersPage() {
 
               <div className="max-h-[500px] overflow-y-auto p-4 space-y-2">
                 {filteredAvailablePlayers.length === 0 ? (
-                  <div className="text-center py-12 text-slate-400 uppercase font-bold tracking-wider">
+                  <div className="text-center py-12 text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                     <p className="text-xs">
                       {searchTerm ? 'No players found' : 'All players assigned!'}
                     </p>
@@ -764,7 +765,7 @@ export default function RealPlayersPage() {
                           </span>
                         </div>
                         <div className="text-right">
-                          <span className="font-black text-blue-600 block text-xs">💰{player.auctionValue}</span>
+                          <span className="font-black text-blue-600 block text-xs"><DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{player.auctionValue}</span>
                         </div>
                       </div>
                     </div>
@@ -818,7 +819,7 @@ export default function RealPlayersPage() {
                             </span>
                             <span className="text-slate-400 font-bold">•</span>
                             <span className={`font-bold uppercase tracking-wider ${isOverBudget ? 'text-rose-600 font-extrabold' : 'text-emerald-600'}`}>
-                              💰{displayBudget.toLocaleString()} LEFT
+                              <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{displayBudget.toLocaleString()} LEFT
                             </span>
                           </div>
                         </div>
@@ -827,7 +828,7 @@ export default function RealPlayersPage() {
                       <div className="flex items-center gap-2.5">
                         {isValidCount && !isOverBudget && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-emerald-50 border border-emerald-200 text-emerald-700">
-                            ✓ READY
+                            Yes READY
                           </span>
                         )}
 
@@ -851,7 +852,7 @@ export default function RealPlayersPage() {
                         <div className="flex justify-between mb-1.5">
                           <span className="text-slate-500 font-bold uppercase">Budget Usage</span>
                           <span className={`font-bold ${isOverBudget ? 'text-rose-600 font-extrabold' : 'text-slate-700'}`}>
-                            💰{displaySpent.toLocaleString()} / 💰{displayTotal.toLocaleString()}
+                            <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{displaySpent.toLocaleString()} / <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{displayTotal.toLocaleString()}
                           </span>
                         </div>
                         <div className="w-full bg-slate-200 rounded-full h-1.5 border border-slate-300/20">
@@ -903,7 +904,7 @@ export default function RealPlayersPage() {
                                 <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/50">
                                   <span className="text-[10px] text-slate-500 font-bold uppercase">Auction Bid:</span>
                                   <div className="relative">
-                                    <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-500 font-semibold text-[10px]">💰</span>
+                                    <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-500 font-semibold text-[10px]"><DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /></span>
                                     <input
                                       type="number"
                                       value={player.auctionValue}
@@ -911,7 +912,7 @@ export default function RealPlayersPage() {
                                       min={250}
                                       step="10"
                                       className="w-20 pl-5 pr-2 py-1 text-[11px] font-bold text-right border border-slate-200 rounded-lg focus:border-slate-800 focus:outline-none"
-                                      title="Minimum: 💰250"
+                                      title="Minimum: $250"
                                     />
                                   </div>
                                 </div>
@@ -990,7 +991,7 @@ export default function RealPlayersPage() {
                                           </span>
                                         </div>
                                         <span className="text-xs font-black text-blue-600">
-                                          💰{player.auctionValue}
+                                          <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{player.auctionValue}
                                         </span>
                                       </button>
                                     ))}
@@ -1000,7 +1001,7 @@ export default function RealPlayersPage() {
                                     return p.playerName.toLowerCase().includes(searchTerm) ||
                                       p.category?.toLowerCase().includes(searchTerm);
                                   }).length === 0 && (
-                                      <div className="px-3 py-4 text-center text-xs text-slate-400 font-bold uppercase tracking-wider">
+                                      <div className="px-3 py-4 text-center text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                                         No players found
                                       </div>
                                     )}

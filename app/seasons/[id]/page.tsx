@@ -3,19 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  Trophy as TrophyIcon, 
-  Shield, 
-  Award as AwardIcon,
-  Flame,
-  Target,
-  RotateCcw,
-  Zap,
-  Layers,
-  ArrowRight,
-  Calendar,
-  ChevronDown
-} from 'lucide-react';
+import { ArrowRight, Award as AwardIcon, Calendar, ChevronDown, Crown, Flame, Layers, Medal, RotateCcw, Shield, Star, Target, TrendingUp, Trophy, Trophy as TrophyIcon, Zap } from 'lucide-react';
 import { useResolveTeamNames } from '@/hooks/useResolveTeamNames';
 
 interface Season {
@@ -332,7 +320,7 @@ export default function SeasonDetailPage() {
           <RotateCcw className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-slate-900 text-lg font-bold mb-2">{error || 'Season not found'}</p>
           <Link href="/seasons" className="text-amber-600 hover:text-amber-700 font-bold text-sm inline-flex items-center gap-1 justify-center">
-            ← Back to Seasons
+            {"<-"} Back to Seasons
           </Link>
         </div>
       </div>
@@ -398,7 +386,7 @@ export default function SeasonDetailPage() {
           href="/seasons"
           className="inline-flex items-center text-xs font-mono font-bold text-slate-500 hover:text-amber-600 transition-colors"
         >
-          ← BACK_TO_ARCHIVE
+          {"<-"} BACK_TO_ARCHIVE
         </Link>
 
         {/* Season Header */}
@@ -953,7 +941,7 @@ export default function SeasonDetailPage() {
                               {(seasonNum === 16 || seasonNum === 17) ? (
                                 player.star_rating ? (
                                   <span className="text-amber-500 text-sm font-bold tracking-wider">
-                                    {'★'.repeat(player.star_rating)}
+                                    {player.star_rating ? [...Array(player.star_rating)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline-block" />) : null}
                                   </span>
                                 ) : (
                                   <span className="text-slate-400 font-mono">-</span>
@@ -1039,7 +1027,7 @@ export default function SeasonDetailPage() {
                               <>
                                 <div className="text-[9px] uppercase text-amber-500 font-bold">Rating</div>
                                 <div className="font-bold text-amber-500 mt-0.5">
-                                  {player.star_rating ? '★'.repeat(player.star_rating) : '-'}
+                                  {player.star_rating ? <span className="flex justify-center gap-0.5">{[...Array(player.star_rating)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />)}</span> : '-'}
                                 </div>
                               </>
                             ) : (
@@ -1070,7 +1058,7 @@ export default function SeasonDetailPage() {
                   href={`/awards/season/${seasonId}`}
                   className="inline-flex items-center text-[10px] font-mono font-bold text-amber-600 hover:text-amber-700 transition-colors uppercase tracking-wider"
                 >
-                  View Dedicated Season Honors Page →
+                  View Dedicated Season Honors Page {"->"}
                 </Link>
               </div>
               {/* Sub-tabs menu */}
@@ -1323,7 +1311,7 @@ export default function SeasonDetailPage() {
                   href={`/awards/season/${seasonId}`}
                   className="inline-flex items-center text-[10px] font-mono font-bold text-amber-600 hover:text-amber-700 transition-colors uppercase tracking-wider"
                 >
-                  View Dedicated Season Trophies Page →
+                  View Dedicated Season Trophies Page {"->"}
                 </Link>
               </div>
             </div>

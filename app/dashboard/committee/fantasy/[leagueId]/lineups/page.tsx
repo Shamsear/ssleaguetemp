@@ -1,4 +1,5 @@
 'use client';
+import { XCircle, CheckCircle, Lock, BarChart2, AlertTriangle } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -393,7 +394,7 @@ export default function WeeklyLineupsPage() {
             <div className="space-y-6">
               {/* Summary */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
-                <h3 className="font-bold text-gray-900 mb-4 text-lg">📊 Lineup Summary</h3>
+                <h3 className="font-bold text-gray-900 mb-4 text-lg"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Lineup Summary</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white rounded-lg p-4">
                     <p className="text-sm text-gray-600 mb-1">Total Teams</p>
@@ -422,7 +423,7 @@ export default function WeeklyLineupsPage() {
 
               {/* Lock Impact */}
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-6 border border-green-200">
-                <h3 className="font-bold text-gray-900 mb-4 text-lg">🔒 Lock Impact</h3>
+                <h3 className="font-bold text-gray-900 mb-4 text-lg"><Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Lock Impact</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-white rounded-lg p-4">
                     <p className="text-sm text-gray-600 mb-1">Will Be Locked</p>
@@ -442,7 +443,7 @@ export default function WeeklyLineupsPage() {
               {/* Warnings */}
               {previewData.warnings.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-bold text-gray-900 text-lg">⚠️ Warnings</h3>
+                  <h3 className="font-bold text-gray-900 text-lg"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Warnings</h3>
                   {previewData.warnings.map((warning, idx) => (
                     <div key={idx} className={`border rounded-lg p-4 ${getSeverityColor(warning.severity)}`}>
                       <p className="font-semibold mb-2">{warning.message}</p>
@@ -461,7 +462,7 @@ export default function WeeklyLineupsPage() {
               {/* Teams Without Lineups */}
               {previewData.teams_without_lineups.length > 0 && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-red-900 mb-3">❌ Teams Without Lineups</h4>
+                  <h4 className="font-semibold text-red-900 mb-3"><XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Teams Without Lineups</h4>
                   <div className="space-y-2">
                     {previewData.teams_without_lineups.map((team, idx) => (
                       <div key={idx} className="bg-white rounded p-3 text-sm">
@@ -476,7 +477,7 @@ export default function WeeklyLineupsPage() {
               {/* Incomplete Lineups */}
               {previewData.incomplete_lineups.length > 0 && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-yellow-900 mb-3">⚠️ Incomplete Lineups</h4>
+                  <h4 className="font-semibold text-yellow-900 mb-3"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Incomplete Lineups</h4>
                   <div className="space-y-2">
                     {previewData.incomplete_lineups.map((team, idx) => (
                       <div key={idx} className="bg-white rounded p-3">
@@ -523,16 +524,16 @@ export default function WeeklyLineupsPage() {
                           <td className="px-4 py-3 text-gray-700">{lineup.starting_players}/5</td>
                           <td className="px-4 py-3">
                             {lineup.has_captain ? (
-                              <span className="text-green-600">✓</span>
+                              <span className="text-green-600">Yes</span>
                             ) : (
-                              <span className="text-red-600">✗</span>
+                              <span className="text-red-600">No</span>
                             )}
                           </td>
                           <td className="px-4 py-3">
                             {lineup.has_vice_captain ? (
-                              <span className="text-green-600">✓</span>
+                              <span className="text-green-600">Yes</span>
                             ) : (
-                              <span className="text-red-600">✗</span>
+                              <span className="text-red-600">No</span>
                             )}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-600">
@@ -558,13 +559,13 @@ export default function WeeklyLineupsPage() {
                   disabled={isLocking || !previewData.can_lock}
                   className="flex-1 px-6 py-3 bg-gradient-to-r from-sky-500 to-blue-600 text-white font-semibold rounded-lg hover:from-sky-600 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLocking ? 'Locking...' : '✅ Confirm & Lock All Lineups'}
+                  {isLocking ? 'Locking...' : '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Confirm & Lock All Lineups'}
                 </button>
               </div>
 
               {!previewData.can_lock && (
                 <p className="text-sm text-red-600 text-center">
-                  ⚠️ Cannot lock due to critical warnings. Please resolve issues first.
+                  <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cannot lock due to critical warnings. Please resolve issues first.
                 </p>
               )}
             </div>

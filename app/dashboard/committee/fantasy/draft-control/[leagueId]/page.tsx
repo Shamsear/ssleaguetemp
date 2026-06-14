@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -249,7 +250,7 @@ export default function DraftControlPage() {
           }`}>
             <div className="flex items-center gap-3">
               <span className="text-2xl">
-                {toast.type === 'success' ? '✅' : '🔔'}
+                {toast.type === 'success' ? '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />' : '🔔'}
               </span>
               <span className="font-semibold">{toast.message}</span>
               <button 
@@ -527,7 +528,7 @@ export default function DraftControlPage() {
                           
                           {tier.tier_status === 'closed' && (
                             <span className="px-4 py-2 text-gray-500 font-semibold">
-                              ✓ Completed
+                              Yes Completed
                             </span>
                           )}
                         </div>

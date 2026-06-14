@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, Trophy, BarChart2, AlertTriangle, Unlock } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -287,7 +288,7 @@ export default function CalculatePointsPage() {
             <div className="space-y-6">
               {/* Round Summary */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
-                <h3 className="font-bold text-gray-900 mb-4 text-lg">📊 Round Summary</h3>
+                <h3 className="font-bold text-gray-900 mb-4 text-lg"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Round Summary</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white rounded-lg p-4">
                     <p className="text-sm text-gray-600 mb-1">Total Teams</p>
@@ -317,7 +318,7 @@ export default function CalculatePointsPage() {
               {/* Warnings */}
               {previewData.warnings.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-bold text-gray-900 text-lg">⚠️ Warnings</h3>
+                  <h3 className="font-bold text-gray-900 text-lg"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Warnings</h3>
                   {previewData.warnings.map((warning, idx) => (
                     <div key={idx} className={`border rounded-lg p-4 ${getSeverityColor(warning.severity)}`}>
                       <p className="font-semibold mb-2">{warning.message}</p>
@@ -338,7 +339,7 @@ export default function CalculatePointsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {previewData.points_distribution.highest_scoring_team && (
                     <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-6 border border-green-200">
-                      <h4 className="font-semibold text-green-900 mb-2">🏆 Highest Scoring Team</h4>
+                      <h4 className="font-semibold text-green-900 mb-2"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Highest Scoring Team</h4>
                       <p className="text-2xl font-bold text-green-700">
                         {previewData.points_distribution.highest_scoring_team.team_name}
                       </p>
@@ -397,7 +398,7 @@ export default function CalculatePointsPage() {
                           )}
                           {!team.is_locked && (
                             <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">
-                              🔓 Unlocked
+                              <Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Unlocked
                             </span>
                           )}
                         </div>
@@ -487,13 +488,13 @@ export default function CalculatePointsPage() {
                   disabled={isCalculating || !previewData.can_calculate}
                   className="flex-1 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold rounded-lg hover:from-amber-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isCalculating ? 'Calculating...' : '✅ Confirm & Calculate Points'}
+                  {isCalculating ? 'Calculating...' : '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Confirm & Calculate Points'}
                 </button>
               </div>
 
               {!previewData.can_calculate && (
                 <p className="text-sm text-red-600 text-center">
-                  ⚠️ Cannot calculate due to critical warnings. Please resolve issues first.
+                  <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cannot calculate due to critical warnings. Please resolve issues first.
                 </p>
               )}
             </div>

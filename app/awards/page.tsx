@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import InstagramEmbed from '@/components/InstagramEmbed';
-import { Shield, Trophy, Award, Calendar, ChevronRight } from 'lucide-react';
+import { Activity, Award, Calendar, ChevronRight, Medal, Shield, Star, Trophy } from 'lucide-react';
 
 interface Award {
   id: string;
@@ -117,13 +117,13 @@ function AwardsContent() {
       case 'POTD':
       case 'POTW':
       case 'POTS':
-        return '⭐';
+        return <Star className="w-5 h-5 text-amber-450 fill-amber-450 inline" />;
       case 'TOD':
       case 'TOW':
       case 'TOTS':
-        return '🏆';
+        return <Trophy className="w-5 h-5 text-amber-500 fill-amber-500 inline" />;
       default:
-        return '🎖️';
+        return <Medal className="w-5 h-5 text-amber-500 inline" />;
     }
   };
 
@@ -354,13 +354,13 @@ function AwardsContent() {
         
         {hasMatchup && (
           <div className="text-[10px] font-mono font-bold text-slate-650 bg-amber-50 border border-amber-100 px-2.5 py-1 rounded-lg">
-            ⚔️ {stats.matchup}
+            <Activity className="w-4 h-4 text-rose-500 inline mr-1 align-text-bottom" /> {stats.matchup}
           </div>
         )}
 
         {hasCleanSheet && (
           <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-150 text-emerald-700 rounded text-[9px] font-mono font-bold uppercase tracking-wide">
-            🛡️ Clean Sheet
+            <Shield className="w-4 h-4 text-blue-500 inline mr-1 align-text-bottom" /> Clean Sheet
           </div>
         )}
 
@@ -403,7 +403,7 @@ function AwardsContent() {
           href="/"
           className="inline-flex items-center text-xs font-mono font-bold text-slate-500 hover:text-amber-600 transition-colors"
         >
-          ← BACK_TO_HOME
+          {"<-"} BACK_TO_HOME
         </Link>
 
         {/* Header Title Panel */}
@@ -444,7 +444,7 @@ function AwardsContent() {
                     : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'
                 }`}
               >
-                ★ AWARDS ({filteredAwardsCount})
+                Awards ({filteredAwardsCount})
               </button>
               <button
                 onClick={() => setActiveTab('trophies')}
@@ -454,7 +454,7 @@ function AwardsContent() {
                     : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'
                 }`}
               >
-                🏆 TROPHIES ({filteredTrophiesCount})
+                Trophies ({filteredTrophiesCount})
               </button>
             </div>
 
@@ -576,7 +576,7 @@ function AwardsContent() {
                             </div>
                             <div className="relative flex-shrink-0">
                               <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-lg shadow-sm">
-                                ⭐
+                                <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
                               </div>
                               {isWinner && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full animate-ping"></div>}
                             </div>
@@ -720,7 +720,7 @@ function AwardsContent() {
                           </div>
                           <div className="relative flex-shrink-0">
                             <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-lg shadow-sm">
-                              🏆
+                              <Trophy className="w-5 h-5 text-amber-500 fill-amber-500" />
                             </div>
                             {isChampion && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full animate-ping"></div>}
                           </div>
@@ -739,7 +739,7 @@ function AwardsContent() {
                           <div className="flex flex-wrap gap-1.5 pt-1.5 border-t border-slate-200/50">
                             {trophy.trophy_position && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-[9px] font-mono font-bold text-amber-700 uppercase">
-                                ★ {trophy.trophy_position}
+                                <Star className="w-3.5 h-3.5 text-amber-450 fill-amber-450 inline mr-1" /> {trophy.trophy_position}
                               </span>
                             )}
                             {trophy.position && (

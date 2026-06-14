@@ -7,25 +7,7 @@ import { db } from '@/lib/firebase/config';
 import Link from 'next/link';
 import PlayerPhoto from '@/components/PlayerPhoto';
 import { usePlayerStats, usePlayerAwards, useTeamTrophies, useTeamSeasonStats, type PlayerAward, type TeamTrophy, type TeamStats } from '@/hooks';
-import {
-  Zap,
-  Shield,
-  Flame,
-  Target,
-  Award,
-  ArrowRight,
-  TrendingUp,
-  Activity,
-  Award as AwardIcon,
-  ChevronRight,
-  ChevronLeft,
-  Briefcase,
-  User,
-  Calendar,
-  Phone,
-  MapPin,
-  Smile
-} from 'lucide-react';
+import { Activity, ArrowRight, Award, Award as AwardIcon, Briefcase, Calendar, ChevronLeft, ChevronRight, Crown, Flame, MapPin, Medal, Phone, Shield, Smile, Star, Target, TrendingUp, Trophy, User, Zap } from 'lucide-react';
 
 interface PlayerData {
   id: string;
@@ -425,7 +407,7 @@ export default function PlayerDetailPage() {
             href="/players"
             className="inline-flex items-center gap-1.5 border border-slate-250 bg-slate-50 hover:bg-slate-100 text-slate-700 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm font-mono"
           >
-            ← BACK TO PLAYERS
+            {"<-"} BACK TO PLAYERS
           </Link>
         </div>
       </div>
@@ -527,7 +509,7 @@ export default function PlayerDetailPage() {
             href="/players"
             className="inline-flex items-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm font-mono"
           >
-            ← BACK TO PLAYERS
+            {"<-"} BACK TO PLAYERS
           </Link>
 
           <div className="flex items-center gap-2 font-mono text-xs">
@@ -682,7 +664,7 @@ export default function PlayerDetailPage() {
                     return (
                       <div className="mt-2">
                         <div className="inline-flex items-center gap-1 bg-amber-50 border border-amber-250 text-amber-800 px-3 py-1 rounded-full text-xs font-mono font-bold">
-                          <span>⭐ {starRating} Star</span>
+                          <span><Star className="w-4 h-4 text-amber-400 fill-amber-400 inline mr-1" /> {starRating} Star</span>
                         </div>
                       </div>
                     );
@@ -1304,7 +1286,7 @@ export default function PlayerDetailPage() {
                             {match.player_goals - match.opponent_goals}
                           </td>
                           <td className="px-4 py-3 text-amber-600 font-bold">
-                            {match.is_potm ? '★' : '—'}
+                            {match.is_potm ? <Star className="w-4 h-4 text-amber-400 fill-amber-400 inline" /> : '—'}
                           </td>
                           <td className="px-4 py-3 text-amber-600 font-black">
                             {match.points}

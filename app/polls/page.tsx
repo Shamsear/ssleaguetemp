@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Link from 'next/link';
-import { Shield, Vote, Calendar, Clock, ChevronRight } from 'lucide-react';
+import { BarChart2, Calendar, ChevronRight, Clock, Crown, Lock, Medal, Shield, Star, TrendingUp, Trophy, Vote } from 'lucide-react';
 
 interface Poll {
     poll_id: string;
@@ -105,7 +105,7 @@ function PollsListContent() {
                     href="/"
                     className="inline-flex items-center text-xs font-mono font-bold text-slate-500 hover:text-amber-600 transition-colors"
                 >
-                    ← BACK_TO_HOME
+                    {"<-"} BACK_TO_HOME
                 </Link>
 
                 {/* Header Title Panel */}
@@ -113,7 +113,7 @@ function PollsListContent() {
                     <div className="text-center md:text-left">
                         <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">PUBLIC FAN POLLS</span>
                         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mt-0.5">
-                            🗳️ Fan Polls
+                            <span className="flex items-center gap-2"><Vote className="w-7 h-7 text-amber-600" /> Fan Polls</span>
                         </h1>
                         <p className="text-xs text-slate-500 font-mono mt-1">
                             CAST YOUR VOTE: ACTIVE OR COMPLETED FAN POLLS FOR RECENT TOURNAMENTS
@@ -154,9 +154,9 @@ function PollsListContent() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {[
-                            { id: 'active' as const, label: 'Active Polls', icon: '🟢' },
-                            { id: 'closed' as const, label: 'Closed Polls', icon: '🔒' },
-                            { id: 'all' as const, label: 'All Polls', icon: '📊' },
+                            { id: 'active' as const, label: 'Active Polls', icon: <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 mr-0.5" /> },
+                            { id: 'closed' as const, label: 'Closed Polls', icon: <Lock className="w-3.5 h-3.5 text-slate-500" /> },
+                            { id: 'all' as const, label: 'All Polls', icon: <BarChart2 className="w-3.5 h-3.5 text-slate-500" /> },
                         ].map((tab) => (
                             <button
                                 key={tab.id}
@@ -273,7 +273,7 @@ function PollsListContent() {
                                                     ? 'bg-slate-50 border-slate-200 text-slate-500 group-hover:bg-slate-100'
                                                     : 'bg-amber-600 text-white border-amber-650 group-hover:bg-amber-700 group-hover:shadow-md group-hover:shadow-amber-600/10'
                                             }`}>
-                                                {closed ? 'View Results' : 'Vote Now →'}
+                                                {closed ? 'View Results' : 'Vote Now ->'}
                                             </div>
                                         </div>
                                     </div>

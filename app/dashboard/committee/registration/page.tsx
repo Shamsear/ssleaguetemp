@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, XCircle } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -71,11 +72,11 @@ export default function TeamRegistrationPage() {
         setRegisteredTeamsCount(snapshot.docs.length);
       },
       (error) => {
-        console.error('❌ Error listening to team registrations:', error);
+        console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Error listening to team registrations:', error);
       }
     );
 
-    console.log('✅ Real-time listener set up successfully');
+    console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Real-time listener set up successfully');
 
     return () => {
       console.log('🔴 Cleaning up real-time listener');
@@ -133,7 +134,7 @@ export default function TeamRegistrationPage() {
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10 font-mono">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Registration Details...</p>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading Registration Details...</p>
         </div>
       </div>
     );

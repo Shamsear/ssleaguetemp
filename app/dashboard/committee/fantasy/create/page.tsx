@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, Trophy } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -265,7 +266,7 @@ export default function CreateFantasyLeaguePage() {
                   <h2 className="text-xl font-bold text-green-900 mb-2">{existingLeague.name || existingLeague.league_name}</h2>
                   <div className="space-y-1 text-sm text-green-800">
                     <p>📅 <strong>Status:</strong> {existingLeague.status?.toUpperCase() || 'DRAFT'}</p>
-                    <p>🏆 <strong>League ID:</strong> {existingLeague.league_id || existingLeague.id}</p>
+                    <p><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> <strong>League ID:</strong> {existingLeague.league_id || existingLeague.id}</p>
                   </div>
                 </div>
               </div>
@@ -288,13 +289,13 @@ export default function CreateFantasyLeaguePage() {
                 href="/dashboard/committee"
                 className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-colors text-center"
               >
-                ← Back to Dashboard
+                &larr; Back to Dashboard
               </Link>
               <Link
                 href={`/dashboard/committee/fantasy/${existingLeague.league_id || existingLeague.season_id || existingLeague.id}`}
                 className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl text-center"
               >
-                🏆 Manage League →
+                <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Manage League  &rarr; 
               </Link>
             </div>
           </div>
@@ -359,7 +360,7 @@ export default function CreateFantasyLeaguePage() {
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-indigo-600">
-                    ✓ Automatically set to your current active season
+                    Yes Automatically set to your current active season
                   </p>
                 </>
               ) : (
@@ -420,10 +421,10 @@ export default function CreateFantasyLeaguePage() {
                 <div>
                   <p className="text-sm font-semibold text-blue-900 mb-2">What happens when you create a fantasy league?</p>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>✅ Fantasy teams automatically created for all registered teams</li>
-                    <li>✅ Default scoring rules configured (goals, MOTM, wins, etc.)</li>
-                    <li>✅ League status set to "Draft" mode</li>
-                    <li>✅ Ready for player draft assignment</li>
+                    <li><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Fantasy teams automatically created for all registered teams</li>
+                    <li><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Default scoring rules configured (goals, MOTM, wins, etc.)</li>
+                    <li><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> League status set to "Draft" mode</li>
+                    <li><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Ready for player draft assignment</li>
                   </ul>
                 </div>
               </div>
@@ -451,7 +452,7 @@ export default function CreateFantasyLeaguePage() {
                     Creating...
                   </span>
                 ) : (
-                  '🏆 Create Fantasy League'
+                  '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Create Fantasy League'
                 )}
               </button>
             </div>

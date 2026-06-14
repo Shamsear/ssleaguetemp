@@ -337,7 +337,7 @@ export default function EnableFantasyTeamsPage() {
                 <div className="bg-white/60 rounded-lg p-3 max-h-32 overflow-y-auto">
                   <ul className="text-sm text-gray-600 space-y-1">
                     {result.details.updated_teams.map((team: string) => (
-                      <li key={team}>✅ {team}</li>
+                      <li key={team}><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> {team}</li>
                     ))}
                   </ul>
                 </div>

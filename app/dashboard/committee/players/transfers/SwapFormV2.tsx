@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, AlertTriangle, BarChart2 } from 'lucide-react';
 
 import { useState, useEffect, useMemo } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -291,7 +292,7 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
       return;
     }
 
-    let confirmMessage = `Swap ${selectedPlayerA.player_name} (${teamAName}) ↔ ${selectedPlayerB.player_name} (${teamBName})?\n\n`;
+    let confirmMessage = `Swap ${selectedPlayerA.player_name} (${teamAName}) &harr; ${selectedPlayerB.player_name} (${teamBName})?\n\n`;
     confirmMessage += `This swap is completely free. No fees or cash transfers will be made.`;
 
     if (!confirm(confirmMessage)) return;
@@ -349,17 +350,17 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
 
       // Build detailed success message
       const calc = result.calculation;
-      let successMessage = `✅ Player swap completed successfully!\n\n`;
-      successMessage += `${selectedPlayerA.player_name} → ${teamBName}\n`;
-      successMessage += `${selectedPlayerB.player_name} → ${teamAName}\n`;
+      let successMessage = `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Player swap completed successfully!\n\n`;
+      successMessage += `${selectedPlayerA.player_name} &rarr; ${teamBName}\n`;
+      successMessage += `${selectedPlayerB.player_name} &rarr; ${teamAName}\n`;
       
       if (calc) {
         // Show category upgrades
         if (calc.playerA.newCategory !== selectedPlayerA.category) {
-          successMessage += `\n• 🏷️ ${selectedPlayerA.player_name}: ${selectedPlayerA.category} → ${calc.playerA.newCategory}`;
+          successMessage += `\n• 🏷️ ${selectedPlayerA.player_name}: ${selectedPlayerA.category} &rarr; ${calc.playerA.newCategory}`;
         }
         if (calc.playerB.newCategory !== selectedPlayerB.category) {
-          successMessage += `\n• 🏷️ ${selectedPlayerB.player_name}: ${selectedPlayerB.category} → ${calc.playerB.newCategory}`;
+          successMessage += `\n• 🏷️ ${selectedPlayerB.player_name}: ${selectedPlayerB.category} &rarr; ${calc.playerB.newCategory}`;
         }
       }
       
@@ -434,7 +435,7 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
       {/* Alerts */}
       {error && (
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl font-mono text-xs uppercase tracking-wide">
-          <p className="font-extrabold">⚠️ Error</p>
+          <p className="font-extrabold"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Error</p>
           <p className="mt-1">{error}</p>
         </div>
       )}
@@ -544,7 +545,7 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
         {calculation && selectedPlayerA && selectedPlayerB && (
           <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
             <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-              📊 Swap Preview
+              <BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Swap Preview
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -556,18 +557,18 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400">Value:</span>
-                    <span className="font-bold text-slate-800">${calculation.playerA.originalValue.toFixed(2)} → ${calculation.playerA.newValue.toFixed(2)}</span>
+                    <span className="font-bold text-slate-800">${calculation.playerA.originalValue.toFixed(2)} &rarr; ${calculation.playerA.newValue.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400">Category:</span>
                     <span className={`font-extrabold ${calculation.playerA.newCategory !== selectedPlayerA.category ? 'text-amber-600' : 'text-slate-800'}`}>
-                      {selectedPlayerA.category} → {calculation.playerA.newCategory}
+                      {selectedPlayerA.category} &rarr; {calculation.playerA.newCategory}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400">Points:</span>
                     <span className="font-bold text-slate-800">
-                      {selectedPlayerA.points} → {selectedPlayerA.points + calculation.playerA.pointsAdded}
+                      {selectedPlayerA.points} &rarr; {selectedPlayerA.points + calculation.playerA.pointsAdded}
                     </span>
                   </div>
                   {calculation.playerA.pointsAdded > 0 && (
@@ -586,18 +587,18 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400">Value:</span>
-                    <span className="font-bold text-slate-800">${calculation.playerB.originalValue.toFixed(2)} → ${calculation.playerB.newValue.toFixed(2)}</span>
+                    <span className="font-bold text-slate-800">${calculation.playerB.originalValue.toFixed(2)} &rarr; ${calculation.playerB.newValue.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400">Category:</span>
                     <span className={`font-extrabold ${calculation.playerB.newCategory !== selectedPlayerB.category ? 'text-amber-600' : 'text-slate-800'}`}>
-                      {selectedPlayerB.category} → {calculation.playerB.newCategory}
+                      {selectedPlayerB.category} &rarr; {calculation.playerB.newCategory}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400">Points:</span>
                     <span className="font-bold text-slate-800">
-                      {selectedPlayerB.points} → {selectedPlayerB.points + calculation.playerB.pointsAdded}
+                      {selectedPlayerB.points} &rarr; {selectedPlayerB.points + calculation.playerB.pointsAdded}
                     </span>
                   </div>
                   {calculation.playerB.pointsAdded > 0 && (
@@ -612,7 +613,7 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
             {/* Free Swap Info Banner */}
             <div className="mt-4 bg-white border border-slate-150 rounded-xl p-4 shadow-sm text-center">
               <span className="text-xs font-black text-emerald-600 uppercase tracking-wider">🆓 Free Player Swap</span>
-              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-1">
+              <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-1">
                 This operation is free of swap charges. Budgets remain untouched.
               </p>
             </div>
@@ -620,7 +621,7 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
             {/* Warnings */}
             {limitExceeded && (
               <div className="mt-4 bg-rose-50 border border-rose-200 rounded-xl p-4 text-rose-700">
-                <p className="font-extrabold">⚠️ Limit Exceeded</p>
+                <p className="font-extrabold"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Limit Exceeded</p>
                 <p className="text-[10px] mt-1 font-bold">
                   {teamALimitExceeded && `${teamAName} has no transfer slots left. `}
                   {teamBLimitExceeded && `${teamBName} has no transfer slots left.`}

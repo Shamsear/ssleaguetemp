@@ -1,5 +1,6 @@
 'use client';
 
+import { Activity, Crown, Gem, Medal, Shield, Sparkles, Star, Trophy } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -142,14 +143,14 @@ export default function TeamSeasonAwardsPage() {
 
     const getAwardIcon = (awardType: string) => {
         const type = awardType?.toLowerCase() || '';
-        if (type.includes('potd') || type.includes('player of the day')) return '⭐';
-        if (type.includes('potw') || type.includes('player of the week')) return '🌟';
-        if (type.includes('tod') || type.includes('team of the day')) return '🏅';
-        if (type.includes('tow') || type.includes('team of the week')) return '🏆';
-        if (type.includes('pots') || type.includes('player of the season')) return '👑';
-        if (type.includes('tots') || type.includes('team of the season')) return '🏆';
-        if (type.includes('motm') || type.includes('man of the match')) return '💎';
-        return '🎖️';
+        if (type.includes('potd') || type.includes('player of the day')) return <Star className="w-5 h-5 text-amber-450 fill-amber-450 inline" />;
+        if (type.includes('potw') || type.includes('player of the week')) return <Sparkles className="w-5 h-5 text-amber-450 fill-amber-450 inline" />;
+        if (type.includes('tod') || type.includes('team of the day')) return <Medal className="w-5 h-5 text-amber-500 inline" />;
+        if (type.includes('tow') || type.includes('team of the week')) return <Trophy className="w-5 h-5 text-amber-500 fill-amber-500 inline" />;
+        if (type.includes('pots') || type.includes('player of the season')) return <Crown className="w-5 h-5 text-amber-550 fill-amber-550 inline" />;
+        if (type.includes('tots') || type.includes('team of the season')) return <Trophy className="w-5 h-5 text-amber-500 fill-amber-500 inline" />;
+        if (type.includes('motm') || type.includes('man of the match')) return <Gem className="w-5 h-5 text-blue-500 inline" />;
+        return <Medal className="w-5 h-5 text-amber-500 inline" />;
     };
 
     const formatDate = (dateString?: string) => {
@@ -185,7 +186,7 @@ export default function TeamSeasonAwardsPage() {
                 <div className="flex flex-wrap gap-2">
                     {(stats.clean_sheet === true || stats.clean_sheet === 'true' || stats.clean_sheets > 0) && (
                         <span className="px-2 py-1 bg-teal-100 text-teal-800 rounded border border-teal-200 text-xs font-bold flex items-center shadow-sm">
-                            🛡️ Clean Sheet
+                            <Shield className="w-4 h-4 text-blue-500 inline mr-1 align-text-bottom" /> Clean Sheet
                         </span>
                     )}
 
@@ -284,11 +285,11 @@ export default function TeamSeasonAwardsPage() {
 
                     <div className="mt-4 sm:mt-6 flex flex-wrap gap-2 sm:gap-3 justify-center lg:justify-start">
                         <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white/80 backdrop-blur-sm rounded-full border border-gray-200 shadow-sm">
-                            <span className="text-lg sm:text-xl">⭐</span>
+                            <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
                             <span className="text-xs sm:text-sm font-semibold text-gray-900">{totalAwards} Awards</span>
                         </div>
                         <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white/80 backdrop-blur-sm rounded-full border border-gray-200 shadow-sm">
-                            <span className="text-lg sm:text-xl">🏆</span>
+                            <Trophy className="w-5 h-5 text-amber-500 fill-amber-500" />
                             <span className="text-xs sm:text-sm font-semibold text-gray-900">{totalTrophies} Trophies</span>
                         </div>
                     </div>
@@ -305,7 +306,7 @@ export default function TeamSeasonAwardsPage() {
                                 }`}
                             suppressHydrationWarning
                         >
-                            ⭐ Awards ({totalAwards})
+                            Awards ({totalAwards})
                         </button>
                         <button
                             onClick={() => setActiveTab('trophies')}
@@ -315,7 +316,7 @@ export default function TeamSeasonAwardsPage() {
                                 }`}
                             suppressHydrationWarning
                         >
-                            🏆 Trophies ({totalTrophies})
+                            Trophies ({totalTrophies})
                         </button>
                     </div>
                 </div>
@@ -323,7 +324,7 @@ export default function TeamSeasonAwardsPage() {
                 {/* Content Grid */}
                 {totalAwards === 0 && totalTrophies === 0 ? (
                     <div className="bg-white/70 backdrop-blur-xl border-2 border-white/40 rounded-xl sm:rounded-2xl p-8 sm:p-12 text-center shadow-lg">
-                        <div className="text-5xl sm:text-6xl mb-4 animate-bounce">🏆</div>
+                        <div className="text-5xl sm:text-6xl mb-4 animate-bounce text-amber-500 flex justify-center"><Trophy className="w-16 h-16" /></div>
                         <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">No Awards Yet</h3>
                         <p className="text-sm sm:text-base text-gray-600 max-w-md mx-auto">
                             Awards will appear here once they are given for this season.
@@ -440,7 +441,7 @@ export default function TeamSeasonAwardsPage() {
                                     <div className="p-4 sm:p-6">
                                         <div className="flex items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
                                             <div className="relative">
-                                                <div className="text-3xl sm:text-4xl flex-shrink-0">⭐</div>
+                                                <div className="text-3xl sm:text-4xl flex-shrink-0 text-amber-400"><Star className="w-8 h-8" /></div>
                                                 {isWinner && <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>}
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -523,7 +524,7 @@ export default function TeamSeasonAwardsPage() {
                                     <div className="p-4 sm:p-6">
                                         <div className="flex items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
                                             <div className="relative">
-                                                <div className="text-3xl sm:text-4xl flex-shrink-0">🏆</div>
+                                                <div className="text-3xl sm:text-4xl flex-shrink-0 text-amber-500"><Trophy className="w-8 h-8" /></div>
                                                 {isChampion && <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>}
                                             </div>
                                             <div className="flex-1 min-w-0">

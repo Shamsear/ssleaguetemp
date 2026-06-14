@@ -1,4 +1,5 @@
 'use client';
+import { Activity } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -146,7 +147,7 @@ export default function ScoringRulesPage() {
         <form onSubmit={handleSave} className="space-y-6">
           {/* Base Points */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">⚽ Base Points</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Base Points</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>

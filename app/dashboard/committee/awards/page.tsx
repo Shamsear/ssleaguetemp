@@ -3,8 +3,26 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import {
+  Trophy,
+  Settings,
+  ArrowLeft,
+  Info,
+  Calendar,
+  Clock,
+  Lock,
+  Plus,
+  Crown,
+  Award,
+  ChevronLeft,
+  ChevronRight,
+  Trash2,
+  CheckCircle,
+  AlertCircle
+} from 'lucide-react';
 
 type AwardTab = 'POTD' | 'POTW' | 'TOD' | 'TOW' | 'POTS' | 'TOTS';
 
@@ -80,7 +98,7 @@ export default function AwardsManagementPage() {
 
           // Set first tournament as default
           setTournamentId(tournaments[0].id);
-          console.log(`🏆 Available tournaments:`, tournaments);
+          console.log(`<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Available tournaments:`, tournaments);
         }
       } catch (err) {
         console.error('Error fetching tournaments:', err);
@@ -201,7 +219,7 @@ export default function AwardsManagementPage() {
         team_name: candidate.team_name || null,
         performance_stats: candidate.performance_stats,
         selected_by: user.uid,
-        selected_by_name: user.displayName || user.email,
+        selected_by_name: (user as any).displayName || (user as any).email || '',
         notes: '',
       };
 
@@ -250,8 +268,12 @@ export default function AwardsManagementPage() {
 
   if (loading || !user || !isCommitteeAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center console-bg font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono font-mono">Loading awards console...</p>
+        </div>
       </div>
     );
   }
@@ -260,29 +282,50 @@ export default function AwardsManagementPage() {
   const maxWeeks = Math.ceil(maxRounds / 7);
 
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-2 sm:px-4 bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-4 sm:mb-8">
-          <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-            🏆 Awards Management
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600">
-            Select and manage tournament awards
-          </p>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Decorative glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative z-10 space-y-6">
+        
+        {/* Navigation */}
+        <div>
+          <Link
+            href="/dashboard/committee"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
+        </div>
+
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <Trophy className="w-6 h-6 text-amber-400 animate-pulse" />
+            </div>
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">SYSTEM CONTROL</span>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                Awards Management
+              </h1>
+              <p className="text-xs text-slate-500 font-mono mt-1">
+                Select and manage tournament awards
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Tournament Selector */}
         {availableTournaments.length > 0 && (
-          <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl shadow-md p-4">
-            <label className="block text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
-              <span className="text-xl">🏟️</span>
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">
               Select Tournament
             </label>
             <select
               value={tournamentId}
               onChange={(e) => setTournamentId(e.target.value)}
-              className="w-full px-4 py-2.5 bg-white border-2 border-blue-300 rounded-lg font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all duration-200"
             >
               {availableTournaments.map((tournament) => (
                 <option key={tournament.id} value={tournament.id}>
@@ -290,79 +333,84 @@ export default function AwardsManagementPage() {
                 </option>
               ))}
             </select>
-            <p className="mt-2 text-xs text-gray-600">
-              Awards are specific to each tournament. Select a tournament to view and manage its awards.
+            <p className="mt-2 text-[10px] text-slate-400 uppercase font-bold">
+              💡 Awards are specific to each tournament. Select a tournament to view and manage its awards.
             </p>
           </div>
         )}
 
         {/* Messages */}
         {error && (
-          <div className="mb-4 p-3 sm:p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-            <p className="text-sm sm:text-base text-red-800">{error}</p>
+          <div className="console-card bg-rose-50 border border-rose-200 rounded-3xl p-5 shadow-sm flex items-center gap-3 text-rose-800">
+            <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0" />
+            <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-3 sm:p-4 bg-green-50 border-l-4 border-green-500 rounded-lg">
-            <p className="text-sm sm:text-base text-green-800">{success}</p>
+          <div className="console-card bg-emerald-50/30 border border-emerald-200 rounded-3xl p-5 shadow-sm flex items-center gap-3 text-emerald-800">
+            <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+            <p className="text-xs font-bold uppercase tracking-wide">{success}</p>
           </div>
         )}
 
-        {/* Tabs - Responsive */}
-        <div className="mb-4 sm:mb-6 overflow-x-auto">
-          <div className="flex gap-1 sm:gap-2 min-w-max sm:min-w-0">
-            {[
-              { id: 'POTD' as AwardTab, label: 'POTD', icon: '⭐' },
-              { id: 'POTW' as AwardTab, label: 'POTW', icon: '🌟' },
-              { id: 'TOD' as AwardTab, label: 'TOD', icon: '🏅' },
-              { id: 'TOW' as AwardTab, label: 'TOW', icon: '🏆' },
-              { id: 'POTS' as AwardTab, label: 'POTS', icon: '👑' },
-              { id: 'TOTS' as AwardTab, label: 'TOTS', icon: '🏆' },
-            ].map((tab) => (
+        {/* Tabs */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {[
+            { id: 'POTD' as AwardTab, label: 'POTD', icon: Award },
+            { id: 'POTW' as AwardTab, label: 'POTW', icon: Trophy },
+            { id: 'TOD' as AwardTab, label: 'TOD', icon: Award },
+            { id: 'TOW' as AwardTab, label: 'TOW', icon: Trophy },
+            { id: 'POTS' as AwardTab, label: 'POTS', icon: Crown },
+            { id: 'TOTS' as AwardTab, label: 'TOTS', icon: Crown },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold text-xs sm:text-base transition-all whitespace-nowrap ${activeTab === tab.id
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
-                  }`}
+                className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border font-mono text-xs uppercase tracking-wider font-bold transition-all duration-200 cursor-pointer ${
+                  activeTab === tab.id
+                    ? 'bg-slate-800 border-slate-900 text-white shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                }`}
               >
-                <span className="hidden sm:inline">{tab.icon} </span>
-                {tab.label}
+                <Icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
         {/* Main Content */}
-        <div className="glass rounded-2xl sm:rounded-3xl p-3 sm:p-6">
+        <div className="space-y-6">
           {/* Round/Week Navigator */}
           {['POTD', 'TOD'].includes(activeTab) && (
-            <div className="mb-4 sm:mb-6">
-              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">
                 Select Round
               </label>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentRound(Math.max(1, currentRound - 1))}
                   disabled={currentRound === 1}
-                  className="p-2 bg-gray-200 rounded-lg disabled:opacity-50"
+                  className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed font-bold transition-all"
                 >
-                  ◀
+                  <ChevronLeft className="w-4 h-4" />
                 </button>
-                <div className="flex-1 overflow-x-auto">
-                  <div className="flex gap-1 sm:gap-2">
+                <div className="flex-1 overflow-x-auto scrollbar-none py-1">
+                  <div className="flex gap-2">
                     {maxRounds > 0 && Array.from({ length: maxRounds }, (_, i) => i + 1).map((round) => (
                       <button
                         key={round}
                         onClick={() => setCurrentRound(round)}
-                        className={`px-2 sm:px-4 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap ${currentRound === round
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white text-gray-700 hover:bg-gray-100'
-                          }`}
+                        className={`px-4 py-2 rounded-xl font-mono text-xs font-bold transition-all ${
+                          currentRound === round
+                            ? 'bg-slate-800 border-slate-900 text-white shadow-sm'
+                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800'
+                        }`}
                       >
-                        R{round}
+                        Round {round}
                       </button>
                     ))}
                   </div>
@@ -370,20 +418,20 @@ export default function AwardsManagementPage() {
                 <button
                   onClick={() => setCurrentRound(Math.min(maxRounds, currentRound + 1))}
                   disabled={currentRound === maxRounds}
-                  className="p-2 bg-gray-200 rounded-lg disabled:opacity-50"
+                  className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed font-bold transition-all"
                 >
-                  ▶
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           )}
 
           {['POTW', 'TOW'].includes(activeTab) && (
-            <div className="mb-4 sm:mb-6">
-              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">
                 Select Week
               </label>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-3 flex-wrap">
                 {[
                   { week: 1, rounds: '1-7' },
                   { week: 2, rounds: '8-13' },
@@ -393,13 +441,16 @@ export default function AwardsManagementPage() {
                   <button
                     key={week}
                     onClick={() => setCurrentWeek(week)}
-                    className={`px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-semibold ${currentWeek === week
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-100'
-                      }`}
+                    className={`px-5 py-2.5 rounded-xl font-mono text-xs font-bold transition-all border text-left flex flex-col justify-center cursor-pointer ${
+                      currentWeek === week
+                        ? 'bg-slate-800 border-slate-900 text-white shadow-sm'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800'
+                    }`}
                   >
-                    Week {week}
-                    <span className="block text-[10px] sm:text-xs opacity-75">Rounds {rounds}</span>
+                    <span>Week {week}</span>
+                    <span className={`text-[9px] uppercase font-black mt-0.5 block ${
+                      currentWeek === week ? 'text-amber-400' : 'text-slate-400'
+                    }`}>Rounds {rounds}</span>
                   </button>
                 ))}
               </div>
@@ -408,39 +459,42 @@ export default function AwardsManagementPage() {
 
           {/* Current Award Display */}
           {currentAward && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs sm:text-sm font-semibold text-green-900">Current Winner</p>
-                  <p className="text-base sm:text-xl font-bold text-green-700">
+            <div className="console-card bg-emerald-50/35 border-2 border-emerald-300 rounded-3xl p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider font-mono">
+                    CURRENT WINNER
+                  </span>
+                  <h3 className="text-xl font-extrabold text-emerald-800">
                     {currentAward.player_name || currentAward.team_name}
-                  </p>
-                  <p className="text-xs text-green-600 mt-1">
+                  </h3>
+                  <p className="text-xs text-emerald-600 font-bold">
                     Selected by {currentAward.selected_by_name}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div>
                   <button
                     onClick={() => handleDeleteAward(currentAward.id)}
-                    className="px-3 sm:px-4 py-2 bg-red-500 text-white text-xs sm:text-sm rounded-lg hover:bg-red-600"
+                    className="w-full sm:w-auto px-4 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-mono text-xs uppercase font-extrabold shadow-sm transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    🗑️ Remove
+                    <Trash2 className="w-3.5 h-3.5" /> Remove Award
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Candidates List */}
-          <div className="mb-4 sm:mb-6">
-            <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-3">
+          {/* Candidates List Section */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
+            <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-tight mb-4">
               {currentAward ? `Winner: ${currentAward.player_name || currentAward.team_name}` : candidates.length > 0 ? 'Eligible Candidates' : 'No candidates available'}
             </h3>
 
             {currentAward && (
-              <div className="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-lg">
-                <p className="text-sm text-yellow-800 font-medium">
-                  ⚠️ An award has already been given for this {['POTD', 'TOD'].includes(activeTab) ? 'round' : 'week'}.
+              <div className="mb-6 flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                <Info className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                <p className="text-[10px] font-bold text-amber-850 uppercase tracking-wider leading-relaxed">
+                  An award has already been given for this {['POTD', 'TOD'].includes(activeTab) ? 'round' : 'week'}.
                   You must remove the current award before selecting a new one.
                 </p>
               </div>
@@ -448,18 +502,17 @@ export default function AwardsManagementPage() {
 
             {loading_data ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
+                <p className="mt-3 text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">Loading candidates...</p>
               </div>
             ) : currentAward ? (
-              <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-gray-200">
-                <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <p className="text-gray-500 font-medium">Candidate selection is locked</p>
-                <p className="text-sm text-gray-400 mt-2">Remove the current award to select a different winner</p>
+              <div className="text-center py-12 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col items-center justify-center">
+                <Lock className="w-12 h-12 text-slate-400 mb-3" />
+                <p className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Candidate selection is locked</p>
+                <p className="text-xs text-slate-500 font-mono mt-1">Remove the current award to select a different winner</p>
               </div>
-            ) : (
-              <div className="space-y-2 sm:space-y-3 max-h-96 overflow-y-auto">
+            ) : candidates.length > 0 ? (
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
                 {candidates.map((candidate, idx) => {
                   const candidateId = candidate.player_id || candidate.team_id || `candidate-${idx}`;
                   const isSelected = selectedCandidate === candidateId;
@@ -468,34 +521,52 @@ export default function AwardsManagementPage() {
                     <div
                       key={candidateId}
                       onClick={() => setSelectedCandidate(candidateId)}
-                      className={`p-3 sm:p-4 rounded-xl cursor-pointer transition-all ${isSelected
-                        ? 'bg-blue-100 border-2 border-blue-500'
-                        : 'bg-white border border-gray-200 hover:border-blue-300'
-                        }`}
+                      className={`p-4 rounded-2xl cursor-pointer transition-all border ${
+                        isSelected
+                          ? 'bg-amber-50/50 border-amber-500 ring-2 ring-amber-500/10'
+                          : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                      }`}
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex-1">
-                          <p className="text-sm sm:text-base font-bold text-gray-900">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-extrabold text-sm text-slate-800 truncate">
                             {candidate.player_name || candidate.team_name}
                           </p>
                           {candidate.result && (
-                            <p className="text-xs text-gray-600 mt-1">{candidate.result}</p>
+                            <p className="text-[10px] text-slate-500 font-mono mt-1 font-bold">{candidate.result}</p>
                           )}
-                          <div className="flex flex-wrap gap-2 mt-2 text-xs">
-                            {candidate.performance_stats && Object.entries(candidate.performance_stats).map(([key, value]) => (
-                              <span key={key} className="px-2 py-1 bg-gray-100 rounded">
-                                {key}: {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
-                              </span>
-                            ))}
-                          </div>
+                           {candidate.performance_stats && (
+                             <div className="flex flex-wrap gap-1.5 mt-2">
+                               {Object.entries(candidate.performance_stats).map(([key, value]) => (
+                                 <span key={key} className="px-2 py-0.5 bg-slate-200/60 border border-slate-300/30 rounded-md text-[9px] font-bold text-slate-650 uppercase">
+                                   {key}: {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : (value as any)}
+                                 </span>
+                               ))}
+                             </div>
+                           )}
                         </div>
                         {isSelected && (
-                          <span className="text-blue-600 text-xl sm:text-2xl">✓</span>
+                          <span className="text-amber-500 text-lg font-black shrink-0 sm:mr-2">Yes</span>
                         )}
                       </div>
                     </div>
                   );
                 })}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-slate-400">
+                <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-4">
+                  <Info className="w-6 h-6 text-slate-400" />
+                </div>
+                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">
+                  No Nominees Available
+                </h3>
+                <p className="text-xs text-slate-500 font-mono">
+                  No completed fixtures or eligible stats found for {['POTD', 'TOD'].includes(activeTab) ? `Round ${currentRound}` : `Week ${currentWeek}`}.
+                </p>
+                {error && (
+                  <p className="text-[10px] text-rose-500 font-mono font-bold mt-2 uppercase">{error}</p>
+                )}
               </div>
             )}
           </div>
@@ -505,15 +576,25 @@ export default function AwardsManagementPage() {
             <button
               onClick={handleSelectAward}
               disabled={!selectedCandidate || submitting}
-              className="w-full py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm sm:text-base font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
             >
-              {submitting ? 'Saving...' : 'Select Award'}
+              {submitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Select Award Winner</span>
+                </>
+              )}
             </button>
           )}
 
           {currentAward && (
-            <div className="w-full py-3 sm:py-4 bg-gray-300 text-gray-600 text-sm sm:text-base font-bold rounded-xl text-center cursor-not-allowed">
-              Award Already Given - Remove to Select Another
+            <div className="w-full py-3 bg-slate-100 border border-slate-200 text-slate-400 font-extrabold rounded-xl text-xs uppercase tracking-wider text-center cursor-not-allowed flex items-center justify-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-slate-400" /> Award Already Given - Remove to Select Another
             </div>
           )}
         </div>

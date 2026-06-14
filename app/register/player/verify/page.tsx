@@ -1,5 +1,6 @@
 'use client'
 
+import { Check, Crown, Lock, Medal, Star, TrendingUp, Trophy } from 'lucide-react';
 import { Suspense, useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { db, auth } from '@/lib/firebase/config'
@@ -648,7 +649,7 @@ function PlayerVerifyContent() {
                     {!isNewPlayer && (
                       <div className="bg-blue-50/60 border border-blue-200/30 text-blue-700 p-4 rounded-xl mb-4 font-mono">
                         <p className="text-xs uppercase font-extrabold mb-1">
-                          🔒 Profile Update Rules
+                          <span className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-slate-500" /> Profile Update Rules</span>
                         </p>
                         <p className="text-[10px] uppercase font-bold leading-relaxed">
                           Fields with existing database values cannot be changed. You can only fill in missing information.
@@ -964,7 +965,7 @@ function PlayerVerifyContent() {
                           </p>
                           <ul className="text-[10px] uppercase font-bold text-blue-700 space-y-1 ml-4">
                             <li className="flex items-center">
-                              <span className="mr-2">✓</span>
+                              <Check className="w-4 h-4 text-emerald-550 inline mr-2" />
                               <strong>{season?.name || 'Current Season'}</strong>
                             </li>
                           </ul>
@@ -1092,7 +1093,7 @@ function PlayerVerifyContent() {
                           </p>
                           <ul className="text-[10px] uppercase font-bold text-blue-700 space-y-1 ml-4">
                             <li className="flex items-center">
-                              <span className="mr-2">✓</span>
+                              <Check className="w-4 h-4 text-emerald-550 inline mr-2" />
                               <strong>{season?.name || 'Current Season'}</strong>
                             </li>
                           </ul>
@@ -1139,7 +1140,7 @@ function PlayerVerifyContent() {
                 disabled={submitting}
                 className="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/60 font-bold rounded-xl transition-all text-xs uppercase tracking-wider hover:-translate-y-0.5 active:translate-y-0"
               >
-                ← Back to Player Selection
+                {"<-"} Back to Player Selection
               </button>
             </div>
           </div>

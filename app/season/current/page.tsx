@@ -3,20 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { 
-  Trophy as TrophyIcon, 
-  Activity, 
-  ArrowRight, 
-  Zap,
-  Shield, 
-  Award as AwardIcon,
-  Flame,
-  Target,
-  RotateCcw,
-  Calendar,
-  Layers,
-  ChevronDown
-} from 'lucide-react';
+import { Activity, ArrowRight, Award as AwardIcon, Calendar, ChevronDown, Crown, Flame, Layers, Medal, RotateCcw, Shield, Star, Target, TrendingUp, Trophy, Trophy as TrophyIcon, Zap } from 'lucide-react';
 
 interface Season {
   id: string;
@@ -253,9 +240,9 @@ export default function CurrentSeasonPage() {
   };
 
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉';
+    if (rank === 1) return <Trophy className="w-4 h-4 text-amber-500 fill-amber-500 inline" />;
+    if (rank === 2) return <Trophy className="w-4 h-4 text-slate-400 fill-slate-400 inline" />;
+    if (rank === 3) return <Trophy className="w-4 h-4 text-amber-750 fill-amber-750 inline" />;
     return '';
   };
 
@@ -277,7 +264,7 @@ export default function CurrentSeasonPage() {
           <Shield className="w-12 h-12 text-slate-400 mx-auto mb-4" />
           <p className="text-slate-900 text-lg font-bold mb-2">No active season found</p>
           <Link href="/" className="text-amber-600 hover:text-amber-700 font-bold text-sm inline-flex items-center gap-1">
-            ← Back to Home
+            {"<-"} Back to Home
           </Link>
         </div>
       </div>
@@ -347,7 +334,7 @@ export default function CurrentSeasonPage() {
               {season.name}
             </h1>
             <p className="text-xs text-slate-500 font-mono mt-1">
-              STATUS: <span className="text-emerald-600 font-bold">🟢 ACTIVE</span>
+              STATUS: <span className="text-emerald-600 font-bold flex items-center gap-1.5"><span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" /> ACTIVE</span>
             </p>
           </div>
           
@@ -430,7 +417,7 @@ export default function CurrentSeasonPage() {
                           : 'border border-slate-200 hover:bg-slate-50 text-slate-600'
                       }`}
                     >
-                      {t.tournament_name} {t.is_primary && '👑'}
+                      {t.tournament_name} {t.is_primary && <Crown className="w-4 h-4 text-amber-500 fill-amber-500 inline ml-1" />}
                     </button>
                   ))}
                 </div>
@@ -872,7 +859,7 @@ export default function CurrentSeasonPage() {
                             {(seasonNum === 16 || seasonNum === 17) ? (
                               player.star_rating ? (
                                 <span className="text-amber-500 text-sm font-bold tracking-wider">
-                                  {'★'.repeat(player.star_rating)}
+                                  {player.star_rating ? [...Array(player.star_rating)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline-block" />) : null}
                                 </span>
                               ) : (
                                 <span className="text-slate-400 font-mono">-</span>
@@ -955,7 +942,7 @@ export default function CurrentSeasonPage() {
                             <>
                               <div className="text-[9px] uppercase text-amber-500 font-bold">Rating</div>
                               <div className="font-bold text-amber-500 mt-0.5">
-                                {player.star_rating ? '★'.repeat(player.star_rating) : '-'}
+                                {player.star_rating ? <span className="flex justify-center gap-0.5">{[...Array(player.star_rating)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />)}</span> : '-'}
                               </div>
                             </>
                           ) : (

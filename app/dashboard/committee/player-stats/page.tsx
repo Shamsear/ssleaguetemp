@@ -6,7 +6,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
-import { BarChart2, ArrowLeft, Pencil, Check, Search, Calendar, Users, Trophy, ClipboardList, ShieldAlert } from 'lucide-react';
+import { BarChart2, ArrowLeft, Pencil, Check, Search, Calendar, Users, Trophy, ClipboardList, ShieldAlert, CheckCircle, Star, Activity } from 'lucide-react';
 
 interface PlayerStats {
   id: string;
@@ -88,7 +88,7 @@ export default function PlayerStatsPage() {
           
           // Filter to show only SSPSLS16 and later (hide historical seasons)
           const filteredSeasons = allSeasons.filter((s: Season) => {
-            // Extract season number (e.g., "SSPSLS16" -> 16)
+            // Extract season number (e.g., "SSPSLS16" &rarr; 16)
             const match = s.id.match(/\d+$/);
             if (match) {
               const seasonNumber = parseInt(match[0]);
@@ -294,7 +294,7 @@ export default function PlayerStatsPage() {
         // Track star rating changes
         if (result.starRatingChanged) {
           starChanges.push(
-            `${update.player_name}: ${result.oldStarRating}⭐ → ${result.newStarRating}⭐`
+            `${update.player_name}: ${result.oldStarRating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> &rarr; ${result.newStarRating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />`
           );
         }
       }
@@ -302,7 +302,7 @@ export default function PlayerStatsPage() {
       // Show notification if any star ratings changed
       if (starChanges.length > 0) {
         alert(
-          `✅ Updates saved!\n\n⭐ Star Rating Changes:\n${starChanges.join('\n')}\n\nSalaries have been automatically recalculated.`
+          `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Updates saved!\n\n<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Star Rating Changes:\n${starChanges.join('\n')}\n\nSalaries have been automatically recalculated.`
         );
       }
 
@@ -375,7 +375,7 @@ export default function PlayerStatsPage() {
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Player Statistics...</p>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading Player Statistics...</p>
         </div>
       </div>
     );
@@ -522,7 +522,7 @@ export default function PlayerStatsPage() {
                 className="w-full py-2 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
               />
             </div>
-            <div className="mt-3 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <div className="mt-3 text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
               Filtering {filteredPlayers.length} of {players.length} players
             </div>
           </div>
@@ -538,14 +538,14 @@ export default function PlayerStatsPage() {
                 <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Click expand button for matchday performance breakdown</p>
               </div>
             </div>
-            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <div className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
               Sorted by <span className="text-slate-800 font-extrabold">{sortBy === 'player_name' ? 'Name' : sortBy.replace('_', ' ').toUpperCase()}</span>
             </div>
           </div>
 
           <div className="hidden sm:block overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-100 text-center font-mono">
-              <thead className="bg-slate-50/50 border-b border-slate-100 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              <thead className="bg-slate-50/50 border-b border-slate-100 text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                 <tr>
                   <th className="px-4 py-3.5 w-12 text-center">
                     <span className="sr-only">Expand</span>
@@ -805,7 +805,7 @@ export default function PlayerStatsPage() {
                               />
                             ) : (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-emerald-50 text-emerald-700 border-emerald-200/40">
-                                ⚽ {player.goals_scored || 0}
+                                <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> {player.goals_scored || 0}
                               </span>
                             )}
                           </td>
@@ -871,7 +871,7 @@ export default function PlayerStatsPage() {
                             <td colSpan={13} className="px-6 py-6 border-t border-b border-slate-100">
                               <div className="console-card bg-white border border-slate-200/60 rounded-xl p-5 shadow-inner font-mono">
                                 <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
-                                  <span className="text-base">📊</span>
+                                  <span className="text-base"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /></span>
                                   <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
                                     Matchday Breakdown - {player.player_name}
                                   </h4>
@@ -884,7 +884,7 @@ export default function PlayerStatsPage() {
                                 ) : (
                                   <div className="overflow-x-auto">
                                     <table className="min-w-full divide-y divide-slate-100 text-center font-mono">
-                                      <thead className="bg-slate-50/50 border-b border-slate-100 text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                                      <thead className="bg-slate-50/50 border-b border-slate-100 text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                                         <tr>
                                           <th className="px-3 py-2 text-left">Round</th>
                                           <th className="px-3 py-2 text-left">Matchup</th>
@@ -986,13 +986,13 @@ export default function PlayerStatsPage() {
                           <tr key={`${player.id}-preview`} className="bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500 font-mono">
                             <td colSpan={13} className="px-6 py-3 text-left">
                               <div className="flex items-center gap-4 text-xs">
-                                <span className="font-extrabold text-slate-700 uppercase tracking-wider">⭐ Star Rating Change:</span>
+                                <span className="font-extrabold text-slate-700 uppercase tracking-wider"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Star Rating Change:</span>
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-amber-50 text-amber-700 border border-amber-200">
-                                  {predictions.oldStarRating}⭐
+                                  {predictions.oldStarRating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />
                                 </span>
-                                <span className="text-slate-400 font-bold">→</span>
+                                <span className="text-slate-400 font-bold"> &rarr; </span>
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                  {predictions.newStarRating}⭐
+                                  {predictions.newStarRating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />
                                 </span>
                               </div>
                             </td>
@@ -1121,7 +1121,7 @@ export default function PlayerStatsPage() {
                             className="w-full px-1 py-0.5 text-[11px] border border-slate-300 rounded text-center text-slate-800 bg-white"
                           />
                         ) : (
-                          <p className="font-extrabold text-emerald-700">⚽ {player.goals_scored || 0}</p>
+                          <p className="font-extrabold text-emerald-700"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> {player.goals_scored || 0}</p>
                         )}
                       </div>
                       <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
@@ -1207,7 +1207,7 @@ export default function PlayerStatsPage() {
                       <div className="mt-2.5 p-2 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 text-[10px] flex justify-between items-center font-mono">
                         <span className="font-bold text-slate-700 uppercase">Star Rating Change:</span>
                         <span className="font-black text-slate-800">
-                          {predictions.oldStarRating}⭐ → {predictions.newStarRating}⭐
+                          {predictions.oldStarRating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> &rarr; {predictions.newStarRating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />
                         </span>
                       </div>
                     )}
@@ -1289,7 +1289,7 @@ export default function PlayerStatsPage() {
           <div className="console-card bg-white border border-slate-200/60 rounded-xl p-5 shadow-sm hover:border-amber-400/40 hover:shadow-md transition-all duration-200 font-mono">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Players</p>
+                <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Total Players</p>
                 <p className="text-2xl font-black text-slate-800 mt-1">{filteredPlayers.length}</p>
               </div>
               <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -1303,13 +1303,13 @@ export default function PlayerStatsPage() {
           <div className="console-card bg-white border border-slate-200/60 rounded-xl p-5 shadow-sm hover:border-amber-400/40 hover:shadow-md transition-all duration-200 font-mono">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Goals</p>
+                <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Total Goals</p>
                 <p className="text-2xl font-black text-slate-800 mt-1">
                   {filteredPlayers.reduce((sum, p) => sum + (p.goals_scored || 0), 0)}
                 </p>
               </div>
               <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0 font-mono">
-                <span className="text-lg">⚽</span>
+                <span className="text-lg"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /></span>
               </div>
             </div>
           </div>
@@ -1317,7 +1317,7 @@ export default function PlayerStatsPage() {
           <div className="console-card bg-white border border-slate-200/60 rounded-xl p-5 shadow-sm hover:border-amber-400/40 hover:shadow-md transition-all duration-200 font-mono">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Matches</p>
+                <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Total Matches</p>
                 <p className="text-2xl font-black text-slate-800 mt-1">
                   {filteredPlayers.reduce((sum, p) => sum + (p.matches_played || 0), 0)}
                 </p>
@@ -1333,7 +1333,7 @@ export default function PlayerStatsPage() {
           <div className="console-card bg-white border border-slate-200/60 rounded-xl p-5 shadow-sm hover:border-amber-400/40 hover:shadow-md transition-all duration-200 font-mono">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Clean Sheets</p>
+                <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Clean Sheets</p>
                 <p className="text-2xl font-black text-slate-800 mt-1">
                   {filteredPlayers.reduce((sum, p) => sum + (p.clean_sheets || 0), 0)}
                 </p>

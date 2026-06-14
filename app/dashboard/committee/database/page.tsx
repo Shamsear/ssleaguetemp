@@ -6,27 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import BulkPhotoUpload from '@/components/BulkPhotoUpload'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
-import {
-  ArrowLeft,
-  Database,
-  UploadCloud,
-  FileSpreadsheet,
-  DownloadCloud,
-  CheckCircle2,
-  Trash2,
-  Filter,
-  Sparkles,
-  RefreshCw,
-  AlertTriangle,
-  Info,
-  Users,
-  Eye,
-  ChevronDown,
-  ChevronUp,
-  Activity,
-  PlusCircle,
-  ShieldAlert
-} from 'lucide-react'
+import { ArrowLeft, Database, UploadCloud, FileSpreadsheet, DownloadCloud, CheckCircle2, Trash2, Filter, Sparkles, RefreshCw, AlertTriangle, Info, Users, Eye, ChevronDown, ChevronUp, Activity, PlusCircle, ShieldAlert, CheckCircle, BarChart2 } from 'lucide-react'
 
 interface PlayerCount {
   total: number
@@ -70,7 +50,7 @@ export default function DatabaseManagementPage() {
 
   const fetchPlayerCount = async () => {
     try {
-      console.log('🔄 Fetching player stats from Neon database')
+      console.log('<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Fetching player stats from Neon database')
       const response = await fetchWithTokenRefresh('/api/players/stats')
       const { data, success } = await response.json()
       
@@ -78,7 +58,7 @@ export default function DatabaseManagementPage() {
         throw new Error('Failed to fetch player stats')
       }
       
-      console.log(`✅ Fetched stats: ${data.total} players from Neon`)
+      console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Fetched stats: ${data.total} players from Neon`)
       setPlayerCount({
         total: data.total,
         byPosition: data.byPosition
@@ -345,7 +325,7 @@ export default function DatabaseManagementPage() {
         throw new Error('Failed to fetch players for backup')
       }
       
-      console.log(`📊 Creating backup of ${players.length} players from Neon database`)
+      console.log(`<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Creating backup of ${players.length} players from Neon database`)
 
       const backup = {
         timestamp: new Date().toISOString(),
@@ -465,7 +445,7 @@ export default function DatabaseManagementPage() {
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-xs text-slate-500 uppercase tracking-wider font-extrabold">Loading...</p>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading...</p>
         </div>
       </div>
     )

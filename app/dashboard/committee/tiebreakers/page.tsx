@@ -1,4 +1,5 @@
 'use client';
+import { Clock } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -468,11 +469,11 @@ export default function CommitteeTiebreakerPage() {
                             ) : (
                               team.submitted ? (
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                  ✓ Submitted
+                                  Yes Submitted
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                  ⏳ Pending
+                                  <Clock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Pending
                                 </span>
                               )
                             )}

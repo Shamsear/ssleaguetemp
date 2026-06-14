@@ -1,4 +1,5 @@
 'use client';
+import { Trophy, BarChart2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -98,9 +99,9 @@ export default function FantasyStandingsPage() {
   if (!user || !league) return null;
 
   const getRankBadge = (rank: number) => {
-    if (rank === 1) return { bg: 'bg-yellow-400', text: 'text-yellow-900', icon: '🥇' };
-    if (rank === 2) return { bg: 'bg-gray-300', text: 'text-gray-700', icon: '🥈' };
-    if (rank === 3) return { bg: 'bg-orange-400', text: 'text-orange-900', icon: '🥉' };
+    if (rank === 1) return { bg: 'bg-yellow-400', text: 'text-yellow-900', icon: '<Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />' };
+    if (rank === 2) return { bg: 'bg-gray-300', text: 'text-gray-700', icon: '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />' };
+    if (rank === 3) return { bg: 'bg-orange-400', text: 'text-orange-900', icon: '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />' };
     return { bg: 'bg-gray-200', text: 'text-gray-600', icon: '#' };
   };
 
@@ -155,7 +156,7 @@ export default function FantasyStandingsPage() {
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
-              📊 Overall Points
+              <BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Overall Points
             </button>
             <button
               onClick={() => setActiveTab('h2h')}

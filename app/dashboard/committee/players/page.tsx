@@ -1,4 +1,5 @@
 'use client'
+import { CheckCircle, RefreshCw, BarChart2 } from 'lucide-react';
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -72,7 +73,7 @@ export default function CommitteePlayersPage() {
     setLoading(true)
 
     try {
-      console.log('🔄 Fetching players from Neon and teams from Firestore')
+      console.log('<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Fetching players from Neon and teams from Firestore')
 
       // Build query params
       const params = new URLSearchParams({
@@ -95,7 +96,7 @@ export default function CommitteePlayersPage() {
         throw new Error('Failed to fetch players')
       }
 
-      console.log(`✅ Fetched ${playersData.length} players from Neon, ${teamsSnapshot.size} teams from Firestore`)
+      console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Fetched ${playersData.length} players from Neon, ${teamsSnapshot.size} teams from Firestore`)
 
       // Use the actual total count from API
       setTotalPlayers(totalCount || 0)
@@ -202,7 +203,7 @@ export default function CommitteePlayersPage() {
       setIsExporting(true)
       setShowExportModal(false)
 
-      console.log('📊 Starting full footballplayer database export...')
+      console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Starting full footballplayer database export...')
 
       // Fetch ALL players without pagination but with sold filter
       let apiUrl = '/api/players?limit=10000'
@@ -405,7 +406,7 @@ export default function CommitteePlayersPage() {
         const sheetName = `${position} (${players.length})`
         const worksheet = workbook.addWorksheet(sheetName)
         styleWorksheet(worksheet, players)
-        console.log(`✅ Created sheet: ${sheetName}`)
+        console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Created sheet: ${sheetName}`)
       })
 
       // Create position group sheets
@@ -413,7 +414,7 @@ export default function CommitteePlayersPage() {
         const sheetName = `${group} Group (${players.length})`
         const worksheet = workbook.addWorksheet(sheetName)
         styleWorksheet(worksheet, players)
-        console.log(`✅ Created sheet: ${sheetName}`)
+        console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Created sheet: ${sheetName}`)
       })
 
       // Create "All Players" overview sheet
@@ -502,7 +503,7 @@ export default function CommitteePlayersPage() {
       showAlert({
         type: 'success',
         title: 'Export Successful',
-        message: `✅ Exported complete footballplayer database to Excel!\n\n📊 ORGANIZED INTO ${totalSheets} WORKSHEETS:\n\n🏃 POSITION SHEETS (${Object.keys(playersByPosition).length}):\n${positionSheetNames}\n\n📋 POSITION GROUP SHEETS (${Object.keys(playersByPositionGroup).length}):\n${groupSheetNames}\n\n📈 OVERVIEW SHEETS:\n• All Players (${totalPlayers})\n• Summary & Statistics\n\n💫 FEATURES:\n• All player attributes (40+ data fields)\n• Color-coded auction eligibility\n• Professional formatting\n• Easy navigation between positions\n\nPerfect for analyzing 2000+ players by position!`
+        message: `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Exported complete footballplayer database to Excel!\n\n<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> ORGANIZED INTO ${totalSheets} WORKSHEETS:\n\n🏃 POSITION SHEETS (${Object.keys(playersByPosition).length}):\n${positionSheetNames}\n\n📋 POSITION GROUP SHEETS (${Object.keys(playersByPositionGroup).length}):\n${groupSheetNames}\n\n📈 OVERVIEW SHEETS:\n• All Players (${totalPlayers})\n• Summary & Statistics\n\n💫 FEATURES:\n• All player attributes (40+ data fields)\n• Color-coded auction eligibility\n• Professional formatting\n• Easy navigation between positions\n\nPerfect for analyzing 2000+ players by position!`
       })
     } catch (err) {
       console.error('Error exporting:', err)
@@ -544,7 +545,7 @@ export default function CommitteePlayersPage() {
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10 font-mono">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading player management...</p>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading player management...</p>
         </div>
       </div>
     )
@@ -746,7 +747,7 @@ export default function CommitteePlayersPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <h3 className="text-sm font-bold text-slate-850 uppercase tracking-wider mb-1">No players found</h3>
-              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Try adjusting your filters or search term</p>
+              <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Try adjusting your filters or search term</p>
             </div>
           ) : (
             <div className="grid gap-4 font-mono">
@@ -781,7 +782,7 @@ export default function CommitteePlayersPage() {
                           Team: {player.team.name}
                         </div>
                       ) : (
-                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-2 flex items-center gap-1">
+                        <div className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-2 flex items-center gap-1">
                           <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
                           Free Agent
                         </div>

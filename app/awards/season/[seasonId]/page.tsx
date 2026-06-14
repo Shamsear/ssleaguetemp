@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import InstagramEmbed from '@/components/InstagramEmbed';
-import { Shield, Trophy as TrophyIcon, Award as AwardIcon, Calendar, Zap, Flame, ChevronDown } from 'lucide-react';
+import { Activity, Award as AwardIcon, Calendar, ChevronDown, Crown, Flame, Gem, Medal, Shield, Sparkles, Star, Trophy, Trophy as TrophyIcon, Zap } from 'lucide-react';
 
 interface Award {
   id: string;
@@ -239,14 +239,14 @@ export default function SeasonAwardsPage() {
 
   const getAwardIcon = (awardType: string) => {
     const type = awardType?.toLowerCase() || '';
-    if (type.includes('potd') || type.includes('player of the day')) return '⭐';
-    if (type.includes('potw') || type.includes('player of the week')) return '🌟';
-    if (type.includes('tod') || type.includes('team of the day')) return '🏅';
-    if (type.includes('tow') || type.includes('team of the week')) return '🏆';
-    if (type.includes('pots') || type.includes('player of the season')) return '👑';
-    if (type.includes('tots') || type.includes('team of the season')) return '🏆';
-    if (type.includes('motm') || type.includes('man of the match')) return '💎';
-    return '🎖️';
+    if (type.includes('potd') || type.includes('player of the day')) return <Star className="w-5 h-5 text-amber-450 fill-amber-450 inline" />;
+    if (type.includes('potw') || type.includes('player of the week')) return <Sparkles className="w-5 h-5 text-amber-450 fill-amber-450 inline" />;
+    if (type.includes('tod') || type.includes('team of the day')) return <Medal className="w-5 h-5 text-amber-500 inline" />;
+    if (type.includes('tow') || type.includes('team of the week')) return <Trophy className="w-5 h-5 text-amber-500 fill-amber-500 inline" />;
+    if (type.includes('pots') || type.includes('player of the season')) return <Crown className="w-5 h-5 text-amber-550 fill-amber-550 inline" />;
+    if (type.includes('tots') || type.includes('team of the season')) return <Trophy className="w-5 h-5 text-amber-500 fill-amber-500 inline" />;
+    if (type.includes('motm') || type.includes('man of the match')) return <Gem className="w-5 h-5 text-blue-500 inline" />;
+    return <Medal className="w-5 h-5 text-amber-500 inline" />;
   };
 
   const formatDate = (dateString?: string) => {
@@ -294,13 +294,13 @@ export default function SeasonAwardsPage() {
       <div className="flex flex-wrap gap-1 justify-center max-w-full mt-1.5 font-mono">
         {hasMatchup && (
           <div className="text-[8px] font-bold text-slate-700 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded text-center w-full truncate mb-0.5">
-            ⚔️ {stats.matchup}
+            <Activity className="w-4 h-4 text-rose-500 inline mr-1 align-text-bottom" /> {stats.matchup}
           </div>
         )}
 
         {hasCleanSheet && (
           <div className="inline-flex items-center px-1.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded text-[7px] font-bold uppercase">
-            🛡️ CS
+            <Shield className="w-4 h-4 text-blue-500 inline mr-1 align-text-bottom" /> CS
           </div>
         )}
 
@@ -449,7 +449,7 @@ export default function SeasonAwardsPage() {
                   : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              ★ Awards ({totalAwards})
+              Awards ({totalAwards})
             </button>
             <button
               onClick={() => setActiveTab('trophies')}
@@ -459,7 +459,7 @@ export default function SeasonAwardsPage() {
                   : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              🏆 Trophies ({totalTrophies})
+              Trophies ({totalTrophies})
             </button>
           </div>
         </div>
@@ -482,7 +482,7 @@ export default function SeasonAwardsPage() {
                     : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
                 }`}
               >
-                🏆 Season Awards ({cleanedPlayerAwards.length})
+                Season Awards ({cleanedPlayerAwards.length})
               </button>
               <button
                 onClick={() => setAwardsSubTab('weekly')}
@@ -492,7 +492,7 @@ export default function SeasonAwardsPage() {
                     : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
                 }`}
               >
-                📅 Weekly Awards ({cleanedAwards.length})
+                Weekly Awards ({cleanedAwards.length})
               </button>
             </div>
           </div>

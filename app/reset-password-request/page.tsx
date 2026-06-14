@@ -1,5 +1,6 @@
 'use client';
 
+import { AlertTriangle, Crown, Medal, Star, TrendingUp, Trophy } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -113,7 +114,7 @@ export default function ResetPasswordRequest() {
 
           {error && (
             <div className="p-4 bg-rose-50 border border-rose-250/60 rounded-2xl flex items-start gap-3 animate-fade-in">
-              <span className="text-lg">⚠️</span>
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
               <div className="text-xs font-mono font-bold text-rose-800 uppercase tracking-wide">
                 {error}
               </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Clock, Crown, Medal, Star, TrendingUp, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -30,7 +31,7 @@ export default function PendingApproval() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <div>
-                  <h3 className="text-lg font-semibold text-yellow-900 mb-1">⏳ Waiting for Super Admin Approval</h3>
+                  <h3 className="text-lg font-semibold text-yellow-900 mb-1"><span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-amber-500 animate-pulse" /> Waiting for Super Admin Approval</span></h3>
                   <p className="text-yellow-800 text-sm">
                     Your account has been created but requires approval from a super admin before you can log in and access the platform.
                   </p>

@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  AlertTriangle,
+  Info,
+  HelpCircle
+} from 'lucide-react';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -64,35 +69,40 @@ export default function ConfirmModal({
   const getIcon = () => {
     if (type === 'danger') {
       return (
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-          <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 border border-rose-100 text-rose-600">
+          <AlertTriangle className="h-6 w-6" />
         </div>
       );
     } else if (type === 'warning') {
       return (
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
-          <svg className="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 border border-amber-100 text-amber-600">
+          <AlertTriangle className="h-6 w-6" />
         </div>
       );
     }
     return (
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-        <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 border border-blue-100 text-blue-600">
+        <HelpCircle className="h-6 w-6" />
       </div>
     );
   };
 
+  const getConfirmButtonColorClass = () => {
+    switch (type) {
+      case 'danger':
+        return 'bg-rose-600 hover:bg-rose-700 text-white border border-rose-700';
+      case 'warning':
+        return 'bg-amber-500 hover:bg-amber-600 text-white border border-amber-600';
+      default:
+        return 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-900';
+    }
+  };
+
   return createPortal(
-    <div style={{ pointerEvents: 'auto', position: 'relative', width: '100%', height: '100%' }}>
+    <div style={{ pointerEvents: 'auto', position: 'relative', width: '100%', height: '100%' }} className="font-mono">
       {/* Backdrop */}
       <div
-        className="bg-black/20 backdrop-blur-sm"
+        className="bg-black/25 backdrop-blur-sm"
         onClick={onCancel}
         style={{
           position: 'absolute',
@@ -107,7 +117,7 @@ export default function ConfirmModal({
 
       {/* Modal - centered */}
       <div 
-        className="w-[calc(100%-2rem)] sm:w-auto sm:min-w-[400px] sm:max-w-lg md:max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl"
+        className="w-[calc(100%-2rem)] sm:w-auto sm:min-w-[400px] sm:max-w-lg md:max-w-xl max-h-[90vh] overflow-y-auto console-card bg-white border border-slate-200/80 rounded-3xl shadow-2xl relative"
         style={{
           position: 'absolute',
           top: '50%',
@@ -126,11 +136,11 @@ export default function ConfirmModal({
               {getIcon()}
             </div>
             <div className="mt-4 text-center sm:ml-4 sm:mt-0 sm:text-left flex-1">
-              <h3 className="text-lg font-semibold leading-6 text-gray-900">
+              <h3 className="text-base font-bold uppercase tracking-wider text-slate-900">
                 {title || 'Confirmation Required'}
               </h3>
               <div className="mt-2">
-                <p className="text-sm text-gray-500 whitespace-pre-line">
+                <p className="text-xs text-slate-550 font-bold whitespace-pre-line leading-relaxed">
                   {message}
                 </p>
               </div>
@@ -140,7 +150,7 @@ export default function ConfirmModal({
             <button
               type="button"
               onClick={onCancel}
-              className="inline-flex w-full sm:w-auto justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-md ring-1 ring-inset ring-gray-300 hover:bg-gray-50 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
+              className="inline-flex w-full sm:w-auto justify-center px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-705 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all duration-200 cursor-pointer"
             >
               {cancelText}
             </button>
@@ -150,13 +160,7 @@ export default function ConfirmModal({
                 onConfirm();
                 onCancel();
               }}
-              className={`inline-flex w-full sm:w-auto justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                type === 'danger' 
-                  ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' 
-                  : type === 'warning'
-                  ? 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
-                  : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
-              }`}
+              className={`inline-flex w-full sm:w-auto justify-center rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] cursor-pointer ${getConfirmButtonColorClass()}`}
             >
               {confirmText}
             </button>

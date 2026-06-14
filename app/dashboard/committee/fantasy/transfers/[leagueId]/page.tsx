@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeftRight, Calendar, Save, AlertCircle, Plus, Settings } from 'lucide-react';
+import { ArrowLeftRight, Calendar, Save, AlertCircle, Plus, Settings, CheckCircle, Lock } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 
 interface TransferWindow {
@@ -520,8 +520,8 @@ export default function TransfersManagementPage() {
                     <h2 className="text-xl font-bold text-gray-900 mb-2">Current Window Status</h2>
                     <p className="text-gray-600">
                       {settings.is_transfer_window_open
-                        ? '✅ Transfer window is currently open'
-                        : '🔒 Transfer window is currently closed'}
+                        ? '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Transfer window is currently open'
+                        : '<Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Transfer window is currently closed'}
                     </p>
                   </div>
                   <button

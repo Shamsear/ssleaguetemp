@@ -1,4 +1,5 @@
 'use client';
+import { XCircle, RefreshCw, CheckCircle, Trash2, AlertTriangle } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -65,13 +66,13 @@ export default function FixDuplicateSalariesPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Duplicate deleted:', data);
-        alert(`✅ Duplicate deleted successfully!\n\nNew real_player_budget: ${data.new_balance.realTotal}`);
+        console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Duplicate deleted:', data);
+        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Duplicate deleted successfully!\n\nNew real_player_budget: ${data.new_balance.realTotal}`);
         setProcessedIds(prev => new Set(prev).add(duplicateId));
         await loadDuplicates();
       } else {
         const error = await response.json();
-        console.error('❌ Delete failed:', error);
+        console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Delete failed:', error);
         alert(`Failed: ${error.error}`);
       }
     } catch (error) {
@@ -100,17 +101,17 @@ export default function FixDuplicateSalariesPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Bulk delete complete:', data);
+        console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Bulk delete complete:', data);
         
         const summary = data.updated_teams.map((t: any) => 
           `${t.team_season_id}: ${t.new_balance.realTotal} Real Player Budget`
         ).join('\n');
         
-        alert(`✅ ${data.message}\n\nUpdated balances:\n${summary}`);
+        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${data.message}\n\nUpdated balances:\n${summary}`);
         await loadDuplicates();
       } else {
         const error = await response.json();
-        console.error('❌ Bulk delete failed:', error);
+        console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Bulk delete failed:', error);
         alert(`Failed: ${error.error}`);
       }
     } catch (error) {
@@ -146,7 +147,7 @@ export default function FixDuplicateSalariesPage() {
 
         {duplicates.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
-            <div className="text-6xl mb-4">✅</div>
+            <div className="text-6xl mb-4"><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /></div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">No Duplicates Found!</h2>
             <p className="text-gray-600">All salary transactions are clean.</p>
             <button
@@ -164,7 +165,7 @@ export default function FixDuplicateSalariesPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <div>
-                  <h3 className="font-bold text-yellow-900">⚠️ Found {duplicates.length} Duplicate Transaction(s)</h3>
+                  <h3 className="font-bold text-yellow-900"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Found {duplicates.length} Duplicate Transaction(s)</h3>
                   <p className="text-sm text-yellow-800 mt-1">
                     These transactions were created within 5 minutes of each other and appear to be duplicates.
                   </p>
@@ -178,14 +179,14 @@ export default function FixDuplicateSalariesPage() {
                 disabled={isProcessing}
                 className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
               >
-                🔄 Refresh
+                <RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Refresh
               </button>
               <button
                 onClick={reverseAll}
                 disabled={isProcessing}
                 className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 disabled:opacity-50"
               >
-                {isProcessing ? 'Processing...' : `🗑️ Delete All ${duplicates.length} Duplicates & Fix Budgets`}
+                {isProcessing ? 'Processing...' : `<Trash2 className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Delete All ${duplicates.length} Duplicates & Fix Budgets`}
               </button>
             </div>
 
@@ -202,7 +203,7 @@ export default function FixDuplicateSalariesPage() {
                       disabled={isProcessing || processedIds.has(dup.duplicate.id)}
                       className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {processedIds.has(dup.duplicate.id) ? '✅ Deleted' : '🗑️ Delete This'}
+                      {processedIds.has(dup.duplicate.id) ? '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Deleted' : '<Trash2 className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Delete This'}
                     </button>
                   </div>
 

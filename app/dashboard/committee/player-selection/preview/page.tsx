@@ -105,7 +105,7 @@ export default function PlayerSelectionPreviewPage() {
       const playersResponse = await fetchWithTokenRefresh('/api/players')
       const { data: players } = await playersResponse.json()
       
-      const playerIdMap = new Map<string, number>() // player_id -> id
+      const playerIdMap = new Map<string, number>() // player_id &rarr; id
       players.forEach((player: any) => {
         playerIdMap.set(player.player_id || player.id.toString(), player.id)
       })

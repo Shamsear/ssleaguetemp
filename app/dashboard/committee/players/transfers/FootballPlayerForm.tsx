@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, AlertTriangle, Activity } from 'lucide-react';
 
 import { useState, useEffect, useMemo } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -197,11 +198,11 @@ export default function FootballPlayerForm() {
     const teamAFee = teamALimit?.next_swap_fee || 0;
     const teamBFee = teamBLimit?.next_swap_fee || 0;
 
-    let confirmMessage = `Swap ${selectedPlayerA.player_name} (${teamAName}) ↔ ${selectedPlayerB.player_name} (${teamBName})?\n\n`;
+    let confirmMessage = `Swap ${selectedPlayerA.player_name} (${teamAName}) &harr; ${selectedPlayerB.player_name} (${teamBName})?\n\n`;
     
     confirmMessage += `Value Exchange:\n`;
-    confirmMessage += `• ${selectedPlayerA.player_name}: ${selectedPlayerA.acquisition_value} → ${selectedPlayerB.acquisition_value}\n`;
-    confirmMessage += `• ${selectedPlayerB.player_name}: ${selectedPlayerB.acquisition_value} → ${selectedPlayerA.acquisition_value}\n\n`;
+    confirmMessage += `• ${selectedPlayerA.player_name}: ${selectedPlayerA.acquisition_value} &rarr; ${selectedPlayerB.acquisition_value}\n`;
+    confirmMessage += `• ${selectedPlayerB.player_name}: ${selectedPlayerB.acquisition_value} &rarr; ${selectedPlayerA.acquisition_value}\n\n`;
 
     if (teamAFee > 0 || teamBFee > 0) {
       confirmMessage += `Fees:\n`;
@@ -238,7 +239,7 @@ export default function FootballPlayerForm() {
         throw new Error(result.error || 'Failed to swap players');
       }
 
-      setSuccess(`✅ ${selectedPlayerA.player_name} and ${selectedPlayerB.player_name} swapped successfully!`);
+      setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${selectedPlayerA.player_name} and ${selectedPlayerB.player_name} swapped successfully!`);
 
       // Reset form
       setSelectedPlayerAId('');
@@ -261,7 +262,7 @@ export default function FootballPlayerForm() {
     <div className="space-y-6">
       {/* Info Banner */}
       <div className="p-5 bg-slate-50 border border-slate-200/60 rounded-2xl font-mono text-xs">
-        <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-2.5">⚽ Football Player Swap</h3>
+        <h3 className="font-extrabold text-slate-800 uppercase tracking-wider mb-2.5"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Football Player Swap</h3>
         <ul className="space-y-1.5 text-slate-500">
           <li>• <strong className="text-slate-800">Swap:</strong> Exchange team assignments AND acquisition values between two players</li>
           <li>• <strong className="text-slate-800">Swap Fees:</strong> Swaps are 100% FREE. No fee deductions from available budgets.</li>
@@ -272,7 +273,7 @@ export default function FootballPlayerForm() {
       {/* Alerts */}
       {error && (
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl font-mono text-xs uppercase tracking-wide">
-          <p className="font-extrabold">⚠️ Error</p>
+          <p className="font-extrabold"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Error</p>
           <p className="mt-1">{error}</p>
         </div>
       )}

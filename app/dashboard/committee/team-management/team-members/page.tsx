@@ -1161,7 +1161,7 @@ export default function TeamMembersPage() {
                               row.team ? (
                                 row.teamName
                               ) : (
-                                <span className="text-red-600">{row.teamName} ✗</span>
+                                <span className="text-red-600">{row.teamName} No</span>
                               )
                             ) : (
                               <span className="text-gray-400 italic">-</span>
@@ -1179,7 +1179,7 @@ export default function TeamMembersPage() {
                                   {row.categoryName}
                                 </div>
                               ) : (
-                                <span className="text-red-600">{row.categoryName} ✗</span>
+                                <span className="text-red-600">{row.categoryName} No</span>
                               )
                             ) : (
                               <span className="text-gray-400 italic">-</span>
@@ -1196,7 +1196,7 @@ export default function TeamMembersPage() {
                               ))}
                             </div>
                           ) : (
-                            <span className="text-xs text-green-600 font-medium">✓ Valid</span>
+                            <span className="text-xs text-green-600 font-medium">Yes Valid</span>
                           )}
                         </td>
                       </tr>

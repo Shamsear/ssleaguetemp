@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, XCircle } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -129,13 +130,13 @@ export default function PopulateFantasyPlayersPage() {
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <p className="text-red-800 font-medium">❌ {error}</p>
+              <p className="text-red-800 font-medium"><XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> {error}</p>
             </div>
           )}
 
           {result && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-              <h3 className="font-semibold text-green-900 mb-3">✅ Success!</h3>
+              <h3 className="font-semibold text-green-900 mb-3"><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Success!</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="bg-white rounded p-3">
                   <p className="text-gray-600">Found in player_seasons</p>

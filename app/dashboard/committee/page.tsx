@@ -1,4 +1,5 @@
 'use client';
+import { Shield, Settings, Activity, BarChart2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -178,7 +179,7 @@ export default function CommitteeDashboard() {
     const { listenToSeasonRoundUpdates } = require('@/lib/realtime/listeners');
 
     const unsubscribe = listenToSeasonRoundUpdates(userSeasonId, (message: any) => {
-      console.log('📊 [Committee Dashboard] Round update:', message.type);
+      console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Committee Dashboard] Round update:', message.type);
 
       // Refetch active rounds when any round event occurs
       if (message.type === 'round_started' ||
@@ -198,7 +199,7 @@ export default function CommitteeDashboard() {
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Dashboard...</p>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading Dashboard...</p>
         </div>
       </div>
     );
@@ -236,7 +237,7 @@ export default function CommitteeDashboard() {
                       </svg>
                     </div>
                     <div>
-                      <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Active Season</div>
+                      <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Active Season</div>
                       <div className="text-xs font-extrabold text-slate-850 truncate">{currentSeason.name}</div>
                     </div>
                   </div>
@@ -317,7 +318,8 @@ export default function CommitteeDashboard() {
             </div>
             <div className="text-xl font-black text-slate-850">{activeRounds.length}</div>
           </div>
-        </div>        {/* Organized Navigation with Collapsible Sections */}
+        </div>
+        {/* Organized Navigation with Collapsible Sections */}
         <div className="space-y-6 mb-8">
 
           {/* Team & Player Management Section */}
@@ -921,7 +923,7 @@ export default function CommitteeDashboard() {
             {loadingRounds ? (
               <div className="text-center py-10">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto"></div>
-                <p className="mt-3 text-[10px] text-slate-500 uppercase tracking-wider font-bold">Loading...</p>
+                <p className="mt-3 text-[10px] text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading...</p>
               </div>
             ) : activeRounds.length === 0 ? (
               <div className="bg-slate-50 border border-slate-100 p-6 rounded-xl text-center">
@@ -945,7 +947,7 @@ export default function CommitteeDashboard() {
                           <h3 className="font-extrabold text-slate-850 text-xs uppercase">{round.position} Round</h3>
                         </div>
                         <Link href="/dashboard/committee/rounds" className="text-[10px] font-bold text-amber-600 hover:text-amber-700 uppercase">
-                          Details →
+                          Details &rarr;
                         </Link>
                       </div>
 
@@ -1001,10 +1003,10 @@ export default function CommitteeDashboard() {
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { pos: 'GK', color: 'bg-yellow-500', icon: '🧤', label: 'Keepers' },
-                { pos: 'DEF', color: 'bg-blue-500', icon: '🛡️', label: 'Defenders' },
-                { pos: 'MID', color: 'bg-green-500', icon: '⚙️', label: 'Midfielders' },
-                { pos: 'FWD', color: 'bg-red-500', icon: '⚽', label: 'Forwards' }
+                { pos: 'GK', color: 'bg-yellow-500', icon: <Activity className="w-3.5 h-3.5 text-yellow-500 inline-block" />, label: 'Keepers' },
+                { pos: 'DEF', color: 'bg-blue-500', icon: <Shield className="w-3.5 h-3.5 text-blue-500 inline-block" />, label: 'Defenders' },
+                { pos: 'MID', color: 'bg-green-500', icon: <Settings className="w-3.5 h-3.5 text-green-500 inline-block" />, label: 'Midfielders' },
+                { pos: 'FWD', color: 'bg-red-500', icon: <Activity className="w-3.5 h-3.5 text-red-500 inline-block" />, label: 'Forwards' }
               ].map(({ pos, color, icon, label }) => (
                 <div key={pos} className="bg-slate-50 border border-slate-150 p-4 rounded-xl hover:border-amber-400/40 hover:bg-white transition-all">
                   <div className="flex items-center mb-2">

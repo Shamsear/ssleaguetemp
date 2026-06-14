@@ -1,4 +1,5 @@
 'use client';
+import { XCircle, Trophy, Crown, Activity, AlertTriangle } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -380,7 +381,7 @@ export default function CommitteeFixtureDetailPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600">Fixture Not Found</h1>
           <Link href="/dashboard/committee/team-management/tournament" className="text-blue-600 mt-4 inline-block">
-            ← Back to Tournament
+            &larr; Back to Tournament
           </Link>
         </div>
       </div>
@@ -406,9 +407,9 @@ export default function CommitteeFixtureDetailPage() {
             {(fixture as any).knockout_round ? (
               <>
                 {(fixture as any).knockout_round === 'quarter_finals' && '⚔️ Quarter Finals'}
-                {(fixture as any).knockout_round === 'semi_finals' && '🏆 Semi Finals'}
-                {(fixture as any).knockout_round === 'finals' && '👑 Finals'}
-                {(fixture as any).knockout_round === 'third_place' && '🥉 Third Place Playoff'}
+                {(fixture as any).knockout_round === 'semi_finals' && '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Semi Finals'}
+                {(fixture as any).knockout_round === 'finals' && '<Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /> Finals'}
+                {(fixture as any).knockout_round === 'third_place' && '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" /> Third Place Playoff'}
                 {' • '}
               </>
             ) : (
@@ -430,9 +431,9 @@ export default function CommitteeFixtureDetailPage() {
                 : 'bg-blue-100 text-blue-800 border border-blue-300'
               }`}>
               {(fixture as any).scoring_system === 'wins' ? (
-                <>🏆 Win-Based Scoring</>
+                <><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Win-Based Scoring</>
               ) : (
-                <>⚽ Goal-Based Scoring</>
+                <><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Goal-Based Scoring</>
               )}
             </span>
           )}
@@ -444,11 +445,11 @@ export default function CommitteeFixtureDetailPage() {
                   : 'bg-blue-100 text-blue-800 border border-blue-300'
               }`}>
               {fixture.scoring_type === 'wins' ? (
-                <>🏆 Win-Based Scoring</>
+                <><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Win-Based Scoring</>
               ) : fixture.scoring_type === 'hybrid' ? (
                 <>🎯 Hybrid Scoring</>
               ) : (
-                <>⚽ Goal-Based Scoring</>
+                <><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Goal-Based Scoring</>
               )}
             </span>
           )}
@@ -512,9 +513,9 @@ export default function CommitteeFixtureDetailPage() {
                 'bg-gray-100 border-l-4 border-gray-500'
                 }`}>
                 <p className="font-semibold text-sm">
-                  {fixture.match_status_reason === 'wo_home_absent' && '⚠️ Walkover - Home team absent'}
-                  {fixture.match_status_reason === 'wo_away_absent' && '⚠️ Walkover - Away team absent'}
-                  {fixture.match_status_reason === 'null_both_absent' && '❌ Match NULL - Both teams absent'}
+                  {fixture.match_status_reason === 'wo_home_absent' && '<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Walkover - Home team absent'}
+                  {fixture.match_status_reason === 'wo_away_absent' && '<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Walkover - Away team absent'}
+                  {fixture.match_status_reason === 'null_both_absent' && '<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Match NULL - Both teams absent'}
                 </p>
               </div>
             )}
@@ -672,21 +673,21 @@ export default function CommitteeFixtureDetailPage() {
                     disabled={isSaving}
                     className="w-full px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 font-medium"
                   >
-                    ⚠️ WO - Home Team Absent
+                    <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> WO - Home Team Absent
                   </button>
                   <button
                     onClick={() => handleDeclareWO('away')}
                     disabled={isSaving}
                     className="w-full px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 font-medium"
                   >
-                    ⚠️ WO - Away Team Absent
+                    <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> WO - Away Team Absent
                   </button>
                   <button
                     onClick={handleDeclareNull}
                     disabled={isSaving}
                     className="w-full px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 font-medium"
                   >
-                    ❌ NULL - Both Teams Absent
+                    <XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> NULL - Both Teams Absent
                   </button>
                 </>
               )}

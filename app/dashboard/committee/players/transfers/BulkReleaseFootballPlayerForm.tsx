@@ -1,4 +1,5 @@
 'use client';
+import { DollarSign, XCircle, CheckCircle, Trash2, AlertTriangle } from 'lucide-react';
 
 import { useState, useEffect, useMemo } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -184,7 +185,7 @@ export default function BulkReleaseFootballPlayerForm() {
       return acc;
     }, {} as Record<string, Player[]>);
 
-    let message = `🗑️ *Bulk Player Release Notification*\n\n`;
+    let message = `<Trash2 className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> *Bulk Player Release Notification*\n\n`;
     message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
     message += `*Release Details:*\n`;
     message += `• Timing: ${timing === 'start' ? 'Season Start' : 'Mid-Season'}\n`;
@@ -207,15 +208,15 @@ export default function BulkReleaseFootballPlayerForm() {
         const refundPercentage = getPlayerRefund(player.id);
         const refundAmount = Math.round(player.acquisition_value * (refundPercentage / 100));
         message += `  • ${player.player_name} (${player.position})\n`;
-        message += `    Contract: ${player.contract_start_season} → ${player.contract_end_season}\n`;
+        message += `    Contract: ${player.contract_start_season} &rarr; ${player.contract_end_season}\n`;
         message += `    Value: ${player.acquisition_value} | Refund: ${refundPercentage}% = ${refundAmount} eCoin\n`;
       });
       message += `\n`;
     });
 
     message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
-    message += `✅ All players are now free agents\n`;
-    message += `💰 Total refunds added to respective team budgets`;
+    message += `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> All players are now free agents\n`;
+    message += `<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Total refunds added to respective team budgets`;
 
     return message;
   };
@@ -285,21 +286,21 @@ export default function BulkReleaseFootballPlayerForm() {
 
       // Show results
       if (successCount > 0 && failCount === 0) {
-        setSuccess(`✅ Successfully released ${successCount} player(s)! Total refund: ${totalRefund} eCoin`);
+        setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Successfully released ${successCount} player(s)! Total refund: ${totalRefund} eCoin`);
         
         // Generate and copy WhatsApp message
         const whatsappMessage = generateBulkWhatsAppMessage(selectedPlayers, releaseTiming);
         try {
           await navigator.clipboard.writeText(whatsappMessage);
-          setSuccess(`✅ Successfully released ${successCount} player(s)! Total refund: ${totalRefund} eCoin\n\n📋 WhatsApp message copied to clipboard!`);
+          setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Successfully released ${successCount} player(s)! Total refund: ${totalRefund} eCoin\n\n📋 WhatsApp message copied to clipboard!`);
         } catch (clipboardError) {
           console.error('Failed to copy to clipboard:', clipboardError);
         }
       } else if (successCount > 0 && failCount > 0) {
-        setSuccess(`⚠️ Released ${successCount} player(s). ${failCount} failed.`);
+        setSuccess(`<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Released ${successCount} player(s). ${failCount} failed.`);
         setError(errors.join('\n'));
       } else {
-        setError(`❌ Failed to release all players:\n${errors.join('\n')}`);
+        setError(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Failed to release all players:\n${errors.join('\n')}`);
       }
 
       // Reset form
@@ -334,7 +335,7 @@ export default function BulkReleaseFootballPlayerForm() {
       {/* Alerts */}
       {error && (
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl font-mono text-xs uppercase tracking-wide whitespace-pre-line">
-          <p className="font-extrabold">⚠️ Error</p>
+          <p className="font-extrabold"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Error</p>
           <p className="mt-1">{error}</p>
         </div>
       )}
@@ -362,7 +363,7 @@ export default function BulkReleaseFootballPlayerForm() {
                   : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
               }`}
             >
-              🏁 Season Start
+              Season Start
               <span className="block text-[9px] font-medium text-slate-400 mt-0.5 lowercase">{userSeasonId}</span>
             </button>
             <button
@@ -374,7 +375,7 @@ export default function BulkReleaseFootballPlayerForm() {
                   : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
               }`}
             >
-              ⏱️ Mid-Season
+              Mid-Season
               <span className="block text-[9px] font-medium text-slate-400 mt-0.5 lowercase">{userSeasonId?.replace(/\D/g, '')}.5</span>
             </button>
           </div>
@@ -474,11 +475,11 @@ export default function BulkReleaseFootballPlayerForm() {
                             <div className="font-extrabold text-slate-800 uppercase tracking-wide truncate">
                               {player.player_name}
                             </div>
-                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 space-y-0.5">
+                            <div className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5 space-y-0.5">
                               <div>Team: <span className="text-slate-700">{player.team_name}</span></div>
                               <div>Pos: <span className="text-slate-700">{player.position}</span></div>
                               <div>Value: <span className="text-amber-600">{player.acquisition_value} eCoin</span></div>
-                              <div>Contract: <span className="text-slate-700">{player.contract_start_season} → {player.contract_end_season}</span></div>
+                              <div>Contract: <span className="text-slate-700">{player.contract_start_season} &rarr; {player.contract_end_season}</span></div>
                             </div>
                           </div>
                           {isSelected && (
@@ -486,7 +487,7 @@ export default function BulkReleaseFootballPlayerForm() {
                               <div className="text-xs font-black text-emerald-600">
                                 +{refundAmount} eCoin
                               </div>
-                              <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                              <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5">
                                 {refundPercentage}% refund
                               </div>
                             </div>
@@ -526,7 +527,7 @@ export default function BulkReleaseFootballPlayerForm() {
         {selectedPlayerIds.size > 0 && (
           <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs">
             <h3 className="font-extrabold text-amber-600 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-              ⚠️ {selectedPlayerIds.size} Player(s) Marked for Release
+              <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> {selectedPlayerIds.size} Player(s) Marked for Release
             </h3>
             <div className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm mb-4">
               <div className="flex justify-between items-center">
@@ -535,7 +536,7 @@ export default function BulkReleaseFootballPlayerForm() {
                   {totalRefund} eCoin
                 </span>
               </div>
-              <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+              <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5">
                 To be refunded across {selectedPlayerIds.size} player(s)
               </div>
             </div>
@@ -550,7 +551,7 @@ export default function BulkReleaseFootballPlayerForm() {
                        <div className="min-w-0">
                          <div className="text-slate-700 truncate">• {p.player_name}</div>
                          <div className="text-[9px] text-slate-400 ml-3 lowercase font-medium">
-                           {p.team_name} | contract: {p.contract_start_season} → {p.contract_end_season}
+                           {p.team_name} | contract: {p.contract_start_season} &rarr; {p.contract_end_season}
                          </div>
                        </div>
                        <span className="text-amber-600 font-extrabold shrink-0">{refundPercentage}% = {refundAmount} eCoin</span>
@@ -569,7 +570,7 @@ export default function BulkReleaseFootballPlayerForm() {
         >
           {submitting
             ? 'Processing Releases...'
-            : `🗑️ Release ${selectedPlayerIds.size} Player(s) - Total Refund: ${totalRefund} eCoin`}
+            : `<Trash2 className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Release ${selectedPlayerIds.size} Player(s) - Total Refund: ${totalRefund} eCoin`}
         </button>
       </form>
     </div>

@@ -1,4 +1,5 @@
 'use client';
+import { CheckCircle, DollarSign, AlertTriangle, BarChart2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -283,7 +284,7 @@ export default function ProcessDraftPage() {
             <div className="space-y-6">
               {/* Bid Summary */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
-                <h3 className="font-bold text-gray-900 mb-4 text-lg">📊 Bid Summary</h3>
+                <h3 className="font-bold text-gray-900 mb-4 text-lg"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Bid Summary</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white rounded-lg p-4">
                     <p className="text-sm text-gray-600 mb-1">Total Bids</p>
@@ -313,7 +314,7 @@ export default function ProcessDraftPage() {
               {/* Warnings */}
               {previewData.warnings.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-bold text-gray-900 text-lg">⚠️ Warnings</h3>
+                  <h3 className="font-bold text-gray-900 text-lg"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Warnings</h3>
                   {previewData.warnings.map((warning, idx) => (
                     <div key={idx} className={`border rounded-lg p-4 ${getSeverityColor(warning.severity)}`}>
                       <p className="font-semibold mb-2">{warning.message}</p>
@@ -417,7 +418,7 @@ export default function ProcessDraftPage() {
 
               {/* Budget Impact */}
               <div>
-                <h3 className="font-bold text-gray-900 mb-4 text-lg">💰 Budget Impact by Team</h3>
+                <h3 className="font-bold text-gray-900 mb-4 text-lg"><DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Budget Impact by Team</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full border border-gray-200 rounded-lg">
                     <thead className="bg-gray-50">
@@ -459,13 +460,13 @@ export default function ProcessDraftPage() {
                   disabled={isProcessing || !previewData.can_process}
                   className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold rounded-lg hover:from-emerald-600 hover:to-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isProcessing ? 'Processing...' : '✅ Confirm & Process Draft'}
+                  {isProcessing ? 'Processing...' : '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Confirm & Process Draft'}
                 </button>
               </div>
 
               {!previewData.can_process && (
                 <p className="text-sm text-red-600 text-center">
-                  ⚠️ Cannot process due to critical warnings. Please resolve issues first.
+                  <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cannot process due to critical warnings. Please resolve issues first.
                 </p>
               )}
             </div>

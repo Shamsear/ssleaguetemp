@@ -1,4 +1,5 @@
 'use client'
+import { CheckCircle, Users, XCircle, BarChart2 } from 'lucide-react';
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -131,7 +132,7 @@ export default function ImportProgressPage() {
         console.log('='.repeat(80))
         console.log('🚀 STARTING BATCH IMPORT PROCESS')
         console.log('='.repeat(80))
-        console.log(`📊 Total players to import: ${newPlayers.length}`)
+        console.log(`<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Total players to import: ${newPlayers.length}`)
         console.log(`📦 Batch size: ${batchSize}`)
         console.log(`🔢 Total batches: ${totalBatches}`)
         console.log('='.repeat(80))
@@ -171,13 +172,13 @@ export default function ImportProgressPage() {
           const duration = Date.now() - startTime
           
           if (!importResult.success) {
-            console.error(`❌ BATCH ${batchNum} FAILED:`, importResult.error)
+            console.error(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> BATCH ${batchNum} FAILED:`, importResult.error)
             throw new Error(importResult.error || `Failed to import batch ${batchNum}`)
           }
           
           totalImported += importResult.count
           
-          console.log(`   ✅ Success! Imported ${importResult.count} players in ${duration}ms`)
+          console.log(`   <CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Success! Imported ${importResult.count} players in ${duration}ms`)
           console.log(`   📈 Total imported so far: ${totalImported}/${newPlayers.length} (${Math.round((totalImported/newPlayers.length)*100)}%)`)
           
           updateStep(2, 'running', `Imported ${totalImported}/${newPlayers.length} players (batch ${batchNum}/${totalBatches} complete)`, progressPercent + Math.floor(60 / totalBatches))
@@ -311,7 +312,7 @@ export default function ImportProgressPage() {
       <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2">👥 Player Import in Progress</h1>
+            <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2"><Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Player Import in Progress</h1>
             <p className="text-gray-600 text-sm md:text-base">Importing players from SQL data to Neon database</p>
           </div>
           <div className="flex items-center">

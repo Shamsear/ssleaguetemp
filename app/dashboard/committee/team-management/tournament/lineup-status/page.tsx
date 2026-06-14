@@ -5,6 +5,37 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import {
+  ArrowLeft,
+  Settings,
+  Plus,
+  Trash2,
+  Trophy,
+  Calendar,
+  Users,
+  Activity,
+  CheckCircle,
+  AlertTriangle,
+  Info,
+  Clock,
+  Layers,
+  Search,
+  Sparkles,
+  Award,
+  ChevronRight,
+  Shield,
+  Eye,
+  FileText,
+  Play,
+  Share2,
+  HelpCircle,
+  X,
+  ChevronLeft,
+  Download,
+  Shuffle,
+  Check,
+  RefreshCw
+} from 'lucide-react';
 
 interface FixtureLineupStatus {
   fixture_id: string;
@@ -323,8 +354,8 @@ export default function LineupStatusPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono mt-4">Loading...</p>
         </div>
       </div>
     );
@@ -346,43 +377,57 @@ export default function LineupStatusPage() {
   ).length;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="glass rounded-2xl md:rounded-3xl p-4 md:p-6 mb-4 md:mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-xl md:text-3xl font-bold text-dark mb-1 md:mb-2 truncate">Lineup Submission Status</h1>
-              <p className="text-sm md:text-base text-gray-600">Track which teams have submitted their lineups</p>
-            </div>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Decorative glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
+        {/* Navigation & Selector */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-wrap gap-3">
             <Link
               href="/dashboard/committee/team-management/tournament"
-              className="px-3 md:px-4 py-2 rounded-xl bg-white/60 text-[#0066FF] hover:bg-white/80 transition-all duration-300 text-xs md:text-sm font-medium flex items-center justify-center shadow-sm flex-shrink-0"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
             >
-              <svg className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Back
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Tournaments
             </Link>
+          </div>
+        </div>
+
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <CheckCircle className="w-6 h-6 text-amber-400" />
+            </div>
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">SYSTEM CONTROL</span>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                Lineup Submission Status
+              </h1>
+              <p className="text-xs text-slate-550 font-mono mt-1">
+                Track and configure team lineup submissions for all matches
+              </p>
+            </div>
           </div>
 
           {/* Tournament Selector */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-            <label className="text-xs md:text-sm font-medium text-gray-700 flex-shrink-0">Tournament:</label>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 border-t border-slate-100 pt-6">
+            <label className="text-xs font-black uppercase text-slate-700 tracking-wider flex-shrink-0">Tournament:</label>
             {isLoadingTournaments ? (
-              <div className="flex items-center gap-2 px-3 md:px-4 py-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#0066FF]"></div>
-                <span className="text-xs md:text-sm text-gray-600">Loading tournaments...</span>
+              <div className="flex items-center gap-2 px-4 py-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-500"></div>
+                <span className="text-xs text-slate-550 font-mono">Loading tournaments...</span>
               </div>
             ) : tournaments.length === 0 ? (
-              <div className="px-3 md:px-4 py-2 text-xs md:text-sm text-red-600 bg-red-50 rounded-xl">
+              <div className="px-4 py-2 text-xs text-red-600 bg-red-50 rounded-xl">
                 No tournaments found. Please create a tournament first.
               </div>
             ) : (
               <select
                 value={selectedTournament}
                 onChange={(e) => setSelectedTournament(e.target.value)}
-                className="flex-1 sm:flex-initial px-3 md:px-4 py-2 bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all duration-200 shadow-sm text-xs md:text-sm min-w-0"
+                className="px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all cursor-pointer"
               >
                 {tournaments.map((tournament) => (
                   <option key={tournament.id} value={tournament.id}>
@@ -395,31 +440,31 @@ export default function LineupStatusPage() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
-          <div className="glass rounded-xl md:rounded-2xl p-3 md:p-4 text-center">
-            <div className="text-2xl md:text-3xl font-bold text-gray-800">{fixtures.length}</div>
-            <div className="text-sm text-gray-600 mt-1">Total Fixtures</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm text-center">
+            <div className="text-2xl md:text-3xl font-black text-slate-900">{fixtures.length}</div>
+            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Total Fixtures</div>
           </div>
-          <div className="glass rounded-2xl p-4 text-center">
-            <div className="text-3xl font-bold text-green-600">{submittedCount}</div>
-            <div className="text-sm text-gray-600 mt-1">Both Submitted</div>
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm text-center">
+            <div className="text-2xl md:text-3xl font-black text-emerald-650">{submittedCount}</div>
+            <div className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mt-1">Both Submitted</div>
           </div>
-          <div className="glass rounded-2xl p-4 text-center">
-            <div className="text-3xl font-bold text-yellow-600">{partialCount}</div>
-            <div className="text-sm text-gray-600 mt-1">Partial</div>
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm text-center">
+            <div className="text-2xl md:text-3xl font-black text-amber-600">{partialCount}</div>
+            <div className="text-[10px] text-amber-600 font-bold uppercase tracking-wider mt-1">Partial</div>
           </div>
-          <div className="glass rounded-2xl p-4 text-center">
-            <div className="text-3xl font-bold text-red-600">{pendingCount}</div>
-            <div className="text-sm text-gray-600 mt-1">Pending</div>
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm text-center">
+            <div className="text-2xl md:text-3xl font-black text-rose-600">{pendingCount}</div>
+            <div className="text-[10px] text-rose-650 font-bold uppercase tracking-wider mt-1">Pending</div>
           </div>
         </div>
 
         {/* Fixtures List */}
-        <div className="glass rounded-3xl p-4 md:p-6">
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
           {isLoading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading fixtures...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+              <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono mt-4">Loading fixtures...</p>
             </div>
           ) : error ? (
             <div className="text-center py-12">
@@ -430,39 +475,39 @@ export default function LineupStatusPage() {
               <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              <p className="text-gray-600">No fixtures found for this tournament</p>
+              <p className="text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono mt-4">No fixtures found for this tournament</p>
             </div>
           ) : (
             <div className="overflow-x-auto -mx-4 md:mx-0">
               <div className="inline-block min-w-full align-middle">
                 <div className="overflow-hidden">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50/80">
+                    <thead className="bg-slate-50/50">
                       <tr>
-                        <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-[10px] font-black text-slate-550 uppercase tracking-wider">
                           Round
                         </th>
-                        <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-[10px] font-black text-slate-550 uppercase tracking-wider">
                           Home Team
                         </th>
-                        <th className="px-3 md:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-center text-[10px] font-black text-slate-550 uppercase tracking-wider">
                           Home
                         </th>
-                        <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-[10px] font-black text-slate-550 uppercase tracking-wider">
                           Away Team
                         </th>
-                        <th className="px-3 md:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-center text-[10px] font-black text-slate-550 uppercase tracking-wider">
                           Away
                         </th>
-                        <th className="px-3 md:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-center text-[10px] font-black text-slate-550 uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-3 md:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-center text-[10px] font-black text-slate-550 uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white/30">
+                    <tbody className="divide-y divide-slate-100 bg-white">
                       {fixtures.map((fixture) => {
                         const bothSubmitted = fixture.home_lineup_submitted && fixture.away_lineup_submitted;
                         const noneSubmitted = !fixture.home_lineup_submitted && !fixture.away_lineup_submitted;
@@ -483,16 +528,16 @@ export default function LineupStatusPage() {
                             <td className="px-3 md:px-6 py-4 whitespace-nowrap text-center">
                               {fixture.home_lineup_submitted ? (
                                 <div className="flex flex-col items-center">
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    ✓
+                                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-100 font-bold text-xs">
+                                    Yes {fixture.home_lineup_count}
                                   </span>
                                   <span className="text-xs text-gray-500 mt-1 hidden md:block">
                                     {fixture.home_lineup_count}
                                   </span>
                                 </div>
                               ) : (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                  ✗
+                                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-100 font-bold text-xs">
+                                  No
                                 </span>
                               )}
                             </td>
@@ -504,26 +549,27 @@ export default function LineupStatusPage() {
                             <td className="px-3 md:px-6 py-4 whitespace-nowrap text-center">
                               {fixture.away_lineup_submitted ? (
                                 <div className="flex flex-col items-center">
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    ✓
+                                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-100 font-bold text-xs">
+                                    Yes {fixture.home_lineup_count}
                                   </span>
                                   <span className="text-xs text-gray-500 mt-1 hidden md:block">
                                     {fixture.away_lineup_count}
                                   </span>
                                 </div>
                               ) : (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                  ✗
+                                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-100 font-bold text-xs">
+                                  No
                                 </span>
                               )}
                             </td>
                             <td className="px-3 md:px-6 py-4 whitespace-nowrap text-center">
-                              <span className={`inline-flex items-center px-2 md:px-3 py-1 rounded-full text-xs font-medium ${bothSubmitted
-                                ? 'bg-green-100 text-green-800'
-                                : noneSubmitted
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                                }`}>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded font-black text-[10px] uppercase border ${
+                                bothSubmitted
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-100'
+                                  : noneSubmitted
+                                  ? 'bg-rose-50 text-rose-800 border-rose-100'
+                                  : 'bg-amber-50 text-amber-800 border-amber-100'
+                              }`}>
                                 {bothSubmitted ? 'Ready' : noneSubmitted ? 'Pending' : 'Partial'}
                               </span>
                             </td>
@@ -532,7 +578,7 @@ export default function LineupStatusPage() {
                                 {!fixture.home_lineup_submitted && (
                                   <button
                                     onClick={() => openLineupModal(fixture, 'home')}
-                                    className="px-2 md:px-3 py-1 md:py-1.5 bg-[#0066FF] text-white rounded-lg hover:bg-[#0052CC] transition-colors text-xs font-medium"
+                                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-mono font-bold text-xs uppercase tracking-wider cursor-pointer shadow-sm transition-all"
                                   >
                                     Set H
                                   </button>
@@ -540,7 +586,7 @@ export default function LineupStatusPage() {
                                 {fixture.home_lineup_submitted && (
                                   <button
                                     onClick={() => viewLineup(fixture, 'home')}
-                                    className="px-2 md:px-3 py-1 md:py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs font-medium"
+                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 text-white rounded-xl font-mono font-bold text-xs uppercase tracking-wider cursor-pointer shadow-sm transition-all"
                                   >
                                     View H
                                   </button>
@@ -548,7 +594,7 @@ export default function LineupStatusPage() {
                                 {!fixture.away_lineup_submitted && (
                                   <button
                                     onClick={() => openLineupModal(fixture, 'away')}
-                                    className="px-2 md:px-3 py-1 md:py-1.5 bg-[#0066FF] text-white rounded-lg hover:bg-[#0052CC] transition-colors text-xs font-medium"
+                                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-mono font-bold text-xs uppercase tracking-wider cursor-pointer shadow-sm transition-all"
                                   >
                                     Set A
                                   </button>
@@ -556,7 +602,7 @@ export default function LineupStatusPage() {
                                 {fixture.away_lineup_submitted && (
                                   <button
                                     onClick={() => viewLineup(fixture, 'away')}
-                                    className="px-2 md:px-3 py-1 md:py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs font-medium"
+                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 text-white rounded-xl font-mono font-bold text-xs uppercase tracking-wider cursor-pointer shadow-sm transition-all"
                                   >
                                     View A
                                   </button>
@@ -574,14 +620,17 @@ export default function LineupStatusPage() {
           )}
         </div>
 
-        {/* Lineup Setting Modal */}
+              </div>
+
+      {/* Modals outside stacking context */}
+      {/* Lineup Setting Modal */}
         {showLineupModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="glass rounded-3xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 font-mono">
+            <div className="console-card bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-dark">Set Lineup</h2>
-                  <p className="text-gray-600 mt-1">
+                  <h2 className="text-sm font-black uppercase text-slate-900 tracking-wider">Set Lineup</h2>
+                  <p className="text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono mt-4 mt-1">
                     {selectedTeamType === 'home' ? selectedFixture?.home_team_name : selectedFixture?.away_team_name}
                     {' - '}Round {selectedFixture?.round_number}
                   </p>
@@ -590,22 +639,20 @@ export default function LineupStatusPage() {
                   onClick={() => setShowLineupModal(false)}
                   className="p-2 hover:bg-white/50 rounded-xl transition-colors"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="w-5 h-5 text-slate-500" />
                 </button>
               </div>
 
               {isLoadingPlayers ? (
                 <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Loading players...</p>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+                  <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono mt-4">Loading players...</p>
                 </div>
               ) : (
                 <>
                   {/* Selected Players */}
                   <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-3">
+                    <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider mb-3">
                       Selected Players ({selectedPlayers.length}) - First 5 are playing, rest are subs
                     </h3>
                     {selectedPlayers.length > 0 ? (
@@ -613,7 +660,7 @@ export default function LineupStatusPage() {
                         {selectedPlayers.map((player, index) => (
                           <div
                             key={player.player_id}
-                            className="flex items-center justify-between p-3 bg-white/60 rounded-xl"
+                            className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl"
                           >
                             <div className="flex items-center gap-3">
                               <span className="text-sm font-medium text-gray-500 w-6">
@@ -628,7 +675,7 @@ export default function LineupStatusPage() {
                             </div>
                             <button
                               onClick={() => togglePlayerSelection(player)}
-                              className="px-3 py-1 bg-red-100 text-red-800 hover:bg-red-200 rounded-lg text-xs font-medium transition-colors"
+                              className="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-100 rounded-lg text-xs font-bold transition-all cursor-pointer"
                             >
                               Remove
                             </button>
@@ -642,7 +689,7 @@ export default function LineupStatusPage() {
 
                   {/* Available Players */}
                   <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-3">Available Players</h3>
+                    <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider mb-3">Available Players</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
                       {availablePlayers
                         .filter(p => !selectedPlayers.some(sp => sp.player_id === p.player_id))
@@ -650,7 +697,7 @@ export default function LineupStatusPage() {
                           <button
                             key={player.player_id}
                             onClick={() => togglePlayerSelection(player)}
-                            className="p-3 bg-white/40 hover:bg-white/60 rounded-xl text-left transition-colors"
+                            className="p-3 bg-slate-50 border border-slate-200/60 rounded-xl text-left transition-all hover:bg-slate-100/75 text-xs font-bold"
                           >
                             <div className="font-medium">{player.player_name}</div>
                           </button>
@@ -662,7 +709,7 @@ export default function LineupStatusPage() {
                   <div className="flex gap-3 justify-end">
                     <button
                       onClick={() => setShowLineupModal(false)}
-                      className="px-6 py-2.5 bg-white/60 hover:bg-white/80 rounded-xl font-medium transition-colors"
+                      className="px-6 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-705 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -674,7 +721,7 @@ export default function LineupStatusPage() {
                         selectedPlayers.length > 7 ||
                         selectedPlayers.filter(p => !p.is_substitute).length !== 5
                       }
-                      className="px-6 py-2.5 bg-[#0066FF] text-white rounded-xl font-medium hover:bg-[#0052CC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
                     >
                       {isSavingLineup ? (
                         <>
@@ -691,7 +738,7 @@ export default function LineupStatusPage() {
                   {selectedPlayers.length > 0 && (selectedPlayers.length < 5 || selectedPlayers.length > 7) && (
                     <div className="mt-4">
                       <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">
-                        ⚠️ Please select between 5 and 7 players (first 5 will be playing, rest will be subs)
+                        <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Please select between 5 and 7 players (first 5 will be playing, rest will be subs)
                       </p>
                     </div>
                   )}
@@ -701,14 +748,14 @@ export default function LineupStatusPage() {
           </div>
         )}
 
-        {/* View Lineup Modal */}
+      {/* View Lineup Modal */}
         {showViewLineupModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4">
-            <div className="glass rounded-2xl md:rounded-3xl p-4 md:p-6 max-w-2xl w-full max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 font-mono">
+            <div className="console-card bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
               <div className="flex items-start md:items-center justify-between mb-4 md:mb-6">
                 <div className="flex-1 min-w-0 pr-2">
-                  <h2 className="text-xl md:text-2xl font-bold text-dark truncate">View Lineup</h2>
-                  <p className="text-sm md:text-base text-gray-600 mt-1 truncate">
+                  <h2 className="text-sm font-black uppercase text-slate-900 tracking-wider">View Lineup</h2>
+                  <p className="text-sm md:text-base text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono mt-4 mt-1 truncate">
                     {selectedTeamType === 'home' ? selectedFixture?.home_team_name : selectedFixture?.away_team_name}
                     {' - '}Round {selectedFixture?.round_number}
                   </p>
@@ -717,22 +764,20 @@ export default function LineupStatusPage() {
                   onClick={() => setShowViewLineupModal(false)}
                   className="p-2 hover:bg-white/50 rounded-xl transition-colors flex-shrink-0"
                 >
-                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="w-5 h-5 text-slate-500" />
                 </button>
               </div>
 
               {isLoadingViewLineup ? (
                 <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Loading lineup...</p>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+                  <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono mt-4">Loading lineup...</p>
                 </div>
               ) : viewLineupData ? (
                 <>
                   {/* Starting Lineup */}
                   <div className="mb-4 md:mb-6">
-                    <h3 className="text-base md:text-lg font-semibold mb-2 md:mb-3 flex items-center gap-2">
+                    <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider mb-3 flex items-center gap-2">
                       <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                       <span className="text-sm md:text-base">Starting Lineup ({viewLineupData.lineup?.filter((p: any) => !p.is_substitute).length || 0})</span>
                     </h3>
@@ -744,7 +789,7 @@ export default function LineupStatusPage() {
                           .map((player: any, index: number) => (
                             <div
                               key={player.player_id}
-                              className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-white/60 rounded-xl"
+                              className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl"
                             >
                               <span className="text-xs md:text-sm font-medium text-gray-500 w-5 md:w-6 flex-shrink-0">
                                 {index + 1}.
@@ -761,7 +806,7 @@ export default function LineupStatusPage() {
                   {/* Substitutes */}
                   {viewLineupData.lineup?.filter((p: any) => p.is_substitute).length > 0 && (
                     <div className="mb-4 md:mb-6">
-                      <h3 className="text-base md:text-lg font-semibold mb-2 md:mb-3 flex items-center gap-2">
+                      <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider mb-3 flex items-center gap-2">
                         <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
                         <span className="text-sm md:text-base">Substitutes ({viewLineupData.lineup?.filter((p: any) => p.is_substitute).length || 0})</span>
                       </h3>
@@ -772,7 +817,7 @@ export default function LineupStatusPage() {
                           .map((player: any, index: number) => (
                             <div
                               key={player.player_id}
-                              className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-yellow-50/60 rounded-xl"
+                              className="flex items-center gap-3 p-3 bg-amber-50/40 border border-amber-100 rounded-xl"
                             >
                               <span className="text-xs md:text-sm font-medium text-gray-500 w-5 md:w-6 flex-shrink-0">
                                 {index + 1}.
@@ -791,17 +836,15 @@ export default function LineupStatusPage() {
                   <div className="flex flex-col sm:flex-row gap-2 md:gap-3 sm:justify-end">
                     <button
                       onClick={() => setShowViewLineupModal(false)}
-                      className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-2.5 bg-white/60 hover:bg-white/80 rounded-xl font-medium transition-colors text-sm md:text-base"
+                      className="px-6 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
                     >
                       Close
                     </button>
                     <button
                       onClick={copyLineupToClipboard}
-                      className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm md:text-base"
+                      className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-2"
                     >
-                      <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
+                      <Share2 className="w-4 h-4 mr-1" />
                       <span className="hidden sm:inline">Copy for WhatsApp</span>
                       <span className="sm:hidden">Copy</span>
                     </button>
@@ -809,13 +852,12 @@ export default function LineupStatusPage() {
                 </>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-gray-600">No lineup data available</p>
+                  <p className="text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono mt-4">No lineup data available</p>
                 </div>
               )}
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }

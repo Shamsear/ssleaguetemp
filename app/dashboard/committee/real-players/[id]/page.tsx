@@ -1,4 +1,5 @@
 'use client';
+import { DollarSign, Trophy, Crown } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -91,7 +92,7 @@ export default function RealPlayerDetailPage() {
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
         <div className="text-center font-mono">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-xs text-slate-450 font-bold uppercase tracking-wider">Loading player details...</p>
+          <p className="mt-4 text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">Loading player details...</p>
         </div>
       </div>
     );
@@ -150,7 +151,7 @@ export default function RealPlayerDetailPage() {
               href="/dashboard/committee/real-players"
               className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all mb-4"
             >
-              ← Back to SS Members
+              &larr; Back to SS Members
             </Link>
             <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight font-mono">
               {playerData.player_name}
@@ -177,7 +178,7 @@ export default function RealPlayerDetailPage() {
           <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-2">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Auction Value</span>
             <div className="text-xl font-black text-emerald-600 mt-1">
-              💰{playerData.auction_value?.toLocaleString() ?? '0'}
+              <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{playerData.auction_value?.toLocaleString() ?? '0'}
             </div>
           </div>
 
@@ -214,55 +215,55 @@ export default function RealPlayerDetailPage() {
               {playerData.matches_played !== undefined && (
                 <div className="text-center bg-slate-50/50 rounded-xl p-2 border border-slate-100">
                   <div className="text-lg font-black text-slate-800">{playerData.matches_played}</div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Games</div>
+                  <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5">Games</div>
                 </div>
               )}
               {playerData.goals_scored !== undefined && (
                 <div className="text-center bg-slate-50/50 rounded-xl p-2 border border-slate-100">
                   <div className="text-lg font-black text-emerald-600">{playerData.goals_scored}</div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Goals</div>
+                  <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5">Goals</div>
                 </div>
               )}
               {playerData.assists !== undefined && (
                 <div className="text-center bg-slate-50/50 rounded-xl p-2 border border-slate-100">
                   <div className="text-lg font-black text-purple-650">{playerData.assists}</div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Assists</div>
+                  <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5">Assists</div>
                 </div>
               )}
               {playerData.clean_sheets !== undefined && (
                 <div className="text-center bg-slate-50/50 rounded-xl p-2 border border-slate-100">
                   <div className="text-lg font-black text-blue-600">{playerData.clean_sheets}</div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">CS</div>
+                  <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5">CS</div>
                 </div>
               )}
               {playerData.wins !== undefined && (
                 <div className="text-center bg-slate-50/50 rounded-xl p-2 border border-slate-100">
                   <div className="text-lg font-black text-emerald-600">{playerData.wins}</div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Wins</div>
+                  <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5">Wins</div>
                 </div>
               )}
               {playerData.draws !== undefined && (
                 <div className="text-center bg-slate-50/50 rounded-xl p-2 border border-slate-100">
                   <div className="text-lg font-black text-slate-500">{playerData.draws}</div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Draws</div>
+                  <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5">Draws</div>
                 </div>
               )}
               {playerData.losses !== undefined && (
                 <div className="text-center bg-slate-50/50 rounded-xl p-2 border border-slate-100">
                   <div className="text-lg font-black text-rose-600">{playerData.losses}</div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Losses</div>
+                  <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5">Losses</div>
                 </div>
               )}
               {playerData.motm_awards !== undefined && playerData.motm_awards > 0 && (
                 <div className="text-center bg-slate-50/50 rounded-xl p-2 border border-slate-100">
                   <div className="text-lg font-black text-amber-600">{playerData.motm_awards}</div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">MOTM</div>
+                  <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5">MOTM</div>
                 </div>
               )}
               {playerData.points !== undefined && (
                 <div className="text-center bg-slate-50/50 rounded-xl p-2 border border-slate-100">
                   <div className="text-lg font-black text-indigo-600">{playerData.points}</div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Points</div>
+                  <div className="text-[9px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-0.5">Points</div>
                 </div>
               )}
             </div>
@@ -273,7 +274,7 @@ export default function RealPlayerDetailPage() {
         {((playerData.awards && playerData.awards.length > 0) || (playerData.potm_count && playerData.potm_count > 0) || (playerData.pots_count && playerData.pots_count > 0)) && (
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm space-y-4">
             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              🏆 Awards & Honors
+              <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Awards & Honors
             </h2>
             
             {/* POTM and POTS counts */}
@@ -285,7 +286,7 @@ export default function RealPlayerDetailPage() {
                       <div className="text-lg font-black text-amber-600">{playerData.potm_count}</div>
                       <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Player of the Match</div>
                     </div>
-                    <div className="text-2xl">🏆</div>
+                    <div className="text-2xl"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></div>
                   </div>
                 )}
                 {playerData.pots_count !== undefined && playerData.pots_count > 0 && (
@@ -294,7 +295,7 @@ export default function RealPlayerDetailPage() {
                       <div className="text-lg font-black text-purple-650">{playerData.pots_count}</div>
                       <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Player of the Season</div>
                     </div>
-                    <div className="text-2xl">👑</div>
+                    <div className="text-2xl"><Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /></div>
                   </div>
                 )}
               </div>

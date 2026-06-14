@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Trophy, Users, Filter, Award, Target } from 'lucide-react';
+import { Trophy, Users, Filter, Award, Target, DollarSign, BarChart2 } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -363,11 +363,11 @@ export default function TournamentRewardsViewPage() {
 
   const getRewardTypeIcon = (type: string) => {
     const icons = {
-      'position_reward': '🥇',
+      'position_reward': '<Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />',
       'completion_bonus': '🎉',
-      'knockout_reward': '🏆'
+      'knockout_reward': '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />'
     };
-    return icons[type as keyof typeof icons] || '💰';
+    return icons[type as keyof typeof icons] || '<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />';
   };
 
   // Group transactions by tournament
@@ -433,7 +433,7 @@ export default function TournamentRewardsViewPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
           <div className="glass rounded-xl p-4 border border-yellow-200/50 shadow-lg">
             <div className="text-center">
-              <div className="text-3xl mb-2">🥇</div>
+              <div className="text-3xl mb-2"><Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /></div>
               <div className="text-2xl font-bold text-yellow-600">{summaryStats.totalPositionRewards}</div>
               <div className="text-xs text-gray-600 mt-1">Position Rewards</div>
             </div>
@@ -449,7 +449,7 @@ export default function TournamentRewardsViewPage() {
 
           <div className="glass rounded-xl p-4 border border-red-200/50 shadow-lg">
             <div className="text-center">
-              <div className="text-3xl mb-2">🏆</div>
+              <div className="text-3xl mb-2"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></div>
               <div className="text-2xl font-bold text-red-600">{summaryStats.totalKnockoutRewards}</div>
               <div className="text-xs text-gray-600 mt-1">Knockout Rewards</div>
             </div>
@@ -492,7 +492,7 @@ export default function TournamentRewardsViewPage() {
                 className="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 bg-white shadow-sm transition-all"
               >
                 <option value="all">All Teams</option>
-                <option value="ALL_SUMMARY" className="font-bold bg-purple-50">📊 ALL TEAMS SUMMARY</option>
+                <option value="ALL_SUMMARY" className="font-bold bg-purple-50"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> ALL TEAMS SUMMARY</option>
                 {teams.map((teamData) => (
                   <option key={teamData.team.id} value={teamData.team.id}>
                     {teamData.team.name}
@@ -513,9 +513,9 @@ export default function TournamentRewardsViewPage() {
                 className="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 bg-white shadow-sm transition-all"
               >
                 <option value="all">All Reward Types</option>
-                <option value="position_reward">🥇 Position Rewards</option>
+                <option value="position_reward"><Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /> Position Rewards</option>
                 <option value="completion_bonus">🎉 Completion Bonus</option>
-                <option value="knockout_reward">🏆 Knockout Rewards</option>
+                <option value="knockout_reward"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Knockout Rewards</option>
               </select>
             </div>
           </div>
@@ -551,9 +551,9 @@ export default function TournamentRewardsViewPage() {
                     <tr>
                       <th className="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Rank</th>
                       <th className="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Team Name</th>
-                      <th className="px-4 lg:px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Position<br/>🥇</th>
+                      <th className="px-4 lg:px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Position<br/><Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /></th>
                       <th className="px-4 lg:px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Completion<br/>🎉</th>
-                      <th className="px-4 lg:px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Knockout<br/>🏆</th>
+                      <th className="px-4 lg:px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Knockout<br/><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></th>
                       <th className="px-4 lg:px-6 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Total eCoin</th>
                       <th className="px-4 lg:px-6 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Total SSCoin</th>
                       <th className="px-4 lg:px-6 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Grand Total</th>
@@ -667,7 +667,7 @@ export default function TournamentRewardsViewPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           {positionRewards.length > 0 && (
                             <span className="px-2 py-1 bg-white/20 rounded-lg text-xs font-bold">
-                              🥇 {positionRewards.length} Position
+                              <Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /> {positionRewards.length} Position
                             </span>
                           )}
                           {completionBonus.length > 0 && (
@@ -677,7 +677,7 @@ export default function TournamentRewardsViewPage() {
                           )}
                           {knockoutRewards.length > 0 && (
                             <span className="px-2 py-1 bg-white/20 rounded-lg text-xs font-bold">
-                              🏆 {knockoutRewards.length} Knockout
+                              <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> {knockoutRewards.length} Knockout
                             </span>
                           )}
                         </div>

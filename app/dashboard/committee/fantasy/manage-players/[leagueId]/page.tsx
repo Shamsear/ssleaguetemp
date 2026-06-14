@@ -1,4 +1,5 @@
 'use client';
+import { XCircle, Star, RefreshCw, Trash2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -352,7 +353,7 @@ export default function ManagePlayersPage() {
                 : 'bg-white text-gray-700 hover:shadow-md'
             }`}
           >
-            🔄 Transfer Player
+            <RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Transfer Player
           </button>
           <button
             onClick={() => { resetForm(); setActiveAction('swap'); }}
@@ -372,7 +373,7 @@ export default function ManagePlayersPage() {
                 : 'bg-white text-gray-700 hover:shadow-md'
             }`}
           >
-            ❌ Remove Player
+            <XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Remove Player
           </button>
         </div>
 
@@ -380,9 +381,9 @@ export default function ManagePlayersPage() {
           <div className="bg-white rounded-2xl shadow-xl border-2 border-indigo-300 p-6 mb-8">
             <h2 className="text-xl font-bold text-gray-900 mb-4">
               {activeAction === 'add' && '➕ Add Player to Team'}
-              {activeAction === 'transfer' && '🔄 Transfer Player'}
+              {activeAction === 'transfer' && '<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Transfer Player'}
               {activeAction === 'swap' && '🔀 Swap Players Between Teams'}
-              {activeAction === 'remove' && '❌ Remove Player from Team'}
+              {activeAction === 'remove' && '<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Remove Player from Team'}
             </h2>
 
             {activeAction === 'add' && (
@@ -400,7 +401,7 @@ export default function ManagePlayersPage() {
                     <option value="">-- Select Player --</option>
                     {availablePlayers.map(p => (
                       <option key={p.real_player_id} value={p.real_player_id}>
-                        {p.player_name} ({p.star_rating}★ - {p.category})
+                        {p.player_name} ({p.star_rating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> - {p.category})
                       </option>
                     ))}
                   </select>
@@ -424,7 +425,7 @@ export default function ManagePlayersPage() {
                   onClick={handleAddPlayer}
                   className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold rounded-xl hover:from-green-700 hover:to-emerald-700"
                 >
-                  ✓ Add Player
+                  Yes Add Player
                 </button>
               </div>
             )}
@@ -470,7 +471,7 @@ export default function ManagePlayersPage() {
                   onClick={handleTransferPlayer}
                   className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:from-blue-700 hover:to-indigo-700"
                 >
-                  ✓ Transfer Player
+                  Yes Transfer Player
                 </button>
               </div>
             )}
@@ -521,7 +522,7 @@ export default function ManagePlayersPage() {
                   onClick={handleSwapPlayers}
                   className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-pink-700"
                 >
-                  ✓ Swap Players
+                  Yes Swap Players
                 </button>
               </div>
             )}
@@ -557,7 +558,7 @@ export default function ManagePlayersPage() {
                     onClick={() => handleRemovePlayer(player.draft_id, player.player_name)}
                     className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
                   >
-                    🗑️ Remove
+                    <Trash2 className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Remove
                   </button>
                 )}
               </div>

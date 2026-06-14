@@ -147,7 +147,7 @@ function PlayerVerifyContent() {
           if (data.approved) {
             clearInterval(pollInterval)
             setStep('verified')
-            setSuccess('✅ Approved by admin! Completing registration...')
+            setSuccess('[SUCCESS] Approved by admin! Completing registration...')
             setTimeout(() => handleConfirm(), 1000)
           } else if (data.rejected) {
             clearInterval(pollInterval)
@@ -167,7 +167,7 @@ function PlayerVerifyContent() {
           if (data.verified) {
             clearInterval(pollInterval)
             setStep('verified')
-            setSuccess('✅ Verified! Completing registration...')
+            setSuccess('[SUCCESS] Verified! Completing registration...')
             setTimeout(() => handleConfirm(), 1000)
           }
         }
@@ -618,7 +618,7 @@ function PlayerVerifyContent() {
                     onClick={() => setStep('telegram')}
                     className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors text-sm"
                   >
-                    ← Back to Telegram Verification
+                    {"<-"} Back to Telegram Verification
                   </button>
                 </div>
               )}

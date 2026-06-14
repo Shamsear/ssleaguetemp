@@ -3,8 +3,28 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import {
+  ArrowLeft,
+  Settings,
+  Info,
+  Calendar,
+  Clock,
+  MessageSquare,
+  Globe,
+  Users,
+  Trophy,
+  Award,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle,
+  AlertCircle,
+  BarChart2,
+  Lock,
+  Plus
+} from 'lucide-react';
 
 type PollType = 'POTD' | 'POTW' | 'TOD' | 'TOW';
 
@@ -132,7 +152,7 @@ export default function PollsManagementPage() {
       console.log('🔍 Fetching polls with params:', pollParams.toString());
       const pollsRes = await fetchWithTokenRefresh(`/api/polls?${pollParams}`);
       const pollsData = await pollsRes.json();
-      console.log('📊 Polls response:', pollsData);
+      console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Polls response:', pollsData);
       setPolls(pollsData.success && pollsData.data ? pollsData.data : []);
 
 
@@ -375,8 +395,12 @@ export default function PollsManagementPage() {
 
   if (loading || !user || !isCommitteeAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center console-bg font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono font-mono">Loading polls console...</p>
+        </div>
       </div>
     );
   }
@@ -385,27 +409,50 @@ export default function PollsManagementPage() {
   const maxWeeks = Math.ceil(maxRounds / 7);
 
   return (
-    <div className="min-h-screen py-8 px-4 bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto max-w-7xl">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-            📊 Polls Management
-          </h1>
-          <p className="text-gray-600">
-            Create and manage voting polls for awards
-          </p>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Decorative glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative z-10 space-y-6">
+        
+        {/* Navigation */}
+        <div>
+          <Link
+            href="/dashboard/committee"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
+        </div>
+
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <BarChart2 className="w-6 h-6 text-amber-400" />
+            </div>
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">SYSTEM CONTROL</span>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                Polls Management
+              </h1>
+              <p className="text-xs text-slate-500 font-mono mt-1">
+                Create and manage voting polls for awards
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Tournament Selector */}
         {availableTournaments.length > 0 && (
-          <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl shadow-md p-4">
-            <label className="block text-sm font-semibold text-gray-800 mb-2">
-              🏟️ Select Tournament
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">
+              Select Tournament
             </label>
             <select
               value={tournamentId}
               onChange={(e) => setTournamentId(e.target.value)}
-              className="w-full px-4 py-2.5 bg-white border-2 border-blue-300 rounded-lg font-medium"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all duration-200"
             >
               {availableTournaments.map((tournament) => (
                 <option key={tournament.id} value={tournament.id}>
@@ -418,66 +465,73 @@ export default function PollsManagementPage() {
 
         {/* Messages */}
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-            <p className="text-red-800">{error}</p>
+          <div className="console-card bg-rose-50 border border-rose-200 rounded-3xl p-5 shadow-sm flex items-center gap-3 text-rose-800">
+            <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0" />
+            <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg">
-            <p className="text-green-800">{success}</p>
+          <div className="console-card bg-emerald-50/30 border border-emerald-200 rounded-3xl p-5 shadow-sm flex items-center gap-3 text-emerald-800">
+            <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+            <p className="text-xs font-bold uppercase tracking-wide">{success}</p>
           </div>
         )}
 
         {/* Tabs */}
-        <div className="mb-6 flex gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { id: 'POTD' as PollType, label: 'POTD', icon: '⭐' },
-            { id: 'POTW' as PollType, label: 'POTW', icon: '🌟' },
-            { id: 'TOD' as PollType, label: 'TOD', icon: '🏅' },
-            { id: 'TOW' as PollType, label: 'TOW', icon: '🏆' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === tab.id
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
+            { id: 'POTD' as PollType, label: 'POTD', icon: Award },
+            { id: 'POTW' as PollType, label: 'POTW', icon: Trophy },
+            { id: 'TOD' as PollType, label: 'TOD', icon: Award },
+            { id: 'TOW' as PollType, label: 'TOW', icon: Trophy },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border font-mono text-xs uppercase tracking-wider font-bold transition-all duration-200 cursor-pointer ${
+                  activeTab === tab.id
+                    ? 'bg-slate-800 border-slate-900 text-white shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                 }`}
-            >
-              {tab.icon} {tab.label}
-            </button>
-          ))}
+              >
+                <Icon className="w-4 h-4" /> {tab.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Main Content */}
-        <div className="glass rounded-3xl p-6">
+        <div className="space-y-6">
           {/* Round/Week Navigator */}
           {['POTD', 'TOD'].includes(activeTab) && (
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">
                 Select Round
               </label>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentRound(Math.max(1, currentRound - 1))}
                   disabled={currentRound === 1}
-                  className="p-2 bg-gray-200 rounded-lg disabled:opacity-50"
+                  className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed font-bold transition-all"
                 >
-                  ◀
+                  <ChevronLeft className="w-4 h-4" />
                 </button>
-                <div className="flex-1 overflow-x-auto">
+                <div className="flex-1 overflow-x-auto scrollbar-none py-1">
                   <div className="flex gap-2">
                     {Array.from({ length: maxRounds }, (_, i) => i + 1).map((round) => (
                       <button
                         key={round}
                         onClick={() => setCurrentRound(round)}
-                        className={`px-4 py-2 rounded-lg font-semibold ${currentRound === round
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white text-gray-700 hover:bg-gray-100'
-                          }`}
+                        className={`px-4 py-2 rounded-xl font-mono text-xs font-bold transition-all ${
+                          currentRound === round
+                            ? 'bg-slate-800 border-slate-900 text-white shadow-sm'
+                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800'
+                        }`}
                       >
-                        R{round}
+                        Round {round}
                       </button>
                     ))}
                   </div>
@@ -485,17 +539,17 @@ export default function PollsManagementPage() {
                 <button
                   onClick={() => setCurrentRound(Math.min(maxRounds, currentRound + 1))}
                   disabled={currentRound === maxRounds}
-                  className="p-2 bg-gray-200 rounded-lg disabled:opacity-50"
+                  className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed font-bold transition-all"
                 >
-                  ▶
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           )}
 
           {['POTW', 'TOW'].includes(activeTab) && (
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">
                 Select Week
               </label>
               <div className="flex gap-2 flex-wrap">
@@ -503,10 +557,11 @@ export default function PollsManagementPage() {
                   <button
                     key={week}
                     onClick={() => setCurrentWeek(week)}
-                    className={`px-6 py-2 rounded-lg font-semibold ${currentWeek === week
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-100'
-                      }`}
+                    className={`px-6 py-2 rounded-xl font-mono text-xs font-bold transition-all ${
+                      currentWeek === week
+                        ? 'bg-slate-800 border-slate-900 text-white shadow-sm'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800'
+                    }`}
                   >
                     Week {week}
                   </button>
@@ -517,38 +572,45 @@ export default function PollsManagementPage() {
 
           {/* Current Poll Display */}
           {currentPoll && (
-            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-blue-900">Active Poll</p>
-                  <p className="text-xl font-bold text-blue-700">{currentPoll.question_en}</p>
-                  <p className="text-sm text-blue-600 mt-1">
-                    Total Votes: {currentPoll.total_votes} • Status: {currentPoll.status}
-                  </p>
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
+                <div className="flex-1 space-y-1">
+                  <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">
+                    ACTIVE POLL • {currentPoll.poll_type.replace('award_', '').toUpperCase()}
+                  </span>
+                  <h2 className="text-lg font-extrabold text-slate-900 leading-tight">
+                    {currentPoll.question_en}
+                  </h2>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                    <span>Total Votes: <strong className="text-slate-800 font-bold">{currentPoll.total_votes}</strong></span>
+                    <span>•</span>
+                    <span>Status: <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-md text-[10px] uppercase font-bold">{currentPoll.status}</span></span>
+                  </div>
                   {currentPoll.closes_at && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      🕒 Closes: {new Date(currentPoll.closes_at).toLocaleString('en-IN', { 
+                    <p className="text-[11px] text-slate-500 font-bold flex items-center gap-1 mt-1">
+                      <Clock className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Closes: {new Date(currentPoll.closes_at).toLocaleString('en-IN', { 
                         timeZone: 'Asia/Kolkata',
                         dateStyle: 'medium',
                         timeStyle: 'short'
-                      })} IST
+                      })} IST</span>
                     </p>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap w-full md:w-auto">
                   {currentPoll.status === 'active' && !editingDeadline && (
                     <>
                       <button
-                        onClick={() => startEditingDeadline(currentPoll.closes_at)}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold"
+                        onClick={() => startEditingDeadline(currentPoll.closes_at || '')}
+                        className="flex-1 md:flex-initial px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded-xl font-mono text-xs uppercase font-extrabold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        📅 Edit Deadline
+                        <Calendar className="w-3.5 h-3.5" /> Edit Deadline
                       </button>
                       <button
                         onClick={() => handleClosePoll(currentPoll.poll_id)}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-semibold"
+                        className="flex-1 md:flex-initial px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-mono text-xs uppercase font-extrabold shadow-sm transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        Close Poll
+                        <Lock className="w-3.5 h-3.5" /> Close Poll
                       </button>
                     </>
                   )}
@@ -557,158 +619,173 @@ export default function PollsManagementPage() {
 
               {/* Deadline Editor */}
               {editingDeadline && (
-                <div className="mb-4 p-4 bg-white rounded-lg border-2 border-blue-400">
-                  <p className="text-sm font-semibold text-gray-700 mb-2">Edit Poll Deadline (IST)</p>
-                  <div className="flex gap-2">
+                <div className="console-card bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                  <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                    Edit Poll Deadline (IST)
+                  </h4>
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="datetime-local"
                       value={newDeadline}
                       onChange={(e) => setNewDeadline(e.target.value)}
-                      className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                      className="flex-1 px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold"
                     />
-                    <button
-                      onClick={() => handleUpdateDeadline(currentPoll.poll_id)}
-                      className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-semibold"
-                    >
-                      ✓ Save
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingDeadline(false);
-                        setNewDeadline('');
-                      }}
-                      className="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 font-semibold"
-                    >
-                      ✕ Cancel
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleUpdateDeadline(currentPoll.poll_id)}
+                        className="flex-1 sm:flex-initial px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-mono text-xs uppercase font-extrabold shadow-sm transition-all flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingDeadline(false);
+                          setNewDeadline('');
+                        }}
+                        className="flex-1 sm:flex-initial px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-mono text-xs uppercase font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Poll Results */}
-              <div className="space-y-2">
+              {/* Poll Options Results */}
+              <div className="space-y-3">
                 {[...currentPoll.options]
                   .sort((a: any, b: any) => (b.votes || 0) - (a.votes || 0))
                   .map((option: any, index: number) => {
-                  const percentage = currentPoll.total_votes > 0
-                    ? ((option.votes || 0) / currentPoll.total_votes * 100).toFixed(1)
-                    : '0.0';
-                  const isExpanded = expandedOption === option.id;
-                  const optionVoters = voters[option.id] || [];
+                    const percentage = currentPoll.total_votes > 0
+                      ? ((option.votes || 0) / currentPoll.total_votes * 100).toFixed(1)
+                      : '0.0';
+                    const isExpanded = expandedOption === option.id;
+                    const optionVoters = voters[option.id] || [];
 
-                  return (
-                    <div key={option.id} className="bg-white rounded-lg overflow-hidden">
-                      <div 
-                        className="p-3 cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => toggleOptionExpansion(option.id, currentPoll.poll_id)}
-                      >
-                        <div className="flex justify-between items-center mb-1">
-                          <div className="flex items-center gap-2">
-                            {/* Rank Badge */}
-                            {index === 0 && option.votes > 0 && (
-                              <span className="text-lg">🥇</span>
-                            )}
-                            {index === 1 && option.votes > 0 && (
-                              <span className="text-lg">🥈</span>
-                            )}
-                            {index === 2 && option.votes > 0 && (
-                              <span className="text-lg">🥉</span>
-                            )}
-                            <span className="font-medium">{option.text_en}</span>
-                            {option.votes > 0 && (
-                              <span className="text-xs text-blue-600">
-                                {isExpanded ? '▼' : '▶'} Click to {isExpanded ? 'hide' : 'see'} voters
-                              </span>
+                    // Badges for ranks
+                    let rankEmoji = null;
+                    if (index === 0 && option.votes > 0) rankEmoji = '<Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />';
+                    else if (index === 1 && option.votes > 0) rankEmoji = '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />';
+                    else if (index === 2 && option.votes > 0) rankEmoji = '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />';
+
+                    return (
+                      <div key={option.id} className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-sm transition-all duration-300">
+                        <div 
+                          className="p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                          onClick={() => toggleOptionExpansion(option.id, currentPoll.poll_id)}
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center gap-2">
+                              {rankEmoji && (
+                                <span className="text-base flex-shrink-0">{rankEmoji}</span>
+                              )}
+                              <span className="font-extrabold text-sm text-slate-800">{option.text_en}</span>
+                              {option.votes > 0 && (
+                                <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider ml-1 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded">
+                                  {isExpanded ? 'Hide Voters' : 'View Voters'}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs font-mono font-bold text-slate-600">
+                              {option.votes || 0} votes ({percentage}%)
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-2">
+                            <div
+                              className="bg-amber-500 h-2 rounded-full transition-all duration-500"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Expanded Voters List */}
+                        {isExpanded && (
+                          <div className="px-4 pb-4 pt-3 border-t border-slate-100 bg-slate-50/50 space-y-2">
+                            <div className="text-[9px] font-black uppercase text-slate-400 tracking-wider mb-2">
+                              Verified Voters
+                            </div>
+                            {loadingVoters ? (
+                              <div className="py-4 text-center">
+                                <div className="animate-spin rounded-full h-5.5 w-5.5 border-b-2 border-slate-800 mx-auto"></div>
+                              </div>
+                            ) : optionVoters.length > 0 ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
+                                {optionVoters.map((voter: any, idx: number) => (
+                                  <div 
+                                    key={idx} 
+                                    className="flex items-center justify-between p-2.5 bg-white border border-slate-100 rounded-xl shadow-sm"
+                                  >
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <span className="text-xs font-bold text-slate-800 truncate">
+                                        {voter.voter_name}
+                                      </span>
+                                      {voter.is_flagged && (
+                                        <span className="flex-shrink-0 text-[8px] bg-red-50 text-red-600 border border-red-100 px-1 rounded uppercase font-black tracking-wide">
+                                          Flagged
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-[9px] text-slate-400 font-bold whitespace-nowrap">
+                                      {new Date(voter.voted_at).toLocaleString('en-IN', {
+                                        timeZone: 'Asia/Kolkata',
+                                        dateStyle: 'short',
+                                        timeStyle: 'short'
+                                      })}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="py-3 text-center text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">
+                                No votes cast yet
+                              </div>
                             )}
                           </div>
-                          <span className="text-sm text-gray-600">{option.votes || 0} votes ({percentage}%)</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full transition-all"
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
+                        )}
                       </div>
-
-                      {/* Expanded Voters List */}
-                      {isExpanded && (
-                        <div className="px-3 pb-3 border-t border-gray-200 bg-gray-50">
-                          {loadingVoters ? (
-                            <div className="py-4 text-center">
-                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                            </div>
-                          ) : optionVoters.length > 0 ? (
-                            <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
-                              {optionVoters.map((voter: any, idx: number) => (
-                                <div 
-                                  key={idx} 
-                                  className="flex items-center justify-between p-2 bg-white rounded border border-gray-200"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium text-gray-900">
-                                      {voter.voter_name}
-                                    </span>
-                                    {voter.is_flagged && (
-                                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
-                                        ⚠️ Flagged
-                                      </span>
-                                    )}
-                                  </div>
-                                  <span className="text-xs text-gray-500">
-                                    {new Date(voter.voted_at).toLocaleString('en-IN', {
-                                      timeZone: 'Asia/Kolkata',
-                                      dateStyle: 'short',
-                                      timeStyle: 'short'
-                                    })}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="py-4 text-center text-sm text-gray-500">
-                              No votes yet
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             </div>
           )}
 
-          {/* Create Poll Section */}
+          {/* Nominees / Create Poll Section */}
           {!currentPoll && (
-            <div className="mb-6">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
               {loading_data ? (
                 <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto"></div>
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
+                  <p className="mt-3 text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">Loading nominees...</p>
                 </div>
               ) : candidates.length > 0 ? (
-                <>
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">
-                    Create Poll
-                  </h3>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <p className="text-sm text-blue-800">
-                      📋 {candidates.length} candidates will be added to the poll
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-tight flex items-center gap-2">
+                      <Plus className="w-5 h-5 text-amber-500" /> Create Award Poll
+                    </h3>
+                    <p className="text-xs text-slate-500 font-mono mt-1">
+                      No active poll exists for this selection. Nominate the candidates below to initialize voting.
                     </p>
                   </div>
 
-                  <div className="space-y-2 max-h-96 overflow-y-auto mb-4">
+                  <div className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                    <Info className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      {candidates.length} candidate(s) are eligible based on completed match statistics.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-1">
                     {candidates.map((candidate, idx) => (
                       <div
                         key={idx}
-                        className="p-4 rounded-xl bg-white border border-gray-200"
+                        className="p-4 rounded-2xl bg-slate-50 border border-slate-200/60 flex flex-col justify-between"
                       >
-                        <p className="font-bold text-gray-900">
+                        <p className="font-extrabold text-sm text-slate-800">
                           {candidate.player_name || candidate.team_name}
                         </p>
                         {candidate.result && (
-                          <p className="text-xs text-gray-600 mt-1">{candidate.result}</p>
+                          <p className="text-[10px] text-slate-500 font-mono mt-1 font-bold">{candidate.result}</p>
                         )}
                       </div>
                     ))}
@@ -717,36 +794,37 @@ export default function PollsManagementPage() {
                   <button
                     onClick={handleCreatePoll}
                     disabled={creating}
-                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50"
+                    className="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {creating ? 'Creating Poll...' : 'Create Poll'}
+                    {creating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
+                        <span>Initializing Poll...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Create & Launch Poll</span>
+                      </>
+                    )}
                   </button>
-                </>
+                </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <div className="text-4xl mb-3">ℹ️</div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">
-                    No Candidates Available
+                <div className="text-center py-12 text-slate-400">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-4">
+                    <Info className="w-6 h-6 text-slate-400" />
+                  </div>
+                  <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">
+                    No Nominees Available
                   </h3>
-                  <p>No eligible candidates for this {['POTD', 'TOD'].includes(activeTab) ? 'round' : 'week'}</p>
+                  <p className="text-xs text-slate-500 font-mono">
+                    No eligible candidates found for {['POTD', 'TOD'].includes(activeTab) ? `Round ${currentRound}` : `Week ${currentWeek}`}.
+                  </p>
                   {error && (
-                    <p className="text-sm text-gray-600 mt-2">{error}</p>
+                    <p className="text-[10px] text-rose-500 font-mono font-bold mt-2 uppercase">{error}</p>
                   )}
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Poll Already Exists Message */}
-          {currentPoll && (
-            <div className="mb-6 text-center py-8 bg-green-50 border border-green-200 rounded-xl">
-              <div className="text-4xl mb-3">✅</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">
-                Poll Already Created
-              </h3>
-              <p className="text-gray-600">
-                A poll for this {['POTD', 'TOD'].includes(activeTab) ? 'round' : 'week'} already exists
-              </p>
             </div>
           )}
         </div>

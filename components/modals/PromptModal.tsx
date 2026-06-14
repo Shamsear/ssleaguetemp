@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { HelpCircle } from 'lucide-react';
 
 interface PromptModalProps {
   isOpen: boolean;
@@ -39,7 +40,9 @@ export default function PromptModal({
     setMounted(true);
     
     return () => {
-      document.body.removeChild(container);
+      if (document.body.contains(container)) {
+        document.body.removeChild(container);
+      }
       setMounted(false);
     };
   }, []);
@@ -73,10 +76,10 @@ export default function PromptModal({
   if (!isOpen || !mounted || !portalContainer) return null;
 
   return createPortal(
-    <div style={{ pointerEvents: 'auto', position: 'relative', width: '100%', height: '100%' }}>
+    <div style={{ pointerEvents: 'auto', position: 'relative', width: '100%', height: '100%' }} className="font-mono">
       {/* Backdrop */}
       <div
-        className="bg-black/20 backdrop-blur-sm"
+        className="bg-black/25 backdrop-blur-sm"
         onClick={onCancel}
         style={{
           position: 'absolute',
@@ -91,7 +94,7 @@ export default function PromptModal({
 
       {/* Modal - centered */}
       <div 
-        className="w-[calc(100%-2rem)] sm:w-auto sm:min-w-[400px] sm:max-w-lg md:max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl"
+        className="w-[calc(100%-2rem)] sm:w-auto sm:min-w-[400px] sm:max-w-lg md:max-w-xl max-h-[90vh] overflow-y-auto console-card bg-white border border-slate-200/80 rounded-3xl shadow-2xl relative"
         style={{
           position: 'absolute',
           top: '50%',
@@ -107,17 +110,15 @@ export default function PromptModal({
         <div className="px-5 py-5 sm:px-8 sm:py-8">
           <form onSubmit={handleSubmit}>
             <div>
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 border border-blue-100 text-blue-600">
+                <HelpCircle className="h-6 w-6" />
               </div>
               <div className="mt-3 text-center sm:mt-5">
-                <h3 className="text-lg font-semibold leading-6 text-gray-900">
+                <h3 className="text-base font-bold uppercase tracking-wider text-slate-900">
                   {title}
                 </h3>
                 <div className="mt-2">
-                  <p className="text-sm text-gray-500 whitespace-pre-line">
+                  <p className="text-xs text-slate-555 font-bold whitespace-pre-line leading-relaxed">
                     {message}
                   </p>
                 </div>
@@ -127,7 +128,7 @@ export default function PromptModal({
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     placeholder={placeholder}
-                    className="block w-full rounded-xl border-2 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-200 sm:text-sm px-4 py-3"
+                    className="block w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                     autoFocus
                   />
                 </div>
@@ -137,13 +138,13 @@ export default function PromptModal({
               <button
                 type="button"
                 onClick={onCancel}
-                className="inline-flex w-full sm:w-auto justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-md ring-1 ring-inset ring-gray-300 hover:bg-gray-50 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
+                className="inline-flex w-full sm:w-auto justify-center px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-55 text-slate-705 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all duration-200 cursor-pointer"
               >
                 {cancelText}
               </button>
               <button
                 type="submit"
-                className="inline-flex w-full sm:w-auto justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="inline-flex w-full sm:w-auto justify-center rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] cursor-pointer bg-slate-800 hover:bg-slate-700 text-white border border-slate-900"
               >
                 {confirmText}
               </button>

@@ -1,4 +1,5 @@
 'use client';
+import { Users, Trophy, Activity, BarChart2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -76,7 +77,7 @@ export default function FantasyRecalculatePage() {
       {/* Header */}
       <div className="mb-6">
         <Link href="/dashboard/committee/fantasy" className="text-blue-600 hover:underline mb-2 inline-block">
-          ← Back to Fantasy Dashboard
+          &larr; Back to Fantasy Dashboard
         </Link>
         <h1 className="text-3xl font-bold text-gray-900">Recalculate Fantasy Points</h1>
         <p className="text-gray-600 mt-1">Recalculate all fantasy points, bonuses, and rankings</p>
@@ -108,7 +109,7 @@ export default function FantasyRecalculatePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="border border-gray-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">⚽</span>
+              <span className="text-2xl"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /></span>
               <h3 className="font-semibold text-gray-900">Player Points</h3>
             </div>
             <ul className="text-sm text-gray-600 space-y-1">
@@ -121,7 +122,7 @@ export default function FantasyRecalculatePage() {
 
           <div className="border border-gray-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">🏆</span>
+              <span className="text-2xl"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></span>
               <h3 className="font-semibold text-gray-900">Team Bonuses</h3>
             </div>
             <ul className="text-sm text-gray-600 space-y-1">
@@ -134,7 +135,7 @@ export default function FantasyRecalculatePage() {
 
           <div className="border border-gray-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">👥</span>
+              <span className="text-2xl"><Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /></span>
               <h3 className="font-semibold text-gray-900">Squad Totals</h3>
             </div>
             <ul className="text-sm text-gray-600 space-y-1">
@@ -145,7 +146,7 @@ export default function FantasyRecalculatePage() {
 
           <div className="border border-gray-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">📊</span>
+              <span className="text-2xl"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /></span>
               <h3 className="font-semibold text-gray-900">Team Rankings</h3>
             </div>
             <ul className="text-sm text-gray-600 space-y-1">

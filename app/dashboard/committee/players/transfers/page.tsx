@@ -1,4 +1,5 @@
 'use client';
+import { DollarSign, RefreshCw, Trash2, Activity, BarChart2, Unlock } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -44,7 +45,7 @@ export default function PlayerTransfersPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center font-mono">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-xs text-slate-400 font-bold uppercase tracking-wider">Loading transfer system...</p>
+          <p className="mt-4 text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">Loading transfer system...</p>
         </div>
       </div>
     );
@@ -63,7 +64,7 @@ export default function PlayerTransfersPage() {
         {/* Header Back Button & ID Badge */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <Link href="/dashboard/committee/players" className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all">
-            ← Back to Player List
+            &larr; Back to Player List
           </Link>
           
           <div className="bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider px-3 py-1.5 rounded-xl border border-slate-700 shadow-sm shrink-0">
@@ -109,7 +110,7 @@ export default function PlayerTransfersPage() {
                     : 'text-slate-500 hover:bg-slate-100'
                 }`}
               >
-                ⚽ Football Players
+                <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Football Players
               </button>
             </div>
           </div>
@@ -120,13 +121,13 @@ export default function PlayerTransfersPage() {
               href="/dashboard/committee/players/transfers/history"
               className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl shadow-sm transition-all"
             >
-              📊 Transaction History
+              <BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Transaction History
             </Link>
             <Link
               href="/dashboard/committee/reports/fees"
               className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl shadow-sm transition-all"
             >
-              💰 Committee Fee Reports
+              <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Committee Fee Reports
             </Link>
           </div>
         </div>
@@ -169,7 +170,7 @@ export default function PlayerTransfersPage() {
                     : 'text-slate-500 hover:bg-slate-50'
                 }`}
               >
-                🔄 Swap Players
+                <RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Swap Players
               </button>
               <button
                 onClick={() => setActiveTab('release')}
@@ -179,7 +180,7 @@ export default function PlayerTransfersPage() {
                     : 'text-slate-500 hover:bg-slate-50'
                 }`}
               >
-                🔓 Release Player
+                <Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Release Player
               </button>
             </div>
           ) : (
@@ -192,7 +193,7 @@ export default function PlayerTransfersPage() {
                     : 'text-slate-500 hover:bg-slate-50'
                 }`}
               >
-                🔄 Swap Players
+                <RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Swap Players
               </button>
               <button
                 onClick={() => setActiveTab('bulk_swap')}
@@ -202,7 +203,7 @@ export default function PlayerTransfersPage() {
                     : 'text-slate-500 hover:bg-slate-50'
                 }`}
               >
-                🔄🔄 Bulk Swap
+                <RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /><RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Bulk Swap
               </button>
               <button
                 onClick={() => setActiveTab('release')}
@@ -212,7 +213,7 @@ export default function PlayerTransfersPage() {
                     : 'text-slate-500 hover:bg-slate-50'
                 }`}
               >
-                🔓 Release Player
+                <Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Release Player
               </button>
               <button
                 onClick={() => setActiveTab('bulk_release')}
@@ -222,7 +223,7 @@ export default function PlayerTransfersPage() {
                     : 'text-slate-500 hover:bg-slate-50'
                 }`}
               >
-                🗑️ Bulk Release
+                <Trash2 className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Bulk Release
               </button>
             </div>
           )}
@@ -345,7 +346,7 @@ export default function PlayerTransfersPage() {
         </div>
 
         {/* Footer info */}
-        <div className="text-center font-mono text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-8">
+        <div className="text-center font-mono text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-8">
           Need help? Check the{' '}
           <a href="#" className="text-amber-600 hover:underline">
             Committee Admin Guide

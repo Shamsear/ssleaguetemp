@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Trash2, Edit2, Save, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, X, XCircle, Star, RefreshCw, CheckCircle, Shield, Trophy, Crown, Activity, BarChart2 } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 
 interface ScoringRule {
@@ -190,24 +190,24 @@ export default function CustomScoringRulesPage() {
   };
 
   const commonRuleTypes = [
-    { value: 'goals_scored', label: 'Goal Scored', icon: '⚽' },
-    { value: 'clean_sheet', label: 'Clean Sheet', icon: '🛡️' },
+    { value: 'goals_scored', label: 'Goal Scored', icon: <Activity className="w-3.5 h-3.5 text-red-500 inline-block" /> },
+    { value: 'clean_sheet', label: 'Clean Sheet', icon: <Shield className="w-3.5 h-3.5 text-blue-500 inline-block" /> },
     { value: 'goals_conceded', label: 'Goal Conceded', icon: '🥅' },
-    { value: 'motm', label: 'Man of the Match', icon: '⭐' },
-    { value: 'win', label: 'Win', icon: '✅' },
+    { value: 'motm', label: 'Man of the Match', icon: '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />' },
+    { value: 'win', label: 'Win', icon: '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />' },
     { value: 'draw', label: 'Draw', icon: '🤝' },
-    { value: 'loss', label: 'Loss', icon: '❌' },
+    { value: 'loss', label: 'Loss', icon: '<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" />' },
     { value: 'fine_goals', label: 'Fine Goals', icon: '💸' },
-    { value: 'substitution_penalty', label: 'Substitution Penalty', icon: '🔄' },
+    { value: 'substitution_penalty', label: 'Substitution Penalty', icon: '<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" />' },
     { value: 'hat_trick', label: 'Hat-trick (3+ goals)', icon: '🎩' },
-    { value: 'brace', label: 'Brace (2 goals)', icon: '⚽⚽' },
+    { value: 'brace', label: 'Brace (2 goals)', icon: '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />' },
     { value: 'concedes_4_plus_goals', label: 'Concedes 4+ Goals', icon: '🚨' },
     { value: 'concedes_15_plus_goals', label: 'Concedes 15+ Goals', icon: '💥' },
     { value: 'scored_6_plus_goals', label: 'Scored 6+ Goals', icon: '🔥' },
     { value: 'match_played', label: 'Match Played', icon: '🎮' },
     { value: 'golden_boot', label: 'Golden Boot Award', icon: '👢' },
     { value: 'best_attacker', label: 'Best Attacker Award', icon: '⚔️' },
-    { value: 'custom', label: 'Custom Rule', icon: '📊' },
+    { value: 'custom', label: 'Custom Rule', icon: '<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" />' },
   ];
 
   if (loading || isLoading) {
@@ -339,11 +339,11 @@ export default function CustomScoringRulesPage() {
                       <option value="new_player">🆕 New Player Bonus (first X matches)</option>
                       <option value="streak">🔥 Streak Bonus (consecutive events)</option>
                       <option value="milestone">🎯 Milestone Bonus (reach X goals/assists)</option>
-                      <option value="match_result">🏆 Match Result Bonus (win/draw/loss)</option>
+                      <option value="match_result"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Match Result Bonus (win/draw/loss)</option>
                       <option value="comeback">💪 Comeback Bonus (winning after being behind)</option>
                       <option value="clean_sheet_streak">🛡️ Clean Sheet Streak (consecutive clean sheets)</option>
                       <option value="goal_difference">⚡ Goal Difference Bonus (winning by X+ goals)</option>
-                      <option value="against_top_team">👑 Top Team Bonus (performance vs top teams)</option>
+                      <option value="against_top_team"><Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /> Top Team Bonus (performance vs top teams)</option>
                       <option value="captain_bonus">©️ Captain/Vice Captain Bonus (multiplier)</option>
                     </select>
                   </div>

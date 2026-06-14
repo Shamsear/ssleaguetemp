@@ -14,6 +14,7 @@ import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import RoundFixturesShareButton from '@/components/RoundFixturesShareButton';
 import TournamentStandings from '@/components/tournament/TournamentStandings';
+import { ArrowLeft, Settings, Plus, Trash2, Trophy, Calendar, Users, Activity, CheckCircle, AlertTriangle, Info, Clock, Layers, Search, Sparkles, Award, ChevronRight, Shield, Eye, FileText, Play, Share2, HelpCircle, X, ChevronLeft, Download, Shuffle, Check, RefreshCw, DollarSign, XCircle, Star, BarChart2 } from 'lucide-react';
 
 interface Match {
   id: string;
@@ -173,7 +174,7 @@ export default function TournamentDashboardPage() {
     handleConfirm,
   } = useModal();
 
-  // Calculate knockout structure based on tournament settings (league/group → knockout)
+  // Calculate knockout structure based on tournament settings (league/group &rarr; knockout)
   const calculateKnockoutStructure = (cfg: typeof newTournament) => {
     const stages: Array<{ name: string; key: keyof typeof newTournament.rewards.knockout_stages; teams: number; emoji: string }> = [];
 
@@ -189,12 +190,12 @@ export default function TournamentDashboardPage() {
     // Guard
     if (!cfg.has_knockout_stage || entrants <= 0) {
       // Still show winner/runner-up inputs so values can be set
-      stages.push({ name: 'Winner', key: 'winner', teams: 1, emoji: '🏆' });
-      stages.push({ name: 'Runner-up', key: 'runner_up', teams: 1, emoji: '🥈' });
+      stages.push({ name: 'Winner', key: 'winner', teams: 1, emoji: '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />' });
+      stages.push({ name: 'Runner-up', key: 'runner_up', teams: 1, emoji: '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />' });
       return stages;
     }
 
-    // If direct semifinals are configured (e.g., 6 teams, top 2 to semis), use quarters → semis → final flow
+    // If direct semifinals are configured (e.g., 6 teams, top 2 to semis), use quarters &rarr; semis &rarr; final flow
     if (!cfg.has_group_stage && directSemis > 0) {
       const qfTeams = Math.max(entrants - directSemis, 0);
       if (qfTeams >= 2) {
@@ -203,9 +204,9 @@ export default function TournamentDashboardPage() {
       // Calculate actual semis: qf winners + direct semis = total in semis
       const qfWinners = qfTeams > 0 ? qfTeams / 2 : 0;
       const totalInSemis = qfWinners + directSemis;
-      stages.push({ name: 'Semi-final Loser', key: 'semi_final_loser', teams: totalInSemis / 2, emoji: '🥉' });
-      stages.push({ name: 'Runner-up', key: 'runner_up', teams: 1, emoji: '🥈' });
-      stages.push({ name: 'Winner', key: 'winner', teams: 1, emoji: '🏆' });
+      stages.push({ name: 'Semi-final Loser', key: 'semi_final_loser', teams: totalInSemis / 2, emoji: '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />' });
+      stages.push({ name: 'Runner-up', key: 'runner_up', teams: 1, emoji: '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />' });
+      stages.push({ name: 'Winner', key: 'winner', teams: 1, emoji: '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />' });
       return stages;
     }
 
@@ -222,11 +223,11 @@ export default function TournamentDashboardPage() {
     addRound(32, 'round_of_32_loser', 'Round of 32 Loser', '🎮');
     addRound(16, 'round_of_16_loser', 'Round of 16 Loser', '🎯');
     addRound(8, 'quarter_final_loser', 'Quarter-final Loser', '🏅');
-    addRound(4, 'semi_final_loser', 'Semi-final Loser', '🥉');
+    addRound(4, 'semi_final_loser', 'Semi-final Loser', '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />');
 
     // Final is always present (winner and runner-up)
-    stages.push({ name: 'Runner-up', key: 'runner_up', teams: 1, emoji: '🥈' });
-    stages.push({ name: 'Winner', key: 'winner', teams: 1, emoji: '🏆' });
+    stages.push({ name: 'Runner-up', key: 'runner_up', teams: 1, emoji: '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />' });
+    stages.push({ name: 'Winner', key: 'winner', teams: 1, emoji: '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />' });
 
     return stages;
   };
@@ -840,7 +841,7 @@ export default function TournamentDashboardPage() {
         });
         
         console.log('🎯 Found playoff fixtures:', playoffFixtures.length);
-        console.log('✅ Completed playoff fixtures:', playoffFixtures.filter(f => f.status === 'completed').length);
+        console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Completed playoff fixtures:', playoffFixtures.filter(f => f.status === 'completed').length);
         
         if (playoffFixtures.length > 0 && playoffFixtures.some(f => f.status === 'completed')) {
           // Semi Finals needs BOTH playoff winners AND top 2 from standings
@@ -848,7 +849,7 @@ export default function TournamentDashboardPage() {
           expectedPreviousRound = playoffFixtures[0].knockout_round; // Use actual round name
           console.log('✨ Will load playoff winners + top 2 from standings');
         } else {
-          console.log('⚠️ No completed playoff found, will load top 4 from standings');
+          console.log('<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> No completed playoff found, will load top 4 from standings');
         }
         // If no playoff, will fall back to standings
       } else if (knockoutRoundType === 'finals') {
@@ -879,10 +880,10 @@ export default function TournamentDashboardPage() {
           f.knockout_round === expectedPreviousRound && f.status === 'completed'
         );
         
-        console.log('📊 Found previous round fixtures:', previousRoundFixtures.length);
+        console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Found previous round fixtures:', previousRoundFixtures.length);
         
         if (previousRoundFixtures.length > 0) {
-          console.log('✅ Processing winners/losers from:', expectedPreviousRound);
+          console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Processing winners/losers from:', expectedPreviousRound);
           
           const isTwoLegged = previousRoundFixtures.some(f => f.knockout_format === 'two_leg');
           
@@ -1013,7 +1014,7 @@ export default function TournamentDashboardPage() {
           
           // Special case: For Semi Finals after Playoff, optionally add top 2 from standings
           if (knockoutRoundType === 'semi_finals' && !needLosers && allTeams.length > 0 && includeTop2ForSemiFinals) {
-            console.log('🔄 Semi Finals detected - also loading top 2 from standings (toggle enabled)');
+            console.log('<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Semi Finals detected - also loading top 2 from standings (toggle enabled)');
             
             try {
               const res = await fetchWithTokenRefresh(`/api/tournaments/${tournamentId}/standings`);
@@ -1057,7 +1058,7 @@ export default function TournamentDashboardPage() {
               // Continue with just playoff winners
             }
           } else if (knockoutRoundType === 'semi_finals' && !needLosers && allTeams.length > 0 && !includeTop2ForSemiFinals) {
-            console.log('⚠️ Semi Finals - top 2 from standings NOT included (toggle disabled)');
+            console.log('<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Semi Finals - top 2 from standings NOT included (toggle disabled)');
             sourceMessage = `Loaded ${allTeams.length} playoff winners only`;
           }
         }
@@ -1505,10 +1506,10 @@ export default function TournamentDashboardPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen min-h-screen flex items-center justify-center console-bg font-mono">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600 font-medium">Loading tournament dashboard...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono mt-4">Loading tournament dashboard...</p>
         </div>
       </div>
     );
@@ -1556,190 +1557,127 @@ export default function TournamentDashboardPage() {
     : fixturesForSelectedTournament.filter(f => f.round_number === selectedRound);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-4 sm:py-8 px-4">
-      <div className="container mx-auto max-w-screen-2xl">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col gap-4">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Link href="/dashboard/committee" className="hover:text-[#0066FF] transition-colors">
-                Committee
-              </Link>
-              <span>/</span>
-              <Link href="/dashboard/committee/team-management" className="hover:text-[#0066FF] transition-colors">
-                Team Management
-              </Link>
-              <span>/</span>
-              <span className="text-gray-900 font-medium">Tournament</span>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Decorative glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
+        {/* Navigation & Selector */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/dashboard/committee/team-management"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Team Management
+            </Link>
+            <Link
+              href="/dashboard/committee/team-management/tournament/lineup-status"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+            >
+              <CheckCircle className="w-3.5 h-3.5 text-slate-605" /> Lineup Status
+            </Link>
+            <Link
+              href="/dashboard/committee/team-management/match-days"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-705 font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+            >
+              <Calendar className="w-3.5 h-3.5 text-slate-600" /> Match Days
+            </Link>
+          </div>
+        </div>
+
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <Trophy className="w-6 h-6 text-amber-400" />
             </div>
-
-            {/* Title & Actions */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-                  🏆 Tournament Management
-                </h1>
-                <p className="text-gray-600 text-sm sm:text-base">
-                  Create tournaments, manage fixtures, and track standings
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href="/dashboard/committee/team-management/tournament/lineup-status"
-                  className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 glass rounded-xl border border-white/20 text-gray-700 hover:bg-white hover:shadow-lg transition-all text-sm font-medium whitespace-nowrap"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                  </svg>
-                  Lineup Status
-                </Link>
-                <Link
-                  href="/dashboard/committee/team-management/match-days"
-                  className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 glass rounded-xl border border-white/20 text-gray-700 hover:bg-white hover:shadow-lg transition-all text-sm font-medium whitespace-nowrap"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Match Days
-                </Link>
-                <Link
-                  href="/dashboard/committee/team-management"
-                  className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 glass rounded-xl border border-white/20 text-gray-700 hover:bg-white hover:shadow-lg transition-all text-sm font-medium whitespace-nowrap"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                  Back
-                </Link>
-              </div>
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">SYSTEM CONTROL</span>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                Tournament Management
+              </h1>
+              <p className="text-xs text-slate-550 font-mono mt-1">
+                Create tournaments, manage fixtures, and track standings
+              </p>
             </div>
           </div>
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <div className="glass rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-blue-50 to-blue-100/50 shadow-lg border border-blue-200/30 hover:shadow-xl transition-shadow">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs sm:text-sm text-blue-900/70 font-medium mb-1">Total Matches</p>
-                <p className="text-2xl sm:text-3xl font-bold text-blue-900">{totalMatches}</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Matches</p>
+                <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{totalMatches}</p>
               </div>
-              <div className="p-2 sm:p-3 bg-blue-500/20 rounded-lg">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
+              <div className="p-2 bg-slate-100 rounded-xl text-slate-600">
+                <Activity className="w-5 h-5" />
               </div>
             </div>
           </div>
 
-          <div className="glass rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-green-50 to-green-100/50 shadow-lg border border-green-200/30 hover:shadow-xl transition-shadow">
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs sm:text-sm text-green-900/70 font-medium mb-1">Completed</p>
-                <p className="text-2xl sm:text-3xl font-bold text-green-900">{completedMatches}</p>
+                <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Completed</p>
+                <p className="text-2xl sm:text-3xl font-black text-emerald-650 mt-1">{completedMatches}</p>
               </div>
-              <div className="p-2 sm:p-3 bg-green-500/20 rounded-lg">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div className="p-2 bg-emerald-50 rounded-xl text-emerald-600">
+                <CheckCircle className="w-5 h-5" />
               </div>
             </div>
           </div>
 
-          <div className="glass rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-orange-50 to-orange-100/50 shadow-lg border border-orange-200/30 hover:shadow-xl transition-shadow">
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs sm:text-sm text-orange-900/70 font-medium mb-1">Pending</p>
-                <p className="text-2xl sm:text-3xl font-bold text-orange-900">{pendingMatches}</p>
+                <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">Pending</p>
+                <p className="text-2xl sm:text-3xl font-black text-amber-600 mt-1">{pendingMatches}</p>
               </div>
-              <div className="p-2 sm:p-3 bg-orange-500/20 rounded-lg">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div className="p-2 bg-amber-50 rounded-xl text-amber-600">
+                <Clock className="w-5 h-5" />
               </div>
             </div>
           </div>
 
-          <div className="glass rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-purple-50 to-purple-100/50 shadow-lg border border-purple-200/30 hover:shadow-xl transition-shadow">
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs sm:text-sm text-purple-900/70 font-medium mb-1">Teams</p>
-                <p className="text-2xl sm:text-3xl font-bold text-purple-900">{participantsCount}</p>
+                <p className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">Teams</p>
+                <p className="text-2xl sm:text-3xl font-black text-purple-600 mt-1">{participantsCount}</p>
               </div>
-              <div className="p-2 sm:p-3 bg-purple-500/20 rounded-lg">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+              <div className="p-2 bg-purple-50 rounded-xl text-purple-600">
+                <Users className="w-5 h-5" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Modern Tab Navigation */}
-        <div className="mb-6 sm:mb-8 -mx-4 sm:mx-0">
-          <div className="glass rounded-none sm:rounded-2xl p-2 flex gap-1 sm:gap-2 shadow-lg border-y sm:border border-white/20 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all inline-flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 snap-start ${activeTab === 'overview'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+        {/* Tabs Selector */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-2 shadow-sm">
+          <div className="flex gap-2 overflow-x-auto font-mono scrollbar-thin">
+            {[
+              { tab: 'overview', label: '<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Overview', activeClass: 'bg-slate-800 text-white border-slate-900' },
+              { tab: 'teams', label: '<Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Teams', activeClass: 'bg-slate-800 text-white border-slate-900' },
+              { tab: 'groups', label: '🎯 Groups', activeClass: 'bg-slate-800 text-white border-slate-900' },
+              { tab: 'fixtures', label: '📅 Fixtures', activeClass: 'bg-slate-800 text-white border-slate-900' },
+              { tab: 'standings', label: '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Standings', activeClass: 'bg-slate-800 text-white border-slate-900' },
+              { tab: 'management', label: '⚙️ Manage', activeClass: 'bg-slate-800 text-white border-slate-900' }
+            ].map(({ tab, label, activeClass }) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as TabType)}
+                className={`px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap border cursor-pointer ${
+                  activeTab === tab
+                    ? `${activeClass} shadow-sm`
+                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                 }`}
-            >
-              <span className="text-sm sm:text-lg">📊</span>
-              <span>Overview</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('teams')}
-              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all inline-flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 snap-start ${activeTab === 'teams'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                }`}
-            >
-              <span className="text-sm sm:text-lg">👥</span>
-              <span>Teams</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('groups')}
-              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all inline-flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 snap-start ${activeTab === 'groups'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                }`}
-            >
-              <span className="text-sm sm:text-lg">🎯</span>
-              <span>Groups</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('fixtures')}
-              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all inline-flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 snap-start ${activeTab === 'fixtures'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                }`}
-            >
-              <span className="text-sm sm:text-lg">📅</span>
-              <span>Fixtures</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('standings')}
-              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all inline-flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 snap-start ${activeTab === 'standings'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                }`}
-            >
-              <span className="text-sm sm:text-lg">🏆</span>
-              <span>Standings</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('management')}
-              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all inline-flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 snap-start ${activeTab === 'management'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                }`}
-            >
-              <span className="text-sm sm:text-lg">⚙️</span>
-              <span>Manage</span>
-            </button>
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -1747,14 +1685,14 @@ export default function TournamentDashboardPage() {
         {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* Tournaments Overview */}
-            <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-white/20">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                  🏆 Active Tournaments
+                  Active Tournaments
                 </h2>
                 <button
                   onClick={() => setActiveTab('management')}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all text-sm font-medium"
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
                 >
                   + Create
                 </button>
@@ -1762,15 +1700,13 @@ export default function TournamentDashboardPage() {
 
               {tournaments.length === 0 ? (
                 <div className="text-center py-12">
-                  <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                  </svg>
+                  <Trophy className="w-16 h-16 mx-auto text-slate-300 mb-4" />
                   <p className="text-gray-500 font-medium mb-4">No tournaments created yet</p>
                   <button
                     onClick={() => setActiveTab('management')}
                     className="text-sm text-[#0066FF] hover:text-[#0052CC] font-medium"
                   >
-                    Create your first tournament →
+                    Create your first tournament  &rarr; 
                   </button>
                 </div>
               ) : (
@@ -1792,13 +1728,11 @@ export default function TournamentDashboardPage() {
 
                       <div className="space-y-2 mb-4">
                         <div className="flex items-center text-xs text-gray-600">
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                          </svg>
-                          {tournament.tournament_type === 'league' ? '⚽ League' :
-                            tournament.tournament_type === 'cup' ? '🏆 Cup' :
+                          <Layers className="w-4 h-4 mr-2 text-slate-500" />
+                          {tournament.tournament_type === 'league' ? '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> League' :
+                            tournament.tournament_type === 'cup' ? '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cup' :
                               tournament.tournament_type === 'ucl' ? '🌟 Champions League' :
-                                tournament.tournament_type === 'uel' ? '⭐ Europa League' :
+                                tournament.tournament_type === 'uel' ? '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Europa League' :
                                   tournament.tournament_type}
                         </div>
 
@@ -1810,7 +1744,7 @@ export default function TournamentDashboardPage() {
 
                         {tournament.has_group_stage && (
                           <div className="text-xs text-blue-600 font-medium">
-                            👥 {tournament.number_of_groups} Groups × {tournament.teams_per_group} Teams
+                            <Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> {tournament.number_of_groups} Groups × {tournament.teams_per_group} Teams
                           </div>
                         )}
                       </div>
@@ -1832,7 +1766,7 @@ export default function TournamentDashboardPage() {
                           }}
                           className="flex-1 px-3 py-2 bg-purple-50 text-purple-700 text-xs font-medium rounded-lg hover:bg-purple-100 transition-colors"
                         >
-                          🏆 Standings
+                          <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Standings
                         </button>
                       </div>
                     </div>
@@ -1844,25 +1778,23 @@ export default function TournamentDashboardPage() {
             {/* Upcoming & Recent Matches */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Upcoming Matches */}
-              <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-white/20">
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <span className="text-xl">⏳</span>
+                    <span className="text-xl"><Clock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /></span>
                     Upcoming Matches
                   </h3>
                   <button
                     onClick={() => setActiveTab('fixtures')}
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
-                    View All →
+                    View All  &rarr; 
                   </button>
                 </div>
 
                 {upcomingMatches.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
-                    <svg className="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                    <Calendar className="w-12 h-12 mx-auto text-slate-300 mb-3" />
                     <p className="text-sm">No upcoming matches</p>
                   </div>
                 ) : (
@@ -1887,7 +1819,7 @@ export default function TournamentDashboardPage() {
                           href={`/dashboard/committee/team-management/fixture/${match.id}`}
                           className="mt-2 text-xs text-blue-600 hover:text-blue-700 font-medium inline-block"
                         >
-                          View Details →
+                          View Details &rarr;
                         </Link>
                       </div>
                     ))}
@@ -1896,25 +1828,23 @@ export default function TournamentDashboardPage() {
               </div>
 
               {/* Recent Results */}
-              <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-white/20">
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <span className="text-xl">✅</span>
+                    <span className="text-xl"><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /></span>
                     Recent Results
                   </h3>
                   <button
                     onClick={() => setActiveTab('fixtures')}
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
-                    View All →
+                    View All  &rarr; 
                   </button>
                 </div>
 
                 {recentMatches.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
-                    <svg className="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
+                    <CheckCircle className="w-12 h-12 mx-auto text-slate-300 mb-3" />
                     <p className="text-sm">No completed matches yet</p>
                   </div>
                 ) : (
@@ -1956,9 +1886,9 @@ export default function TournamentDashboardPage() {
 
         {activeTab === 'teams' && (
           <div className="space-y-6">
-            <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-white/20">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-                👥 Manage Tournament Teams
+                Manage Tournament Teams
               </h2>
               <p className="text-gray-600 text-sm mb-6">
                 Select which teams will participate in this tournament. You must assign teams before generating fixtures.
@@ -1966,7 +1896,7 @@ export default function TournamentDashboardPage() {
 
               {/* Tournament Selector */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                   Select Tournament
                 </label>
                 <select
@@ -2041,17 +1971,12 @@ export default function TournamentDashboardPage() {
                     >
                       {isSavingTeams ? (
                         <>
-                          <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
+                          <RefreshCw className="animate-spin h-5 w-5 mr-2" />
                           Saving...
                         </>
                       ) : (
                         <>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                          </svg>
+                          <Check className="w-5 h-5 mr-2" />
                           Save Team Assignments
                         </>
                       )}
@@ -2063,9 +1988,7 @@ export default function TournamentDashboardPage() {
               {/* Empty State */}
               {selectedTournamentForTeams && tournamentTeams.length === 0 && (
                 <div className="text-center py-12">
-                  <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
+                  <Users className="w-16 h-16 mx-auto text-slate-300 mb-4" />
                   <p className="text-gray-500 font-medium">No teams registered for this season yet</p>
                 </div>
               )}
@@ -2076,15 +1999,15 @@ export default function TournamentDashboardPage() {
         {activeTab === 'fixtures' && (
           <div className="space-y-6">
             {/* Tournament Selector & Actions */}
-            <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-white/20">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-                📅 Fixtures Management
+                Fixtures Management
               </h2>
 
               <div className="space-y-4">
                 {/* Tournament Selector */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                     Select Tournament
                   </label>
                   <select
@@ -2104,7 +2027,7 @@ export default function TournamentDashboardPage() {
                 {/* Fixture Type Selection */}
                 {selectedTournamentForFixtures && (
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Fixture Type</label>
+                    <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">Fixture Type</label>
                     <div className="flex gap-3">
                       <button
                         onClick={() => setIsTwoLegged(false)}
@@ -2133,7 +2056,7 @@ export default function TournamentDashboardPage() {
                 {/* Matchup Mode Selection */}
                 {selectedTournamentForFixtures && (
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Matchup Creation Mode</label>
+                    <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">Matchup Creation Mode</label>
                     <div className="flex gap-3">
                       <button
                         onClick={() => setMatchupMode('manual')}
@@ -2170,7 +2093,7 @@ export default function TournamentDashboardPage() {
                 {/* Knockout Format Selection */}
                 {selectedTournamentForFixtures && (
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                       Knockout Format <span className="text-xs text-gray-500">(for knockout generation)</span>
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -2221,7 +2144,7 @@ export default function TournamentDashboardPage() {
                 {/* Scoring System Selection */}
                 {selectedTournamentForFixtures && (
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                       Scoring System <span className="text-xs text-gray-500">(applies to all formats)</span>
                     </label>
                     <div className="flex gap-3">
@@ -2232,7 +2155,7 @@ export default function TournamentDashboardPage() {
                             : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                           }`}
                       >
-                        <div className="font-semibold">⚽ Goal-Based</div>
+                        <div className="font-semibold">Goal-Based</div>
                         <div className="text-xs mt-1">Winner by total goals scored</div>
                       </button>
                       <button
@@ -2242,7 +2165,7 @@ export default function TournamentDashboardPage() {
                             : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                           }`}
                       >
-                        <div className="font-semibold">🏆 Win-Based</div>
+                        <div className="font-semibold">Win-Based</div>
                         <div className="text-xs mt-1">3 pts for win, 1 for draw</div>
                       </button>
                     </div>
@@ -2260,9 +2183,7 @@ export default function TournamentDashboardPage() {
                 {selectedTournamentForFixtures && (
                   <div className="mb-6 p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl">
                     <h3 className="text-lg font-bold text-purple-900 mb-4 flex items-center gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
+                      <Sparkles className="w-5 h-5 text-amber-500" />
                       Round-Wise Knockout Generation
                     </h3>
                     <p className="text-sm text-purple-700 mb-4">Generate one knockout round at a time with custom settings for each round.</p>
@@ -2270,13 +2191,13 @@ export default function TournamentDashboardPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       {/* Round Type */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Round Type</label>
+                        <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">Round Type</label>
                         <select
                           value={knockoutRoundType}
                           onChange={(e) => setKnockoutRoundType(e.target.value as any)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                         >
-                          <option value="playoff">Playoff (4 teams → 2 winners)</option>
+                          <option value="playoff">Playoff (4 teams &rarr; 2 winners)</option>
                           <option value="quarter_finals">Quarter Finals</option>
                           <option value="semi_finals">Semi Finals</option>
                           <option value="finals">Finals</option>
@@ -2286,7 +2207,7 @@ export default function TournamentDashboardPage() {
 
                       {/* Round Number - Auto-calculated */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                           Round Number
                           <span className="ml-2 text-xs text-purple-600 font-normal">(Auto-set to next round)</span>
                         </label>
@@ -2304,7 +2225,7 @@ export default function TournamentDashboardPage() {
 
                       {/* Number of Teams - Auto-determined by Round Type */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                           Number of Teams
                           <span className="ml-2 text-xs text-purple-600 font-normal">(Auto-set by round type)</span>
                         </label>
@@ -2319,7 +2240,7 @@ export default function TournamentDashboardPage() {
 
                       {/* Pairing Method */}
                       <div>     
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Pairing Method</label>
+                        <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">Pairing Method</label>
                         <select
                           value={knockoutPairingMethod}
                           onChange={(e) => setKnockoutPairingMethod(e.target.value as any)}
@@ -2344,7 +2265,7 @@ export default function TournamentDashboardPage() {
                           }}
                           className="px-3 py-1.5 bg-purple-600 text-white text-xs rounded-lg hover:bg-purple-700 font-medium transition-colors"
                         >
-                          📊 Load & Auto-Select Top Teams
+                          <BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Load & Auto-Select Top Teams
                         </button>
                       </div>
 
@@ -2353,7 +2274,7 @@ export default function TournamentDashboardPage() {
                           {/* Knockout Structure Preview */}
                           {knockoutSelectedTeams.length === knockoutNumTeams && (
                             <div className="mb-3 p-3 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
-                              <h4 className="text-xs font-bold text-purple-900 mb-2">🏆 Knockout Structure Preview</h4>
+                              <h4 className="text-xs font-bold text-purple-900 mb-2"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Knockout Structure Preview</h4>
                               <div className="space-y-1 text-xs">
                                 {knockoutPairingMethod === 'standard' && (
                                   <>
@@ -2438,9 +2359,7 @@ export default function TournamentDashboardPage() {
                         </>
                       ) : (
                         <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300 text-center">
-                          <svg className="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
+                          <Users className="w-12 h-12 mx-auto text-slate-400 mb-3" />
                           <p className="text-sm font-medium text-gray-700 mb-1">No teams loaded</p>
                           <p className="text-xs text-gray-500 mb-3">Click the button above to load teams from standings</p>
                           <p className="text-xs text-gray-400">Top {knockoutNumTeams} teams will be auto-selected</p>
@@ -2456,17 +2375,12 @@ export default function TournamentDashboardPage() {
                     >
                       {isGeneratingKnockoutRound ? (
                         <>
-                          <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
+                          <RefreshCw className="animate-spin h-5 w-5 mr-2" />
                           Generating Round...
                         </>
                       ) : (
                         <>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
+                          <Sparkles className="w-5 h-5 text-amber-500" />
                           Generate Knockout Round
                         </>
                       )}
@@ -2484,17 +2398,12 @@ export default function TournamentDashboardPage() {
                     >
                       {isGeneratingFixtures ? (
                         <>
-                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
+                          <RefreshCw className="animate-spin h-4 w-4 mr-2" />
                           Generating...
                         </>
                       ) : (
                         <>
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                          </svg>
+                          <Plus className="w-4 h-4 mr-2" />
                           Generate Fixtures
                         </>
                       )}
@@ -2507,17 +2416,12 @@ export default function TournamentDashboardPage() {
                     >
                       {isGeneratingKnockout ? (
                         <>
-                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
+                          <RefreshCw className="animate-spin h-4 w-4 mr-2" />
                           Generating...
                         </>
                       ) : (
                         <>
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
+                          <Sparkles className="w-4 h-4 mr-2" />
                           Generate Knockout
                         </>
                       )}
@@ -2531,17 +2435,12 @@ export default function TournamentDashboardPage() {
                       >
                         {isDeletingFixtures ? (
                           <>
-                            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
+                            <RefreshCw className="animate-spin h-4 w-4 mr-2" />
                             Deleting...
                           </>
                         ) : (
                           <>
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            <Trash2 className="w-4 h-4 mr-2" />
                             Delete All Fixtures
                           </>
                         )}
@@ -2554,12 +2453,10 @@ export default function TournamentDashboardPage() {
 
             {/* Info Box */}
             {selectedTournamentForFixtures && fixturesForSelectedTournament.length === 0 && (
-              <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-white/20 bg-blue-50/30">
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm bg-blue-50/30">
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-blue-100 rounded-lg shrink-0">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <Info className="w-5 h-5 text-amber-500" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-gray-900 mb-1">Ready to Generate Fixtures?</h3>
@@ -2570,9 +2467,7 @@ export default function TournamentDashboardPage() {
                       onClick={() => setActiveTab('teams')}
                       className="text-sm text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-1"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
+                      <Users className="w-4 h-4 mr-2" />
                       Go to Teams Tab
                     </button>
                   </div>
@@ -2582,7 +2477,7 @@ export default function TournamentDashboardPage() {
 
             {/* Fixtures List */}
             {selectedTournamentForFixtures && fixturesForSelectedTournament.length > 0 && (
-              <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-white/20">
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-gray-900">
                     📋 Fixtures ({fixturesForSelectedTournament.length})
@@ -2623,15 +2518,15 @@ export default function TournamentDashboardPage() {
                           </span>
                           {(fixture as any).knockout_round && (
                             <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full font-bold">
-                              {(fixture as any).knockout_round === 'quarter_finals' && '⚔️ QF'}
-                              {(fixture as any).knockout_round === 'semi_finals' && '🏆 SF'}
-                              {(fixture as any).knockout_round === 'finals' && '👑 FINAL'}
-                              {(fixture as any).knockout_round === 'third_place' && '🥉 3rd'}
+                              {(fixture as any).knockout_round === 'quarter_finals' && 'QF'}
+                              {(fixture as any).knockout_round === 'semi_finals' && 'SF'}
+                              {(fixture as any).knockout_round === 'finals' && 'FINAL'}
+                              {(fixture as any).knockout_round === 'third_place' && '3rd'}
                             </span>
                           )}
                           {(fixture as any).scoring_system && (
                             <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                              {(fixture as any).scoring_system === 'wins' ? '🏆 Wins' : '⚽ Goals'}
+                              {(fixture as any).scoring_system === 'wins' ? 'Wins' : 'Goals'}
                             </span>
                           )}
                           {fixture.group_name && (
@@ -2651,7 +2546,7 @@ export default function TournamentDashboardPage() {
                           href={`/dashboard/committee/team-management/fixture/${fixture.id}`}
                           className="text-xs text-blue-600 hover:text-blue-700 font-medium"
                         >
-                          Manage →
+                          Manage  &rarr; 
                         </Link>
                       </div>
 
@@ -2681,13 +2576,13 @@ export default function TournamentDashboardPage() {
         {activeTab === 'standings' && (
           <div className="space-y-6">
             {/* Tournament Selector */}
-            <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-white/20">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-                🏆 Tournament Standings
+                Tournament Standings
               </h2>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                   Select Tournament
                 </label>
                 <select
@@ -2709,11 +2604,9 @@ export default function TournamentDashboardPage() {
             {selectedTournamentForStandings ? (
               <TournamentStandings tournamentId={selectedTournamentForStandings} />
             ) : (
-              <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-white/20">
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
                 <div className="text-center py-12 text-gray-500">
-                  <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
+                  <Trophy className="w-16 h-16 mx-auto text-slate-300 mb-4" />
                   <p className="font-medium mb-2">Select a tournament</p>
                   <p className="text-sm">Choose a tournament above to view its standings</p>
                 </div>
@@ -2724,16 +2617,16 @@ export default function TournamentDashboardPage() {
 
         {activeTab === 'groups' && (
           <div className="space-y-6">
-            <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-white/20">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-                🎯 Manage Tournament Groups
+                Manage Tournament Groups
               </h2>
               <p className="text-gray-600 text-sm mb-6">
                 Assign teams to groups for group stage tournaments. Teams must be assigned to the tournament first.
               </p>
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Tournament</label>
+                <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">Select Tournament</label>
                 <select
                   value={selectedTournamentForGroups}
                   onChange={(e) => setSelectedTournamentForGroups(e.target.value)}
@@ -2761,26 +2654,26 @@ export default function TournamentDashboardPage() {
                       onClick={handleAutoDistributeGroups}
                       className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition-all text-sm font-medium"
                     >
-                      🎲 Auto Distribute
+                      Auto Distribute
                     </button>
                     <button
                       onClick={handleClearGroups}
                       className="px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl hover:shadow-lg transition-all text-sm font-medium"
                     >
-                      🗑️ Clear All
+                      Clear All
                     </button>
                     <button
                       onClick={handleSaveGroups}
                       disabled={isSavingGroups}
                       className="ml-auto px-6 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-all text-sm font-medium disabled:opacity-50"
                     >
-                      {isSavingGroups ? '💾 Saving...' : '💾 Save Groups'}
+                      {isSavingGroups ? 'Saving...' : 'Save Groups'}
                     </button>
                   </div>
 
                   {groupAssignments.length > 0 && (
                     <div className="mb-6">
-                      <h3 className="text-lg font-bold text-gray-900 mb-4">Assigned Groups</h3>
+                      <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider mb-4 border-b border-slate-100 pb-2">Assigned Groups</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {Array.from(new Set(groupAssignments.map(a => a.group_name))).sort().map(groupName => {
                           const teamsInGroup = groupAssignments.filter(a => a.group_name === groupName);
@@ -2819,7 +2712,7 @@ export default function TournamentDashboardPage() {
 
                   {unassignedTeams.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-4">
+                      <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider mb-4 border-b border-slate-100 pb-2">
                         Unassigned Teams ({unassignedTeams.length})
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -2872,7 +2765,7 @@ export default function TournamentDashboardPage() {
 
               {!selectedTournamentForGroups && (
                 <div className="text-center py-12">
-                  <div className="text-6xl mb-4">🏆</div>
+                  <div className="text-6xl mb-4"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Select a Tournament</h3>
                   <p className="text-gray-600">
                     Choose a tournament with group stage enabled to manage group assignments.
@@ -2886,14 +2779,14 @@ export default function TournamentDashboardPage() {
         {activeTab === 'management' && (
           <div className="space-y-6">
             {/* Create Tournament Form */}
-            <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-white/20">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                  ➕ Create New Tournament
+                  Create New Tournament
                 </h2>
                 <button
                   onClick={() => setShowCreateForm(!showCreateForm)}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all text-sm font-medium"
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
                 >
                   {showCreateForm ? 'Hide Form' : 'Show Form'}
                 </button>
@@ -2904,32 +2797,32 @@ export default function TournamentDashboardPage() {
                   {/* Basic Info */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         Tournament Type
                       </label>
                       <select
                         value={newTournament.tournament_type}
                         onChange={(e) => setNewTournament({ ...newTournament, tournament_type: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         required
                       >
-                        <option value="league">⚽ League</option>
-                        <option value="cup">🏆 Cup</option>
+                        <option value="league"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> League</option>
+                        <option value="cup"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cup</option>
                         <option value="ucl">🌟 Champions League</option>
-                        <option value="uel">⭐ Europa League</option>
+                        <option value="uel"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Europa League</option>
                         <option value="super_cup">🏅 Super Cup</option>
                         <option value="league_cup">🥤 League Cup</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         Status
                       </label>
                       <select
                         value={newTournament.status}
                         onChange={(e) => setNewTournament({ ...newTournament, status: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         required
                       >
                         <option value="upcoming">Upcoming</option>
@@ -2939,60 +2832,60 @@ export default function TournamentDashboardPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         Tournament Name
                       </label>
                       <input
                         type="text"
                         value={newTournament.tournament_name}
                         onChange={(e) => setNewTournament({ ...newTournament, tournament_name: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         placeholder="Auto-generated"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         Tournament Code
                       </label>
                       <input
                         type="text"
                         value={newTournament.tournament_code}
                         onChange={(e) => setNewTournament({ ...newTournament, tournament_code: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         placeholder="Auto-generated"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         Start Date
                       </label>
                       <input
                         type="date"
                         value={newTournament.start_date}
                         onChange={(e) => setNewTournament({ ...newTournament, start_date: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         End Date
                       </label>
                       <input
                         type="date"
                         value={newTournament.end_date}
                         onChange={(e) => setNewTournament({ ...newTournament, end_date: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        👥 Squad Size (Players per Match)
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
+                        <Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Squad Size (Players per Match)
                       </label>
                       <input
                         type="number"
@@ -3010,7 +2903,7 @@ export default function TournamentDashboardPage() {
                             setNewTournament({ ...newTournament, squad_size: 11 });
                           }
                         }}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         placeholder="11"
                         required
                       />
@@ -3018,42 +2911,42 @@ export default function TournamentDashboardPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        ⚽ Scoring Type
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
+                        <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Scoring Type
                         <span className="text-xs text-gray-500 ml-2">(How team wins are calculated)</span>
                       </label>
                       <select
                         value={newTournament.scoring_type || 'goals'}
                         onChange={(e) => setNewTournament({ ...newTournament, scoring_type: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                       >
-                        <option value="goals">⚽ Goal-Based (Total Goals) - Default</option>
-                        <option value="wins">🏆 Win-Based (Matchup Wins)</option>
-                        <option value="hybrid">🎯 Hybrid (Wins + Goals Tiebreaker)</option>
+                        <option value="goals">Goal-Based (Total Goals) - Default</option>
+                        <option value="wins">Win-Based (Matchup Wins)</option>
+                        <option value="hybrid">Hybrid (Wins + Goals Tiebreaker)</option>
                       </select>
                       <p className="text-xs text-gray-500 mt-1">
                         {newTournament.scoring_type === 'wins' ? (
                           <>
                             <strong>Win-Based:</strong> Team with most matchup wins wins the fixture.
-                            Example: Team A wins 3 matchups, Team B wins 2 → Team A wins
+                            Example: Team A wins 3 matchups, Team B wins 2 &rarr; Team A wins
                           </>
                         ) : newTournament.scoring_type === 'hybrid' ? (
                           <>
                             <strong>Hybrid:</strong> Matchup wins decide; total goals break ties.
-                            Example: Both win 2 matchups → Team with more goals wins
+                            Example: Both win 2 matchups &rarr; Team with more goals wins
                           </>
                         ) : (
                           <>
                             <strong>Goal-Based (Default):</strong> Team with most total goals wins.
-                            Example: Team A: 6 goals, Team B: 7 goals → Team B wins
+                            Example: Team A: 6 goals, Team B: 7 goals &rarr; Team B wins
                           </>
                         )}
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        🏆 Number of Participating Teams
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
+                        <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Number of Participating Teams
                       </label>
                       <input
                         type="number"
@@ -3076,7 +2969,7 @@ export default function TournamentDashboardPage() {
                             }
                           });
                         }}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         placeholder="16"
                         required
                       />
@@ -3085,14 +2978,14 @@ export default function TournamentDashboardPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                       Description
                     </label>
                     <textarea
                       value={newTournament.description}
                       onChange={(e) => setNewTournament({ ...newTournament, description: e.target.value })}
                       rows={3}
-                      className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                       placeholder="Optional description..."
                     />
                   </div>
@@ -3118,7 +3011,7 @@ export default function TournamentDashboardPage() {
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 mr-3"
                         />
                         <div className="flex-1">
-                          <span className="font-medium text-gray-900">⚽ Include League Stage</span>
+                          <span className="font-medium text-gray-900"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Include League Stage</span>
                           <p className="text-xs text-gray-500 mt-1">Round-robin format where all teams play each other</p>
                         </div>
                       </label>
@@ -3139,7 +3032,7 @@ export default function TournamentDashboardPage() {
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 mr-3"
                         />
                         <div className="flex-1">
-                          <span className="font-medium text-gray-900">🏆 Include Group Stage</span>
+                          <span className="font-medium text-gray-900"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Include Group Stage</span>
                           <p className="text-xs text-gray-500 mt-1">Divide teams into groups (e.g., Group A, B, C, D)</p>
                         </div>
                       </label>
@@ -3152,7 +3045,7 @@ export default function TournamentDashboardPage() {
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 mr-3"
                         />
                         <div className="flex-1">
-                          <span className="font-medium text-gray-900">🥇 Include Knockout Stage</span>
+                          <span className="font-medium text-gray-900"><Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /> Include Knockout Stage</span>
                           <p className="text-xs text-gray-500 mt-1">Add playoff bracket (quarters, semis, final)</p>
                         </div>
                       </label>
@@ -3303,7 +3196,7 @@ export default function TournamentDashboardPage() {
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-gray-900">⭐ Set as Primary Tournament</span>
+                            <span className="font-bold text-gray-900"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Set as Primary Tournament</span>
                             <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-semibold">IMPORTANT</span>
                           </div>
                           <p className="text-sm text-gray-700 mt-2 font-medium">Primary tournament is the main league competition for this season:</p>
@@ -3344,7 +3237,7 @@ export default function TournamentDashboardPage() {
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-gray-900">🏆 Include in Player Awards</span>
+                            <span className="font-bold text-gray-900"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Include in Player Awards</span>
                             <span className="text-xs bg-amber-600 text-white px-2 py-0.5 rounded-full font-semibold">IMPORTANT</span>
                           </div>
                           <p className="text-sm text-gray-700 mt-2 font-medium">Player stats from this tournament will count towards end-of-season awards:</p>
@@ -3362,7 +3255,7 @@ export default function TournamentDashboardPage() {
                   {/* Tournament Rewards Configuration */}
                   <div className="border-t border-gray-200 pt-6">
                     <div className="flex items-center gap-2 mb-4">
-                      <h3 className="text-lg font-semibold text-gray-800">💰 Tournament Rewards</h3>
+                      <h3 className="text-lg font-semibold text-gray-800">Tournament Rewards</h3>
                       <span className="text-xs bg-gradient-to-r from-blue-600 to-purple-600 text-white px-2 py-1 rounded-full font-semibold">eCoin & SSCoin</span>
                     </div>
                     <p className="text-sm text-gray-600 mb-6">Configure monetary rewards for teams based on match results, positions, and knockout stages</p>
@@ -3372,7 +3265,7 @@ export default function TournamentDashboardPage() {
                       {(newTournament.has_league_stage || newTournament.has_group_stage) && (
                         <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-200">
                           <div className="flex items-center gap-2 mb-4">
-                            <h4 className="font-bold text-gray-900">⚽ Match Result Rewards</h4>
+                            <h4 className="font-bold text-gray-900">Match Result Rewards</h4>
                             <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">Per Match</span>
                           </div>
                           <p className="text-xs text-gray-600 mb-4">Rewards given to teams after each match result</p>
@@ -3381,7 +3274,7 @@ export default function TournamentDashboardPage() {
                             {/* Win Rewards */}
                             <div className="bg-white/80 rounded-xl p-4 border border-green-300">
                               <div className="flex items-center gap-2 mb-3">
-                                <span className="text-2xl">🏆</span>
+                                <span className="text-2xl"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></span>
                                 <h5 className="font-semibold text-green-700">Win</h5>
                               </div>
                               <div className="space-y-2">
@@ -3529,7 +3422,7 @@ export default function TournamentDashboardPage() {
                       {newTournament.has_league_stage && (
                         <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border-2 border-purple-200">
                           <div className="flex items-center gap-2 mb-4">
-                            <h4 className="font-bold text-gray-900">🏆 League Standing Rewards</h4>
+                            <h4 className="font-bold text-gray-900">League Standing Rewards</h4>
                             <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full">
                               {newTournament.has_knockout_stage ? 'All Positions' : 'Season End'}
                             </span>
@@ -3544,7 +3437,7 @@ export default function TournamentDashboardPage() {
                             {newTournament.rewards.league_positions.map((posReward, index) => (
                               <div key={index} className="bg-white/80 rounded-xl p-4 border border-purple-300">
                                 <div className="flex items-center gap-2 mb-3">
-                                  <span className="text-xl">{index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🏅'}</span>
+                                  <span className="text-xl">{index === 0 ? '1st' : index === 1 ? '2nd' : index === 2 ? '3rd' : '4th'}</span>
                                   <h5 className="font-semibold text-purple-700">
                                     {index === 0 ? 'Champion' : index === 1 ? 'Runner-up' : `${posReward.position}${posReward.position === 3 ? 'rd' : 'th'} Place`}
                                   </h5>
@@ -3635,7 +3528,7 @@ export default function TournamentDashboardPage() {
                               }}
                               className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all text-sm font-medium"
                             >
-                              ✨ Auto-fill All {newTournament.number_of_teams} Positions
+                              Auto-fill All {newTournament.number_of_teams} Positions
                             </button>
                           </div>
                         </div>
@@ -3645,12 +3538,12 @@ export default function TournamentDashboardPage() {
                       {newTournament.has_knockout_stage && (
                         <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-6 border-2 border-orange-200">
                           <div className="flex items-center gap-2 mb-4">
-                            <h4 className="font-bold text-gray-900">🏆 Knockout Stage Rewards</h4>
+                            <h4 className="font-bold text-gray-900">Knockout Stage Rewards</h4>
                             <span className="text-xs bg-orange-600 text-white px-2 py-0.5 rounded-full">Tournament End</span>
                           </div>
                           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                             {newTournament.has_group_stage ? (
-                              // Group Stage → Knockout flow
+                              // Group Stage &rarr; Knockout flow
                               <>
                                 <p className="text-xs text-blue-800">
                                   <strong>Your Knockout Structure:</strong>
@@ -3660,11 +3553,11 @@ export default function TournamentDashboardPage() {
                                   </span>
                                 </p>
                                 <p className="text-xs text-blue-700 mt-1">
-                                  🎯 Groups complete → Top {newTournament.teams_advancing_per_group} from each group advance → Knockout bracket begins
+                                  🎯 Groups complete &rarr; Top {newTournament.teams_advancing_per_group} from each group advance &rarr; Knockout bracket begins
                                 </p>
                               </>
                             ) : (
-                              // League → Knockout flow
+                              // League &rarr; Knockout flow
                               <>
                                 <p className="text-xs text-blue-800">
                                   <strong>Your Playoff Structure:</strong> {newTournament.playoff_teams} teams total
@@ -3672,8 +3565,8 @@ export default function TournamentDashboardPage() {
                                 </p>
                                 <p className="text-xs text-blue-700 mt-1">
                                   {newTournament.playoff_teams - newTournament.direct_semifinal_teams > 0
-                                    ? `${newTournament.playoff_teams - newTournament.direct_semifinal_teams} teams play quarters → ${(newTournament.playoff_teams - newTournament.direct_semifinal_teams) / 2 + newTournament.direct_semifinal_teams} in semis → 2 in final`
-                                    : `${newTournament.direct_semifinal_teams || Math.ceil(newTournament.playoff_teams / 2)} teams in semis → 2 in final`}
+                                    ? `${newTournament.playoff_teams - newTournament.direct_semifinal_teams} teams play quarters &rarr; ${(newTournament.playoff_teams - newTournament.direct_semifinal_teams) / 2 + newTournament.direct_semifinal_teams} in semis &rarr; 2 in final`
+                                    : `${newTournament.direct_semifinal_teams || Math.ceil(newTournament.playoff_teams / 2)} teams in semis &rarr; 2 in final`}
                                 </p>
                               </>
                             )}
@@ -3767,12 +3660,12 @@ export default function TournamentDashboardPage() {
                       {newTournament.has_group_stage && newTournament.has_knockout_stage && (
                         <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl p-6 border-2 border-red-200">
                           <div className="flex items-center gap-2 mb-4">
-                            <h4 className="font-bold text-gray-900">❌ Group Stage Elimination Rewards</h4>
+                            <h4 className="font-bold text-gray-900">Group Stage Elimination Rewards</h4>
                             <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Did Not Qualify</span>
                           </div>
                           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                             <p className="text-xs text-yellow-800">
-                              <strong>📊 Teams eliminated in group stage:</strong>
+                              <strong><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Teams eliminated in group stage:</strong>
                               {' '}Total teams: {newTournament.number_of_teams || (newTournament.number_of_groups * newTournament.teams_per_group)}
                               {' '}| Advance: {newTournament.number_of_groups * newTournament.teams_advancing_per_group}
                               {' '}| <span className="font-bold">Eliminated: {(newTournament.number_of_teams || (newTournament.number_of_groups * newTournament.teams_per_group)) - (newTournament.number_of_groups * newTournament.teams_advancing_per_group)}</span>
@@ -3911,7 +3804,7 @@ export default function TournamentDashboardPage() {
                               }}
                               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all text-sm font-medium"
                             >
-                              ✨ Auto-fill Elimination Rewards
+                              Auto-fill Elimination Rewards
                             </button>
                           </div>
                         </div>
@@ -3920,7 +3813,7 @@ export default function TournamentDashboardPage() {
                       {/* Tournament Completion Bonus */}
                       <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border-2 border-blue-200">
                         <div className="flex items-center gap-2 mb-4">
-                          <h4 className="font-bold text-gray-900">🎁 Tournament Completion Bonus</h4>
+                          <h4 className="font-bold text-gray-900">Tournament Completion Bonus</h4>
                           <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">All Teams</span>
                         </div>
                         <p className="text-xs text-gray-600 mb-4">Bonus reward given to all teams that complete the tournament</p>
@@ -3973,7 +3866,7 @@ export default function TournamentDashboardPage() {
                   <div className="border-t border-gray-200 pt-6">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-1">⚔️ Lineup Category Requirements</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-1">Lineup Category Requirements</h3>
                         <p className="text-sm text-gray-600">Set minimum players required from each category in starting XI</p>
                       </div>
                       <label className="flex items-center gap-3 bg-white/50 px-4 py-2.5 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-blue-500/50 transition-all">
@@ -4000,7 +3893,7 @@ export default function TournamentDashboardPage() {
 
                     {!newTournament.enable_category_requirements ? (
                       <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
-                        <div className="text-4xl mb-3">✅</div>
+                        <div className="text-4xl mb-3"><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /></div>
                         <p className="text-gray-700 font-medium mb-1">Category Requirements Disabled</p>
                         <p className="text-sm text-gray-600">Teams can create lineups without category restrictions</p>
                       </div>
@@ -4014,7 +3907,7 @@ export default function TournamentDashboardPage() {
                           <div key={category.id} className="p-4 bg-white/50 rounded-xl border border-gray-200">
                             <label className="flex flex-col">
                               <span className="font-medium text-gray-900 mb-2">
-                                {category.icon || '⭐'} {category.name}
+                                {category.icon || '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />'} {category.name}
                               </span>
                               <input
                                 type="number"
@@ -4058,17 +3951,12 @@ export default function TournamentDashboardPage() {
                     >
                       {isCreatingTournament ? (
                         <>
-                          <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
+                          <RefreshCw className="animate-spin h-5 w-5 mr-2" />
                           Creating...
                         </>
                       ) : (
                         <>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                          </svg>
+                          <Plus className="w-5 h-5 mr-2" />
                           Create Tournament
                         </>
                       )}
@@ -4083,7 +3971,7 @@ export default function TournamentDashboardPage() {
               <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-blue-300 mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-gray-900">
-                    ✏️ Edit Tournament: {editingTournament.tournament_name}
+                    Edit Tournament: {editingTournament.tournament_name}
                   </h2>
                   <button
                     onClick={() => setEditingTournament(null)}
@@ -4180,32 +4068,32 @@ export default function TournamentDashboardPage() {
                   {/* Basic Info */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         Tournament Type
                       </label>
                       <select
                         value={editingTournament.tournament_type}
                         onChange={(e) => setEditingTournament({ ...editingTournament, tournament_type: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         required
                       >
-                        <option value="league">⚽ League</option>
-                        <option value="cup">🏆 Cup</option>
+                        <option value="league"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> League</option>
+                        <option value="cup"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cup</option>
                         <option value="ucl">🌟 Champions League</option>
-                        <option value="uel">⭐ Europa League</option>
+                        <option value="uel"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Europa League</option>
                         <option value="super_cup">🏅 Super Cup</option>
                         <option value="league_cup">🥤 League Cup</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         Status
                       </label>
                       <select
                         value={editingTournament.status}
                         onChange={(e) => setEditingTournament({ ...editingTournament, status: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         required
                       >
                         <option value="upcoming">Upcoming</option>
@@ -4215,92 +4103,92 @@ export default function TournamentDashboardPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        ⚽ Scoring Type
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
+                        <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Scoring Type
                         <span className="text-xs text-gray-500 ml-2">(How team wins are calculated)</span>
                       </label>
                       <select
                         value={editingTournament.scoring_type || 'goals'}
                         onChange={(e) => setEditingTournament({ ...editingTournament, scoring_type: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                       >
-                        <option value="goals">⚽ Goal-Based (Total Goals)</option>
-                        <option value="wins">🏆 Win-Based (Matchup Wins)</option>
-                        <option value="hybrid">🎯 Hybrid (Wins + Goals Tiebreaker)</option>
+                        <option value="goals">Goal-Based (Total Goals)</option>
+                        <option value="wins">Win-Based (Matchup Wins)</option>
+                        <option value="hybrid">Hybrid (Wins + Goals Tiebreaker)</option>
                       </select>
                       <p className="text-xs text-gray-500 mt-1">
                         {editingTournament.scoring_type === 'wins' ? (
                           <>
                             <strong>Win-Based:</strong> Team with most matchup wins wins the fixture.
-                            Example: Team A wins 3 matchups, Team B wins 2 → Team A wins
+                            Example: Team A wins 3 matchups, Team B wins 2 &rarr; Team A wins
                           </>
                         ) : editingTournament.scoring_type === 'hybrid' ? (
                           <>
                             <strong>Hybrid:</strong> Matchup wins decide; total goals break ties.
-                            Example: Both win 2 matchups → Team with more goals wins
+                            Example: Both win 2 matchups &rarr; Team with more goals wins
                           </>
                         ) : (
                           <>
                             <strong>Goal-Based (Default):</strong> Team with most total goals wins.
-                            Example: Team A: 6 goals, Team B: 7 goals → Team B wins
+                            Example: Team A: 6 goals, Team B: 7 goals &rarr; Team B wins
                           </>
                         )}
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         Tournament Name
                       </label>
                       <input
                         type="text"
                         value={editingTournament.tournament_name}
                         onChange={(e) => setEditingTournament({ ...editingTournament, tournament_name: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         Tournament Code
                       </label>
                       <input
                         type="text"
                         value={editingTournament.tournament_code}
                         onChange={(e) => setEditingTournament({ ...editingTournament, tournament_code: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         Start Date
                       </label>
                       <input
                         type="date"
                         value={editingTournament.start_date}
                         onChange={(e) => setEditingTournament({ ...editingTournament, start_date: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         End Date
                       </label>
                       <input
                         type="date"
                         value={editingTournament.end_date}
                         onChange={(e) => setEditingTournament({ ...editingTournament, end_date: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        👥 Squad Size (Players per Match)
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
+                        <Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Squad Size (Players per Match)
                       </label>
                       <input
                         type="number"
@@ -4318,7 +4206,7 @@ export default function TournamentDashboardPage() {
                             setEditingTournament({ ...editingTournament, squad_size: 11 });
                           }
                         }}
-                        className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         placeholder="11"
                         required
                       />
@@ -4327,14 +4215,14 @@ export default function TournamentDashboardPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                       Description
                     </label>
                     <textarea
                       value={editingTournament.description}
                       onChange={(e) => setEditingTournament({ ...editingTournament, description: e.target.value })}
                       rows={3}
-                      className="w-full px-4 py-2.5 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                       placeholder="Optional description..."
                     />
                   </div>
@@ -4360,7 +4248,7 @@ export default function TournamentDashboardPage() {
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 mr-3"
                         />
                         <div className="flex-1">
-                          <span className="font-medium text-gray-900">⚽ Include League Stage</span>
+                          <span className="font-medium text-gray-900"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Include League Stage</span>
                           <p className="text-xs text-gray-500 mt-1">Round-robin format where all teams play each other</p>
                         </div>
                       </label>
@@ -4381,7 +4269,7 @@ export default function TournamentDashboardPage() {
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 mr-3"
                         />
                         <div className="flex-1">
-                          <span className="font-medium text-gray-900">🏆 Include Group Stage</span>
+                          <span className="font-medium text-gray-900"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Include Group Stage</span>
                           <p className="text-xs text-gray-500 mt-1">Divide teams into groups (e.g., Group A, B, C, D)</p>
                         </div>
                       </label>
@@ -4394,7 +4282,7 @@ export default function TournamentDashboardPage() {
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 mr-3"
                         />
                         <div className="flex-1">
-                          <span className="font-medium text-gray-900">🥇 Include Knockout Stage</span>
+                          <span className="font-medium text-gray-900"><Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /> Include Knockout Stage</span>
                           <p className="text-xs text-gray-500 mt-1">Add playoff bracket (quarters, semis, final)</p>
                         </div>
                       </label>
@@ -4523,7 +4411,7 @@ export default function TournamentDashboardPage() {
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-gray-900">⭐ Set as Primary Tournament</span>
+                            <span className="font-bold text-gray-900"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Set as Primary Tournament</span>
                             <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-semibold">IMPORTANT</span>
                           </div>
                           <p className="text-sm text-gray-700 mt-2 font-medium">Primary tournament is the main league competition for this season:</p>
@@ -4564,7 +4452,7 @@ export default function TournamentDashboardPage() {
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-gray-900">🏆 Include in Player Awards</span>
+                            <span className="font-bold text-gray-900"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Include in Player Awards</span>
                             <span className="text-xs bg-amber-600 text-white px-2 py-0.5 rounded-full font-semibold">IMPORTANT</span>
                           </div>
                           <p className="text-sm text-gray-700 mt-2 font-medium">Player stats from this tournament will count towards end-of-season awards:</p>
@@ -4581,7 +4469,7 @@ export default function TournamentDashboardPage() {
 
                   {/* Lineup Category Requirements */}
                   <div className="border-t border-gray-200 pt-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">⚔️ Lineup Category Requirements</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Lineup Category Requirements</h3>
                     <p className="text-sm text-gray-600 mb-4">Set the minimum number of players required from each category in the starting 11</p>
 
                     {categories.length === 0 ? (
@@ -4594,7 +4482,7 @@ export default function TournamentDashboardPage() {
                           <div key={category.id} className="p-4 bg-white/50 rounded-xl border border-gray-200">
                             <label className="flex flex-col">
                               <span className="font-medium text-gray-900 mb-2">
-                                {category.icon || '⭐'} {category.name}
+                                {category.icon || '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />'} {category.name}
                               </span>
                               <input
                                 type="number"
@@ -4624,13 +4512,13 @@ export default function TournamentDashboardPage() {
 
                   {/* Match Rewards Section */}
                   <div className="border-t border-gray-200 pt-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">💰 Match Rewards</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2"><DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Match Rewards</h3>
                     <p className="text-sm text-gray-600 mb-4">Configure eCoin and SSCoin rewards for match results</p>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* Win Rewards */}
                       <div className="p-4 bg-green-50 rounded-xl border border-green-200">
-                        <h4 className="font-semibold text-green-800 mb-3">🏆 Win</h4>
+                        <h4 className="font-semibold text-green-800 mb-3"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Win</h4>
                         <div className="space-y-3">
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">eCoin</label>
@@ -4720,7 +4608,7 @@ export default function TournamentDashboardPage() {
 
                       {/* Loss Rewards */}
                       <div className="p-4 bg-red-50 rounded-xl border border-red-200">
-                        <h4 className="font-semibold text-red-800 mb-3">❌ Loss</h4>
+                        <h4 className="font-semibold text-red-800 mb-3"><XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Loss</h4>
                         <div className="space-y-3">
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">eCoin</label>
@@ -4767,7 +4655,7 @@ export default function TournamentDashboardPage() {
 
                   {/* League Standing Rewards Section */}
                   <div className="border-t border-gray-200 pt-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">🏆 League Standing Rewards</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">League Standing Rewards</h3>
                     <p className="text-sm text-gray-600 mb-4">Rewards based on final league table positions (Season End)</p>
 
                     <div className="space-y-3">
@@ -4889,7 +4777,7 @@ export default function TournamentDashboardPage() {
                           }}
                           className="px-4 py-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 text-sm font-medium"
                         >
-                          ✨ Auto-fill All {editingTournament.number_of_teams || 16} Positions
+                          Auto-fill All {editingTournament.number_of_teams || 16} Positions
                         </button>
                       </div>
                     </div>
@@ -4898,7 +4786,7 @@ export default function TournamentDashboardPage() {
                   {/* Knockout Stage Rewards Section - Only show if knockout stage is enabled */}
                   {editingTournament.has_knockout_stage && (
                     <div className="border-t border-gray-200 pt-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-2">🏆 Knockout Stage Rewards</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2">Knockout Stage Rewards</h3>
                       <p className="text-sm text-gray-600 mb-4">
                         Rewards for teams based on knockout stage elimination ({editingTournament.playoff_teams || 4} teams qualify)
                       </p>
@@ -4907,7 +4795,7 @@ export default function TournamentDashboardPage() {
                         {/* Dynamically show stages based on playoff_teams */}
                         {/* Winner - Always show for any knockout */}
                         <div className="p-4 bg-yellow-50 rounded-xl border-2 border-yellow-400">
-                          <h4 className="font-semibold text-yellow-800 mb-3">🥇 Winner</h4>
+                          <h4 className="font-semibold text-yellow-800 mb-3"><Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /> Winner</h4>
                           <div className="space-y-2">
                             <div>
                               <label className="block text-xs font-medium text-gray-700 mb-1">eCoin</label>
@@ -4958,7 +4846,7 @@ export default function TournamentDashboardPage() {
 
                         {/* Runner-up - Always show for any knockout */}
                         <div className="p-4 bg-gray-50 rounded-xl border-2 border-gray-400">
-                          <h4 className="font-semibold text-gray-800 mb-3">🥈 Runner-up</h4>
+                          <h4 className="font-semibold text-gray-800 mb-3"><Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" /> Runner-up</h4>
                           <div className="space-y-2">
                             <div>
                               <label className="block text-xs font-medium text-gray-700 mb-1">eCoin</label>
@@ -5010,7 +4898,7 @@ export default function TournamentDashboardPage() {
                         {/* Semi-final Loser - Show if 4+ teams */}
                         {(editingTournament.playoff_teams || 4) >= 4 && (
                           <div className="p-4 bg-orange-50 rounded-xl border border-orange-300">
-                            <h4 className="font-semibold text-orange-800 mb-3">🥉 Semi-final Loser</h4>
+                            <h4 className="font-semibold text-orange-800 mb-3"><Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" /> Semi-final Loser</h4>
                             <div className="space-y-2">
                               <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">eCoin</label>
@@ -5225,12 +5113,12 @@ export default function TournamentDashboardPage() {
 
                   {/* Tournament Completion Bonus Section */}
                   <div className="border-t border-gray-200 pt-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">🎁 Tournament Completion Bonus</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Tournament Completion Bonus</h3>
                     <p className="text-sm text-gray-600 mb-4">Bonus reward given to all teams that complete the tournament</p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">eCoin Bonus</label>
+                        <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">eCoin Bonus</label>
                         <input
                           type="number"
                           min="0"
@@ -5249,7 +5137,7 @@ export default function TournamentDashboardPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">SSCoin Bonus</label>
+                        <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">SSCoin Bonus</label>
                         <input
                           type="number"
                           min="0"
@@ -5275,7 +5163,7 @@ export default function TournamentDashboardPage() {
                       type="submit"
                       className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all font-medium"
                     >
-                      💾 Save Changes
+                      Save Changes
                     </button>
                     <button
                       type="button"
@@ -5290,16 +5178,14 @@ export default function TournamentDashboardPage() {
             )}
 
             {/* Existing Tournaments */}
-            <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-white/20">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                📋 Existing Tournaments ({tournaments.length})
+                Existing Tournaments ({tournaments.length})
               </h2>
 
               {tournaments.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
-                  <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                  </svg>
+                  <Trophy className="w-16 h-16 mx-auto text-slate-300 mb-4" />
                   <p className="font-medium mb-2">No tournaments found</p>
                   <p className="text-sm">Create a tournament above to get started</p>
                 </div>
@@ -5342,7 +5228,7 @@ export default function TournamentDashboardPage() {
                             )}
                             {tournament.has_group_stage && (
                               <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium">
-                                👥 Groups: {tournament.number_of_groups}
+                                <Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Groups: {tournament.number_of_groups}
                               </span>
                             )}
                             {tournament.include_in_fantasy && (
@@ -5352,7 +5238,7 @@ export default function TournamentDashboardPage() {
                             )}
                             {tournament.include_in_awards && (
                               <span className="bg-amber-50 text-amber-700 px-2 py-1 rounded-md font-medium">
-                                🏆 Awards
+                                <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Awards
                               </span>
                             )}
                           </div>
@@ -5427,7 +5313,7 @@ export default function TournamentDashboardPage() {
                               }`}
                             title={tournament.include_in_awards ? 'Awards Enabled - Click to disable' : 'Awards Disabled - Click to enable'}
                           >
-                            {tournament.include_in_awards ? '🏆 Awards' : '🏆 Off'}
+                            {tournament.include_in_awards ? '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Awards' : '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Off'}
                           </button>
                           <button
                             onClick={async () => {
