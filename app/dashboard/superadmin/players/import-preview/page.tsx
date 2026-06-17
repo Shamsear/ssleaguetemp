@@ -291,245 +291,243 @@ export default function PlayersImportPreview() {
 
   if (!user || user.role !== 'super_admin') {
     return null;
-  }
-
-  return (
-    <div className="min-h-screen py-4 sm:py-8 px-4">
-      <div className="container mx-auto max-w-screen-xl">
-        {/* Page Header */}
-        <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2">👥 Player Import Preview</h1>
-              <p className="text-gray-600 text-sm md:text-base">Review and edit players before importing to database</p>
-            </div>
-            <div className="flex items-center">
-              <button
-                onClick={() => router.push('/dashboard/superadmin/players')}
-                className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Database
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Import Summary */}
-        <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">{newPlayers.length}</div>
-              <div className="text-sm text-gray-600">New Players</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">{updatedPlayers.length}</div>
-              <div className="text-sm text-gray-600">Updates</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-[#0066FF]">{totalOperations}</div>
-              <div className="text-sm text-gray-600">Total Operations</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">CSV</div>
-              <div className="text-sm text-gray-600">Data Source</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Validation Status */}
-        <div className={`glass rounded-3xl p-4 mb-6 shadow-lg backdrop-blur-md border border-white/20 ${validationErrors.size > 0 ? 'bg-red-50/30' : 'bg-blue-50/30'}`}>
-          <div className="flex items-center">
-            <svg className={`w-5 h-5 mr-2 ${validationErrors.size > 0 ? 'text-red-600' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  }  return (
+    <div className="space-y-8 animate-fade-in font-mono">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/dashboard/superadmin/players')}
+            className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-950 transition-all flex-shrink-0 shadow-sm"
+            title="Back to Database"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            <span className={`text-sm ${validationErrors.size > 0 ? 'text-red-800' : 'text-blue-800'}`}>
-              {validationErrors.size > 0 
-                ? `${validationErrors.size} validation error(s) found. Please fix them before importing.`
-                : 'Click on any cell to edit player data. Changes are automatically validated.'}
-            </span>
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              Player Import Preview
+            </h1>
+            <p className="text-xs text-slate-500 font-mono mt-1">
+              Review and edit players before final sync to database.
+            </p>
           </div>
         </div>
+      </div>
 
-        {/* New Players Table */}
-        {newPlayers.length > 0 && (
-          <div className="glass rounded-3xl shadow-lg backdrop-blur-md border border-white/20 overflow-hidden mb-8">
-            <div className="px-6 py-5 bg-gradient-to-r from-green-50/50 to-green-100/50 border-b border-green-200/50">
-              <h3 className="text-xl font-semibold text-green-700 flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                New Players ({newPlayers.length})
-              </h3>
-            </div>
+      {/* Import Summary */}
+      <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 font-mono">
+          <div className="text-center">
+            <div className="text-2xl font-extrabold text-emerald-600">{newPlayers.length}</div>
+            <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">New Players</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-extrabold text-blue-600">{updatedPlayers.length}</div>
+            <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">Updates</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-extrabold text-amber-600">{totalOperations}</div>
+            <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">Total Operations</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-extrabold text-slate-700">CSV</div>
+            <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">Data Source</div>
+          </div>
+        </div>
+      </div>
 
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead className="bg-white/10">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider w-16">#</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Player Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider w-32">Actions</th>
+      {/* Validation Status */}
+      <div className={`rounded-xl p-4 border text-xs flex items-center gap-3 font-mono ${
+        validationErrors.size > 0 
+          ? 'bg-rose-50 border-rose-200 text-rose-700' 
+          : 'bg-slate-50 border-slate-200 text-slate-700'
+      }`}>
+        <svg className={`w-5 h-5 flex-shrink-0 ${validationErrors.size > 0 ? 'text-rose-500' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>
+          {validationErrors.size > 0 
+            ? `${validationErrors.size} validation error(s) found. Please correct them before syncing.`
+            : 'Click on any name field to adjust player data directly. Changes are validated in real-time.'}
+        </span>
+      </div>
+
+      {/* New Players Table */}
+      {newPlayers.length > 0 && (
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200/60 bg-emerald-50/50">
+            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-2">
+              <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              New Players ({newPlayers.length})
+            </h3>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100 text-sm font-mono">
+              <thead className="bg-slate-50 text-slate-500">
+                <tr>
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider w-16">#</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider">Player Name</th>
+                  <th className="px-5 py-3 text-right text-xs font-bold uppercase tracking-wider w-24">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
+                {newPlayers.map((player, index) => (
+                  <tr key={index} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-5 py-3.5 text-slate-500 font-bold">
+                      {index + 1}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <input
+                        type="text"
+                        value={player.name}
+                        onChange={(e) => handleCellChange('new', index, 'name', e.target.value)}
+                        className={`w-full px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-lg focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 transition-all font-semibold text-xs ${
+                          validationErrors.has(`new-${index}-name`) ? 'border-rose-450 bg-rose-50/50 text-rose-700' : ''
+                        }`}
+                        placeholder="Player name"
+                      />
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePlayer('new', index)}
+                        className="p-2 rounded-xl bg-rose-50 border border-rose-200/60 text-rose-600 hover:bg-rose-100 transition-all"
+                        title="Remove from import list"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="bg-white/20 divide-y divide-gray-200">
-                  {newPlayers.map((player, index) => (
-                    <tr key={index} className="hover:bg-white/30 transition-colors">
-                      <td className="px-4 py-3 text-gray-600 font-medium">
-                        {index + 1}
-                      </td>
-                      <td className="px-4 py-3">
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Updated Players Table */}
+      {updatedPlayers.length > 0 && (
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200/60 bg-blue-50/50">
+            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-blue-800 flex items-center gap-2">
+              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Player Updates ({updatedPlayers.length})
+            </h3>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100 text-sm font-mono">
+              <thead className="bg-slate-50 text-slate-500">
+                <tr>
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider w-16">#</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider">Player ID</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider">Current Name</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider">New Name</th>
+                  <th className="px-5 py-3 text-right text-xs font-bold uppercase tracking-wider w-24">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
+                {updatedPlayers.map((player, index) => (
+                  <tr key={index} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-5 py-3.5 text-slate-500 font-bold">
+                      {index + 1}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="text-xs font-mono text-amber-600 font-semibold">{player.player_id}</span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="text-xs text-slate-505 italic">{player.oldName}</span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="relative">
                         <input
                           type="text"
                           value={player.name}
-                          onChange={(e) => handleCellChange('new', index, 'name', e.target.value)}
-                          className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 text-gray-800 ${
-                            validationErrors.has(`new-${index}-name`) ? 'border-red-500 bg-red-50' : ''
+                          onChange={(e) => handleCellChange('updated', index, 'name', e.target.value)}
+                          className={`w-full px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-lg focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 transition-all font-semibold text-xs ${
+                            validationErrors.has(`updated-${index}-name`) ? 'border-rose-455 bg-rose-50/50 text-rose-700' : ''
+                          } ${
+                            player.oldName !== player.name ? 'bg-emerald-50/60 border-emerald-200' : ''
                           }`}
-                          placeholder="Player name"
+                          placeholder="New player name"
                         />
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePlayer('new', index)}
-                          className="text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded transition-colors"
-                          title="Remove from import"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Updated Players Table */}
-        {updatedPlayers.length > 0 && (
-          <div className="glass rounded-3xl shadow-lg backdrop-blur-md border border-white/20 overflow-hidden mb-8">
-            <div className="px-6 py-5 bg-gradient-to-r from-blue-50/50 to-blue-100/50 border-b border-blue-200/50">
-              <h3 className="text-xl font-semibold text-blue-700 flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Player Updates ({updatedPlayers.length})
-              </h3>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead className="bg-white/10">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider w-16">#</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Player ID</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Current Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">New Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider w-32">Actions</th>
+                        {player.oldName !== player.name && (
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                            <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePlayer('updated', index)}
+                        className="p-2 rounded-xl bg-rose-50 border border-rose-200/60 text-rose-600 hover:bg-rose-100 transition-all"
+                        title="Remove from import list"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="bg-white/20 divide-y divide-gray-200">
-                  {updatedPlayers.map((player, index) => (
-                    <tr key={index} className="hover:bg-white/30 transition-colors">
-                      <td className="px-4 py-3 text-gray-600 font-medium">
-                        {index + 1}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-mono text-blue-600 font-medium">{player.player_id}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center">
-                          <span className="text-sm text-gray-500 italic">{player.oldName}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={player.name}
-                            onChange={(e) => handleCellChange('updated', index, 'name', e.target.value)}
-                            className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 text-gray-800 font-medium ${
-                              validationErrors.has(`updated-${index}-name`) ? 'border-red-500 bg-red-50' : ''
-                            } ${
-                              player.oldName !== player.name ? 'bg-green-50' : ''
-                            }`}
-                            placeholder="New player name"
-                          />
-                          {player.oldName !== player.name && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                              <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePlayer('updated', index)}
-                          className="text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded transition-colors"
-                          title="Remove from import"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Import Actions */}
-        <div className="glass rounded-3xl p-6 shadow-lg backdrop-blur-md border border-white/20">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-1">Ready to Import</h3>
-              <p className="text-sm text-gray-600">Review your changes and start the import process</p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={validateAll}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Validate All
-              </button>
-              <button
-                onClick={handleStartImport}
-                disabled={importing || validationErrors.size > 0}
-                className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-[#0066FF] to-[#0066FF]/80 hover:from-[#0066FF]/90 hover:to-[#0066FF]/70 text-white text-sm font-medium rounded-lg transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {importing ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Preparing Import...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                    </svg>
-                    Start Import
-                  </>
-                )}
-              </button>
-            </div>
+      {/* Import Actions */}
+      <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-center sm:text-left">
+            <h3 className="text-sm font-bold text-slate-800">Ready to Sync</h3>
+            <p className="text-xs text-slate-505 font-mono mt-0.5">Validate configuration parameters and proceed to sync database.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={validateAll}
+              className="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-700 transition-all shadow-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Validate Records
+            </button>
+            <button
+              onClick={handleStartImport}
+              disabled={importing || validationErrors.size > 0}
+              className="inline-flex items-center gap-1.5 px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {importing ? (
+                <>
+                  <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Syncing data...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                  Sync to Database
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>

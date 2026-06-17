@@ -23,6 +23,10 @@ export default function MobileNav() {
     if (href === '/') {
       return pathname === '/';
     }
+    // Highlight Roster Requests active state for all request subpaths
+    if (href === '/dashboard/team/requests') {
+      return pathname.startsWith('/dashboard/team/requests');
+    }
     // For dashboard links, only highlight if it's an exact match
     if (href.includes('/dashboard/')) {
       return pathname === href;
@@ -207,6 +211,7 @@ export default function MobileNav() {
         { href: '/dashboard/team/profile', label: 'Club Profile', cat: 'My Club', roles: ['team'], requireRegistration: true },
         { href: '/dashboard/team/players', label: 'Squad Registry', cat: 'My Club', roles: ['team'], requireRegistration: true },
         { href: '/dashboard/team/budget-planner', label: 'Finances & Budget', cat: 'My Club', roles: ['team'], requireRegistration: true },
+        { href: '/dashboard/team/requests', label: 'Roster Requests', cat: 'My Club', roles: ['team'], requireRegistration: true },
         
         { href: '/dashboard/team/players-database', label: 'Players Market', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
         { href: '/dashboard/team/matches', label: 'Club Matchdays', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },

@@ -899,10 +899,13 @@ export default function HistoricalSeasonDetailPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading season data...</p>
+      <div className="flex items-center justify-center pt-32">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
+          </div>
+          <p className="text-slate-500 font-mono text-xs tracking-widest uppercase animate-pulse">Loading season telemetry...</p>
         </div>
       </div>
     );
@@ -914,14 +917,22 @@ export default function HistoricalSeasonDetailPage() {
 
   if (!season) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Season not found</p>
+      <div className="flex items-center justify-center pt-32 p-4">
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-8 max-w-md w-full text-center space-y-6 shadow-sm">
+          <div className="w-16 h-16 mx-auto rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center">
+            <svg className="w-8 h-8 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-slate-800">Season Context Missing</h2>
+            <p className="text-xs text-slate-505 font-mono">The requested historical season could not be loaded.</p>
+          </div>
           <button
             onClick={() => router.push('/dashboard/superadmin/historical-seasons')}
-            className="mt-4 px-4 py-2 bg-[#0066FF] text-white rounded-lg hover:bg-[#0066FF]/90"
+            className="w-full py-2.5 bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-700 text-xs font-mono font-bold rounded-xl transition-all shadow-sm inline-flex items-center justify-center gap-1.5"
           >
-            Return to Historical Seasons
+            Back to Seasons
           </button>
         </div>
       </div>
@@ -929,47 +940,47 @@ export default function HistoricalSeasonDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 py-4 sm:py-8 px-4">
-      <div className="container mx-auto max-w-screen-2xl">
+    <div className="space-y-8 animate-fade-in font-mono">
+      <div className="space-y-6">
         {/* Enhanced Page Header */}
         <header className="mb-8">
-          <div className="glass rounded-2xl p-6 mb-6 shadow-xl backdrop-blur-md border border-white/30">
+          <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => router.push('/dashboard/superadmin/historical-seasons')}
-                  className="group p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all duration-300 hover:shadow-md"
+                  className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-650 hover:text-slate-950 transition-all flex-shrink-0 shadow-sm"
                 >
-                  <svg className="w-5 h-5 text-gray-600 group-hover:text-[#0066FF] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-slate-500 group-hover:text-amber-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
                 <div className="flex items-center gap-3">
-                  <div className="p-3 bg-gradient-to-r from-[#0066FF] to-purple-600 rounded-xl">
+                  <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
                         ID: {seasonId}
                       </span>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 border border-slate-200 text-slate-600">
                         📚 Historical Season
                       </span>
                     </div>
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#0066FF] to-purple-600 bg-clip-text text-transparent">
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
                       {season.name || seasonId}
                     </h1>
                     <div className="flex items-center gap-2 mt-1">
                       {season.short_name && (
-                        <span className="text-gray-600 text-sm font-medium">
+                        <span className="text-slate-500 text-sm font-medium">
                           {season.short_name}
                         </span>
                       )}
                       {season.short_name && <span className="text-gray-400">•</span>}
-                      <span className="text-gray-500 text-sm">
+                      <span className="text-slate-400 text-sm">
                         Status: <span className="font-medium text-gray-700">{season.status}</span>
                       </span>
                     </div>
@@ -981,7 +992,7 @@ export default function HistoricalSeasonDetailPage() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => router.push(`/dashboard/superadmin/historical-seasons/${seasonId}/edit`)}
-                  className="group flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 bg-gradient-to-r from-[#0066FF] to-purple-600 text-white hover:from-[#0066FF]/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm"
                 >
                   <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -992,7 +1003,7 @@ export default function HistoricalSeasonDetailPage() {
                 
                 <button
                   onClick={() => router.push(`/dashboard/superadmin/historical-seasons/${seasonId}/edit-data`)}
-                  className="group flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700 shadow-lg hover:shadow-xl"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-mono text-xs font-bold rounded-xl transition-all shadow-sm"
                 >
                   <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
@@ -1004,10 +1015,10 @@ export default function HistoricalSeasonDetailPage() {
                 <button
                   onClick={handleExportToExcel}
                   disabled={isExporting}
-                  className={`group flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
+                  className={`inline-flex items-center gap-1.5 px-4 py-2 font-mono text-xs font-bold rounded-xl transition-all shadow-sm ${
                     isExporting 
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl'
+                      ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   {isExporting ? (
@@ -1030,65 +1041,65 @@ export default function HistoricalSeasonDetailPage() {
           </div>
           
           {/* Data Architecture Information Banner */}
-          <div className="glass rounded-xl p-5 mb-6 border border-indigo-200/50 bg-gradient-to-r from-indigo-50/50 to-purple-50/30">
+          <div className="console-card bg-white border border-slate-200/60 p-5 mb-6 shadow-sm rounded-2xl">
             <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-indigo-100 rounded-lg">
-                <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-2 p-1 rounded bg-amber-500/10 text-amber-600">
+                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold text-indigo-800">📦 Data Architecture</h3>
+              <h3 className="text-sm font-semibold text-slate-800">📦 Data Architecture</h3>
             </div>
             <div className="text-sm text-gray-700 space-y-2">
               <p className="font-medium">
-                This historical season uses our <span className="font-bold text-indigo-700">two-collection architecture</span>:
+                This historical season uses our <span className="font-bold text-slate-700">two-collection architecture</span>:
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>
-                  <span className="font-semibold text-indigo-600">realplayers</span> collection stores <span className="font-medium">permanent player information</span> (name, contact, gaming IDs)
+                  <span className="font-semibold text-amber-600">realplayers</span> collection stores <span className="font-medium">permanent player information</span> (name, contact, gaming IDs)
                 </li>
                 <li>
                   <span className="font-semibold text-purple-600">realplayerstats</span> collection stores <span className="font-medium">season-specific stats</span> (category, team, statistics)
                 </li>
               </ul>
-              <p className="mt-2 text-xs text-gray-600 italic">
+              <p className="mt-2 text-xs text-slate-500 italic">
                 ✅ This separation preserves permanent player data while allowing multiple seasons without overwriting
               </p>
             </div>
           </div>
 
           {season.import_metadata && (
-            <div className="glass rounded-xl p-5 mb-6 border border-blue-200/50 bg-gradient-to-r from-blue-50/50 to-indigo-50/30">
+            <div className="console-card bg-white border border-slate-200/60 p-5 mb-6 shadow-sm rounded-2xl">
               <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 p-1 rounded bg-amber-500/10 text-amber-600">
+                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <h3 className="text-sm font-semibold text-blue-800">📂 Import Information</h3>
+                <h3 className="text-sm font-semibold text-slate-850">📂 Import Information</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white/60 rounded-lg p-3 border border-white/50">
-                  <div className="text-xs font-medium text-blue-700 mb-1">Source File</div>
-                  <div className="text-sm font-semibold text-gray-800 truncate" title="{season.import_metadata.source_file}">
+                <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-250/60">
+                  <div className="text-xs font-medium text-slate-500 mb-1">Source File</div>
+                  <div className="text-sm font-semibold text-slate-800 truncate" title="{season.import_metadata.source_file}">
                     {season.import_metadata.source_file}
                   </div>
                 </div>
-                <div className="bg-white/60 rounded-lg p-3 border border-white/50">
-                  <div className="text-xs font-medium text-blue-700 mb-1">File Size</div>
-                  <div className="text-sm font-semibold text-gray-800">
+                <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-250/60">
+                  <div className="text-xs font-medium text-slate-500 mb-1">File Size</div>
+                  <div className="text-sm font-semibold text-slate-800">
                     {(season.import_metadata.file_size / 1024).toFixed(1)} KB
                   </div>
                 </div>
-                <div className="bg-white/60 rounded-lg p-3 border border-white/50">
-                  <div className="text-xs font-medium text-blue-700 mb-1">File Type</div>
-                  <div className="text-sm font-semibold text-gray-800">
+                <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-250/60">
+                  <div className="text-xs font-medium text-slate-500 mb-1">File Type</div>
+                  <div className="text-sm font-semibold text-slate-800">
                     {season.import_metadata.file_type.toUpperCase()}
                   </div>
                 </div>
-                <div className="bg-white/60 rounded-lg p-3 border border-white/50">
-                  <div className="text-xs font-medium text-blue-700 mb-1">Import Date</div>
-                  <div className="text-sm font-semibold text-gray-800">
+                <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-250/60">
+                  <div className="text-xs font-medium text-slate-500 mb-1">Import Date</div>
+                  <div className="text-sm font-semibold text-slate-800">
                     {season.import_metadata.import_date?.toDate?.()?.toLocaleDateString() || 'Unknown'}
                   </div>
                 </div>
@@ -1098,7 +1109,7 @@ export default function HistoricalSeasonDetailPage() {
         </header>
 
         {/* Enhanced Tab Navigation */}
-        <div className="glass rounded-t-3xl p-3 shadow-xl backdrop-blur-md border border-white/30 border-b-0 mb-0">
+        <div className="console-card bg-white border border-slate-200/60 rounded-t-2xl p-3 shadow-sm border-b-0 mb-0">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
             {[
               { id: 'overview', name: 'Overview', icon: '📊', color: 'from-purple-500 to-purple-600' },
@@ -1113,8 +1124,8 @@ export default function HistoricalSeasonDetailPage() {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`group flex-shrink-0 px-5 py-3 rounded-xl text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                   activeTab === tab.id
-                    ? `bg-gradient-to-r ${tab.color} text-white shadow-lg ring-2 ring-white/20`
-                    : 'text-gray-600 hover:bg-white/40 hover:shadow-md'
+                    ? 'bg-slate-800 text-white shadow-sm'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
                 <span className={`mr-2 transition-transform duration-300 ${
@@ -1127,83 +1138,83 @@ export default function HistoricalSeasonDetailPage() {
         </div>
 
         {/* Enhanced Tab Content */}
-        <div className="glass rounded-b-3xl shadow-xl backdrop-blur-md border border-white/30 overflow-hidden">
+        <div className="console-card bg-white border border-slate-200/60 rounded-b-2xl shadow-sm border-t-0 overflow-hidden">
           {/* Enhanced Overview Tab */}
           {activeTab === 'overview' && (
             <div className="p-6 lg:p-8">
               {/* Enhanced Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="group bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:rotate-12 transition-transform duration-300">
+                    <div className="p-3 bg-slate-50 border border-slate-250 text-slate-700 rounded-xl group-hover:rotate-12 transition-transform duration-300">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                     </div>
                     <span className="text-xs font-medium opacity-80">🏆</span>
                   </div>
-                  <div className="text-3xl font-bold mb-1">{teams.length}</div>
-                  <div className="text-sm font-medium opacity-90">Teams</div>
+                  <div className="text-3xl font-extrabold text-slate-800">{teams.length}</div>
+                  <div className="text-xs text-slate-400 font-bold uppercase mt-1">Teams</div>
                 </div>
-                <div className="group bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:rotate-12 transition-transform duration-300">
+                    <div className="p-3 bg-slate-50 border border-slate-250 text-slate-700 rounded-xl group-hover:rotate-12 transition-transform duration-300">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
                     <span className="text-xs font-medium opacity-80">👥</span>
                   </div>
-                  <div className="text-3xl font-bold mb-1">{players.length}</div>
-                  <div className="text-sm font-medium opacity-90">Total Players</div>
+                  <div className="text-3xl font-extrabold text-slate-800">{players.length}</div>
+                  <div className="text-xs text-slate-400 font-bold uppercase mt-1">Total Players</div>
                 </div>
-                <div className="group bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:rotate-12 transition-transform duration-300">
+                    <div className="p-3 bg-slate-50 border border-slate-250 text-slate-700 rounded-xl group-hover:rotate-12 transition-transform duration-300">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                     <span className="text-xs font-medium opacity-80">✅</span>
                   </div>
-                  <div className="text-3xl font-bold mb-1">{activePlayers.length}</div>
-                  <div className="text-sm font-medium opacity-90">Active Players</div>
+                  <div className="text-3xl font-extrabold text-slate-800">{activePlayers.length}</div>
+                  <div className="text-xs text-slate-400 font-bold uppercase mt-1">Active Players</div>
                 </div>
-                <div className="group bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:rotate-12 transition-transform duration-300">
+                    <div className="p-3 bg-slate-50 border border-slate-250 text-slate-700 rounded-xl group-hover:rotate-12 transition-transform duration-300">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
                     </div>
                     <span className="text-xs font-medium opacity-80">⚽</span>
                   </div>
-                  <div className="text-3xl font-bold mb-1">{totalGoalsScored.toLocaleString()}</div>
-                  <div className="text-sm font-medium opacity-90">Total Goals</div>
+                  <div className="text-3xl font-extrabold text-slate-800">{totalGoalsScored.toLocaleString()}</div>
+                  <div className="text-xs text-slate-400 font-bold uppercase mt-1">Total Goals</div>
                 </div>
               </div>
 
               {/* Enhanced Category Distribution */}
-              <div className="glass rounded-2xl p-6 lg:p-8 border border-green-200/50 bg-gradient-to-br from-green-50/50 to-emerald-50/30">
+              <div className="console-card bg-slate-50/50 border border-slate-200/60 p-6 shadow-sm rounded-2xl">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-green-100 rounded-xl">
+                  <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                     <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800">📊 Category Distribution</h3>
+                  <h3 className="text-sm font-extrabold text-slate-800">📊 Category Distribution</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                   {Object.entries(categoryDistribution).map(([category, count]) => {
                     const percentage = players.length > 0 ? ((count / players.length) * 100).toFixed(1) : '0';
                     return (
-                      <div key={category} className="group bg-white/80 hover:bg-white rounded-xl p-4 border border-white/50 hover:shadow-md transition-all duration-300 transform hover:scale-105">
+                      <div key={category} className="group bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm">
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-green-600 mb-1">{count}</div>
-                          <div className="text-xs font-semibold text-gray-800 mb-2 truncate" title={category}>
+                          <div className="text-2xl font-extrabold text-amber-600 mb-1">{count}</div>
+                          <div className="text-xs font-semibold text-slate-800 mb-2 truncate" title={category}>
                             {category || 'Uncategorized'}
                           </div>
-                          <div className="text-xs text-gray-500 font-medium">
+                          <div className="text-xs text-slate-400 font-medium">
                             {percentage}%
                           </div>
                         </div>
@@ -1221,17 +1232,17 @@ export default function HistoricalSeasonDetailPage() {
               {/* Teams Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-3 bg-orange-100 rounded-xl">
-                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
+                    <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800">🏆 Teams Overview</h3>
-                    <p className="text-sm text-gray-600">Team performance and player statistics</p>
+                    <h3 className="text-sm font-extrabold text-slate-800">🏆 Teams Overview</h3>
+                    <p className="text-xs text-slate-500 font-mono">Team performance and player statistics</p>
                   </div>
                 </div>
-                <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-orange-50 rounded-lg">
+                <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg">
                   <span className="text-sm font-medium text-orange-800">Teams: {teamStats.length}</span>
                 </div>
               </div>
@@ -1243,33 +1254,33 @@ export default function HistoricalSeasonDetailPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">No Teams Found</h3>
-                  <p className="text-gray-600">This season doesn't have any teams yet.</p>
+                  <h3 className="text-lg font-semibold text-slate-800 mb-2">No Teams Found</h3>
+                  <p className="text-slate-500">This season doesn't have any teams yet.</p>
                 </div>
               ) : (
                 <>
                   {/* Desktop Table */}
-                  <div className="hidden lg:block overflow-x-auto rounded-2xl border border-gray-200/50">
-                    <table className="min-w-full bg-white/50">
-                      <thead className="bg-gradient-to-r from-orange-50 to-orange-100/80">
+                  <div className="hidden lg:block overflow-x-auto rounded-2xl border border-slate-200/60 rounded-2xl overflow-hidden">
+                    <table className="min-w-full bg-white text-slate-700">
+                      <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                         <tr>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">
                             <div className="flex items-center gap-2">
-                              <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                               </svg>
                               Team
                             </div>
                           </th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">
                             <div className="flex items-center gap-2">
-                              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
                               Owner
                             </div>
                           </th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">
                             <div className="flex items-center gap-2">
                               <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -1277,7 +1288,7 @@ export default function HistoricalSeasonDetailPage() {
                               Players
                             </div>
                           </th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">
                             <div className="flex items-center gap-2">
                               <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -1285,7 +1296,7 @@ export default function HistoricalSeasonDetailPage() {
                               Goals
                             </div>
                           </th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">
                             <div className="flex items-center gap-2">
                               <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -1295,7 +1306,7 @@ export default function HistoricalSeasonDetailPage() {
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
+                      <tbody className="divide-y divide-slate-100">
                         {teamStats.map((team, index) => (
                           <tr 
                             key={team.id} 
@@ -1310,14 +1321,14 @@ export default function HistoricalSeasonDetailPage() {
                                 </div>
                                 <div>
                                   <div className="font-semibold text-gray-900 text-base">{team.team_name}</div>
-                                  <div className="text-xs text-gray-500">{team.team_code}</div>
+                                  <div className="text-xs text-slate-400">{team.team_code}</div>
                                 </div>
                               </div>
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+                                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                   </svg>
                                 </div>
@@ -1327,7 +1338,7 @@ export default function HistoricalSeasonDetailPage() {
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-slate-100 border border-slate-200 text-slate-600 border border-purple-200">
                                 {team.playerCount} players
                               </span>
                             </td>
@@ -1373,7 +1384,7 @@ export default function HistoricalSeasonDetailPage() {
                             <h4 className="font-bold text-gray-900 text-base truncate">
                               {team.team_name}
                             </h4>
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-xs text-slate-500 font-mono mt-1">
                               Owner: {team.owner_name || 'N/A'}
                             </p>
                           </div>
@@ -1388,9 +1399,9 @@ export default function HistoricalSeasonDetailPage() {
                             <div className="text-lg font-bold text-green-600">{team.totalGoals || 0}</div>
                             <div className="text-xs text-green-700 font-medium">Goals</div>
                           </div>
-                          <div className="text-center bg-blue-50 rounded-lg p-3">
-                            <div className="text-sm font-bold text-blue-600">{team.season_stats?.wins || team.season_stats?.w || 0}-{team.season_stats?.draws || team.season_stats?.d || 0}-{team.season_stats?.losses || team.season_stats?.l || 0}</div>
-                            <div className="text-xs text-blue-700 font-medium">W-D-L</div>
+                          <div className="text-center bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg p-3">
+                            <div className="text-sm font-bold text-amber-600">{team.season_stats?.wins || team.season_stats?.w || 0}-{team.season_stats?.draws || team.season_stats?.d || 0}-{team.season_stats?.losses || team.season_stats?.l || 0}</div>
+                            <div className="text-xs text-slate-500 font-medium">W-D-L</div>
                           </div>
                         </div>
                       </div>
@@ -1407,18 +1418,18 @@ export default function HistoricalSeasonDetailPage() {
               {/* Players Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-3 bg-blue-100 rounded-xl">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
+                    <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800">👤 Players Overview</h3>
-                    <p className="text-sm text-gray-600">Simple view of all players with essential information</p>
+                    <h3 className="text-sm font-extrabold text-slate-800">👤 Players Overview</h3>
+                    <p className="text-xs text-slate-500 font-mono">Simple view of all players with essential information</p>
                   </div>
                 </div>
-                <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg">
-                  <span className="text-sm font-medium text-blue-800">Total: {players.length}</span>
+                <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg">
+                  <span className="text-sm font-medium text-slate-850">Total: {players.length}</span>
                 </div>
               </div>
 
@@ -1429,25 +1440,25 @@ export default function HistoricalSeasonDetailPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">No Players Found</h3>
-                  <p className="text-gray-600">This season doesn't have any players yet.</p>
+                  <h3 className="text-lg font-semibold text-slate-800 mb-2">No Players Found</h3>
+                  <p className="text-slate-500">This season doesn't have any players yet.</p>
                 </div>
               ) : (
                 <>
                   {/* Desktop Table */}
-                  <div className="hidden md:block overflow-x-auto rounded-2xl border border-gray-200/50">
-                    <table className="min-w-full bg-white/50">
-                      <thead className="bg-gradient-to-r from-blue-50 to-blue-100/80">
+                  <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-200/60 rounded-2xl overflow-hidden">
+                    <table className="min-w-full bg-white text-slate-700">
+                      <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                         <tr>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">
                             <div className="flex items-center gap-2">
-                              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
                               Player Name
                             </div>
                           </th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">
                             <div className="flex items-center gap-2">
                               <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -1455,7 +1466,7 @@ export default function HistoricalSeasonDetailPage() {
                               Category
                             </div>
                           </th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">
                             <div className="flex items-center gap-2">
                               <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -1465,7 +1476,7 @@ export default function HistoricalSeasonDetailPage() {
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
+                      <tbody className="divide-y divide-slate-100">
                         {players.map((player, index) => {
                           return (
                             <tr 
@@ -1483,7 +1494,7 @@ export default function HistoricalSeasonDetailPage() {
                                     <div className="font-semibold text-gray-900">
                                       {player.name || 'Unknown Player'}
                                     </div>
-                                    <div className="text-xs text-gray-500">Player #{index + 1}</div>
+                                    <div className="text-xs text-slate-400">Player #{index + 1}</div>
                                   </div>
                                 </div>
                               </td>
@@ -1491,7 +1502,7 @@ export default function HistoricalSeasonDetailPage() {
                                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                                   player.category 
                                     ? 'bg-green-100 text-green-800 border border-green-200' 
-                                    : 'bg-gray-100 text-gray-600 border border-gray-200'
+                                    : 'bg-gray-100 text-slate-500 border border-slate-200'
                                 }`}>
                                   {player.category || 'N/A'}
                                 </span>
@@ -1502,7 +1513,7 @@ export default function HistoricalSeasonDetailPage() {
                                     player.team ? 'bg-purple-500' : 'bg-gray-400'
                                   }`}></div>
                                   <span className={`font-medium ${
-                                    player.team ? 'text-gray-900' : 'text-gray-500'
+                                    player.team ? 'text-gray-900' : 'text-slate-400'
                                   }`}>
                                     {player.team || 'No Team'}
                                   </span>
@@ -1531,27 +1542,27 @@ export default function HistoricalSeasonDetailPage() {
                               <h4 className="font-semibold text-gray-900 truncate">
                                 {player.name || 'Unknown Player'}
                               </h4>
-                              <span className="text-xs text-gray-500 flex-shrink-0">#{index + 1}</span>
+                              <span className="text-xs text-slate-400 flex-shrink-0">#{index + 1}</span>
                             </div>
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs font-medium text-gray-600">Category:</span>
+                                <span className="text-xs font-medium text-slate-500">Category:</span>
                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                   player.category 
                                     ? 'bg-green-100 text-green-800' 
-                                    : 'bg-gray-100 text-gray-600'
+                                    : 'bg-gray-100 text-slate-500'
                                 }`}>
                                   {player.category || 'N/A'}
                                 </span>
                               </div>
                               <div className="flex items-center justify-between">
-                                <span className="text-xs font-medium text-gray-600">Team:</span>
+                                <span className="text-xs font-medium text-slate-500">Team:</span>
                                 <div className="flex items-center gap-2">
                                   <div className={`w-2 h-2 rounded-full ${
                                     player.team ? 'bg-purple-500' : 'bg-gray-400'
                                   }`}></div>
                                   <span className={`text-xs font-medium ${
-                                    player.team ? 'text-gray-900' : 'text-gray-500'
+                                    player.team ? 'text-gray-900' : 'text-slate-400'
                                   }`}>
                                     {player.team || 'No Team'}
                                   </span>
@@ -1573,20 +1584,20 @@ export default function HistoricalSeasonDetailPage() {
             <div className="p-6 lg:p-8">
               {/* Stats Header */}
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-green-100 rounded-xl">
+                <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                   <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-800">📈 Player Statistics</h3>
-                  <p className="text-sm text-gray-600">Detailed performance metrics and rankings</p>
+                  <h3 className="text-sm font-extrabold text-slate-800">📈 Player Statistics</h3>
+                  <p className="text-xs text-slate-500 font-mono">Detailed performance metrics and rankings</p>
                 </div>
               </div>
               
               {/* Category Filter Tabs */}
               <div className="mb-6">
-                <div className="bg-white rounded-xl p-2 shadow-sm border border-gray-200">
+                <div className="bg-white rounded-xl p-2 shadow-sm border border-slate-200">
                   <div className="flex gap-2 overflow-x-auto scrollbar-hide">
                     {/* All Categories Tab */}
                     <button
@@ -1594,7 +1605,7 @@ export default function HistoricalSeasonDetailPage() {
                       className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
                         selectedCategory === 'all'
                           ? 'bg-green-500 text-white shadow-md'
-                          : 'text-gray-600 hover:bg-gray-100'
+                          : 'text-slate-500 hover:bg-gray-100'
                       }`}
                     >
                       All ({players.length})
@@ -1609,15 +1620,15 @@ export default function HistoricalSeasonDetailPage() {
                       // Get color based on category
                       const getColor = () => {
                         if (lowerCategory.includes('forward') || lowerCategory.includes('striker')) {
-                          return isSelected ? 'bg-red-500 text-white shadow-md' : 'text-gray-600 hover:bg-red-50';
+                          return isSelected ? 'bg-red-500 text-white shadow-md' : 'text-slate-500 hover:bg-red-50';
                         } else if (lowerCategory.includes('midfielder') || lowerCategory.includes('mid')) {
-                          return isSelected ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 hover:bg-blue-50';
+                          return isSelected ? 'bg-blue-500 text-white shadow-md' : 'text-slate-500 hover:bg-blue-50';
                         } else if (lowerCategory.includes('defender') || lowerCategory.includes('defence')) {
-                          return isSelected ? 'bg-indigo-500 text-white shadow-md' : 'text-gray-600 hover:bg-indigo-50';
+                          return isSelected ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-500 hover:bg-indigo-50';
                         } else if (lowerCategory.includes('goalkeeper') || lowerCategory.includes('gk')) {
-                          return isSelected ? 'bg-yellow-500 text-white shadow-md' : 'text-gray-600 hover:bg-yellow-50';
+                          return isSelected ? 'bg-yellow-500 text-white shadow-md' : 'text-slate-500 hover:bg-yellow-50';
                         } else {
-                          return isSelected ? 'bg-purple-500 text-white shadow-md' : 'text-gray-600 hover:bg-purple-50';
+                          return isSelected ? 'bg-purple-500 text-white shadow-md' : 'text-slate-500 hover:bg-purple-50';
                         }
                       };
                       
@@ -1659,10 +1670,10 @@ export default function HistoricalSeasonDetailPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-2">
                     {selectedCategory === 'all' ? 'No Statistics Available' : `No Players in ${selectedCategory}`}
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-slate-500">
                     {selectedCategory === 'all' 
                       ? 'Player statistics will appear here once available.' 
                       : 'Try selecting a different category or clear the filter.'}
@@ -1671,34 +1682,34 @@ export default function HistoricalSeasonDetailPage() {
               ) : (
                 <>
                   {/* Desktop Table */}
-                  <div className="hidden lg:block overflow-x-auto rounded-2xl border border-gray-200/50">
-                    <table className="min-w-full bg-white/50">
-                      <thead className="bg-gradient-to-r from-green-50 to-green-100/80">
+                  <div className="hidden lg:block overflow-x-auto rounded-2xl border border-slate-200/60 rounded-2xl overflow-hidden">
+                    <table className="min-w-full bg-white text-slate-700">
+                      <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                         <tr>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider">
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-slate-800 uppercase tracking-wider">
                             <div className="flex items-center gap-2">
-                              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
                               Player
                             </div>
                           </th>
-                          <th className="px-3 py-4 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider">Team</th>
-                          <th className="px-3 py-4 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider">Cat.</th>
-                          <th className="px-3 py-4 text-center text-xs font-semibold text-gray-800 uppercase tracking-wider" title="Total Matches">Matches</th>
-                          <th className="px-3 py-4 text-center text-xs font-semibold text-gray-800 uppercase tracking-wider" title="Wins-Draws-Losses">W-D-L</th>
-                          <th className="px-3 py-4 text-center text-xs font-semibold text-gray-800 uppercase tracking-wider" title="Win Rate">Win %</th>
-                          <th className="px-3 py-4 text-center text-xs font-semibold text-gray-800 uppercase tracking-wider" title="Goals Scored">Goals</th>
-                          <th className="px-3 py-4 text-center text-xs font-semibold text-gray-800 uppercase tracking-wider" title="Goals Per Game">G/Game</th>
-                          <th className="px-3 py-4 text-center text-xs font-semibold text-gray-800 uppercase tracking-wider" title="Goals Conceded">Conceded</th>
-                          <th className="px-3 py-4 text-center text-xs font-semibold text-gray-800 uppercase tracking-wider" title="Conceded Per Game">C/Game</th>
-                          <th className="px-3 py-4 text-center text-xs font-semibold text-gray-800 uppercase tracking-wider" title="Net Goals">Net</th>
-                          <th className="px-3 py-4 text-center text-xs font-semibold text-gray-800 uppercase tracking-wider" title="Clean Sheets">Clean</th>
-                          <th className="px-3 py-4 text-center text-xs font-semibold text-gray-800 uppercase tracking-wider" title="Player of the Match">POTM</th>
-                          <th className="px-3 py-4 text-center text-xs font-semibold text-gray-800 uppercase tracking-wider" title="Points">Points</th>
+                          <th className="px-3 py-4 text-left text-xs font-semibold text-slate-800 uppercase tracking-wider">Team</th>
+                          <th className="px-3 py-4 text-left text-xs font-semibold text-slate-800 uppercase tracking-wider">Cat.</th>
+                          <th className="px-3 py-4 text-center text-xs font-semibold text-slate-800 uppercase tracking-wider" title="Total Matches">Matches</th>
+                          <th className="px-3 py-4 text-center text-xs font-semibold text-slate-800 uppercase tracking-wider" title="Wins-Draws-Losses">W-D-L</th>
+                          <th className="px-3 py-4 text-center text-xs font-semibold text-slate-800 uppercase tracking-wider" title="Win Rate">Win %</th>
+                          <th className="px-3 py-4 text-center text-xs font-semibold text-slate-800 uppercase tracking-wider" title="Goals Scored">Goals</th>
+                          <th className="px-3 py-4 text-center text-xs font-semibold text-slate-800 uppercase tracking-wider" title="Goals Per Game">G/Game</th>
+                          <th className="px-3 py-4 text-center text-xs font-semibold text-slate-800 uppercase tracking-wider" title="Goals Conceded">Conceded</th>
+                          <th className="px-3 py-4 text-center text-xs font-semibold text-slate-800 uppercase tracking-wider" title="Conceded Per Game">C/Game</th>
+                          <th className="px-3 py-4 text-center text-xs font-semibold text-slate-800 uppercase tracking-wider" title="Net Goals">Net</th>
+                          <th className="px-3 py-4 text-center text-xs font-semibold text-slate-800 uppercase tracking-wider" title="Clean Sheets">Clean</th>
+                          <th className="px-3 py-4 text-center text-xs font-semibold text-slate-800 uppercase tracking-wider" title="Player of the Match">POTM</th>
+                          <th className="px-3 py-4 text-center text-xs font-semibold text-slate-800 uppercase tracking-wider" title="Points">Points</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
+                      <tbody className="divide-y divide-slate-100">
                         {filteredPlayers
                           .sort((a, b) => {
                             const pointsA = a.stats?.points || a.stats?.total_points || 0;
@@ -1740,7 +1751,7 @@ export default function HistoricalSeasonDetailPage() {
                                       <div className="font-semibold text-gray-900 text-sm">
                                         {player.name || 'Unknown Player'}
                                       </div>
-                                      <div className="text-xs text-gray-500">Rank #{index + 1}</div>
+                                      <div className="text-xs text-slate-400">Rank #{index + 1}</div>
                                     </div>
                                   </div>
                                 </td>
@@ -1752,8 +1763,8 @@ export default function HistoricalSeasonDetailPage() {
                                 <td className="px-3 py-4">
                                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                     player.category 
-                                      ? 'bg-indigo-100 text-indigo-800' 
-                                      : 'bg-gray-100 text-gray-600'
+                                      ? 'bg-indigo-100 text-slate-800' 
+                                      : 'bg-gray-100 text-slate-500'
                                   }`}>
                                     {player.category || 'N/A'}
                                   </span>
@@ -1786,17 +1797,17 @@ export default function HistoricalSeasonDetailPage() {
                                   <span className="text-lg font-bold text-green-600">{stats.goals_scored || 0}</span>
                                 </td>
                                 <td className="px-3 py-4 text-center">
-                                  <span className="text-sm font-medium text-blue-600">{typeof goalsPerGame === 'number' ? goalsPerGame.toFixed(2) : '0.00'}</span>
+                                  <span className="text-sm font-medium text-amber-600">{typeof goalsPerGame === 'number' ? goalsPerGame.toFixed(2) : '0.00'}</span>
                                 </td>
                                 <td className="px-3 py-4 text-center">
                                   <span className="text-sm font-medium text-red-600">{stats.goals_conceded || 0}</span>
                                 </td>
                                 <td className="px-3 py-4 text-center">
-                                  <span className="text-sm font-medium text-orange-600">{typeof concededPerGame === 'number' ? concededPerGame.toFixed(2) : '0.00'}</span>
+                                  <span className="text-sm font-medium text-amber-500">{typeof concededPerGame === 'number' ? concededPerGame.toFixed(2) : '0.00'}</span>
                                 </td>
                                 <td className="px-3 py-4 text-center">
                                   <span className={`text-sm font-bold ${
-                                    netGoals > 0 ? 'text-green-600' : netGoals < 0 ? 'text-red-600' : 'text-gray-600'
+                                    netGoals > 0 ? 'text-green-600' : netGoals < 0 ? 'text-red-600' : 'text-slate-500'
                                   }`}>
                                     {netGoals > 0 ? '+' : ''}{netGoals}
                                   </span>
@@ -1816,7 +1827,7 @@ export default function HistoricalSeasonDetailPage() {
                                 </td>
                                 <td className="px-3 py-4 text-center">
                                   <div className="flex items-center justify-center gap-2">
-                                    <span className="text-sm font-bold text-indigo-600">{stats.points || stats.total_points || 0}</span>
+                                    <span className="text-sm font-bold text-amber-600">{stats.points || stats.total_points || 0}</span>
                                     {isTopPlayer && (
                                       <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -1882,7 +1893,7 @@ export default function HistoricalSeasonDetailPage() {
                                     </svg>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <div className="flex items-center gap-2 text-xs text-slate-500 font-mono">
                                   <span>{player.team || 'No Team'}</span>
                                   <span>•</span>
                                   <span>{player.category || 'N/A'}</span>
@@ -1897,7 +1908,7 @@ export default function HistoricalSeasonDetailPage() {
                                 isTopPlayer ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 ring-2 ring-yellow-400' : 'bg-indigo-50'
                               }`}>
                                 <div className="flex items-center justify-center gap-1">
-                                  <div className="text-xl font-bold text-indigo-600">{stats.points || stats.total_points || 0}</div>
+                                  <div className="text-xl font-bold text-amber-600">{stats.points || stats.total_points || 0}</div>
                                   {isTopPlayer && (
                                     <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
                                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -1905,7 +1916,7 @@ export default function HistoricalSeasonDetailPage() {
                                   )}
                                 </div>
                                 <div className={`text-xs font-medium ${
-                                  isTopPlayer ? 'text-yellow-800' : 'text-indigo-700'
+                                  isTopPlayer ? 'text-yellow-800' : 'text-slate-700'
                                 }`}>Points</div>
                               </div>
                               
@@ -1914,28 +1925,28 @@ export default function HistoricalSeasonDetailPage() {
                                 <div className="text-xs text-yellow-700 font-medium">Matches</div>
                               </div>
                               <div className="text-center bg-gray-50 rounded-lg p-2.5">
-                                <div className="text-sm font-bold text-gray-600">{stats.matches_won || 0}-{stats.matches_drawn || 0}-{stats.matches_lost || 0}</div>
+                                <div className="text-sm font-bold text-slate-500">{stats.matches_won || 0}-{stats.matches_drawn || 0}-{stats.matches_lost || 0}</div>
                                 <div className="text-xs text-gray-700 font-medium">W-D-L</div>
                               </div>
                               <div className="text-center bg-green-50 rounded-lg p-2.5">
                                 <div className="text-xl font-bold text-green-600">{stats.goals_scored || 0}</div>
                                 <div className="text-xs text-green-700 font-medium">Goals Scored</div>
                               </div>
-                              <div className="text-center bg-blue-50 rounded-lg p-2.5">
-                                <div className="text-lg font-bold text-blue-600">{typeof goalsPerGame === 'number' ? goalsPerGame.toFixed(2) : '0.00'}</div>
-                                <div className="text-xs text-blue-700 font-medium">Goals/Game</div>
+                              <div className="text-center bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg p-2.5">
+                                <div className="text-lg font-bold text-amber-600">{typeof goalsPerGame === 'number' ? goalsPerGame.toFixed(2) : '0.00'}</div>
+                                <div className="text-xs text-slate-500 font-medium">Goals/Game</div>
                               </div>
                               <div className="text-center bg-red-50 rounded-lg p-2.5">
                                 <div className="text-lg font-bold text-red-600">{stats.goals_conceded || 0}</div>
                                 <div className="text-xs text-red-700 font-medium">Conceded</div>
                               </div>
-                              <div className="text-center bg-orange-50 rounded-lg p-2.5">
-                                <div className="text-lg font-bold text-orange-600">{typeof concededPerGame === 'number' ? concededPerGame.toFixed(2) : '0.00'}</div>
+                              <div className="text-center bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg p-2.5">
+                                <div className="text-lg font-bold text-amber-500">{typeof concededPerGame === 'number' ? concededPerGame.toFixed(2) : '0.00'}</div>
                                 <div className="text-xs text-orange-700 font-medium">Conceded/Game</div>
                               </div>
                               <div className="text-center bg-teal-50 rounded-lg p-2.5">
                                 <div className={`text-lg font-bold ${
-                                  netGoals > 0 ? 'text-green-600' : netGoals < 0 ? 'text-red-600' : 'text-gray-600'
+                                  netGoals > 0 ? 'text-green-600' : netGoals < 0 ? 'text-red-600' : 'text-slate-500'
                                 }`}>
                                   {netGoals > 0 ? '+' : ''}{netGoals}
                                 </div>
@@ -1946,10 +1957,10 @@ export default function HistoricalSeasonDetailPage() {
                                 <div className="text-xs text-purple-700 font-medium">Clean Sheets</div>
                               </div>
                               {stats.potm && (
-                                <div className="text-center bg-orange-50 rounded-lg p-2.5 col-span-2 sm:col-span-1">
+                                <div className="text-center bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg p-2.5 col-span-2 sm:col-span-1">
                                   <div className="flex items-center justify-center gap-1">
                                     <span className="text-lg">🌟</span>
-                                    <div className="text-lg font-bold text-orange-600">{stats.potm}</div>
+                                    <div className="text-lg font-bold text-amber-500">{stats.potm}</div>
                                   </div>
                                   <div className="text-xs text-orange-700 font-medium">POTM</div>
                                 </div>
@@ -1969,14 +1980,14 @@ export default function HistoricalSeasonDetailPage() {
             <div className="p-6 lg:p-8">
               {/* Standings Header */}
               <div className="flex items-center gap-3 mb-8">
-                <div className="p-3 bg-yellow-100 rounded-xl">
+                <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                   <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-800">🏅 Team Standings & Awards</h3>
-                  <p className="text-sm text-gray-600">Final standings, league winners, and cup champions</p>
+                  <h3 className="text-sm font-extrabold text-slate-800">🏅 Team Standings & Awards</h3>
+                  <p className="text-xs text-slate-500 font-mono">Final standings, league winners, and cup champions</p>
                 </div>
               </div>
 
@@ -1987,7 +1998,7 @@ export default function HistoricalSeasonDetailPage() {
                     {awards.filter(a => a.award_category?.toLowerCase().includes('league') || a.award_category?.toLowerCase().includes('champion')).map((award, index) => (
                       <div key={award.id} className="glass rounded-2xl p-6 border border-yellow-200/50 bg-gradient-to-br from-yellow-50/50 to-amber-50/30 hover:shadow-xl transition-all duration-300">
                         <div className="flex items-center gap-3 mb-4">
-                          <div className="p-3 bg-yellow-100 rounded-xl">
+                          <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                             <svg className="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                             </svg>
@@ -1998,10 +2009,10 @@ export default function HistoricalSeasonDetailPage() {
                           </div>
                         </div>
                         <div className="bg-white/60 rounded-xl p-4 border border-white/50">
-                          <p className="text-sm font-medium text-gray-600 mb-1">Winner</p>
+                          <p className="text-sm font-medium text-slate-500 mb-1">Winner</p>
                           <p className="text-lg font-bold text-gray-900">{award.winner_team || award.winner_player || 'N/A'}</p>
                           {award.description && (
-                            <p className="text-xs text-gray-500 mt-2">{award.description}</p>
+                            <p className="text-xs text-slate-400 mt-2">{award.description}</p>
                           )}
                         </div>
                       </div>
@@ -2013,36 +2024,36 @@ export default function HistoricalSeasonDetailPage() {
               {/* Team Standings Table */}
               <div className="glass rounded-2xl p-6 lg:p-8 border border-blue-200/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-blue-100 rounded-xl">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
+                    <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </div>
-                  <h4 className="text-xl font-bold text-gray-800">📋 Final Team Standings</h4>
+                  <h4 className="text-sm font-extrabold text-slate-800">📋 Final Team Standings</h4>
                 </div>
 
                 {teamStats.length === 0 ? (
                   <div className="text-center py-12">
-                    <p className="text-gray-600">No team standings available</p>
+                    <p className="text-slate-500">No team standings available</p>
                   </div>
                 ) : (
                   <>
                     {/* Desktop Table */}
-                    <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-200/50">
-                      <table className="min-w-full bg-white/50">
+                    <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/60 rounded-2xl overflow-hidden">
+                      <table className="min-w-full bg-white text-slate-700">
                         <thead className="bg-gradient-to-r from-blue-50 to-indigo-100/80">
                           <tr>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800 uppercase tracking-wider">Pos</th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800 uppercase tracking-wider">Team</th>
-                            <th className="px-6 py-4 text-center text-sm font-semibold text-gray-800 uppercase tracking-wider">MP</th>
-                            <th className="px-6 py-4 text-center text-sm font-semibold text-gray-800 uppercase tracking-wider">W</th>
-                            <th className="px-6 py-4 text-center text-sm font-semibold text-gray-800 uppercase tracking-wider">D</th>
-                            <th className="px-6 py-4 text-center text-sm font-semibold text-gray-800 uppercase tracking-wider">L</th>
-                            <th className="px-6 py-4 text-center text-sm font-semibold text-gray-800 uppercase tracking-wider">Goals</th>
-                            <th className="px-6 py-4 text-center text-sm font-semibold text-gray-800 uppercase tracking-wider">Pts</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Pos</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Team</th>
+                            <th className="px-6 py-4 text-center text-sm font-semibold text-slate-800 uppercase tracking-wider">MP</th>
+                            <th className="px-6 py-4 text-center text-sm font-semibold text-slate-800 uppercase tracking-wider">W</th>
+                            <th className="px-6 py-4 text-center text-sm font-semibold text-slate-800 uppercase tracking-wider">D</th>
+                            <th className="px-6 py-4 text-center text-sm font-semibold text-slate-800 uppercase tracking-wider">L</th>
+                            <th className="px-6 py-4 text-center text-sm font-semibold text-slate-800 uppercase tracking-wider">Goals</th>
+                            <th className="px-6 py-4 text-center text-sm font-semibold text-slate-800 uppercase tracking-wider">Pts</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200">
+                        <tbody className="divide-y divide-slate-100">
                           {teamStats
                             .sort((a, b) => {
                               // Use rank from teamstats if available, otherwise sort by points, GD, GF
@@ -2094,7 +2105,7 @@ export default function HistoricalSeasonDetailPage() {
                                           {team.team_name}
                                           {isChampion && <span className="ml-2 text-yellow-600">👑</span>}
                                         </div>
-                                        <div className="text-xs text-gray-500">{team.owner_name || 'N/A'}</div>
+                                        <div className="text-xs text-slate-400">{team.owner_name || 'N/A'}</div>
                                       </div>
                                     </div>
                                   </td>
@@ -2117,11 +2128,11 @@ export default function HistoricalSeasonDetailPage() {
                                     </span>
                                   </td>
                                   <td className="px-6 py-4 text-center">
-                                    <span className="text-lg font-bold text-blue-600">{team.totalGoals}</span>
+                                    <span className="text-lg font-bold text-amber-600">{team.totalGoals}</span>
                                   </td>
                                   <td className="px-6 py-4 text-center">
                                     <span className={`text-xl font-bold ${
-                                      isChampion ? 'text-yellow-600' : 'text-indigo-600'
+                                      isChampion ? 'text-yellow-600' : 'text-amber-600'
                                     }`}>
                                       {points}
                                     </span>
@@ -2165,28 +2176,28 @@ export default function HistoricalSeasonDetailPage() {
                                     {team.team_name}
                                     {isChampion && <span className="ml-1">👑</span>}
                                   </div>
-                                  <div className="text-xs text-gray-500">{team.owner_name || 'N/A'}</div>
+                                  <div className="text-xs text-slate-400">{team.owner_name || 'N/A'}</div>
                                 </div>
                               </div>
                               <div className="grid grid-cols-3 gap-2 text-center">
                                 <div className="bg-gray-50 rounded-lg p-2">
                                   <div className="text-lg font-bold text-gray-900">{team.matchesPlayed}</div>
-                                  <div className="text-xs text-gray-600">MP</div>
+                                  <div className="text-xs text-slate-500">MP</div>
                                 </div>
-                                <div className="bg-blue-50 rounded-lg p-2">
-                                  <div className="text-lg font-bold text-blue-600">{team.totalGoals}</div>
-                                  <div className="text-xs text-blue-700">Goals</div>
+                                <div className="bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg p-2">
+                                  <div className="text-lg font-bold text-amber-600">{team.totalGoals}</div>
+                                  <div className="text-xs text-slate-500">Goals</div>
                                 </div>
                                 <div className={`rounded-lg p-2 ${
                                   isChampion ? 'bg-yellow-50' : 'bg-indigo-50'
                                 }`}>
                                   <div className={`text-lg font-bold ${
-                                    isChampion ? 'text-yellow-600' : 'text-indigo-600'
+                                    isChampion ? 'text-yellow-600' : 'text-amber-600'
                                   }`}>
                                     {points}
                                   </div>
                                   <div className={`text-xs ${
-                                    isChampion ? 'text-yellow-700' : 'text-indigo-700'
+                                    isChampion ? 'text-yellow-700' : 'text-slate-700'
                                   }`}>
                                     Points
                                   </div>
@@ -2215,14 +2226,14 @@ export default function HistoricalSeasonDetailPage() {
               {trophies.length > 0 && (
                 <div className="mt-8 glass rounded-2xl p-6 lg:p-8 border border-yellow-200/50 bg-gradient-to-br from-yellow-50/50 to-amber-50/30">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 bg-yellow-100 rounded-xl">
+                    <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                       <svg className="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z" />
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-xl font-bold text-gray-800">🏆 Team Trophies</h4>
-                      <p className="text-sm text-gray-600">Championship trophies and special achievements</p>
+                      <h4 className="text-sm font-extrabold text-slate-800">🏆 Team Trophies</h4>
+                      <p className="text-xs text-slate-500 font-mono">Championship trophies and special achievements</p>
                     </div>
                   </div>
                   
@@ -2252,7 +2263,7 @@ export default function HistoricalSeasonDetailPage() {
                               {team?.team_name || 'Unknown Team'}
                             </p>
                             {team?.owner_name && (
-                              <p className="text-xs text-gray-600 mt-1 truncate" title={team.owner_name}>
+                              <p className="text-xs text-slate-500 mt-1 truncate" title={team.owner_name}>
                                 {team.owner_name}
                               </p>
                             )}
@@ -2268,12 +2279,12 @@ export default function HistoricalSeasonDetailPage() {
               {teamStats.filter(t => t.cupAchievement && t.cupAchievement.trim() !== '').length > 0 && (
                 <div className="mt-8 glass rounded-2xl p-6 lg:p-8 border border-orange-200/50 bg-gradient-to-br from-orange-50/50 to-red-50/30">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 bg-orange-100 rounded-xl">
-                      <svg className="w-6 h-6 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
+                      <svg className="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z" />
                       </svg>
                     </div>
-                    <h4 className="text-xl font-bold text-gray-800">🏆 Cup Competition Results</h4>
+                    <h4 className="text-sm font-extrabold text-slate-800">🏆 Cup Competition Results</h4>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {teamStats
@@ -2299,7 +2310,7 @@ export default function HistoricalSeasonDetailPage() {
                                 </svg>
                               )}
                               <h5 className={`font-bold ${
-                                isWinner ? 'text-yellow-700' : isRunnerUp ? 'text-gray-600' : 'text-orange-700'
+                                isWinner ? 'text-yellow-700' : isRunnerUp ? 'text-slate-500' : 'text-orange-700'
                               }`}>
                                 {achievement}
                               </h5>
@@ -2308,13 +2319,13 @@ export default function HistoricalSeasonDetailPage() {
                               isWinner ? 'bg-yellow-50 border-yellow-200' : 'bg-orange-50 border-orange-200'
                             }`}>
                               <p className={`text-xs font-medium mb-1 ${
-                                isWinner ? 'text-yellow-600' : 'text-orange-600'
+                                isWinner ? 'text-yellow-600' : 'text-amber-500'
                               }`}>
                                 {isWinner ? '🏆 Winner' : isRunnerUp ? '🥈 Runner-up' : 'Achievement'}
                               </p>
                               <p className="text-base font-bold text-gray-900">{team.team_name}</p>
                               {team.owner_name && (
-                                <p className="text-xs text-gray-500 mt-1">{team.owner_name}</p>
+                                <p className="text-xs text-slate-400 mt-1">{team.owner_name}</p>
                               )}
                             </div>
                           </div>
@@ -2328,19 +2339,19 @@ export default function HistoricalSeasonDetailPage() {
               {awards.filter(a => a.award_category?.toLowerCase().includes('cup')).length > 0 && (
                 <div className="mt-8 glass rounded-2xl p-6 lg:p-8 border border-orange-200/50 bg-gradient-to-br from-orange-50/50 to-red-50/30">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 bg-orange-100 rounded-xl">
-                      <svg className="w-6 h-6 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
+                      <svg className="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z" />
                       </svg>
                     </div>
-                    <h4 className="text-xl font-bold text-gray-800">🏆 Additional Cup Awards</h4>
+                    <h4 className="text-sm font-extrabold text-slate-800">🏆 Additional Cup Awards</h4>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {awards.filter(a => a.award_category?.toLowerCase().includes('cup')).map((award) => (
                       <div key={award.id} className="bg-white/70 rounded-xl p-5 border border-white/50 hover:shadow-md transition-all duration-300">
                         <h5 className="font-bold text-orange-700 mb-2">{award.award_name}</h5>
-                        <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
-                          <p className="text-xs font-medium text-orange-600 mb-1">
+                        <div className="bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg p-3 border border-orange-200">
+                          <p className="text-xs font-medium text-amber-500 mb-1">
                             {award.award_name.toLowerCase().includes('runner') ? 'Runner-up' : 'Winner'}
                           </p>
                           <p className="text-base font-bold text-gray-900">{award.winner_team || award.winner_player || 'N/A'}</p>
@@ -2355,14 +2366,14 @@ export default function HistoricalSeasonDetailPage() {
               {playerAwards.length > 0 && (
                 <div className="mt-8 glass rounded-2xl p-6 lg:p-8 border border-purple-200/50 bg-gradient-to-br from-purple-50/50 to-pink-50/30">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 bg-purple-100 rounded-xl">
+                    <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                       <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-xl font-bold text-gray-800">🎯 Player Awards</h4>
-                      <p className="text-sm text-gray-600">Individual and category awards</p>
+                      <h4 className="text-sm font-extrabold text-slate-800">🎯 Player Awards</h4>
+                      <p className="text-xs text-slate-500 font-mono">Individual and category awards</p>
                     </div>
                   </div>
                   
@@ -2393,7 +2404,7 @@ export default function HistoricalSeasonDetailPage() {
                                   </p>
                                   <p className="text-base font-bold text-gray-900">{award.player_name}</p>
                                   {award.category && (
-                                    <p className="text-xs text-gray-500 mt-1">{award.category}</p>
+                                    <p className="text-xs text-slate-400 mt-1">{award.category}</p>
                                   )}
                                 </div>
                               </div>
@@ -2445,13 +2456,13 @@ export default function HistoricalSeasonDetailPage() {
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-indigo-100 rounded-xl">
-                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800">📥 Import & Export</h3>
-                    <p className="text-sm text-gray-600">Update historical season data with Excel files</p>
+                    <h3 className="text-sm font-extrabold text-slate-800">📥 Import & Export</h3>
+                    <p className="text-xs text-slate-500 font-mono">Update historical season data with Excel files</p>
                   </div>
                 </div>
               </div>
@@ -2463,32 +2474,32 @@ export default function HistoricalSeasonDetailPage() {
                     {/* Enhanced Instructions */}
                     <div className="glass rounded-2xl p-6 lg:p-8 mb-8 border border-blue-200/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
                       <div className="flex items-start gap-4">
-                        <div className="p-3 bg-blue-100 rounded-xl flex-shrink-0">
-                          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl flex-shrink-0">
+                          <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                         </div>
                         <div>
-                          <h3 className="text-lg font-bold text-blue-800 mb-4">📋 How to Update Historical Season Data</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-blue-700">
+                          <h3 className="text-lg font-bold text-slate-850 mb-4">📋 How to Update Historical Season Data</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-slate-500">
                             <div className="bg-white/60 rounded-lg p-4 border border-blue-200/50">
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
-                                <strong className="text-blue-800">Export Data</strong>
+                                <strong className="text-slate-850">Export Data</strong>
                               </div>
                               <p>Click "Export Excel" above to download the current season data as an Excel file.</p>
                             </div>
                             <div className="bg-white/60 rounded-lg p-4 border border-blue-200/50">
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                                <strong className="text-blue-800">Make Changes</strong>
+                                <strong className="text-slate-850">Make Changes</strong>
                               </div>
                               <p>Open the Excel file and update any data on the Teams, Players, Awards, or Matches sheets.</p>
                             </div>
                             <div className="bg-white/60 rounded-lg p-4 border border-blue-200/50">
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
-                                <strong className="text-blue-800">Upload & Preview</strong>
+                                <strong className="text-slate-850">Upload & Preview</strong>
                               </div>
                               <p>Save the Excel file and upload it below to preview and apply your changes.</p>
                             </div>
@@ -2498,7 +2509,7 @@ export default function HistoricalSeasonDetailPage() {
                     </div>
 
                     {/* Enhanced File Upload Area */}
-                    <div className="glass rounded-2xl p-8 border border-gray-200/50">
+                    <div className="glass rounded-2xl p-8 border border-slate-200/60 rounded-2xl overflow-hidden">
                       <div
                         className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
                           dragOver 
@@ -2514,14 +2525,14 @@ export default function HistoricalSeasonDetailPage() {
                             <div className="w-16 h-16 mx-auto mb-6 relative">
                               <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-200 border-t-indigo-600"></div>
                               <div className="absolute inset-0 flex items-center justify-center">
-                                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                               </div>
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Processing Excel File</h3>
-                            <p className="text-gray-600">Analyzing your data for preview...</p>
-                            <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
+                            <h3 className="text-lg font-semibold text-slate-800 mb-2">Processing Excel File</h3>
+                            <p className="text-slate-500">Analyzing your data for preview...</p>
+                            <p className="text-sm text-slate-400 mt-2">This may take a few moments</p>
                           </div>
                         ) : (
                           <div className="py-8">
@@ -2530,8 +2541,8 @@ export default function HistoricalSeasonDetailPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                               </svg>
                             </div>
-                            <h3 className="text-2xl font-bold text-gray-800 mb-3">Upload Your Excel File</h3>
-                            <p className="text-gray-600 mb-6 max-w-md mx-auto">Drag and drop your updated Excel file here, or click the button below to browse your files</p>
+                            <h3 className="text-2xl font-bold text-slate-800 mb-3">Upload Your Excel File</h3>
+                            <p className="text-slate-500 mb-6 max-w-md mx-auto">Drag and drop your updated Excel file here, or click the button below to browse your files</p>
                             <input
                               type="file"
                               accept=".xlsx,.xls"
@@ -2551,7 +2562,7 @@ export default function HistoricalSeasonDetailPage() {
                               </svg>
                               Select Excel File
                             </label>
-                            <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500">
+                            <div className="mt-4 flex items-center justify-center gap-4 text-xs text-slate-400">
                               <div className="flex items-center gap-1">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -2594,7 +2605,7 @@ export default function HistoricalSeasonDetailPage() {
 
                           {/* Players Results */}
                           <div className="bg-white rounded-lg p-4">
-                            <h4 className="font-semibold text-blue-600 mb-2">Players</h4>
+                            <h4 className="font-semibold text-amber-600 mb-2">Players</h4>
                             <div className="text-sm space-y-1">
                               <p>Updated: <span className="font-medium">{importResults.stats.players.updated}</span></p>
                               <p>Unchanged: <span className="font-medium">{importResults.stats.players.unchanged}</span></p>
@@ -2624,7 +2635,7 @@ export default function HistoricalSeasonDetailPage() {
 
                           {/* Matches Results */}
                           <div className="bg-white rounded-lg p-4">
-                            <h4 className="font-semibold text-orange-600 mb-2">Matches</h4>
+                            <h4 className="font-semibold text-amber-500 mb-2">Matches</h4>
                             <div className="text-sm space-y-1">
                               <p>Updated: <span className="font-medium">{importResults.stats.matches.updated}</span></p>
                               <p>Unchanged: <span className="font-medium">{importResults.stats.matches.unchanged}</span></p>
@@ -2669,8 +2680,8 @@ export default function HistoricalSeasonDetailPage() {
                     <div className="mb-6">
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <h3 className="text-xl font-bold text-gray-800">📋 Import Preview</h3>
-                          <p className="text-sm text-gray-600">Review and edit data before importing</p>
+                          <h3 className="text-sm font-extrabold text-slate-800">📋 Import Preview</h3>
+                          <p className="text-xs text-slate-500 font-mono">Review and edit data before importing</p>
                         </div>
                         <button
                           onClick={handleCancelPreview}
@@ -2687,15 +2698,15 @@ export default function HistoricalSeasonDetailPage() {
                           <div className="text-xs text-purple-700">Teams</div>
                         </div>
                         <div className="text-center bg-blue-50 p-3 rounded-lg">
-                          <div className="text-2xl font-bold text-blue-600">{previewPlayers.length}</div>
-                          <div className="text-xs text-blue-700">Players</div>
+                          <div className="text-2xl font-bold text-amber-600">{previewPlayers.length}</div>
+                          <div className="text-xs text-slate-500">Players</div>
                         </div>
                         <div className="text-center bg-yellow-50 p-3 rounded-lg">
                           <div className="text-2xl font-bold text-yellow-600">{previewAwards.length}</div>
                           <div className="text-xs text-yellow-700">Awards</div>
                         </div>
                         <div className="text-center bg-orange-50 p-3 rounded-lg">
-                          <div className="text-2xl font-bold text-orange-600">{previewMatches.length}</div>
+                          <div className="text-2xl font-bold text-amber-500">{previewMatches.length}</div>
                           <div className="text-xs text-orange-700">Matches</div>
                         </div>
                       </div>
@@ -2747,19 +2758,19 @@ export default function HistoricalSeasonDetailPage() {
                     )}
                     
                     {/* Bulk Replace Tool */}
-                    <div className="rounded-xl p-4 mb-6 bg-white/20 border border-gray-200">
+                    <div className="rounded-xl p-4 mb-6 bg-white/20 border border-slate-200">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold text-gray-800">🔧 Bulk Fix Team Names</h3>
+                        <h3 className="text-sm font-semibold text-slate-800">🔧 Bulk Fix Team Names</h3>
                         <button
                           onClick={() => setShowBulkReplace(!showBulkReplace)}
-                          className="text-xs text-blue-600 hover:text-blue-800 underline"
+                          className="text-xs text-amber-600 hover:text-slate-850 underline"
                         >
                           {showBulkReplace ? 'Hide' : 'Show'} Tool
                         </button>
                       </div>
                       {showBulkReplace && (
                         <div className="space-y-3">
-                          <p className="text-xs text-gray-600">Find and replace team names in all player records at once:</p>
+                          <p className="text-xs text-slate-500">Find and replace team names in all player records at once:</p>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-gray-700 mb-1">Find team name:</label>
@@ -2788,7 +2799,7 @@ export default function HistoricalSeasonDetailPage() {
                           >
                             Replace All
                           </button>
-                          <p className="text-xs text-gray-500 mt-2">
+                          <p className="text-xs text-slate-400 mt-2">
                             💡 This will update the team name for all players with matching team name (case-insensitive)
                           </p>
                         </div>
@@ -2804,12 +2815,12 @@ export default function HistoricalSeasonDetailPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex items-center">
                           <svg className={`w-5 h-5 mr-2 ${
-                            validationErrors.size > 0 ? 'text-red-600' : 'text-blue-600'
+                            validationErrors.size > 0 ? 'text-red-600' : 'text-amber-600'
                           }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <span className={`text-sm ${
-                            validationErrors.size > 0 ? 'text-red-800' : 'text-blue-800'
+                            validationErrors.size > 0 ? 'text-red-800' : 'text-slate-850'
                           }`}>
                             {validationErrors.size > 0 
                               ? `${validationErrors.size} validation error(s) found. Please fix them before importing.`
@@ -2885,8 +2896,8 @@ export default function HistoricalSeasonDetailPage() {
                             onClick={() => setPreviewTab(tab.id as any)}
                             className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                               previewTab === tab.id
-                                ? 'bg-[#0066FF] text-white shadow-md'
-                                : 'text-gray-600 hover:bg-white/30'
+                                ? 'bg-slate-800 text-white shadow-md'
+                                : 'text-slate-500 hover:bg-white/30'
                             }`}
                           >
                             <span className="mr-2">{tab.icon}</span>
@@ -2897,31 +2908,31 @@ export default function HistoricalSeasonDetailPage() {
                     </div>
 
                     {/* Preview Tables */}
-                    <div className="rounded-b-xl bg-white/20 border border-gray-200 overflow-hidden">
+                    <div className="rounded-b-xl bg-white/20 border border-slate-200 overflow-hidden">
                       {/* Teams Preview Table */}
                       {previewTab === 'teams' && previewTeams.length > 0 && (
                         <div className="overflow-x-auto">
                           <table className="min-w-full">
                             <thead className="bg-white/10">
                               <tr>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Team Name</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Owner</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Link to Team</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Rank</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Points</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">MP</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">W</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">D</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">L</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">GF</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">GA</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">GD</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">%</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Cup</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Actions</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Team Name</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Owner</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Link to Team</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Rank</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Points</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">MP</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">W</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">D</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">L</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">GF</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">GA</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">GD</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">%</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Cup</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
                               </tr>
                             </thead>
-                            <tbody className="bg-white/20 divide-y divide-gray-200">
+                            <tbody className="bg-white/20 divide-y divide-slate-100">
                               {previewTeams.map((team, index) => (
                                 <tr key={index} className="hover:bg-white/30 transition-colors">
                                   <td className="px-2 py-3">
@@ -2929,7 +2940,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={team.team_name}
                                       onChange={(e) => handlePreviewTeamChange(index, 'team_name', e.target.value)}
-                                      className={`w-24 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-24 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`team-${index}-team_name`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                       placeholder="Team name"
@@ -2940,7 +2951,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={team.owner_name || ''}
                                       onChange={(e) => handlePreviewTeamChange(index, 'owner_name', e.target.value)}
-                                      className={`w-24 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-24 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`team-${index}-owner_name`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                       placeholder="Owner name"
@@ -2978,7 +2989,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="number"
                                       value={team.rank || ''}
                                       onChange={(e) => handlePreviewTeamChange(index, 'rank', parseInt(e.target.value) || 0)}
-                                      className={`w-12 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs`}
+                                      className={`w-12 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs`}
                                       placeholder="Rank"
                                     />
                                   </td>
@@ -2988,7 +2999,7 @@ export default function HistoricalSeasonDetailPage() {
                                       value={team.p || ''}
                                       onChange={(e) => handlePreviewTeamChange(index, 'p', parseFloat(e.target.value) || 0)}
                                       step="0.1"
-                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs`}
+                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs`}
                                       placeholder="Points"
                                     />
                                   </td>
@@ -2997,7 +3008,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="number"
                                       value={team.mp || ''}
                                       onChange={(e) => handlePreviewTeamChange(index, 'mp', parseInt(e.target.value) || 0)}
-                                      className={`w-12 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs`}
+                                      className={`w-12 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs`}
                                       placeholder="MP"
                                     />
                                   </td>
@@ -3006,7 +3017,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="number"
                                       value={team.w || ''}
                                       onChange={(e) => handlePreviewTeamChange(index, 'w', parseInt(e.target.value) || 0)}
-                                      className={`w-12 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs`}
+                                      className={`w-12 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs`}
                                       placeholder="W"
                                     />
                                   </td>
@@ -3015,7 +3026,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="number"
                                       value={team.d || ''}
                                       onChange={(e) => handlePreviewTeamChange(index, 'd', parseInt(e.target.value) || 0)}
-                                      className={`w-12 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs`}
+                                      className={`w-12 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs`}
                                       placeholder="D"
                                     />
                                   </td>
@@ -3024,7 +3035,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="number"
                                       value={team.l || ''}
                                       onChange={(e) => handlePreviewTeamChange(index, 'l', parseInt(e.target.value) || 0)}
-                                      className={`w-12 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs`}
+                                      className={`w-12 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs`}
                                       placeholder="L"
                                     />
                                   </td>
@@ -3034,7 +3045,7 @@ export default function HistoricalSeasonDetailPage() {
                                       value={team.f || ''}
                                       onChange={(e) => handlePreviewTeamChange(index, 'f', parseFloat(e.target.value) || 0)}
                                       step="0.1"
-                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs`}
+                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs`}
                                       placeholder="GF"
                                     />
                                   </td>
@@ -3044,7 +3055,7 @@ export default function HistoricalSeasonDetailPage() {
                                       value={team.a || ''}
                                       onChange={(e) => handlePreviewTeamChange(index, 'a', parseFloat(e.target.value) || 0)}
                                       step="0.1"
-                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs`}
+                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs`}
                                       placeholder="GA"
                                     />
                                   </td>
@@ -3054,7 +3065,7 @@ export default function HistoricalSeasonDetailPage() {
                                       value={team.gd || ''}
                                       onChange={(e) => handlePreviewTeamChange(index, 'gd', parseFloat(e.target.value) || 0)}
                                       step="0.1"
-                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs`}
+                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs`}
                                       placeholder="GD"
                                     />
                                   </td>
@@ -3064,7 +3075,7 @@ export default function HistoricalSeasonDetailPage() {
                                       value={team.percentage || ''}
                                       onChange={(e) => handlePreviewTeamChange(index, 'percentage', parseFloat(e.target.value) || 0)}
                                       step="0.01"
-                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs`}
+                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs`}
                                       placeholder="%"
                                     />
                                   </td>
@@ -3073,7 +3084,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={team.cup || ''}
                                       onChange={(e) => handlePreviewTeamChange(index, 'cup', e.target.value)}
-                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs`}
+                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs`}
                                       placeholder="Cup"
                                     />
                                   </td>
@@ -3102,27 +3113,27 @@ export default function HistoricalSeasonDetailPage() {
                           <table className="min-w-full">
                             <thead className="bg-white/10">
                               <tr>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Name</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Team</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Category</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Goals</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">G/Game</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Conceded</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">C/Game</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Net Goals</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Clean</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Points</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">W</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">D</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">L</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Total M</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Total P</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Category Trophies</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Individual Trophies</th>
-                                <th className="px-2 py-3 text-left text-xs font-medium text-gray-600 uppercase">Actions</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Team</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Category</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Goals</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">G/Game</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Conceded</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">C/Game</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Net Goals</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Clean</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Points</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">W</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">D</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">L</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Total M</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Total P</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Category Trophies</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Individual Trophies</th>
+                                <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
                               </tr>
                             </thead>
-                            <tbody className="bg-white/20 divide-y divide-gray-200">
+                            <tbody className="bg-white/20 divide-y divide-slate-100">
                               {previewPlayers.map((player, index) => (
                                 <tr key={index} className="hover:bg-white/30 transition-colors">
                                   <td className="px-2 py-3">
@@ -3130,7 +3141,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={player.name}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'name', e.target.value)}
-                                      className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-name`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                       placeholder="Name"
@@ -3141,7 +3152,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={player.team}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'team', e.target.value)}
-                                      className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-team`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                       placeholder="Team"
@@ -3152,7 +3163,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={player.category}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'category', e.target.value)}
-                                      className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-category`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                       placeholder="Category"
@@ -3164,7 +3175,7 @@ export default function HistoricalSeasonDetailPage() {
                                       value={player.goals_scored}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'goals_scored', parseFloat(e.target.value) || 0)}
                                       step="0.1"
-                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-goals_scored`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3175,7 +3186,7 @@ export default function HistoricalSeasonDetailPage() {
                                       value={player.goals_per_game}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'goals_per_game', parseFloat(e.target.value) || 0)}
                                       step="0.1"
-                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-goals_per_game`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3186,7 +3197,7 @@ export default function HistoricalSeasonDetailPage() {
                                       value={player.goals_conceded}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'goals_conceded', parseFloat(e.target.value) || 0)}
                                       step="0.1"
-                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-goals_conceded`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3197,7 +3208,7 @@ export default function HistoricalSeasonDetailPage() {
                                       value={player.conceded_per_game}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'conceded_per_game', parseFloat(e.target.value) || 0)}
                                       step="0.1"
-                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-conceded_per_game`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3208,7 +3219,7 @@ export default function HistoricalSeasonDetailPage() {
                                       value={player.net_goals}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'net_goals', parseFloat(e.target.value) || 0)}
                                       step="0.1"
-                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-net_goals`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3219,7 +3230,7 @@ export default function HistoricalSeasonDetailPage() {
                                       value={player.cleansheets}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'cleansheets', parseFloat(e.target.value) || 0)}
                                       step="0.1"
-                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-cleansheets`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3230,7 +3241,7 @@ export default function HistoricalSeasonDetailPage() {
                                       value={player.points}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'points', parseFloat(e.target.value) || 0)}
                                       step="0.1"
-                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-points`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3240,7 +3251,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="number"
                                       value={player.win}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'win', parseInt(e.target.value) || 0)}
-                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-win`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3250,7 +3261,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="number"
                                       value={player.draw}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'draw', parseInt(e.target.value) || 0)}
-                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-draw`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3260,7 +3271,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="number"
                                       value={player.loss}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'loss', parseInt(e.target.value) || 0)}
-                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-loss`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3270,7 +3281,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="number"
                                       value={player.total_matches}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'total_matches', parseInt(e.target.value) || 0)}
-                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-total_matches`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3281,7 +3292,7 @@ export default function HistoricalSeasonDetailPage() {
                                       value={player.total_points}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'total_points', parseFloat(e.target.value) || 0)}
                                       step="0.1"
-                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-1 py-1 text-xs ${
+                                      className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
                                         validationErrors.has(`player-${index}-total_points`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3306,7 +3317,7 @@ export default function HistoricalSeasonDetailPage() {
                                       {player.individual_trophies && player.individual_trophies.length > 0 ? (
                                         <div className="flex flex-wrap gap-1">
                                           {player.individual_trophies.map((trophy, idx) => (
-                                            <span key={idx} className="inline-block bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs whitespace-nowrap">
+                                            <span key={idx} className="inline-block bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-xs whitespace-nowrap">
                                               {trophy}
                                             </span>
                                           ))}
@@ -3341,15 +3352,15 @@ export default function HistoricalSeasonDetailPage() {
                           <table className="min-w-full">
                             <thead className="bg-white/10">
                               <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Award Name</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Category</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Winner Team</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Winner Player</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Description</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Actions</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Award Name</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Category</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Winner Team</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Winner Player</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Description</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
                               </tr>
                             </thead>
-                            <tbody className="bg-white/20 divide-y divide-gray-200">
+                            <tbody className="bg-white/20 divide-y divide-slate-100">
                               {previewAwards.map((award, index) => (
                                 <tr key={index} className="hover:bg-white/30 transition-colors">
                                   <td className="px-4 py-3">
@@ -3357,7 +3368,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={award.award_name}
                                       onChange={(e) => handlePreviewAwardChange(index, 'award_name', e.target.value)}
-                                      className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                                      className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-2 py-1 ${
                                         validationErrors.has(`award-${index}-award_name`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                       placeholder="Award name"
@@ -3368,7 +3379,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={award.award_category}
                                       onChange={(e) => handlePreviewAwardChange(index, 'award_category', e.target.value)}
-                                      className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                                      className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-2 py-1 ${
                                         validationErrors.has(`award-${index}-award_category`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                       placeholder="Category"
@@ -3379,7 +3390,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={award.winner_team || ''}
                                       onChange={(e) => handlePreviewAwardChange(index, 'winner_team', e.target.value)}
-                                      className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                                      className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-2 py-1 ${
                                         validationErrors.has(`award-${index}-winner_team`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                       placeholder="Winner team"
@@ -3390,7 +3401,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={award.winner_player || ''}
                                       onChange={(e) => handlePreviewAwardChange(index, 'winner_player', e.target.value)}
-                                      className="w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1"
+                                      className="w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-2 py-1"
                                       placeholder="Winner player"
                                     />
                                   </td>
@@ -3399,7 +3410,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={award.description || ''}
                                       onChange={(e) => handlePreviewAwardChange(index, 'description', e.target.value)}
-                                      className="w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1"
+                                      className="w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-2 py-1"
                                       placeholder="Description"
                                     />
                                   </td>
@@ -3428,16 +3439,16 @@ export default function HistoricalSeasonDetailPage() {
                           <table className="min-w-full">
                             <thead className="bg-white/10">
                               <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Match Date</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Home Team</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Away Team</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Home Score</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Away Score</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Match Type</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Actions</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Match Date</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Home Team</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Away Team</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Home Score</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Away Score</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Match Type</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
                               </tr>
                             </thead>
-                            <tbody className="bg-white/20 divide-y divide-gray-200">
+                            <tbody className="bg-white/20 divide-y divide-slate-100">
                               {previewMatches.map((match, index) => (
                                 <tr key={index} className="hover:bg-white/30 transition-colors">
                                   <td className="px-4 py-3">
@@ -3445,7 +3456,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={match.match_date}
                                       onChange={(e) => handlePreviewMatchChange(index, 'match_date', e.target.value)}
-                                      className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                                      className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-2 py-1 ${
                                         validationErrors.has(`match-${index}-match_date`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                       placeholder="Match date"
@@ -3456,7 +3467,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={match.home_team}
                                       onChange={(e) => handlePreviewMatchChange(index, 'home_team', e.target.value)}
-                                      className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                                      className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-2 py-1 ${
                                         validationErrors.has(`match-${index}-home_team`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                       placeholder="Home team"
@@ -3467,7 +3478,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={match.away_team}
                                       onChange={(e) => handlePreviewMatchChange(index, 'away_team', e.target.value)}
-                                      className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                                      className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-2 py-1 ${
                                         validationErrors.has(`match-${index}-away_team`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                       placeholder="Away team"
@@ -3478,7 +3489,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="number"
                                       value={match.home_score}
                                       onChange={(e) => handlePreviewMatchChange(index, 'home_score', parseInt(e.target.value) || 0)}
-                                      className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                                      className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-2 py-1 ${
                                         validationErrors.has(`match-${index}-home_score`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3488,7 +3499,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="number"
                                       value={match.away_score}
                                       onChange={(e) => handlePreviewMatchChange(index, 'away_score', parseInt(e.target.value) || 0)}
-                                      className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                                      className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-2 py-1 ${
                                         validationErrors.has(`match-${index}-away_score`) ? 'border-red-500 bg-red-50' : ''
                                       }`}
                                     />
@@ -3498,7 +3509,7 @@ export default function HistoricalSeasonDetailPage() {
                                       type="text"
                                       value={match.match_type || ''}
                                       onChange={(e) => handlePreviewMatchChange(index, 'match_type', e.target.value)}
-                                      className="w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1"
+                                      className="w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-2 py-1"
                                       placeholder="Match type"
                                     />
                                   </td>
@@ -3527,17 +3538,17 @@ export default function HistoricalSeasonDetailPage() {
                         (previewTab === 'awards' && previewAwards.length === 0) ||
                         (previewTab === 'matches' && previewMatches.length === 0)) && (
                         <div className="px-8 py-16 text-center">
-                          <p className="text-gray-500">No {previewTab} data found in the uploaded file.</p>
+                          <p className="text-slate-400">No {previewTab} data found in the uploaded file.</p>
                         </div>
                       )}
                     </div>
 
                     {/* Import Actions */}
-                    <div className="mt-6 bg-white/10 rounded-xl p-6 border border-gray-200">
+                    <div className="mt-6 bg-white/10 rounded-xl p-6 border border-slate-200">
                       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-800 mb-1">Ready to Import</h3>
-                          <p className="text-sm text-gray-600">Review your changes and start the import process</p>
+                          <h3 className="text-lg font-semibold text-slate-800 mb-1">Ready to Import</h3>
+                          <p className="text-xs text-slate-500 font-mono">Review your changes and start the import process</p>
                         </div>
                         <div className="flex gap-3">
                           <button

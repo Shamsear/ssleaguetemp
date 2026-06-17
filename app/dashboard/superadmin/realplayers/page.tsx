@@ -225,10 +225,13 @@ export default function RealPlayersPage() {
 
   if (loading || loadingData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="flex items-center justify-center pt-32">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
+          </div>
+          <p className="text-slate-500 font-mono text-xs tracking-wider uppercase animate-pulse">Loading real player database...</p>
         </div>
       </div>
     );
@@ -239,118 +242,122 @@ export default function RealPlayersPage() {
   }
 
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-4">
-      <div className="container mx-auto max-w-screen-2xl">
-        {/* Header */}
-        <header className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <button
-              onClick={() => router.push('/dashboard/superadmin')}
-              className="p-2 rounded-xl hover:bg-white/50 transition-colors"
-            >
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h1 className="text-3xl md:text-4xl font-bold gradient-text">Real Players Database</h1>
+    <div className="space-y-8 animate-fade-in font-mono">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/dashboard/superadmin')}
+            className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-950 transition-all flex-shrink-0 shadow-sm"
+            title="Back to Dashboard"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              Real Players Database
+            </h1>
+            <p className="text-xs text-slate-500 font-mono mt-1">
+              All players from Firebase realplayers collection.
+            </p>
           </div>
-          <p className="text-gray-600 text-sm md:text-base ml-14">All players from Firebase realplayers collection</p>
-        </header>
+        </div>
+      </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-            <div className="flex items-start">
-              <svg className="w-5 h-5 text-red-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
+      {/* Error Alert */}
+      {error && (
+        <div className="rounded-2xl p-4 bg-rose-50 border border-rose-200 text-rose-700 font-mono text-xs flex items-center gap-3">
+          <svg className="w-5 h-5 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p>{error}</p>
+        </div>
+      )}
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
+          <div className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider">Total Players</div>
+          <div className="text-2xl font-extrabold text-slate-800 mt-1 font-mono">{players.length}</div>
+        </div>
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
+          <div className="text-[10px] font-mono font-semibold text-emerald-600 uppercase tracking-wider">Active Players</div>
+          <div className="text-2xl font-extrabold text-emerald-605 mt-1 font-mono">
+            {players.filter(p => p.is_active !== false).length}
           </div>
-        )}
+        </div>
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
+          <div className="text-[10px] font-mono font-semibold text-purple-600 uppercase tracking-wider">With Photos</div>
+          <div className="text-2xl font-extrabold text-purple-650 mt-1 font-mono font-mono">
+            {players.filter(p => p.photo_url).length}
+          </div>
+        </div>
+      </div>
 
-        {/* Stats */}
-        <div className="glass rounded-3xl p-6 mb-8 shadow-lg">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="glass p-6 rounded-xl bg-white/10">
-              <div className="text-sm text-gray-600 mb-1">Total Players</div>
-              <div className="text-3xl font-bold text-[#0066FF]">{players.length}</div>
-            </div>
-            <div className="glass p-6 rounded-xl bg-white/10">
-              <div className="text-sm text-gray-600 mb-1">Active Players</div>
-              <div className="text-3xl font-bold text-green-600">
-                {players.filter(p => p.is_active !== false).length}
-              </div>
-            </div>
-            <div className="glass p-6 rounded-xl bg-white/10">
-              <div className="text-sm text-gray-600 mb-1">With Photos</div>
-              <div className="text-3xl font-bold text-purple-600">
-                {players.filter(p => p.photo_url).length}
-              </div>
-            </div>
+      {/* Search and Table Container */}
+      <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl overflow-hidden">
+        <div className="px-6 py-5 border-b border-slate-200/60 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+            <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Real Player Registry
+          </h2>
+          <div className="text-xs text-slate-500 font-mono">
+            Showing <span className="font-bold text-slate-700">{filteredPlayers.length}</span> of <span className="font-bold text-slate-700">{players.length}</span> records
           </div>
         </div>
 
-        {/* Search and Table */}
-        <div className="glass rounded-3xl p-6 shadow-lg">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold gradient-text">All Players</h2>
-            <div className="text-sm text-gray-600">
-              Showing {filteredPlayers.length} of {players.length}
-            </div>
-          </div>
-
+        <div className="p-6 space-y-6">
           {/* Search and Filters */}
-          <div className="mb-6 space-y-4">
+          <div className="flex flex-col gap-5">
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search by name, ID, phone, or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-3 pl-10 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none"
+                className="w-full px-4 py-3 pl-10 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 transition-all font-mono text-xs"
               />
-              <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
             
             {/* Place Filter Pills */}
             {availablePlaces.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 font-mono">
+                  <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span className="text-sm font-medium text-gray-700">Filter by Place:</span>
+                  <span>Filter by Location:</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   <button
                     onClick={() => setFilterPlace('all')}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
                       filterPlace === 'all'
-                        ? 'bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white shadow-md'
-                        : 'bg-white text-gray-700 border border-gray-200 hover:border-[#0066FF] hover:text-[#0066FF]'
+                        ? 'bg-slate-800 text-white shadow-sm border border-slate-705/30'
+                        : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    All Places
-                    <span className="ml-1.5 opacity-75">({players.length})</span>
+                    All Places ({players.length})
                   </button>
                   {availablePlaces.map(place => (
                     <button
                       key={place}
                       onClick={() => setFilterPlace(place)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
                         filterPlace === place
-                          ? 'bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white shadow-md'
-                          : 'bg-white text-gray-700 border border-gray-200 hover:border-[#0066FF] hover:text-[#0066FF]'
+                          ? 'bg-slate-800 text-white shadow-sm border border-slate-700/30'
+                          : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
                       }`}
                     >
-                      {place}
-                      <span className="ml-1.5 opacity-75">
-                        ({players.filter(p => p.place === place).length})
-                      </span>
+                      {place} ({players.filter(p => p.place === place).length})
                     </button>
                   ))}
                 </div>
@@ -359,22 +366,22 @@ export default function RealPlayersPage() {
           </div>
 
           {/* Desktop Table */}
-          <div className="hidden md:block overflow-x-auto rounded-xl">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50/50">
+          <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-200/60 bg-white">
+            <table className="min-w-full divide-y divide-slate-100 text-sm font-mono">
+              <thead className="bg-slate-50 text-slate-500">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Player ID</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Name</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Place</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Phone</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider">Player ID</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider">Name</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider">Place</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider">Phone</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider">
                     <button
                       onClick={() => {
                         if (sortByDob === 'none') setSortByDob('year');
                         else if (sortByDob === 'year') setSortByDob('birthday');
                         else setSortByDob('none');
                       }}
-                      className="flex items-center gap-1 hover:text-[#0066FF] transition-colors"
+                      className="flex items-center gap-1 hover:text-amber-600 transition-colors uppercase font-bold text-xs"
                       title={
                         sortByDob === 'none' 
                           ? 'Click to sort by year (oldest first)' 
@@ -385,94 +392,87 @@ export default function RealPlayersPage() {
                     >
                       Date of Birth
                       {sortByDob === 'year' && (
-                        <span className="flex items-center gap-0.5 text-[#0066FF]">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span className="flex items-center gap-0.5 text-amber-605">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                          <span className="text-[10px] font-bold">Y</span>
+                          <span className="text-[9px] font-bold">Y</span>
                         </span>
                       )}
                       {sortByDob === 'birthday' && (
-                        <span className="flex items-center gap-0.5 text-green-600">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span className="flex items-center gap-0.5 text-emerald-600">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                           </svg>
-                          <span className="text-[10px] font-bold">B</span>
+                          <span className="text-[9px] font-bold">B</span>
                         </span>
                       )}
                       {sortByDob === 'none' && (
-                        <svg className="w-4 h-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                         </svg>
                       )}
                     </button>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Created</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Actions</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider">Created</th>
+                  <th className="px-5 py-3 text-right text-xs font-bold uppercase tracking-wider w-28">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white/30">
+              <tbody className="divide-y divide-slate-100 bg-white text-slate-750">
                 {filteredPlayers.map((player) => (
-                  <tr key={player.player_id} className="hover:bg-white/60 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-mono text-[#0066FF] font-medium">{player.player_id}</span>
+                  <tr key={player.player_id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-5 py-3.5 whitespace-nowrap">
+                      <span className="text-xs font-mono text-amber-600 font-semibold">{player.player_id}</span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         {player.photo_url && (
                           <img 
                             src={player.photo_url} 
                             alt={player.name}
-                            className="w-10 h-10 rounded-full object-cover border-2 border-white shadow"
+                            className="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm"
                           />
                         )}
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{player.name}</div>
+                          <div className="text-sm font-bold text-slate-800">{player.name}</div>
                           {player.display_name && player.display_name !== player.name && (
-                            <div className="text-xs text-gray-500">{player.display_name}</div>
+                            <div className="text-[10px] text-slate-400">({player.display_name})</div>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-5 py-3.5 whitespace-nowrap">
                       {player.place ? (
-                        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-purple-100 text-purple-800">
-                          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
+                        <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded bg-purple-50 border border-purple-200 text-purple-700">
                           {player.place}
                         </span>
                       ) : (
-                        <span className="text-gray-400 text-sm">-</span>
+                        <span className="text-slate-400 text-xs">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {player.phone || <span className="text-gray-400">-</span>}
+                    <td className="px-5 py-3.5 whitespace-nowrap text-xs text-slate-700">
+                      {player.phone || <span className="text-slate-400">-</span>}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-5 py-3.5 whitespace-nowrap">
                       {(() => {
                         const dobValue = player.dob || player.date_of_birth;
                         if (dobValue) {
                           return (
-                            <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800">
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
+                            <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded bg-blue-50 border border-blue-200 text-blue-700">
                               {formatDOB(dobValue)}
                             </span>
                           );
                         }
-                        return <span className="text-gray-400 text-sm">-</span>;
+                        return <span className="text-slate-400 text-xs">-</span>;
                       })()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                    <td className="px-5 py-3.5 whitespace-nowrap text-xs text-slate-400">
                       {formatDate(player.created_at)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-5 py-3.5 whitespace-nowrap text-right">
                       <Link
                         href={`/dashboard/superadmin/realplayers/${player.player_id}`}
-                        className="inline-flex items-center px-3 py-1.5 bg-[#0066FF] text-white text-xs font-medium rounded-lg hover:bg-[#0066FF]/90 transition-colors"
+                        className="inline-flex items-center px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition-all shadow-sm"
                       >
                         View Details
                       </Link>
@@ -486,42 +486,35 @@ export default function RealPlayersPage() {
           {/* Mobile Cards */}
           <div className="md:hidden space-y-4">
             {filteredPlayers.map((player) => (
-              <div key={player.player_id} className="bg-white/30 rounded-xl p-4 border border-gray-100">
-                <div className="flex items-start gap-3 mb-3">
+              <div key={player.player_id} className="p-4 bg-slate-50 border border-slate-200/60 rounded-xl space-y-3 shadow-sm">
+                <div className="flex items-start gap-3">
                   {player.photo_url && (
                     <img 
                       src={player.photo_url} 
                       alt={player.name}
-                      className="w-12 h-12 rounded-full object-cover border-2 border-white shadow"
+                      className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm"
                     />
                   )}
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{player.name}</h3>
+                  <div className="flex-grow min-w-0">
+                    <h3 className="font-bold text-slate-800 truncate">{player.name}</h3>
                     {player.display_name && player.display_name !== player.name && (
-                      <p className="text-xs text-gray-500">{player.display_name}</p>
+                      <p className="text-[10px] text-slate-400">{player.display_name}</p>
                     )}
-                    <p className="text-xs font-mono text-[#0066FF] mt-1">{player.player_id}</p>
+                    <p className="text-xs font-mono text-amber-600 mt-0.5">{player.player_id}</p>
                   </div>
                 </div>
                 
-                <div className="space-y-2 text-sm mb-3">
+                <div className="space-y-2 text-xs">
                   {player.place && (
                     <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      <span className="text-gray-600">Place:</span>
-                      <span className="font-medium">{player.place}</span>
+                      <span className="text-slate-400">Place:</span>
+                      <span className="font-semibold text-slate-705">{player.place}</span>
                     </div>
                   )}
                   {player.phone && (
                     <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                      <span className="text-gray-600">Phone:</span>
-                      <span className="font-medium">{player.phone}</span>
+                      <span className="text-slate-400">Phone:</span>
+                      <span className="font-semibold text-slate-705">{player.phone}</span>
                     </div>
                   )}
                   {(() => {
@@ -529,11 +522,8 @@ export default function RealPlayersPage() {
                     if (dobValue) {
                       return (
                         <div className="flex items-center gap-2">
-                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-gray-600">DOB:</span>
-                          <span className="font-medium">{formatDOB(dobValue)}</span>
+                          <span className="text-slate-400">DOB:</span>
+                          <span className="font-semibold text-slate-700">{formatDOB(dobValue)}</span>
                         </div>
                       );
                     }
@@ -543,7 +533,7 @@ export default function RealPlayersPage() {
 
                 <Link
                   href={`/dashboard/superadmin/realplayers/${player.player_id}`}
-                  className="block w-full text-center px-4 py-2 bg-[#0066FF] text-white text-sm font-medium rounded-lg hover:bg-[#0066FF]/90 transition-colors"
+                  className="block w-full text-center px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
                 >
                   View Details
                 </Link>
@@ -552,12 +542,12 @@ export default function RealPlayersPage() {
           </div>
 
           {filteredPlayers.length === 0 && (
-            <div className="text-center py-12">
-              <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center py-12 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
+              <svg className="w-12 h-12 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zm-4 7a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <h3 className="text-xl font-medium text-gray-600 mb-2">No players found</h3>
-              <p className="text-gray-500">Try adjusting your search</p>
+              <h3 className="text-lg font-bold text-slate-800 mb-1">No players found</h3>
+              <p className="text-xs text-slate-500 font-mono">Try adjusting your search query or place filter</p>
             </div>
           )}
         </div>

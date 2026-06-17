@@ -1,10 +1,10 @@
+'use client';
+
 import { Info, Trophy } from 'lucide-react';
 /**
  * Fantasy H2H (Head-to-Head) Page
  * View H2H standings, current matchup, and fixture history
  */
-
-'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';

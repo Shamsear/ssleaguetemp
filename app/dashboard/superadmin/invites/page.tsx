@@ -22,18 +22,18 @@ import {
   User, 
   Check, 
   ExternalLink, 
-  Eye, 
-  Settings, 
   ArrowLeft, 
   Clock, 
   UserCheck, 
   Users, 
-  CheckCircle2, 
-  KeyRound, 
   Copy, 
   X, 
-  Activity,
-  RefreshCw 
+  RefreshCw,
+  CopyCheck,
+  ShieldCheck,
+  CalendarCheck,
+  Send,
+  AlertCircle
 } from 'lucide-react';
 
 interface SeasonAdmin {
@@ -142,7 +142,10 @@ export default function AdminInvites() {
     }
     if (!loading && user && user.role === 'super_admin') {
       loadData();
-      setupRealTimeListeners();
+      const unsubscribe = setupRealTimeListeners();
+      return () => {
+        if (unsubscribe) unsubscribe();
+      };
     }
   }, [user, loading, router]);
   
@@ -189,7 +192,6 @@ export default function AdminInvites() {
       console.error('Error listening to users:', error);
     });
     
-    // Cleanup on unmount
     return () => {
       unsubscribeInvites();
       unsubscribeUsers();
@@ -246,7 +248,7 @@ export default function AdminInvites() {
         user.username
       );
       
-      // Reset form and close form (no reload needed - real-time listeners will update)
+      // Reset form and close form
       setFormData({
         seasonId: formData.seasonId,
         description: '',
@@ -274,8 +276,6 @@ export default function AdminInvites() {
     try {
       setError(null);
       await deleteAdminInvite(inviteCode);
-      
-      // No reload needed - real-time listeners will update
       alert('Invite deleted successfully!');
     } catch (err: any) {
       console.error('Error deleting invite:', err);
@@ -310,10 +310,11 @@ export default function AdminInvites() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-950 text-slate-100 animate-pulse">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
-          <p className="mt-4 text-slate-400 font-mono text-sm">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono text-slate-800">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Syncing Invite Registry...</p>
         </div>
       </div>
     );
@@ -324,342 +325,327 @@ export default function AdminInvites() {
   }
 
   return (
-    <div className="min-h-screen py-6 sm:py-10 px-4 sm:px-6 bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-950 text-slate-100 animate-fade-in">
-      <div className="container mx-auto max-w-screen-2xl">
-        
-        {/* Page Header */}
-        <header className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-white/10 pb-8">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/dashboard/superadmin')}
-              className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 transition-all duration-300 hover:scale-105"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shadow-inner hidden sm:flex">
-                <Link2 className="w-8 h-8" />
-              </div>
-              <div>
-                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent mb-2">
-                  Admin Invitations
-                </h1>
-                <p className="text-slate-400 text-sm font-mono">Create and manage committee admin invitation links</p>
-              </div>
-            </div>
-          </div>
+    <div className="space-y-8 animate-fade-in font-mono">
+      
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
+        <div className="flex items-center gap-4">
           <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold rounded-2xl text-white bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 group w-full md:w-auto justify-center"
+            onClick={() => router.push('/dashboard/superadmin')}
+            className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-all flex-shrink-0 shadow-sm"
+            title="Back to Dashboard"
           >
-            <PlusCircle className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-200" />
-            {showCreateForm ? 'Cancel' : 'Create Invite'}
+            <ArrowLeft className="w-5 h-5" />
           </button>
-        </header>
-
-        {/* Season-Based Admin Overview */}
-        <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md shadow-xl mb-8">
-          <div className="px-6 py-5 bg-white/5 border-b border-white/10">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
-                <Users className="w-5 h-5 text-indigo-400" />
-                Season Administrators
-              </h3>
-              {seasonAdmins.length > 0 && (
-                <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
-                  {seasonAdmins.length} Seasons
-                </span>
-              )}
-            </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-850 uppercase tracking-wider">
+              Admin Invitations
+            </h1>
+            <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
+              Generate secure onboarding links for incoming season committee members.
+            </p>
           </div>
-          
-          {seasonAdmins.length > 0 ? (
-            <div className="divide-y divide-white/5">
-              {seasonAdmins.map((season) => (
-                <div key={season.seasonId}>
-                  {/* Season Header */}
-                  <div className="px-6 py-4 bg-white/5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mr-3">
-                          <Calendar className="w-4 h-4 text-indigo-400" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-slate-200">{season.seasonName} ({season.seasonYear})</h4>
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-1 font-mono">
-                            {season.isActive ? (
-                              <span className="flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
-                                Active Season
-                              </span>
-                            ) : (
-                              <span className="flex items-center px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-400 border border-slate-500/20 text-[10px] font-bold">
-                                Previous Season
-                              </span>
-                            )}
-                            <span>{season.activeInvites} Active Invites</span>
-                            <span>{season.usedInvites} Used Invites</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Admins List */}
-                  {season.admins.map((admin, idx) => (
-                    <div key={idx} className="px-6 py-3 pl-16 border-l-2 border-indigo-500/20 ml-6 hover:bg-white/5 transition-all">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mr-3">
-                            <UserCheck className="w-3.5 h-3.5 text-indigo-400" />
-                          </div>
-                          <div>
-                            <span className="font-bold text-slate-200 text-sm">{admin.username}</span>
-                            <div className="flex items-center space-x-2 text-[10px] text-slate-400 font-mono mt-0.5">
-                              <span>{admin.email}</span>
-                              {admin.isActive ? (
-                                <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Active</span>
-                              ) : (
-                                <span className="px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">Inactive</span>
-                              )}
-                              <span>Joined: {formatDate(admin.createdAt).split(',')[0]}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="px-8 py-20 text-center">
-              <div className="max-w-sm mx-auto">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center">
-                  <Settings className="w-10 h-10 text-indigo-400" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-200 mb-2">No Season Data Found</h3>
-                <p className="text-slate-400 text-xs font-sans mb-6">Create seasons and invite administrators to get started.</p>
-              </div>
-            </div>
-          )}
         </div>
+        <button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono font-bold transition-all border cursor-pointer ${
+            showCreateForm
+              ? 'bg-rose-50 border-rose-250 text-rose-700 hover:bg-rose-100 shadow-sm'
+              : 'bg-slate-800 hover:bg-slate-900 text-white border-slate-950 shadow-sm'
+          }`}
+        >
+          {showCreateForm ? (
+            <>
+              <X className="w-4 h-4" />
+              Cancel Form
+            </>
+          ) : (
+            <>
+              <PlusCircle className="w-4 h-4" />
+              Generate New Link
+            </>
+          )}
+        </button>
+      </div>
 
-        {/* Active Invites */}
-        <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md shadow-xl">
-          <div className="px-6 py-5 bg-white/5 border-b border-white/10">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
-                <Link2 className="w-5 h-5 text-indigo-400" />
-                Active Invitations
-              </h3>
-              {invites.filter(inv => inv.isActive && inv.usedCount < inv.maxUses).length > 0 && (
-                <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
-                  {invites.filter(inv => inv.isActive && inv.usedCount < inv.maxUses).length} Active
-                </span>
-              )}
-            </div>
+      {/* Error Notification */}
+      {error && (
+        <div className="console-card bg-white border border-rose-200/60 rounded-2xl p-4 text-rose-700 font-mono text-xs flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
+          <p>{error}</p>
+        </div>
+      )}
+
+      {/* Create Invite Form Banner */}
+      {showCreateForm && (
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm animate-fade-in space-y-4">
+          <div className="flex items-center gap-2">
+            <Send className="w-4 h-4 text-amber-500" />
+            <h3 className="text-sm font-mono font-bold text-slate-800 uppercase tracking-wider">Invitation Code Parameters</h3>
           </div>
           
-          {/* Create Invite Form */}
-          {showCreateForm && (
-            <div className="border-b border-white/10 animate-fade-in">
-              <form onSubmit={handleCreateInvite} className="p-6 space-y-4 bg-white/5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="group">
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
-                      Season *
-                    </label>
-                    <select
-                      value={formData.seasonId}
-                      onChange={(e) => setFormData({ ...formData, seasonId: e.target.value })}
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-white/10 bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-200 transition-all font-sans"
-                      required
-                    >
-                      <option value="">Select season</option>
-                      {seasons.map((season) => (
-                        <option key={season.id} value={season.id}>
-                          {season.name} ({season.year}) {season.isActive ? '✓' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div className="group">
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
-                      Description
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-white/10 bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-200 transition-all font-sans placeholder-slate-600"
-                      placeholder="Brief description"
-                    />
-                  </div>
-                  
-                  <div className="group">
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
-                      Max Uses
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.maxUses}
-                      onChange={(e) => setFormData({ ...formData, maxUses: parseInt(e.target.value) || 1 })}
-                      min="1"
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-white/10 bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-200 transition-all font-mono"
-                    />
-                  </div>
-                  
-                  <div className="group">
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
-                      Expires (Hours)
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.expiresInHours}
-                      onChange={(e) => setFormData({ ...formData, expiresInHours: parseInt(e.target.value) || 24 })}
-                      min="1"
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-white/10 bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-200 transition-all font-mono"
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex justify-end space-x-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateForm(false)}
-                    className="px-4 py-2 border border-white/10 text-xs font-semibold uppercase tracking-wider rounded-xl text-slate-300 bg-white/5 hover:bg-white/10 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isCreating || !formData.seasonId}
-                    className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl text-white bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
-                  >
-                    {isCreating ? (
-                      <>
-                        <RefreshCw className="animate-spin w-3.5 h-3.5 mr-1.5" />
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
-                        Create
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
+          <form onSubmit={handleCreateInvite} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-[10px] font-mono font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Target Season *</label>
+              <select
+                value={formData.seasonId}
+                onChange={(e) => setFormData({ ...formData, seasonId: e.target.value })}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400/50 focus:outline-none focus:ring-1 focus:ring-amber-400/20 text-slate-800 font-mono text-xs transition-all font-bold"
+                required
+              >
+                <option value="">Select season...</option>
+                {seasons.map((season) => (
+                  <option key={season.id} value={season.id}>
+                    {season.name} ({season.year}) {season.isActive ? '• Active' : ''}
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
-          
-          {invites.filter(inv => inv.isActive && inv.usedCount < inv.maxUses).length > 0 || showCreateForm ? (
-            <div className="divide-y divide-white/5">
-              {invites.filter(inv => inv.isActive && inv.usedCount < inv.maxUses).map((invite) => (
-                <div key={invite.id} className="px-6 py-5 hover:bg-white/5 transition-all duration-200 group">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center mb-3">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mr-3 shadow-inner animate-pulse">
-                          <Link2 className="w-5 h-5 text-indigo-400" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-lg font-bold text-slate-200 group-hover:text-indigo-400 transition-colors">
-                            {invite.description || 'Admin Invitation'}
-                            {invite.seasonName && <span className="text-xs font-normal text-slate-400 ml-2">for {invite.seasonName}</span>}
-                          </h4>
-                          <div className="flex flex-wrap items-center gap-4 text-xs mt-1">
-                            <span className={`flex items-center px-3 py-1 rounded-full border ${seasons.find(s => s.id === invite.seasonId)?.isActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
-                              <Calendar className="w-3.5 h-3.5 mr-1.5 text-slate-500" />
-                              <span className="font-bold">{invite.seasonName}</span>
-                              {invite.seasonYear && <span className="ml-1 opacity-75 font-mono">({invite.seasonYear})</span>}
-                              {seasons.find(s => s.id === invite.seasonId)?.isActive && (
-                                <span className="ml-2 inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500 text-white uppercase tracking-wider">
-                                  Active
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-4 text-[10px] text-slate-400 font-mono mt-3">
-                            <span className="flex items-center">
-                              <User className="w-3.5 h-3.5 mr-1 text-slate-500" />
-                              Created by: {invite.createdByUsername}
-                            </span>
-                            <span className="flex items-center">
-                              <Clock className="w-3.5 h-3.5 mr-1 text-slate-500" />
-                              Expires: {formatDate(invite.expiresAt)}
-                            </span>
-                            <span className="flex items-center">
-                              <Settings className="w-3.5 h-3.5 mr-1 text-slate-500" />
-                              Uses: {invite.usedCount}/{invite.maxUses}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Invite URL Display */}
-                      <div className="bg-white/5 rounded-2xl p-4 border border-white/10 mt-3 shadow-inner">
-                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Invitation URL</label>
-                        <div className="flex items-center space-x-2 flex-wrap gap-2">
-                          <input
-                            type="text"
-                            readOnly
-                            value={getInviteUrl(invite.code, invite.seasonId)}
-                            onClick={(e) => e.currentTarget.select()}
-                            className="flex-1 min-w-0 text-xs bg-slate-900 border border-white/10 rounded-xl px-3 py-2 font-mono text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                          />
-                          {invite.usedCount < invite.maxUses && (
-                            <button
-                              onClick={() => copyToClipboard(getInviteUrl(invite.code, invite.seasonId), invite.id)}
-                              className="inline-flex items-center px-3 py-2 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-                            >
-                              <Copy className="w-3.5 h-3.5 mr-1" />
-                              {copiedUrl === invite.id ? 'Copied!' : 'Copy'}
-                            </button>
-                          )}
-                          <a
-                            href={getInviteUrl(invite.code, invite.seasonId)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-2 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5 mr-1" />
-                            Test
-                          </a>
-                          <button
-                            onClick={() => handleDeleteInvite(invite.code, invite.description || 'Unnamed invite', invite.seasonName || 'Unknown Season')}
-                            className="inline-flex items-center px-3 py-2 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 mr-1" />
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+
+            <div>
+              <label className="block text-[10px] font-mono font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Reference Label / Name</label>
+              <input
+                type="text"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400/50 focus:outline-none focus:ring-1 focus:ring-amber-400/20 text-slate-800 font-mono text-xs transition-all font-bold placeholder-slate-400"
+                placeholder="e.g. Finance Officer Invite"
+              />
             </div>
-          ) : (
-            <div className="px-8 py-20 text-center animate-fade-in">
-              <div className="max-w-sm mx-auto">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center animate-pulse">
-                  <Link2 className="w-10 h-10 text-indigo-400" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-200 mb-2">No Active Invitations</h3>
-                <p className="text-slate-400 text-xs font-sans mb-6">Create invitation codes to allow new administrators to join the system.</p>
+
+            <div>
+              <label className="block text-[10px] font-mono font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Maximum Uses</label>
+              <input
+                type="number"
+                value={formData.maxUses}
+                onChange={(e) => setFormData({ ...formData, maxUses: parseInt(e.target.value) || 1 })}
+                min="1"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400/50 focus:outline-none focus:ring-1 focus:ring-amber-400/20 text-slate-800 font-mono text-xs transition-all font-bold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-mono font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Expiration Lifetime (Hours)</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  value={formData.expiresInHours}
+                  onChange={(e) => setFormData({ ...formData, expiresInHours: parseInt(e.target.value) || 24 })}
+                  min="1"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400/50 focus:outline-none focus:ring-1 focus:ring-amber-400/20 text-slate-800 font-mono text-xs transition-all font-bold"
+                />
                 <button
-                  onClick={() => setShowCreateForm(true)}
-                  className="inline-flex items-center px-4 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider hover:bg-indigo-500/20 transition-all duration-200"
+                  type="submit"
+                  disabled={isCreating || !formData.seasonId}
+                  className="px-5 bg-slate-800 hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed text-white font-mono text-xs font-bold rounded-xl transition-all flex items-center justify-center flex-shrink-0 gap-1.5 shadow-sm cursor-pointer"
                 >
-                  <PlusCircle className="w-4 h-4 mr-2" />
-                  Create First Invite
+                  {isCreating ? (
+                    <RefreshCw className="animate-spin w-3.5 h-3.5" />
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      Generate
+                    </>
+                  )}
                 </button>
               </div>
             </div>
-          )}
+          </form>
         </div>
+      )}
+
+      {/* Dashboard Content Split Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* Left Panel: Active Invite Code Registry (col-span-7) */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm">
+            <div className="px-6 py-5 bg-slate-50/55 border-b border-slate-200/60 flex items-center justify-between">
+              <h3 className="text-sm font-mono font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <Link2 className="w-4 h-4 text-amber-500" />
+                Active Link Registry
+              </h3>
+              <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200/60 text-slate-700 text-xs font-mono font-semibold">
+                {invites.filter(inv => inv.isActive && inv.usedCount < inv.maxUses).length} Unused Codes
+              </span>
+            </div>
+
+            {invites.filter(inv => inv.isActive && inv.usedCount < inv.maxUses).length > 0 ? (
+              <div className="divide-y divide-slate-100">
+                {invites.filter(inv => inv.isActive && inv.usedCount < inv.maxUses).map((invite) => (
+                  <div key={invite.id} className="p-6 hover:bg-slate-50/30 transition-all duration-200 space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-bold text-slate-800 font-mono">
+                          {invite.description || 'Committee Admin Invite'}
+                        </h4>
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-550 font-mono">
+                          <span className="inline-flex items-center gap-1">
+                            <User className="w-3 h-3 text-slate-400" />
+                            By: {invite.createdByUsername}
+                          </span>
+                          <span className="w-1 h-1 rounded-full bg-slate-200" />
+                          <span className="inline-flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-slate-400" />
+                            Expires: {formatDate(invite.expiresAt)}
+                          </span>
+                          <span className="w-1 h-1 rounded-full bg-slate-200" />
+                          <span className="inline-flex items-center gap-1">
+                            <Users className="w-3 h-3 text-slate-400" />
+                            Uses: {invite.usedCount}/{invite.maxUses}
+                          </span>
+                        </div>
+                      </div>
+
+                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase border ${
+                        seasons.find(s => s.id === invite.seasonId)?.isActive
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                          : 'bg-slate-100 text-slate-600 border border-slate-200'
+                      }`}>
+                        {invite.seasonName}
+                      </span>
+                    </div>
+
+                    {/* URL Actions Row */}
+                    <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={getInviteUrl(invite.code, invite.seasonId)}
+                        onClick={(e) => e.currentTarget.select()}
+                        className="flex-1 min-w-0 bg-transparent border-none outline-none font-mono text-[11px] text-slate-650 px-2 py-1 select-all font-bold"
+                      />
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <button
+                          onClick={() => copyToClipboard(getInviteUrl(invite.code, invite.seasonId), invite.id)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-mono text-xs font-semibold transition-all shadow-sm cursor-pointer"
+                        >
+                          {copiedUrl === invite.id ? (
+                            <>
+                              <CopyCheck className="w-3.5 h-3.5" />
+                              Copied
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              Copy
+                            </>
+                          )}
+                        </button>
+                        <a
+                          href={getInviteUrl(invite.code, invite.seasonId)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-all shadow-sm"
+                          title="Test Link"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                        <button
+                          onClick={() => handleDeleteInvite(invite.code, invite.description || 'Unnamed invite', invite.seasonName || 'Unknown Season')}
+                          className="p-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 hover:text-rose-700 transition-all cursor-pointer"
+                          title="Revoke / Delete Link"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-12 text-center space-y-4 bg-slate-50/50">
+                <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200/60 flex items-center justify-center mx-auto shadow-sm">
+                  <Link2 className="w-6 h-6 text-slate-400" />
+                </div>
+                <div>
+                  <h4 className="text-slate-800 font-bold">No active links found</h4>
+                  <p className="text-xs text-slate-500 font-mono mt-1 uppercase">
+                    Start by generating a secure invite URL for this season's administrators.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Panel: Season Administrators Directory (col-span-5) */}
+        <div className="lg:col-span-5 space-y-6">
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm">
+            <div className="px-6 py-5 bg-slate-50/55 border-b border-slate-200/60 flex items-center justify-between">
+              <h3 className="text-sm font-mono font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <Users className="w-4 h-4 text-amber-500" />
+                Season Committee Members
+              </h3>
+            </div>
+
+            {seasonAdmins.length > 0 ? (
+              <div className="divide-y divide-slate-100">
+                {seasonAdmins.map((season) => (
+                  <div key={season.seasonId} className="p-4 space-y-3">
+                    {/* Season Identity Card */}
+                    <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                      <div className="flex items-center gap-2.5">
+                        <CalendarCheck className="w-4 h-4 text-amber-500" />
+                        <span className="text-xs font-bold text-slate-800 font-mono">
+                          {season.seasonName} ({season.seasonYear})
+                        </span>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase border ${
+                        season.isActive
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-slate-100 text-slate-500 border border-slate-200'
+                      }`}>
+                        {season.isActive ? 'Active' : 'Archived'}
+                      </span>
+                    </div>
+
+                    {/* Admins Nested List */}
+                    {season.admins.length > 0 ? (
+                      <div className="space-y-2 pl-3">
+                        {season.admins.map((admin, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 hover:bg-slate-50/40 rounded-xl transition-all">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0">
+                                <UserCheck className="w-3.5 h-3.5 text-slate-600" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-800 truncate">{admin.username}</p>
+                                <p className="text-[10px] text-slate-550 font-mono truncate">{admin.email}</p>
+                              </div>
+                            </div>
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold border ${
+                              admin.isActive
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                : 'bg-rose-50 text-rose-700 border-rose-100'
+                            }`}>
+                              {admin.isActive ? 'Active' : 'Banned'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-500 font-mono italic pl-3 uppercase">No committee administrators enrolled.</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-12 text-center space-y-4 bg-slate-50/50">
+                <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200/60 flex items-center justify-center mx-auto shadow-sm">
+                  <ShieldCheck className="w-6 h-6 text-slate-400" />
+                </div>
+                <div>
+                  <h4 className="text-slate-800 font-bold">No Admin Assignments</h4>
+                  <p className="text-xs text-slate-550 font-mono mt-1 uppercase">
+                    Once administrators register with codes, they'll appear listed here by season.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
       </div>
     </div>
   );

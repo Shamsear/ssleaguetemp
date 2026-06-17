@@ -1,11 +1,11 @@
+'use client';
+
 import { CrystalBallIcon } from '@/components/ui/CustomIcons';
 import { Info, Pencil } from 'lucide-react';
 /**
  * Fantasy Predictions List Page
  * View all rounds and access prediction submission
  */
-
-'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';

@@ -434,10 +434,13 @@ export default function EditSeasonDataPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading season data...</p>
+      <div className="flex items-center justify-center pt-32">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
+          </div>
+          <p className="text-slate-500 font-mono text-xs tracking-widest uppercase animate-pulse">Loading season data...</p>
         </div>
       </div>
     );
@@ -448,32 +451,32 @@ export default function EditSeasonDataPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 py-4 px-4">
-      <div className="container mx-auto max-w-screen-2xl">
+    <div className="space-y-6 animate-fade-in font-mono">
+      <div className="space-y-6">
         {/* Header */}
         <div className="mb-6">
-          <div className="glass rounded-2xl p-6 shadow-xl backdrop-blur-md border border-white/30">
+          <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl">
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => router.push(`/dashboard/superadmin/historical-seasons/${seasonId}`)}
-                  className="group p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all duration-300 hover:shadow-md"
+                  className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-950 transition-all shadow-sm flex-shrink-0"
                 >
-                  <svg className="w-5 h-5 text-gray-600 group-hover:text-[#0066FF] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-slate-500 group-hover:text-[#0066FF] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
                 <div className="flex items-center gap-3">
-                  <div className="p-3 bg-gradient-to-r from-[#0066FF] to-purple-600 rounded-xl">
+                  <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
                     </svg>
                   </div>
                   <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#0066FF] to-purple-600 bg-clip-text text-transparent">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
                       📊 Excel-Style Data Editor
                     </h1>
-                    <p className="text-sm text-gray-600 mt-1">Edit teams and players with all columns visible</p>
+                    <p className="text-sm text-slate-500 mt-1">Edit teams and players with all columns visible</p>
                   </div>
                 </div>
               </div>
@@ -481,11 +484,7 @@ export default function EditSeasonDataPage() {
               <button
                 onClick={handleSaveAll}
                 disabled={isSaving}
-                className={`px-6 py-3 rounded-xl font-medium text-white transition-all transform hover:scale-105 ${
-                  isSaving
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl'
-                }`}
+                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5"
               >
                 {isSaving ? (
                   <div className="flex items-center gap-2">
@@ -500,7 +499,7 @@ export default function EditSeasonDataPage() {
 
             {/* Messages */}
             {successMessage && (
-              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="mt-4 p-4 bg-emerald-50 border border-emerald-250 text-emerald-700 rounded-xl text-xs font-semibold flex items-center gap-3">
                 <div className="flex items-center gap-2 text-green-800">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
@@ -511,7 +510,7 @@ export default function EditSeasonDataPage() {
             )}
 
             {error && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="mt-4 p-4 bg-rose-50 border border-rose-250 text-rose-705 rounded-xl text-xs font-semibold flex items-center gap-3">
                 <div className="flex items-center gap-2 text-red-800">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -524,14 +523,14 @@ export default function EditSeasonDataPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="glass rounded-t-2xl p-3 shadow-xl backdrop-blur-md border border-white/30 border-b-0">
+        <div className="console-card bg-white border border-slate-200/60 rounded-t-2xl p-3 shadow-sm border-b-0">
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab('teams')}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${
                 activeTab === 'teams'
-                  ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg'
-                  : 'bg-white/60 text-gray-700 hover:bg-white/80'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900'
               }`}
             >
               <span>🏆</span>
@@ -541,8 +540,8 @@ export default function EditSeasonDataPage() {
               onClick={() => setActiveTab('players')}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${
                 activeTab === 'players'
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-                  : 'bg-white/60 text-gray-700 hover:bg-white/80'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900'
               }`}
             >
               <span>👤</span>
@@ -552,108 +551,108 @@ export default function EditSeasonDataPage() {
         </div>
 
         {/* Search Bar */}
-        <div className="glass rounded-b-none border-t-0 p-4 shadow-xl backdrop-blur-md border border-white/30">
+        <div className="console-card bg-white border border-slate-200/60 p-4 shadow-sm border-t-0 border-b-0">
           <div className="relative">
             <input
               type="text"
               placeholder={`Search ${activeTab}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 font-mono text-xs transition-all placeholder-slate-400"
             />
-            <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
         </div>
 
         {/* Content */}
-        <div className="glass rounded-b-2xl shadow-xl backdrop-blur-md border border-white/30 border-t-0 overflow-hidden">
+        <div className="console-card bg-white border border-slate-200/60 rounded-b-2xl shadow-sm border-t-0 overflow-hidden">
           {activeTab === 'teams' ? (
             <div className="overflow-x-auto">
               <table className="min-w-full">
-                <thead className="bg-gradient-to-r from-orange-50 to-orange-100/80 sticky top-0 z-10">
+                <thead className="bg-slate-50 sticky top-0 z-10 text-slate-600 border-b border-slate-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200">#</th>
-                    <th onClick={() => handleSort('season_stats.rank')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200 min-w-[80px] cursor-pointer hover:bg-orange-200/50">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200">#</th>
+                    <th onClick={() => handleSort('season_stats.rank')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         Rank
                         {sortConfig?.key === 'season_stats.rank' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('team_name')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200 min-w-[200px] cursor-pointer hover:bg-orange-200/50">
+                    <th onClick={() => handleSort('team_name')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[200px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         Team
                         {sortConfig?.key === 'team_name' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('owner_name')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200 min-w-[150px] cursor-pointer hover:bg-orange-200/50">
+                    <th onClick={() => handleSort('owner_name')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[150px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         Owner Name
                         {sortConfig?.key === 'owner_name' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('season_stats.p')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200 min-w-[80px] cursor-pointer hover:bg-orange-200/50">
+                    <th onClick={() => handleSort('season_stats.p')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         P
                         {sortConfig?.key === 'season_stats.p' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('season_stats.mp')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200 min-w-[80px] cursor-pointer hover:bg-orange-200/50">
+                    <th onClick={() => handleSort('season_stats.mp')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         MP
                         {sortConfig?.key === 'season_stats.mp' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('season_stats.w')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200 min-w-[80px] cursor-pointer hover:bg-orange-200/50">
+                    <th onClick={() => handleSort('season_stats.w')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         W
                         {sortConfig?.key === 'season_stats.w' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('season_stats.d')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200 min-w-[80px] cursor-pointer hover:bg-orange-200/50">
+                    <th onClick={() => handleSort('season_stats.d')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         D
                         {sortConfig?.key === 'season_stats.d' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('season_stats.l')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200 min-w-[80px] cursor-pointer hover:bg-orange-200/50">
+                    <th onClick={() => handleSort('season_stats.l')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         L
                         {sortConfig?.key === 'season_stats.l' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('season_stats.f')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200 min-w-[80px] cursor-pointer hover:bg-orange-200/50">
+                    <th onClick={() => handleSort('season_stats.f')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         F
                         {sortConfig?.key === 'season_stats.f' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('season_stats.a')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200 min-w-[80px] cursor-pointer hover:bg-orange-200/50">
+                    <th onClick={() => handleSort('season_stats.a')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         A
                         {sortConfig?.key === 'season_stats.a' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('season_stats.gd')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200 min-w-[80px] cursor-pointer hover:bg-orange-200/50">
+                    <th onClick={() => handleSort('season_stats.gd')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         GD
                         {sortConfig?.key === 'season_stats.gd' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('season_stats.percentage')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200 min-w-[100px] cursor-pointer hover:bg-orange-200/50">
+                    <th onClick={() => handleSort('season_stats.percentage')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[100px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         Percentage
                         {sortConfig?.key === 'season_stats.percentage' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('season_stats.cup')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-orange-200 min-w-[120px] cursor-pointer hover:bg-orange-200/50">
+                    <th onClick={() => handleSort('season_stats.cup')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[120px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         Cup
                         {sortConfig?.key === 'season_stats.cup' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('season_stats.players_count')} className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[120px] cursor-pointer hover:bg-orange-200/50">
+                    <th onClick={() => handleSort('season_stats.players_count')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider min-w-[120px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         Players Count
                         {sortConfig?.key === 'season_stats.players_count' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
@@ -661,119 +660,119 @@ export default function EditSeasonDataPage() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white/50 divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-slate-100 text-slate-700">
                   {sortedTeams.map((team, index) => (
-                    <tr key={team.id} className="hover:bg-orange-50/30 transition-colors">
-                      <td className="px-4 py-3 text-sm text-gray-600 border-r border-gray-200">{index + 1}</td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                    <tr key={team.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-4 py-3 text-sm text-slate-500 border-r border-slate-100">{index + 1}</td>
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={team.season_stats?.rank || 0}
                           onChange={(e) => updateTeamField(team.id, 'season_stats.rank', e.target.value)}
                           onPaste={(e) => handleTeamPaste(e, team.id, 'season_stats.rank', index)}
                           onFocus={(e) => e.target.select()}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="text"
                           value={team.team_name}
                           onChange={(e) => updateTeamField(team.id, 'team_name', e.target.value)}
                           onPaste={(e) => handleTeamPaste(e, team.id, 'team_name', index)}
                           onFocus={(e) => e.target.select()}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-medium"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono font-medium transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="text"
                           value={team.owner_name || ''}
                           onChange={(e) => updateTeamField(team.id, 'owner_name', e.target.value)}
                           onPaste={(e) => handleTeamPaste(e, team.id, 'owner_name', index)}
                           onFocus={(e) => e.target.select()}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={team.season_stats?.p || 0}
                           onChange={(e) => updateTeamField(team.id, 'season_stats.p', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={team.season_stats?.mp || 0}
                           onChange={(e) => updateTeamField(team.id, 'season_stats.mp', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={team.season_stats?.w || 0}
                           onChange={(e) => updateTeamField(team.id, 'season_stats.w', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={team.season_stats?.d || 0}
                           onChange={(e) => updateTeamField(team.id, 'season_stats.d', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={team.season_stats?.l || 0}
                           onChange={(e) => updateTeamField(team.id, 'season_stats.l', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={team.season_stats?.f || 0}
                           onChange={(e) => updateTeamField(team.id, 'season_stats.f', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={team.season_stats?.a || 0}
                           onChange={(e) => updateTeamField(team.id, 'season_stats.a', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={team.season_stats?.gd || 0}
                           onChange={(e) => updateTeamField(team.id, 'season_stats.gd', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           step="0.01"
                           value={team.season_stats?.percentage || 0}
                           onChange={(e) => updateTeamField(team.id, 'season_stats.percentage', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="text"
                           value={team.season_stats?.cup || ''}
                           onChange={(e) => updateTeamField(team.id, 'season_stats.cup', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -783,7 +782,7 @@ export default function EditSeasonDataPage() {
                           onChange={(e) => updateTeamField(team.id, 'season_stats.players_count', e.target.value)}
                           onPaste={(e) => handleTeamPaste(e, team.id, 'season_stats.players_count', index)}
                           onFocus={(e) => e.target.select()}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
                     </tr>
@@ -800,66 +799,66 @@ export default function EditSeasonDataPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full">
-                <thead className="bg-gradient-to-r from-blue-50 to-blue-100/80 sticky top-0 z-10">
+                <thead className="bg-slate-50 sticky top-0 z-10 text-slate-600 border-b border-slate-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200">#</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[180px]">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[150px]">Team</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[100px]">Category</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[100px]">Goals Scored</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[120px]">Goals Per Game</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[120px]">Goals Conceded</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[130px]">Conceded Per Game</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[100px]">Net Goals</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[110px]">Clean Sheets</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[80px]">POTM</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[80px]">Points</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[80px]">Win</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[80px]">Draw</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[80px]">Loss</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[120px]">Total Matches</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[110px]">Total Points</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[150px]">Category Trophy 1</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[150px]">Category Trophy 2</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-blue-200 min-w-[160px]">Individual Trophy 1</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[160px]">Individual Trophy 2</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200">#</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[180px]">Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[150px]">Team</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[100px]">Category</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[100px]">Goals Scored</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[120px]">Goals Per Game</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[120px]">Goals Conceded</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[130px]">Conceded Per Game</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[100px]">Net Goals</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[110px]">Clean Sheets</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px]">POTM</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px]">Points</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px]">Win</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px]">Draw</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[80px]">Loss</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[120px]">Total Matches</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[110px]">Total Points</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[150px]">Category Trophy 1</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[150px]">Category Trophy 2</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[160px]">Individual Trophy 1</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider min-w-[160px]">Individual Trophy 2</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white/50 divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-slate-100 text-slate-700">
                   {sortedPlayers.map((player, index) => (
-                    <tr key={player.id} className="hover:bg-blue-50/30 transition-colors">
-                      <td className="px-4 py-3 text-sm text-gray-600 border-r border-gray-200">{index + 1}</td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                    <tr key={player.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-4 py-3 text-sm text-slate-500 border-r border-slate-100">{index + 1}</td>
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="text"
                           value={player.name}
                           onChange={(e) => updatePlayerField(player.id, 'name', e.target.value)}
                           onPaste={(e) => handlePlayerPaste(e, player.id, 'name', index)}
                           onFocus={(e) => e.target.select()}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-medium"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono font-medium transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="text"
                           value={player.team || ''}
                           onChange={(e) => updatePlayerField(player.id, 'team', e.target.value)}
                           onPaste={(e) => handlePlayerPaste(e, player.id, 'team', index)}
                           onFocus={(e) => e.target.select()}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="text"
                           value={player.category || ''}
                           onChange={(e) => updatePlayerField(player.id, 'category', e.target.value)}
                           onPaste={(e) => handlePlayerPaste(e, player.id, 'category', index)}
                           onFocus={(e) => e.target.select()}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           step="0.01"
@@ -867,133 +866,133 @@ export default function EditSeasonDataPage() {
                           onChange={(e) => updatePlayerField(player.id, 'stats.goals_scored', e.target.value)}
                           onPaste={(e) => handlePlayerPaste(e, player.id, 'stats.goals_scored', index)}
                           onFocus={(e) => e.target.select()}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           step="0.01"
                           value={player.stats?.goals_per_game || 0}
                           onChange={(e) => updatePlayerField(player.id, 'stats.goals_per_game', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           step="0.01"
                           value={player.stats?.goals_conceded || 0}
                           onChange={(e) => updatePlayerField(player.id, 'stats.goals_conceded', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           step="0.01"
                           value={player.stats?.conceded_per_game || 0}
                           onChange={(e) => updatePlayerField(player.id, 'stats.conceded_per_game', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           step="0.01"
                           value={player.stats?.net_goals || 0}
                           onChange={(e) => updatePlayerField(player.id, 'stats.net_goals', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={player.stats?.cleansheets || player.stats?.clean_sheets || 0}
                           onChange={(e) => updatePlayerField(player.id, 'stats.cleansheets', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={player.stats?.potm || 0}
                           onChange={(e) => updatePlayerField(player.id, 'stats.potm', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           step="0.01"
                           value={player.stats?.points || 0}
                           onChange={(e) => updatePlayerField(player.id, 'stats.points', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={player.stats?.win || 0}
                           onChange={(e) => updatePlayerField(player.id, 'stats.win', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={player.stats?.draw || 0}
                           onChange={(e) => updatePlayerField(player.id, 'stats.draw', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={player.stats?.loss || 0}
                           onChange={(e) => updatePlayerField(player.id, 'stats.loss', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           value={player.stats?.total_matches || 0}
                           onChange={(e) => updatePlayerField(player.id, 'stats.total_matches', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="number"
                           step="0.01"
                           value={player.stats?.total_points || 0}
                           onChange={(e) => updatePlayerField(player.id, 'stats.total_points', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="text"
                           value={player.category_wise_trophy_1 || ''}
                           onChange={(e) => updatePlayerField(player.id, 'category_wise_trophy_1', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="text"
                           value={player.category_wise_trophy_2 || ''}
                           onChange={(e) => updatePlayerField(player.id, 'category_wise_trophy_2', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="text"
                           value={player.individual_wise_trophy_1 || ''}
                           onChange={(e) => updatePlayerField(player.id, 'individual_wise_trophy_1', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -1001,7 +1000,7 @@ export default function EditSeasonDataPage() {
                           type="text"
                           value={player.individual_wise_trophy_2 || ''}
                           onChange={(e) => updatePlayerField(player.id, 'individual_wise_trophy_2', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
                     </tr>
@@ -1019,14 +1018,14 @@ export default function EditSeasonDataPage() {
         </div>
 
         {/* Info Banner */}
-        <div className="mt-6 glass rounded-xl p-4 border border-blue-200/50 bg-gradient-to-r from-blue-50/50 to-indigo-50/30">
+        <div className="mt-6 glass rounded-xl p-4 border border-slate-200/50 bg-gradient-to-r from-blue-50/50 to-indigo-50/30">
           <div className="flex items-start gap-3">
             <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
               <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <div className="text-sm text-gray-700">
+            <div className="text-sm text-slate-600">
               <p className="font-semibold mb-1">💡 Excel-Style Editing Tips:</p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>All fields are directly editable - click any cell to modify</li>

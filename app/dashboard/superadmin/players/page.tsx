@@ -410,495 +410,415 @@ export default function PlayersManagement() {
   }
 
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-4">
-      <div className="container mx-auto max-w-screen-2xl">
-        {/* Page Header */}
-        <header className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <button
-              onClick={() => router.push('/dashboard/superadmin')}
-              className="p-2 rounded-xl hover:bg-white/50 transition-colors"
-            >
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h1 className="text-3xl md:text-4xl font-bold gradient-text">Player Database</h1>
+    <div className="space-y-8 animate-fade-in font-mono">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/dashboard/superadmin')}
+            className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-950 transition-all flex-shrink-0 shadow-sm"
+            title="Back to Dashboard"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              Player Database
+            </h1>
+            <p className="text-xs text-slate-500 font-mono mt-1">
+              Manage all players in the system, edit details, and run bulk operations.
+            </p>
           </div>
-          <p className="text-gray-600 text-sm md:text-base ml-14">Manage all players in the system</p>
-        </header>
+        </div>
+      </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-            <div className="flex items-start">
-              <svg className="w-5 h-5 text-red-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <p className="text-sm text-red-800 font-medium">Error loading players data</p>
-                <p className="text-xs text-red-700 mt-1">{error}</p>
-              </div>
-              <button
-                onClick={() => setError(null)}
-                className="ml-auto text-red-600 hover:text-red-800"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+      {/* Error Alert */}
+      {error && (
+        <div className="rounded-2xl p-4 bg-rose-50 border border-rose-200 text-rose-700 font-mono text-xs flex items-center gap-3">
+          <svg className="w-5 h-5 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p className="font-bold">Error loading players data</p>
+            <p className="mt-0.5">{error}</p>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="ml-auto text-rose-500 hover:text-rose-750"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Statistics Section */}
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
+            <div className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider">Total Players</div>
+            <div className="text-2xl font-extrabold text-slate-800 mt-1">{stats.totalPlayers}</div>
+          </div>
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
+            <div className="text-[10px] font-mono font-semibold text-emerald-600 uppercase tracking-wider">Registered Players</div>
+            <div className="text-2xl font-extrabold text-emerald-600 mt-1">{stats.registeredPlayers}</div>
+          </div>
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
+            <div className="text-[10px] font-mono font-semibold text-amber-600 uppercase tracking-wider">Unregistered Players</div>
+            <div className="text-2xl font-extrabold text-amber-600 mt-1">{stats.unregisteredPlayers}</div>
+          </div>
+        </div>
+
+        {/* Season Breakdown */}
+        {seasonsWithPlayers.length > 0 && (
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
+            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 mb-4">Players by Season Breakdown</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {seasonsWithPlayers.map((season) => (
+                season.playerCount > 0 && (
+                  <div key={season.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 hover:border-slate-350 transition-all">
+                    <p className="text-xs text-slate-405 font-mono">Season</p>
+                    <p className="text-sm font-bold text-slate-800 mt-0.5">{season.name}</p>
+                    <p className="text-lg font-extrabold text-amber-600 mt-2 font-mono">{season.playerCount} players</p>
+                  </div>
+                )
+              ))}
             </div>
           </div>
         )}
+      </div>
 
-        {/* Statistics Section */}
-        <div className="glass rounded-3xl p-4 sm:p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
-          <h2 className="text-xl font-bold gradient-text mb-6">Player Statistics</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="glass p-6 rounded-xl bg-white/10 shadow-sm border border-gray-100/20 hover:shadow-md transition-shadow">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zm-4 7a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Players</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.totalPlayers}</dd>
-                  </dl>
-                </div>
-              </div>
+      {/* Forms Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Bulk Import */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-slate-805 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Bulk Import Players
+            </h2>
+            <div className="rounded-xl p-4 mb-6 bg-slate-50 border border-slate-200/60 text-xs text-slate-600 space-y-2">
+              <p className="font-bold text-slate-700">Import Instructions:</p>
+              <ul className="list-disc list-inside space-y-1 pl-1">
+                <li><strong>Download Template:</strong> Get all existing players for local editing.</li>
+                <li><strong>Edit Names:</strong> Set names in the CSV file row-by-row.</li>
+                <li><strong>Add Players:</strong> Leave player_id blank for new players (auto-generated ID).</li>
+                <li><strong>Format:</strong> Supports standard CSV files.</li>
+              </ul>
             </div>
-            
-            <div className="glass p-6 rounded-xl bg-white/10 shadow-sm border border-gray-100/20 hover:shadow-md transition-shadow">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Registered Players</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.registeredPlayers}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-            
-            <div className="glass p-6 rounded-xl bg-white/10 shadow-sm border border-gray-100/20 hover:shadow-md transition-shadow">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Unregistered Players</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.unregisteredPlayers}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Season Breakdown */}
-          {seasonsWithPlayers.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Players by Season</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {seasonsWithPlayers.map((season) => (
-                  season.playerCount > 0 && (
-                    <div key={season.id} className="glass p-3 rounded-lg bg-white/20">
-                      <p className="text-sm font-medium text-gray-700">{season.name}</p>
-                      <p className="text-lg font-bold text-[#0066FF]">{season.playerCount} players</p>
-                    </div>
-                  )
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={handleDownloadTemplate}
+                className="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-700 transition-all shadow-sm"
+              >
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
+                Download CSV Template
+              </button>
+              <p className="text-[10px] text-slate-400 mt-2 font-mono">
+                {stats.totalPlayers > 0 
+                  ? `Exports all ${stats.totalPlayers} existing records`
+                  : 'Downloads a sample CSV structure'}
+              </p>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Bulk Import Section */}
-        <div className="glass rounded-3xl p-4 sm:p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
-          <h2 className="text-xl font-bold gradient-text mb-6">Bulk Import Players</h2>
-          
-          <div className="bg-blue-50/50 rounded-lg p-4 mb-6 border border-blue-100">
-            <div className="flex items-start">
-              <svg className="w-5 h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <p className="text-sm text-blue-800 mb-2"><strong>Import Instructions:</strong></p>
-                <ul className="text-xs text-blue-700 list-disc list-inside space-y-1">
-                  <li><strong>Download Template:</strong> Click below to export all existing players with their IDs and names</li>
-                  <li><strong>Edit Names:</strong> Update player names in the CSV file as needed</li>
-                  <li><strong>Add New Players:</strong> Add new rows with empty player_id to create new players</li>
-                  <li><strong>Player IDs:</strong> Existing players must keep their player_id. New players will get auto-generated IDs</li>
-                  <li><strong>Supported formats:</strong> Excel (.xlsx, .xls) or CSV files</li>
-                </ul>
-              </div>
+          <form onSubmit={handleFileUpload} className="space-y-4">
+            <div>
+              <label htmlFor="player_file" className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                Select Player File (CSV)
+              </label>
+              <input
+                type="file"
+                id="player_file"
+                accept=".csv"
+                onChange={handleFileChange}
+                required
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 transition-all font-mono text-xs"
+              />
             </div>
-          </div>
-          
-          {/* Download Template Button */}
-          <div className="mb-6">
             <button
-              onClick={handleDownloadTemplate}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              type="submit"
+              disabled={uploading || !selectedFile}
+              className="w-full px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-              </svg>
-              Download CSV Template
+              {uploading ? (
+                <>
+                  <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing file...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  Import Players List
+                </>
+              )}
             </button>
-            <p className="text-xs text-gray-500 mt-2">
-              {stats.totalPlayers > 0 
-                ? `Exports all ${stats.totalPlayers} existing players for editing`
-                : 'Downloads a sample template with example player names'}
-            </p>
-          </div>
-          
-          <form onSubmit={handleFileUpload} className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
-              <div className="flex-grow w-full">
-                <label htmlFor="player_file" className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Player File
-                </label>
-                <input
-                  type="file"
-                  id="player_file"
-                  accept=".xlsx,.xls,.csv"
-                  onChange={handleFileChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
-                />
-                {selectedFile && (
-                  <p className="mt-2 text-sm text-gray-600">
-                    Selected: <span className="font-medium">{selectedFile.name}</span>
-                  </p>
-                )}
-              </div>
-              <div className="flex-shrink-0 w-full sm:w-auto">
-                <button
-                  type="submit"
-                  disabled={uploading || !selectedFile}
-                  className="w-full sm:w-auto px-6 py-3 bg-[#0066FF] text-white rounded-xl hover:bg-[#0066FF]/90 transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {uploading ? (
-                    <>
-                      <svg className="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                      </svg>
-                      Import Players
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
           </form>
         </div>
 
-        {/* Add Single Player Section */}
-        <div className="glass rounded-3xl p-4 sm:p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
-          <h2 className="text-xl font-bold gradient-text mb-6">Add New Player</h2>
-          
-          <div className="bg-blue-50/50 rounded-lg p-4 mb-6 border border-blue-100">
-            <div className="flex items-start">
-              <svg className="w-5 h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        {/* Add Single Player */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-slate-805 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              <div>
-                <p className="text-sm text-blue-800"><strong>Note:</strong> Only player name is required. Season, team, and other details will be assigned later.</p>
-              </div>
+              Add Single Player
+            </h2>
+            <div className="rounded-xl p-4 mb-6 bg-slate-50 border border-slate-200/60 text-xs text-slate-600">
+              <p className="font-bold text-slate-700">Quick Registration:</p>
+              <p className="mt-1">Only the player's name is required to initialize a record. Team and active league season parameters can be assigned later.</p>
             </div>
           </div>
-          
-          <form onSubmit={handleAddPlayer} className="space-y-6">
+
+          <form onSubmit={handleAddPlayer} className="space-y-4">
             <div>
-              <label htmlFor="player_name" className="block text-sm font-medium text-gray-700 mb-2">
-                Player Name *
+              <label htmlFor="player_name" className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                Player Name
               </label>
               <input
                 type="text"
                 id="player_name"
-                name="player_name"
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
                 required
                 disabled={addingPlayer}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-                placeholder="Enter player name"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 transition-all font-semibold"
+                placeholder="E.g. Kylian Mbappé"
               />
             </div>
-            
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={addingPlayer || !playerName.trim()}
-                className="px-6 py-3 bg-[#0066FF] text-white rounded-xl hover:bg-[#0066FF]/90 transition-colors duration-200 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {addingPlayer ? (
-                  <>
-                    <svg className="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Adding...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Add Player
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={addingPlayer || !playerName.trim()}
+              className="w-full px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+            >
+              {addingPlayer ? (
+                <>
+                  <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Creating player...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Register Player
+                </>
+              )}
+            </button>
           </form>
         </div>
+      </div>
 
-        {/* Players List */}
-        <div className="glass rounded-3xl p-4 sm:p-6 shadow-lg backdrop-blur-md border border-white/20">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            <h2 className="text-xl font-bold gradient-text">All Players</h2>
-            <button
-              onClick={async () => {
-                setLoadingData(true);
-                try {
-                  const allPlayers = await getAllRealPlayers();
-                  setPlayers(allPlayers);
-                  
-                  // Calculate statistics
-                  const playerStats = await getRealPlayerStatistics();
-                  setStats({
-                    totalPlayers: playerStats.totalPlayers,
-                    registeredPlayers: allPlayers.filter(p => p.is_registered).length,
-                    unregisteredPlayers: allPlayers.filter(p => !p.is_registered).length,
-                  });
-                  
-                  // Recalculate seasons with players
-                  const seasonMap = new Map<string, { name: string; count: number }>();
-                  allPlayers.forEach(player => {
-                    if (player.season_id && player.season_name) {
-                      const existing = seasonMap.get(player.season_id);
-                      if (existing) {
-                        existing.count++;
-                      } else {
-                        seasonMap.set(player.season_id, {
-                          name: player.season_name,
-                          count: 1
-                        });
-                      }
-                    }
-                  });
-                  
-                  const seasonsArray = Array.from(seasonMap.entries()).map(([id, data]) => ({
-                    id,
-                    name: data.name,
-                    playerCount: data.count
-                  }));
-                  setSeasonsWithPlayers(seasonsArray);
-                } catch (error) {
-                  console.error('Error refreshing players:', error);
-                  alert('Failed to refresh players data. Please try again.');
-                } finally {
-                  setLoadingData(false);
-                }
-              }}
-              disabled={loadingData}
-              className="inline-flex items-center px-4 py-2 bg-white/50 hover:bg-white/80 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg className={`w-4 h-4 mr-2 ${loadingData ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      {/* Players List */}
+      <div className="console-card bg-white border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-slate-200/60 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+              <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              Refresh
-            </button>
+              Registered Player Registry
+            </h2>
           </div>
-          
-          {/* Search and Filter */}
-          <div className="mb-6 space-y-4">
+          <button
+            onClick={async () => {
+              setLoadingData(true);
+              try {
+                const allPlayers = await getAllRealPlayers();
+                setPlayers(allPlayers);
+                
+                const playerStats = await getRealPlayerStatistics();
+                setStats({
+                  totalPlayers: playerStats.totalPlayers,
+                  registeredPlayers: allPlayers.filter(p => p.is_registered).length,
+                  unregisteredPlayers: allPlayers.filter(p => !p.is_registered).length,
+                });
+                
+                const seasonMap = new Map<string, { name: string; count: number }>();
+                allPlayers.forEach(player => {
+                  if (player.season_id && player.season_name) {
+                    const existing = seasonMap.get(player.season_id);
+                    if (existing) {
+                      existing.count++;
+                    } else {
+                      seasonMap.set(player.season_id, {
+                        name: player.season_name,
+                        count: 1
+                      });
+                    }
+                  }
+                });
+                
+                const seasonsArray = Array.from(seasonMap.entries()).map(([id, data]) => ({
+                  id,
+                  name: data.name,
+                  playerCount: data.count
+                }));
+                setSeasonsWithPlayers(seasonsArray);
+              } catch (error) {
+                console.error('Error refreshing players:', error);
+                alert('Failed to refresh players data. Please try again.');
+              } finally {
+                setLoadingData(false);
+              }
+            }}
+            disabled={loadingData}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200/60 rounded-xl text-xs font-semibold text-slate-700 transition-all shadow-sm"
+          >
+            <svg className={`w-3.5 h-3.5 ${loadingData ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh Table
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Search and Filters */}
+          <div className="flex flex-col gap-4">
             {/* Search Bar */}
-            <div className="flex-grow">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search by name, ID, team, or season..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2.5 pl-10 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
-                />
-                <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by name, ID, team, or season..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-3 pl-10 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 transition-all font-mono text-xs"
+              />
+              <svg className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-            
-            {/* Filter Buttons */}
+
+            {/* Filters Block */}
             <div className="flex flex-col sm:flex-row gap-3">
               {/* Completeness Filter */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFilterCompleteness('all')}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                    filterCompleteness === 'all'
-                      ? 'bg-[#0066FF] text-white'
-                      : 'bg-white/50 text-gray-700 hover:bg-white/80'
-                  }`}
-                >
-                  All Players
-                </button>
-                <button
-                  onClick={() => setFilterCompleteness('complete')}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                    filterCompleteness === 'complete'
-                      ? 'bg-[#0066FF] text-white'
-                      : 'bg-white/50 text-gray-700 hover:bg-white/80'
-                  }`}
-                >
-                  Complete (Team + Season)
-                </button>
-                <button
-                  onClick={() => setFilterCompleteness('incomplete')}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                    filterCompleteness === 'incomplete'
-                      ? 'bg-orange-600 text-white'
-                      : 'bg-white/50 text-gray-700 hover:bg-white/80'
-                  }`}
-                >
-                  Incomplete
-                </button>
+              <div className="p-1 bg-slate-100 border border-slate-200/60 rounded-xl flex gap-1 overflow-x-auto scrollbar-none">
+                {[
+                  { id: 'all', label: 'All Players' },
+                  { id: 'complete', label: 'Complete (Team + Season)' },
+                  { id: 'incomplete', label: 'Incomplete' },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setFilterCompleteness(f.id as any)}
+                    className={`px-4 py-2 rounded-lg text-[11px] font-mono font-bold transition-all whitespace-nowrap ${
+                      filterCompleteness === f.id
+                        ? 'bg-slate-800 text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-805 hover:bg-slate-50'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
               </div>
-              
-              {/* Registration Status Filter */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFilterStatus('all')}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                    filterStatus === 'all'
-                      ? 'bg-gray-700 text-white'
-                      : 'bg-white/50 text-gray-700 hover:bg-white/80'
-                  }`}
-                >
-                  All Status
-                </button>
-                <button
-                  onClick={() => setFilterStatus('registered')}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                    filterStatus === 'registered'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white/50 text-gray-700 hover:bg-white/80'
-                  }`}
-                >
-                  Registered
-                </button>
-                <button
-                  onClick={() => setFilterStatus('unregistered')}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                    filterStatus === 'unregistered'
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-white/50 text-gray-700 hover:bg-white/80'
-                  }`}
-                >
-                  Pending
-                </button>
+
+              {/* Status Filter */}
+              <div className="p-1 bg-slate-100 border border-slate-200/60 rounded-xl flex gap-1 overflow-x-auto scrollbar-none">
+                {[
+                  { id: 'all', label: 'All Status' },
+                  { id: 'registered', label: 'Registered' },
+                  { id: 'unregistered', label: 'Pending' },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setFilterStatus(f.id as any)}
+                    className={`px-4 py-2 rounded-lg text-[11px] font-mono font-bold transition-all whitespace-nowrap ${
+                      filterStatus === f.id
+                        ? 'bg-slate-800 text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-805 hover:bg-slate-50'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
-          
-          {/* Results count */}
+
+          {/* Results Count */}
           {players.length > 0 && (
-            <div className="mb-4 text-sm text-gray-600">
-              Showing <span className="font-semibold text-gray-800">{filteredPlayers.length}</span> of <span className="font-semibold text-gray-800">{players.length}</span> players
+            <div className="text-xs text-slate-505 font-mono">
+              Showing <span className="font-bold text-slate-800">{filteredPlayers.length}</span> of <span className="font-bold text-slate-800">{players.length}</span> players
             </div>
           )}
-          
+
           {filteredPlayers.length > 0 ? (
             <>
               {/* Desktop Table */}
-              <div className="hidden md:block overflow-x-auto rounded-xl shadow-sm">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50/50">
+              <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-200/60 bg-white shadow-sm">
+                <table className="min-w-full divide-y divide-slate-100 text-sm font-mono">
+                  <thead className="bg-slate-50 text-slate-500">
                     <tr>
-                      <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Player ID</th>
-                      <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
-                      <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Team</th>
-                      <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Season</th>
-                      <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                      <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created</th>
+                      <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider">Player ID</th>
+                      <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider">Name</th>
+                      <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider">Team</th>
+                      <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider">Season</th>
+                      <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider">Status</th>
+                      <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider">Created</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white/30">
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
                     {filteredPlayers.map((player) => (
-                      <tr key={player.id} className="hover:bg-white/60 transition-colors">
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          <span className="text-sm font-mono text-[#0066FF] font-medium">{player.player_id}</span>
+                      <tr key={player.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-5 py-4 whitespace-nowrap text-amber-600 font-semibold text-xs">
+                          {player.player_id}
                         </td>
                         <td className="px-5 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-800">{player.name}</div>
+                          <div className="font-bold text-slate-850">{player.name}</div>
                           {player.display_name && (
-                            <div className="text-xs text-gray-500">({player.display_name})</div>
+                            <div className="text-[10px] text-slate-400">({player.display_name})</div>
+                          )}
+                        </td>
+                        <td className="px-5 py-4 whitespace-nowrap text-xs">
+                          {player.team_name ? (
+                            <span className="font-semibold text-slate-800">{player.team_name}</span>
+                          ) : player.team ? (
+                            <span className="text-slate-500">{player.team}</span>
+                          ) : (
+                            <span className="text-slate-400">No team</span>
                           )}
                         </td>
                         <td className="px-5 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-700">
-                            {player.team_name ? (
-                              <span className="font-medium">{player.team_name}</span>
-                            ) : player.team ? (
-                              <span className="text-gray-500">{player.team}</span>
-                            ) : (
-                              <span className="text-gray-400">No team</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-5 py-4 whitespace-nowrap">
                           {player.season_name ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 border border-emerald-200 text-emerald-700">
                               {player.season_name}
                             </span>
                           ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-50 border border-slate-200 text-slate-505">
                               No season
                             </span>
                           )}
                         </td>
                         <td className="px-5 py-4 whitespace-nowrap">
                           {player.is_registered ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 border border-emerald-200 text-emerald-700">
                               Registered
                             </span>
                           ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-800">
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-50 border border-amber-200 text-amber-700">
                               Pending
                             </span>
                           )}
                         </td>
-                        <td className="px-5 py-4 whitespace-nowrap text-xs text-gray-500">
+                        <td className="px-5 py-4 whitespace-nowrap text-xs text-slate-400">
                           {formatDate(player.created_at)}
                         </td>
                       </tr>
@@ -910,42 +830,39 @@ export default function PlayersManagement() {
               {/* Mobile Cards */}
               <div className="md:hidden space-y-4">
                 {filteredPlayers.map((player) => (
-                  <div key={player.id} className="bg-white/30 backdrop-blur-sm rounded-xl shadow-sm p-4 border border-gray-100">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="text-base font-semibold text-gray-800">{player.name}</h3>
-                        {player.display_name && (
-                          <p className="text-xs text-gray-500">({player.display_name})</p>
-                        )}
-                        <p className="text-sm font-mono text-[#0066FF]">{player.player_id}</p>
-                      </div>
+                  <div key={player.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/60 shadow-sm space-y-3">
+                    <div>
+                      <div className="font-bold text-slate-805">{player.name}</div>
+                      {player.display_name && (
+                        <div className="text-[10px] text-slate-400">({player.display_name})</div>
+                      )}
+                      <div className="text-xs font-semibold text-amber-605 font-mono mt-1">{player.player_id}</div>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="text-gray-600">Team:</span>{' '}
+                        <span className="text-slate-400">Team:</span>{' '}
                         {player.team_name ? (
-                          <span className="font-medium">{player.team_name}</span>
+                          <span className="font-semibold text-slate-700">{player.team_name}</span>
                         ) : player.team ? (
-                          <span className="text-gray-500">{player.team}</span>
+                          <span className="text-slate-500">{player.team}</span>
                         ) : (
-                          <span className="text-gray-400">No team</span>
+                          <span className="text-slate-400">None</span>
                         )}
                       </div>
                       <div>
-                        <span className="text-gray-600">Season:</span>{' '}
+                        <span className="text-slate-400">Season:</span>{' '}
                         {player.season_name ? (
-                          <span className="text-green-600">{player.season_name}</span>
+                          <span className="text-emerald-700 font-semibold">{player.season_name}</span>
                         ) : (
-                          <span className="text-gray-400">No season</span>
+                          <span className="text-slate-400">None</span>
                         )}
                       </div>
-                      <div>
-                        <span className="text-gray-600">Status:</span>{' '}
+                      <div className="col-span-2">
+                        <span className="text-slate-400">Status:</span>{' '}
                         {player.is_registered ? (
-                          <span className="text-green-600">Registered</span>
+                          <span className="text-emerald-700 font-semibold">Registered</span>
                         ) : (
-                          <span className="text-amber-600">Pending</span>
+                          <span className="text-amber-700 font-semibold">Pending</span>
                         )}
                       </div>
                     </div>
@@ -954,12 +871,12 @@ export default function PlayersManagement() {
               </div>
             </>
           ) : (
-            <div className="text-center py-12">
-              <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center py-12 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
+              <svg className="w-12 h-12 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zm-4 7a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <h3 className="text-xl font-medium text-gray-600 mb-2">No players found</h3>
-              <p className="text-gray-500 mb-4">Start by importing players using the bulk import feature above</p>
+              <h3 className="text-lg font-bold text-slate-805 mb-1">No players found</h3>
+              <p className="text-xs text-slate-500 font-mono">Import player records or search with different filters.</p>
             </div>
           )}
         </div>

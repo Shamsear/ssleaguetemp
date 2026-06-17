@@ -4,6 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { ArrowLeft } from 'lucide-react';
+
 
 interface ImportStep {
   name: string;
@@ -179,7 +181,7 @@ function ImportProgressContent() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'running':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-amber-700';
       case 'completed':
         return 'bg-green-100 text-green-800';
       case 'failed':
@@ -192,9 +194,9 @@ function ImportProgressContent() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
-        return <div className="w-6 h-6 rounded-full bg-gray-300"></div>;
+        return <div className="w-5 h-5 rounded-full bg-slate-200 border border-slate-300"></div>;
       case 'running':
-        return <div className="w-6 h-6 rounded-full bg-blue-500 animate-pulse"></div>;
+        return <div className="w-5 h-5 rounded-full bg-amber-500 border border-amber-600 animate-pulse"></div>;
       case 'completed':
         return (
           <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,11 +217,11 @@ function ImportProgressContent() {
   const getStepBorderClass = (status: string) => {
     switch (status) {
       case 'running':
-        return 'border-blue-200 bg-blue-50';
+        return 'border-amber-200 bg-amber-500/5';
       case 'completed':
-        return 'border-green-200 bg-green-50';
+        return 'border-emerald-200 bg-emerald-50/20';
       case 'failed':
-        return 'border-red-200 bg-red-50';
+        return 'border-rose-200 bg-rose-50/20';
       default:
         return 'border-gray-200';
     }
@@ -227,10 +229,13 @@ function ImportProgressContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="flex items-center justify-center pt-32">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
+          </div>
+          <p className="text-slate-550 font-mono text-xs tracking-widest uppercase animate-pulse">Checking import status...</p>
         </div>
       </div>
     );
@@ -257,43 +262,41 @@ function ImportProgressContent() {
   }
 
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-4">
-      <div className="container mx-auto max-w-screen-xl">
-        {/* Page Header */}
-        <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2">🏆 Season Import in Progress</h1>
-              <p className="text-gray-600 text-sm md:text-base">Importing historical season data to database</p>
-            </div>
-            <div className="flex items-center">
-              <div className={`flex items-center px-3 py-2 rounded-lg ${getStatusColor(progress.status)}`}>
-                {progress.status === 'running' && (
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                )}
-                <span className="font-medium">
-                  {progress.status === 'running' && 'Processing...'}
-                  {progress.status === 'completed' && 'Completed!'}
-                  {progress.status === 'failed' && 'Failed'}
-                </span>
-              </div>
-            </div>
+    <div className="space-y-8 animate-fade-in font-mono">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            Season Import in Progress
+          </h1>
+          <p className="text-xs text-slate-505 font-mono mt-1">
+            Importing historical season data records to the database.
+          </p>
+        </div>
+        <div className="flex items-center">
+          <div className={`flex items-center px-3 py-1.5 rounded-xl text-xs font-bold border ${getStatusColor(progress.status)}`}>
+            {progress.status === 'running' && (
+              <span className="w-3.5 h-3.5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin mr-2"></span>
+            )}
+            <span>
+              {progress.status === 'running' && 'Processing...'}
+              {progress.status === 'completed' && 'Completed!'}
+              {progress.status === 'failed' && 'Failed'}
+            </span>
           </div>
         </div>
+      </div>
 
         {/* Overall Progress */}
-        <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
+        <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-semibold text-gray-800">Overall Progress</h2>
-              <span className="text-2xl font-bold text-[#0066FF]">{progress.overall_progress}%</span>
+              <span className="text-2xl font-bold text-amber-600">{progress.overall_progress}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-4">
               <div
-                className="bg-gradient-to-r from-[#0066FF] to-[#0066FF]/80 h-4 rounded-full transition-all duration-500 ease-out"
+                className="bg-amber-500 h-4 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${progress.overall_progress}%` }}
               ></div>
             </div>
@@ -313,9 +316,9 @@ function ImportProgressContent() {
         </div>
 
         {/* Detailed Steps */}
-        <div className="glass rounded-3xl shadow-lg backdrop-blur-md border border-white/20 overflow-hidden mb-8">
-          <div className="px-6 py-5 bg-gradient-to-r from-[#0066FF]/5 to-[#0066FF]/10 border-b border-[#0066FF]/20">
-            <h3 className="text-xl font-semibold text-[#0066FF] flex items-center">
+        <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl shadow-lg backdrop-blur-md border border-white/20 overflow-hidden mb-8">
+          <div className="px-6 py-5 bg-slate-50 border-b border-slate-200/60">
+            <h3 className="text-xl font-semibold text-amber-600 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
               </svg>
@@ -331,7 +334,7 @@ function ImportProgressContent() {
                     {getStatusIcon(step.status)}
                   </div>
                   <div className="flex-grow">
-                    <h4 className={`font-medium ${step.status === 'running' ? 'text-blue-800' : step.status === 'completed' ? 'text-green-800' : step.status === 'failed' ? 'text-red-800' : 'text-gray-600'}`}>
+                    <h4 className={`font-medium ${step.status === 'running' ? 'text-amber-700' : step.status === 'completed' ? 'text-green-800' : step.status === 'failed' ? 'text-red-800' : 'text-gray-600'}`}>
                       {step.name}
                     </h4>
                     <p className="text-sm text-gray-600">{step.description}</p>
@@ -347,7 +350,7 @@ function ImportProgressContent() {
                       <div className="w-16">
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
-                            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                            className="bg-amber-500 h-2 rounded-full transition-all duration-300"
                             style={{ width: `${step.progress}%` }}
                           ></div>
                         </div>
@@ -362,7 +365,7 @@ function ImportProgressContent() {
 
         {/* Import Summary */}
         {progress.summary && progress.status === 'completed' && (
-          <div className="glass rounded-3xl p-6 shadow-lg backdrop-blur-md border border-white/20 mb-8">
+          <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-6 shadow-lg backdrop-blur-md border border-white/20 mb-8">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -401,7 +404,7 @@ function ImportProgressContent() {
           <div className="flex justify-center">
             <button
               onClick={() => router.push('/dashboard/superadmin/historical-seasons')}
-              className="inline-flex items-center px-6 py-3 bg-[#0066FF] hover:bg-[#0066FF]/90 text-white text-sm font-medium rounded-lg transition-colors shadow-lg"
+              className="inline-flex items-center px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg transition-colors shadow-lg"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -414,7 +417,7 @@ function ImportProgressContent() {
         {progress.status === 'failed' && (
           <div className="space-y-6">
             {/* Error Alert */}
-            <div className="glass rounded-2xl p-6 bg-red-50/50 border border-red-200">
+            <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-6 bg-red-50/50 border border-red-200">
               <div className="flex items-start">
                 <svg className="w-6 h-6 text-red-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -497,7 +500,6 @@ function ImportProgressContent() {
           </div>
         )}
       </div>
-    </div>
   );
 }
 
@@ -505,10 +507,13 @@ export default function HistoricalSeasonImportProgress() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading...</p>
+        <div className="flex items-center justify-center pt-32">
+          <div className="text-center space-y-4">
+            <div className="relative w-16 h-16 mx-auto">
+              <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
+              <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
+            </div>
+            <p className="text-slate-550 font-mono text-xs tracking-widest uppercase animate-pulse">Initializing progress stream...</p>
           </div>
         </div>
       }

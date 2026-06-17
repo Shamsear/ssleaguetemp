@@ -265,7 +265,7 @@ export default function Login() {
                     autoComplete="off"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
+                    className="pl-12 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
                     placeholder="Enter your username"
                   />
                 </div>
@@ -295,7 +295,7 @@ export default function Login() {
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
+                    className="pl-12 pr-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
                     placeholder="Enter your password"
                   />
                   <button

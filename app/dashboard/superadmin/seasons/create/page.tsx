@@ -12,7 +12,10 @@ import {
   Users, 
   Percent, 
   PlusCircle, 
-  Activity 
+  Activity,
+  AlertCircle,
+  Shield,
+  FileText
 } from 'lucide-react';
 
 export default function CreateSeason() {
@@ -93,10 +96,13 @@ export default function CreateSeason() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-950 text-slate-100 animate-pulse">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
-          <p className="mt-4 text-slate-400 font-mono text-sm">Loading...</p>
+      <div className="flex items-center justify-center pt-32">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
+          </div>
+          <p className="text-slate-500 font-mono text-xs tracking-widest uppercase animate-pulse">Preparing Wizard...</p>
         </div>
       </div>
     );
@@ -107,258 +113,274 @@ export default function CreateSeason() {
   }
 
   return (
-    <div className="min-h-screen py-6 sm:py-10 px-4 sm:px-6 bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-950 text-slate-100 animate-fade-in font-sans">
-      <div className="container mx-auto max-w-4xl">
+    <div className="space-y-8 animate-fade-in font-mono">
+      
+      {/* Page Header */}
+      <div className="flex items-center gap-4 pb-6 border-b border-slate-200/60">
+        <button
+          type="button"
+          onClick={() => router.push('/dashboard/superadmin/seasons')}
+          className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-950 transition-all flex-shrink-0 shadow-sm"
+          title="Back to Seasons"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            Initialize New Season
+          </h1>
+          <p className="text-xs text-slate-500 font-mono mt-1">
+            Set up rules, budgets, and validation parameters for drafts.
+          </p>
+        </div>
+      </div>
+
+      {/* Errors display */}
+      {error && (
+        <div className="rounded-2xl p-4 bg-rose-50 border border-rose-200 text-rose-700 font-mono text-xs flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0" />
+          <p>{error}</p>
+        </div>
+      )}
+
+      {/* Wizard Form Wrapper */}
+      <form onSubmit={handleSubmit} className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl overflow-hidden space-y-0">
         
-        {/* Page Header */}
-        <header className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-white/10 pb-8">
-          <div className="flex items-center gap-4">
+        <div className="px-8 py-5 border-b border-slate-200/60 bg-slate-50/50 flex items-center gap-2.5">
+          <Settings className="w-5 h-5 text-slate-500" />
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700">
+            Season Configuration Parameters
+          </span>
+        </div>
+
+        <div className="p-8 space-y-8">
+          
+          {/* Form Fields Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Season Number */}
+            <div className="space-y-2">
+              <label htmlFor="seasonNumber" className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                Season Identifier Number *
+              </label>
+              <input
+                type="number"
+                name="seasonNumber"
+                id="seasonNumber"
+                value={formData.seasonNumber}
+                onChange={handleChange}
+                min="1"
+                max="999"
+                className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
+                placeholder="e.g., 16"
+                required
+              />
+              <p className="text-[10px] text-slate-450 font-mono">
+                Name will compile as: <span className="text-amber-600 font-semibold">{formData.seasonNumber ? `Season ${formData.seasonNumber}` : 'Season X'}</span>
+              </p>
+            </div>
+
+            {/* Year */}
+            <div className="space-y-2">
+              <label htmlFor="year" className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                Season Year Calendar *
+              </label>
+              <input
+                type="text"
+                name="year"
+                id="year"
+                value={formData.year}
+                onChange={handleChange}
+                className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
+                placeholder="e.g., 2026"
+                required
+              />
+              <p className="text-[10px] text-slate-450 font-mono">Compact year identification for stats mapping</p>
+            </div>
+
+          </div>
+
+            {/* Season Type Selection */}
+            <div className="space-y-3">
+              <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                Bidding System Engine Type *
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* Single Currency Option */}
+                <div
+                  onClick={() => setFormData({ ...formData, type: 'single' })}
+                  className={`cursor-pointer p-5 rounded-2xl border transition-all duration-200 ${
+                    formData.type === 'single'
+                      ? 'border-amber-500 bg-amber-500/5 shadow-sm'
+                      : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-bold text-slate-800 text-xs font-mono uppercase">Single Currency</h4>
+                    {formData.type === 'single' && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-mono leading-relaxed">
+                    Standard bidding engine with one global balance (e.g. legacy seasons 1-15).
+                  </p>
+                </div>
+
+                {/* Multi Currency Option */}
+                <div
+                  onClick={() => setFormData({ ...formData, type: 'multi' })}
+                  className={`cursor-pointer p-5 rounded-2xl border transition-all duration-200 ${
+                    formData.type === 'multi'
+                      ? 'border-amber-500 bg-amber-500/5 shadow-sm'
+                      : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-bold text-slate-800 text-xs font-mono uppercase">Multi-Currency & Roster Limits</h4>
+                    {formData.type === 'multi' && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-mono leading-relaxed">
+                    Separate Dollar and Euro wallets for domestic/international drafts (Season 16+).
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Advanced Multi-Currency Parameters */}
+            {formData.type === 'multi' && (
+              <div className="p-6 rounded-2xl bg-slate-50/50 border border-slate-200/60 space-y-6 animate-fade-in">
+                <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+                  <Coins className="w-4 h-4 text-amber-600" />
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-700">
+                    Roster and Budget Configuration Limits
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 font-mono text-xs">
+                  
+                  {/* Dollar Budget */}
+                  <div className="space-y-2">
+                    <label className="block text-slate-500 font-bold">Dollar Budget limit ($)</label>
+                    <input
+                      type="number"
+                      value={formData.dollar_budget}
+                      onChange={(e) => setFormData({ ...formData, dollar_budget: parseInt(e.target.value) || 0 })}
+                      className="block w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20"
+                    />
+                    <p className="text-[9px] text-slate-400">Maximum starting balance for local draft rounds.</p>
+                  </div>
+                  
+                  {/* Euro Budget */}
+                  <div className="space-y-2">
+                    <label className="block text-slate-500 font-bold">Euro Budget limit (€)</label>
+                    <input
+                      type="number"
+                      value={formData.euro_budget}
+                      onChange={(e) => setFormData({ ...formData, euro_budget: parseInt(e.target.value) || 0 })}
+                      className="block w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20"
+                    />
+                    <p className="text-[9px] text-slate-400">Maximum starting balance for foreign league drafts.</p>
+                  </div>
+                  
+                  {/* Required Real Players */}
+                  <div className="space-y-2">
+                    <label className="block text-slate-500 font-bold">Required Real Players (Exact)</label>
+                    <input
+                      type="number"
+                      value={formData.required_real_players}
+                      onChange={(e) => setFormData({ ...formData, required_real_players: parseInt(e.target.value) || 0 })}
+                      className="block w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20"
+                    />
+                    <p className="text-[9px] text-slate-400">Number of live human players each squad must own.</p>
+                  </div>
+                  
+                  {/* Max Football Players */}
+                  <div className="space-y-2">
+                    <label className="block text-slate-500 font-bold">Max Roster Players Limit</label>
+                    <input
+                      type="number"
+                      value={formData.max_football_players}
+                      onChange={(e) => setFormData({ ...formData, max_football_players: parseInt(e.target.value) || 0 })}
+                      className="block w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20"
+                    />
+                    <p className="text-[9px] text-slate-400">Absolute maximum size limit of a single team squad roster.</p>
+                  </div>
+                  
+                  {/* Lineup Fine Amount */}
+                  <div className="space-y-2">
+                    <label className="block text-slate-500 font-bold">Lineup Rule Penalty Amount</label>
+                    <input
+                      type="number"
+                      value={formData.category_fine_amount}
+                      onChange={(e) => setFormData({ ...formData, category_fine_amount: parseInt(e.target.value) || 0 })}
+                      className="block w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20"
+                    />
+                    <p className="text-[9px] text-slate-400">Fine assessed to teams for illegal weekly rosters.</p>
+                  </div>
+                  
+                  {/* Lineup Fine Currency */}
+                  <div className="space-y-2">
+                    <label className="block text-slate-500 font-bold">Lineup Penalty Wallet Currency</label>
+                    <select
+                      value={formData.category_fine_currency}
+                      onChange={(e) => setFormData({ ...formData, category_fine_currency: e.target.value as 'dollar' | 'euro' })}
+                      className="block w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20"
+                    >
+                      <option value="dollar">Dollar Wallet ($)</option>
+                      <option value="euro">Euro Wallet (€)</option>
+                    </select>
+                    <p className="text-[9px] text-slate-400">Target wallet for violation penalty collection.</p>
+                  </div>
+
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
+            <div className="space-y-2">
+              <label htmlFor="description" className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                Rules & Description Info <span className="text-slate-400 font-normal lowercase">(optional)</span>
+              </label>
+              <textarea
+                name="description"
+                id="description"
+                rows={4}
+                value={formData.description}
+                onChange={handleChange}
+                className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 text-xs resize-none"
+                placeholder="Include details about draft format, rules, tournament timelines, or registration details..."
+              />
+              <p className="text-[10px] text-slate-400 font-mono">Will be shown in detail view cards to all managers.</p>
+            </div>
+
+          </div>
+
+          {/* Form Actions */}
+          <div className="px-8 py-5 border-t border-slate-200/60 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
             <button
               type="button"
               onClick={() => router.push('/dashboard/superadmin/seasons')}
-              className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 transition-all duration-300 hover:scale-105"
+              className="w-full sm:w-auto px-6 py-2.5 bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-700 text-xs font-mono font-bold rounded-xl transition-all shadow-sm"
             >
-              <ArrowLeft className="w-5 h-5" />
+              Cancel
             </button>
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shadow-inner hidden sm:flex">
-                <PlusCircle className="w-8 h-8" />
-              </div>
-              <div>
-                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent mb-2">
-                  Create Season
-                </h1>
-                <p className="text-slate-400 text-sm font-mono">Initialize a new season with customizable draft controls</p>
-              </div>
-            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full sm:w-auto px-6 py-2.5 bg-slate-800 hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5"
+            >
+              <PlusCircle className="w-4 h-4" />
+              {submitting ? 'Creating Season...' : 'Initialize Season'}
+            </button>
           </div>
-        </header>
 
-        {/* Error Message */}
-        {error && (
-          <div className="rounded-2xl p-4 mb-6 bg-rose-500/10 border border-rose-500/20 text-rose-200 font-mono text-sm">
-            <p>{error}</p>
-          </div>
-        )}
+        </form>
 
-        {/* Form Container */}
-        <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md shadow-xl">
-          <form onSubmit={handleSubmit} className="space-y-0">
-            <div className="px-8 py-6 bg-white/5 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-6 h-6 text-indigo-400" />
-                <h3 className="text-lg font-bold text-slate-200">Season Configuration</h3>
-              </div>
-              <p className="mt-1 text-xs text-slate-400 font-mono">Configure the core details of your auction environment</p>
-            </div>
-
-            <div className="p-8 space-y-8">
-              {/* Season Number */}
-              <div className="group">
-                <label htmlFor="seasonNumber" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 group-focus-within:text-indigo-400 transition-colors font-mono">
-                  Season Number *
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    name="seasonNumber"
-                    id="seasonNumber"
-                    value={formData.seasonNumber}
-                    onChange={handleChange}
-                    min="1"
-                    max="999"
-                    className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-900/60 text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 sm:text-sm font-mono"
-                    placeholder="e.g., 16"
-                    required
-                  />
-                </div>
-                <p className="mt-2 text-[10px] text-slate-500 font-mono">
-                  {formData.seasonNumber ? `Created as "Season ${formData.seasonNumber}"` : 'The name is auto-derived from this number'}
-                </p>
-              </div>
-
-              {/* Year */}
-              <div className="group">
-                <label htmlFor="year" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 group-focus-within:text-indigo-400 transition-colors font-mono">
-                  Year *
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="year"
-                    id="year"
-                    value={formData.year}
-                    onChange={handleChange}
-                    className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-900/60 text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 sm:text-sm font-mono"
-                    placeholder="e.g., 2024"
-                    required
-                  />
-                </div>
-                <p className="mt-2 text-[10px] text-slate-500 font-mono">Compact year identification for stats mapping</p>
-              </div>
-
-              {/* Season Type */}
-              <div className="group">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 font-mono">
-                  Season Type *
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div
-                    onClick={() => setFormData({ ...formData, type: 'single' })}
-                    className={`cursor-pointer p-5 rounded-2xl border transition-all duration-200 ${
-                      formData.type === 'single'
-                        ? 'border-indigo-500 bg-indigo-500/10 shadow-md shadow-indigo-500/10'
-                        : 'border-white/10 bg-slate-900/40 hover:bg-slate-900/60 hover:border-white/20'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-bold text-slate-200 text-sm">Single Currency Season</h4>
-                      {formData.type === 'single' && (
-                        <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-400 font-mono leading-relaxed">Standard bidding engine with one global balance (e.g. legacy seasons 1-15)</p>
-                  </div>
-                  <div
-                    onClick={() => setFormData({ ...formData, type: 'multi' })}
-                    className={`cursor-pointer p-5 rounded-2xl border transition-all duration-200 ${
-                      formData.type === 'multi'
-                        ? 'border-indigo-500 bg-indigo-500/10 shadow-md shadow-indigo-500/10'
-                        : 'border-white/10 bg-slate-900/40 hover:bg-slate-900/60 hover:border-white/20'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-bold text-slate-200 text-sm">Multi-Currency & Roster</h4>
-                      {formData.type === 'multi' && (
-                        <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-400 font-mono leading-relaxed">Advanced rules (Season 16+): separate dollar and euro wallets for player registration and draft rounds</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Multi-Season Configurations */}
-              {formData.type === 'multi' && (
-                <div className="space-y-6 p-6 rounded-2xl bg-white/5 border border-white/10 animate-fade-in">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Coins className="w-5 h-5 text-indigo-400" />
-                    <h4 className="font-bold text-slate-200 text-sm uppercase tracking-wider font-mono"> Roster & Financial Budget Allocations</h4>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono">
-                    <div className="group">
-                      <label className="block text-xs font-bold text-slate-400 mb-2">Dollar Wallet Budget ($)</label>
-                      <input
-                        type="number"
-                        value={formData.dollar_budget}
-                        onChange={(e) => setFormData({ ...formData, dollar_budget: parseInt(e.target.value) || 0 })}
-                        className="block w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/60 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-xs"
-                      />
-                      <p className="mt-1 text-[9px] text-slate-500">Maximum budget limit for bidding on registered local players</p>
-                    </div>
-                    
-                    <div className="group">
-                      <label className="block text-xs font-bold text-slate-400 mb-2">Euro Wallet Budget (€)</label>
-                      <input
-                        type="number"
-                        value={formData.euro_budget}
-                        onChange={(e) => setFormData({ ...formData, euro_budget: parseInt(e.target.value) || 0 })}
-                        className="block w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/60 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-xs"
-                      />
-                      <p className="mt-1 text-[9px] text-slate-500">Maximum budget limit for bidding on foreign league players</p>
-                    </div>
-                    
-                    <div className="group">
-                      <label className="block text-xs font-bold text-slate-400 mb-2">Required Real Players (Exact count)</label>
-                      <input
-                        type="number"
-                        value={formData.required_real_players}
-                        onChange={(e) => setFormData({ ...formData, required_real_players: parseInt(e.target.value) || 0 })}
-                        className="block w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/60 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-xs"
-                      />
-                      <p className="mt-1 text-[9px] text-slate-500">Every team roster must contain exactly this count of real members</p>
-                    </div>
-                    
-                    <div className="group">
-                      <label className="block text-xs font-bold text-slate-400 mb-2">Max Football Players Limit</label>
-                      <input
-                        type="number"
-                        value={formData.max_football_players}
-                        onChange={(e) => setFormData({ ...formData, max_football_players: parseInt(e.target.value) || 0 })}
-                        className="block w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/60 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-xs"
-                      />
-                      <p className="mt-1 text-[9px] text-slate-500">Maximum overall team squad size limit</p>
-                    </div>
-                    
-                    <div className="group">
-                      <label className="block text-xs font-bold text-slate-400 mb-2">Category Lineup Fine Amount</label>
-                      <input
-                        type="number"
-                        value={formData.category_fine_amount}
-                        onChange={(e) => setFormData({ ...formData, category_fine_amount: parseInt(e.target.value) || 0 })}
-                        className="block w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/60 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-xs"
-                      />
-                      <p className="mt-1 text-[9px] text-slate-500">Deduction amount for weekly lineup rule infractions</p>
-                    </div>
-                    
-                    <div className="group">
-                      <label className="block text-xs font-bold text-slate-400 mb-2">Fine Deduct Currency</label>
-                      <select
-                        value={formData.category_fine_currency}
-                        onChange={(e) => setFormData({ ...formData, category_fine_currency: e.target.value as 'dollar' | 'euro' })}
-                        className="block w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900 text-slate-200 focus:outline-none focus:border-indigo-500 sm:text-xs"
-                      >
-                        <option value="dollar">Dollar Wallet ($)</option>
-                        <option value="euro">Euro Wallet (€)</option>
-                      </select>
-                      <p className="mt-1 text-[9px] text-slate-500">Target wallet for violation penalty collection</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Description */}
-              <div className="group">
-                <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 group-focus-within:text-indigo-400 transition-colors font-mono">
-                  Description <span className="text-slate-500 font-normal lowercase">(optional)</span>
-                </label>
-                <div className="relative">
-                  <textarea
-                    name="description"
-                    id="description"
-                    rows={4}
-                    value={formData.description}
-                    onChange={handleChange}
-                    className="block w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-900/60 text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 sm:text-sm resize-none"
-                    placeholder="Provide description details, tournament rules, or scheduling briefs..."
-                  />
-                </div>
-                <p className="mt-2 text-[10px] text-slate-500 font-mono">General description text shown to all system participants</p>
-              </div>
-            </div>
-
-            {/* Footer Form Actions */}
-            <div className="px-8 py-6 bg-white/5 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 font-mono">
-              <button
-                type="button"
-                onClick={() => router.push('/dashboard/superadmin/seasons')}
-                className="inline-flex items-center px-6 py-3 border border-white/10 text-xs font-bold uppercase tracking-wider rounded-xl text-slate-300 bg-white/5 hover:bg-white/10 transition-all duration-200 w-full sm:w-auto justify-center"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="inline-flex items-center px-8 py-3 border border-transparent text-sm font-semibold rounded-2xl text-white bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto justify-center group disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                {submitting ? 'Creating...' : 'Create Season'}
-              </button>
-            </div>
-          </form>
-        </div>
       </div>
-    </div>
   );
 }

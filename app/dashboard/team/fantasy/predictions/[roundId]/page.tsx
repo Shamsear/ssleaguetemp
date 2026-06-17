@@ -1,11 +1,11 @@
+'use client';
+
 import { CrystalBallIcon } from '@/components/ui/CustomIcons';
 import { Clock, Info, Save } from 'lucide-react';
 /**
  * Fantasy Predictions Page
  * Submit predictions for H2H matchups to earn bonus points
  */
-
-'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';

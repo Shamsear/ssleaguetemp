@@ -431,9 +431,7 @@ html {
 
 /* Retro styling overrides for inputs and selectors inside console containers */
 .console-card select,
-.console-card input[type="text"],
-.console-card input[type="number"],
-.console-card input[type="search"],
+.console-card input:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
 .console-card textarea {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
   font-size: 0.75rem !important; /* text-xs */
@@ -446,7 +444,9 @@ html {
 
 /* Fix text going behind icon inside console cards */
 .console-card input.pl-10,
-.console-card select.pl-10 {
+.console-card select.pl-10,
+.console-card input[class*="pl-10"],
+.console-card select[class*="pl-10"] {
   padding-left: 2.5rem !important;
 }
 

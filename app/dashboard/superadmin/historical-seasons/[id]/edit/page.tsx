@@ -5,6 +5,16 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getIdToken } from 'firebase/auth';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { 
+  ArrowLeft, 
+  Calendar, 
+  Trophy, 
+  Award, 
+  Save, 
+  AlertCircle, 
+  CheckCircle2,
+  FileText
+} from 'lucide-react';
 
 interface Season {
   id: string;
@@ -194,10 +204,13 @@ export default function EditHistoricalSeasonPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading season data...</p>
+      <div className="flex items-center justify-center pt-32">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
+          </div>
+          <p className="text-slate-500 font-mono text-xs tracking-widest uppercase animate-pulse">Loading season data...</p>
         </div>
       </div>
     );
@@ -209,12 +222,12 @@ export default function EditHistoricalSeasonPage() {
 
   if (!season) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Season not found</p>
+      <div className="flex items-center justify-center pt-32 font-mono">
+        <div className="text-center space-y-4">
+          <p className="text-slate-600 text-sm">Season not found</p>
           <button
             onClick={() => router.push('/dashboard/superadmin/historical-seasons')}
-            className="mt-4 px-4 py-2 bg-[#0066FF] text-white rounded-lg hover:bg-[#0066FF]/90"
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm"
           >
             Return to Historical Seasons
           </button>
@@ -224,169 +237,153 @@ export default function EditHistoricalSeasonPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 py-8 px-4">
-      <div className="container mx-auto max-w-4xl">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="glass rounded-2xl p-6 shadow-xl backdrop-blur-md border border-white/30">
-            <div className="flex items-center gap-4 mb-4">
-              <button
-                onClick={() => router.push(`/dashboard/superadmin/historical-seasons/${seasonId}`)}
-                className="group p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all duration-300 hover:shadow-md"
-              >
-                <svg className="w-5 h-5 text-gray-600 group-hover:text-[#0066FF] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-gradient-to-r from-[#0066FF] to-purple-600 rounded-xl">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-[#0066FF] to-purple-600 bg-clip-text text-transparent">
-                    Edit Season Details
-                  </h1>
-                  <p className="text-sm text-gray-600 mt-1">Update champions, awards, and other metadata</p>
-                </div>
-              </div>
+    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in font-mono">
+      {/* Header */}
+      <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push(`/dashboard/superadmin/historical-seasons/${seasonId}`)}
+            className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-950 transition-all shadow-sm flex-shrink-0"
+            title="Back to Season Details"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
+              <Calendar className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+                Edit Season Details
+              </h1>
+              <p className="text-xs text-slate-500 mt-1">Update champions, awards, and other metadata</p>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="glass rounded-2xl shadow-xl backdrop-blur-md border border-white/30 p-8 space-y-8">
-          {/* Success Message */}
-          {successMessage && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center gap-2 text-green-800">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="font-medium">{successMessage}</span>
-              </div>
-            </div>
-          )}
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="console-card bg-white border border-slate-200/60 p-8 shadow-sm rounded-2xl space-y-8">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="rounded-2xl p-4 bg-emerald-50 border border-emerald-250 text-emerald-700 text-xs flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+            <p className="font-semibold">{successMessage}</p>
+          </div>
+        )}
 
-          {/* Error Message */}
-          {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center gap-2 text-red-800">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="font-medium">{error}</span>
-              </div>
-            </div>
-          )}
+        {/* Error Message */}
+        {error && (
+          <div className="rounded-2xl p-4 bg-rose-50 border border-rose-250 text-rose-700 text-xs flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0" />
+            <p className="font-semibold">{error}</p>
+          </div>
+        )}
 
-          {/* Basic Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 pb-2 border-b">
-              <span className="text-xl">📋</span>
-              Basic Information
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Season Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                  placeholder="e.g., Season 2024"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Short Name
-                </label>
-                <input
-                  type="text"
-                  name="short_name"
-                  value={formData.short_name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                  placeholder="e.g., S24"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
+        {/* Basic Information */}
+        <div className="space-y-4">
+          <h3 className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider pb-2 border-b border-slate-200/60">
+            📋 Basic Information
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                Season Name *
               </label>
-              <textarea
-                name="description"
-                value={formData.description}
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
                 onChange={handleChange}
-                rows={3}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                placeholder="Season description..."
+                required
+                className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
+                placeholder="e.g., Season 2024"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                Short Name
+              </label>
+              <input
+                type="text"
+                name="short_name"
+                value={formData.short_name}
+                onChange={handleChange}
+                className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
+                placeholder="e.g., S24"
               />
             </div>
           </div>
 
-          {/* Champions */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 pb-2 border-b">
-              <span className="text-xl">🏆</span>
-              Champions & Runner-up
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Champion Team
-                </label>
-                <input
-                  type="text"
-                  name="champion_team_name"
-                  value={formData.champion_team_name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                  placeholder="Winning team name"
-                />
-              </div>
+          <div className="space-y-2">
+            <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+              Description
+            </label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows={3}
+              className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
+              placeholder="Season description..."
+            />
+          </div>
+        </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Runner-up Team
-                </label>
-                <input
-                  type="text"
-                  name="runner_up_team_name"
-                  value={formData.runner_up_team_name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                  placeholder="Second place team"
-                />
-              </div>
+        {/* Champions */}
+        <div className="space-y-4">
+          <h3 className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider pb-2 border-b border-slate-200/60">
+            🏆 Champions & Runner-up
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                Champion Team
+              </label>
+              <input
+                type="text"
+                name="champion_team_name"
+                value={formData.champion_team_name}
+                onChange={handleChange}
+                className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
+                placeholder="Winning team name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                Runner-up Team
+              </label>
+              <input
+                type="text"
+                name="runner_up_team_name"
+                value={formData.runner_up_team_name}
+                onChange={handleChange}
+                className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
+                placeholder="Second place team"
+              />
             </div>
           </div>
+        </div>
 
-          {/* Individual Awards */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 pb-2 border-b">
-              <span className="text-xl">⭐</span>
-              Individual Awards
-            </h3>
+        {/* Individual Awards */}
+        <div className="space-y-6">
+          <h3 className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider pb-2 border-b border-slate-200/60">
+            ⭐ Individual Awards
+          </h3>
 
+          <div className="grid grid-cols-1 gap-6">
             {/* Top Scorer */}
-            <div className="bg-green-50 rounded-lg p-4">
-              <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+            <div className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-5 space-y-4">
+              <h4 className="text-xs font-mono font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
                 <span>⚽</span> Top Scorer
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="md:col-span-2 space-y-2">
+                  <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
                     Player Name
                   </label>
                   <input
@@ -394,12 +391,12 @@ export default function EditHistoricalSeasonPage() {
                     name="top_scorer_player_name"
                     value={formData.top_scorer_player_name}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                    className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
                     placeholder="Player name"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
                     Goals
                   </label>
                   <input
@@ -407,7 +404,7 @@ export default function EditHistoricalSeasonPage() {
                     name="top_scorer_goals"
                     value={formData.top_scorer_goals}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                    className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
                     placeholder="0"
                     min="0"
                   />
@@ -416,13 +413,13 @@ export default function EditHistoricalSeasonPage() {
             </div>
 
             {/* Best Goalkeeper */}
-            <div className="bg-yellow-50 rounded-lg p-4">
-              <h4 className="font-semibold text-yellow-800 mb-3 flex items-center gap-2">
+            <div className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-5 space-y-4">
+              <h4 className="text-xs font-mono font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
                 <span>🧤</span> Best Goalkeeper
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="md:col-span-2 space-y-2">
+                  <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
                     Player Name
                   </label>
                   <input
@@ -430,12 +427,12 @@ export default function EditHistoricalSeasonPage() {
                     name="best_goalkeeper_player_name"
                     value={formData.best_goalkeeper_player_name}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                    className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
                     placeholder="Player name"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
                     Clean Sheets
                   </label>
                   <input
@@ -443,7 +440,7 @@ export default function EditHistoricalSeasonPage() {
                     name="best_goalkeeper_clean_sheets"
                     value={formData.best_goalkeeper_clean_sheets}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                    className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
                     placeholder="0"
                     min="0"
                   />
@@ -452,13 +449,13 @@ export default function EditHistoricalSeasonPage() {
             </div>
 
             {/* Most Assists */}
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+            <div className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-5 space-y-4">
+              <h4 className="text-xs font-mono font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
                 <span>🎯</span> Most Assists
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="md:col-span-2 space-y-2">
+                  <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
                     Player Name
                   </label>
                   <input
@@ -466,12 +463,12 @@ export default function EditHistoricalSeasonPage() {
                     name="most_assists_player_name"
                     value={formData.most_assists_player_name}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                    className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
                     placeholder="Player name"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
                     Assists
                   </label>
                   <input
@@ -479,7 +476,7 @@ export default function EditHistoricalSeasonPage() {
                     name="most_assists_count"
                     value={formData.most_assists_count}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                    className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
                     placeholder="0"
                     min="0"
                   />
@@ -487,98 +484,99 @@ export default function EditHistoricalSeasonPage() {
               </div>
             </div>
 
-            {/* MVP */}
-            <div className="bg-purple-50 rounded-lg p-4">
-              <h4 className="font-semibold text-purple-800 mb-3 flex items-center gap-2">
-                <span>👑</span> Most Valuable Player (MVP)
-              </h4>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Player Name
-                </label>
-                <input
-                  type="text"
-                  name="mvp_player_name"
-                  value={formData.mvp_player_name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                  placeholder="Player name"
-                />
-              </div>
-            </div>
-
-            {/* POTM */}
-            <div className="bg-orange-50 rounded-lg p-4">
-              <h4 className="font-semibold text-orange-800 mb-3 flex items-center gap-2">
-                <span>🌟</span> Player of the Match (POTM)
-              </h4>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Player ID
-                </label>
-                <input
-                  type="number"
-                  name="potm"
-                  value={formData.potm}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                  placeholder="Enter Player ID"
-                  min="0"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 pb-2 border-b">
-              <span className="text-xl">📝</span>
-              Additional Notes
-            </h3>
-            
-            <div>
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                placeholder="Any additional notes about this season..."
-              />
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between gap-4 pt-6 border-t">
-            <button
-              type="button"
-              onClick={() => router.push(`/dashboard/superadmin/historical-seasons/${seasonId}`)}
-              className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              disabled={isSaving}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSaving}
-              className={`px-8 py-3 rounded-lg font-medium text-white transition-all ${
-                isSaving
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-[#0066FF] to-purple-600 hover:shadow-lg transform hover:scale-105'
-              }`}
-            >
-              {isSaving ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Saving Changes...</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* MVP */}
+              <div className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-5 space-y-4">
+                <h4 className="text-xs font-mono font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                  <span>👑</span> MVP
+                </h4>
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                    Player Name
+                  </label>
+                  <input
+                    type="text"
+                    name="mvp_player_name"
+                    value={formData.mvp_player_name}
+                    onChange={handleChange}
+                    className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
+                    placeholder="Player name"
+                  />
                 </div>
-              ) : (
-                '💾 Save Changes'
-              )}
-            </button>
+              </div>
+
+              {/* POTM */}
+              <div className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-5 space-y-4">
+                <h4 className="text-xs font-mono font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                  <span>🌟</span> Player of the Match (POTM)
+                </h4>
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                    Player ID
+                  </label>
+                  <input
+                    type="number"
+                    name="potm"
+                    value={formData.potm}
+                    onChange={handleChange}
+                    className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
+                    placeholder="Enter Player ID"
+                    min="0"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-        </form>
-      </div>
+        </div>
+
+        {/* Notes */}
+        <div className="space-y-4">
+          <h3 className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider pb-2 border-b border-slate-200/60">
+            📝 Additional Notes
+          </h3>
+          
+          <div className="space-y-2">
+            <textarea
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              rows={4}
+              className="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 font-mono text-xs"
+              placeholder="Any additional notes about this season..."
+            />
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-250/60">
+          <button
+            type="button"
+            onClick={() => router.push(`/dashboard/superadmin/historical-seasons/${seasonId}`)}
+            className="px-5 py-2.5 bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-700 font-mono text-xs font-bold rounded-xl transition-all shadow-sm"
+            disabled={isSaving}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+          >
+            {isSaving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                <span>Save Changes</span>
+              </>
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
+

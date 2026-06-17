@@ -128,10 +128,10 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-[#0066FF] to-purple-600 text-white p-6 rounded-t-2xl">
+        <div className="sticky top-0 bg-slate-900 text-white p-6 rounded-t-2xl border-b border-slate-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-lg">
+              <div className="p-2 bg-white/20 rounded-xl">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
@@ -143,7 +143,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/20 rounded-xl transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -155,7 +155,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
               <div className="flex items-center gap-2 text-red-800">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -182,7 +182,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl focus:ring-2 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 focus:border-transparent"
                   placeholder="e.g., Season 2024"
                 />
               </div>
@@ -196,7 +196,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
                   name="short_name"
                   value={formData.short_name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl focus:ring-2 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 focus:border-transparent"
                   placeholder="e.g., S24"
                 />
               </div>
@@ -211,7 +211,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+                className="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl focus:ring-2 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 focus:border-transparent"
                 placeholder="Season description..."
               />
             </div>
@@ -234,7 +234,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
                   name="champion_team_name"
                   value={formData.champion_team_name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl focus:ring-2 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 focus:border-transparent"
                   placeholder="Winning team name"
                 />
               </div>
@@ -248,7 +248,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
                   name="runner_up_team_name"
                   value={formData.runner_up_team_name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl focus:ring-2 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 focus:border-transparent"
                   placeholder="Second place team"
                 />
               </div>
@@ -273,7 +273,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
                   name="top_scorer_player_name"
                   value={formData.top_scorer_player_name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl focus:ring-2 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 focus:border-transparent"
                   placeholder="Player name"
                 />
               </div>
@@ -286,7 +286,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
                   name="top_scorer_goals"
                   value={formData.top_scorer_goals}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl focus:ring-2 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 focus:border-transparent"
                   placeholder="0"
                   min="0"
                 />
@@ -304,7 +304,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
                   name="best_goalkeeper_player_name"
                   value={formData.best_goalkeeper_player_name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl focus:ring-2 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 focus:border-transparent"
                   placeholder="Player name"
                 />
               </div>
@@ -317,7 +317,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
                   name="best_goalkeeper_clean_sheets"
                   value={formData.best_goalkeeper_clean_sheets}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl focus:ring-2 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 focus:border-transparent"
                   placeholder="0"
                   min="0"
                 />
@@ -335,7 +335,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
                   name="most_assists_player_name"
                   value={formData.most_assists_player_name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl focus:ring-2 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 focus:border-transparent"
                   placeholder="Player name"
                 />
               </div>
@@ -348,7 +348,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
                   name="most_assists_count"
                   value={formData.most_assists_count}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl focus:ring-2 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 focus:border-transparent"
                   placeholder="0"
                   min="0"
                 />
@@ -365,7 +365,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
                 name="mvp_player_name"
                 value={formData.mvp_player_name}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+                className="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl focus:ring-2 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 focus:border-transparent"
                 placeholder="Player name"
               />
             </div>
@@ -384,7 +384,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
                 value={formData.notes}
                 onChange={handleChange}
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+                className="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl focus:ring-2 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 focus:border-transparent"
                 placeholder="Any additional notes about this season..."
               />
             </div>
@@ -395,7 +395,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-6 py-2.5 border border-slate-200 bg-slate-50 text-slate-800 text-xs font-mono rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               disabled={isSaving}
             >
               Cancel
@@ -403,7 +403,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
             <button
               type="submit"
               disabled={isSaving}
-              className={`px-6 py-2.5 rounded-lg font-medium text-white transition-all ${
+              className={`px-6 py-2.5 rounded-xl font-medium text-white transition-all ${
                 isSaving
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-[#0066FF] to-purple-600 hover:shadow-lg transform hover:scale-105'

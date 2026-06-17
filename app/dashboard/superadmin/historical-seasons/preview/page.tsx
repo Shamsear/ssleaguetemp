@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { findMatches, MatchResult } from '@/lib/utils/fuzzyMatch';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { ArrowLeft } from 'lucide-react';
+
 
 interface TeamData {
   rank: number;
@@ -868,10 +870,13 @@ export default function PreviewHistoricalSeason() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="flex items-center justify-center pt-32">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
+          </div>
+          <p className="text-slate-550 font-mono text-xs tracking-widest uppercase animate-pulse">Loading preview...</p>
         </div>
       </div>
     );
@@ -882,43 +887,42 @@ export default function PreviewHistoricalSeason() {
   }
 
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-4">
-      <div className="container mx-auto max-w-screen-xl">
-        {/* Page Header */}
-        <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2">🏆 Season Import Preview</h1>
-              <p className="text-gray-600 text-sm md:text-base">Review and edit season data before importing</p>
-              {uploadData && (
-                <div className="mt-2 text-sm space-y-1">
-                  <div>
-                    <span className="font-semibold text-[#0066FF]">Season {uploadData.seasonInfo.seasonNumber}</span>
-                    <span className="mx-2 text-gray-400">•</span>
-                    <span className="text-gray-600">ID: SSPSLS{uploadData.seasonInfo.seasonNumber}</span>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    📄 {uploadData.seasonInfo.fileName} ({(uploadData.seasonInfo.fileSize / 1024).toFixed(1)} KB)
-                  </div>
+    <div className="space-y-8 animate-fade-in font-mono">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/dashboard/superadmin/historical-seasons/import')}
+            className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-655 hover:text-slate-950 transition-all flex-shrink-0 shadow-sm"
+            title="Back to Upload"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              Season Import Preview
+            </h1>
+            <p className="text-xs text-slate-505 font-mono mt-1">
+              Review and edit season data before committing to database.
+            </p>
+            {uploadData && (
+              <div className="mt-2 text-xs space-y-1 font-mono">
+                <div>
+                  <span className="font-bold text-amber-600">Season {uploadData.seasonInfo.seasonNumber}</span>
+                  <span className="mx-2 text-slate-300">•</span>
+                  <span className="text-slate-500">ID: SSPSLS{uploadData.seasonInfo.seasonNumber}</span>
                 </div>
-              )}
-            </div>
-            <div className="flex items-center">
-              <button
-                onClick={() => router.push('/dashboard/superadmin/historical-seasons/import')}
-                className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Upload
-              </button>
-            </div>
+                <div className="text-[10px] text-slate-450">
+                  📄 {uploadData.seasonInfo.fileName} ({(uploadData.seasonInfo.fileSize / 1024).toFixed(1)} KB)
+                </div>
+              </div>
+            )}
           </div>
         </div>
+      </div>
 
         {/* Import Summary */}
-        <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
+        <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-3xl font-bold text-purple-600">{teams.length}</div>
@@ -929,7 +933,7 @@ export default function PreviewHistoricalSeason() {
               <div className="text-sm text-gray-600">Players</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#0066FF]">{teams.length + players.length}</div>
+              <div className="text-3xl font-bold text-amber-600">{teams.length + players.length}</div>
               <div className="text-sm text-gray-600">Total Items</div>
             </div>
           </div>
@@ -940,7 +944,7 @@ export default function PreviewHistoricalSeason() {
           <div className="space-y-4 mb-6">
             {/* Errors */}
             {uploadData.errors.length > 0 && (
-              <div className="glass rounded-3xl p-4 shadow-lg backdrop-blur-md border border-white/20 bg-red-50/30">
+              <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-4 shadow-lg backdrop-blur-md border border-white/20 bg-red-50/30">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center">
                     <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -970,7 +974,7 @@ export default function PreviewHistoricalSeason() {
             
             {/* Warnings */}
             {uploadData.warnings.length > 0 && (
-              <div className="glass rounded-3xl p-4 shadow-lg backdrop-blur-md border border-white/20 bg-yellow-50/30">
+              <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-4 shadow-lg backdrop-blur-md border border-white/20 bg-yellow-50/30">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center">
                     <svg className="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1002,7 +1006,7 @@ export default function PreviewHistoricalSeason() {
         
         {/* Potential Duplicates Section */}
         {duplicateMatches.length > 0 && (
-          <div className="glass rounded-3xl p-6 mb-6 shadow-lg backdrop-blur-md border border-white/20 bg-orange-50/30">
+          <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-6 mb-6 shadow-lg backdrop-blur-md border border-white/20 bg-orange-50/30">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center">
                 <svg className="w-5 h-5 text-orange-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1066,7 +1070,7 @@ export default function PreviewHistoricalSeason() {
                           </div>
                           <button
                             onClick={() => applySuggestion(match.inputName, suggestion.name, match.type)}
-                            className="ml-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
+                            className="ml-3 px-3 py-1 bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium rounded transition-colors"
                           >
                             Use This
                           </button>
@@ -1087,7 +1091,7 @@ export default function PreviewHistoricalSeason() {
         )}
         
         {/* Bulk Replace Tool */}
-        <div className="glass rounded-3xl p-4 mb-6 shadow-lg backdrop-blur-md border border-white/20">
+        <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-4 mb-6 shadow-lg backdrop-blur-md border border-white/20">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-800">🔧 Bulk Fix Team Names</h3>
             <button
@@ -1124,7 +1128,7 @@ export default function PreviewHistoricalSeason() {
               </div>
               <button
                 onClick={handleBulkReplaceTeamNames}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 Replace All
               </button>
@@ -1133,7 +1137,7 @@ export default function PreviewHistoricalSeason() {
         </div>
         
         {/* Team Name Changes Information Banner */}
-        <div className="glass rounded-3xl p-4 mb-6 shadow-lg backdrop-blur-md border border-white/20 bg-purple-50/30">
+        <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-4 mb-6 shadow-lg backdrop-blur-md border border-white/20 bg-purple-50/30">
           <div className="flex items-start">
             <svg className="w-5 h-5 mr-2 text-purple-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1153,7 +1157,7 @@ export default function PreviewHistoricalSeason() {
         </div>
         
         {/* Auto-save Information Banner */}
-        <div className="glass rounded-3xl p-4 mb-6 shadow-lg backdrop-blur-md border border-white/20 bg-green-50/30">
+        <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-4 mb-6 shadow-lg backdrop-blur-md border border-white/20 bg-green-50/30">
           <div className="flex items-start">
             <svg className="w-5 h-5 mr-2 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1168,7 +1172,7 @@ export default function PreviewHistoricalSeason() {
         </div>
         
         {/* Validation Status */}
-        <div className={`glass rounded-3xl p-4 mb-6 shadow-lg backdrop-blur-md border border-white/20 ${validationErrors.size > 0 ? 'bg-red-50/30' : 'bg-blue-50/30'}`}>
+        <div className={`console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-4 mb-6 shadow-lg backdrop-blur-md border border-white/20 ${validationErrors.size > 0 ? 'bg-red-50/30' : 'bg-blue-50/30'}`}>
           <div className="flex items-start justify-between">
             <div className="flex items-center">
               <svg className={`w-5 h-5 mr-2 ${validationErrors.size > 0 ? 'text-red-600' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2026,7 +2030,7 @@ export default function PreviewHistoricalSeason() {
         </div>
 
         {/* Import Actions */}
-        <div className="glass rounded-3xl p-6 shadow-lg backdrop-blur-md border border-white/20">
+        <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-6 shadow-lg backdrop-blur-md border border-white/20">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-1">Ready to Import</h3>
@@ -2035,7 +2039,7 @@ export default function PreviewHistoricalSeason() {
             <div className="flex gap-3">
               <button
                 onClick={validateAll}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                className="inline-flex items-center px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -2045,7 +2049,7 @@ export default function PreviewHistoricalSeason() {
               <button
                 onClick={handleStartImport}
                 disabled={importing || validationErrors.size > 0}
-                className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-[#0066FF] to-[#0066FF]/80 hover:from-[#0066FF]/90 hover:to-[#0066FF]/70 text-white text-sm font-medium rounded-lg transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-6 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-mono font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {importing ? (
                   <>
@@ -2067,7 +2071,6 @@ export default function PreviewHistoricalSeason() {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

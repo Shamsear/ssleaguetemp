@@ -4,9 +4,22 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase/config';
-import { collection, query, getDocs, doc, updateDoc, limit, where, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, doc, updateDoc, orderBy } from 'firebase/firestore';
 import Image from 'next/image';
-import Link from 'next/link';
+import { 
+  ArrowLeft, 
+  Search, 
+  Upload, 
+  Circle, 
+  Square, 
+  AlertCircle, 
+  CheckCircle, 
+  Sparkles, 
+  Image as ImageIcon, 
+  User, 
+  Move,
+  Maximize2
+} from 'lucide-react';
 
 interface Player {
   id: string;
@@ -164,17 +177,6 @@ export default function PlayerPhotosManagement() {
     const posY = shape === 'circle' ? (player.photo_position_y_circle ?? 50) : (player.photo_position_y_square ?? 50);
     const scale = shape === 'circle' ? (player.photo_scale_circle || 1) : (player.photo_scale_square || 1);
     
-    console.log('Opening modal - Loading saved settings:', {
-      player: player.player_id,
-      shape,
-      savedData: {
-        posX: shape === 'circle' ? player.photo_position_x_circle : player.photo_position_x_square,
-        posY: shape === 'circle' ? player.photo_position_y_circle : player.photo_position_y_square,
-        scale: shape === 'circle' ? player.photo_scale_circle : player.photo_scale_square
-      },
-      loading: { posX, posY, scale }
-    });
-    
     setOverlayPosition({ x: posX, y: posY });
     setOverlayScale(scale);
   };
@@ -204,8 +206,6 @@ export default function PlayerPhotosManagement() {
       if (posX !== undefined) updateData[fieldPosX] = posX;
       if (posY !== undefined) updateData[fieldPosY] = posY;
 
-      console.log('Saving to Firestore:', { playerId, shape, updateData });
-
       await updateDoc(doc(db, 'realplayers', playerDoc.id), updateData);
 
       // Update local state
@@ -231,13 +231,6 @@ export default function PlayerPhotosManagement() {
   const saveModalSettings = async () => {
     if (!editingPlayer) return;
     
-    console.log('Saving modal settings:', {
-      player: editingPlayer.player_id,
-      shape: modalShape,
-      scale: overlayScale,
-      position: overlayPosition
-    });
-    
     await handlePhotoSettings(
       editingPlayer.player_id,
       modalShape,
@@ -262,7 +255,6 @@ export default function PlayerPhotosManagement() {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      // Extract player ID from filename (e.g., "sspslpsl0001.jpg" -> "sspslpsl0001")
       const fileName = file.name.toLowerCase();
       const playerId = fileName.split('.')[0];
 
@@ -329,10 +321,13 @@ export default function PlayerPhotosManagement() {
 
   if (loading || loadingData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading players...</p>
+      <div className="flex items-center justify-center pt-32">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
+          </div>
+          <p className="text-slate-550 font-mono text-xs tracking-widest uppercase animate-pulse">Loading player registry...</p>
         </div>
       </div>
     );
@@ -343,181 +338,173 @@ export default function PlayerPhotosManagement() {
   }
 
   return (
-    <div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8">
-      <div className="container mx-auto max-w-7xl">
-        
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-4xl font-bold gradient-text mb-2">Player Photos Management</h1>
-              <p className="text-gray-600">Upload and manage player profile photos</p>
-            </div>
-            <Link 
-              href="/dashboard/superadmin"
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Back
-            </Link>
+    <div className="space-y-8 animate-fade-in font-mono">
+      
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/dashboard/superadmin')}
+            className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-650 hover:text-slate-950 transition-all flex-shrink-0 shadow-sm"
+            title="Back to Dashboard"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              Player Photos Management
+            </h1>
+            <p className="text-xs text-slate-505 font-mono mt-1">
+              Upload raw player assets, configure positioning offsets, and preview circular/square shapes.
+            </p>
           </div>
         </div>
+      </div>
 
-        {/* Messages */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-start">
-            <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 flex items-start">
-            <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {success}
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="glass rounded-xl p-5 border border-blue-200">
-            <div className="text-sm text-gray-600 mb-1">Total Players</div>
-            <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
-          </div>
-          <div className="glass rounded-xl p-5 border border-green-200">
-            <div className="text-sm text-gray-600 mb-1">With Photo</div>
-            <div className="text-3xl font-bold text-green-600">{stats.withPhoto}</div>
-          </div>
-          <div className="glass rounded-xl p-5 border border-amber-200">
-            <div className="text-sm text-gray-600 mb-1">Without Photo</div>
-            <div className="text-3xl font-bold text-amber-600">{stats.withoutPhoto}</div>
-          </div>
+      {/* Messages */}
+      {error && (
+        <div className="rounded-2xl p-4 bg-rose-50 border border-rose-200 text-rose-700 font-mono text-xs flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0" />
+          <p className="flex-1">{error}</p>
         </div>
+      )}
 
-        {/* Bulk Upload Section */}
-        <div className="glass rounded-xl p-6 mb-6 border border-purple-200">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-            <svg className="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            Bulk Upload Photos
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Upload multiple photos at once. Filename must match player ID (e.g., <code className="bg-gray-100 px-2 py-1 rounded">sspslpsl0001.jpg</code>)
-          </p>
+      {success && (
+        <div className="rounded-2xl p-4 bg-emerald-50 border border-emerald-250 text-emerald-700 font-mono text-xs flex items-center gap-3">
+          <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+          <p className="flex-1">{success}</p>
+        </div>
+      )}
+
+      {/* Stats Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="console-card bg-white border border-slate-200/60 p-5 shadow-sm rounded-2xl">
+          <div className="text-[10px] text-slate-450 uppercase tracking-wider mb-1">Total Players</div>
+          <div className="text-2xl font-extrabold text-slate-800">{stats.total}</div>
+        </div>
+        <div className="console-card bg-white border border-slate-200/60 p-5 shadow-sm rounded-2xl text-emerald-650">
+          <div className="text-[10px] text-slate-450 uppercase tracking-wider mb-1">With Photo</div>
+          <div className="text-2xl font-extrabold">{stats.withPhoto}</div>
+        </div>
+        <div className="console-card bg-white border border-slate-200/60 p-5 shadow-sm rounded-2xl text-amber-600">
+          <div className="text-[10px] text-slate-450 uppercase tracking-wider mb-1">Without Photo</div>
+          <div className="text-2xl font-extrabold">{stats.withoutPhoto}</div>
+        </div>
+      </div>
+
+      {/* Bulk Upload Section */}
+      <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl space-y-4">
+        <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <Upload className="w-4 h-4 text-amber-500" />
+          Bulk Upload Photos
+        </h2>
+        <p className="text-xs text-slate-500 leading-relaxed">
+          Upload multiple photos concurrently. Filenames must exactly match player registry ID keys (e.g., <code className="bg-slate-100 px-1.5 py-0.5 rounded text-amber-600 font-bold">sspslpsl0001.jpg</code>).
+        </p>
+        <div className="max-w-md">
           <input
             type="file"
             accept="image/*"
             multiple
             disabled={bulkUploading}
             onChange={(e) => e.target.files && handleBulkUpload(e.target.files)}
-            className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+            className="block w-full text-xs text-slate-700 border border-slate-200 rounded-xl cursor-pointer bg-slate-50 focus:outline-none file:mr-4 file:py-2.5 file:px-4 file:border-0 file:text-xs file:font-bold file:bg-slate-850 file:text-white hover:file:bg-slate-900"
           />
-          {bulkUploading && (
-            <div className="mt-3 text-sm text-purple-600 flex items-center">
-              <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Uploading photos...
-            </div>
-          )}
         </div>
+        {bulkUploading && (
+          <div className="text-xs text-amber-600 flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+            Uploading files...
+          </div>
+        )}
+      </div>
 
-        {/* Search and Filters */}
-        <div className="glass rounded-xl p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-3 mb-3">
-            <div className="flex-1">
+      {/* Search and Filters Console */}
+      <div className="console-card bg-white border border-slate-200/60 p-5 shadow-sm rounded-2xl space-y-4">
+        <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by name, ID, or email..."
+                placeholder="Search by name, registry ID, or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-850 font-mono text-xs transition-all placeholder-slate-400"
               />
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setFilterType('all')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  filterType === 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setFilterType('with-photo')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  filterType === 'with-photo'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                With Photo
-              </button>
-              <button
-                onClick={() => setFilterType('without-photo')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  filterType === 'without-photo'
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                No Photo
-              </button>
-            </div>
           </div>
-          
-          {/* Shape Preview Toggle */}
-          <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
-            <span className="text-sm font-medium text-gray-700">Preview Shape:</span>
+          <div className="flex flex-wrap gap-2 text-xs font-mono">
+            <button
+              onClick={() => setFilterType('all')}
+              className={`px-4 py-2 rounded-xl font-bold transition-all ${
+                filterType === 'all'
+                  ? 'bg-slate-800 text-white'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              All Players
+            </button>
+            <button
+              onClick={() => setFilterType('with-photo')}
+              className={`px-4 py-2 rounded-xl font-bold transition-all ${
+                filterType === 'with-photo'
+                  ? 'bg-slate-800 text-white'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              With Photo
+            </button>
+            <button
+              onClick={() => setFilterType('without-photo')}
+              className={`px-4 py-2 rounded-xl font-bold transition-all ${
+                filterType === 'without-photo'
+                  ? 'bg-slate-800 text-white'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              No Photo
+            </button>
+          </div>
+        </div>
+        
+        {/* Shape Preview Toggle */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Preview Shape:</span>
             <div className="flex gap-2">
               <button
                 onClick={() => setPreviewShape('circle')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                   previewShape === 'circle'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20'
+                    : 'bg-white border border-slate-200 hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <div className="w-4 h-4 rounded-full bg-white/30 border-2 border-current"></div>
-                Circle
+                <Circle className="w-3.5 h-3.5" />
+                Circle View
               </button>
               <button
                 onClick={() => setPreviewShape('square')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                   previewShape === 'square'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20'
+                    : 'bg-white border border-slate-200 hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <div className="w-4 h-4 rounded bg-white/30 border-2 border-current"></div>
-                Square
+                <Square className="w-3.5 h-3.5" />
+                Square View
               </button>
             </div>
-            <span className="text-xs text-gray-500 ml-auto">Photos are displayed as they will appear on the site</span>
           </div>
-          
-          <p className="text-sm text-gray-600 mt-2">
-            Showing {filteredPlayers.length} of {players.length} players
-          </p>
+          <span className="text-[10px] text-slate-450 font-mono">Showing {filteredPlayers.length} of {players.length} matching records</span>
         </div>
+      </div>
 
-        {/* Players Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {/* Players Grid */}
+      {filteredPlayers.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredPlayers.map(player => {
-            // Get settings based on current preview shape
-            const currentPosition = previewShape === 'circle' 
-              ? (player.photo_position_circle || 'center')
-              : (player.photo_position_square || 'center');
             const currentScale = previewShape === 'circle'
               ? (player.photo_scale_circle || 1)
               : (player.photo_scale_square || 1);
@@ -528,155 +515,144 @@ export default function PlayerPhotosManagement() {
               ? (player.photo_position_y_circle ?? 50)
               : (player.photo_position_y_square ?? 50);
             
-            // Use custom position if available, otherwise use preset
-            const displayPosition = currentPosition === 'custom' 
-              ? `${currentPosX}% ${currentPosY}%`
-              : currentPosition;
-            
             return (
-            <div key={player.id} className="glass rounded-xl p-4 border border-gray-200 hover:shadow-lg transition-all">
-              {/* Photo */}
-              <div 
-                className={`relative w-full aspect-square mb-3 overflow-hidden bg-gray-100 ${
-                  previewShape === 'circle' ? 'rounded-full' : 'rounded-lg'
-                }`}
-              >
-                {player.photo_url ? (
-                  <Image
-                    src={player.photo_url}
-                    alt={player.name}
-                    fill
-                    className="object-cover"
-                    style={{
-                      objectPosition: `${currentPosX}% ${currentPosY}%`,
-                      transform: `scale(${currentScale})`,
-                      transformOrigin: `${currentPosX}% ${currentPosY}%`
-                    }}
-                    unoptimized
-                    draggable={false}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-
-              {/* Player Info */}
-              <div className="mb-3">
-                <h3 className="font-bold text-gray-900 truncate">{player.name}</h3>
-                <p className="text-sm text-gray-600 font-mono">{player.player_id}</p>
-              </div>
-
-              {/* Photo Adjustment Controls (only show if photo exists) */}
-              {player.photo_url && (
-                <div className="mb-3 grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => openAdjustmentModal(player, 'circle')}
-                    className="px-3 py-2 text-xs font-medium rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <div className="w-3 h-3 rounded-full border-2 border-current"></div>
-                    Circle
-                  </button>
-                  <button
-                    onClick={() => openAdjustmentModal(player, 'square')}
-                    className="px-3 py-2 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <div className="w-3 h-3 rounded border-2 border-current"></div>
-                    Square
-                  </button>
-                </div>
-              )}
-
-              {/* Upload Button */}
-              <label className="block">
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={uploadingPlayerId === player.player_id}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      handlePhotoUpload(player.player_id, file);
-                    }
-                  }}
-                  className="hidden"
-                />
-                <div className={`px-4 py-2 rounded-lg text-center cursor-pointer transition-colors ${
-                  uploadingPlayerId === player.player_id
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : player.photo_url
-                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                    : 'bg-green-100 text-green-700 hover:bg-green-200'
-                }`}>
-                  {uploadingPlayerId === player.player_id ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Uploading...
-                    </span>
-                  ) : player.photo_url ? (
-                    'Change Photo'
+              <div key={player.id} className="console-card bg-white border border-slate-200/60 p-4 shadow-sm rounded-2xl hover:shadow-md transition-all flex flex-col justify-between space-y-4">
+                
+                {/* Photo Aspect Frame */}
+                <div 
+                  className={`relative w-full aspect-square overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0 ${
+                    previewShape === 'circle' ? 'rounded-full shadow-inner' : 'rounded-xl'
+                  }`}
+                >
+                  {player.photo_url ? (
+                    <Image
+                      src={player.photo_url}
+                      alt={player.name}
+                      fill
+                      className="object-cover"
+                      style={{
+                        objectPosition: `${currentPosX}% ${currentPosY}%`,
+                        transform: `scale(${currentScale})`,
+                        transformOrigin: `${currentPosX}% ${currentPosY}%`
+                      }}
+                      unoptimized
+                      draggable={false}
+                    />
                   ) : (
-                    'Upload Photo'
+                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                      <User className="w-16 h-16 stroke-[1.2]" />
+                    </div>
                   )}
                 </div>
-              </label>
-            </div>
-          );})}
+
+                {/* Player Metadata */}
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-905 truncate text-sm">{player.name}</h3>
+                  <p className="text-[10px] text-slate-450 font-mono mt-0.5">{player.player_id}</p>
+                </div>
+
+                {/* Adjuster controls */}
+                {player.photo_url && (
+                  <div className="grid grid-cols-2 gap-2 font-mono text-[10px] text-slate-700">
+                    <button
+                      onClick={() => openAdjustmentModal(player, 'circle')}
+                      className="py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center gap-1 font-bold"
+                    >
+                      <Circle className="w-3 h-3 text-slate-450" />
+                      Circle
+                    </button>
+                    <button
+                      onClick={() => openAdjustmentModal(player, 'square')}
+                      className="py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center gap-1 font-bold"
+                    >
+                      <Square className="w-3 h-3 text-slate-450" />
+                      Square
+                    </button>
+                  </div>
+                )}
+
+                {/* File Upload Selector */}
+                <label className="block">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploadingPlayerId === player.player_id}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        handlePhotoUpload(player.player_id, file);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <div className={`py-2 rounded-xl text-center cursor-pointer text-xs font-mono font-bold transition-all ${
+                    uploadingPlayerId === player.player_id
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                      : player.photo_url
+                      ? 'bg-white border border-slate-200 hover:bg-slate-50 text-slate-700'
+                      : 'bg-slate-800 hover:bg-slate-900 text-white shadow-sm'
+                  }`}>
+                    {uploadingPlayerId === player.player_id ? (
+                      <span className="flex items-center justify-center gap-1.5">
+                        <span className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></span>
+                        Uploading
+                      </span>
+                    ) : player.photo_url ? (
+                      'Change Asset'
+                    ) : (
+                      'Upload Asset'
+                    )}
+                  </div>
+                </label>
+              </div>
+            );
+          })}
         </div>
+      ) : (
+        <div className="console-card bg-white border border-slate-200/60 p-16 text-center text-slate-500">
+          <ImageIcon className="w-12 h-12 mx-auto text-slate-300 mb-4 animate-pulse" />
+          <h3 className="font-extrabold text-slate-805 mb-1 text-sm">No Player Records Found</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            Try adjusting your search criteria or toggling photo filtering switches.
+          </p>
+        </div>
+      )}
 
-        {filteredPlayers.length === 0 && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <p className="text-gray-600 font-medium">No players found</p>
-          </div>
-        )}
-      </div>
-
-      {/* Adjustment Modal */}
+      {/* Draggable Adjustment Modal Dialog */}
       {editingPlayer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={closeModal}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={closeModal}>
           <div 
-            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-slate-200/60 flex flex-col font-mono"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold">{editingPlayer.name}</h2>
-                  <p className="text-sm opacity-90">
-                    Adjust Photo Position - {modalShape === 'circle' ? '⭕ Circle View' : '⬜ Square View'}
-                  </p>
-                </div>
-                <button
-                  onClick={closeModal}
-                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+            <div className="bg-slate-900 px-6 py-5 text-white flex items-center justify-between border-b border-slate-800">
+              <div>
+                <h2 className="text-lg font-bold">{editingPlayer.name}</h2>
+                <p className="text-[10px] text-slate-450 mt-0.5">
+                  Adjust Focus Offset & Zoom Level — {modalShape === 'circle' ? '⭕ Circular crop preview' : '⬜ Square crop preview'}
+                </p>
               </div>
+              <button
+                onClick={closeModal}
+                className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-450 hover:text-white"
+              >
+                ✕
+              </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+            <div className="p-6 overflow-y-auto flex-1 space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
-                {/* Left: Image with Draggable Overlay */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-gray-900">Preview & Adjust</h3>
+                
+                {/* Left: Raw Image viewport with Draggable Overlay Focus */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                    <Move className="w-3.5 h-3.5" />
+                    Drag & Focus Pointer
+                  </h3>
                   <div 
-                    className="relative w-full aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-move border-2 border-gray-200"
+                    className="relative w-full aspect-square bg-slate-100 rounded-2xl overflow-hidden cursor-move border border-slate-200/60 shadow-inner select-none"
                     onMouseDown={(e) => {
                       setIsDragging(true);
                       const rect = e.currentTarget.getBoundingClientRect();
@@ -694,7 +670,7 @@ export default function PlayerPhotosManagement() {
                     onMouseUp={() => setIsDragging(false)}
                     onMouseLeave={() => setIsDragging(false)}
                   >
-                    {/* Full Image */}
+                    {/* Full source image */}
                     {editingPlayer.photo_url && (
                       <Image
                         src={editingPlayer.photo_url}
@@ -706,17 +682,17 @@ export default function PlayerPhotosManagement() {
                       />
                     )}
                     
-                    {/* Draggable Overlay */}
+                    {/* Draggable boundary mask overlay */}
                     <div 
                       className="absolute inset-0 pointer-events-none"
                       style={{
-                        background: `radial-gradient(circle at ${overlayPosition.x}% ${overlayPosition.y}%, transparent 0%, transparent ${(modalShape === 'circle' ? 150 : 200) / overlayScale}px, rgba(0,0,0,0.7) ${(modalShape === 'circle' ? 150 : 200) / overlayScale}px)`
+                        background: `radial-gradient(circle at ${overlayPosition.x}% ${overlayPosition.y}%, transparent 0%, transparent ${(modalShape === 'circle' ? 150 : 200) / overlayScale}px, rgba(15,23,42,0.7) ${(modalShape === 'circle' ? 150 : 200) / overlayScale}px)`
                       }}
                     >
-                      {/* Visible Frame */}
+                      {/* Anchor marker */}
                       <div
-                        className={`absolute border-4 border-purple-500 shadow-2xl ${
-                          modalShape === 'circle' ? 'rounded-full' : 'rounded-lg'
+                        className={`absolute border-2 border-amber-500 shadow-2xl ${
+                          modalShape === 'circle' ? 'rounded-full' : 'rounded-xl'
                         }`}
                         style={{
                           width: `${300 / overlayScale}px`,
@@ -726,112 +702,107 @@ export default function PlayerPhotosManagement() {
                         }}
                       >
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-1 h-8 bg-purple-500"></div>
-                          <div className="w-8 h-1 bg-purple-500 absolute"></div>
+                          <div className="w-0.5 h-6 bg-amber-500"></div>
+                          <div className="w-6 h-0.5 bg-amber-500 absolute"></div>
                         </div>
                       </div>
-                      
-                      {/* Instruction Overlay */}
-                      {!isDragging && (
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-sm font-medium pointer-events-auto">
-                          🖱️ Click and drag to position
-                        </div>
-                      )}
                     </div>
                   </div>
                   
-                  {/* Position Info */}
-                  <div className="bg-gray-50 rounded-lg p-3 text-sm">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 font-medium">Position:</span>
-                      <span className="font-mono text-purple-600">
-                        X: {overlayPosition.x.toFixed(1)}%, Y: {overlayPosition.y.toFixed(1)}%
-                      </span>
-                    </div>
+                  {/* Position details */}
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs text-slate-500 flex justify-between font-mono">
+                    <span>Active Alignment:</span>
+                    <span className="font-bold text-amber-600">
+                      X: {overlayPosition.x.toFixed(1)}% / Y: {overlayPosition.y.toFixed(1)}%
+                    </span>
                   </div>
                 </div>
 
-                {/* Right: Preview & Controls */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-gray-900">Final Preview</h3>
+                {/* Right: Crop result preview and zoom controller */}
+                <div className="space-y-5">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    Cropped Aspect Preview
+                  </h3>
                   
-                  {/* Preview */}
-                  <div 
-                    className={`relative w-64 h-64 mx-auto bg-gray-100 overflow-hidden ${
-                      modalShape === 'circle' ? 'rounded-full' : 'rounded-xl'
-                    }`}
-                  >
-                    {editingPlayer.photo_url && (
-                      <Image
-                        src={editingPlayer.photo_url}
-                        alt={editingPlayer.name}
-                        fill
-                        className="object-cover"
-                        style={{
-                          objectPosition: `${overlayPosition.x}% ${overlayPosition.y}%`,
-                          transform: `scale(${overlayScale})`,
-                          transformOrigin: `${overlayPosition.x}% ${overlayPosition.y}%`
-                        }}
-                        unoptimized
-                        draggable={false}
-                      />
-                    )}
+                  {/* Aspect viewport */}
+                  <div className="p-4 border border-slate-100 bg-slate-50 rounded-2xl">
+                    <div 
+                      className={`relative w-60 h-60 mx-auto bg-white border border-slate-200 shadow-md overflow-hidden ${
+                        modalShape === 'circle' ? 'rounded-full' : 'rounded-2xl'
+                      }`}
+                    >
+                      {editingPlayer.photo_url && (
+                        <Image
+                          src={editingPlayer.photo_url}
+                          alt={editingPlayer.name}
+                          fill
+                          className="object-cover"
+                          style={{
+                            objectPosition: `${overlayPosition.x}% ${overlayPosition.y}%`,
+                            transform: `scale(${overlayScale})`,
+                            transformOrigin: `${overlayPosition.x}% ${overlayPosition.y}%`
+                          }}
+                          unoptimized
+                          draggable={false}
+                        />
+                      )}
+                    </div>
                   </div>
 
-                  {/* Shape Toggle */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Adjust for:</label>
-                    <div className="flex gap-2">
+                  {/* Mode switcher */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-slate-550 uppercase tracking-wider">Adjustment mode shape:</label>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
                       <button
                         onClick={() => {
                           setModalShape('circle');
-                          // Load circle settings
                           const posX = editingPlayer.photo_position_x_circle ?? 50;
                           const posY = editingPlayer.photo_position_y_circle ?? 50;
                           const scale = editingPlayer.photo_scale_circle || 1;
                           setOverlayPosition({ x: posX, y: posY });
                           setOverlayScale(scale);
                         }}
-                        className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                        className={`py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 ${
                           modalShape === 'circle'
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20'
+                            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                         }`}
                       >
-                        <div className="w-4 h-4 rounded-full border-2 border-current"></div>
+                        <Circle className="w-3.5 h-3.5" />
                         Circle
                       </button>
                       <button
                         onClick={() => {
                           setModalShape('square');
-                          // Load square settings
                           const posX = editingPlayer.photo_position_x_square ?? 50;
                           const posY = editingPlayer.photo_position_y_square ?? 50;
                           const scale = editingPlayer.photo_scale_square || 1;
                           setOverlayPosition({ x: posX, y: posY });
                           setOverlayScale(scale);
                         }}
-                        className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                        className={`py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 ${
                           modalShape === 'square'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20'
+                            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                         }`}
                       >
-                        <div className="w-4 h-4 rounded border-2 border-current"></div>
+                        <Square className="w-3.5 h-3.5" />
                         Square
                       </button>
                     </div>
                   </div>
 
-                  {/* Zoom Control */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Zoom: {(overlayScale * 100).toFixed(0)}%
-                    </label>
+                  {/* Zoom slider */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-xs text-slate-500 font-mono">
+                      <span>Zoom Magnifier:</span>
+                      <span className="font-bold text-slate-805">{(overlayScale * 100).toFixed(0)}%</span>
+                    </div>
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => setOverlayScale(Math.max(0.5, overlayScale - 0.1))}
-                        className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold"
+                        className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-extrabold text-sm transition-all"
                       >
                         −
                       </button>
@@ -842,44 +813,44 @@ export default function PlayerPhotosManagement() {
                         step="0.1"
                         value={overlayScale}
                         onChange={(e) => setOverlayScale(parseFloat(e.target.value))}
-                        className="flex-1"
+                        className="flex-1 accent-slate-800"
                       />
                       <button
                         onClick={() => setOverlayScale(Math.min(2, overlayScale + 0.1))}
-                        className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold"
+                        className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-extrabold text-sm transition-all"
                       >
                         +
                       </button>
                     </div>
                   </div>
 
-                  {/* Reset Button */}
+                  {/* Centering button */}
                   <button
                     onClick={() => {
                       setOverlayPosition({ x: 50, y: 50 });
                       setOverlayScale(1);
                     }}
-                    className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium text-gray-700 transition-colors"
+                    className="w-full py-2 bg-slate-100 hover:bg-slate-200/80 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all"
                   >
-                    Reset to Center
+                    Reset Offset Focus
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+            <div className="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-slate-200/60">
               <button
                 onClick={closeModal}
-                className="px-6 py-2 rounded-lg font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+                className="px-5 py-2.5 bg-white border border-slate-200/60 hover:bg-slate-100/50 text-slate-700 text-xs font-bold rounded-xl transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={saveModalSettings}
-                className="px-6 py-2 rounded-lg font-medium bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-colors shadow-lg"
+                className="px-5 py-2.5 bg-slate-805 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
               >
-                Save Changes
+                Save Adjustment
               </button>
             </div>
           </div>

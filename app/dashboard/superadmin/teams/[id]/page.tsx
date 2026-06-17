@@ -239,10 +239,13 @@ export default function TeamDetailsPage() {
 
   if (loading || loadingData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
-          <p className="mt-4 text-slate-400 font-mono text-xs tracking-wider uppercase">Loading team statistics & rosters...</p>
+      <div className="flex items-center justify-center pt-32">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
+          </div>
+          <p className="text-slate-500 font-mono text-xs tracking-wider uppercase animate-pulse">Loading team statistics & rosters...</p>
         </div>
       </div>
     );
@@ -254,23 +257,23 @@ export default function TeamDetailsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 px-4 text-slate-200">
-        <div className="text-center max-w-md p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md shadow-2xl">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+      <div className="flex items-center justify-center pt-32 px-4 text-slate-700 font-mono">
+        <div className="text-center max-w-md p-8 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-500">
             <AlertTriangle className="w-8 h-8" />
           </div>
-          <h2 className="text-xl font-bold text-slate-100 mb-2">Error Loading Team</h2>
-          <p className="text-slate-400 font-mono text-xs mb-6">{error}</p>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">Error Loading Team</h2>
+          <p className="text-slate-550 font-mono text-xs mb-6">{error}</p>
           <div className="flex gap-3 justify-center font-mono text-xs">
             <button
               onClick={() => loadTeamData()}
-              className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-all shadow-lg shadow-indigo-500/20"
+              className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-semibold transition-all shadow-sm"
             >
               Try Again
             </button>
             <button
               onClick={() => router.push('/dashboard/superadmin/teams')}
-              className="px-5 py-2.5 border border-white/10 rounded-xl text-slate-300 bg-white/5 hover:bg-white/10 transition-all"
+              className="px-5 py-2.5 border border-slate-200 rounded-xl text-slate-700 bg-white hover:bg-slate-50 transition-all shadow-sm"
             >
               Back to Teams
             </button>
@@ -288,605 +291,517 @@ export default function TeamDetailsPage() {
   const balancePercentage = (team.balance / team.initial_balance) * 100;
 
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-4">
-      <div className="container mx-auto max-w-screen-2xl">
-        {/* Page Header */}
-        <header className="mb-6 sm:mb-8">
-          <div className="flex flex-col gap-4">
-            {/* Back button and team info */}
-            <div className="flex items-start gap-3">
+    <div className="space-y-8 animate-fade-in font-mono">
+      
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/dashboard/superadmin/teams')}
+            className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-55 text-slate-650 hover:text-slate-950 transition-all flex-shrink-0 shadow-sm"
+            title="Back to Teams"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-4">
+            <div className="relative w-16 h-16 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center flex-shrink-0 group overflow-hidden shadow-sm">
+              {team.logo_url ? (
+                <img 
+                  src={team.logo_url} 
+                  alt={`${team.team_name} logo`}
+                  className="max-w-full max-h-full object-contain p-1"
+                  onError={(e) => {
+                    const target = e.target as HTMLElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `<span class="text-amber-600 font-bold text-2xl font-mono">${team.team_code}</span>`;
+                    }
+                  }}
+                />
+              ) : (
+                <span className="text-amber-600 font-bold text-2xl font-mono">{team.team_code}</span>
+              )}
+              {/* Edit Logo Overlay */}
               <button
-                onClick={() => router.push('/dashboard/superadmin/teams')}
-                className="p-2 rounded-xl hover:bg-white/50 transition-colors flex-shrink-0 mt-1"
+                onClick={() => setShowEditModal(true)}
+                className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-slate-200"
+                title="Upload Logo"
               >
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                </svg>
+                <Camera className="w-5 h-5" />
               </button>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start gap-3">
-                  <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 group">
-                    {team.logo_url ? (
-                      <img 
-                        src={team.logo_url} 
-                        alt={`${team.team_name} logo`}
-                        className="max-w-full max-h-full object-contain p-1"
-                        onError={(e) => {
-                          const target = e.target as HTMLElement;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.innerHTML = `<span class="text-[#0066FF] font-bold text-lg sm:text-2xl">${team.team_code}</span>`;
-                          }
-                        }}
-                      />
-                    ) : (
-                      <span className="text-[#0066FF] font-bold text-lg sm:text-2xl">{team.team_code}</span>
-                    )}
-                    {/* Edit Logo Overlay */}
-                    <button
-                      onClick={() => setShowEditModal(true)}
-                      className="absolute inset-0 bg-black/60 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                      title="Edit Logo"
-                    >
-                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold gradient-text truncate">{team.team_name}</h1>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1">
-                      <span className="text-sm text-gray-600 truncate">{team.season_name}</span>
-                      <span className="text-gray-400 hidden sm:inline">•</span>
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium self-start ${
-                        team.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 truncate">
+                  {team.team_name}
+                </h1>
+                <span className="px-2 py-0.5 rounded text-xs font-mono bg-slate-100 border border-slate-250 text-slate-600 uppercase">
+                  {team.team_code}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-500 font-mono">
+                <span>{team.season_name}</span>
+                <span>•</span>
+                <span className={`inline-flex items-center gap-1 font-semibold ${
+                  team.is_active ? 'text-emerald-700' : 'text-slate-500'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${team.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                  {team.is_active ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              setEditForm({ teamName: team.team_name, logoUrl: team.logo_url || '' });
+              setShowEditModal(true);
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-slate-50 border border-slate-200/60 rounded-xl text-sm font-semibold text-slate-700 transition-all font-mono shadow-sm"
+          >
+            <Edit className="w-4 h-4" />
+            Edit Team
+          </button>
+          <button
+            onClick={handleToggleStatus}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 border rounded-xl text-sm font-semibold transition-all font-mono ${
+              team.is_active
+                ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-sm'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 shadow-sm'
+            }`}
+          >
+            {team.is_active ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+            {team.is_active ? 'Deactivate' : 'Activate'}
+          </button>
+        </div>
+      </div>
+
+      {/* Statistics Cards */}
+      {team.currency_system === 'dual' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm relative overflow-hidden group hover:border-slate-350 transition-all">
+            <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform text-blue-600">
+              <span className="text-8xl font-black font-serif">€</span>
+            </div>
+            <p className="text-xs font-mono uppercase tracking-wider text-slate-400">eCoin Balance (Football)</p>
+            <h3 className="text-3xl font-extrabold text-blue-600 mt-2 font-mono">{formatCurrency(team.football_budget || 0, 'euro')}</h3>
+            <p className="text-xs text-slate-500 mt-4 font-mono">Spent: {formatCurrency(team.football_spent || 0, 'euro')}</p>
+          </div>
+
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm relative overflow-hidden group hover:border-slate-350 transition-all">
+            <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform text-emerald-600">
+              <span className="text-8xl font-black font-serif">$</span>
+            </div>
+            <p className="text-xs font-mono uppercase tracking-wider text-slate-400">SSCoin Balance (Real)</p>
+            <h3 className="text-3xl font-extrabold text-emerald-600 mt-2 font-mono">{formatCurrency(team.real_player_budget || 0, 'dollar')}</h3>
+            <p className="text-xs text-slate-500 mt-4 font-mono">Spent: {formatCurrency(team.real_player_spent || 0, 'dollar')}</p>
+          </div>
+
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm relative overflow-hidden group hover:border-slate-350 transition-all">
+            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-slate-300">
+              <Users className="w-24 h-24" />
+            </div>
+            <p className="text-xs font-mono uppercase tracking-wider text-slate-400">Squad Size</p>
+            <h3 className="text-3xl font-extrabold text-purple-650 mt-2 font-mono">{team.players_count}</h3>
+            <p className="text-xs text-slate-500 mt-4 font-mono">Football: {team.football_players?.length || 0} | Real: {team.real_players?.length || 0}</p>
+          </div>
+
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm relative overflow-hidden group hover:border-slate-350 transition-all flex flex-col justify-between">
+            <div>
+              <p className="text-xs font-mono uppercase tracking-wider text-slate-400">Total Budgets</p>
+              <div className="mt-2 space-y-1 font-mono text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Football:</span>
+                  <span className="font-semibold text-slate-700">{formatCurrency((team.football_budget || 0) + (team.football_spent || 0), 'euro')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Real:</span>
+                  <span className="font-semibold text-slate-700">{formatCurrency((team.real_player_budget || 0) + (team.real_player_spent || 0), 'dollar')}</span>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowAdjustBalanceModal(true)}
+              className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-800 font-mono transition-all group/btn"
+            >
+              Adjust Balance <TrendingUp className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm hover:border-slate-350 transition-all">
+            <p className="text-xs font-mono uppercase tracking-wider text-slate-400">Current Balance</p>
+            <h3 className="text-3xl font-extrabold text-amber-600 mt-2 font-mono">{formatCurrency(team.balance)}</h3>
+            <div className="w-full bg-slate-100 rounded-full h-1.5 mt-4 overflow-hidden border border-slate-200">
+              <div
+                className="bg-amber-500 h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(balancePercentage, 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-slate-500 mt-2 font-mono">{balancePercentage.toFixed(1)}% remaining</p>
+          </div>
+
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm hover:border-slate-350 transition-all">
+            <p className="text-xs font-mono uppercase tracking-wider text-slate-400">Total Spent</p>
+            <h3 className="text-3xl font-extrabold text-rose-700 mt-2 font-mono">{formatCurrency(team.total_spent)}</h3>
+            <div className="w-full bg-slate-100 rounded-full h-1.5 mt-4 overflow-hidden border border-slate-200">
+              <div
+                className="bg-rose-500 h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(spendingPercentage, 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-slate-500 mt-2 font-mono">{spendingPercentage.toFixed(1)}% of initial</p>
+          </div>
+
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm hover:border-slate-350 transition-all">
+            <p className="text-xs font-mono uppercase tracking-wider text-slate-400">Squad Size</p>
+            <h3 className="text-3xl font-extrabold text-emerald-600 mt-2 font-mono">{team.players_count}</h3>
+            <p className="text-xs text-slate-500 mt-4 font-mono">Registered squad players</p>
+          </div>
+
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm hover:border-slate-350 transition-all flex flex-col justify-between">
+            <div>
+              <p className="text-xs font-mono uppercase tracking-wider text-slate-400">Initial Budget</p>
+              <h3 className="text-3xl font-extrabold text-purple-650 mt-2 font-mono">{formatCurrency(team.initial_balance)}</h3>
+            </div>
+            <button
+              onClick={() => setShowAdjustBalanceModal(true)}
+              className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-800 font-mono transition-all group/btn"
+            >
+              Adjust Balance <TrendingUp className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Owner Information */}
+      <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+          <User className="w-5 h-5 text-slate-605" />
+          Owner Details
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all">
+            <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-600">
+              <User className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-slate-400 font-mono">Owner Name</p>
+              <p className="text-sm font-semibold text-slate-700 truncate mt-0.5">{team.owner_name || 'Not assigned'}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all">
+            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600">
+              <Mail className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-slate-400 font-mono">Email Address</p>
+              <p className="text-sm font-semibold text-slate-700 truncate mt-0.5">{team.owner_email || 'Not assigned'}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all">
+            <div className="p-3 rounded-xl bg-purple-50 border border-purple-200 text-purple-600">
+              <Info className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-slate-400 font-mono">Phone Number</p>
+              <p className="text-sm font-semibold text-slate-700 truncate mt-0.5">{team.owner_phone || 'Not assigned'}</p>
+            </div>
+          </div>
+        </div>
+        {team.description && (
+          <div className="mt-6 pt-5 border-t border-slate-200/60">
+            <p className="text-sm text-slate-500 leading-relaxed font-mono">{team.description}</p>
+          </div>
+        )}
+      </div>
+
+        {/* Tabbed Console layout */}
+        <div className="space-y-4">
+          <div className="p-1 bg-slate-100 border border-slate-200/60 rounded-xl flex gap-1 overflow-x-auto scrollbar-none max-w-max">
+            {[
+              { id: 'overview', label: 'Overview', icon: Layers },
+              { id: 'players', label: `Squad Players (${players.length})`, icon: Users },
+              { id: 'transactions', label: 'Transactions', icon: ArrowRightLeft },
+              { id: 'settings', label: 'Settings', icon: Settings },
+            ].map((tab) => {
+              const IconComp = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-mono font-semibold transition-all whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'bg-slate-800 text-white shadow-sm border border-slate-700/30'
+                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-transparent'
+                  }`}
+                >
+                  <IconComp className="w-3.5 h-3.5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl overflow-hidden min-h-[350px]">
+            {/* Overview Tab Content */}
+            {activeTab === 'overview' && (
+              <div className="p-6 sm:p-8 space-y-6">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <Info className="w-4 h-4 text-amber-500" />
+                  Team Summary
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-mono text-sm">
+                  <div className="space-y-4">
+                    <div className="flex justify-between py-3 border-b border-slate-100">
+                      <span className="text-slate-500">Team Code:</span>
+                      <span className="font-semibold text-slate-850">{team.team_code}</span>
+                    </div>
+                    <div className="flex justify-between py-3 border-b border-slate-100">
+                      <span className="text-slate-500">League Season:</span>
+                      <span className="font-semibold text-slate-850">{team.season_name}</span>
+                    </div>
+                    <div className="flex justify-between py-3 border-b border-slate-100">
+                      <span className="text-slate-500">Registration Date:</span>
+                      <span className="font-semibold text-slate-850">{formatDate(team.created_at)}</span>
+                    </div>
+                    <div className="flex justify-between py-3">
+                      <span className="text-slate-500">Status:</span>
+                      <span className={`font-semibold ${team.is_active ? 'text-emerald-700' : 'text-slate-550'}`}>
                         {team.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-            {/* Action buttons */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto">
-              <button
-                onClick={() => {
-                  setEditForm({ teamName: team.team_name, logoUrl: team.logo_url || '' });
-                  setShowEditModal(true);
-                }}
-                className="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Edit Team
-              </button>
-              <button
-                onClick={handleToggleStatus}
-                className={`inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  team.is_active
-                    ? 'bg-red-600 text-white hover:bg-red-700'
-                    : 'bg-green-600 text-white hover:bg-green-700'
-                }`}
-              >
-                {team.is_active ? 'Deactivate' : 'Activate'}
-              </button>
-            </div>
-          </div>
-        </header>
 
-        {/* Statistics Cards */}
-        {team.currency_system === 'dual' ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <div className="glass rounded-2xl p-6 shadow-lg backdrop-blur-md border border-white/20">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1">eCoin Balance (Football)</p>
-                  <p className="text-lg sm:text-2xl font-bold text-[#0066FF]">{formatCurrency(team.football_budget || 0, 'euro')}</p>
-                </div>
-                <div className="p-3 rounded-xl bg-gradient-to-br from-[#0066FF]/20 to-[#0066FF]/10 animate-pulse">
-                  <span className="text-2xl font-bold text-[#0066FF]">€</span>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500">Spent: {formatCurrency(team.football_spent || 0, 'euro')}</p>
-            </div>
-
-            <div className="glass rounded-2xl p-6 shadow-lg backdrop-blur-md border border-white/20">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1">SSCoin Balance (Real)</p>
-                  <p className="text-lg sm:text-2xl font-bold text-green-600">{formatCurrency(team.real_player_budget || 0, 'dollar')}</p>
-                </div>
-                <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/10">
-                  <span className="text-2xl font-bold text-green-600">$</span>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500">Spent: {formatCurrency(team.real_player_spent || 0, 'dollar')}</p>
-            </div>
-
-            <div className="glass rounded-2xl p-6 shadow-lg backdrop-blur-md border border-white/20">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1">Squad Size</p>
-                  <p className="text-lg sm:text-2xl font-bold text-purple-600">{team.players_count}</p>
-                </div>
-                <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/10">
-                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-4">Football: {team.football_players?.length || 0} | Real: {team.real_players?.length || 0}</p>
-            </div>
-
-            <div className="glass rounded-2xl p-6 shadow-lg backdrop-blur-md border border-white/20">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Budgets</p>
-                  <p className="text-xs font-semibold text-gray-900">
-                    Football: {formatCurrency((team.football_budget || 0) + (team.football_spent || 0), 'euro')}
-                  </p>
-                  <p className="text-xs font-semibold text-gray-900">
-                    Real: {formatCurrency((team.real_player_budget || 0) + (team.real_player_spent || 0), 'dollar')}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowAdjustBalanceModal(true)}
-                className="text-xs text-purple-600 hover:text-purple-700 font-medium mt-4"
-              >
-                Adjust Balance {"->"}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <div className="glass rounded-2xl p-6 shadow-lg backdrop-blur-md border border-white/20">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1">Current Balance</p>
-                  <p className="text-lg sm:text-2xl font-bold text-[#0066FF]">{formatCurrency(team.balance)}</p>
-                </div>
-                <div className="p-3 rounded-xl bg-gradient-to-br from-[#0066FF]/20 to-[#0066FF]/10">
-                  <svg className="w-8 h-8 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                <div
-                  className="bg-[#0066FF] h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${balancePercentage}%` }}
-                ></div>
-              </div>
-              <p className="text-xs text-gray-500">{balancePercentage.toFixed(1)}% of initial balance</p>
-            </div>
-
-            <div className="glass rounded-2xl p-6 shadow-lg backdrop-blur-md border border-white/20">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Spent</p>
-                  <p className="text-lg sm:text-2xl font-bold text-red-600">{formatCurrency(team.total_spent)}</p>
-                </div>
-                <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/20 to-red-500/10">
-                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-                  </svg>
-                </div>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                <div
-                  className="bg-red-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${spendingPercentage}%` }}
-                ></div>
-              </div>
-              <p className="text-xs text-gray-500">{spendingPercentage.toFixed(1)}% of initial balance</p>
-            </div>
-
-            <div className="glass rounded-2xl p-6 shadow-lg backdrop-blur-md border border-white/20">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1">Squad Size</p>
-                  <p className="text-lg sm:text-2xl font-bold text-green-600">{team.players_count}</p>
-                </div>
-                <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/10">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-4">Players in squad</p>
-            </div>
-
-            <div className="glass rounded-2xl p-6 shadow-lg backdrop-blur-md border border-white/20">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1">Initial Budget</p>
-                  <p className="text-lg sm:text-2xl font-bold text-purple-600">{formatCurrency(team.initial_balance)}</p>
-                </div>
-                <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/10">
-                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowAdjustBalanceModal(true)}
-                className="text-xs text-purple-600 hover:text-purple-700 font-medium mt-4"
-              >
-                Adjust Balance {"->"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Owner Information */}
-        <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
-          <h2 className="text-xl font-bold gradient-text mb-4 flex items-center">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zm-4 7a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            Owner Information
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center">
-              <div className="p-3 rounded-xl bg-blue-50 mr-3">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zm-4 7a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Owner Name</p>
-                <p className="text-sm font-semibold text-gray-900">{team.owner_name || 'N/A'}</p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <div className="p-3 rounded-xl bg-green-50 mr-3">
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Email</p>
-                <p className="text-sm font-semibold text-gray-900">{team.owner_email || 'N/A'}</p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <div className="p-3 rounded-xl bg-purple-50 mr-3">
-                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Phone</p>
-                <p className="text-sm font-semibold text-gray-900">{team.owner_phone || 'N/A'}</p>
-              </div>
-            </div>
-          </div>
-          {team.description && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600">{team.description}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="glass rounded-t-3xl p-1.5 sm:p-2 shadow-lg backdrop-blur-md border border-white/20 border-b-0">
-          <div className="flex gap-1 sm:gap-2 overflow-x-auto scrollbar-hide">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`flex-shrink-0 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-medium transition-all ${
-                activeTab === 'overview'
-                  ? 'bg-gradient-to-r from-[#0066FF] to-[#0066FF]/80 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-white/30'
-              }`}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('players')}
-              className={`flex-shrink-0 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
-                activeTab === 'players'
-                  ? 'bg-gradient-to-r from-[#0066FF] to-[#0066FF]/80 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-white/30'
-              }`}
-            >
-              <span className="hidden sm:inline">Players ({players.length})</span>
-              <span className="sm:hidden">Players</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('transactions')}
-              className={`flex-shrink-0 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
-                activeTab === 'transactions'
-                  ? 'bg-gradient-to-r from-[#0066FF] to-[#0066FF]/80 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-white/30'
-              }`}
-            >
-              Transactions
-            </button>
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`flex-shrink-0 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-medium transition-all ${
-                activeTab === 'settings'
-                  ? 'bg-gradient-to-r from-[#0066FF] to-[#0066FF]/80 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-white/30'
-              }`}
-            >
-              Settings
-            </button>
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        <div className="glass rounded-b-3xl shadow-lg backdrop-blur-md border border-white/20 overflow-hidden mb-8">
-          {/* Overview Tab */}
-          {activeTab === 'overview' && (
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Team Summary</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <div className="flex justify-between py-2 border-b border-gray-200">
-                    <span className="text-sm text-gray-600">Team Code:</span>
-                    <span className="text-sm font-semibold text-gray-900">{team.team_code}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b border-gray-200">
-                    <span className="text-sm text-gray-600">Season:</span>
-                    <span className="text-sm font-semibold text-gray-900">{team.season_name}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b border-gray-200">
-                    <span className="text-sm text-gray-600">Created Date:</span>
-                    <span className="text-sm font-semibold text-gray-900">{formatDate(team.created_at)}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b border-gray-200">
-                    <span className="text-sm text-gray-600">Status:</span>
-                    <span className={`text-sm font-semibold ${team.is_active ? 'text-green-600' : 'text-gray-600'}`}>
-                      {team.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  {team.currency_system === 'dual' ? (
-                    <>
-                      <div className="flex justify-between py-2 border-b border-gray-200">
-                        <span className="text-sm text-gray-600">eCoin Initial / Current:</span>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {formatCurrency((team.football_budget || 0) + (team.football_spent || 0), 'euro')} / {formatCurrency(team.football_budget || 0, 'euro')}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-200">
-                        <span className="text-sm text-gray-600">SSCoin Initial / Current:</span>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {formatCurrency((team.real_player_budget || 0) + (team.real_player_spent || 0), 'dollar')} / {formatCurrency(team.real_player_budget || 0, 'dollar')}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-200">
-                        <span className="text-sm text-gray-600">Spent (Football / Real):</span>
-                        <span className="text-sm font-semibold text-red-600">
-                          {formatCurrency(team.football_spent || 0, 'euro')} / {formatCurrency(team.real_player_spent || 0, 'dollar')}
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex justify-between py-2 border-b border-gray-200">
-                        <span className="text-sm text-gray-600">Initial Balance:</span>
-                        <span className="text-sm font-semibold text-gray-900">{formatCurrency(team.initial_balance)}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-200">
-                        <span className="text-sm text-gray-600">Current Balance:</span>
-                        <span className="text-sm font-semibold text-[#0066FF]">{formatCurrency(team.balance)}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-200">
-                        <span className="text-sm text-gray-600">Total Spent:</span>
-                        <span className="text-sm font-semibold text-red-600">{formatCurrency(team.spent_amount || team.total_spent)}</span>
-                      </div>
-                    </>
-                  )}
-                  <div className="flex justify-between py-2 border-b border-gray-200">
-                    <span className="text-sm text-gray-600">Squad Size:</span>
-                    <span className="text-sm font-semibold text-gray-900">{team.players_count} players</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Players Tab */}
-          {activeTab === 'players' && (
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Squad Players</h3>
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#0066FF]/20 text-[#0066FF]">
-                  {players.length} Players
-                </span>
-              </div>
-              
-              {players.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50/50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Player ID</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Name</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Position</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Rating</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Price Paid</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Acquired</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white/30">
-                      {players.map((player) => (
-                        <tr key={player.id} className="hover:bg-white/60 transition-colors">
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <span className="text-sm font-mono text-[#0066FF] font-medium">{player.player_id}</span>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-gray-900">{player.name}</div>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              {player.position}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <span className="text-sm font-semibold text-gray-900">{player.overall_rating}</span>
-                              <svg className="w-4 h-4 text-yellow-500 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <span className="text-sm font-semibold text-gray-900">
-                              {player.price_paid ? formatCurrency(player.price_paid) : 'N/A'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <span className="text-sm text-gray-600">
-                              {player.acquired_at ? formatDate(player.acquired_at) : 'N/A'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <button
-                              onClick={() => handleRemovePlayer(player)}
-                              className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Remove Player"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-600 mb-2">No players yet</h3>
-                  <p className="text-sm text-gray-500">Players will appear here once they are acquired through auctions</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Transactions Tab */}
-          {activeTab === 'transactions' && (
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Transaction History</h3>
-              
-              {transactions.length > 0 ? (
-                <div className="space-y-3">
-                  {transactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-white/30 transition-colors">
-                      <div className="flex items-center flex-1">
-                        <div className={`p-3 rounded-xl mr-4 ${
-                          transaction.type === 'bid_won' ? 'bg-green-50' :
-                          transaction.type === 'bid_lost' ? 'bg-red-50' :
-                          'bg-blue-50'
-                        }`}>
-                          {transaction.type === 'bid_won' && (
-                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          )}
-                          {transaction.type === 'bid_lost' && (
-                            <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          )}
-                          {transaction.type === 'balance_adjustment' && (
-                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          )}
+                  <div className="space-y-4">
+                    {team.currency_system === 'dual' ? (
+                      <>
+                        <div className="flex justify-between py-3 border-b border-slate-100">
+                          <span className="text-slate-500">eCoin Initial / Current:</span>
+                          <span className="font-semibold text-slate-850">
+                            {formatCurrency((team.football_budget || 0) + (team.football_spent || 0), 'euro')} / {formatCurrency(team.football_budget || 0, 'euro')}
+                          </span>
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-gray-900">{transaction.description}</p>
-                          {transaction.player_name && (
-                            <p className="text-xs text-gray-500 mt-1">{transaction.player_name}</p>
-                          )}
-                          <p className="text-xs text-gray-400 mt-1">{formatDateTime(transaction.timestamp)}</p>
+                        <div className="flex justify-between py-3 border-b border-slate-100">
+                          <span className="text-slate-500">SSCoin Initial / Current:</span>
+                          <span className="font-semibold text-slate-850">
+                            {formatCurrency((team.real_player_budget || 0) + (team.real_player_spent || 0), 'dollar')} / {formatCurrency(team.real_player_budget || 0, 'dollar')}
+                          </span>
                         </div>
-                      </div>
-                      <div className="text-right ml-4">
-                        <p className={`text-lg font-bold ${
-                          transaction.amount < 0 ? 'text-red-600' : 
-                          transaction.amount > 0 ? 'text-green-600' : 
-                          'text-gray-600'
-                        }`}>
-                          {transaction.amount !== 0 ? formatCurrency(transaction.amount) : '-'}
-                        </p>
-                      </div>
+                        <div className="flex justify-between py-3 border-b border-slate-100">
+                          <span className="text-slate-500">Spent (Football / Real):</span>
+                          <span className="font-semibold text-rose-600">
+                            {formatCurrency(team.football_spent || 0, 'euro')} / {formatCurrency(team.real_player_spent || 0, 'dollar')}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex justify-between py-3 border-b border-slate-100">
+                          <span className="text-slate-500">Initial Balance:</span>
+                          <span className="font-semibold text-slate-850">{formatCurrency(team.initial_balance)}</span>
+                        </div>
+                        <div className="flex justify-between py-3 border-b border-slate-100">
+                          <span className="text-slate-500">Current Balance:</span>
+                          <span className="font-semibold text-amber-600">{formatCurrency(team.balance)}</span>
+                        </div>
+                        <div className="flex justify-between py-3 border-b border-slate-100">
+                          <span className="text-slate-505">Total Spent:</span>
+                          <span className="font-semibold text-rose-600">{formatCurrency(team.spent_amount || team.total_spent)}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex justify-between py-3">
+                      <span className="text-slate-500">Squad Count:</span>
+                      <span className="font-semibold text-slate-850">{team.players_count} active players</span>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              ) : (
-                <div className="text-center py-12">
-                  <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-600 mb-2">No transactions yet</h3>
-                  <p className="text-sm text-gray-500">Transaction history will appear here</p>
-                </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* Settings Tab */}
-          {activeTab === 'settings' && (
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Team Settings</h3>
-              <div className="space-y-4">
-                <div className="p-4 rounded-xl border border-gray-200">
-                  <div className="flex items-center justify-between">
+            {/* Players Tab Content */}
+            {activeTab === 'players' && (
+              <div className="p-6 sm:p-8 space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-amber-500" />
+                    Squad Roster
+                  </h3>
+                  <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-amber-50 border border-amber-200 text-amber-700">
+                    {players.length} Players Registered
+                  </span>
+                </div>
+
+                {players.length > 0 ? (
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200/60 bg-white shadow-sm">
+                    <table className="min-w-full divide-y divide-slate-100 text-sm font-mono">
+                      <thead className="bg-slate-50 text-slate-500">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Player ID</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Name</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Position</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Overall</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Price Paid</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Acquired</th>
+                          <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                        {players.map((player) => (
+                          <tr key={player.id} className="hover:bg-slate-50/50 transition-all">
+                            <td className="px-6 py-4 whitespace-nowrap text-slate-600 font-semibold">{player.player_id}</td>
+                            <td className="px-6 py-4 whitespace-nowrap font-bold text-slate-900">{player.name}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 border border-slate-200 text-slate-700 uppercase">
+                                {player.position}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-1 font-bold text-slate-800">
+                                {player.overall_rating}
+                                <svg className="w-3.5 h-3.5 text-amber-400 fill-amber-400" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-slate-800 font-semibold">
+                              {player.price_paid ? formatCurrency(player.price_paid) : 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-slate-500 text-xs">
+                              {player.acquired_at ? formatDate(player.acquired_at) : 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                              <button
+                                onClick={() => handleRemovePlayer(player)}
+                                className="p-2 rounded-xl bg-rose-50 border border-rose-200/60 text-rose-600 hover:bg-rose-100 transition-all"
+                                title="Remove Player"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-16 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
+                    <Users className="w-10 h-10 mx-auto text-slate-400 mb-3" />
+                    <h4 className="text-base font-bold text-slate-800">No Roster Configured</h4>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 font-mono">
+                      Players will appear in the squad once they are successfully drafted or bought in live auctions.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Transactions Tab Content */}
+            {activeTab === 'transactions' && (
+              <div className="p-6 sm:p-8 space-y-6">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <ArrowRightLeft className="w-4 h-4 text-amber-500" />
+                  Transaction Log
+                </h3>
+
+                {transactions.length > 0 ? (
+                  <div className="space-y-3 font-mono">
+                    {transactions.map((tx) => (
+                      <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/60 hover:border-slate-350 transition-all gap-4">
+                        <div className="flex items-start gap-4">
+                          <div className={`p-2.5 rounded-xl border flex-shrink-0 ${
+                            tx.type === 'bid_won' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
+                            tx.type === 'bid_lost' ? 'bg-rose-50 border-rose-200 text-rose-700' :
+                            'bg-blue-50 border-blue-200 text-blue-750'
+                          }`}>
+                            <Info className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">{tx.description}</p>
+                            {tx.player_name && (
+                              <p className="text-xs text-slate-500 mt-0.5">Player: {tx.player_name}</p>
+                            )}
+                            <p className="text-[10px] text-slate-400 mt-1">{formatDateTime(tx.timestamp)}</p>
+                          </div>
+                        </div>
+                        <div className="text-right sm:ml-auto">
+                          <span className={`text-lg font-extrabold ${
+                            tx.amount < 0 ? 'text-rose-600' : 
+                            tx.amount > 0 ? 'text-emerald-600' : 
+                            'text-slate-500'
+                          }`}>
+                            {tx.amount > 0 ? '+' : ''}{tx.amount !== 0 ? formatCurrency(tx.amount) : '-'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-16 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
+                    <ArrowRightLeft className="w-10 h-10 mx-auto text-slate-400 mb-3" />
+                    <h4 className="text-base font-bold text-slate-800">Transaction History Clear</h4>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 font-mono">
+                      No monetary or budget operations have been recorded for this squad during the active season.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Settings Tab Content */}
+            {activeTab === 'settings' && (
+              <div className="p-6 sm:p-8 space-y-6">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-amber-500" />
+                  Management Console
+                </h3>
+
+                <div className="grid grid-cols-1 gap-4 font-mono text-sm">
+                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h4 className="font-semibold text-gray-900">Team Status</h4>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {team.is_active ? 'Team is currently active and can participate in auctions' : 'Team is currently inactive'}
+                      <h4 className="font-bold text-slate-800">Deactivate / Activate Squad</h4>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Temporarily suspend team roster from placing bids or participating in operations.
                       </p>
                     </div>
                     <button
                       onClick={handleToggleStatus}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`px-5 py-2.5 rounded-xl font-bold transition-all text-xs border ${
                         team.is_active
-                          ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                          : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          ? 'bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100'
+                          : 'bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100'
                       }`}
                     >
                       {team.is_active ? 'Deactivate Team' : 'Activate Team'}
                     </button>
                   </div>
-                </div>
 
-                <div className="p-4 rounded-xl border border-gray-200">
-                  <div className="flex items-center justify-between">
+                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h4 className="font-semibold text-gray-900">Balance Adjustment</h4>
-                      <p className="text-sm text-gray-600 mt-1">Manually adjust team balance for corrections</p>
+                      <h4 className="font-bold text-slate-800">Manual Balance Adjustment</h4>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Inject currency or dock budget points manually. This will generate a transaction log.
+                      </p>
                     </div>
                     <button
                       onClick={() => setShowAdjustBalanceModal(true)}
-                      className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200 transition-colors"
+                      className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm"
                     >
                       Adjust Balance
                     </button>
                   </div>
-                </div>
 
-                <div className="p-4 rounded-xl border border-red-200 bg-red-50">
-                  <div className="flex items-center justify-between">
+                  <div className="p-5 rounded-2xl bg-rose-50 border border-rose-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h4 className="font-semibold text-red-900">Danger Zone</h4>
-                      <p className="text-sm text-red-600 mt-1">Permanently delete this team and all associated data</p>
+                      <h4 className="font-bold text-rose-800">Danger Zone: Purge Squad</h4>
+                      <p className="text-xs text-rose-600/80 mt-1">
+                        Permanently delete this squad roster, reset all balances, and delete associated history.
+                      </p>
                     </div>
                     <button
                       onClick={() => {
@@ -895,80 +810,72 @@ export default function TeamDetailsPage() {
                           router.push('/dashboard/superadmin/teams');
                         }
                       }}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                      className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition-all text-xs shadow-sm"
                     >
                       Delete Team
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Edit Team Modal */}
         {showEditModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="glass rounded-3xl p-6 max-w-md w-full shadow-2xl border border-white/20">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold gradient-text">Edit Team</h2>
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+            <div className="console-card bg-white border border-slate-200 shadow-lg rounded-2xl p-6 sm:p-8 max-w-md w-full space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <Edit className="w-5 h-5 text-amber-500" />
+                  Edit Squad
+                </h2>
                 <button
                   onClick={() => {
                     setShowEditModal(false);
                     setEditForm({ teamName: '', logoUrl: '' });
                   }}
-                  className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                  className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-650 transition-all"
                 >
-                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <XCircle className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleUpdateTeam} className="space-y-4">
-                {/* Current Logo Display */}
+              <form onSubmit={handleUpdateTeam} className="space-y-4 font-mono text-sm">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Logo</label>
-                  <div className="w-24 h-24 rounded-2xl bg-white flex items-center justify-center border-2 border-gray-200 mx-auto">
+                  <label className="block text-xs text-slate-500 mb-2 uppercase tracking-wider font-semibold">Current Logo</label>
+                  <div className="w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto overflow-hidden shadow-inner">
                     {(editForm.logoUrl || team.logo_url) ? (
                       <img 
                         src={editForm.logoUrl || team.logo_url} 
-                        alt="Team logo"
+                        alt="Team logo preview"
                         className="max-w-full max-h-full object-contain p-2"
                       />
                     ) : (
-                      <span className="text-[#0066FF] font-bold text-2xl">{team.team_code}</span>
+                      <span className="text-amber-600 font-bold text-xl">{team.team_code}</span>
                     )}
                   </div>
                 </div>
 
-                {/* Logo Upload */}
                 <div>
-                  <label htmlFor="logo_upload" className="block text-sm font-medium text-gray-700 mb-2">
-                    Upload New Logo
-                  </label>
+                  <label className="block text-xs text-slate-500 mb-2 uppercase tracking-wider font-semibold">Upload Logo Asset</label>
                   <div className="flex items-center justify-center w-full">
-                    <label htmlFor="logo_upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-200 border-dashed rounded-2xl cursor-pointer bg-slate-50 hover:bg-slate-100/70 hover:border-amber-400/40 transition-all">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
                         {uploadingLogo ? (
                           <>
-                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0066FF] mb-2"></div>
-                            <p className="text-sm text-gray-500">Uploading...</p>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mb-2" />
+                            <p className="text-xs text-slate-500">Uploading to storage server...</p>
                           </>
                         ) : (
                           <>
-                            <svg className="w-10 h-10 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
-                            <p className="mb-1 text-sm text-gray-500">
-                              <span className="font-semibold">Click to upload</span> or drag and drop
-                            </p>
-                            <p className="text-xs text-gray-500">PNG, JPG or SVG (MAX. 5MB)</p>
+                            <Camera className="w-8 h-8 mb-2 text-slate-400" />
+                            <p className="text-xs text-slate-550 font-semibold mb-0.5">Click to browse asset</p>
+                            <p className="text-[10px] text-slate-400">PNG, JPG or SVG (Max 5MB)</p>
                           </>
                         )}
                       </div>
                       <input
-                        id="logo_upload"
                         type="file"
                         className="hidden"
                         accept="image/*"
@@ -979,54 +886,47 @@ export default function TeamDetailsPage() {
                   </div>
                 </div>
 
-                {/* Logo URL (optional) */}
                 <div>
-                  <label htmlFor="logo_url" className="block text-sm font-medium text-gray-700 mb-2">
-                    Or Enter Logo URL
-                  </label>
+                  <label htmlFor="logo_url_input" className="block text-xs text-slate-500 mb-1.5 uppercase tracking-wider font-semibold">Or logo URL link</label>
                   <input
                     type="url"
-                    id="logo_url"
+                    id="logo_url_input"
                     value={editForm.logoUrl}
                     onChange={(e) => setEditForm({ ...editForm, logoUrl: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 transition-all"
                     placeholder="https://example.com/logo.png"
                   />
                 </div>
 
-                {/* Team Name */}
                 <div>
-                  <label htmlFor="team_name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Team Name
-                  </label>
+                  <label htmlFor="team_name_input" className="block text-xs text-slate-500 mb-1.5 uppercase tracking-wider font-semibold">Squad Name</label>
                   <input
                     type="text"
-                    id="team_name"
+                    id="team_name_input"
                     value={editForm.teamName}
                     onChange={(e) => setEditForm({ ...editForm, teamName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 transition-all font-semibold"
                     placeholder={team.team_name}
                   />
-                  <p className="text-xs text-gray-500 mt-1">Current: {team.team_name}</p>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex gap-3 pt-4 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => {
                       setShowEditModal(false);
                       setEditForm({ teamName: '', logoUrl: '' });
                     }}
-                    className="px-6 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 py-3 border border-slate-200/60 rounded-xl text-slate-700 bg-white hover:bg-slate-50 transition-all font-semibold"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={uploadingLogo}
-                    className="px-6 py-3 bg-[#0066FF] text-white rounded-xl text-sm font-medium hover:bg-[#0066FF]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                   >
-                    Update Team
+                    Save Changes
                   </button>
                 </div>
               </form>
@@ -1036,70 +936,67 @@ export default function TeamDetailsPage() {
 
         {/* Adjust Balance Modal */}
         {showAdjustBalanceModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="glass rounded-3xl p-6 max-w-md w-full shadow-2xl border border-white/20">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold gradient-text">Adjust Balance</h2>
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+            <div className="console-card bg-white border border-slate-200 shadow-lg rounded-2xl p-6 sm:p-8 max-w-md w-full space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-amber-500" />
+                  Adjust Balance
+                </h2>
                 <button
                   onClick={() => setShowAdjustBalanceModal(false)}
-                  className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                  className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-650 transition-all"
                 >
-                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <XCircle className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleAdjustBalance} className="space-y-4">
+              <form onSubmit={handleAdjustBalance} className="space-y-4 font-mono text-sm">
                 <div>
-                  <label htmlFor="adjustment_amount" className="block text-sm font-medium text-gray-700 mb-2">
-                    Adjustment Amount (₹) *
-                  </label>
+                  <label htmlFor="adjust_amount_input" className="block text-xs text-slate-500 mb-1.5 uppercase tracking-wider font-semibold">Adjustment Amount (₹)</label>
                   <input
                     type="number"
-                    id="adjustment_amount"
+                    id="adjust_amount_input"
                     required
                     value={balanceAdjustment.amount}
                     onChange={(e) => setBalanceAdjustment({ ...balanceAdjustment, amount: parseInt(e.target.value) || 0 })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all"
-                    placeholder="Enter amount (positive to add, negative to subtract)"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 transition-all font-semibold"
+                    placeholder="E.g. 5000 or -2000"
                   />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Current balance: {formatCurrency(team.balance)}
-                  </p>
-                  {balanceAdjustment.amount !== 0 && (
-                    <p className="text-xs font-semibold mt-1">
-                      New balance: {formatCurrency(team.balance + balanceAdjustment.amount)}
-                    </p>
-                  )}
+                  <div className="flex justify-between mt-3 text-xs text-slate-500">
+                    <span>Current: {formatCurrency(team.balance)}</span>
+                    {balanceAdjustment.amount !== 0 && (
+                      <span className="font-bold text-slate-700">
+                        Target: {formatCurrency(team.balance + balanceAdjustment.amount)}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div>
-                  <label htmlFor="adjustment_reason" className="block text-sm font-medium text-gray-700 mb-2">
-                    Reason for Adjustment *
-                  </label>
+                  <label htmlFor="adjust_reason_input" className="block text-xs text-slate-500 mb-1.5 uppercase tracking-wider font-semibold">Adjustment Reason</label>
                   <textarea
-                    id="adjustment_reason"
+                    id="adjust_reason_input"
                     required
                     rows={3}
                     value={balanceAdjustment.reason}
                     onChange={(e) => setBalanceAdjustment({ ...balanceAdjustment, reason: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0066FF]/30 focus:border-[#0066FF] outline-none transition-all resize-none"
-                    placeholder="Explain why you're adjusting the balance..."
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 transition-all resize-none"
+                    placeholder="Explain the purpose of this manual credit or debit..."
                   />
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex gap-3 pt-4 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => setShowAdjustBalanceModal(false)}
-                    className="px-6 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 py-3 border border-slate-200/60 rounded-xl text-slate-700 bg-white hover:bg-slate-50 transition-all font-semibold"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3 bg-[#0066FF] text-white rounded-xl text-sm font-medium hover:bg-[#0066FF]/90 transition-colors"
+                    className="flex-1 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold transition-all shadow-sm"
                   >
                     Apply Adjustment
                   </button>
@@ -1109,6 +1006,5 @@ export default function TeamDetailsPage() {
           </div>
         )}
       </div>
-    </div>
   );
 }

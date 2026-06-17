@@ -24,6 +24,12 @@ export default function Navbar() {
   const { signOut } = useFirebaseAuth();
   const router = useRouter();
   const pathname = usePathname();
+  
+  // Close dropdown when pathname changes (route changes/navigation/logout)
+  useEffect(() => {
+    setOpenDropdown(null);
+  }, [pathname]);
+
   const searchParams = useSearchParams();
   const currentTab = searchParams ? (searchParams.get('tab') || searchParams.get('filter')) : null;
   const isHome = pathname === '/';
@@ -757,10 +763,10 @@ export default function Navbar() {
                   <div className="relative" ref={(el) => { dropdownRefs.current['myteam'] = el; }}>
                     <button
                       onClick={() => toggleDropdown('myteam')}
-                      className={getDropdownClass(['/dashboard/team/profile', '/dashboard/team/players', '/dashboard/team/budget-planner', '/dashboard/team/players-database'])}
+                      className={getDropdownClass(['/dashboard/team/profile', '/dashboard/team/players', '/dashboard/team/budget-planner', '/dashboard/team/players-database', '/dashboard/team/requests'])}
                     >
                       My Team
-                      <span className={getDropdownSpanClass(['/dashboard/team/profile', '/dashboard/team/players', '/dashboard/team/budget-planner', '/dashboard/team/players-database'])}></span>
+                      <span className={getDropdownSpanClass(['/dashboard/team/profile', '/dashboard/team/players', '/dashboard/team/budget-planner', '/dashboard/team/players-database', '/dashboard/team/requests'])}></span>
                       <svg className={`w-4 h-4 ml-1.5 transition-transform duration-350 ${openDropdown === 'myteam' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -825,6 +831,21 @@ export default function Navbar() {
                               isActiveLink('/dashboard/team/players-database') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                             }`}></span>
                             Player Database
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/team/requests" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/team/requests')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/team/requests') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Roster Requests
                           </span>
                         </Link>
                       </div>

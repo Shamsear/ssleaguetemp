@@ -1,10 +1,10 @@
+'use client';
+
 import { BarChart2, Calendar, Info, User, Users } from 'lucide-react';
 /**
  * Fantasy Player Analysis Page
  * Detailed player statistics, form, and fixture difficulty
  */
-
-'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';

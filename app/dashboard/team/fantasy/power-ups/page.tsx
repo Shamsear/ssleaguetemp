@@ -1,11 +1,11 @@
+'use client';
+
 import { WildcardIcon } from '@/components/ui/CustomIcons';
 import { BookOpen, Clock, Crown, Dumbbell, Info, Lightbulb } from 'lucide-react';
 /**
  * Fantasy Power-Ups Page
  * View available power-ups, activate them, and see usage history
  */
-
-'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';

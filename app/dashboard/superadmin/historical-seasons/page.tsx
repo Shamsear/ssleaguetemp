@@ -4,6 +4,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { 
+  ArrowLeft, 
+  Download, 
+  Upload, 
+  Calendar, 
+  Trash2, 
+  Eye, 
+  AlertCircle, 
+  CheckCircle, 
+  Sparkles,
+  Info,
+  Clock,
+  Users,
+  Award,
+  Layers,
+  Database
+} from 'lucide-react';
 
 interface Season {
   id: string;
@@ -77,11 +94,11 @@ export default function HistoricalSeasons() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
       case 'completed':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-slate-100 text-slate-600 border border-slate-200/60';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-slate-100 text-slate-600 border border-slate-200/60';
     }
   };
 
@@ -104,48 +121,53 @@ export default function HistoricalSeasons() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading template:', error);
-      alert('Failed to download template. Please try again.');
+      alert('Failed to download template');
     }
   };
 
   const handleDeleteSeason = async (seasonId: string) => {
     if (deleteConfirm !== seasonId) {
       setDeleteConfirm(seasonId);
+      // Reset confirmation after 5 seconds if not clicked again
+      setTimeout(() => {
+        setDeleteConfirm(prev => prev === seasonId ? null : prev);
+      }, 5000);
       return;
     }
 
     try {
       setDeleting(seasonId);
-      const response = await fetchWithTokenRefresh(`/api/seasons/historical/${seasonId}`, {
+      setError(null);
+      
+      const response = await fetchWithTokenRefresh(`/api/seasons/historical/delete?season_id=${seasonId}`, {
         method: 'DELETE',
       });
-
+      
       const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to delete season');
+      
+      if (data.success) {
+        setSeasons(prev => prev.filter(s => s.id !== seasonId));
+        setDeleteConfirm(null);
+      } else {
+        setError(data.error || 'Failed to delete season');
       }
-
-      // Remove from local state
-      setSeasons(seasons.filter(s => s.id !== seasonId));
-      alert(`Season deleted successfully!\n\nDeleted:\n- ${data.deleted.playerStats} player stats\n- ${data.deleted.teamStats} team stats\n- ${data.deleted.awards} awards\n- Updated ${data.deleted.teamsUpdated} teams`);
     } catch (error) {
       console.error('Error deleting season:', error);
-      alert(`Failed to delete season: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setError('An error occurred while deleting the season');
     } finally {
       setDeleting(null);
-      setDeleteConfirm(null);
     }
   };
 
-  if (loading || seasonsLoading) {
+  if (loading || (seasonsLoading && seasons.length === 0)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">
-            {loading ? 'Loading...' : 'Loading seasons data...'}
-          </p>
+      <div className="flex items-center justify-center pt-32">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
+          </div>
+          <p className="text-slate-550 font-mono text-xs tracking-widest uppercase animate-pulse">Syncing Historical records...</p>
         </div>
       </div>
     );
@@ -155,277 +177,207 @@ export default function HistoricalSeasons() {
     return null;
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen py-4 sm:py-8 px-4">
-        <div className="container mx-auto max-w-screen-2xl">
-          <div className="glass rounded-3xl p-8 shadow-lg backdrop-blur-md border border-white/20 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-100 flex items-center justify-center">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Seasons</h2>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="inline-flex items-center px-4 py-2 bg-[#0066FF] hover:bg-[#0066FF]/90 text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Retry
-            </button>
+  return (
+    <div className="space-y-8 animate-fade-in font-mono">
+      
+      {/* Info Banner about new structure */}
+      <div className="console-card bg-amber-500/5 border border-amber-200/60 p-5 shadow-sm rounded-2xl flex items-start gap-3.5">
+        <Info className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+        <div className="space-y-2">
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Database Schema Isolation</h3>
+          <p className="text-[11px] text-slate-550 leading-relaxed">
+            Player records are partitioned into static credentials (<code className="font-bold">realplayers</code>) and season-specific performance coefficients (<code className="font-bold">realplayerstats</code>). 
+            This structural separation prevents seasonal overwrites and preserves history.
+          </p>
+          <div className="flex flex-wrap gap-2 pt-1 font-mono text-[9px] font-bold uppercase">
+            <span className="inline-flex items-center px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 border border-amber-500/20">
+              Preserved Identity
+            </span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 border border-amber-500/20">
+              Isolate Seasons
+            </span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 border border-amber-500/20">
+              Zero Overwrite Risk
+            </span>
           </div>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen py-4 sm:py-8 px-4">
-      <div className="container mx-auto max-w-screen-2xl">
-        {/* Info Banner about new structure */}
-        <div className="glass rounded-2xl p-4 mb-6 shadow-md backdrop-blur-md border border-blue-200/50 bg-gradient-to-r from-blue-50/80 to-indigo-50/80">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 mt-0.5">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-blue-900 mb-1">New Database Structure</h3>
-              <p className="text-xs text-blue-800 mb-2">
-                Player data is now split into two collections: <strong>realplayers</strong> (permanent info) and <strong>realplayerstats</strong> (season-specific stats).
-                This ensures data integrity and allows players to have different categories and teams across seasons.
-              </p>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 font-medium">
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  Permanent data preserved
-                </span>
-                <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 font-medium">
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  Season-specific categories
-                </span>
-                <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 font-medium">
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  No data overwriting
-                </span>
-              </div>
-            </div>
+      
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/dashboard/superadmin')}
+            className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-950 transition-all flex-shrink-0 shadow-sm"
+            title="Back to Dashboard"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              Historical Seasons
+            </h1>
+            <p className="text-xs text-slate-505 font-mono mt-1">
+              Configure previous season index tables, download spreadsheets, and audit historical performance databases.
+            </p>
           </div>
         </div>
-        
-        {/* Page Header */}
-        <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2">🏆 Historical Seasons</h1>
-              <p className="text-gray-600 text-sm md:text-base">Manage and import previous season data</p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={handleDownloadTemplate}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                </svg>
-                Download Template
-              </button>
-              <button
-                onClick={() => router.push('/dashboard/superadmin/historical-seasons/import')}
-                className="inline-flex items-center px-4 py-2 bg-[#0066FF] hover:bg-[#0066FF]/90 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                Import New Season
-              </button>
-            </div>
-          </div>
+        <div className="flex flex-wrap gap-2.5">
+          <button
+            onClick={handleDownloadTemplate}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-700 text-xs font-mono font-bold rounded-xl transition-all shadow-sm"
+          >
+            <Download className="w-4 h-4" />
+            Download Template
+          </button>
+          <button
+            onClick={() => router.push('/dashboard/superadmin/historical-seasons/import')}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-mono font-bold rounded-xl transition-all shadow-sm"
+          >
+            <Upload className="w-4 h-4" />
+            Import Season
+          </button>
         </div>
+      </div>
 
-        {/* Seasons List */}
-        <div className="glass rounded-3xl shadow-lg backdrop-blur-md border border-white/20 overflow-hidden">
-          <div className="px-6 py-5 bg-gradient-to-r from-[#0066FF]/5 to-[#0066FF]/10 border-b border-[#0066FF]/20">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-[#0066FF] flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                All Seasons
-              </h3>
-              {!seasonsLoading && seasons.length > 0 && (
-                <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-[#0066FF]/20 text-[#0066FF]">
-                  {seasons.length} Total Seasons
-                </span>
-              )}
-            </div>
-          </div>
+      {/* Errors display */}
+      {error && (
+        <div className="rounded-2xl p-4 bg-rose-50 border border-rose-200 text-rose-700 font-mono text-xs flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0" />
+          <p className="flex-1">{error}</p>
+        </div>
+      )}
 
-          {!seasonsLoading && seasons.length > 0 ? (
-            <div className="divide-y divide-gray-200/50">
-              {seasons.map((season) => (
-                <div key={season.id} className="px-6 py-5 hover:bg-white/30 transition-all duration-200 group">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center mb-3">
-                        <div className="flex items-center space-x-3">
-                          {/* Season Icon */}
-                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0066FF]/20 to-[#0066FF]/10 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                            </svg>
-                          </div>
-
-                          <div>
-                            <h3 
-                              className="text-lg font-semibold text-gray-900 group-hover:text-[#0066FF] transition-colors cursor-pointer hover:underline"
-                              onClick={() => router.push(`/dashboard/superadmin/historical-seasons/${season.id}`)}
-                            >
-                              Season {season.season_number || 'N/A'}
-                            </h3>
-                            <div className="flex items-center gap-3">
-                              <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full transition-all duration-200 ${getStatusBadge(season.status)}`}>
-                                {season.status.charAt(0).toUpperCase() + season.status.slice(1)}
-                              </span>
-                              <span className="text-sm text-gray-500">ID: {season.id}</span>
-                              {season.is_active && (
-                                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                                  Current Active
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                        {/* Creation Date */}
-                        <div className="flex items-center">
-                          <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          Created: {formatDate(season.created_at)}
-                        </div>
-
-                        {/* Teams Count */}
-                        <div className="flex items-center">
-                          <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 6.292 4 4 0 010-6.292zM15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                          </svg>
-                          {season.teams_count} Teams
-                        </div>
-
-                        {/* Awards Count */}
-                        <div className="flex items-center">
-                          <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                          </svg>
-                          {season.awards_count} Awards
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {season.status === 'completed' && (
-                        <div className="inline-flex items-center px-3 py-2 rounded-xl bg-blue-50 text-blue-700 text-xs font-medium border border-blue-200">
-                          <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                          </svg>
-                          Historical Data
-                        </div>
-                      )}
-                      {season.is_active && (
-                        <div className="inline-flex items-center px-3 py-2 rounded-xl bg-green-50 text-green-700 text-xs font-medium border border-green-200">
-                          <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                          Active Season
-                        </div>
-                      )}
-                      <button
-                        onClick={() => router.push(`/dashboard/superadmin/historical-seasons/${season.id}`)}
-                        className="inline-flex items-center px-3 py-2 rounded-xl bg-gray-50 text-gray-700 text-xs font-medium border border-gray-200 hover:bg-[#0066FF]/10 hover:text-[#0066FF] hover:border-[#0066FF]/20 transition-all"
-                      >
-                        <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        View Details
-                      </button>
-                      {season.is_historical && (
-                        <button
-                          onClick={() => handleDeleteSeason(season.id)}
-                          disabled={deleting === season.id}
-                          className={
-                            deleteConfirm === season.id
-                              ? "inline-flex items-center px-3 py-2 rounded-xl bg-red-600 text-white text-xs font-medium border border-red-700 hover:bg-red-700 transition-all"
-                              : "inline-flex items-center px-3 py-2 rounded-xl bg-red-50 text-red-700 text-xs font-medium border border-red-200 hover:bg-red-100 hover:border-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                          }
-                        >
-                          {deleting === season.id ? (
-                            <>
-                              <svg className="w-3 h-3 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              Deleting...
-                            </>
-                          ) : deleteConfirm === season.id ? (
-                            <>
-                              <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                              </svg>
-                              Click Again to Confirm
-                            </>
-                          ) : (
-                            <>
-                              <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                              Delete
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="px-8 py-16 text-center">
-              <div className="max-w-sm mx-auto">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-[#0066FF]/20 to-[#0066FF]/10 flex items-center justify-center">
-                  <svg className="w-10 h-10 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Seasons Found</h3>
-                <p className="text-gray-500 mb-6">No seasons have been imported yet. Start by importing your first historical season.</p>
-                <button
-                  onClick={() => router.push('/dashboard/superadmin/historical-seasons/import')}
-                  className="inline-flex items-center px-4 py-2 rounded-xl bg-[#0066FF] text-white text-sm font-medium hover:bg-[#0066FF]/90"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  Import First Season
-                </button>
-              </div>
-            </div>
+      {/* Seasons Card List */}
+      <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200/60 bg-slate-50/50 flex items-center justify-between">
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+            <Database className="w-4 h-4 text-amber-500" />
+            League Archival Registry
+          </span>
+          {!seasonsLoading && seasons.length > 0 && (
+            <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-mono font-bold uppercase">
+              {seasons.length} Seasons
+            </span>
           )}
         </div>
+
+        {!seasonsLoading && seasons.length > 0 ? (
+          <div className="divide-y divide-slate-100">
+            {seasons.map((season) => (
+              <div key={season.id} className="px-6 py-5 hover:bg-slate-50/50 transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3.5 mb-2.5">
+                    {/* Season Symbol */}
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center flex-shrink-0">
+                      <Calendar className="w-5 h-5" />
+                    </div>
+
+                    <div className="min-w-0">
+                      <h3 
+                        className="text-sm font-extrabold text-slate-900 hover:text-amber-600 hover:underline cursor-pointer transition-colors"
+                        onClick={() => router.push(`/dashboard/superadmin/historical-seasons/${season.id}`)}
+                      >
+                        Season {season.season_number || 'N/A'}
+                      </h3>
+                      <div className="flex items-center gap-2 flex-wrap text-[10px] font-mono mt-0.5">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded font-bold uppercase text-[9px] ${getStatusBadge(season.status)}`}>
+                          {season.status}
+                        </span>
+                        <span className="text-slate-400">ID: {season.id}</span>
+                        {season.is_active && (
+                          <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[9px] font-mono font-bold uppercase animate-pulse">
+                            Active Context
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] text-slate-500 font-mono pl-0 md:pl-14">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      Created: {formatDate(season.created_at)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5 text-slate-400" />
+                      {season.teams_count} Franchises
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Award className="w-3.5 h-3.5 text-slate-400" />
+                      {season.awards_count} Awards
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center flex-wrap gap-2 self-start md:self-center pl-0 md:pl-14">
+                  {season.status === 'completed' && (
+                    <div className="inline-flex items-center px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200">
+                      Archived
+                    </div>
+                  )}
+                  {season.is_active && (
+                    <div className="inline-flex items-center px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                      Active
+                    </div>
+                  )}
+                  <button
+                    onClick={() => router.push(`/dashboard/superadmin/historical-seasons/${season.id}`)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-[11px] font-bold transition-all shadow-sm"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    Details
+                  </button>
+                  {season.is_historical && (
+                    <button
+                      onClick={() => handleDeleteSeason(season.id)}
+                      disabled={deleting === season.id}
+                      className={
+                        deleteConfirm === season.id
+                          ? "inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-600 text-white text-[11px] font-bold hover:bg-rose-700 transition-all shadow-sm"
+                          : "inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-250 hover:bg-rose-100 hover:border-rose-300 text-rose-700 text-[11px] font-bold transition-all"
+                      }
+                    >
+                      {deleting === season.id ? (
+                        <>
+                          <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                          Deleting
+                        </>
+                      ) : deleteConfirm === season.id ? (
+                        <>
+                          <AlertCircle className="w-3.5 h-3.5 animate-pulse" />
+                          Confirm Delete
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-3.5 h-3.5 text-rose-455" />
+                          Delete
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="px-6 py-16 text-center text-slate-500 font-mono">
+            <Calendar className="w-12 h-12 mx-auto text-slate-300 mb-4 animate-pulse" />
+            <h4 className="font-extrabold text-slate-805 mb-1 text-sm">No Historical Records Found</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mb-6">
+              No historical data packages have been initialized in the database yet.
+            </p>
+            <button
+              onClick={() => router.push('/dashboard/superadmin/historical-seasons/import')}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm"
+            >
+              <Upload className="w-4 h-4" />
+              Import First Season
+            </button>
+          </div>
+        )}
       </div>
+
     </div>
   );
 }

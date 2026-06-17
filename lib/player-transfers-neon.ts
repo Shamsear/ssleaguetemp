@@ -22,6 +22,7 @@ import {
   logSwapFeePaid,
   logSwapFeeReceived
 } from '@/lib/transaction-logger';
+import { closePlayerHistory, createPlayerHistory } from '@/lib/player-history';
 
 export type PlayerType = 'real' | 'football';
 
@@ -250,6 +251,19 @@ export async function releasePlayerNeon(
       'player_movement'
     );
     
+    // Update player history
+    try {
+      await closePlayerHistory(
+        playerData.player_id,
+        playerData.team_id,
+        'release',
+        currentSeasonId
+      );
+      console.log(`✅ Closed player history for ${playerData.player_name}`);
+    } catch (historyError) {
+      console.error('Warning: Failed to close player history:', historyError);
+    }
+    
     console.log(`✅ Released ${playerData.player_name}. Refund: $${refundAmount}`);
     
     return {
@@ -425,6 +439,32 @@ export async function transferPlayerNeon(
       currentSeasonId,
       'player_movement'
     );
+    
+    // Update player history
+    try {
+      await closePlayerHistory(
+        playerData.player_id,
+        playerData.team_id,
+        'transfer',
+        currentSeasonId
+      );
+      
+      await createPlayerHistory({
+        playerId: playerData.player_id,
+        playerName: playerData.player_name,
+        position: null,
+        teamId: newTeamId,
+        teamName: newTeamName,
+        seasonId: currentSeasonId,
+        acquisitionType: 'transfer',
+        acquisitionValue: newContractValue,
+        contractStartSeason: currentSeasonId,
+        contractEndSeason: currentSeasonId
+      });
+      console.log(`✅ Updated player history for transfer`);
+    } catch (historyError) {
+      console.error('Warning: Failed to update player history for transfer:', historyError);
+    }
     
     return {
       success: true,
@@ -660,6 +700,44 @@ export async function swapPlayersNeon(
       currentSeasonId,
       'player_movement'
     );
+    
+    // Update player history
+    try {
+      await Promise.all([
+        closePlayerHistory(playerAData.player_id, teamAId, 'swap', currentSeasonId),
+        closePlayerHistory(playerBData.player_id, teamBId, 'swap', currentSeasonId)
+      ]);
+      
+      await Promise.all([
+        createPlayerHistory({
+          playerId: playerAData.player_id,
+          playerName: playerAData.player_name,
+          position: null,
+          teamId: teamBId,
+          teamName: playerBData.team || 'Unknown Team',
+          seasonId: currentSeasonId,
+          acquisitionType: 'swap',
+          acquisitionValue: playerAData.auction_value,
+          contractStartSeason: currentSeasonId,
+          contractEndSeason: currentSeasonId
+        }),
+        createPlayerHistory({
+          playerId: playerBData.player_id,
+          playerName: playerBData.player_name,
+          position: null,
+          teamId: teamAId,
+          teamName: playerAData.team || 'Unknown Team',
+          seasonId: currentSeasonId,
+          acquisitionType: 'swap',
+          acquisitionValue: playerBData.auction_value,
+          contractStartSeason: currentSeasonId,
+          contractEndSeason: currentSeasonId
+        })
+      ]);
+      console.log(`✅ Updated player history for swap`);
+    } catch (historyError) {
+      console.error('Warning: Failed to update player history for swap:', historyError);
+    }
     
     const feeMessage = feeAmount === 0 
       ? 'No fee involved'

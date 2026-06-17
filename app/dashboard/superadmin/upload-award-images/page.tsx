@@ -1,6 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  ArrowLeft, 
+  Upload, 
+  Image as ImageIcon, 
+  Link as LinkIcon, 
+  Copy, 
+  AlertCircle, 
+  CheckCircle, 
+  Sparkles,
+  FileText,
+  RefreshCw,
+  Trophy,
+  Award as AwardIcon,
+  Layers
+} from 'lucide-react';
 
 interface Award {
   id: string;
@@ -36,6 +53,9 @@ interface Trophy {
 }
 
 export default function UploadAwardImagesPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>('');
   const [uploading, setUploading] = useState(false);
@@ -52,6 +72,15 @@ export default function UploadAwardImagesPage() {
   const [loading, setLoading] = useState(false);
   const [seasons, setSeasons] = useState<string[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>('');
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+    if (!authLoading && user && user.role !== 'super_admin') {
+      router.push('/dashboard');
+    }
+  }, [user, authLoading, router]);
 
   // Fetch awards on mount
   useEffect(() => {
@@ -238,29 +267,59 @@ export default function UploadAwardImagesPage() {
     setTimeout(() => setMessage(null), 2000);
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            🏆 Upload Award Images
-          </h1>
-          <p className="text-gray-600">
-            Upload images for awards, trophies, and player achievements
-          </p>
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center pt-32">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
+          </div>
+          <p className="text-slate-550 font-mono text-xs tracking-widest uppercase animate-pulse">Syncing Media Telemetry...</p>
         </div>
+      </div>
+    );
+  }
 
-        {/* Award Selection */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Select Award/Trophy
-          </h2>
+  if (!user || user.role !== 'super_admin') {
+    return null;
+  }
 
+  return (
+    <div className="space-y-8 animate-fade-in font-mono">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/dashboard/superadmin')}
+            className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-950 transition-all flex-shrink-0 shadow-sm"
+            title="Back to Dashboard"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              Upload Award Images
+            </h1>
+            <p className="text-xs text-slate-550 font-mono mt-1">
+              Upload custom assets to ImageKit storage and auto-link them to awards, trophies, and player cards.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Award Selection Panel */}
+      <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl space-y-5">
+        <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 border-b border-slate-100 pb-3">
+          <Layers className="w-4 h-4 text-amber-500" />
+          Select Target Context
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
           {/* Season Selector */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Season (optional filter):
+          <div className="space-y-2">
+            <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+              Season Filter
             </label>
             <select
               value={selectedSeason}
@@ -268,7 +327,7 @@ export default function UploadAwardImagesPage() {
                 setSelectedSeason(e.target.value);
                 setSelectedItemId('');
               }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-amber-400 outline-none"
             >
               <option value="">All Seasons</option>
               {seasons.map((season) => (
@@ -280,9 +339,9 @@ export default function UploadAwardImagesPage() {
           </div>
 
           {/* Award Type Selector */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Type:
+          <div className="space-y-2">
+            <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+              Asset Category Type
             </label>
             <select
               value={awardType}
@@ -290,33 +349,31 @@ export default function UploadAwardImagesPage() {
                 setAwardType(e.target.value as any);
                 setSelectedItemId('');
               }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-amber-400 outline-none"
             >
-              <option value="award">Awards (POTD, POTW, POTS, TOTS)</option>
-              <option value="player_award">Player Awards (Golden Boot, Best Player)</option>
-              <option value="trophy">Trophies</option>
+              <option value="award">General Awards (POTD, POTW, TOTS)</option>
+              <option value="player_award">Individual Player Awards (Golden Boot)</option>
+              <option value="trophy">Franchise Trophies</option>
             </select>
           </div>
 
           {/* Item Selector */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Item:
+          <div className="space-y-2">
+            <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+              Specific Award Item
             </label>
             <select
               value={selectedItemId}
               onChange={(e) => {
                 setSelectedItemId(e.target.value);
-                // Clear preview and file when changing selection
                 setSelectedFile(null);
                 setPreview('');
                 setUploadedUrl('');
                 setMessage(null);
-                // Load existing Instagram URL if available
                 const currentUrl = getCurrentInstagramUrl();
                 setInstagramPostUrl(currentUrl || '');
               }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-amber-400 outline-none"
             >
               <option value="">-- Select {awardType === 'award' ? 'Award' : awardType === 'player_award' ? 'Player Award' : 'Trophy'} --</option>
               {awardType === 'award' && Array.isArray(awards) && awards
@@ -333,12 +390,10 @@ export default function UploadAwardImagesPage() {
               {awardType === 'player_award' && Array.isArray(playerAwards) && playerAwards
                 .filter(award => {
                   if (selectedSeason && award.season_id !== selectedSeason) return false;
-                  // Skip empty/generic entries
                   const type = award.award_type?.trim();
                   if (!award.player_name && !award.team_name) return false;
                   if (!type || type === 'Category') return false;
 
-                  // Skip short-term awards that are best handled in the main awards table
                   const excludedTypes = ['POTD', 'TOD', 'POTW', 'TOTW', 'MOTM', 'Man of the Match', 'Player of the Day', 'Team of the Day'];
                   if (excludedTypes.some(t => {
                     const upperType = type.toUpperCase();
@@ -366,230 +421,212 @@ export default function UploadAwardImagesPage() {
             </select>
           </div>
         </div>
+      </div>
 
-        {/* Upload Section */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Upload Image
-          </h2>
+      {/* Upload Section Panel */}
+      <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl space-y-6">
+        <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 border-b border-slate-100 pb-3">
+          <Upload className="w-4 h-4 text-amber-500" />
+          Image Asset Payload
+        </h2>
 
-          {/* Show current image if it exists */}
-          {selectedItemId && getCurrentImage() && !preview && (
-            <div className="mb-6">
-              <p className="text-sm font-semibold text-gray-700 mb-2">📸 Current Image:</p>
-              <div className="relative group">
-                <img
-                  src={getCurrentImage()!}
-                  alt="Current award image"
-                  className="w-full max-w-md mx-auto rounded-lg shadow-md border-2 border-gray-300"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg flex items-center justify-center">
-                  <p className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-sm font-semibold">
-                    Click below to replace
+        {/* Existing Image Display */}
+        {selectedItemId && getCurrentImage() && !preview && (
+          <div className="space-y-2 max-w-md">
+            <p className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">📸 Current Configured Asset:</p>
+            <div className="relative group rounded-2xl overflow-hidden border border-slate-200/65 shadow-sm bg-slate-50 p-2">
+              <img
+                src={getCurrentImage()!}
+                alt="Current award achievement image"
+                className="w-full max-h-64 object-contain rounded-xl"
+              />
+            </div>
+            {getCurrentInstagramUrl() && (
+              <a
+                href={getCurrentInstagramUrl()!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-amber-600 hover:text-amber-800 hover:underline flex items-center gap-1 font-mono pt-1"
+              >
+                <LinkIcon className="w-3.5 h-3.5" />
+                View Linked Instagram Post
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* Dropzone File Selector */}
+        <div className="mb-4">
+          <label className="flex flex-col items-center justify-center w-full h-64 border border-slate-200 border-dashed rounded-2xl cursor-pointer bg-slate-50 hover:bg-slate-100/50 hover:border-amber-400/50 transition duration-200">
+            <div className="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
+              {preview ? (
+                <img src={preview} alt="Upload Preview" className="max-h-52 rounded-xl border border-slate-200 shadow-sm" />
+              ) : (
+                <>
+                  <ImageIcon className="w-12 h-12 mb-4 text-slate-400 stroke-[1.2]" />
+                  <p className="mb-2 text-xs text-slate-600 font-mono">
+                    <span className="font-bold text-slate-800">Click to browse file</span> or drag and drop image here
                   </p>
-                </div>
-              </div>
-              {getCurrentInstagramUrl() && (
-                <div className="mt-2 text-center">
-                  <a
-                    href={getCurrentInstagramUrl()!}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1"
-                  >
-                    🔗 {getCurrentInstagramUrl()}
-                  </a>
-                </div>
+                  <p className="text-[10px] text-slate-400 font-mono">PNG, JPG, WEBP formats (Max size: 10MB)</p>
+                </>
               )}
             </div>
-          )}
-
-          {/* File Input */}
-          <div className="mb-6">
-            <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                {preview ? (
-                  <img src={preview} alt="Preview" className="max-h-52 rounded-lg" />
-                ) : (
-                  <>
-                    <svg
-                      className="w-12 h-12 mb-4 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      />
-                    </svg>
-                    <p className="mb-2 text-sm text-gray-500">
-                      <span className="font-semibold">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-gray-500">PNG, JPG, WEBP (MAX. 10MB)</p>
-                  </>
-                )}
-              </div>
-              <input
-                type="file"
-                className="hidden"
-                accept="image/jpeg,image/jpg,image/png,image/webp"
-                onChange={handleFileSelect}
-              />
-            </label>
-          </div>
-
-          {/* Selected File Info */}
-          {selectedFile && (
-            <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-gray-700">
-                <span className="font-semibold">Selected file:</span> {selectedFile.name}
-              </p>
-              <p className="text-sm text-gray-600">
-                Size: {(selectedFile.size / 1024).toFixed(2)} KB
-              </p>
-            </div>
-          )}
-
-          {/* Instagram Post URL (Optional) */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Instagram Post Link (optional):
-            </label>
             <input
-              type="url"
-              value={instagramPostUrl}
-              onChange={(e) => setInstagramPostUrl(e.target.value)}
-              placeholder="https://www.instagram.com/p/POST_ID/"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              type="file"
+              className="hidden"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              onChange={handleFileSelect}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              When users click the image, they'll be redirected to this Instagram post
-            </p>
-          </div>
-
-          {/* Upload Button */}
-          <button
-            onClick={handleUpload}
-            disabled={!selectedFile || !selectedItemId || uploading}
-            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition ${!selectedFile || !selectedItemId || uploading
-              ? 'bg-gray-400 cursor-not-allowed'
-              : getCurrentImage() ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'
-              }`}
-          >
-            {uploading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                {getCurrentImage() ? 'Replacing...' : 'Uploading...'}
-              </span>
-            ) : (
-              getCurrentImage() ? '🔄 Replace Image' : '📤 Upload Image'
-            )}
-          </button>
-
-          {/* Message */}
-          {message && (
-            <div
-              className={`mt-4 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-                }`}
-            >
-              {message.text}
-            </div>
-          )}
+          </label>
         </div>
 
-        {/* Result Section */}
-        {uploadedUrl && (
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              ✅ Upload Successful!
-            </h2>
-
-            {/* Preview */}
-            <div className="mb-6">
-              <img
-                src={uploadedUrl}
-                alt="Uploaded"
-                className="w-full max-w-md mx-auto rounded-lg shadow-lg"
-              />
-            </div>
-
-            {/* URL to use */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Image URL (use this in database):
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={uploadedUrl}
-                    readOnly
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                  />
-                  <button
-                    onClick={() => copyToClipboard(uploadedUrl)}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
-                  >
-                    📋 Copy
-                  </button>
-                </div>
-              </div>
-
-              {/* SQL Examples */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm font-semibold text-gray-700 mb-2">SQL Examples:</p>
-
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <p className="text-gray-600 mb-1">For Awards:</p>
-                    <code className="block bg-white p-2 rounded border border-gray-200 overflow-x-auto">
-                      UPDATE awards SET instagram_link = '{uploadedUrl}' WHERE id = 'award_id';
-                    </code>
-                    <button
-                      onClick={() => copyToClipboard(`UPDATE awards SET instagram_link = '${uploadedUrl}' WHERE id = 'award_id';`)}
-                      className="mt-1 text-blue-600 hover:underline text-xs"
-                    >
-                      Copy SQL
-                    </button>
-                  </div>
-
-                  <div>
-                    <p className="text-gray-600 mb-1">For Player Awards:</p>
-                    <code className="block bg-white p-2 rounded border border-gray-200 overflow-x-auto">
-                      UPDATE player_awards SET instagram_link = '{uploadedUrl}' WHERE id = 'award_id';
-                    </code>
-                    <button
-                      onClick={() => copyToClipboard(`UPDATE player_awards SET instagram_link = '${uploadedUrl}' WHERE id = 'award_id';`)}
-                      className="mt-1 text-blue-600 hover:underline text-xs"
-                    >
-                      Copy SQL
-                    </button>
-                  </div>
-
-                  <div>
-                    <p className="text-gray-600 mb-1">For Trophies:</p>
-                    <code className="block bg-white p-2 rounded border border-gray-200 overflow-x-auto">
-                      UPDATE team_trophies SET instagram_link = '{uploadedUrl}' WHERE id = 'trophy_id';
-                    </code>
-                    <button
-                      onClick={() => copyToClipboard(`UPDATE team_trophies SET instagram_link = '${uploadedUrl}' WHERE id = 'trophy_id';`)}
-                      className="mt-1 text-blue-600 hover:underline text-xs"
-                    >
-                      Copy SQL
-                    </button>
-                  </div>
-                </div>
-              </div>
+        {/* File Metadata Box */}
+        {selectedFile && (
+          <div className="p-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs font-mono text-slate-700 flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="font-bold text-slate-800 truncate">Payload: {selectedFile.name}</p>
+              <p className="text-[10px] text-slate-450 mt-0.5">Size: {(selectedFile.size / 1024).toFixed(2)} KB</p>
             </div>
           </div>
         )}
+
+        {/* Instagram Post URL */}
+        <div className="space-y-2 max-w-2xl text-xs font-mono">
+          <label className="block text-[10px] font-mono font-bold text-slate-505 uppercase tracking-wider">
+            Instagram Post Redirect Link (optional):
+          </label>
+          <input
+            type="url"
+            value={instagramPostUrl}
+            onChange={(e) => setInstagramPostUrl(e.target.value)}
+            placeholder="e.g. https://www.instagram.com/p/POST_ID/"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 font-mono text-xs transition-all placeholder-slate-400"
+          />
+          <p className="text-[10px] text-slate-450">
+            Clicking this image on the site will redirect visitors to this Instagram post.
+          </p>
+        </div>
+
+        {/* Action button */}
+        <button
+          onClick={handleUpload}
+          disabled={!selectedFile || !selectedItemId || uploading}
+          className={`w-full py-3 px-4 rounded-xl font-mono text-xs font-bold text-white transition-all shadow-sm flex items-center justify-center gap-2 ${
+            !selectedFile || !selectedItemId || uploading
+              ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+              : getCurrentImage() ? 'bg-amber-600 hover:bg-amber-700' : 'bg-slate-800 hover:bg-slate-900'
+          }`}
+        >
+          {uploading ? (
+            <span className="flex items-center gap-1.5">
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              {getCurrentImage() ? 'Replacing Storage Object...' : 'Uploading Asset payload...'}
+            </span>
+          ) : (
+            getCurrentImage() ? '🔄 Replace Configured Asset' : '📤 Upload & Link Asset'
+          )}
+        </button>
+
+        {/* Message Banner */}
+        {message && (
+          <div className={`rounded-xl p-4 font-mono text-xs flex items-center gap-3 border ${
+            message.type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'
+          }`}>
+            {message.type === 'success' ? <CheckCircle className="w-4 h-4 text-emerald-550 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0" />}
+            <p className="flex-1">{message.text}</p>
+          </div>
+        )}
       </div>
+
+      {/* Success Result Panel */}
+      {uploadedUrl && (
+        <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl space-y-6">
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-650 flex items-center gap-1.5 border-b border-slate-100 pb-3">
+            <CheckCircle className="w-4 h-4 text-emerald-500" />
+            Asset Upload Telemetry Successful
+          </h2>
+
+          <div className="relative w-full max-w-md mx-auto rounded-2xl overflow-hidden border border-slate-200 shadow-sm p-2 bg-slate-50">
+            <img
+              src={uploadedUrl}
+              alt="Uploaded Asset preview"
+              className="w-full max-h-64 object-contain rounded-xl"
+            />
+          </div>
+
+          <div className="space-y-4 font-mono text-xs max-w-3xl">
+            <div className="space-y-2">
+              <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                Target Image CDN URL:
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={uploadedUrl}
+                  readOnly
+                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 font-mono text-xs select-all"
+                />
+                <button
+                  onClick={() => copyToClipboard(uploadedUrl)}
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            {/* SQL Examples */}
+            <div className="bg-slate-50 border border-slate-200/60 p-4 rounded-xl space-y-4">
+              <p className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                <FileText className="w-3.5 h-3.5" />
+                SQL Database Update Snippets
+              </p>
+
+              <div className="space-y-3">
+                <div>
+                  <p className="text-[10px] text-slate-450 uppercase mb-1">For Awards table updates:</p>
+                  <code className="block bg-white p-3 rounded-xl border border-slate-200/65 overflow-x-auto text-[11px] font-mono text-slate-700">
+                    UPDATE awards SET instagram_link = '{uploadedUrl}' WHERE id = '{selectedItemId || 'award_id'}';
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(`UPDATE awards SET instagram_link = '${uploadedUrl}' WHERE id = '${selectedItemId || 'award_id'}';`)}
+                    className="mt-1 text-amber-600 hover:text-amber-800 hover:underline text-[10px] font-bold"
+                  >
+                    Copy SQL Statement
+                  </button>
+                </div>
+
+                <div>
+                  <p className="text-[10px] text-slate-450 uppercase mb-1">For Player Awards table updates:</p>
+                  <code className="block bg-white p-3 rounded-xl border border-slate-200/65 overflow-x-auto text-[11px] font-mono text-slate-700">
+                    UPDATE player_awards SET instagram_link = '{uploadedUrl}' WHERE id = '{selectedItemId || 'award_id'}';
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(`UPDATE player_awards SET instagram_link = '${uploadedUrl}' WHERE id = '${selectedItemId || 'award_id'}';`)}
+                    className="mt-1 text-amber-600 hover:text-amber-800 hover:underline text-[10px] font-bold"
+                  >
+                    Copy SQL Statement
+                  </button>
+                </div>
+
+                <div>
+                  <p className="text-[10px] text-slate-455 uppercase mb-1">For Trophies table updates:</p>
+                  <code className="block bg-white p-3 rounded-xl border border-slate-200/65 overflow-x-auto text-[11px] font-mono text-slate-700">
+                    UPDATE team_trophies SET instagram_link = '{uploadedUrl}' WHERE id = '{selectedItemId || 'trophy_id'}';
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(`UPDATE team_trophies SET instagram_link = '${uploadedUrl}' WHERE id = '${selectedItemId || 'trophy_id'}';`)}
+                    className="mt-1 text-amber-600 hover:text-amber-800 hover:underline text-[10px] font-bold"
+                  >
+                    Copy SQL Statement
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

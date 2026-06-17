@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { AlertCircle, BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Flame, Info, Settings, Star, TrendingUp, Trophy, User, Users } from 'lucide-react';
+import { AlertCircle, ArrowRightLeft, BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Flame, Info, Settings, Star, TrendingUp, Trophy, User, UserMinus, Users } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
@@ -840,9 +840,10 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 <Link
                   key={round.id}
                   href={`/dashboard/team/round/${round.id}`}
-                  className="block w-full px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
                 >
-                  <Flame className="w-4 h-4 text-orange-500" /> Round #{round.round_number}{round.position ? ` - ${round.position.includes(',') ? round.position.split(',').join(' + ') : round.position}` : ''}
+                  <Flame className="w-4 h-4 text-orange-500" />
+                  <span>Round #{round.round_number}{round.position ? ` - ${round.position.includes(',') ? round.position.split(',').join(' + ') : round.position}` : ''}</span>
                 </Link>
               ))}
 
@@ -850,9 +851,10 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 <Link
                   key={round.id}
                   href={`/dashboard/team/bulk-round/${round.id}`}
-                  className="block w-full px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
                 >
-                  ⚡ Bulk Round #{round.round_number}
+                  <span>⚡</span>
+                  <span>Bulk Round #{round.round_number}</span>
                 </Link>
               ))}
 
@@ -860,9 +862,10 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
               {pendingRounds && pendingRounds.length > 0 && pendingRounds.map(round => (
                 <div
                   key={round.id}
-                  className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 text-xs font-mono font-bold uppercase tracking-wider text-center cursor-not-allowed"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 text-xs font-mono font-bold uppercase tracking-wider cursor-not-allowed"
                 >
-                  <Clock className="w-4 h-4 text-slate-500" /> Round #{round.round_number} - Pending
+                  <Clock className="w-4 h-4 text-slate-500" />
+                  <span>Round #{round.round_number} - Pending</span>
                 </div>
               ))}
 
@@ -870,9 +873,10 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 <Link
                   key={bulkRound.id}
                   href={`/dashboard/team/bulk-round/${bulkRound.id}`}
-                  className="block w-full px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
                 >
-                  ⚡ Bulk Auction
+                  <span>⚡</span>
+                  <span>Bulk Auction</span>
                 </Link>
               ))}
 
@@ -880,9 +884,10 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 <Link
                   key={tiebreaker.id}
                   href={`/dashboard/team/tiebreaker/${tiebreaker.id}`}
-                  className="block w-full px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center animate-pulse"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider animate-pulse"
                 >
-                  ⚠️ Tiebreaker - {tiebreaker.player.name}
+                  <span>⚠️</span>
+                  <span>Tiebreaker - {tiebreaker.player.name}</span>
                 </Link>
               ))}
 
@@ -890,30 +895,45 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 <Link
                   key={tiebreaker.id}
                   href={`/dashboard/team/bulk-tiebreaker/${tiebreaker.id}`}
-                  className="block w-full px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center animate-pulse"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider animate-pulse"
                 >
-                  <AlertCircle className="w-4 h-4 text-rose-500" /> Bulk Tiebreaker - {tiebreaker.player.name}
+                  <AlertCircle className="w-4 h-4 text-rose-500" />
+                  <span>Bulk Tiebreaker - {tiebreaker.player.name}</span>
                 </Link>
               ))}
 
               {activeBids.length > 0 && (
-                <button onClick={() => setActiveTab('auctions')} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                  <ClipboardList className="w-4 h-4 text-slate-500" /> {activeBids.length} Active Bid{activeBids.length > 1 ? 's' : ''}
+                <button
+                  onClick={() => setActiveTab('auctions')}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-105 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+                >
+                  <ClipboardList className="w-4 h-4 text-slate-500" />
+                  <span>{activeBids.length} Active Bid{activeBids.length > 1 ? 's' : ''}</span>
                 </button>
               )}
 
               {activeRounds.length === 0 && activeBulkRounds.length === 0 && tiebreakers.length === 0 && activeBids.length === 0 && (!pendingRounds || pendingRounds.length === 0) && (
-                <div className="px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-150 text-slate-400 text-xs font-mono font-bold uppercase tracking-wider text-center">No active auctions</div>
+                <div className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-150 text-slate-400 text-xs font-mono font-bold uppercase tracking-wider">
+                  <span>No active auctions</span>
+                </div>
               )}
 
               {roundResults.length > 0 && (
-                <button onClick={() => setActiveTab('results')} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                  <BarChart2 className="w-4 h-4 text-slate-500" /> View Results
+                <button
+                  onClick={() => setActiveTab('results')}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-105 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+                >
+                  <BarChart2 className="w-4 h-4 text-slate-500" />
+                  <span>View Results</span>
                 </button>
               )}
 
-              <Link href="/dashboard/team/auction-results" className="block w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                🎯 Auction Results
+              <Link
+                href="/dashboard/team/auction-results"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <span>🎯</span>
+                <span>Auction Results</span>
               </Link>
             </div>
           </div>
@@ -927,17 +947,54 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
               <h3 className="font-extrabold text-slate-900 uppercase tracking-tight text-sm">Team</h3>
             </div>
             <div className="space-y-2">
-              <button onClick={() => setActiveTab('squad')} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                <SoccerBallIcon className="w-4 h-4" /> My Squad ({stats.playerCount}/{team.football_total_slots || MAX_PLAYERS_PER_TEAM})
+              <button
+                onClick={() => setActiveTab('squad')}
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-105 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <SoccerBallIcon className="w-4 h-4" />
+                <span>My Squad ({stats.playerCount}/{team.football_total_slots || MAX_PLAYERS_PER_TEAM})</span>
               </button>
-              <Link href="/dashboard/team/real-players" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                <Users className="w-4 h-4 text-slate-500" /> Real Players
+              <Link
+                href="/dashboard/team/real-players"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <Users className="w-4 h-4 text-slate-500" />
+                <span>Real Players</span>
               </Link>
-              <Link href="/dashboard/team/footballplayers" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                🏈 Auction Players
+              <Link
+                href="/dashboard/team/footballplayers"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <span>🏈</span>
+                <span>Auction Players</span>
               </Link>
-              <Link href="/dashboard/team/players-database" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                <BarChart2 className="w-4 h-4 text-slate-500" /> My Players
+              <Link
+                href="/dashboard/team/players-database"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <BarChart2 className="w-4 h-4 text-slate-500" />
+                <span>My Players</span>
+              </Link>
+              <Link
+                href="/dashboard/team/requests"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <ClipboardList className="w-4 h-4 text-white" />
+                <span>Roster Requests</span>
+              </Link>
+              <Link
+                href="/dashboard/team/requests/swap"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <ArrowRightLeft className="w-4 h-4 text-slate-500" />
+                <span>Swap Request</span>
+              </Link>
+              <Link
+                href="/dashboard/team/requests/release"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <UserMinus className="w-4 h-4 text-slate-500" />
+                <span>Release Request</span>
               </Link>
             </div>
           </div>
@@ -951,32 +1008,68 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
               <h3 className="font-extrabold text-slate-900 uppercase tracking-tight text-sm">Competition</h3>
             </div>
             <div className="space-y-2">
-              <Link href="/dashboard/team/matches" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                <Calendar className="w-4 h-4 text-slate-500" /> Matches
+              <Link
+                href="/dashboard/team/matches"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <Calendar className="w-4 h-4 text-slate-500" />
+                <span>Matches</span>
               </Link>
-              <Link href="/dashboard/team/all-teams" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                <Users className="w-4 h-4 text-slate-500" /> All Teams
+              <Link
+                href="/dashboard/team/all-teams"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <Users className="w-4 h-4 text-slate-500" />
+                <span>All Teams</span>
               </Link>
-              <Link href="/dashboard/team/team-leaderboard" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Team Standings
+              <Link
+                href="/dashboard/team/team-leaderboard"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />
+                <span>Team Standings</span>
               </Link>
-              <Link href="/dashboard/team/player-leaderboard" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                <ClipboardList className="w-4 h-4 text-slate-500" /> Player Stats
+              <Link
+                href="/dashboard/team/player-leaderboard"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <ClipboardList className="w-4 h-4 text-slate-500" />
+                <span>Player Stats</span>
               </Link>
-              <Link href={`/awards/season/${seasonStatus.seasonId}`} className="block w-full px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                🏅 Season Awards
+              <Link
+                href={`/awards/season/${seasonStatus.seasonId}`}
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <span>🏅</span>
+                <span>Season Awards</span>
               </Link>
-              <Link href="/dashboard/team/player-stats" className="block w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Player Point Change
+              <Link
+                href="/dashboard/team/player-stats"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                <span>Player Point Change</span>
               </Link>
-              <Link href="/dashboard/team/my-player-stats" className="block w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                <BarChart2 className="w-4 h-4 text-slate-500" /> My Player Stats
+              <Link
+                href="/dashboard/team/my-player-stats"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <BarChart2 className="w-4 h-4 text-slate-500" />
+                <span>My Player Stats</span>
               </Link>
-              <Link href="/dashboard/team/fantasy/my-team" className="block w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Fantasy
+              <Link
+                href="/dashboard/team/fantasy/my-team"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                <span>Fantasy</span>
               </Link>
-              <Link href="/rules" className="block w-full px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                <ClipboardList className="w-4 h-4 text-slate-500" /> Rules
+              <Link
+                href="/rules"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <ClipboardList className="w-4 h-4 text-slate-500" />
+                <span>Rules</span>
               </Link>
             </div>
           </div>
@@ -990,17 +1083,33 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
               <h3 className="font-extrabold text-slate-900 uppercase tracking-tight text-sm">Planning</h3>
             </div>
             <div className="space-y-2">
-              <Link href="/dashboard/team/budget-planner" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                💰 Budget Planner
+              <Link
+                href="/dashboard/team/budget-planner"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <span>💰</span>
+                <span>Budget Planner</span>
               </Link>
-              <Link href="/dashboard/team/real-players-planner" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                <Users className="w-4 h-4 text-slate-500" /> Real Players Planner
+              <Link
+                href="/dashboard/team/real-players-planner"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <Users className="w-4 h-4 text-slate-500" />
+                <span>Real Players Planner</span>
               </Link>
-              <Link href="/dashboard/team/transactions" className="block w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                💳 Transactions
+              <Link
+                href="/dashboard/team/transactions"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <span>💳</span>
+                <span>Transactions</span>
               </Link>
-              <Link href="/dashboard/team/profile/edit" className="block w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider text-center">
-                <Settings className="w-4 h-4 text-slate-500" /> Settings
+              <Link
+                href="/dashboard/team/profile/edit"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <Settings className="w-4 h-4 text-slate-500" />
+                <span>Settings</span>
               </Link>
             </div>
           </div>

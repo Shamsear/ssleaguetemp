@@ -1,10 +1,10 @@
+'use client';
+
 import { Crown, Flame, Info, Star, Trophy } from 'lucide-react';
 /**
  * Fantasy Challenges Page
  * View active challenges, track progress, and see completed challenges
  */
-
-'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';

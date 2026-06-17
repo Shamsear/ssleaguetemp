@@ -4,8 +4,21 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { 
+  ArrowLeft, 
+  AlertCircle, 
+  CheckCircle, 
+  ExternalLink, 
+  Edit3, 
+  Plus, 
+  Trophy, 
+  Award as AwardIcon, 
+  Activity, 
+  HelpCircle,
+  Clock
+} from 'lucide-react';
 
-interface Trophy {
+interface TrophyData {
   id: number;
   team_name: string;
   season_id: string;
@@ -49,7 +62,7 @@ export default function AwardPhotosManagement() {
   const [error, setError] = useState<string | null>(null);
 
   // Data states
-  const [trophies, setTrophies] = useState<Trophy[]>([]);
+  const [trophies, setTrophies] = useState<TrophyData[]>([]);
   const [awards, setAwards] = useState<Award[]>([]);
   const [playerAwards, setPlayerAwards] = useState<PlayerAward[]>([]);
 
@@ -153,16 +166,19 @@ export default function AwardPhotosManagement() {
 
       const data = await res.json();
       if (data.success) {
-        setSuccess('✅ Instagram link updated successfully!');
+        setSuccess('Instagram link updated successfully!');
         setEditingId(null);
         setEditingLink('');
         fetchData();
+        setTimeout(() => setSuccess(null), 3000);
       } else {
         setError(data.error || 'Failed to update');
+        setTimeout(() => setError(null), 4000);
       }
     } catch (err) {
       console.error('Error updating:', err);
       setError('Failed to update Instagram link');
+      setTimeout(() => setError(null), 4000);
     }
   };
 
@@ -187,340 +203,372 @@ export default function AwardPhotosManagement() {
     return name;
   };
 
-  if (authLoading || !user || user.role !== 'super_admin') {
+  if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+      <div className="flex items-center justify-center pt-32">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
+          </div>
+          <p className="text-slate-550 font-mono text-xs tracking-widest uppercase animate-pulse">Syncing Media Settings...</p>
+        </div>
       </div>
     );
   }
 
+  if (!user || user.role !== 'super_admin') {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-2 sm:px-4 bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
-            📸 Award Photos Management
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600">
-            Add Instagram embed links for all awards and trophies
-          </p>
-        </div>
-
-        {/* Messages */}
-        {error && (
-          <div className="mb-4 p-3 sm:p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-            <p className="text-sm sm:text-base text-red-800">{error}</p>
-          </div>
-        )}
-        
-        {success && (
-          <div className="mb-4 p-3 sm:p-4 bg-green-50 border-l-4 border-green-500 rounded-lg">
-            <p className="text-sm sm:text-base text-green-800">{success}</p>
-          </div>
-        )}
-
-        {/* Season Selector */}
-        <div className="glass rounded-2xl p-4 sm:p-6 mb-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Select Season</label>
-          <select
-            value={selectedSeason}
-            onChange={(e) => setSelectedSeason(e.target.value)}
-            className="w-full sm:w-64 p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+    <div className="space-y-8 animate-fade-in font-mono">
+      
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/dashboard/superadmin')}
+            className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-650 hover:text-slate-950 transition-all flex-shrink-0 shadow-sm"
+            title="Back to Dashboard"
           >
-            {seasons.map((season) => (
-              <option key={season.id} value={season.id}>
-                {season.name || season.short_name || season.id}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Tabs */}
-        <div className="glass rounded-2xl p-4 sm:p-6 mb-6">
-          <div className="flex flex-wrap gap-2 mb-6">
-            <button
-              onClick={() => setActiveTab('trophies')}
-              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                activeTab === 'trophies'
-                  ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              🏆 Team Trophies ({trophies.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('awards')}
-              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                activeTab === 'awards'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              ⭐ General Awards ({awards.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('player_awards')}
-              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                activeTab === 'player_awards'
-                  ? 'bg-gradient-to-r from-green-500 to-teal-500 text-white shadow-lg'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              👟 Player Awards ({playerAwards.length})
-            </button>
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              Award Photos Management
+            </h1>
+            <p className="text-xs text-slate-505 font-mono mt-1">
+              Add Instagram embedded visual links for tournament awards, weekly achievements, and team trophies.
+            </p>
           </div>
-
-          {/* Content */}
-          {loading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto"></div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {/* Team Trophies */}
-              {activeTab === 'trophies' && trophies.map((trophy) => (
-                <div key={trophy.id} className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-900 text-base">
-                          {trophy.trophy_name} {trophy.trophy_position && `• ${trophy.trophy_position}`}
-                        </h3>
-                        <p className="text-sm text-gray-600">Team: {trophy.team_name}</p>
-                      </div>
-                      <span className="px-2 py-1 rounded-lg text-xs font-semibold bg-yellow-100 text-yellow-800">
-                        {trophy.trophy_type}
-                      </span>
-                    </div>
-                    
-                    {editingId === trophy.id ? (
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          value={editingLink}
-                          onChange={(e) => setEditingLink(e.target.value)}
-                          placeholder="Instagram embed link (e.g., https://www.instagram.com/p/ABC123/embed)"
-                          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={handleSave}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={handleCancel}
-                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-400"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          {trophy.instagram_link ? (
-                            <a
-                              href={trophy.instagram_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-blue-600 hover:underline truncate block"
-                            >
-                              {trophy.instagram_link}
-                            </a>
-                          ) : (
-                            <span className="text-xs text-gray-400">No photo link added</span>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleEdit(trophy.id, trophy.instagram_link)}
-                          className="ml-3 px-3 py-1 bg-blue-500 text-white rounded-lg text-xs font-semibold hover:bg-blue-600"
-                        >
-                          {trophy.instagram_link ? 'Edit' : 'Add'} Link
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {/* General Awards */}
-              {activeTab === 'awards' && awards.map((award) => (
-                <div key={award.id} className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-900 text-base">
-                          {getAwardDisplayName(award)}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {award.player_name || award.team_name}
-                        </p>
-                      </div>
-                      <span className="px-2 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-800">
-                        {award.award_type}
-                      </span>
-                    </div>
-                    
-                    {editingId === award.id ? (
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          value={editingLink}
-                          onChange={(e) => setEditingLink(e.target.value)}
-                          placeholder="Instagram embed link"
-                          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={handleSave}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={handleCancel}
-                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-400"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          {award.instagram_link ? (
-                            <a
-                              href={award.instagram_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-blue-600 hover:underline truncate block"
-                            >
-                              {award.instagram_link}
-                            </a>
-                          ) : (
-                            <span className="text-xs text-gray-400">No photo link added</span>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleEdit(award.id, award.instagram_link)}
-                          className="ml-3 px-3 py-1 bg-blue-500 text-white rounded-lg text-xs font-semibold hover:bg-blue-600"
-                        >
-                          {award.instagram_link ? 'Edit' : 'Add'} Link
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {/* Player Awards */}
-              {activeTab === 'player_awards' && playerAwards.map((award) => (
-                <div key={award.id} className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-900 text-base">
-                          {award.award_type} {award.award_position && `• ${award.award_position}`}
-                        </h3>
-                        <p className="text-sm text-gray-600">Player: {award.player_name}</p>
-                      </div>
-                      <span className="px-2 py-1 rounded-lg text-xs font-semibold bg-green-100 text-green-800">
-                        {award.award_category}
-                      </span>
-                    </div>
-                    
-                    {editingId === award.id ? (
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          value={editingLink}
-                          onChange={(e) => setEditingLink(e.target.value)}
-                          placeholder="Instagram embed link"
-                          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={handleSave}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={handleCancel}
-                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-400"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          {award.instagram_link ? (
-                            <a
-                              href={award.instagram_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-blue-600 hover:underline truncate block"
-                            >
-                              {award.instagram_link}
-                            </a>
-                          ) : (
-                            <span className="text-xs text-gray-400">No photo link added</span>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleEdit(award.id, award.instagram_link)}
-                          className="ml-3 px-3 py-1 bg-blue-500 text-white rounded-lg text-xs font-semibold hover:bg-blue-600"
-                        >
-                          {award.instagram_link ? 'Edit' : 'Add'} Link
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {/* Empty State */}
-              {activeTab === 'trophies' && trophies.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <p className="text-lg">No trophies found for this season</p>
-                </div>
-              )}
-              {activeTab === 'awards' && awards.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <p className="text-lg">No awards found for this season</p>
-                </div>
-              )}
-              {activeTab === 'player_awards' && playerAwards.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <p className="text-lg">No player awards found for this season</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Instructions */}
-        <div className="glass rounded-2xl p-4 sm:p-6 bg-blue-50 border border-blue-200">
-          <h3 className="font-bold text-gray-900 mb-3">📝 How to add Instagram embed links:</h3>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
-            <li>Open the Instagram post on web browser</li>
-            <li>Click the three dots (•••) menu</li>
-            <li>Select "Embed"</li>
-            <li>Copy the embed URL or full iframe code</li>
-            <li>Paste it in the input field above</li>
-            <li>Click "Save" to update</li>
-          </ol>
-          <p className="mt-3 text-xs text-gray-600">
-            Example: <code className="bg-gray-200 px-2 py-1 rounded">https://www.instagram.com/p/ABC123/embed</code>
-          </p>
         </div>
       </div>
+
+      {/* Messages */}
+      {error && (
+        <div className="rounded-2xl p-4 bg-rose-50 border border-rose-200 text-rose-700 font-mono text-xs flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0" />
+          <p className="flex-1">{error}</p>
+        </div>
+      )}
+      
+      {success && (
+        <div className="rounded-2xl p-4 bg-emerald-50 border border-emerald-250 text-emerald-700 font-mono text-xs flex items-center gap-3">
+          <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+          <p className="flex-1">{success}</p>
+        </div>
+      )}
+
+      {/* Season Selector */}
+      <div className="console-card bg-white border border-slate-200/60 p-5 shadow-sm rounded-2xl">
+        <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider mb-2">Select Active Season Context</label>
+        <select
+          value={selectedSeason}
+          onChange={(e) => setSelectedSeason(e.target.value)}
+          className="w-full sm:w-64 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-amber-400 outline-none text-xs"
+        >
+          {seasons.map((season) => (
+            <option key={season.id} value={season.id}>
+              {season.name || season.short_name || season.id}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Tabs Layout */}
+      <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl space-y-6">
+        
+        {/* Navigation Switchers */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setActiveTab('trophies')}
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
+              activeTab === 'trophies'
+                ? 'bg-slate-800 text-white shadow-sm'
+                : 'bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700'
+            }`}
+          >
+            <Trophy className="w-4 h-4" />
+            Franchise Trophies ({trophies.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('awards')}
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
+              activeTab === 'awards'
+                ? 'bg-slate-800 text-white shadow-sm'
+                : 'bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700'
+            }`}
+          >
+            <AwardIcon className="w-4 h-4" />
+            General Awards ({awards.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('player_awards')}
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
+              activeTab === 'player_awards'
+                ? 'bg-slate-800 text-white shadow-sm'
+                : 'bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700'
+            }`}
+          >
+            <Activity className="w-4 h-4" />
+            Player Awards ({playerAwards.length})
+          </button>
+        </div>
+
+        {/* Content Lists */}
+        {loading ? (
+          <div className="text-center py-8 text-slate-400">
+            <span className="inline-block w-6 h-6 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></span>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            
+            {/* Team Trophies */}
+            {activeTab === 'trophies' && trophies.map((trophy) => (
+              <div key={trophy.id} className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-4 hover:shadow-sm transition-all space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {trophy.trophy_name} {trophy.trophy_position && `• ${trophy.trophy_position}`}
+                    </h3>
+                    <p className="text-xs text-slate-500 font-mono mt-0.5">Assigned Franchise: <span className="font-semibold text-slate-700">{trophy.team_name}</span></p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-mono font-bold uppercase self-start">
+                    {trophy.trophy_type}
+                  </span>
+                </div>
+                
+                {editingId === trophy.id ? (
+                  <div className="space-y-2 max-w-2xl">
+                    <input
+                      type="text"
+                      value={editingLink}
+                      onChange={(e) => setEditingLink(e.target.value)}
+                      placeholder="Instagram embed link (e.g., https://www.instagram.com/p/ABC123/embed)"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 font-mono text-xs transition-all"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSave}
+                        className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={handleCancel}
+                        className="px-3.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-4 pt-1 border-t border-slate-100">
+                    <div className="flex-1 min-w-0">
+                      {trophy.instagram_link ? (
+                        <a
+                          href={trophy.instagram_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-amber-600 hover:underline truncate flex items-center gap-1"
+                        >
+                          {trophy.instagram_link}
+                          <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                        </a>
+                      ) : (
+                        <span className="text-xs text-slate-400 font-mono">No Instagram embedded asset configured.</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleEdit(trophy.id, trophy.instagram_link)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-850 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all flex-shrink-0"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      {trophy.instagram_link ? 'Edit' : 'Add'} Link
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* General Awards */}
+            {activeTab === 'awards' && awards.map((award) => (
+              <div key={award.id} className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-4 hover:shadow-sm transition-all space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {getAwardDisplayName(award)}
+                    </h3>
+                    <p className="text-xs text-slate-500 font-mono mt-0.5">Recipient: <span className="font-semibold text-slate-700">{award.player_name || award.team_name}</span></p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-mono font-bold uppercase self-start">
+                    {award.award_type}
+                  </span>
+                </div>
+                
+                {editingId === award.id ? (
+                  <div className="space-y-2 max-w-2xl">
+                    <input
+                      type="text"
+                      value={editingLink}
+                      onChange={(e) => setEditingLink(e.target.value)}
+                      placeholder="Instagram embed link"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 font-mono text-xs transition-all"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSave}
+                        className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={handleCancel}
+                        className="px-3.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-55 text-slate-700 text-xs font-bold rounded-xl transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-4 pt-1 border-t border-slate-100">
+                    <div className="flex-1 min-w-0">
+                      {award.instagram_link ? (
+                        <a
+                          href={award.instagram_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-amber-600 hover:underline truncate flex items-center gap-1"
+                        >
+                          {award.instagram_link}
+                          <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                        </a>
+                      ) : (
+                        <span className="text-xs text-slate-400 font-mono">No Instagram embedded asset configured.</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleEdit(award.id, award.instagram_link)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-850 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all flex-shrink-0"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      {award.instagram_link ? 'Edit' : 'Add'} Link
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Player Awards */}
+            {activeTab === 'player_awards' && playerAwards.map((award) => (
+              <div key={award.id} className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-4 hover:shadow-sm transition-all space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {award.award_type} {award.award_position && `• ${award.award_position}`}
+                    </h3>
+                    <p className="text-xs text-slate-505 font-mono mt-0.5">Player: <span className="font-semibold text-slate-700">{award.player_name}</span></p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-mono font-bold uppercase self-start">
+                    {award.award_category}
+                  </span>
+                </div>
+                
+                {editingId === award.id ? (
+                  <div className="space-y-2 max-w-2xl">
+                    <input
+                      type="text"
+                      value={editingLink}
+                      onChange={(e) => setEditingLink(e.target.value)}
+                      placeholder="Instagram embed link"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 outline-none text-slate-800 font-mono text-xs transition-all"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSave}
+                        className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={handleCancel}
+                        className="px-3.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-55 text-slate-700 text-xs font-bold rounded-xl transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-4 pt-1 border-t border-slate-100">
+                    <div className="flex-1 min-w-0">
+                      {award.instagram_link ? (
+                        <a
+                          href={award.instagram_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-amber-600 hover:underline truncate flex items-center gap-1"
+                        >
+                          {award.instagram_link}
+                          <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                        </a>
+                      ) : (
+                        <span className="text-xs text-slate-400 font-mono">No Instagram embedded asset configured.</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleEdit(award.id, award.instagram_link)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-850 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all flex-shrink-0"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      {award.instagram_link ? 'Edit' : 'Add'} Link
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Empty States */}
+            {activeTab === 'trophies' && trophies.length === 0 && (
+              <div className="text-center py-12 text-slate-500 font-mono">
+                <Trophy className="w-12 h-12 mx-auto text-slate-300 mb-3 animate-pulse" />
+                <p className="text-xs">No trophies registered for this season context.</p>
+              </div>
+            )}
+            {activeTab === 'awards' && awards.length === 0 && (
+              <div className="text-center py-12 text-slate-500 font-mono">
+                <AwardIcon className="w-12 h-12 mx-auto text-slate-300 mb-3 animate-pulse" />
+                <p className="text-xs">No awards registered for this season context.</p>
+              </div>
+            )}
+            {activeTab === 'player_awards' && playerAwards.length === 0 && (
+              <div className="text-center py-12 text-slate-500 font-mono">
+                <Activity className="w-12 h-12 mx-auto text-slate-300 mb-3 animate-pulse" />
+                <p className="text-xs">No player specific awards registered for this season.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Helper documentation guide */}
+      <div className="console-card bg-amber-500/5 border border-amber-200/60 p-5 shadow-sm rounded-2xl space-y-3">
+        <h3 className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+          <HelpCircle className="w-4 h-4 text-amber-500" />
+          Instagram Link Formatting Guild
+        </h3>
+        <ol className="list-decimal list-inside space-y-2 text-xs text-slate-700 leading-relaxed font-mono">
+          <li>Open the target Instagram post on a desktop web browser.</li>
+          <li>Click the options menu button (<code className="font-bold">•••</code>) on the post.</li>
+          <li>Select the <code className="bg-amber-100 px-1 py-0.5 rounded font-bold text-amber-800">Embed</code> option from the dialog.</li>
+          <li>Copy the full code snippet or extract the source URL.</li>
+          <li>Ensure the URL contains the embed path suffix (e.g., <code className="bg-slate-100 px-1 py-0.5 rounded text-amber-600">/embed</code>).</li>
+        </ol>
+        <p className="text-[10px] text-slate-450 mt-1">
+          Example: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-amber-600">https://www.instagram.com/p/CeFghTyvK9d/embed</code>
+        </p>
+      </div>
+
     </div>
   );
 }

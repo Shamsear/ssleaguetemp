@@ -1,11 +1,11 @@
+'use client';
+
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
 import { ClipboardList, Handshake, TrendingUp, Trophy } from 'lucide-react';
 /**
  * Fantasy Achievements Page
  * Displays all achievements with unlock status and progress
  */
-
-'use client';
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
