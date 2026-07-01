@@ -11,7 +11,7 @@ import { useRouter, usePathname } from 'next/navigation';
 export default function MobileNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
-  const [viewportHeight, setViewportHeight] = useState(0);
+  const [isStandalone, setIsStandalone] = useState(false);
   const { user } = useAuth();
   const { isRegistered, teamLogo } = useTeamRegistration();
   const { signOut } = useFirebaseAuth();
@@ -34,32 +34,14 @@ export default function MobileNav() {
     return pathname.startsWith(href);
   };
 
-  // Handle viewport height changes (for mobile browser UI)
+  // Detect PWA standalone display mode
   useEffect(() => {
-    const updateViewportHeight = () => {
-      // Use visualViewport if available, otherwise fallback to window.innerHeight
-      const height = window.visualViewport?.height || window.innerHeight;
-      setViewportHeight(height);
-    };
-
-    updateViewportHeight();
-    
-    // Listen to visualViewport resize events
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', updateViewportHeight);
-      window.visualViewport.addEventListener('scroll', updateViewportHeight);
+    if (typeof window !== 'undefined') {
+      const isMqlStandalone = window.matchMedia('(display-mode: standalone)').matches 
+        || (window.navigator as any).standalone 
+        || document.referrer.includes('android-app://');
+      setIsStandalone(!!isMqlStandalone);
     }
-    
-    // Fallback to window resize
-    window.addEventListener('resize', updateViewportHeight);
-
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', updateViewportHeight);
-        window.visualViewport.removeEventListener('scroll', updateViewportHeight);
-      }
-      window.removeEventListener('resize', updateViewportHeight);
-    };
   }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -229,9 +211,13 @@ export default function MobileNav() {
     <>
       {/* Mobile Navigation Bar */}
       <nav
-        className="md:hidden fixed left-4 right-4 z-[1001] transition-none rounded-2xl border bg-white/85 backdrop-blur-xl border-[#D4AF37]/25 shadow-lg shadow-black/5 shadow-[#D4AF37]/5 px-2 py-1.5"
+        className="mobile-bottom-nav md:hidden fixed left-4 right-4 z-[1001] transition-none rounded-2xl border bg-white/85 backdrop-blur-xl border-[#D4AF37]/25 shadow-lg shadow-black/5 shadow-[#D4AF37]/5 px-2 py-1.5"
         style={{
-          bottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))'
+          bottom: isStandalone 
+            ? 'max(1.5rem, env(safe-area-inset-bottom, 24px))' 
+            : 'max(0.5rem, env(safe-area-inset-bottom, 0px))',
+          transform: 'translate3d(0, 0, 0)',
+          WebkitTransform: 'translate3d(0, 0, 0)'
         }}
       >
         <div className="flex items-center justify-between relative px-2">
@@ -335,7 +321,9 @@ export default function MobileNav() {
       {isMenuOpen && (
         <div
           style={{ 
-            paddingBottom: 'calc(7rem + env(safe-area-inset-bottom, 0px))'
+            paddingBottom: isStandalone 
+              ? 'calc(8.5rem + env(safe-area-inset-bottom, 24px))' 
+              : 'calc(7rem + env(safe-area-inset-bottom, 0px))'
           }}
           className="md:hidden fixed inset-0 z-[1000] overflow-y-auto bg-[#FAF9F6]/98 backdrop-blur-3xl flex flex-col pt-6 px-4 sm:px-6 animate-fade-in font-mono text-slate-700 select-none animate-duration-200 border-l border-t border-[#D4AF37]/25"
           onClick={(e) => {
@@ -568,7 +556,7 @@ export default function MobileNav() {
       <style jsx global>{`
         @media (max-width: 768px) {
           body {
-            padding-bottom: 84px;
+            padding-bottom: ${isStandalone ? '114px' : '84px'};
           }
         }
       `}</style>
