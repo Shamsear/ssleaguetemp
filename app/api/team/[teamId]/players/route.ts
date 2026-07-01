@@ -25,22 +25,43 @@ export async function GET(
 
     const sql = getTournamentDb();
 
-    // 1. Fetch REALPLAYERS (tournament players) from player_seasons
-    const playerSeasons = await sql`
-      SELECT 
-        player_id,
-        player_name,
-        team,
-        category,
-        star_rating,
-        points,
-        registration_status
-      FROM player_seasons
-      WHERE team_id = ${teamId} 
-        AND season_id = ${seasonId} 
-        AND registration_status = 'active'
-      ORDER BY player_name ASC
-    `;
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    // 1. Fetch REALPLAYERS (tournament players) from correct database table
+    let playerSeasons;
+    if (isModern) {
+      playerSeasons = await sql`
+        SELECT 
+          player_id,
+          player_name,
+          team,
+          category,
+          star_rating,
+          points,
+          registration_status
+        FROM player_seasons
+        WHERE team_id = ${teamId} 
+          AND season_id = ${seasonId} 
+          AND registration_status = 'active'
+        ORDER BY player_name ASC
+      `;
+    } else {
+      playerSeasons = await sql`
+        SELECT 
+          player_id,
+          player_name,
+          team,
+          category,
+          star_rating,
+          points,
+          'active' as registration_status
+        FROM realplayerstats
+        WHERE team_id = ${teamId} 
+          AND season_id = ${seasonId} 
+        ORDER BY player_name ASC
+      `;
+    }
 
     // Fetch full realplayer details from Firebase if any exist
     let enrichedRealPlayers: any[] = [];

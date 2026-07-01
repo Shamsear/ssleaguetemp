@@ -152,6 +152,8 @@ export type NewsEventType =
   | 'mid_season_review'
   | 'season_winner'
   | 'season_stats_recap'
+  | 'season_start'
+  | 'season_complete'
   
   // Poll results
   | 'poll_results'
@@ -167,7 +169,9 @@ export type NewsCategory =
   | 'fantasy'
   | 'match'
   | 'announcement'
-  | 'milestone';
+  | 'milestone'
+  | 'tournament'
+  | 'player';
 
 // Who generated the news
 export type GeneratedBy = 'ai' | 'admin';

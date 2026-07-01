@@ -78,13 +78,26 @@ export async function GET(request: NextRequest) {
     const registeredPlayerIds = new Set<string>();
 
     try {
-      // Query player_seasons table to check which players are registered for this season
-      const registeredPlayers = await sql`
-        SELECT player_id 
-        FROM player_seasons 
-        WHERE season_id = ${seasonId} 
-        AND player_id = ANY(${playerIds})
-      `;
+      const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+      const isModern = seasonNum === 16 || seasonNum === 17;
+
+      // Query database table to check which players are registered for this season
+      let registeredPlayers;
+      if (isModern) {
+        registeredPlayers = await sql`
+          SELECT player_id 
+          FROM player_seasons 
+          WHERE season_id = ${seasonId} 
+          AND player_id = ANY(${playerIds})
+        `;
+      } else {
+        registeredPlayers = await sql`
+          SELECT player_id 
+          FROM realplayerstats 
+          WHERE season_id = ${seasonId} 
+          AND player_id = ANY(${playerIds})
+        `;
+      }
 
       registeredPlayers.forEach((row: any) => {
         registeredPlayerIds.add(row.player_id);

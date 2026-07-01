@@ -46,10 +46,19 @@ export async function POST(
       // Check if player is already registered in Neon
       const sql = getTournamentDb();
       const registrationId = `${requestData.player_id}_${requestData.season_id}`;
+      const seasonNum = parseInt(requestData.season_id.replace(/\D/g, '')) || 0;
+      const isModern = seasonNum === 16 || seasonNum === 17;
 
-      const existingPlayerCheck = await sql`
-        SELECT id FROM player_seasons WHERE id = ${registrationId}
-      `;
+      let existingPlayerCheck;
+      if (isModern) {
+        existingPlayerCheck = await sql`
+          SELECT id FROM player_seasons WHERE id = ${registrationId}
+        `;
+      } else {
+        existingPlayerCheck = await sql`
+          SELECT id FROM realplayerstats WHERE id = ${registrationId}
+        `;
+      }
 
       if (existingPlayerCheck.length === 0) {
         // Get player name
@@ -64,28 +73,47 @@ export async function POST(
           playerName = playerSnapshot.docs[0].data().name
         }
 
-        // Create single-season contract (no auto-registration for next season)
-        const contractId = `contract_${requestData.player_id}_${requestData.season_id}_${Date.now()}`;
+        if (isModern) {
+          // Create single-season contract (no auto-registration for next season)
+          const contractId = `contract_${requestData.player_id}_${requestData.season_id}_${Date.now()}`;
 
-        // Create player registration for CURRENT season only in Neon
-        await sql`
-          INSERT INTO player_seasons (
-            id, player_id, season_id, player_name,
-            contract_id, contract_start_season, contract_end_season, contract_length,
-            is_auto_registered, registration_date, registration_status,
-            star_rating, points,
-            matches_played, goals_scored, assists, wins, draws, losses, clean_sheets, motm_awards,
-            created_at, updated_at
-          )
-          VALUES (
-            ${registrationId}, ${requestData.player_id}, ${requestData.season_id}, ${playerName},
-            ${contractId}, ${requestData.season_id}, ${requestData.season_id}, 1,
-            false, NOW(), 'active',
-            3, 100,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            NOW(), NOW()
-          )
-        `;
+          // Create player registration for CURRENT season only in Neon
+          await sql`
+            INSERT INTO player_seasons (
+              id, player_id, season_id, player_name,
+              contract_id, contract_start_season, contract_end_season, contract_length,
+              is_auto_registered, registration_date, registration_status,
+              star_rating, points,
+              matches_played, goals_scored, assists, wins, draws, losses, clean_sheets, motm_awards,
+              created_at, updated_at
+            )
+            VALUES (
+              ${registrationId}, ${requestData.player_id}, ${requestData.season_id}, ${playerName},
+              ${contractId}, ${requestData.season_id}, ${requestData.season_id}, 1,
+              false, NOW(), 'active',
+              3, 100,
+              0, 0, 0, 0, 0, 0, 0, 0,
+              NOW(), NOW()
+            )
+          `;
+        } else {
+          // Register in realplayerstats for S18+ and S1-15
+          const category = requestData.category || 'White';
+          await sql`
+            INSERT INTO realplayerstats (
+              id, player_id, season_id, player_name,
+              category, points, star_rating,
+              matches_played, goals_scored, assists, wins, draws, losses, clean_sheets, motm_awards,
+              created_at, updated_at
+            )
+            VALUES (
+              ${registrationId}, ${requestData.player_id}, ${requestData.season_id}, ${playerName},
+              ${category}, 0, 3,
+              0, 0, 0, 0, 0, 0, 0, 0,
+              NOW(), NOW()
+            )
+          `;
+        }
 
         // Update permanent player data in Firebase realplayers
         await adminDb.collection('realplayers').doc(requestData.player_id).set({

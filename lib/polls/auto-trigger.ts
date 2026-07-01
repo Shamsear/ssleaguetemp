@@ -442,9 +442,16 @@ export async function triggerSeasonChampionPoll(seasonId: string): Promise<strin
       return null;
     }
 
+    // Fetch season name
+    const [season] = await sql`
+      SELECT name FROM seasons WHERE id = ${seasonId} LIMIT 1
+    `;
+    const seasonName = season?.name || `Season ${seasonId}`;
+
     // Create season champion poll
     const pollId = await createSeasonChampionPoll({
       seasonId,
+      seasonName,
       teams: teams.map((t: any) => ({
         id: t.id,
         name: t.name,
@@ -500,9 +507,16 @@ export async function triggerSeasonMVPPoll(seasonId: string): Promise<string | n
       return null;
     }
 
+    // Fetch season name
+    const [season] = await sql`
+      SELECT name FROM seasons WHERE id = ${seasonId} LIMIT 1
+    `;
+    const seasonName = season?.name || `Season ${seasonId}`;
+
     // Create season MVP poll
     const pollId = await createSeasonMVPPoll({
       seasonId,
+      seasonName,
       players: players.map((p: any) => ({
         id: p.id,
         name: p.name,

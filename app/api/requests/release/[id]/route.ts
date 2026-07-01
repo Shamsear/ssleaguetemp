@@ -13,10 +13,10 @@ import { getAuctionDb } from '@/lib/neon/auction-config';
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { status, processed_by, processed_by_name, rejection_reason } = body;
     
@@ -53,10 +53,15 @@ export async function PATCH(
       
       const sql = req.player_type === 'real' ? getTournamentDb() : getAuctionDb();
       
+      const seasonNum = parseInt(req.season_id.replace(/\D/g, '')) || 0;
+      const isModern = seasonNum === 16 || seasonNum === 17;
+      
       // Fetch full player data from Neon to pass to releasePlayerNeon
       let playerData;
       if (req.player_type === 'real') {
-        const result = await sql`SELECT * FROM player_seasons WHERE id = ${req.player_id + '_' + req.season_id} LIMIT 1`;
+        const result = isModern
+          ? await sql`SELECT * FROM player_seasons WHERE id = ${req.player_id + '_' + req.season_id} LIMIT 1`
+          : await sql`SELECT * FROM realplayerstats WHERE id = ${req.player_id + '_' + req.season_id} LIMIT 1`;
         playerData = result[0];
       } else {
         const result = await sql`SELECT * FROM footballplayers WHERE player_id = ${req.player_id} AND season_id = ${req.season_id} LIMIT 1`;

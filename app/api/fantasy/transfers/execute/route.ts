@@ -163,11 +163,25 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const playerSeasons = await tournamentSql`
-          SELECT * FROM player_seasons
-          WHERE player_id = ${player_in_id}
-          LIMIT 1
-        `;
+        const seasonNum = parseInt(league.season_id.replace(/\D/g, '')) || 0;
+        const isModern = seasonNum === 16 || seasonNum === 17;
+
+        let playerSeasons;
+        if (isModern) {
+          playerSeasons = await tournamentSql`
+            SELECT * FROM player_seasons
+            WHERE player_id = ${player_in_id}
+              AND season_id = ${league.season_id}
+            LIMIT 1
+          `;
+        } else {
+          playerSeasons = await tournamentSql`
+            SELECT * FROM realplayerstats
+            WHERE player_id = ${player_in_id}
+              AND season_id = ${league.season_id}
+            LIMIT 1
+          `;
+        }
 
         if (playerSeasons.length === 0) {
           return NextResponse.json(

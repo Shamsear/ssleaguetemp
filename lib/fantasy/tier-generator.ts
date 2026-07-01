@@ -115,48 +115,88 @@ async function getAvailablePlayers(
   // For initial draft: all players from player_seasons (tournament DB)
   // For transfer draft: only available (not owned) players
   
+  const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+  const isModern = seasonNum === 16 || seasonNum === 17;
+
   if (draftType === 'initial') {
-    // Get all players from player_seasons for this season
-    const players = await tournamentSql<Player[]>`
-      SELECT 
-        ps.player_id as real_player_id,
-        ps.player_name,
-        COALESCE(ps.category, 'Unknown') as position,
-        COALESCE(ps.team, 'Unknown') as real_team_name,
-        COALESCE(ps.points, 0) as total_points,
-        10 as games_played,
-        CASE 
-          WHEN 10 > 0 THEN ROUND(COALESCE(ps.points, 0)::numeric / 10, 2)
-          ELSE 0
-        END as avg_points_per_game
-      FROM player_seasons ps
-      WHERE ps.season_id = ${seasonId}
-        AND ps.player_id IS NOT NULL
-        AND ps.player_name IS NOT NULL
-      ORDER BY COALESCE(ps.points, 0) DESC
-    `;
+    // Get all players from correct table for this season
+    const players = isModern
+      ? await tournamentSql<Player[]>`
+          SELECT 
+            ps.player_id as real_player_id,
+            ps.player_name,
+            COALESCE(ps.category, 'Unknown') as position,
+            COALESCE(ps.team, 'Unknown') as real_team_name,
+            COALESCE(ps.points, 0) as total_points,
+            10 as games_played,
+            CASE 
+              WHEN 10 > 0 THEN ROUND(COALESCE(ps.points, 0)::numeric / 10, 2)
+              ELSE 0
+            END as avg_points_per_game
+          FROM player_seasons ps
+          WHERE ps.season_id = ${seasonId}
+            AND ps.player_id IS NOT NULL
+            AND ps.player_name IS NOT NULL
+          ORDER BY COALESCE(ps.points, 0) DESC
+        `
+      : await tournamentSql<Player[]>`
+          SELECT 
+            ps.player_id as real_player_id,
+            ps.player_name,
+            COALESCE(ps.category, 'Unknown') as position,
+            COALESCE(ps.team, 'Unknown') as real_team_name,
+            COALESCE(ps.points, 0) as total_points,
+            10 as games_played,
+            CASE 
+              WHEN 10 > 0 THEN ROUND(COALESCE(ps.points, 0)::numeric / 10, 2)
+              ELSE 0
+            END as avg_points_per_game
+          FROM realplayerstats ps
+          WHERE ps.season_id = ${seasonId}
+            AND ps.player_id IS NOT NULL
+            AND ps.player_name IS NOT NULL
+          ORDER BY COALESCE(ps.points, 0) DESC
+        `;
     return players;
   } else {
     // For transfer draft, only get available players (not in fantasy_squad)
-    // Need to query both databases
-    const players = await tournamentSql<Player[]>`
-      SELECT 
-        ps.player_id as real_player_id,
-        ps.player_name,
-        COALESCE(ps.category, 'Unknown') as position,
-        COALESCE(ps.team, 'Unknown') as real_team_name,
-        COALESCE(ps.points, 0) as total_points,
-        10 as games_played,
-        CASE 
-          WHEN 10 > 0 THEN ROUND(COALESCE(ps.points, 0)::numeric / 10, 2)
-          ELSE 0
-        END as avg_points_per_game
-      FROM player_seasons ps
-      WHERE ps.season_id = ${seasonId}
-        AND ps.player_id IS NOT NULL
-        AND ps.player_name IS NOT NULL
-      ORDER BY COALESCE(ps.points, 0) DESC
-    `;
+    const players = isModern
+      ? await tournamentSql<Player[]>`
+          SELECT 
+            ps.player_id as real_player_id,
+            ps.player_name,
+            COALESCE(ps.category, 'Unknown') as position,
+            COALESCE(ps.team, 'Unknown') as real_team_name,
+            COALESCE(ps.points, 0) as total_points,
+            10 as games_played,
+            CASE 
+              WHEN 10 > 0 THEN ROUND(COALESCE(ps.points, 0)::numeric / 10, 2)
+              ELSE 0
+            END as avg_points_per_game
+          FROM player_seasons ps
+          WHERE ps.season_id = ${seasonId}
+            AND ps.player_id IS NOT NULL
+            AND ps.player_name IS NOT NULL
+          ORDER BY COALESCE(ps.points, 0) DESC
+        `
+      : await tournamentSql<Player[]>`
+          SELECT 
+            ps.player_id as real_player_id,
+            ps.player_name,
+            COALESCE(ps.category, 'Unknown') as position,
+            COALESCE(ps.team, 'Unknown') as real_team_name,
+            COALESCE(ps.points, 0) as total_points,
+            10 as games_played,
+            CASE 
+              WHEN 10 > 0 THEN ROUND(COALESCE(ps.points, 0)::numeric / 10, 2)
+              ELSE 0
+            END as avg_points_per_game
+          FROM realplayerstats ps
+          WHERE ps.season_id = ${seasonId}
+            AND ps.player_id IS NOT NULL
+            AND ps.player_name IS NOT NULL
+          ORDER BY COALESCE(ps.points, 0) DESC
+        `;
     
     // Filter out players already in fantasy_squad
     const ownedPlayers = await fantasySql`

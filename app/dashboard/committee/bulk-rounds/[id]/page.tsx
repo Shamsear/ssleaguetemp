@@ -848,7 +848,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
           {/* Team Progress Summary */}
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
             <h2 className="text-sm sm:text-base font-extrabold mb-6 uppercase text-slate-900 tracking-wide flex items-center gap-2">
-              <Users className="w-4.5 h-4.5 text-amber-500" />
+              <Users className="w-5 h-5 text-amber-500" />
               Team Progress
             </h2>
             {loadingTeamSummary ? (
@@ -884,7 +884,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                           <h4 className="font-extrabold text-slate-800 text-sm flex-1 pr-2 uppercase truncate">{team.team_name}</h4>
                           {isComplete && (
                             <span className="text-green-600 flex-shrink-0">
-                              <Check className="w-4.5 h-4.5 text-green-500" />
+                              <Check className="w-5 h-5 text-green-500" />
                             </span>
                           )}
                         </div>
@@ -979,7 +979,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
               <h2 className="text-sm sm:text-base font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
-                <Users className="w-4.5 h-4.5 text-amber-500" />
+                <Users className="w-5 h-5 text-amber-500" />
                 Round Players
               </h2>
               {round.status === 'draft' && (
@@ -1380,7 +1380,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                               <td colSpan={shouldShowBids ? 6 : 5} className="py-4 px-5">
                                 <div className="p-4 border border-blue-200/60 rounded-2xl bg-white space-y-4">
                                   <h4 className="font-extrabold text-slate-800 flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider">
-                                    <Layers className="w-4.5 h-4.5 text-blue-500" />
+                                    <Layers className="w-5 h-5 text-blue-500" />
                                     Bids for {player.player_name}
                                   </h4>
                                   
@@ -1435,7 +1435,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                                 <div className="p-4 border border-orange-200/60 rounded-2xl bg-white space-y-4">
                                   <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                                     <h4 className="font-extrabold text-slate-800 flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider">
-                                      <Sparkles className="w-4.5 h-4.5 text-orange-650 text-orange-600 animate-pulse" />
+                                      <Sparkles className="w-5 h-5 text-orange-650 text-orange-600 animate-pulse" />
                                       Live Tiebreaker Auction - {player.player_name}
                                     </h4>
                                     <div className="flex items-center gap-2">

@@ -79,6 +79,10 @@ export default function PublicPlayerDatabasePage() {
   }, [searchTerm]);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
+  useEffect(() => {
     const fetchPlayers = async () => {
       if (players.length > 0) {
         setIsFetching(true);

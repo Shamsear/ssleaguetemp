@@ -43,6 +43,8 @@ interface PlayerStat {
   goals_conceded: number;
   clean_sheets: number;
   points: number;
+  base_points?: number;
+  raw_points?: number;
 }
 
 interface PlayerAward {

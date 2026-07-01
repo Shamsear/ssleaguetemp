@@ -8,31 +8,63 @@ export async function GET(request: NextRequest) {
 
     const sql = getTournamentDb();
 
-    const players = await sql`
-      SELECT 
-        id,
-        player_id,
-        player_name,
-        season_id,
-        team,
-        points,
-        base_points,
-        matches_played,
-        goals_scored,
-        goals_conceded,
-        (goals_scored - goals_conceded) as goal_difference,
-        wins,
-        draws,
-        losses,
-        clean_sheets,
-        assists,
-        auction_value,
-        star_rating,
-        salary_per_match
-      FROM player_seasons
-      WHERE season_id = ${season_id}
-      ORDER BY points DESC, goal_difference DESC, goals_scored DESC
-    `;
+    const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    let players;
+    if (isModern) {
+      players = await sql`
+        SELECT 
+          id,
+          player_id,
+          player_name,
+          season_id,
+          team,
+          points,
+          base_points,
+          matches_played,
+          goals_scored,
+          goals_conceded,
+          (goals_scored - goals_conceded) as goal_difference,
+          wins,
+          draws,
+          losses,
+          clean_sheets,
+          assists,
+          auction_value,
+          star_rating,
+          salary_per_match
+        FROM player_seasons
+        WHERE season_id = ${season_id}
+        ORDER BY points DESC, goal_difference DESC, goals_scored DESC
+      `;
+    } else {
+      players = await sql`
+        SELECT 
+          id,
+          player_id,
+          player_name,
+          season_id,
+          team,
+          points,
+          0 as base_points,
+          matches_played,
+          goals_scored,
+          goals_conceded,
+          (goals_scored - goals_conceded) as goal_difference,
+          wins,
+          draws,
+          losses,
+          clean_sheets,
+          assists,
+          0 as auction_value,
+          3 as star_rating,
+          0 as salary_per_match
+        FROM realplayerstats
+        WHERE season_id = ${season_id}
+        ORDER BY points DESC, goal_difference DESC, goals_scored DESC
+      `;
+    }
 
     // Debug logging
     console.log('[Committee Player Stats API] Season:', season_id);
@@ -80,8 +112,6 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Enforce minimum points of 100
-    const validatedPoints = Math.max(100, points || 100);
 
     const sql = getTournamentDb();
 
@@ -97,12 +127,27 @@ export async function PUT(request: NextRequest) {
       return 3;
     }
 
+    const seasonNum = parseInt(player_id.split('_')[1]?.replace(/\D/g, '') || '0');
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    // Enforce minimum points of 100 for modern seasons (S16/17)
+    const validatedPoints = isModern ? Math.max(100, points || 100) : (points || 0);
+
     // Get current player data to check auction value
-    const currentData = await sql`
-      SELECT auction_value, star_rating, salary_per_match
-      FROM player_seasons
-      WHERE id = ${player_id}
-    `;
+    let currentData;
+    if (isModern) {
+      currentData = await sql`
+        SELECT auction_value, star_rating, salary_per_match
+        FROM player_seasons
+        WHERE id = ${player_id}
+      `;
+    } else {
+      currentData = await sql`
+        SELECT 0 as auction_value, 3 as star_rating, 0 as salary_per_match
+        FROM realplayerstats
+        WHERE id = ${player_id}
+      `;
+    }
 
     if (currentData.length === 0) {
       return NextResponse.json(
@@ -128,24 +173,42 @@ export async function PUT(request: NextRequest) {
     console.log('  Star Rating:', oldStarRating, '→', newStarRating, newStarRating !== oldStarRating ? '(CHANGED)' : '');
     console.log('  Salary:', oldSalary.toFixed(2), '→', newSalary.toFixed(2), newStarRating !== oldStarRating ? '(RECALCULATED)' : '');
 
-    await sql`
-      UPDATE player_seasons
-      SET
-        points = ${validatedPoints},
-        star_rating = ${newStarRating},
-        salary_per_match = ${newSalary},
-        base_points = ${base_points},
-        matches_played = ${matches_played},
-        goals_scored = ${goals_scored},
-        goals_conceded = ${goals_conceded},
-        wins = ${wins},
-        draws = ${draws},
-        losses = ${losses},
-        clean_sheets = ${clean_sheets},
-        assists = ${assists},
-        updated_at = NOW()
-      WHERE id = ${player_id}
-    `;
+    if (isModern) {
+      await sql`
+        UPDATE player_seasons
+        SET
+          points = ${validatedPoints},
+          star_rating = ${newStarRating},
+          salary_per_match = ${newSalary},
+          base_points = ${base_points},
+          matches_played = ${matches_played},
+          goals_scored = ${goals_scored},
+          goals_conceded = ${goals_conceded},
+          wins = ${wins},
+          draws = ${draws},
+          losses = ${losses},
+          clean_sheets = ${clean_sheets},
+          assists = ${assists},
+          updated_at = NOW()
+        WHERE id = ${player_id}
+      `;
+    } else {
+      await sql`
+        UPDATE realplayerstats
+        SET
+          points = ${validatedPoints},
+          matches_played = ${matches_played},
+          goals_scored = ${goals_scored},
+          goals_conceded = ${goals_conceded},
+          wins = ${wins},
+          draws = ${draws},
+          losses = ${losses},
+          clean_sheets = ${clean_sheets},
+          assists = ${assists},
+          updated_at = NOW()
+        WHERE id = ${player_id}
+      `;
+    }
 
     return NextResponse.json({ 
       success: true,

@@ -418,10 +418,10 @@ export async function POST(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { fixtureId: string } }
+  { params }: { params: Promise<{ fixtureId: string }> }
 ) {
   try {
-    const { fixtureId } = params;
+    const { fixtureId } = await params;
     
     const auth = await verifyAuth(['team'], request);
     if (!auth.authenticated) {
@@ -731,12 +731,22 @@ export async function GET(
       }
 
       // Fetch player names
-      const players = await sql`
-        SELECT player_id, player_name 
-        FROM player_seasons 
-        WHERE player_id = ANY(${playerIds})
-        AND season_id = ${lineup.season_id}
-      `;
+      const seasonNum = parseInt(lineup.season_id.replace(/\D/g, '')) || 0;
+      const isModern = seasonNum === 16 || seasonNum === 17;
+
+      const players = isModern
+        ? await sql`
+            SELECT player_id, player_name 
+            FROM player_seasons 
+            WHERE player_id = ANY(${playerIds})
+            AND season_id = ${lineup.season_id}
+          `
+        : await sql`
+            SELECT player_id, player_name 
+            FROM realplayerstats 
+            WHERE player_id = ANY(${playerIds})
+            AND season_id = ${lineup.season_id}
+          `;
 
       // Create a map of player_id to player_name
       const playerMap = new Map(players.map(p => [p.player_id, p.player_name]));

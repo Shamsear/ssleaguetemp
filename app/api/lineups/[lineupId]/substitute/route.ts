@@ -7,11 +7,11 @@ import { validateSubstitution } from '@/lib/lineup-validation';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ lineupId: string }> }
 ) {
   try {
     const sql = getTournamentDb();
-    const { id: lineupId } = await params;
+    const { lineupId } = await params;
     const body = await request.json();
     const {
       player_out,
@@ -141,11 +141,11 @@ export async function POST(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ lineupId: string }> }
 ) {
   try {
     const sql = getTournamentDb();
-    const { id: lineupId } = await params;
+    const { lineupId } = await params;
 
     const substitutions = await sql`
       SELECT *

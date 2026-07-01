@@ -1,6 +1,8 @@
 'use client';
 import { ECoinIcon, SSCoinIcon } from '@/components/ui/CustomIcons';
 import { Activity, BarChart2, Calendar, DollarSign, Star } from 'lucide-react';
+import { useModal } from '@/hooks/useModal';
+import AlertModal from '@/components/modals/AlertModal';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -32,6 +34,7 @@ export default function CommitteeTeamsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { isCommitteeAdmin, userSeasonId } = usePermissions();
+  const { alertState, showAlert, closeAlert } = useModal();
   const [teams, setTeams] = useState<TeamData[]>([]);
   const [loadingTeams, setLoadingTeams] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -165,14 +168,26 @@ export default function CommitteeTeamsPage() {
       message += `🕐 ${new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}\n`;
 
       navigator.clipboard.writeText(message).then(() => {
-        alert('[SUCCESS]  Team balances copied to clipboard!\nPaste in WhatsApp.');
+        showAlert({
+          type: 'success',
+          title: 'Copy Success',
+          message: 'Team balances copied to clipboard!\nPaste in WhatsApp.'
+        });
       }).catch(err => {
         console.error('Failed to copy:', err);
-        alert('[ERROR]  Failed to copy. Please try again.');
+        showAlert({
+          type: 'error',
+          title: 'Copy Failed',
+          message: 'Failed to copy. Please try again.'
+        });
       });
     } catch (error) {
       console.error('Error generating WhatsApp message:', error);
-      alert('[ERROR]  Error generating summary.');
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: 'Error generating summary.'
+      });
     }
   };
 
@@ -302,6 +317,7 @@ export default function CommitteeTeamsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400/50 focus:outline-none focus:ring-1 focus:ring-amber-400/20 text-xs uppercase tracking-wider font-bold transition-all"
+                style={{ paddingLeft: '3rem' }}
               />
             </div>
             
@@ -506,6 +522,15 @@ export default function CommitteeTeamsPage() {
           )}
         </div>
       </div>
+      
+      {/* Custom Alert Modal */}
+      <AlertModal
+        isOpen={alertState.isOpen}
+        onClose={closeAlert}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+      />
     </div>
   );
 }

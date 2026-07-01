@@ -64,13 +64,24 @@ export async function validateLineup(
 
   // 4. Check if all players belong to the team and are registered for season
   console.log('🔍 Checking player eligibility:', { allPlayers, seasonId, teamId });
-  const playerChecks = await sql`
-    SELECT player_id, category
-    FROM player_seasons
-    WHERE player_id = ANY(${allPlayers})
-    AND season_id = ${seasonId}
-    AND team_id = ${teamId}
-  `;
+  const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+  const isModern = seasonNum === 16 || seasonNum === 17;
+
+  const playerChecks = isModern
+    ? await sql`
+        SELECT player_id, category
+        FROM player_seasons
+        WHERE player_id = ANY(${allPlayers})
+        AND season_id = ${seasonId}
+        AND team_id = ${teamId}
+      `
+    : await sql`
+        SELECT player_id, category
+        FROM realplayerstats
+        WHERE player_id = ANY(${allPlayers})
+        AND season_id = ${seasonId}
+        AND team_id = ${teamId}
+      `;
   console.log('🔍 Player checks result:', playerChecks);
   console.log('🔍 Unique category values found:', [...new Set(playerChecks.map((p: any) => p.category))]);
 

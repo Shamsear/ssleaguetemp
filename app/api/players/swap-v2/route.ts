@@ -50,6 +50,9 @@ export async function POST(request: NextRequest) {
     const cash_amount = 0;
     const cash_direction = 'none';
 
+    const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
     // Validate required fields
     if (!player_a_id || !player_b_id || !season_id || !swapped_by || !swapped_by_name) {
       return NextResponse.json(
@@ -125,11 +128,11 @@ export async function POST(request: NextRequest) {
               ps.player_id,
               ps.player_name,
               ps.team_id,
-              ps.auction_value,
+              ${isModern ? 'ps.auction_value' : '0 as auction_value'},
               ps.category,
               ps.points,
-              ps.salary_per_match
-            FROM player_seasons ps
+              ${isModern ? 'ps.salary_per_match' : '0 as salary_per_match'}
+            FROM ${isModern ? 'player_seasons' : 'realplayerstats'} ps
             WHERE ps.player_id = $1 AND ps.season_id = $2
           `;
           resultA = await sqlA(queryA, [player_a_id, season_id]);
@@ -171,11 +174,11 @@ export async function POST(request: NextRequest) {
               ps.player_id,
               ps.player_name,
               ps.team_id,
-              ps.auction_value,
+              ${isModern ? 'ps.auction_value' : '0 as auction_value'},
               ps.category,
               ps.points,
-              ps.salary_per_match
-            FROM player_seasons ps
+              ${isModern ? 'ps.salary_per_match' : '0 as salary_per_match'}
+            FROM ${isModern ? 'player_seasons' : 'realplayerstats'} ps
             WHERE ps.player_id = $1 AND ps.season_id = $2
           `;
           resultB = await sqlB(queryB, [player_b_id, season_id]);

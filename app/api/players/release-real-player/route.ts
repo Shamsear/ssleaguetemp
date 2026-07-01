@@ -64,21 +64,43 @@ export async function POST(request: NextRequest) {
 
         const sql = getTournamentDb();
 
+        const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+        const isModern = seasonNum === 16 || seasonNum === 17;
+        const usesCategoryPoints = seasonNum >= 18;
+
         // Fetch player details
-        const players = await sql`
-      SELECT 
-        id,
-        player_id,
-        player_name,
-        team_id,
-        team,
-        auction_value,
-        contract_start_season,
-        contract_end_season,
-        contract_id
-      FROM player_seasons
-      WHERE player_id = ${playerId} AND season_id = ${seasonId}
-    `;
+        let players;
+        if (isModern) {
+            players = await sql`
+          SELECT 
+            id,
+            player_id,
+            player_name,
+            team_id,
+            team,
+            auction_value,
+            contract_start_season,
+            contract_end_season,
+            contract_id
+          FROM player_seasons
+          WHERE player_id = ${playerId} AND season_id = ${seasonId}
+        `;
+        } else {
+            players = await sql`
+          SELECT 
+            id,
+            player_id,
+            player_name,
+            team_id,
+            team,
+            0 as auction_value,
+            NULL as contract_start_season,
+            NULL as contract_end_season,
+            NULL as contract_id
+          FROM realplayerstats
+          WHERE player_id = ${playerId} AND season_id = ${seasonId}
+        `;
+        }
 
         if (players.length === 0) {
             return NextResponse.json(
@@ -104,7 +126,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (!player.auction_value) {
+        if (!player.auction_value && !usesCategoryPoints) {
             return NextResponse.json(
                 {
                     success: false,
@@ -122,7 +144,7 @@ export async function POST(request: NextRequest) {
             : seasonId.toUpperCase();
 
         // Calculate refund amount using manual percentage
-        const refundAmount = Math.round(player.auction_value * (refundPercentage / 100));
+        const refundAmount = usesCategoryPoints ? 0 : Math.round((player.auction_value || 0) * (refundPercentage / 100));
 
         // Calculate half-seasons for logging purposes
         const startSeason = player.contract_start_season || seasonId;
@@ -156,86 +178,98 @@ export async function POST(request: NextRequest) {
         const team = teams[0];
 
         // Execute database updates
-        // 1. Update current season player record - end contract at release point
-        await sql`
-      UPDATE player_seasons
-      SET 
-        team_id = NULL,
-        team = NULL,
-        status = NULL,
-        contract_end_season = ${releaseSeasonId},
-        updated_at = NOW()
-      WHERE player_id = ${playerId} AND season_id = ${seasonId}
-    `;
-
-        // 2. Create new free agent contract with modified season_id to avoid unique constraint
-        // For mid-season release: use SSPSLS16.5 as season_id
-        // For start release: use SSPSLS16.0 as season_id
-        const freeAgentSeasonId = releaseTiming === 'mid'
-            ? `SSPSLS${releaseSeasonNumber}.5`
-            : `SSPSLS${releaseSeasonNumber}.0`;
-
-        const seasonEndId = `SSPSLS${parseInt(releaseSeasonNumber) + 1}`;
-        const originalPlayer = await sql`
-      SELECT * FROM player_seasons
-      WHERE player_id = ${playerId} AND season_id = ${seasonId}
-      LIMIT 1
-    `;
-
-        if (originalPlayer.length > 0) {
-            const playerData = originalPlayer[0];
-
+        if (isModern) {
+            // 1. Update current season player record - end contract at release point
             await sql`
-        INSERT INTO player_seasons (
-          id,
-          player_id,
-          player_name,
-          season_id,
-          team_id,
-          team,
-          contract_start_season,
-          contract_end_season,
-          auction_value,
-          star_rating,
-          category,
-          registration_status,
-          status,
-          created_at,
-          updated_at
-        ) VALUES (
-          ${`${playerId}_${freeAgentSeasonId}`},
-          ${playerId},
-          ${playerData.player_name},
-          ${freeAgentSeasonId},
-          NULL,
-          NULL,
-          ${releaseSeasonId},
-          ${seasonEndId},
-          NULL,
-          ${playerData.star_rating},
-          ${playerData.category},
-          'free_agent',
-          NULL,
-          NOW(),
-          NOW()
-        )
-      `;
-        }
+          UPDATE player_seasons
+          SET 
+            team_id = NULL,
+            team = NULL,
+            status = NULL,
+            contract_end_season = ${releaseSeasonId},
+            updated_at = NOW()
+          WHERE player_id = ${playerId} AND season_id = ${seasonId}
+        `;
 
-        // 3. Update future season contracts to free agent
-        const currentSeasonNum = parseInt(releaseSeasonNumber);
-        await sql`
-      UPDATE player_seasons
-      SET 
-        team_id = NULL,
-        team = NULL,
-        status = NULL,
-        auction_value = NULL,
-        registration_status = 'free_agent',
-        updated_at = NOW()
-      WHERE player_id = ${playerId}
-        AND CAST(REGEXP_REPLACE(season_id, '[^0-9.]', '', 'g') AS DECIMAL) > ${currentSeasonNum}
-    `;
+            // 2. Create new free agent contract with modified season_id to avoid unique constraint
+            // For mid-season release: use SSPSLS16.5 as season_id
+            // For start release: use SSPSLS16.0 as season_id
+            const freeAgentSeasonId = releaseTiming === 'mid'
+                ? `SSPSLS${releaseSeasonNumber}.5`
+                : `SSPSLS${releaseSeasonNumber}.0`;
+
+            const seasonEndId = `SSPSLS${parseInt(releaseSeasonNumber) + 1}`;
+            const originalPlayer = await sql`
+          SELECT * FROM player_seasons
+          WHERE player_id = ${playerId} AND season_id = ${seasonId}
+          LIMIT 1
+        `;
+
+            if (originalPlayer.length > 0) {
+                const playerData = originalPlayer[0];
+
+                await sql`
+            INSERT INTO player_seasons (
+              id,
+              player_id,
+              player_name,
+              season_id,
+              team_id,
+              team,
+              contract_start_season,
+              contract_end_season,
+              auction_value,
+              star_rating,
+              category,
+              registration_status,
+              status,
+              created_at,
+              updated_at
+            ) VALUES (
+              ${`${playerId}_${freeAgentSeasonId}`},
+              ${playerId},
+              ${playerData.player_name},
+              ${freeAgentSeasonId},
+              NULL,
+              NULL,
+              ${releaseSeasonId},
+              ${seasonEndId},
+              NULL,
+              ${playerData.star_rating},
+              ${playerData.category},
+              'free_agent',
+              NULL,
+              NOW(),
+              NOW()
+            )
+          `;
+            }
+
+            // 3. Update future season contracts to free agent
+            const currentSeasonNum = parseInt(releaseSeasonNumber);
+            await sql`
+          UPDATE player_seasons
+          SET 
+            team_id = NULL,
+            team = NULL,
+            status = NULL,
+            auction_value = NULL,
+            registration_status = 'free_agent',
+            updated_at = NOW()
+          WHERE player_id = ${playerId}
+            AND CAST(REGEXP_REPLACE(season_id, '[^0-9.]', '', 'g') AS DECIMAL) > ${currentSeasonNum}
+        `;
+        } else {
+            // S18+ release logic: simply clear team mapping in realplayerstats
+            await sql`
+          UPDATE realplayerstats
+          SET 
+            team_id = NULL,
+            team = NULL,
+            updated_at = NOW()
+          WHERE player_id = ${playerId} AND season_id = ${seasonId}
+        `;
+        }
 
         // 4. Update team balance in Firebase team_seasons
         try {

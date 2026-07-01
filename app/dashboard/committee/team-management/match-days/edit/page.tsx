@@ -415,7 +415,7 @@ function EditRoundDeadlinesContent() {
               {/* Deadline Preview */}
               <div className="mt-8 p-5 bg-slate-50 border border-slate-200/60 rounded-3xl space-y-4">
                 <div className="flex items-center gap-2 border-b border-slate-200/60 pb-3">
-                  <Info className="w-4.5 h-4.5 text-blue-500" />
+                  <Info className="w-5 h-5 text-blue-500" />
                   <h3 className="text-xs font-extrabold uppercase text-slate-800 tracking-wider">Deadline Preview</h3>
                 </div>
 

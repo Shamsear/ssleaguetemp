@@ -136,10 +136,9 @@ export async function GET(request: NextRequest) {
     
     console.time('⚡ Batch fetch all real players');
     
-    // Determine if this is a modern season (16+)
     const isModernSeason = (season: string) => {
       const seasonNum = parseInt(season.replace(/\D/g, '')) || 0;
-      return seasonNum >= 16;
+      return seasonNum === 16 || seasonNum === 17;
     };
     
     // Step 3b: Fetch all real players for all teams from Neon

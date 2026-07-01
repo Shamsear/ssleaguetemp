@@ -59,16 +59,32 @@ export async function GET(request: NextRequest) {
       GROUP BY tp.team_id
     `;
 
-    // Fetch real players count from tournament DB
-    const realPlayerCounts = await tournamentDb`
-      SELECT 
-        team_id,
-        COUNT(*) as count
-      FROM player_seasons
-      WHERE season_id = ${seasonId}
-        AND team_id IS NOT NULL
-      GROUP BY team_id
-    `;
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    // Fetch real players count from correct database table
+    let realPlayerCounts;
+    if (isModern) {
+      realPlayerCounts = await tournamentDb`
+        SELECT 
+          team_id,
+          COUNT(*) as count
+        FROM player_seasons
+        WHERE season_id = ${seasonId}
+          AND team_id IS NOT NULL
+        GROUP BY team_id
+      `;
+    } else {
+      realPlayerCounts = await tournamentDb`
+        SELECT 
+          team_id,
+          COUNT(*) as count
+        FROM realplayerstats
+        WHERE season_id = ${seasonId}
+          AND team_id IS NOT NULL
+        GROUP BY team_id
+      `;
+    }
 
     // Combine the results
     const playerCounts: { [key: string]: { footballPlayersCount: number; realPlayersCount: number } } = {};

@@ -8,10 +8,19 @@ async function recalculateSeasonCategories(season_id: string) {
   try {
     console.log(`Recalculating categories for season: ${season_id}`);
     
-    // Determine if this is a modern season (16+)
+    const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+    if (seasonNum >= 18) {
+      console.log(`Bypassing category recalculation for Season ${seasonNum} (static color-based categories)`);
+      return {
+        success: true,
+        message: `Bypassed category recalculation for Season ${seasonNum} (static color-based categories)`
+      };
+    }
+
+    // Determine if this is a modern season (16-17)
     const isModernSeason = (season: string) => {
       const seasonNum = parseInt(season.replace(/\D/g, '')) || 0;
-      return seasonNum >= 16;
+      return seasonNum === 16 || seasonNum === 17;
     };
     
     const sql = getTournamentDb();

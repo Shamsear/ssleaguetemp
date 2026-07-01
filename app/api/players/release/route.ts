@@ -38,8 +38,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
     const sql = player_type === 'real' ? getTournamentDb() : getAuctionDb();
-    const tableName = player_type === 'real' ? 'player_seasons' : 'footballplayers';
+    const tableName = player_type === 'real'
+      ? (isModern ? 'player_seasons' : 'realplayerstats')
+      : 'footballplayers';
     const nameField = player_type === 'real' ? 'player_name' : 'name';
 
     // Fetch player (need to get 'id' for team_players deletion)

@@ -35,22 +35,44 @@ export async function GET(request: NextRequest) {
     const league = leagues[0];
     const tournamentSql = getTournamentDb();
 
-    // Get all players from player_seasons for this season
-    const allPlayers = await tournamentSql`
-      SELECT 
-        player_id,
-        player_name,
-        team as real_team_name,
-        team_id,
-        category,
-        star_rating
-      FROM player_seasons
-      WHERE season_id = ${league.season_id}
-        AND player_name IS NOT NULL
-        AND team IS NOT NULL
-        AND team != ''
-      ORDER BY player_name ASC
-    `;
+    const seasonNum = parseInt(league.season_id.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    // Get all players from correct database table
+    let allPlayers;
+    if (isModern) {
+      allPlayers = await tournamentSql`
+        SELECT 
+          player_id,
+          player_name,
+          team as real_team_name,
+          team_id,
+          category,
+          star_rating
+        FROM player_seasons
+        WHERE season_id = ${league.season_id}
+          AND player_name IS NOT NULL
+          AND team IS NOT NULL
+          AND team != ''
+        ORDER BY player_name ASC
+      `;
+    } else {
+      allPlayers = await tournamentSql`
+        SELECT 
+          player_id,
+          player_name,
+          team as real_team_name,
+          team_id,
+          category,
+          3 as star_rating
+        FROM realplayerstats
+        WHERE season_id = ${league.season_id}
+          AND player_name IS NOT NULL
+          AND team IS NOT NULL
+          AND team != ''
+        ORDER BY player_name ASC
+      `;
+    }
 
     // Get fantasy points aggregated by player (base points without captain/vc multipliers)
     // Calculate base points by dividing total_points by multiplier (2 for captain, 1.5 for vc, 1 for regular)

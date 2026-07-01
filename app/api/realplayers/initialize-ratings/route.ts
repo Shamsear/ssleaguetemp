@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     // Determine if this is a modern season (16+)
     const isModernSeason = (season: string) => {
       const seasonNum = parseInt(season.replace(/\D/g, '')) || 0;
-      return seasonNum >= 16;
+      return seasonNum === 16 || seasonNum === 17;
     };
     
     const sql = getTournamentDb();

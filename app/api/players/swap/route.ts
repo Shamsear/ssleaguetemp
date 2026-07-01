@@ -65,14 +65,22 @@ export async function POST(request: NextRequest) {
     // Fetch both players from Neon
     let playerAData, playerBData;
     
+    const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
     if (player_type === 'real') {
       const compositeIdA = `${player_a_id}_${season_id}`;
       const compositeIdB = `${player_b_id}_${season_id}`;
       
-      const [resultA, resultB] = await Promise.all([
-        sql`SELECT * FROM player_seasons WHERE id = ${compositeIdA} LIMIT 1`,
-        sql`SELECT * FROM player_seasons WHERE id = ${compositeIdB} LIMIT 1`
-      ]);
+      const [resultA, resultB] = isModern
+        ? await Promise.all([
+            sql`SELECT * FROM player_seasons WHERE id = ${compositeIdA} LIMIT 1`,
+            sql`SELECT * FROM player_seasons WHERE id = ${compositeIdB} LIMIT 1`
+          ])
+        : await Promise.all([
+            sql`SELECT * FROM realplayerstats WHERE id = ${compositeIdA} LIMIT 1`,
+            sql`SELECT * FROM realplayerstats WHERE id = ${compositeIdB} LIMIT 1`
+          ]);
       
       if (resultA.length === 0 || resultB.length === 0) {
         return NextResponse.json(

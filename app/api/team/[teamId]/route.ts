@@ -68,10 +68,10 @@ export async function GET(
 
     const teamSeasonData = teamSeasonDoc.data();
 
-    // Determine if this is a modern season (16+)
+    // Determine if this is a modern season (16-17)
     const isModernSeason = (season: string) => {
       const seasonNum = parseInt(season.replace(/\D/g, '')) || 0;
-      return seasonNum >= 16;
+      return seasonNum === 16 || seasonNum === 17;
     };
 
     // Fetch football players from Neon auction database

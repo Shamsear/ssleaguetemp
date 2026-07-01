@@ -116,7 +116,7 @@ function TeamDetailContent() {
   useEffect(() => {
     if (selectedView === 'season' && selectedSeasonId) {
       const seasonNum = parseInt(selectedSeasonId?.match(/\d+/)?.[0] || '0');
-      const isModernSeason = seasonNum >= 16;
+      const isModernSeason = seasonNum === 16 || seasonNum === 17;
 
       if (isModernSeason) {
         fetchFootballPlayers(selectedSeasonId);
@@ -674,7 +674,7 @@ function TeamDetailContent() {
                     <div className="overflow-x-auto">
                       {(() => {
                         const seasonNum = parseInt(selectedSeasonId?.match(/\d+/)?.[0] || '0');
-                        const isModernSeason = seasonNum >= 16;
+                        const isModernSeason = seasonNum === 16 || seasonNum === 17;
                         const hasCategory = isModernSeason
                           ? realPlayers.some(p => p.category && p.category.trim() !== '')
                           : true;
@@ -781,7 +781,7 @@ function TeamDetailContent() {
             {/* Awards Section */}
             {selectedView === 'season' && selectedSeasonId && (() => {
               const seasonNum = parseInt(selectedSeasonId?.match(/\d+/)?.[0] || '0');
-              return seasonNum >= 16;
+              return seasonNum === 16 || seasonNum === 17;
             })() && (
               <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm space-y-4">
                 <h3 className="text-sm font-bold text-slate-900 font-mono uppercase tracking-wider flex items-center border-b border-slate-100 pb-3">
@@ -854,7 +854,7 @@ function TeamDetailContent() {
             {/* Football Players (eFootball) */}
             {selectedView === 'season' && selectedSeasonId && (() => {
               const seasonNum = parseInt(selectedSeasonId?.match(/\d+/)?.[0] || '0');
-              const isModernSeason = seasonNum >= 16;
+              const isModernSeason = seasonNum === 16 || seasonNum === 17;
               return isModernSeason;
             })() && (
               <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm space-y-4">

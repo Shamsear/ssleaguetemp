@@ -28,12 +28,21 @@ export async function DELETE(request: NextRequest) {
     console.log(`🗑️ Deleting player registration: ${registrationId}`);
 
     // Get the player data from Neon to check registration type
+    const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
     const sql = getTournamentDb();
-    const playerStats = await sql`
-      SELECT id, player_id, season_id
-      FROM realplayerstats 
-      WHERE player_id = ${player_id} AND season_id = ${season_id}
-    `;
+    const playerStats = isModern
+      ? await sql`
+          SELECT id, player_id, season_id
+          FROM player_seasons 
+          WHERE player_id = ${player_id} AND season_id = ${season_id}
+        `
+      : await sql`
+          SELECT id, player_id, season_id
+          FROM realplayerstats 
+          WHERE player_id = ${player_id} AND season_id = ${season_id}
+        `;
 
     if (playerStats.length === 0) {
       return NextResponse.json(
@@ -61,11 +70,18 @@ export async function DELETE(request: NextRequest) {
     // Assume confirmed registration for now (we can enhance this later if needed)
     const registrationType = 'confirmed';
 
-    // Delete from Neon realplayerstats table
-    await sql`
-      DELETE FROM realplayerstats 
-      WHERE player_id = ${player_id} AND season_id = ${season_id}
-    `;
+    // Delete from Neon table
+    if (isModern) {
+      await sql`
+        DELETE FROM player_seasons 
+        WHERE player_id = ${player_id} AND season_id = ${season_id}
+      `;
+    } else {
+      await sql`
+        DELETE FROM realplayerstats 
+        WHERE player_id = ${player_id} AND season_id = ${season_id}
+      `;
+    }
 
     console.log(`✅ Deleted from Neon realplayerstats: ${player_id} for season ${season_id}`);
 

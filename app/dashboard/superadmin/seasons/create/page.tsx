@@ -25,7 +25,7 @@ export default function CreateSeason() {
     seasonNumber: '',
     year: new Date().getFullYear().toString(),
     description: '',
-    type: 'single' as 'single' | 'multi',
+    type: 'multi' as 'single' | 'multi',
     dollar_budget: 1000,
     euro_budget: 10000,
     required_real_players: 5, // Exact count required
@@ -200,59 +200,8 @@ export default function CreateSeason() {
 
           </div>
 
-            {/* Season Type Selection */}
-            <div className="space-y-3">
-              <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
-                Bidding System Engine Type *
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                {/* Single Currency Option */}
-                <div
-                  onClick={() => setFormData({ ...formData, type: 'single' })}
-                  className={`cursor-pointer p-5 rounded-2xl border transition-all duration-200 ${
-                    formData.type === 'single'
-                      ? 'border-amber-500 bg-amber-500/5 shadow-sm'
-                      : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-bold text-slate-800 text-xs font-mono uppercase">Single Currency</h4>
-                    {formData.type === 'single' && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    )}
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-mono leading-relaxed">
-                    Standard bidding engine with one global balance (e.g. legacy seasons 1-15).
-                  </p>
-                </div>
-
-                {/* Multi Currency Option */}
-                <div
-                  onClick={() => setFormData({ ...formData, type: 'multi' })}
-                  className={`cursor-pointer p-5 rounded-2xl border transition-all duration-200 ${
-                    formData.type === 'multi'
-                      ? 'border-amber-500 bg-amber-500/5 shadow-sm'
-                      : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-bold text-slate-800 text-xs font-mono uppercase">Multi-Currency & Roster Limits</h4>
-                    {formData.type === 'multi' && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    )}
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-mono leading-relaxed">
-                    Separate Dollar and Euro wallets for domestic/international drafts (Season 16+).
-                  </p>
-                </div>
-
-              </div>
-            </div>
-
             {/* Advanced Multi-Currency Parameters */}
-            {formData.type === 'multi' && (
-              <div className="p-6 rounded-2xl bg-slate-50/50 border border-slate-200/60 space-y-6 animate-fade-in">
+            <div className="p-6 rounded-2xl bg-slate-50/50 border border-slate-200/60 space-y-6 animate-fade-in">
                 <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
                   <Coins className="w-4 h-4 text-amber-600" />
                   <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-700">
@@ -264,7 +213,7 @@ export default function CreateSeason() {
                   
                   {/* Dollar Budget */}
                   <div className="space-y-2">
-                    <label className="block text-slate-500 font-bold">Dollar Budget limit ($)</label>
+                    <label className="block text-slate-500 font-bold">SSCoin Budget limit (SS)</label>
                     <input
                       type="number"
                       value={formData.dollar_budget}
@@ -276,7 +225,7 @@ export default function CreateSeason() {
                   
                   {/* Euro Budget */}
                   <div className="space-y-2">
-                    <label className="block text-slate-500 font-bold">Euro Budget limit (€)</label>
+                    <label className="block text-slate-500 font-bold">ECoin Budget limit (E)</label>
                     <input
                       type="number"
                       value={formData.euro_budget}
@@ -330,15 +279,14 @@ export default function CreateSeason() {
                       onChange={(e) => setFormData({ ...formData, category_fine_currency: e.target.value as 'dollar' | 'euro' })}
                       className="block w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20"
                     >
-                      <option value="dollar">Dollar Wallet ($)</option>
-                      <option value="euro">Euro Wallet (€)</option>
+                      <option value="dollar">SSCoin Wallet (SS)</option>
+                      <option value="euro">ECoin Wallet (E)</option>
                     </select>
                     <p className="text-[9px] text-slate-400">Target wallet for violation penalty collection.</p>
                   </div>
 
                 </div>
               </div>
-            )}
 
             {/* Description */}
             <div className="space-y-2">

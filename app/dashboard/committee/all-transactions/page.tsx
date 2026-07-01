@@ -72,6 +72,10 @@ export default function AllTransactionsPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
+  useEffect(() => {
     if (user && user.role === 'committee_admin' && userSeasonId) {
       loadInitialData();
     }

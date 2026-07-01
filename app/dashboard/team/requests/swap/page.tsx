@@ -12,7 +12,7 @@ import Link from 'next/link';
 
 // Custom UI Components replacing missing shadcn imports
 const Card = ({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={`bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm ${className || ''}`} {...props}>
+  <div className={`console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm ${className || ''}`} {...props}>
     {children}
   </div>
 );

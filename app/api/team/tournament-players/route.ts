@@ -57,26 +57,52 @@ export async function GET(request: NextRequest) {
     
     console.log(`✅ Found team in Firebase: ${teamId} (${teamName})`);
 
-    // Fetch team's players from player_seasons table
-    const playersResult = await sql`
-      SELECT 
-        id,
-        player_id,
-        player_name,
-        team_id,
-        team as team_name,
-        category,
-        star_rating,
-        points,
-        auction_value,
-        salary_per_match,
-        status,
-        season_id,
-        updated_at
-      FROM player_seasons
-      WHERE team_id = ${teamId} AND season_id = ${seasonId}
-      ORDER BY player_name ASC
-    `;
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    // Fetch team's players from correct database table
+    let playersResult;
+    if (isModern) {
+      playersResult = await sql`
+        SELECT 
+          id,
+          player_id,
+          player_name,
+          team_id,
+          team as team_name,
+          category,
+          star_rating,
+          points,
+          auction_value,
+          salary_per_match,
+          status,
+          season_id,
+          updated_at
+        FROM player_seasons
+        WHERE team_id = ${teamId} AND season_id = ${seasonId}
+        ORDER BY player_name ASC
+      `;
+    } else {
+      playersResult = await sql`
+        SELECT 
+          id,
+          player_id,
+          player_name,
+          team_id,
+          team as team_name,
+          category,
+          star_rating,
+          points,
+          0 as auction_value,
+          0 as salary_per_match,
+          'active' as status,
+          season_id,
+          updated_at
+        FROM realplayerstats
+        WHERE team_id = ${teamId} AND season_id = ${seasonId}
+        ORDER BY player_name ASC
+      `;
+    }
 
     let players = playersResult.map(player => ({
       id: player.id,

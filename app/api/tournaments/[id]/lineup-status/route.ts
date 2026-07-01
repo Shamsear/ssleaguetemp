@@ -53,19 +53,27 @@ export async function GET(
             AND team_id = f.away_team_id
           LIMIT 1
         ), 0) as away_lineup_count,
-        -- Get home team total squad size from player_seasons
+        -- Get home team total squad size
         COALESCE((
           SELECT COUNT(*) 
-          FROM player_seasons 
-          WHERE team_id = f.home_team_id 
-            AND season_id = f.season_id
+          FROM (
+            SELECT team_id, season_id FROM player_seasons
+            UNION ALL
+            SELECT team_id, season_id FROM realplayerstats
+          ) all_ps
+          WHERE all_ps.team_id = f.home_team_id 
+            AND all_ps.season_id = f.season_id
         ), 0) as home_total_players,
-        -- Get away team total squad size from player_seasons
+        -- Get away team total squad size
         COALESCE((
           SELECT COUNT(*) 
-          FROM player_seasons 
-          WHERE team_id = f.away_team_id 
-            AND season_id = f.season_id
+          FROM (
+            SELECT team_id, season_id FROM player_seasons
+            UNION ALL
+            SELECT team_id, season_id FROM realplayerstats
+          ) all_ps
+          WHERE all_ps.team_id = f.away_team_id 
+            AND all_ps.season_id = f.season_id
         ), 0) as away_total_players
       FROM fixtures f
       WHERE f.tournament_id = ${tournamentId}

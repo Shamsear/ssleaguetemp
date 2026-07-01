@@ -944,7 +944,7 @@ export default function PreviewHistoricalSeason() {
           <div className="space-y-4 mb-6">
             {/* Errors */}
             {uploadData.errors.length > 0 && (
-              <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-4 shadow-lg backdrop-blur-md border border-white/20 bg-red-50/30">
+              <div className="console-card bg-red-50/20 border border-red-200 p-4 rounded-xl shadow-sm">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center">
                     <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1137,7 +1137,7 @@ export default function PreviewHistoricalSeason() {
         </div>
         
         {/* Team Name Changes Information Banner */}
-        <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-4 mb-6 shadow-lg backdrop-blur-md border border-white/20 bg-purple-50/30">
+        <div className="console-card bg-purple-50/20 border border-purple-200 p-4 mb-6 rounded-xl shadow-sm">
           <div className="flex items-start">
             <svg className="w-5 h-5 mr-2 text-purple-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1157,7 +1157,7 @@ export default function PreviewHistoricalSeason() {
         </div>
         
         {/* Auto-save Information Banner */}
-        <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-4 mb-6 shadow-lg backdrop-blur-md border border-white/20 bg-green-50/30">
+        <div className="console-card bg-green-50/20 border border-green-200 p-4 mb-6 rounded-xl shadow-sm">
           <div className="flex items-start">
             <svg className="w-5 h-5 mr-2 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1172,7 +1172,7 @@ export default function PreviewHistoricalSeason() {
         </div>
         
         {/* Validation Status */}
-        <div className={`console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl p-4 mb-6 shadow-lg backdrop-blur-md border border-white/20 ${validationErrors.size > 0 ? 'bg-red-50/30' : 'bg-blue-50/30'}`}>
+        <div className={`console-card p-4 mb-6 rounded-xl shadow-sm border ${validationErrors.size > 0 ? 'bg-red-50/20 border-red-200 text-red-800' : 'bg-blue-50/20 border-blue-200 text-blue-800'}`}>
           <div className="flex items-start justify-between">
             <div className="flex items-center">
               <svg className={`w-5 h-5 mr-2 ${validationErrors.size > 0 ? 'text-red-600' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1266,14 +1266,14 @@ export default function PreviewHistoricalSeason() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="glass rounded-t-3xl p-2 shadow-lg backdrop-blur-md border border-white/20 border-b-0">
+        <div className="flex gap-2 border-b border-slate-200/60 pb-3 mb-6 overflow-x-auto">
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab('teams')}
-              className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+              className={`flex-1 px-4 py-3 text-xs font-mono font-bold rounded-xl transition-all ${
                 activeTab === 'teams'
-                  ? 'bg-gradient-to-r from-[#0066FF] to-[#0066FF]/80 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-white/30'
+                  ? 'bg-slate-800 text-white shadow-sm border border-slate-800'
+                  : 'bg-white text-slate-655 hover:text-slate-900 border border-slate-200/60 hover:bg-slate-50'
               }`}
             >
               <div className="flex items-center justify-center">
@@ -1285,10 +1285,10 @@ export default function PreviewHistoricalSeason() {
             </button>
             <button
               onClick={() => setActiveTab('players')}
-              className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+              className={`flex-1 px-4 py-3 text-xs font-mono font-bold rounded-xl transition-all ${
                 activeTab === 'players'
-                  ? 'bg-gradient-to-r from-[#0066FF] to-[#0066FF]/80 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-white/30'
+                  ? 'bg-slate-800 text-white shadow-sm border border-slate-800'
+                  : 'bg-white text-slate-655 hover:text-slate-900 border border-slate-200/60 hover:bg-slate-50'
               }`}
             >
               <div className="flex items-center justify-center">
@@ -1302,12 +1302,12 @@ export default function PreviewHistoricalSeason() {
         </div>
 
         {/* Data Tables */}
-        <div className="glass rounded-b-3xl shadow-lg backdrop-blur-md border border-white/20 overflow-hidden mb-8">
+        <div className="console-card bg-white border border-slate-200/60 p-6 rounded-2xl shadow-sm mb-8 overflow-hidden">
           {/* Teams Table */}
           {activeTab === 'teams' && teams.length > 0 && (
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
-                <thead className="bg-white/10">
+                <thead className="bg-slate-50 border-b border-slate-100">
                   <tr>
                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase">Rank</th>
                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase">Team</th>
@@ -1328,15 +1328,15 @@ export default function PreviewHistoricalSeason() {
                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white/20 divide-y divide-gray-200">
+                <tbody className="divide-y divide-slate-100 bg-white">
                   {teams.map((team, index) => (
-                    <tr key={index} className="hover:bg-white/30 transition-colors">
+                    <tr key={index} className="hover:bg-slate-50 transition-colors">
                       <td className="px-3 py-2">
                         <input
                           type="number"
                           value={team.rank}
                           onChange={(e) => handleTeamChange(index, 'rank', parseInt(e.target.value) || 0)}
-                          className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-14 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`team-${index}-rank`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1346,7 +1346,7 @@ export default function PreviewHistoricalSeason() {
                           type="text"
                           value={team.team}
                           onChange={(e) => handleTeamChange(index, 'team', e.target.value)}
-                          className={`w-32 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-32 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`team-${index}-team`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                           placeholder="Team name"
@@ -1357,7 +1357,7 @@ export default function PreviewHistoricalSeason() {
                           type="text"
                           value={team.owner_name}
                           onChange={(e) => handleTeamChange(index, 'owner_name', e.target.value)}
-                          className={`w-32 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-32 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`team-${index}-owner_name`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                           placeholder="Owner name"
@@ -1367,8 +1367,8 @@ export default function PreviewHistoricalSeason() {
                         <select
                           value={team.linked_team_id || ''}
                           onChange={(e) => handleTeamChange(index, 'linked_team_id', e.target.value)}
-                          className={`w-48 border outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 text-xs ${
-                            team.linked_team_id ? 'bg-blue-50 border-blue-300' : 'bg-transparent border-gray-300'
+                          className={`w-48 text-xs font-mono rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all px-2 py-1 border ${
+                            team.linked_team_id ? 'bg-amber-50/50 border-amber-300 text-amber-900 font-bold' : 'bg-slate-50 border-slate-200 text-slate-800'
                           }`}
                         >
                           <option value="">➕ New Team</option>
@@ -1452,7 +1452,7 @@ export default function PreviewHistoricalSeason() {
                           type="number"
                           value={team.p}
                           onChange={(e) => handleTeamChange(index, 'p', parseInt(e.target.value) || 0)}
-                          className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-14 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`team-${index}-p`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1462,7 +1462,7 @@ export default function PreviewHistoricalSeason() {
                           type="number"
                           value={team.mp}
                           onChange={(e) => handleTeamChange(index, 'mp', parseInt(e.target.value) || 0)}
-                          className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-14 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`team-${index}-mp`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1472,7 +1472,7 @@ export default function PreviewHistoricalSeason() {
                           type="number"
                           value={team.w}
                           onChange={(e) => handleTeamChange(index, 'w', parseInt(e.target.value) || 0)}
-                          className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-14 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`team-${index}-w`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1482,7 +1482,7 @@ export default function PreviewHistoricalSeason() {
                           type="number"
                           value={team.d}
                           onChange={(e) => handleTeamChange(index, 'd', parseInt(e.target.value) || 0)}
-                          className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-14 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`team-${index}-d`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1492,7 +1492,7 @@ export default function PreviewHistoricalSeason() {
                           type="number"
                           value={team.l}
                           onChange={(e) => handleTeamChange(index, 'l', parseInt(e.target.value) || 0)}
-                          className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-14 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`team-${index}-l`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1502,7 +1502,7 @@ export default function PreviewHistoricalSeason() {
                           type="number"
                           value={team.f}
                           onChange={(e) => handleTeamChange(index, 'f', parseInt(e.target.value) || 0)}
-                          className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-14 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`team-${index}-f`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1512,7 +1512,7 @@ export default function PreviewHistoricalSeason() {
                           type="number"
                           value={team.a}
                           onChange={(e) => handleTeamChange(index, 'a', parseInt(e.target.value) || 0)}
-                          className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-14 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`team-${index}-a`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1522,7 +1522,7 @@ export default function PreviewHistoricalSeason() {
                           type="number"
                           value={team.gd}
                           onChange={(e) => handleTeamChange(index, 'gd', parseInt(e.target.value) || 0)}
-                          className={`w-14 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-14 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`team-${index}-gd`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1533,7 +1533,7 @@ export default function PreviewHistoricalSeason() {
                           value={team.percentage}
                           onChange={(e) => handleTeamChange(index, 'percentage', parseFloat(e.target.value) || 0)}
                           step="0.1"
-                          className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-16 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`team-${index}-percentage`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1543,7 +1543,7 @@ export default function PreviewHistoricalSeason() {
                           type="text"
                           value={team.cup_1 || ''}
                           onChange={(e) => handleTeamChange(index, 'cup_1', e.target.value)}
-                          className="w-32 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1"
+                          className="w-32 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all"
                           placeholder="Optional"
                         />
                       </td>
@@ -1552,7 +1552,7 @@ export default function PreviewHistoricalSeason() {
                           type="text"
                           value={team.cup_2 || ''}
                           onChange={(e) => handleTeamChange(index, 'cup_2', e.target.value)}
-                          className="w-32 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1"
+                          className="w-32 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all"
                           placeholder="Optional"
                         />
                       </td>
@@ -1561,7 +1561,7 @@ export default function PreviewHistoricalSeason() {
                           type="text"
                           value={team.cup_3 || ''}
                           onChange={(e) => handleTeamChange(index, 'cup_3', e.target.value)}
-                          className="w-32 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1"
+                          className="w-32 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all"
                           placeholder="Optional"
                         />
                       </td>
@@ -1588,7 +1588,7 @@ export default function PreviewHistoricalSeason() {
           {activeTab === 'players' && players.length > 0 && (
             <div className="overflow-x-auto">
               <table className="min-w-full">
-                <thead className="bg-white/10">
+                <thead className="bg-slate-50 border-b border-slate-100">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Link To</th>
@@ -1614,15 +1614,15 @@ export default function PreviewHistoricalSeason() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white/20 divide-y divide-gray-200">
+                <tbody className="divide-y divide-slate-100 bg-white">
                   {players.map((player, index) => (
-                    <tr key={index} className="hover:bg-white/30 transition-colors">
+                    <tr key={index} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3">
                         <input
                           type="text"
                           value={player.name}
                           onChange={(e) => handlePlayerChange(index, 'name', e.target.value)}
-                          className={`w-48 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-48 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-name`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                           placeholder="Player name"
@@ -1632,8 +1632,8 @@ export default function PreviewHistoricalSeason() {
                         <div className="relative">
                           {/* Searchable Player Dropdown */}
                           <div 
-                            className={`w-56 border rounded px-2 py-1 text-xs cursor-pointer ${
-                              player.linked_player_id ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-300'
+                            className={`w-56 text-xs font-mono rounded-lg px-2 py-1 cursor-pointer border ${
+                              player.linked_player_id ? 'bg-amber-50/50 border-amber-300 text-amber-900 font-bold' : 'bg-slate-50 border-slate-200 text-slate-800'
                             }`}
                             onClick={() => setOpenPlayerDropdown(openPlayerDropdown === index ? null : index)}
                           >
@@ -1732,7 +1732,7 @@ export default function PreviewHistoricalSeason() {
                                           {filteredSuggested.map(existingPlayer => (
                                             <div
                                               key={existingPlayer.player_id}
-                                              className="px-3 py-2 text-xs hover:bg-blue-50 cursor-pointer"
+                                              className="px-3 py-2 text-xs hover:bg-slate-100 cursor-pointer"
                                               onClick={() => {
                                                 handlePlayerChange(index, 'linked_player_id', existingPlayer.player_id);
                                                 setOpenPlayerDropdown(null);
@@ -1759,7 +1759,7 @@ export default function PreviewHistoricalSeason() {
                                           {filteredOthers.map(existingPlayer => (
                                             <div
                                               key={existingPlayer.player_id}
-                                              className="px-3 py-2 text-xs hover:bg-blue-50 cursor-pointer"
+                                              className="px-3 py-2 text-xs hover:bg-slate-100 cursor-pointer"
                                               onClick={() => {
                                                 handlePlayerChange(index, 'linked_player_id', existingPlayer.player_id);
                                                 setOpenPlayerDropdown(null);
@@ -1801,7 +1801,7 @@ export default function PreviewHistoricalSeason() {
                           type="text"
                           value={player.team}
                           onChange={(e) => handlePlayerChange(index, 'team', e.target.value)}
-                          className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-full bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-team`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                           placeholder="Team"
@@ -1812,7 +1812,7 @@ export default function PreviewHistoricalSeason() {
                           type="text"
                           value={player.category}
                           onChange={(e) => handlePlayerChange(index, 'category', e.target.value)}
-                          className={`w-full bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-full bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-category`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                           placeholder="Category"
@@ -1825,7 +1825,7 @@ export default function PreviewHistoricalSeason() {
                           onChange={(e) => handlePlayerChange(index, 'goals_scored', e.target.value === '' ? null : parseFloat(e.target.value))}
                           step="0.1"
                           placeholder="N/A"
-                          className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-20 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-goals_scored`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1837,7 +1837,7 @@ export default function PreviewHistoricalSeason() {
                           onChange={(e) => handlePlayerChange(index, 'goals_per_game', e.target.value === '' ? null : parseFloat(e.target.value))}
                           step="0.1"
                           placeholder="N/A"
-                          className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-20 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-goals_per_game`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1849,7 +1849,7 @@ export default function PreviewHistoricalSeason() {
                           onChange={(e) => handlePlayerChange(index, 'goals_conceded', e.target.value === '' ? null : parseFloat(e.target.value))}
                           step="0.1"
                           placeholder="N/A"
-                          className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-20 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-goals_conceded`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1861,7 +1861,7 @@ export default function PreviewHistoricalSeason() {
                           onChange={(e) => handlePlayerChange(index, 'conceded_per_game', e.target.value === '' ? null : parseFloat(e.target.value))}
                           step="0.1"
                           placeholder="N/A"
-                          className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-20 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-conceded_per_game`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1873,7 +1873,7 @@ export default function PreviewHistoricalSeason() {
                           onChange={(e) => handlePlayerChange(index, 'net_goals', e.target.value === '' ? null : parseFloat(e.target.value))}
                           step="0.1"
                           placeholder="N/A"
-                          className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-20 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-net_goals`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1885,7 +1885,7 @@ export default function PreviewHistoricalSeason() {
                           onChange={(e) => handlePlayerChange(index, 'cleansheets', e.target.value === '' ? null : parseFloat(e.target.value))}
                           step="0.1"
                           placeholder="N/A"
-                          className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-20 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-cleansheets`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1896,7 +1896,7 @@ export default function PreviewHistoricalSeason() {
                           value={player.potm ?? ''}
                           onChange={(e) => handlePlayerChange(index, 'potm', e.target.value === '' ? null : parseInt(e.target.value))}
                           placeholder="N/A"
-                          className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-20 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-potm`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1908,7 +1908,7 @@ export default function PreviewHistoricalSeason() {
                           onChange={(e) => handlePlayerChange(index, 'points', e.target.value === '' ? null : parseFloat(e.target.value))}
                           step="0.1"
                           placeholder="N/A"
-                          className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-20 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-points`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1918,7 +1918,7 @@ export default function PreviewHistoricalSeason() {
                           type="number"
                           value={player.win}
                           onChange={(e) => handlePlayerChange(index, 'win', parseInt(e.target.value) || 0)}
-                          className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-16 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-win`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1928,7 +1928,7 @@ export default function PreviewHistoricalSeason() {
                           type="number"
                           value={player.draw}
                           onChange={(e) => handlePlayerChange(index, 'draw', parseInt(e.target.value) || 0)}
-                          className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-16 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-draw`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1938,7 +1938,7 @@ export default function PreviewHistoricalSeason() {
                           type="number"
                           value={player.loss}
                           onChange={(e) => handlePlayerChange(index, 'loss', parseInt(e.target.value) || 0)}
-                          className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-16 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-loss`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1948,7 +1948,7 @@ export default function PreviewHistoricalSeason() {
                           type="number"
                           value={player.total_matches}
                           onChange={(e) => handlePlayerChange(index, 'total_matches', parseInt(e.target.value) || 0)}
-                          className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-20 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-total_matches`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1960,7 +1960,7 @@ export default function PreviewHistoricalSeason() {
                           onChange={(e) => handlePlayerChange(index, 'total_points', e.target.value === '' ? null : parseFloat(e.target.value))}
                           step="0.1"
                           placeholder="N/A"
-                          className={`w-20 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1 ${
+                          className={`w-20 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all ${
                             validationErrors.has(`player-${index}-total_points`) ? 'border-red-500 bg-red-50' : ''
                           }`}
                         />
@@ -1970,7 +1970,7 @@ export default function PreviewHistoricalSeason() {
                           type="text"
                           value={player.category_wise_trophy_1 || ''}
                           onChange={(e) => handlePlayerChange(index, 'category_wise_trophy_1', e.target.value)}
-                          className="w-32 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1"
+                          className="w-32 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all"
                           placeholder="Optional"
                         />
                       </td>
@@ -1979,7 +1979,7 @@ export default function PreviewHistoricalSeason() {
                           type="text"
                           value={player.category_wise_trophy_2 || ''}
                           onChange={(e) => handlePlayerChange(index, 'category_wise_trophy_2', e.target.value)}
-                          className="w-32 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1"
+                          className="w-32 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all"
                           placeholder="Optional"
                         />
                       </td>
@@ -1988,7 +1988,7 @@ export default function PreviewHistoricalSeason() {
                           type="text"
                           value={player.individual_wise_trophy_1 || ''}
                           onChange={(e) => handlePlayerChange(index, 'individual_wise_trophy_1', e.target.value)}
-                          className="w-32 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1"
+                          className="w-32 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all"
                           placeholder="Optional"
                         />
                       </td>
@@ -1997,7 +1997,7 @@ export default function PreviewHistoricalSeason() {
                           type="text"
                           value={player.individual_wise_trophy_2 || ''}
                           onChange={(e) => handlePlayerChange(index, 'individual_wise_trophy_2', e.target.value)}
-                          className="w-32 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-[#0066FF] rounded px-2 py-1"
+                          className="w-32 bg-slate-50 border border-slate-200 text-slate-800 font-mono text-xs rounded-lg focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all"
                           placeholder="Optional"
                         />
                       </td>

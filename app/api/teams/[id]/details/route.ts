@@ -92,7 +92,7 @@ export async function GET(
       .filter(Boolean);
 
     // 5. Fetch ALL players ever associated with the team
-    // From player_seasons (season 16+)
+    // From player_seasons (only for S16/S17)
     const modernPlayers = await sql`
       SELECT DISTINCT
         player_id,
@@ -105,11 +105,12 @@ export async function GET(
         SUM(points) as points
       FROM player_seasons
       WHERE team_id = ${teamId}
+        AND season_id IN ('SSPSLS16', 'SSPSLS17')
       GROUP BY player_id, player_name, category, season_id
       ORDER BY season_id DESC, points DESC
     `;
 
-    // From realplayerstats (season 1-15)
+    // From realplayerstats (season 1-15 and S18+)
     const historicalPlayers = await sql`
       SELECT DISTINCT
         player_id,
@@ -121,6 +122,7 @@ export async function GET(
         SUM(points) as points
       FROM realplayerstats
       WHERE team_id = ${teamId}
+        AND season_id NOT IN ('SSPSLS16', 'SSPSLS17')
       GROUP BY player_id, player_name, category, season_id
       ORDER BY season_id DESC, points DESC
     `;

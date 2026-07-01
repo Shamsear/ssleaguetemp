@@ -144,14 +144,23 @@ async function updatePlayerStats(data: {
   const { player_id, player_name, season_id, fixture_id, goals_scored, goals_conceded, won, draw, lost, motm, clean_sheet } = data;
 
   const statsId = `${player_id}_${season_id}`;
+  const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+  const isModern = seasonNum === 16 || seasonNum === 17;
 
-  // Get current stats from player_seasons table
-  const existing = await sql`
-    SELECT * FROM player_seasons WHERE id = ${statsId} LIMIT 1
-  `;
+  // Get current stats from the correct table
+  let existing;
+  if (isModern) {
+    existing = await sql`
+      SELECT * FROM player_seasons WHERE id = ${statsId} LIMIT 1
+    `;
+  } else {
+    existing = await sql`
+      SELECT * FROM realplayerstats WHERE id = ${statsId} LIMIT 1
+    `;
+  }
 
   if (existing.length === 0) {
-    console.warn(`Player ${player_name} (${player_id}) not found in player_seasons for season ${season_id}`);
+    console.warn(`Player ${player_name} (${player_id}) not found in database for season ${season_id}`);
     console.warn('Skipping stats update - player may not be registered for this season');
     return;
   }
@@ -179,25 +188,42 @@ async function updatePlayerStats(data: {
   // Add fixture to processed list
   const updatedProcessedFixtures = [...processedFixtures, fixture_id];
 
-  // Update existing stats in player_seasons
-  // NOTE: Points are NOT updated here - they are managed separately via /api/realplayers/update-points
-  // which uses star rating base points + goal difference (+5 to -5 per match)
-  await sql`
-    UPDATE player_seasons
-    SET
-      matches_played = ${(current.matches_played || 0) + 1},
-      goals_scored = ${(current.goals_scored || 0) + goals_scored},
-      goals_conceded = ${(current.goals_conceded || 0) + goals_conceded},
-      assists = ${current.assists || 0},
-      wins = ${(current.wins || 0) + (won ? 1 : 0)},
-      draws = ${(current.draws || 0) + (draw ? 1 : 0)},
-      losses = ${(current.losses || 0) + (lost ? 1 : 0)},
-      clean_sheets = ${(current.clean_sheets || 0) + (clean_sheet ? 1 : 0)},
-      motm_awards = ${(current.motm_awards || 0) + (motm ? 1 : 0)},
-      processed_fixtures = ${JSON.stringify(updatedProcessedFixtures)}::jsonb,
-      updated_at = NOW()
-    WHERE id = ${statsId}
-  `;
+  // Update existing stats in correct table
+  if (isModern) {
+    await sql`
+      UPDATE player_seasons
+      SET
+        matches_played = ${(current.matches_played || 0) + 1},
+        goals_scored = ${(current.goals_scored || 0) + goals_scored},
+        goals_conceded = ${(current.goals_conceded || 0) + goals_conceded},
+        assists = ${current.assists || 0},
+        wins = ${(current.wins || 0) + (won ? 1 : 0)},
+        draws = ${(current.draws || 0) + (draw ? 1 : 0)},
+        losses = ${(current.losses || 0) + (lost ? 1 : 0)},
+        clean_sheets = ${(current.clean_sheets || 0) + (clean_sheet ? 1 : 0)},
+        motm_awards = ${(current.motm_awards || 0) + (motm ? 1 : 0)},
+        processed_fixtures = ${JSON.stringify(updatedProcessedFixtures)}::jsonb,
+        updated_at = NOW()
+      WHERE id = ${statsId}
+    `;
+  } else {
+    await sql`
+      UPDATE realplayerstats
+      SET
+        matches_played = ${(current.matches_played || 0) + 1},
+        goals_scored = ${(current.goals_scored || 0) + goals_scored},
+        goals_conceded = ${(current.goals_conceded || 0) + goals_conceded},
+        assists = ${current.assists || 0},
+        wins = ${(current.wins || 0) + (won ? 1 : 0)},
+        draws = ${(current.draws || 0) + (draw ? 1 : 0)},
+        losses = ${(current.losses || 0) + (lost ? 1 : 0)},
+        clean_sheets = ${(current.clean_sheets || 0) + (clean_sheet ? 1 : 0)},
+        motm_awards = ${(current.motm_awards || 0) + (motm ? 1 : 0)},
+        processed_fixtures = ${JSON.stringify(updatedProcessedFixtures)}::jsonb,
+        updated_at = NOW()
+      WHERE id = ${statsId}
+    `;
+  }
 
   console.log(`✓ Updated stats for ${player_name}: +${goals_scored} goals, match ${won ? 'W' : draw ? 'D' : 'L'}`);
 }

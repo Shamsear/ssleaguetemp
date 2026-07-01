@@ -7,6 +7,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { Trophy as TrophyIcon, Settings, ArrowLeft, Info, Calendar, Clock, Lock, Plus, Trash2, CheckCircle, AlertCircle, Sparkles, X, ChevronRight, Award, Crown, Trophy, Star } from 'lucide-react';
+import { useModal } from '@/hooks/useModal';
+import ConfirmModal from '@/components/modals/ConfirmModal';
 
 interface Trophy {
   id: number;
@@ -36,6 +38,7 @@ export default function TrophyManagementPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { isCommitteeAdmin, userSeasonId } = usePermissions();
+  const { confirmState, showConfirm, closeConfirm, handleConfirm } = useModal();
   
   const [trophies, setTrophies] = useState<Trophy[]>([]);
   const [preview, setPreview] = useState<TrophyPreview[]>([]);
@@ -216,7 +219,14 @@ export default function TrophyManagementPage() {
   };
 
   const handleDeleteTrophy = async (trophyId: number) => {
-    if (!confirm('Delete this trophy?')) return;
+    const confirmed = await showConfirm({
+      type: 'danger',
+      title: 'Delete Trophy',
+      message: 'Are you sure you want to delete this trophy?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel'
+    });
+    if (!confirmed) return;
     
     setError(null);
     setSuccess(null);
@@ -658,6 +668,18 @@ export default function TrophyManagementPage() {
           )}
         </div>
       </div>
+      
+      {/* Custom Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        onConfirm={handleConfirm}
+        onCancel={closeConfirm}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        type={confirmState.type}
+      />
     </div>
   );
 }

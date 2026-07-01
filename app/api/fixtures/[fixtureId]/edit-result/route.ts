@@ -292,7 +292,9 @@ export async function PATCH(
       matchups, 
       edited_by, 
       edited_by_name, 
-      edit_reason 
+      edit_reason,
+      home_penalty_goals,
+      away_penalty_goals
     } = body;
 
     if (!matchups || !Array.isArray(matchups)) {
@@ -381,10 +383,24 @@ export async function PATCH(
     }
 
     // Step 4: Calculate new fixture totals
-    const newHomeScore = matchups.reduce((sum: number, m: any) => sum + (m.home_goals || 0), 0);
-    const newAwayScore = matchups.reduce((sum: number, m: any) => sum + (m.away_goals || 0), 0);
-    const newResult = newHomeScore > newAwayScore ? 'home_win' : 
-                      newAwayScore > newHomeScore ? 'away_win' : 'draw';
+    const matchupHomeGoals = matchups.reduce((sum: number, m: any) => sum + (m.home_goals || 0), 0);
+    const matchupAwayGoals = matchups.reduce((sum: number, m: any) => sum + (m.away_goals || 0), 0);
+
+    // Get sub penalties from oldMatchups (which won't change)
+    const totalHomeSubPenalty = oldMatchups.reduce((sum: number, m: any) => sum + (Number(m.home_sub_penalty) || 0), 0);
+    const totalAwaySubPenalty = oldMatchups.reduce((sum: number, m: any) => sum + (Number(m.away_sub_penalty) || 0), 0);
+
+    // Get fine penalty goals
+    const homePenaltyGoalsVal = home_penalty_goals !== undefined ? Number(home_penalty_goals) || 0 : Number(fixture.home_penalty_goals) || 0;
+    const awayPenaltyGoalsVal = away_penalty_goals !== undefined ? Number(away_penalty_goals) || 0 : Number(fixture.away_penalty_goals) || 0;
+
+    // Calculate final scores including penalties
+    const totalHomeScore = matchupHomeGoals + totalAwaySubPenalty + homePenaltyGoalsVal;
+    const totalAwayScore = matchupAwayGoals + totalHomeSubPenalty + awayPenaltyGoalsVal;
+
+    // Determine result
+    const newResult = totalHomeScore > totalAwayScore ? 'home_win' : 
+                      totalAwayScore > totalHomeScore ? 'away_win' : 'draw';
 
     // Step 4.2: Delete old transactions for this fixture to prevent duplicates
     console.log('🗑️  Deleting old transactions for this fixture...');
@@ -399,9 +415,10 @@ export async function PATCH(
       console.error('⚠️  Failed to delete old transactions:', txError);
     }
 
-    // Step 4.3: Revert old match rewards if result changed
+    // Step 4.3: Revert old match rewards if result changed (S16-17 only)
     const oldResult = fixture.result;
-    if (oldResult && oldResult !== newResult) {
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    if (seasonNum < 18 && oldResult && oldResult !== newResult) {
       console.log(`🔄 Result changed from ${oldResult} to ${newResult} - adjusting match rewards...`);
       try {
         await revertMatchRewards({
@@ -440,44 +457,48 @@ export async function PATCH(
     await sql`
       UPDATE fixtures
       SET 
-        home_score = ${newHomeScore},
-        away_score = ${newAwayScore},
+        home_score = ${totalHomeScore},
+        away_score = ${totalAwayScore},
         result = ${newResult},
-        updated_by = ${edited_by || null},
-        updated_by_name = ${edited_by_name || null},
+        home_penalty_goals = ${homePenaltyGoalsVal},
+        away_penalty_goals = ${awayPenaltyGoalsVal},
         updated_at = NOW()
       WHERE id = ${fixtureId}
     `;
 
-    // Step 5.5: Distribute new match rewards if result changed
-    if (oldResult && oldResult !== newResult) {
-      console.log('💰 Distributing corrected match rewards...');
-      try {
-        await distributeMatchRewards({
-          fixtureId,
-          matchResult: newResult as 'home_win' | 'away_win' | 'draw',
-          seasonId,
-        });
-        console.log('✅ New match rewards distributed');
-      } catch (rewardError) {
-        console.error('⚠️ Failed to distribute new match rewards:', rewardError);
-        // Don't fail the whole request
-      }
-    } else if (!oldResult) {
-      // If there was no previous result (shouldn't happen, but handle it)
-      console.log('💰 Distributing match rewards for first-time result...');
-      try {
-        await distributeMatchRewards({
-          fixtureId,
-          matchResult: newResult as 'home_win' | 'away_win' | 'draw',
-          seasonId,
-        });
-        console.log('✅ Match rewards distributed');
-      } catch (rewardError) {
-        console.error('⚠️ Failed to distribute match rewards:', rewardError);
+    // Step 5.5: Distribute new match rewards if result changed (S16-17 only)
+    if (seasonNum < 18) {
+      if (oldResult && oldResult !== newResult) {
+        console.log('💰 Distributing corrected match rewards...');
+        try {
+          await distributeMatchRewards({
+            fixtureId,
+            matchResult: newResult as 'home_win' | 'away_win' | 'draw',
+            seasonId,
+          });
+          console.log('✅ New match rewards distributed');
+        } catch (rewardError) {
+          console.error('⚠️ Failed to distribute new match rewards:', rewardError);
+          // Don't fail the whole request
+        }
+      } else if (!oldResult) {
+        // If there was no previous result (shouldn't happen, but handle it)
+        console.log('💰 Distributing match rewards for first-time result...');
+        try {
+          await distributeMatchRewards({
+            fixtureId,
+            matchResult: newResult as 'home_win' | 'away_win' | 'draw',
+            seasonId,
+          });
+          console.log('✅ Match rewards distributed');
+        } catch (rewardError) {
+          console.error('⚠️ Failed to distribute match rewards:', rewardError);
+        }
+      } else {
+        console.log('ℹ️ Result unchanged - no reward adjustment needed');
       }
     } else {
-      console.log('ℹ️ Result unchanged - no reward adjustment needed');
+      console.log(`ℹ️ Skipping match rewards distribution/reversion for Season ${seasonNum}`);
     }
 
     // Step 6: Apply new stats
@@ -552,8 +573,8 @@ export async function PATCH(
           away_team_id: fixture.away_team_id,
           home_score: totalHomeScore,
           away_score: totalAwayScore,
-          home_penalty_goals: Number(home_penalty_goals) || 0,
-          away_penalty_goals: Number(away_penalty_goals) || 0,
+          home_penalty_goals: homePenaltyGoalsVal,
+          away_penalty_goals: awayPenaltyGoalsVal,
           matchups: matchups,
           is_edit: true  // Flag to indicate this is an edit
         })
@@ -633,23 +654,14 @@ export async function PATCH(
     await sql`
       INSERT INTO fixture_audit_log (
         fixture_id,
-        action_type,
-        action_by,
-        action_by_name,
-        notes,
-        season_id,
-        round_number,
-        match_number,
-        changes
+        change_type,
+        changed_by,
+        changes,
+        tournament_id
       ) VALUES (
         ${fixtureId},
         'result_edited',
-        ${edited_by || 'system'},
         ${edited_by_name || 'Committee Admin'},
-        ${edit_reason || 'Result edited by committee admin'},
-        ${fixture.season_id},
-        ${fixture.round_number},
-        ${fixture.match_number},
         ${JSON.stringify({
           old: {
             home_score: fixture.home_score,
@@ -663,8 +675,13 @@ export async function PATCH(
             result: newResult,
             matchups: matchups
           },
-          rewards_adjusted: oldResult !== newResult
-        })}
+          edit_reason: edit_reason || 'Result edited by committee admin',
+          season_id: fixture.season_id,
+          round_number: fixture.round_number,
+          match_number: fixture.match_number,
+          edited_by: edited_by || 'system'
+        })},
+        ${fixture.tournament_id || null}
       )
     `;
 

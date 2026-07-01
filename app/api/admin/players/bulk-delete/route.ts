@@ -35,12 +35,24 @@ export async function POST(request: NextRequest) {
       const currentRegistrationId = `${player_id}_${season_id}`;
       const nextRegistrationId = `${player_id}_${nextSeasonId}`;
 
+      const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+      const isModern = seasonNum === 16 || seasonNum === 17;
+
       // Get player data (check both current and next for historical multi-season data)
-      const playerSeasons = await sql`
-        SELECT id, player_name, registration_type
-        FROM player_seasons 
-        WHERE id IN (${currentRegistrationId}, ${nextRegistrationId})
-      `;
+      let playerSeasons;
+      if (isModern) {
+        playerSeasons = await sql`
+          SELECT id, player_name, registration_type
+          FROM player_seasons 
+          WHERE id IN (${currentRegistrationId}, ${nextRegistrationId})
+        `;
+      } else {
+        playerSeasons = await sql`
+          SELECT id, player_name, 'confirmed' as registration_type
+          FROM realplayerstats 
+          WHERE id IN (${currentRegistrationId}, ${nextRegistrationId})
+        `;
+      }
 
       if (playerSeasons.length === 0) {
         console.warn(`⚠️ Player ${player_id} not found, skipping`);
@@ -52,10 +64,17 @@ export async function POST(request: NextRequest) {
       const playerName = currentSeasonData?.player_name || player_id;
 
       // Delete from Neon (both current and next season if exists - for historical data compatibility)
-      await sql`
-        DELETE FROM player_seasons 
-        WHERE id IN (${currentRegistrationId}, ${nextRegistrationId})
-      `;
+      if (isModern) {
+        await sql`
+          DELETE FROM player_seasons 
+          WHERE id IN (${currentRegistrationId}, ${nextRegistrationId})
+        `;
+      } else {
+        await sql`
+          DELETE FROM realplayerstats 
+          WHERE id IN (${currentRegistrationId}, ${nextRegistrationId})
+        `;
+      }
 
       // Delete from Firebase (both current and next season if exists - for historical data compatibility)
       try {
@@ -117,8 +136,8 @@ export async function POST(request: NextRequest) {
       console.log(`✅ Deleted player ${playerName} (${registrationType})`);
     }
 
-    // Auto-promote unconfirmed players for each deleted confirmed player
-    if (confirmedDeletedCount > 0) {
+    // Auto-promote unconfirmed players for each deleted confirmed player (S16/17 only)
+    if (isModern && confirmedDeletedCount > 0) {
       const seasonDoc = await adminDb.collection('seasons').doc(season_id).get();
       if (seasonDoc.exists) {
         const seasonData = seasonDoc.data()!;

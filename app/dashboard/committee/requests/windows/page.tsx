@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 // Custom UI Components replacing missing shadcn imports
 const Card = ({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={`bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm ${className || ''}`} {...props}>
+  <div className={`console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm ${className || ''}`} {...props}>
     {children}
   </div>
 );
@@ -168,7 +168,11 @@ export default function WindowsManagementPage() {
   if (!isCommitteeAdmin) return <div>Access denied.</div>;
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-5xl mx-auto relative z-10 space-y-6 font-mono">
       <div className="flex justify-between items-center border-b pb-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -340,6 +344,7 @@ export default function WindowsManagementPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

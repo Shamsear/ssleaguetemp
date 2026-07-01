@@ -400,30 +400,35 @@ export default function CommitteeMatchupCreator({
         const teamName = showLineupSetter === 'home' ? homeTeamName : awayTeamName;
 
         return (
-            <div className="p-6 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 max-h-[85vh] overflow-y-auto font-mono text-slate-800">
                 <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Set Lineup for {teamName}</h2>
-                    <p className="text-gray-600">Select 5-7 players (first 5 will be starting XI, rest are substitutes)</p>
+                    <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-1">Set Lineup for {teamName}</h2>
+                    <p className="text-xs text-slate-550">Select 5-7 players (first 5 starting XI, remaining are substitutes)</p>
                 </div>
 
                 {error && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                        <p className="text-red-700">{error}</p>
+                    <div className="bg-rose-50 border border-rose-250 rounded-2xl p-4 mb-4 text-xs font-bold text-rose-700 flex items-center gap-2">
+                        <span>⚠️</span> {error}
                     </div>
                 )}
 
-                <div className="mb-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                    <p className="font-semibold text-purple-900">
-                        Selected: {selectedPlayers.length} / 7 players
-                        {selectedPlayers.length >= 5 && (
-                            <span className="ml-2 text-green-600">✓ Ready to submit</span>
-                        )}
+                <div className="mb-6 p-4 bg-slate-50 border border-slate-200/60 rounded-2xl">
+                    <p className="font-bold text-xs uppercase tracking-wider text-slate-650 flex items-center justify-between">
+                        <span>Selected Players:</span>
+                        <span className="font-mono bg-white px-2.5 py-1 rounded-lg border border-slate-200/50 text-slate-800">
+                            {selectedPlayers.length} / 7
+                        </span>
                     </p>
+                    {selectedPlayers.length >= 5 && (
+                        <p className="text-[10px] font-bold text-emerald-650 mt-2 flex items-center gap-1">
+                            ✓ Ready to submit lineup
+                        </p>
+                    )}
                 </div>
 
                 {isSettingLineup ? (
                     <div className="flex items-center justify-center p-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-800"></div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
@@ -435,28 +440,30 @@ export default function CommitteeMatchupCreator({
                                 <button
                                     key={player.player_id}
                                     onClick={() => togglePlayerSelection(player)}
-                                    className={`p-4 rounded-lg border-2 text-left transition-all ${isSelected
-                                        ? 'border-purple-500 bg-purple-50'
-                                        : 'border-gray-200 bg-white hover:border-purple-300'
+                                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between min-h-[90px] ${isSelected
+                                        ? 'border-slate-800 bg-slate-50 shadow-xs'
+                                        : 'border-slate-250 bg-white hover:border-slate-350 hover:bg-slate-50/50'
                                         }`}
                                 >
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="font-semibold">{player.player_name}</p>
-                                            <p className="text-xs text-gray-500">{player.player_id}</p>
-                                            {player.category && (
-                                                <span className="text-xs px-2 py-1 bg-gray-100 rounded mt-1 inline-block">
-                                                    {player.category}
-                                                </span>
-                                            )}
+                                    <div className="flex items-start justify-between w-full">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-bold text-slate-900 text-xs sm:text-sm truncate">{player.player_name}</p>
+                                            <p className="text-[10px] font-mono text-slate-400 mt-0.5">{player.player_id}</p>
                                         </div>
                                         {isSelected && (
-                                            <div className="flex flex-col items-center">
-                                                <span className="text-2xl">✓</span>
-                                                <span className="text-xs font-bold text-purple-600">
-                                                    {position <= 5 ? `P${position}` : `SUB${position - 5}`}
-                                                </span>
-                                            </div>
+                                            <span className="text-emerald-500 font-bold shrink-0 ml-2">✓</span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center justify-between w-full mt-2">
+                                        {player.category ? (
+                                            <span className="text-[9px] font-bold font-mono uppercase px-2 py-0.5 bg-slate-105 text-slate-600 rounded">
+                                                {player.category}
+                                            </span>
+                                        ) : <div />}
+                                        {isSelected && (
+                                            <span className="text-[9px] font-black font-mono uppercase bg-slate-800 text-white px-2 py-0.5 rounded">
+                                                {position <= 5 ? `XI #${position}` : `SUB #${position - 5}`}
+                                            </span>
                                         )}
                                     </div>
                                 </button>
@@ -465,7 +472,7 @@ export default function CommitteeMatchupCreator({
                     </div>
                 )}
 
-                <div className="flex gap-3 pt-4 border-t">
+                <div className="flex gap-3 pt-4 border-t border-slate-100">
                     <button
                         onClick={() => {
                             setShowLineupSetter(null);
@@ -474,14 +481,14 @@ export default function CommitteeMatchupCreator({
                             setError(null);
                         }}
                         disabled={isSettingLineup}
-                        className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium disabled:opacity-50"
+                        className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all border border-slate-200 disabled:opacity-50 cursor-pointer"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={submitLineup}
                         disabled={isSettingLineup || selectedPlayers.length < 5 || selectedPlayers.length > 7}
-                        className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 font-medium disabled:opacity-50"
+                        className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm disabled:opacity-50 cursor-pointer"
                     >
                         {isSettingLineup ? 'Setting Lineup...' : `Set Lineup (${selectedPlayers.length} players)`}
                     </button>
@@ -494,9 +501,9 @@ export default function CommitteeMatchupCreator({
     if (isLoading) {
         return (
             <div className="flex items-center justify-center p-12">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading lineups...</p>
+                <div className="text-center font-mono">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-800 mx-auto mb-4"></div>
+                    <p className="text-xs text-slate-550">Loading lineups...</p>
                 </div>
             </div>
         );
@@ -505,91 +512,73 @@ export default function CommitteeMatchupCreator({
     // Show lineup setting options if needed
     if (homeNeedsLineup || awayNeedsLineup) {
         return (
-            <div className="p-6">
+            <div className="p-6 font-mono text-slate-850">
                 <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Lineups Required</h2>
-                    <p className="text-gray-600">Both teams need to set their lineups before creating matchups</p>
+                    <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-1">Lineups Required</h2>
+                    <p className="text-xs text-slate-550">Both teams need to set their lineups before creating matchups</p>
                 </div>
 
                 <div className="space-y-4 mb-6">
-                    {homeNeedsLineup && (
-                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="font-semibold text-orange-900">{homeTeamName}</p>
-                                    <p className="text-sm text-orange-700">Lineup not set</p>
-                                </div>
-                                <button
-                                    onClick={() => handleSetLineup('home')}
-                                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
-                                >
-                                    Set Lineup
-                                </button>
+                    {homeNeedsLineup ? (
+                        <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <p className="font-bold text-slate-900 text-sm">{homeTeamName}</p>
+                                <p className="text-[10px] text-amber-700 mt-0.5">⚠️ Lineup not set</p>
                             </div>
+                            <button
+                                onClick={() => handleSetLineup('home')}
+                                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm self-start sm:self-auto"
+                            >
+                                Set Lineup
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="bg-emerald-50/30 border border-emerald-250 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <p className="font-bold text-slate-900 text-sm">{homeTeamName}</p>
+                                <p className="text-[10px] text-emerald-700 mt-0.5">✓ Lineup set ({homeLineup?.players.length} players)</p>
+                            </div>
+                            <button
+                                onClick={() => handleSetLineup('home')}
+                                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider rounded-xl transition-all border border-slate-200 cursor-pointer self-start sm:self-auto"
+                            >
+                                ✏️ Edit Lineup
+                            </button>
                         </div>
                     )}
 
-                    {awayNeedsLineup && (
-                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="font-semibold text-orange-900">{awayTeamName}</p>
-                                    <p className="text-sm text-orange-700">Lineup not set</p>
-                                </div>
-                                <button
-                                    onClick={() => handleSetLineup('away')}
-                                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
-                                >
-                                    Set Lineup
-                                </button>
+                    {awayNeedsLineup ? (
+                        <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <p className="font-bold text-slate-900 text-sm">{awayTeamName}</p>
+                                <p className="text-[10px] text-amber-700 mt-0.5">⚠️ Lineup not set</p>
                             </div>
+                            <button
+                                onClick={() => handleSetLineup('away')}
+                                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm self-start sm:self-auto"
+                            >
+                                Set Lineup
+                            </button>
                         </div>
-                    )}
-
-                    {!homeNeedsLineup && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-green-600 text-xl">✓</span>
-                                    <div>
-                                        <p className="font-semibold text-green-900">{homeTeamName}</p>
-                                        <p className="text-sm text-green-700">Lineup set ({homeLineup?.players.length} players)</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => handleSetLineup('home')}
-                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center gap-2"
-                                >
-                                    ✏️ Edit Lineup
-                                </button>
+                    ) : (
+                        <div className="bg-emerald-50/30 border border-emerald-250 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <p className="font-bold text-slate-900 text-sm">{awayTeamName}</p>
+                                <p className="text-[10px] text-emerald-700 mt-0.5">✓ Lineup set ({awayLineup?.players.length} players)</p>
                             </div>
-                        </div>
-                    )}
-
-                    {!awayNeedsLineup && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-green-600 text-xl">✓</span>
-                                    <div>
-                                        <p className="font-semibold text-green-900">{awayTeamName}</p>
-                                        <p className="text-sm text-green-700">Lineup set ({awayLineup?.players.length} players)</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => handleSetLineup('away')}
-                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center gap-2"
-                                >
-                                    ✏️ Edit Lineup
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => handleSetLineup('away')}
+                                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider rounded-xl transition-all border border-slate-200 cursor-pointer self-start sm:self-auto"
+                            >
+                                ✏️ Edit Lineup
+                            </button>
                         </div>
                     )}
                 </div>
 
                 <button
                     onClick={onCancel}
-                    className="w-full px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+                    className="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all border border-slate-200 cursor-pointer"
                 >
                     Close
                 </button>
@@ -597,22 +586,21 @@ export default function CommitteeMatchupCreator({
         );
     }
 
-    // Rest of the matchup creator code (same as before)
     const availableHomePlayers = homeLineup?.players.filter(p => !usedHomePlayers.has(p.player_id)) || [];
     const availableAwayPlayers = awayLineup?.players.filter(p => !usedAwayPlayers.has(p.player_id)) || [];
 
     return (
-        <div className="p-6 max-h-[90vh] overflow-y-auto">
+        <div className="p-6 max-h-[85vh] overflow-y-auto font-mono text-slate-850">
             {/* Header */}
             <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Matchups</h2>
-                <p className="text-gray-600">Select players from each team to create individual matchups</p>
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-1">Create Matchups</h2>
+                <p className="text-xs text-slate-550">Select players from each team to create individual matchups</p>
             </div>
 
             {/* Error Message */}
             {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <p className="text-red-700">{error}</p>
+                <div className="bg-rose-50 border border-rose-250 rounded-2xl p-4 mb-4 text-xs font-bold text-rose-700 flex items-center gap-2">
+                    <span>⚠️</span> {error}
                 </div>
             )}
 
@@ -621,10 +609,10 @@ export default function CommitteeMatchupCreator({
                 <div className="mb-6">
                     <button
                         onClick={autoGenerate}
-                        className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 font-medium flex items-center justify-center gap-2"
+                        className="w-full px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
                     >
                         ⚡ Auto-Generate Matchups
-                        <span className="text-sm opacity-90">(Pairs players in order)</span>
+                        <span className="text-[10px] font-normal opacity-80">(Pairs starting XI in order)</span>
                     </button>
                 </div>
             )}
@@ -632,33 +620,33 @@ export default function CommitteeMatchupCreator({
             {/* Created Matchups */}
             {selectedMatchups.length > 0 && (
                 <div className="mb-6">
-                    <h3 className="font-bold text-lg mb-3">Created Matchups ({selectedMatchups.length})</h3>
-                    <div className="space-y-2">
+                    <h3 className="font-bold text-xs uppercase tracking-wider text-slate-550 mb-3">Created Matchups ({selectedMatchups.length})</h3>
+                    <div className="space-y-3">
                         {selectedMatchups.map((matchup) => (
-                            <div key={matchup.position} className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-200">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-4 flex-1">
-                                        <span className="text-lg font-bold text-purple-600">#{matchup.position}</span>
-                                        <div className="flex-1 grid grid-cols-3 gap-2 items-center">
+                            <div key={matchup.position} className="bg-slate-50/70 border border-slate-200/60 rounded-2xl p-4 hover:bg-slate-50 transition-all">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4 flex-1 w-full">
+                                        <span className="text-sm font-black font-mono text-slate-400 bg-white px-2 py-1 rounded-lg border shadow-3xs">#{matchup.position}</span>
+                                        <div className="flex-1 grid grid-cols-3 gap-2 items-center text-xs">
                                             <div className="text-right">
-                                                <p className="font-semibold text-gray-900">{matchup.home_player_name}</p>
-                                                <p className="text-xs text-gray-500">{homeTeamName}</p>
+                                                <p className="font-bold text-slate-850 truncate">{matchup.home_player_name}</p>
+                                                <p className="text-[9px] font-mono text-slate-450 uppercase tracking-wider mt-0.5">{homeTeamName}</p>
                                             </div>
-                                            <div className="text-center">
-                                                <span className="text-2xl">⚔️</span>
+                                            <div className="text-center font-bold text-slate-400">
+                                                VS
                                             </div>
                                             <div className="text-left">
-                                                <p className="font-semibold text-gray-900">{matchup.away_player_name}</p>
-                                                <p className="text-xs text-gray-500">{awayTeamName}</p>
+                                                <p className="font-bold text-slate-850 truncate">{matchup.away_player_name}</p>
+                                                <p className="text-[9px] font-mono text-slate-450 uppercase tracking-wider mt-0.5">{awayTeamName}</p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-end sm:justify-start pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                                         <select
                                             value={matchup.match_duration}
                                             onChange={(e) => updateMatchupDuration(matchup.position, parseInt(e.target.value))}
-                                            className="px-2 py-1 border rounded text-sm"
+                                            className="px-3 py-1.5 bg-white border border-slate-205 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
                                         >
                                             <option value={6}>6 min</option>
                                             <option value={7}>7 min</option>
@@ -666,10 +654,10 @@ export default function CommitteeMatchupCreator({
                                         </select>
                                         <button
                                             onClick={() => removeMatchup(matchup.position)}
-                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-all cursor-pointer border border-transparent hover:border-rose-100"
                                             title="Remove matchup"
                                         >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                             </svg>
                                         </button>
@@ -684,19 +672,19 @@ export default function CommitteeMatchupCreator({
             {/* Available Players */}
             {(availableHomePlayers.length > 0 || availableAwayPlayers.length > 0) && (
                 <div className="mb-6">
-                    <h3 className="font-bold text-lg mb-3">
-                        Available Players
+                    <h3 className="font-bold text-xs uppercase tracking-wider text-slate-550 mb-3 flex items-center justify-between">
+                        <span>Select Players to Match</span>
                         {(selectedHomePlayer || selectedAwayPlayer) && (
-                            <span className="ml-2 text-sm font-normal text-purple-600">
-                                {selectedHomePlayer && !selectedAwayPlayer && '← Select away player'}
-                                {!selectedHomePlayer && selectedAwayPlayer && '← Select home player'}
+                            <span className="text-[10px] font-bold text-amber-600 animate-pulse">
+                                {selectedHomePlayer && !selectedAwayPlayer && '← Select away player next'}
+                                {!selectedHomePlayer && selectedAwayPlayer && '← Select home player next'}
                             </span>
                         )}
                     </h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Home Team */}
                         <div>
-                            <h4 className="font-semibold text-purple-700 mb-2">{homeTeamName}</h4>
+                            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500 mb-2">{homeTeamName}</h4>
                             <div className="space-y-2">
                                 {availableHomePlayers.map((player) => {
                                     const isSelected = selectedHomePlayer?.player_id === player.player_id;
@@ -708,46 +696,40 @@ export default function CommitteeMatchupCreator({
                                             key={player.player_id}
                                             onClick={() => !isDisabled && handlePlayerClick(player, 'home')}
                                             disabled={isDisabled}
-                                            className={`w-full text-left border-2 rounded-lg p-3 transition-all ${isDisabled
-                                                ? 'bg-gray-50 border-gray-200 opacity-60 cursor-not-allowed'
-                                                : isSelected
-                                                    ? 'bg-purple-100 border-purple-500 shadow-md'
-                                                    : 'bg-white border-gray-200 hover:border-purple-300 hover:bg-purple-50'
-                                                }`}
+                                            className={`w-full text-left border rounded-2xl p-3 transition-all flex items-center justify-between ${
+                                                isDisabled
+                                                    ? 'bg-slate-55/50 border-slate-150 opacity-50 cursor-not-allowed'
+                                                    : isSelected
+                                                        ? 'bg-slate-100 border-slate-800 shadow-sm cursor-pointer'
+                                                        : 'bg-white border-slate-200 hover:border-slate-350 hover:bg-slate-55/50 cursor-pointer'
+                                            }`}
                                         >
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="font-medium">{player.player_name}</p>
-                                                        {player.isStarting && (
-                                                            <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-semibold">
-                                                                XI
-                                                            </span>
-                                                        )}
-                                                        {player.isSubstitute && (
-                                                            <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full font-semibold">
-                                                                SUB
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-xs text-gray-500">{player.player_id}</p>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-bold text-slate-800 text-xs truncate">{player.player_name}</p>
+                                                    {player.isStarting && (
+                                                        <span className="text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold">
+                                                            XI
+                                                        </span>
+                                                    )}
                                                 </div>
-                                                {isSelected && !isDisabled && (
-                                                    <span className="text-purple-600 text-xl">👈</span>
-                                                )}
+                                                <p className="text-[10px] font-mono text-slate-400 mt-0.5">{player.player_id}</p>
                                             </div>
+                                            {isSelected && !isDisabled && (
+                                                <span className="text-slate-800 shrink-0 ml-2">👈</span>
+                                            )}
                                         </button>
                                     );
                                 })}
                                 {availableHomePlayers.length === 0 && (
-                                    <p className="text-sm text-gray-500 italic">All players assigned</p>
+                                    <p className="text-xs text-slate-400 italic font-mono">All players assigned</p>
                                 )}
                             </div>
                         </div>
 
                         {/* Away Team */}
                         <div>
-                            <h4 className="font-semibold text-blue-700 mb-2">{awayTeamName}</h4>
+                            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500 mb-2">{awayTeamName}</h4>
                             <div className="space-y-2">
                                 {availableAwayPlayers.map((player) => {
                                     const isSelected = selectedAwayPlayer?.player_id === player.player_id;
@@ -759,39 +741,33 @@ export default function CommitteeMatchupCreator({
                                             key={player.player_id}
                                             onClick={() => !isDisabled && handlePlayerClick(player, 'away')}
                                             disabled={isDisabled}
-                                            className={`w-full text-left border-2 rounded-lg p-3 transition-all ${isDisabled
-                                                ? 'bg-gray-50 border-gray-200 opacity-60 cursor-not-allowed'
-                                                : isSelected
-                                                    ? 'bg-blue-100 border-blue-500 shadow-md'
-                                                    : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50'
-                                                }`}
+                                            className={`w-full text-left border rounded-2xl p-3 transition-all flex items-center justify-between ${
+                                                isDisabled
+                                                    ? 'bg-slate-55/50 border-slate-150 opacity-50 cursor-not-allowed'
+                                                    : isSelected
+                                                        ? 'bg-slate-100 border-slate-800 shadow-sm cursor-pointer'
+                                                        : 'bg-white border-slate-200 hover:border-slate-350 hover:bg-slate-55/50 cursor-pointer'
+                                            }`}
                                         >
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="font-medium">{player.player_name}</p>
-                                                        {player.isStarting && (
-                                                            <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-semibold">
-                                                                XI
-                                                            </span>
-                                                        )}
-                                                        {player.isSubstitute && (
-                                                            <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full font-semibold">
-                                                                SUB
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-xs text-gray-500">{player.player_id}</p>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-bold text-slate-800 text-xs truncate">{player.player_name}</p>
+                                                    {player.isStarting && (
+                                                        <span className="text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold">
+                                                            XI
+                                                        </span>
+                                                    )}
                                                 </div>
-                                                {isSelected && !isDisabled && (
-                                                    <span className="text-blue-600 text-xl">👈</span>
-                                                )}
+                                                <p className="text-[10px] font-mono text-slate-400 mt-0.5">{player.player_id}</p>
                                             </div>
+                                            {isSelected && !isDisabled && (
+                                                <span className="text-slate-800 shrink-0 ml-2">👈</span>
+                                            )}
                                         </button>
                                     );
                                 })}
                                 {availableAwayPlayers.length === 0 && (
-                                    <p className="text-sm text-gray-500 italic">All players assigned</p>
+                                    <p className="text-xs text-slate-400 italic font-mono">All players assigned</p>
                                 )}
                             </div>
                         </div>
@@ -800,22 +776,22 @@ export default function CommitteeMatchupCreator({
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-4 border-t">
+            <div className="flex gap-3 pt-4 border-t border-slate-100">
                 <button
                     onClick={onCancel}
                     disabled={isSaving}
-                    className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium disabled:opacity-50"
+                    className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all border border-slate-200 disabled:opacity-50 cursor-pointer"
                 >
                     Cancel
                 </button>
                 <button
                     onClick={handleSubmit}
                     disabled={isSaving || selectedMatchups.length === 0}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                     {isSaving ? (
                         <>
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                             Creating...
                         </>
                     ) : (

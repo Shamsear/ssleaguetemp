@@ -110,11 +110,21 @@ async function revertPlayerStats(data: {
   const { player_id, season_id, goals_scored, won, draw, lost } = data;
 
   const statsId = `${player_id}_${season_id}`;
+  const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+  const isModern = seasonNum === 16 || seasonNum === 17;
+  const usesCategoryPoints = seasonNum >= 18;
 
-  // Get current stats from player_seasons
-  const existing = await sql`
-    SELECT * FROM player_seasons WHERE id = ${statsId} LIMIT 1
-  `;
+  // Get current stats from correct table
+  let existing;
+  if (isModern) {
+    existing = await sql`
+      SELECT * FROM player_seasons WHERE id = ${statsId} LIMIT 1
+    `;
+  } else {
+    existing = await sql`
+      SELECT * FROM realplayerstats WHERE id = ${statsId} LIMIT 1
+    `;
+  }
 
   if (existing.length === 0) {
     console.warn(`No stats found for ${statsId}, nothing to revert`);
@@ -134,23 +144,41 @@ async function revertPlayerStats(data: {
   const newDraws = Math.max(0, (current.draws || 0) - (draw ? 1 : 0));
   const newLosses = Math.max(0, (current.losses || 0) - (lost ? 1 : 0));
 
-  // Recalculate points
-  const newPoints = calculatePoints(newWins, newDraws, current.motm_awards || 0, newGoalsScored);
+  // Recalculate points (S1-17 only)
+  const newPoints = usesCategoryPoints
+    ? (current.points || 0)
+    : calculatePoints(newWins, newDraws, current.motm_awards || 0, newGoalsScored);
 
-  // Update stats in player_seasons
-  await sql`
-    UPDATE player_seasons
-    SET
-      matches_played = ${newMatchesPlayed},
-      goals_scored = ${newGoalsScored},
-      wins = ${newWins},
-      draws = ${newDraws},
-      losses = ${newLosses},
-      points = ${newPoints},
-      processed_fixtures = ${JSON.stringify(updatedProcessedFixtures)}::jsonb,
-      updated_at = NOW()
-    WHERE id = ${statsId}
-  `;
+  // Update stats in correct table
+  if (isModern) {
+    await sql`
+      UPDATE player_seasons
+      SET
+        matches_played = ${newMatchesPlayed},
+        goals_scored = ${newGoalsScored},
+        wins = ${newWins},
+        draws = ${newDraws},
+        losses = ${newLosses},
+        points = ${newPoints},
+        processed_fixtures = ${JSON.stringify(updatedProcessedFixtures)}::jsonb,
+        updated_at = NOW()
+      WHERE id = ${statsId}
+    `;
+  } else {
+    await sql`
+      UPDATE realplayerstats
+      SET
+        matches_played = ${newMatchesPlayed},
+        goals_scored = ${newGoalsScored},
+        wins = ${newWins},
+        draws = ${newDraws},
+        losses = ${newLosses},
+        points = ${newPoints},
+        processed_fixtures = ${JSON.stringify(updatedProcessedFixtures)}::jsonb,
+        updated_at = NOW()
+      WHERE id = ${statsId}
+    `;
+  }
 
   console.log(`✅ Reverted stats for player ${player_id}: -${goals_scored} goals, match count -1`);
 }

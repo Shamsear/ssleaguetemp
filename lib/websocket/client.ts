@@ -5,7 +5,7 @@
 
 type WebSocketMessage = {
   type: 'bid' | 'round_update' | 'tiebreaker' | 'player_sold' | 'round_status' | 
-        'squad_update' | 'wallet_update' | 'tiebreaker_bid' | 'new_round' | 'tiebreaker_created';
+        'squad_update' | 'wallet_update' | 'tiebreaker_bid' | 'new_round' | 'tiebreaker_created' | 'bid_submitted';
   data: any;
   timestamp?: number;
 };

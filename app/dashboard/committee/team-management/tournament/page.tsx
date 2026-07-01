@@ -1,8 +1,8 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { getActiveSeason, getSeasonById } from '@/lib/firebase/seasons';
 import { getTournamentSettings, saveTournamentSettings } from '@/lib/firebase/tournamentSettings';
@@ -14,7 +14,27 @@ import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import RoundFixturesShareButton from '@/components/RoundFixturesShareButton';
 import TournamentStandings from '@/components/tournament/TournamentStandings';
-import { Activity, AlertTriangle, ArrowLeft, Award, Ban, BarChart2, Bot, Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, ClipboardList, Clock, DollarSign, Download, Eye, FileText, Handshake, HeartCrack, HelpCircle, Info, Layers, Lightbulb, Pencil, Play, Plus, RefreshCw, Search, Settings, Share2, Shield, Shuffle, Sparkles, Star, Trash2, Trophy, Users, X, XCircle } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowLeft, Award, Ban, BarChart2, Bot, Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, ClipboardList, Clock, DollarSign, Download, Eye, FileText, Handshake, HeartCrack, HelpCircle, Info, Layers, Lightbulb, Pencil, Play, Plus, RefreshCw, Search, Settings, Share2, Shield, Shuffle, Sparkles, Star, Trash2, Trophy, Users, X, XCircle, Crown, Flame, Swords } from 'lucide-react';
+
+const getCategoryColor = (name: string) => {
+  const normalized = name.trim().toLowerCase();
+  if (normalized.includes('red')) return 'red';
+  if (normalized.includes('black')) return 'black';
+  if (normalized.includes('blue')) return 'blue';
+  if (normalized.includes('white')) return 'white';
+  return 'slate';
+};
+
+const getColorDotStyles = (name: string) => {
+  const color = getCategoryColor(name);
+  const styles: { [key: string]: string } = {
+    red: 'bg-rose-500 border border-rose-600 ring-rose-500/20',
+    blue: 'bg-blue-500 border border-blue-600 ring-blue-500/20',
+    black: 'bg-slate-800 border border-slate-900 ring-slate-800/20',
+    white: 'bg-white border border-slate-350 ring-slate-200/20',
+  };
+  return styles[color] || 'bg-slate-400 border border-slate-500 ring-slate-400/20';
+};
 
 interface Match {
   id: string;
@@ -35,10 +55,11 @@ interface Match {
 
 type TabType = 'overview' | 'teams' | 'groups' | 'fixtures' | 'standings' | 'management';
 
-export default function TournamentDashboardPage() {
+export function TournamentDashboardPageContent() {
   const { user, loading } = useAuth();
   const { userSeasonId } = usePermissions();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [participantsCount, setParticipantsCount] = useState(0);
@@ -163,6 +184,58 @@ export default function TournamentDashboardPage() {
   const [isSavingGroups, setIsSavingGroups] = useState(false);
   const [numberOfGroups, setNumberOfGroups] = useState(4);
 
+  // Synchronize selections with URL query parameters
+  const updateUrlParams = (updates: { tab?: TabType; tournament?: string; round?: number }) => {
+    const params = new URLSearchParams(window.location.search);
+    if (updates.tab !== undefined) params.set('tab', updates.tab);
+    if (updates.tournament !== undefined) {
+      if (updates.tournament) params.set('tournament', updates.tournament);
+      else params.delete('tournament');
+    }
+    if (updates.round !== undefined) params.set('round', updates.round.toString());
+    router.replace(`/dashboard/committee/team-management/tournament?${params.toString()}`, { scroll: false });
+  };
+
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    updateUrlParams({ tab });
+  };
+
+  const handleTournamentChange = (val: string) => {
+    setSelectedTournamentForFixtures(val);
+    setSelectedTournamentForTeams(val);
+    setSelectedTournamentForStandings(val);
+    setSelectedTournamentForGroups(val);
+    updateUrlParams({ tournament: val });
+  };
+
+  const handleRoundChange = (val: number) => {
+    setSelectedRound(val);
+    updateUrlParams({ round: val });
+  };
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as TabType;
+    const tournamentParam = searchParams.get('tournament');
+    const roundParam = searchParams.get('round');
+
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+    if (tournamentParam) {
+      setSelectedTournamentForFixtures(tournamentParam);
+      setSelectedTournamentForTeams(tournamentParam);
+      setSelectedTournamentForStandings(tournamentParam);
+      setSelectedTournamentForGroups(tournamentParam);
+    }
+    if (roundParam) {
+      const parsedRound = parseInt(roundParam);
+      if (!isNaN(parsedRound)) {
+        setSelectedRound(parsedRound);
+      }
+    }
+  }, [searchParams]);
+
   // Modal system
   const {
     alertState,
@@ -176,7 +249,7 @@ export default function TournamentDashboardPage() {
 
   // Calculate knockout structure based on tournament settings (league/group &rarr; knockout)
   const calculateKnockoutStructure = (cfg: typeof newTournament) => {
-    const stages: Array<{ name: string; key: keyof typeof newTournament.rewards.knockout_stages; teams: number; emoji: string }> = [];
+    const stages: Array<{ name: string; key: keyof typeof newTournament.rewards.knockout_stages; teams: number; emoji: React.ReactNode }> = [];
 
     // Determine effective knockout entrants
     const groupAdvancers = cfg.has_group_stage
@@ -190,8 +263,8 @@ export default function TournamentDashboardPage() {
     // Guard
     if (!cfg.has_knockout_stage || entrants <= 0) {
       // Still show winner/runner-up inputs so values can be set
-      stages.push({ name: 'Winner', key: 'winner', teams: 1, emoji: '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />' });
-      stages.push({ name: 'Runner-up', key: 'runner_up', teams: 1, emoji: '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />' });
+      stages.push({ name: 'Winner', key: 'winner', teams: 1, emoji: <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> });
+      stages.push({ name: 'Runner-up', key: 'runner_up', teams: 1, emoji: <Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" /> });
       return stages;
     }
 
@@ -204,15 +277,15 @@ export default function TournamentDashboardPage() {
       // Calculate actual semis: qf winners + direct semis = total in semis
       const qfWinners = qfTeams > 0 ? qfTeams / 2 : 0;
       const totalInSemis = qfWinners + directSemis;
-      stages.push({ name: 'Semi-final Loser', key: 'semi_final_loser', teams: totalInSemis / 2, emoji: '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />' });
-      stages.push({ name: 'Runner-up', key: 'runner_up', teams: 1, emoji: '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />' });
-      stages.push({ name: 'Winner', key: 'winner', teams: 1, emoji: '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />' });
+      stages.push({ name: 'Semi-final Loser', key: 'semi_final_loser', teams: totalInSemis / 2, emoji: <Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" /> });
+      stages.push({ name: 'Runner-up', key: 'runner_up', teams: 1, emoji: <Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" /> });
+      stages.push({ name: 'Winner', key: 'winner', teams: 1, emoji: <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> });
       return stages;
     }
 
     // Group-derived (or standard playoff without byes): build from largest standard round down
     // Normalize entrants to typical rounds: 32, 16, 8, 4, 2
-    const addRound = (roundSize: number, key: keyof typeof newTournament.rewards.knockout_stages, name: string, emoji: string) => {
+    const addRound = (roundSize: number, key: keyof typeof newTournament.rewards.knockout_stages, name: string, emoji: React.ReactNode) => {
       if (entrants >= roundSize) {
         stages.push({ name, key, teams: roundSize / 2, emoji });
         entrants = roundSize / 2; // advance to next round size
@@ -223,11 +296,11 @@ export default function TournamentDashboardPage() {
     addRound(32, 'round_of_32_loser', 'Round of 32 Loser', '🎮');
     addRound(16, 'round_of_16_loser', 'Round of 16 Loser', '🎯');
     addRound(8, 'quarter_final_loser', 'Quarter-final Loser', '🏅');
-    addRound(4, 'semi_final_loser', 'Semi-final Loser', '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />');
+    addRound(4, 'semi_final_loser', 'Semi-final Loser', <Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />);
 
     // Final is always present (winner and runner-up)
-    stages.push({ name: 'Runner-up', key: 'runner_up', teams: 1, emoji: '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />' });
-    stages.push({ name: 'Winner', key: 'winner', teams: 1, emoji: '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />' });
+    stages.push({ name: 'Runner-up', key: 'runner_up', teams: 1, emoji: <Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" /> });
+    stages.push({ name: 'Winner', key: 'winner', teams: 1, emoji: <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> });
 
     return stages;
   };
@@ -1509,7 +1582,7 @@ export default function TournamentDashboardPage() {
       <div className="min-h-screen min-h-screen flex items-center justify-center console-bg font-mono">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono mt-4">Loading tournament dashboard...</p>
+          <p className="mt-4 text-xs text-slate-500 uppercase tracking-wider font-extrabold font-mono">Loading tournament dashboard...</p>
         </div>
       </div>
     );
@@ -1597,7 +1670,7 @@ export default function TournamentDashboardPage() {
               <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
                 Tournament Management
               </h1>
-              <p className="text-xs text-slate-550 font-mono mt-1">
+              <p className="text-xs text-slate-500 font-mono mt-1">
                 Create tournaments, manage fixtures, and track standings
               </p>
             </div>
@@ -1659,16 +1732,16 @@ export default function TournamentDashboardPage() {
         <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-2 shadow-sm">
           <div className="flex gap-2 overflow-x-auto font-mono scrollbar-thin">
             {[
-              { tab: 'overview', label: '<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Overview', activeClass: 'bg-slate-800 text-white border-slate-900' },
-              { tab: 'teams', label: '<Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Teams', activeClass: 'bg-slate-800 text-white border-slate-900' },
-              { tab: 'groups', label: '🎯 Groups', activeClass: 'bg-slate-800 text-white border-slate-900' },
-              { tab: 'fixtures', label: '<Calendar className="w-4 h-4 text-slate-500" /> Fixtures', activeClass: 'bg-slate-800 text-white border-slate-900' },
-              { tab: 'standings', label: '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Standings', activeClass: 'bg-slate-800 text-white border-slate-900' },
-              { tab: 'management', label: '<Settings className="w-4 h-4 text-slate-500" /> Manage', activeClass: 'bg-slate-800 text-white border-slate-900' }
+              { tab: 'overview', label: <><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Overview</>, activeClass: 'bg-slate-800 text-white border-slate-900' },
+              { tab: 'teams', label: <><Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Teams</>, activeClass: 'bg-slate-800 text-white border-slate-900' },
+              { tab: 'groups', label: <>🎯 Groups</>, activeClass: 'bg-slate-800 text-white border-slate-900' },
+              { tab: 'fixtures', label: <><Calendar className="w-4 h-4 text-slate-500 mr-1 inline-block align-text-bottom" /> Fixtures</>, activeClass: 'bg-slate-800 text-white border-slate-900' },
+              { tab: 'standings', label: <><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Standings</>, activeClass: 'bg-slate-800 text-white border-slate-900' },
+              { tab: 'management', label: <><Settings className="w-4 h-4 text-slate-500 mr-1 inline-block align-text-bottom" /> Manage</>, activeClass: 'bg-slate-800 text-white border-slate-900' }
             ].map(({ tab, label, activeClass }) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab as TabType)}
+                onClick={() => handleTabChange(tab as TabType)}
                 className={`px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap border cursor-pointer ${
                   activeTab === tab
                     ? `${activeClass} shadow-sm`
@@ -1691,7 +1764,7 @@ export default function TournamentDashboardPage() {
                   Active Tournaments
                 </h2>
                 <button
-                  onClick={() => setActiveTab('management')}
+                  onClick={() => handleTabChange('management')}
                   className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
                 >
                   + Create
@@ -1703,7 +1776,7 @@ export default function TournamentDashboardPage() {
                   <Trophy className="w-16 h-16 mx-auto text-slate-300 mb-4" />
                   <p className="text-gray-500 font-medium mb-4">No tournaments created yet</p>
                   <button
-                    onClick={() => setActiveTab('management')}
+                    onClick={() => handleTabChange('management')}
                     className="text-sm text-[#0066FF] hover:text-[#0052CC] font-medium"
                   >
                     Create your first tournament  &rarr; 
@@ -1729,16 +1802,28 @@ export default function TournamentDashboardPage() {
                       <div className="space-y-2 mb-4">
                         <div className="flex items-center text-xs text-gray-600">
                           <Layers className="w-4 h-4 mr-2 text-slate-500" />
-                          {tournament.tournament_type === 'league' ? '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> League' :
-                            tournament.tournament_type === 'cup' ? '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cup' :
-                              tournament.tournament_type === 'ucl' ? '🌟 Champions League' :
-                                tournament.tournament_type === 'uel' ? '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Europa League' :
-                                  tournament.tournament_type}
+                          {tournament.tournament_type === 'league' ? (
+                            <>
+                              <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> League
+                            </>
+                          ) : tournament.tournament_type === 'cup' ? (
+                            <>
+                              <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cup
+                            </>
+                          ) : tournament.tournament_type === 'ucl' ? (
+                            '🌟 Champions League'
+                          ) : tournament.tournament_type === 'uel' ? (
+                            <>
+                              <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Europa League
+                            </>
+                          ) : (
+                            tournament.tournament_type
+                          )}
                         </div>
 
                         {tournament.has_knockout_stage && (
                           <div className="text-xs text-purple-600 font-medium">
-                            <Swords className="w-4 h-4 text-rose-500" /> Includes Knockout Stage
+                            <Swords className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Includes Knockout Stage
                           </div>
                         )}
 
@@ -1753,7 +1838,11 @@ export default function TournamentDashboardPage() {
                         <button
                           onClick={() => {
                             setSelectedTournamentForFixtures(tournament.id);
+                            setSelectedTournamentForTeams(tournament.id);
+                            setSelectedTournamentForStandings(tournament.id);
+                            setSelectedTournamentForGroups(tournament.id);
                             setActiveTab('fixtures');
+                            updateUrlParams({ tournament: tournament.id, tab: 'fixtures' });
                           }}
                           className="flex-1 px-3 py-2 bg-blue-50 text-blue-700 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors"
                         >
@@ -1761,8 +1850,12 @@ export default function TournamentDashboardPage() {
                         </button>
                         <button
                           onClick={() => {
+                            setSelectedTournamentForFixtures(tournament.id);
+                            setSelectedTournamentForTeams(tournament.id);
                             setSelectedTournamentForStandings(tournament.id);
+                            setSelectedTournamentForGroups(tournament.id);
                             setActiveTab('standings');
+                            updateUrlParams({ tournament: tournament.id, tab: 'standings' });
                           }}
                           className="flex-1 px-3 py-2 bg-purple-50 text-purple-700 text-xs font-medium rounded-lg hover:bg-purple-100 transition-colors"
                         >
@@ -1785,7 +1878,7 @@ export default function TournamentDashboardPage() {
                     Upcoming Matches
                   </h3>
                   <button
-                    onClick={() => setActiveTab('fixtures')}
+                    onClick={() => handleTabChange('fixtures')}
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
                     View All  &rarr; 
@@ -1835,7 +1928,7 @@ export default function TournamentDashboardPage() {
                     Recent Results
                   </h3>
                   <button
-                    onClick={() => setActiveTab('fixtures')}
+                    onClick={() => handleTabChange('fixtures')}
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
                     View All  &rarr; 
@@ -1901,7 +1994,7 @@ export default function TournamentDashboardPage() {
                 </label>
                 <select
                   value={selectedTournamentForTeams}
-                  onChange={(e) => setSelectedTournamentForTeams(e.target.value)}
+                  onChange={(e) => handleTournamentChange(e.target.value)}
                   className="w-full px-4 py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
                 >
                   <option value="">-- Select a tournament --</option>
@@ -2012,7 +2105,7 @@ export default function TournamentDashboardPage() {
                   </label>
                   <select
                     value={selectedTournamentForFixtures}
-                    onChange={(e) => setSelectedTournamentForFixtures(e.target.value)}
+                    onChange={(e) => handleTournamentChange(e.target.value)}
                     className="w-full px-4 py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
                   >
                     <option value="">-- Select a tournament --</option>
@@ -2464,7 +2557,7 @@ export default function TournamentDashboardPage() {
                       Make sure you've assigned teams to this tournament in the <strong>Teams tab</strong> first.
                     </p>
                     <button
-                      onClick={() => setActiveTab('teams')}
+                      onClick={() => handleTabChange('teams')}
                       className="text-sm text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-1"
                     >
                       <Users className="w-4 h-4 mr-2" />
@@ -2496,7 +2589,7 @@ export default function TournamentDashboardPage() {
                       <label className="text-sm font-medium text-gray-700">Round:</label>
                       <select
                         value={selectedRound}
-                        onChange={(e) => setSelectedRound(parseInt(e.target.value))}
+                        onChange={(e) => handleRoundChange(parseInt(e.target.value))}
                         className="px-3 py-1.5 bg-white/60 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70"
                       >
                         <option value={0}>All Rounds</option>
@@ -2587,7 +2680,7 @@ export default function TournamentDashboardPage() {
                 </label>
                 <select
                   value={selectedTournamentForStandings}
-                  onChange={(e) => setSelectedTournamentForStandings(e.target.value)}
+                  onChange={(e) => handleTournamentChange(e.target.value)}
                   className="w-full px-4 py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
                 >
                   <option value="">-- Select a tournament --</option>
@@ -2629,7 +2722,7 @@ export default function TournamentDashboardPage() {
                 <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">Select Tournament</label>
                 <select
                   value={selectedTournamentForGroups}
-                  onChange={(e) => setSelectedTournamentForGroups(e.target.value)}
+                  onChange={(e) => handleTournamentChange(e.target.value)}
                   className="w-full px-4 py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
                 >
                   <option value="">-- Select a tournament --</option>
@@ -2753,7 +2846,7 @@ export default function TournamentDashboardPage() {
                         Please assign teams to this tournament first in the Teams tab.
                       </p>
                       <button
-                        onClick={() => setActiveTab('teams')}
+                        onClick={() => handleTabChange('teams')}
                         className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all text-sm font-medium"
                       >
                         Go to Teams Tab
@@ -3906,8 +3999,8 @@ export default function TournamentDashboardPage() {
                         {categories.map((category) => (
                           <div key={category.id} className="p-4 bg-white/50 rounded-xl border border-gray-200">
                             <label className="flex flex-col">
-                              <span className="font-medium text-gray-900 mb-2">
-                                {category.icon || '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />'} {category.name}
+                              <span className="font-medium text-gray-900 mb-2 flex items-center gap-1.5">
+                                <span className={`w-2.5 h-2.5 rounded-full ring-2 ${getColorDotStyles(category.name)} inline-block flex-shrink-0`} /> {category.name}
                               </span>
                               <input
                                 type="number"
@@ -4481,8 +4574,8 @@ export default function TournamentDashboardPage() {
                         {categories.map((category) => (
                           <div key={category.id} className="p-4 bg-white/50 rounded-xl border border-gray-200">
                             <label className="flex flex-col">
-                              <span className="font-medium text-gray-900 mb-2">
-                                {category.icon || '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />'} {category.name}
+                              <span className="font-medium text-gray-900 mb-2 flex items-center gap-1.5">
+                                <span className={`w-2.5 h-2.5 rounded-full ring-2 ${getColorDotStyles(category.name)} inline-block flex-shrink-0`} /> {category.name}
                               </span>
                               <input
                                 type="number"
@@ -5313,7 +5406,15 @@ export default function TournamentDashboardPage() {
                               }`}
                             title={tournament.include_in_awards ? 'Awards Enabled - Click to disable' : 'Awards Disabled - Click to enable'}
                           >
-                            {tournament.include_in_awards ? '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Awards' : '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Off'}
+                            {tournament.include_in_awards ? (
+                              <>
+                                <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Awards
+                              </>
+                            ) : (
+                              <>
+                                <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Off
+                              </>
+                            )}
                           </button>
                           <button
                             onClick={async () => {
@@ -5400,5 +5501,23 @@ export default function TournamentDashboardPage() {
         type={confirmState.type}
       />
     </div>
+  );
+}
+
+export default function TournamentDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="console-bg min-h-screen flex items-center justify-center relative font-mono text-slate-800">
+          <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+          <div className="text-center relative z-10">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+            <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold animate-pulse">Loading tournament console...</p>
+          </div>
+        </div>
+      }
+    >
+      <TournamentDashboardPageContent />
+    </Suspense>
   );
 }

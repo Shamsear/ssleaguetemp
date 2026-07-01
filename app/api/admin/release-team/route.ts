@@ -39,23 +39,43 @@ export async function POST(request: NextRequest) {
 
     console.log(`🔓 Mid-Season Team Release: ${teamId} from ${seasonId}`);
 
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
     // Step 1: Find all Real Players (SS Members) on this team
-    const realPlayers = await tournamentSql`
-      SELECT 
-        player_id,
-        player_name,
-        season_id,
-        team_id,
-        team,
-        contract_start_season,
-        contract_end_season,
-        auction_value,
-        salary_per_match
-      FROM player_seasons
-      WHERE season_id = ${seasonId}
-        AND team_id = ${teamId}
-      ORDER BY player_name
-    `;
+    const realPlayers = isModern
+      ? await tournamentSql`
+        SELECT 
+          player_id,
+          player_name,
+          season_id,
+          team_id,
+          team,
+          contract_start_season,
+          contract_end_season,
+          auction_value,
+          salary_per_match
+        FROM player_seasons
+        WHERE season_id = ${seasonId}
+          AND team_id = ${teamId}
+        ORDER BY player_name
+      `
+      : await tournamentSql`
+        SELECT 
+          player_id,
+          player_name,
+          season_id,
+          team_id,
+          team,
+          NULL as contract_start_season,
+          NULL as contract_end_season,
+          0 as auction_value,
+          0 as salary_per_match
+        FROM realplayerstats
+        WHERE season_id = ${seasonId}
+          AND team_id = ${teamId}
+        ORDER BY player_name
+      `;
 
     console.log(`📋 Found ${realPlayers.length} SS Members on team`);
 
@@ -133,17 +153,30 @@ export async function POST(request: NextRequest) {
       // Release Real Players (SS Members)
       for (const player of realPlayers) {
         try {
-          await tournamentSql`
-            UPDATE player_seasons
-            SET 
-              team_id = NULL,
-              team = NULL,
-              contract_end_season = ${seasonId},
-              updated_at = NOW()
-            WHERE 
-              player_id = ${player.player_id}
-              AND season_id = ${seasonId}
-          `;
+          if (isModern) {
+            await tournamentSql`
+              UPDATE player_seasons
+              SET 
+                team_id = NULL,
+                team = NULL,
+                contract_end_season = ${seasonId},
+                updated_at = NOW()
+              WHERE 
+                player_id = ${player.player_id}
+                AND season_id = ${seasonId}
+            `;
+          } else {
+            await tournamentSql`
+              UPDATE realplayerstats
+              SET 
+                team_id = NULL,
+                team = NULL,
+                updated_at = NOW()
+              WHERE 
+                player_id = ${player.player_id}
+                AND season_id = ${seasonId}
+            `;
+          }
           releasedRealPlayers++;
           console.log(`✅ Released SS Member: ${player.player_name}`);
         } catch (error) {

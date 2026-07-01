@@ -10,7 +10,6 @@ import ConfirmModal from '@/components/modals/ConfirmModal';
 import Image from 'next/image';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { useDashboardWebSocket } from '@/hooks/useWebSocket';
-import NotificationButton from '@/components/notifications/NotificationButton';
 import ManagerRegistrationForm from '@/components/forms/ManagerRegistrationForm';
 import OwnerRegistrationForm from '@/components/forms/OwnerRegistrationForm';
 
@@ -728,17 +727,6 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Avg Rating</div>
               <div className="text-sm sm:text-lg lg:text-2xl font-black text-amber-600">{stats.avgRating.toFixed(1)}</div>
             </div>
-          </div>
-        </div>
-
-        {/* Notification Button */}
-        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex-1">
-              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-tight">Push Notifications</h3>
-              <p className="text-xs text-slate-400 font-sans mt-0.5">Get real-time updates about auctions, matches, and results</p>
-            </div>
-            <NotificationButton />
           </div>
         </div>
 

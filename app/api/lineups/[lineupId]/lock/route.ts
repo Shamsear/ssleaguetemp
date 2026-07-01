@@ -7,11 +7,11 @@ import { sendNotificationToSeason } from '@/lib/notifications/send-notification'
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ lineupId: string }> }
 ) {
   try {
     const sql = getTournamentDb();
-    const { id: lineupId } = await params;
+    const { lineupId } = await params;
     const body = await request.json();
     const { locked_by, locked_by_name } = body;
 

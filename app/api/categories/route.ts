@@ -150,9 +150,11 @@ export async function POST(request: NextRequest) {
     // Generate category ID
     const categoryId = `cat_${body.name.trim().toLowerCase().replace(/\s+/g, '_')}`;
     
+    const colorName = body.name.trim().toLowerCase();
     const categoryData = {
       name: body.name.trim(),
-      icon: body.icon || '⭐',
+      color: ['red', 'black', 'blue', 'white'].includes(colorName) ? colorName : 'slate',
+      icon: body.icon || '',
       priority: priority,
       points_same_category: parseInt(body.points_same_category),
       points_one_level_diff: parseInt(body.points_one_level_diff),

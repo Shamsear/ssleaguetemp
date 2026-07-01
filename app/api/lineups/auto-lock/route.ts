@@ -125,13 +125,23 @@ export async function POST(request: NextRequest) {
     if (!homeSubmitted && !matchupsExist) {
       // Home team hasn't submitted and no matchups yet
       // Check if they have exactly 5 players
-      const homePlayers = await sql`
-        SELECT player_id, player_name 
-        FROM player_seasons 
-        WHERE team_id = ${homeTeamId} 
-          AND season_id = ${seasonId}
-          AND status = 'active'
-      `;
+      const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+      const isModern = seasonNum === 16 || seasonNum === 17;
+
+      const homePlayers = isModern
+        ? await sql`
+            SELECT player_id, player_name 
+            FROM player_seasons 
+            WHERE team_id = ${homeTeamId} 
+              AND season_id = ${seasonId}
+              AND status = 'active'
+          `
+        : await sql`
+            SELECT player_id, player_name 
+            FROM realplayerstats 
+            WHERE team_id = ${homeTeamId} 
+              AND season_id = ${seasonId}
+          `;
       
       if (homePlayers.length === 5) {
         // Auto-submit all 5 players (no substitute, no warning)
@@ -215,13 +225,20 @@ export async function POST(request: NextRequest) {
       console.log('⚠️ Away team has not submitted lineup:', awayTeamId);
       
       // Get away team's player count
-      const awayPlayers = await sql`
-        SELECT player_id, player_name 
-        FROM player_seasons 
-        WHERE team_id = ${awayTeamId} 
-          AND season_id = ${seasonId}
-          AND status = 'active'
-      `;
+      const awayPlayers = isModern
+        ? await sql`
+            SELECT player_id, player_name 
+            FROM player_seasons 
+            WHERE team_id = ${awayTeamId} 
+              AND season_id = ${seasonId}
+              AND status = 'active'
+          `
+        : await sql`
+            SELECT player_id, player_name 
+            FROM realplayerstats 
+            WHERE team_id = ${awayTeamId} 
+              AND season_id = ${seasonId}
+          `;
       
       const playerCount = awayPlayers.length;
       console.log(`📊 Away team has ${playerCount} active players`);

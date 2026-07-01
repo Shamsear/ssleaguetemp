@@ -102,7 +102,7 @@ export default function ConfirmModal({
     <div style={{ pointerEvents: 'auto', position: 'relative', width: '100%', height: '100%' }} className="font-mono">
       {/* Backdrop */}
       <div
-        className="bg-black/25 backdrop-blur-sm"
+        className="bg-slate-950/40 backdrop-blur-xs transition-all duration-300"
         onClick={onCancel}
         style={{
           position: 'absolute',
@@ -117,7 +117,7 @@ export default function ConfirmModal({
 
       {/* Modal - centered */}
       <div 
-        className="w-[calc(100%-2rem)] sm:w-auto sm:min-w-[400px] sm:max-w-lg md:max-w-xl max-h-[90vh] overflow-y-auto console-card bg-white border border-slate-200/80 rounded-3xl shadow-2xl relative"
+        className="w-[calc(100%-2rem)] sm:w-auto sm:min-w-[400px] sm:max-w-lg md:max-w-xl max-h-[90vh] overflow-y-auto console-card bg-white border border-slate-200/80 rounded-3xl shadow-2xl relative animate-in fade-in-0 zoom-in-95 duration-200"
         style={{
           position: 'absolute',
           top: '50%',

@@ -20,7 +20,7 @@ export async function GET(
       );
     }
 
-    // Fetch fixture details
+    // Fetch fixture details (only valid columns)
     const fixtures = await sql`
       SELECT 
         id,
@@ -30,19 +30,13 @@ export async function GET(
         home_team_name,
         away_team_name,
         status,
+        notes,
         created_at,
-        created_by,
-        created_by_name,
         updated_at,
-        updated_by,
-        updated_by_name,
-        result_submitted_at,
-        result_submitted_by,
-        result_submitted_by_name,
-        declared_at,
-        declared_by,
-        declared_by_name,
-        match_status_reason
+        matchups_created_by,
+        matchups_created_at,
+        lineup_last_edited_by,
+        lineup_last_edited_at
       FROM fixtures
       WHERE id = ${fixtureId}
       LIMIT 1
@@ -57,33 +51,32 @@ export async function GET(
 
     const fixture = fixtures[0];
 
-    // Fetch complete audit log
+    // Fetch complete audit log using correct columns
     const auditLogs = await sql`
       SELECT 
         id,
-        action_type,
-        action_by,
-        action_by_name,
-        action_at,
+        change_type,
+        changed_by,
         changes,
-        notes
+        timestamp
       FROM fixture_audit_log
       WHERE fixture_id = ${fixtureId}
-      ORDER BY action_at ASC
+      ORDER BY timestamp ASC
     `;
 
     // Build comprehensive timeline
     const timeline: any[] = [];
 
     // 1. Creation event
-    if (fixture.created_at) {
+    const createdAt = fixture.matchups_created_at || fixture.created_at;
+    if (createdAt) {
       timeline.push({
         id: 'created',
         type: 'created',
         action: 'Fixture Created',
-        user: fixture.created_by_name || 'System',
-        user_id: fixture.created_by,
-        timestamp: fixture.created_at,
+        user: fixture.matchups_created_by || 'System',
+        user_id: fixture.matchups_created_by || 'system',
+        timestamp: createdAt,
         icon: '📅',
         color: 'blue',
         details: `Round ${fixture.round_number}, Match ${fixture.match_number} created`,
@@ -97,7 +90,7 @@ export async function GET(
       let color = '';
       let details = '';
 
-      switch (log.action_type) {
+      switch (log.change_type) {
         case 'updated':
           action = 'Fixture Updated';
           icon = '✏️';
@@ -105,15 +98,10 @@ export async function GET(
           details = getUpdateDetails(log.changes);
           break;
         case 'result_submitted':
-          action = 'Result Submitted';
+        case 'result_edited':
+          action = log.change_type === 'result_submitted' ? 'Result Submitted' : 'Result Edited';
           icon = '📊';
           color = 'green';
-          details = getResultDetails(log.changes);
-          break;
-        case 'result_edited':
-          action = 'Result Edited';
-          icon = '🔄';
-          color = 'orange';
           details = getResultEditDetails(log.changes);
           break;
         case 'wo_declared':
@@ -126,65 +114,34 @@ export async function GET(
           action = 'Match Nullified';
           icon = '❌';
           color = 'gray';
-          details = 'Both teams absent - match declared null';
+          details = log.changes?.note || 'Both teams absent - match declared null';
           break;
-        case 'deleted':
-          action = 'Fixture Deleted';
-          icon = '🗑️';
-          color = 'red';
-          details = 'Fixture was deleted';
+        case 'matchups_marked_null':
+          action = 'Matchups Null Status Changed';
+          icon = '🚫';
+          color = 'purple';
+          details = log.changes?.note || 'Matchup null status modified';
           break;
         default:
-          action = log.action_type;
+          action = log.change_type || 'Activity';
           icon = '📝';
-          color = 'gray';
-          details = log.notes || '';
+          color = 'slate';
+          details = log.changes?.note || log.changes?.reason || '';
       }
 
       timeline.push({
         id: log.id,
-        type: log.action_type,
+        type: log.change_type,
         action,
-        user: log.action_by_name,
-        user_id: log.action_by,
-        timestamp: log.action_at,
+        user: log.changed_by || 'Committee Admin',
+        user_id: log.changed_by,
+        timestamp: log.timestamp,
         icon,
         color,
         details,
         changes: log.changes,
-        notes: log.notes,
       });
     });
-
-    // 3. Result submission (if not in audit log)
-    if (fixture.result_submitted_at && !auditLogs.find((l) => l.action_type === 'result_submitted')) {
-      timeline.push({
-        id: 'result_submitted',
-        type: 'result_submitted',
-        action: 'Result Submitted',
-        user: fixture.result_submitted_by_name || 'Unknown',
-        user_id: fixture.result_submitted_by,
-        timestamp: fixture.result_submitted_at,
-        icon: '📊',
-        color: 'green',
-        details: 'Match result was submitted',
-      });
-    }
-
-    // 4. WO/NULL declaration (if not in audit log)
-    if (fixture.declared_at && !auditLogs.find((l) => ['wo_declared', 'null_declared'].includes(l.action_type))) {
-      timeline.push({
-        id: 'declared',
-        type: fixture.match_status_reason?.includes('wo') ? 'wo_declared' : 'null_declared',
-        action: fixture.match_status_reason?.includes('wo') ? 'Walkover Declared' : 'Match Nullified',
-        user: fixture.declared_by_name || 'Committee Admin',
-        user_id: fixture.declared_by,
-        timestamp: fixture.declared_at,
-        icon: fixture.match_status_reason?.includes('wo') ? '⚠️' : '❌',
-        color: 'red',
-        details: getStatusReasonDetails(fixture.match_status_reason),
-      });
-    }
 
     // Sort timeline by timestamp
     timeline.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
@@ -199,7 +156,7 @@ export async function GET(
         home_team: fixture.home_team_name,
         away_team: fixture.away_team_name,
         status: fixture.status,
-        match_status_reason: fixture.match_status_reason,
+        notes: fixture.notes
       },
       timeline,
       totalEvents: timeline.length,
@@ -213,7 +170,7 @@ export async function GET(
   }
 }
 
-// Helper functions to extract details from changes
+// Helper functions to extract details from changes safely
 function getUpdateDetails(changes: any): string {
   if (!changes) return 'Fixture details updated';
   
@@ -237,45 +194,26 @@ function getUpdateDetails(changes: any): string {
   return changedFields.length > 0 ? changedFields.join(', ') : 'Fixture details updated';
 }
 
-function getResultDetails(changes: any): string {
-  if (!changes?.new) return 'Result submitted';
-  
-  const newData = changes.new;
-  return `Score: ${newData.home_team_name} ${newData.home_score} - ${newData.away_score} ${newData.away_team_name}`;
-}
-
 function getResultEditDetails(changes: any): string {
   if (!changes) return 'Result was edited';
   
   const old = changes.old || {};
   const newData = changes.new || {};
   
-  return `Score changed: ${old.home_score}-${old.away_score} → ${newData.home_score}-${newData.away_score}`;
+  if (old.home_score !== undefined && newData.home_score !== undefined) {
+    return `Score changed: ${old.home_score}-${old.away_score} → ${newData.home_score}-${newData.away_score}`;
+  }
+  return changes.note || 'Result submitted/edited';
 }
 
 function getWODetails(changes: any): string {
-  if (!changes?.new) return 'Walkover declared';
+  if (!changes) return 'Walkover declared';
   
-  const reason = changes.new.match_status_reason;
+  const reason = changes.reason || (changes.new && changes.new.match_status_reason);
   if (reason === 'wo_home_absent') {
-    return `Home team absent - Walkover to ${changes.new.away_team_name}`;
+    return `Home team absent`;
   } else if (reason === 'wo_away_absent') {
-    return `Away team absent - Walkover to ${changes.new.home_team_name}`;
+    return `Away team absent`;
   }
-  return 'Walkover declared';
-}
-
-function getStatusReasonDetails(reason: string | null): string {
-  if (!reason) return '';
-  
-  switch (reason) {
-    case 'wo_home_absent':
-      return 'Home team was absent';
-    case 'wo_away_absent':
-      return 'Away team was absent';
-    case 'null_both_absent':
-      return 'Both teams were absent';
-    default:
-      return reason;
-  }
+  return changes.note || 'Walkover declared';
 }

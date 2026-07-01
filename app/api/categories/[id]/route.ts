@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getCategoryById,
-  updateCategory,
-  deleteCategory,
-  UpdateCategoryData,
-} from '@/lib/firebase/categories';
+import { adminDb } from '@/lib/firebase/admin';
 
 /**
  * GET /api/categories/[id]
@@ -16,9 +11,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const category = await getCategoryById(id);
+    const categoryDoc = await adminDb.collection('categories').doc(id).get();
     
-    if (!category) {
+    if (!categoryDoc.exists) {
       return NextResponse.json(
         {
           success: false,
@@ -27,6 +22,11 @@ export async function GET(
         { status: 404 }
       );
     }
+    
+    const category = {
+      id: categoryDoc.id,
+      ...categoryDoc.data(),
+    };
     
     return NextResponse.json({
       success: true,
@@ -116,7 +116,7 @@ export async function PUT(
     }
     
     // Build update object
-    const updates: UpdateCategoryData = {};
+    const updates: any = {};
     
     if (body.name) updates.name = body.name.trim();
     if (body.color) updates.color = body.color;
@@ -125,14 +125,20 @@ export async function PUT(
     // Add point updates
     for (const field of pointFields) {
       if (body[field] !== undefined) {
-        (updates as any)[field] = parseInt(body[field]);
+        updates[field] = parseInt(body[field]);
       }
     }
     
-    await updateCategory(id, updates);
+    updates.updated_at = new Date();
+    
+    await adminDb.collection('categories').doc(id).update(updates);
     
     // Fetch updated category
-    const updatedCategory = await getCategoryById(id);
+    const updatedDoc = await adminDb.collection('categories').doc(id).get();
+    const updatedCategory = {
+      id: updatedDoc.id,
+      ...updatedDoc.data(),
+    };
     
     return NextResponse.json({
       success: true,
@@ -161,7 +167,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await deleteCategory(id);
+    await adminDb.collection('categories').doc(id).delete();
     
     return NextResponse.json({
       success: true,
@@ -178,3 +184,4 @@ export async function DELETE(
     );
   }
 }
+

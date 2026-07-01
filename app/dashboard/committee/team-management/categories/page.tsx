@@ -8,7 +8,59 @@ import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { ArrowLeft, Plus, CheckCircle, AlertCircle, Trash2, Edit2, Info, X, Layers, Star } from 'lucide-react';
+import { ArrowLeft, Plus, CheckCircle, AlertCircle, Trash2, Edit2, Info, X, Layers } from 'lucide-react';
+
+const getCategoryColor = (name: string) => {
+  const normalized = name.trim().toLowerCase();
+  if (normalized.includes('red')) return 'red';
+  if (normalized.includes('black')) return 'black';
+  if (normalized.includes('blue')) return 'blue';
+  if (normalized.includes('white')) return 'white';
+  return 'slate';
+};
+
+const getColorDotStyles = (name: string) => {
+  const color = getCategoryColor(name);
+  const styles: { [key: string]: string } = {
+    red: 'bg-rose-500 border border-rose-600 ring-rose-500/20',
+    blue: 'bg-blue-500 border border-blue-600 ring-blue-500/20',
+    black: 'bg-slate-800 border border-slate-900 ring-slate-800/20',
+    white: 'bg-white border border-slate-350 ring-slate-200/20',
+  };
+  return styles[color] || 'bg-slate-400 border border-slate-500 ring-slate-400/20';
+};
+
+const getRelativeLevels = (priority: number) => {
+  if (priority === 1) {
+    return [
+      { fieldSuffix: 'same_category', label: 'Same Level' },
+      { fieldSuffix: 'one_level_diff', label: '1 Level Down' },
+      { fieldSuffix: 'two_level_diff', label: '2 Levels Down' },
+      { fieldSuffix: 'three_level_diff', label: '3 Levels Down' },
+    ];
+  } else if (priority === 2) {
+    return [
+      { fieldSuffix: 'one_level_diff', label: '1 Level Up' },
+      { fieldSuffix: 'same_category', label: 'Same Level' },
+      { fieldSuffix: 'two_level_diff', label: '1 Level Down' },
+      { fieldSuffix: 'three_level_diff', label: '2 Levels Down' },
+    ];
+  } else if (priority === 3) {
+    return [
+      { fieldSuffix: 'two_level_diff', label: '2 Levels Up' },
+      { fieldSuffix: 'one_level_diff', label: '1 Level Up' },
+      { fieldSuffix: 'same_category', label: 'Same Level' },
+      { fieldSuffix: 'three_level_diff', label: '1 Level Down' },
+    ];
+  } else { // priority === 4
+    return [
+      { fieldSuffix: 'three_level_diff', label: '3 Levels Up' },
+      { fieldSuffix: 'two_level_diff', label: '2 Levels Up' },
+      { fieldSuffix: 'one_level_diff', label: '1 Level Up' },
+      { fieldSuffix: 'same_category', label: 'Same Level' },
+    ];
+  }
+};
 
 interface Category {
   id: string;
@@ -214,9 +266,7 @@ function CategoriesPageContent() {
                 {/* Category Header */}
                 <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm flex-shrink-0">
-                      {category.icon || '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />'}
-                    </span>
+                    <span className={`w-3.5 h-3.5 rounded-full ring-4 ${getColorDotStyles(category.name)} flex-shrink-0`} />
                     <div>
                       <h3 className="font-extrabold text-slate-900 text-sm uppercase tracking-wide truncate max-w-[140px]">{category.name}</h3>
                       <span className="inline-flex text-[9px] font-black uppercase bg-slate-200/60 text-slate-750 border border-slate-300 px-1.5 py-0.5 rounded mt-1">
@@ -234,22 +284,15 @@ function CategoriesPageContent() {
                       <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Win Points
                     </h4>
                     <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
-                        <span className="text-slate-500 text-[10px]">Same:</span>
-                        <span className="font-bold text-emerald-700">{category.points_same_category}</span>
-                      </div>
-                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
-                        <span className="text-slate-500 text-[10px]">+1 diff:</span>
-                        <span className="font-bold text-emerald-700">{category.points_one_level_diff}</span>
-                      </div>
-                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
-                        <span className="text-slate-500 text-[10px]">+2 diff:</span>
-                        <span className="font-bold text-emerald-700">{category.points_two_level_diff}</span>
-                      </div>
-                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
-                        <span className="text-slate-500 text-[10px]">+3 diff:</span>
-                        <span className="font-bold text-emerald-700">{category.points_three_level_diff}</span>
-                      </div>
+                      {getRelativeLevels(category.priority).map(({ fieldSuffix, label }) => {
+                        const val = category[`points_${fieldSuffix}` as keyof Category];
+                        return (
+                          <div key={fieldSuffix} className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                            <span className="text-slate-500 text-[9px] truncate max-w-[80px]" title={label}>{label}:</span>
+                            <span className="font-bold text-emerald-700">{val}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -259,22 +302,15 @@ function CategoriesPageContent() {
                       <Info className="w-3.5 h-3.5 text-blue-500" /> Draw Points
                     </h4>
                     <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
-                        <span className="text-slate-500 text-[10px]">Same:</span>
-                        <span className="font-bold text-blue-700">{category.draw_same_category}</span>
-                      </div>
-                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
-                        <span className="text-slate-500 text-[10px]">+1 diff:</span>
-                        <span className="font-bold text-blue-700">{category.draw_one_level_diff}</span>
-                      </div>
-                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
-                        <span className="text-slate-500 text-[10px]">+2 diff:</span>
-                        <span className="font-bold text-blue-700">{category.draw_two_level_diff}</span>
-                      </div>
-                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
-                        <span className="text-slate-500 text-[10px]">+3 diff:</span>
-                        <span className="font-bold text-blue-700">{category.draw_three_level_diff}</span>
-                      </div>
+                      {getRelativeLevels(category.priority).map(({ fieldSuffix, label }) => {
+                        const val = category[`draw_${fieldSuffix}` as keyof Category];
+                        return (
+                          <div key={fieldSuffix} className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                            <span className="text-slate-500 text-[9px] truncate max-w-[80px]" title={label}>{label}:</span>
+                            <span className="font-bold text-blue-700">{val}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -284,22 +320,15 @@ function CategoriesPageContent() {
                       <AlertCircle className="w-3.5 h-3.5 text-rose-500" /> Loss Points
                     </h4>
                     <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
-                        <span className="text-slate-500 text-[10px]">Same:</span>
-                        <span className="font-bold text-rose-700">{category.loss_same_category}</span>
-                      </div>
-                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
-                        <span className="text-slate-500 text-[10px]">-1 diff:</span>
-                        <span className="font-bold text-rose-700">{category.loss_one_level_diff}</span>
-                      </div>
-                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
-                        <span className="text-slate-500 text-[10px]">-2 diff:</span>
-                        <span className="font-bold text-rose-700">{category.loss_two_level_diff}</span>
-                      </div>
-                      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
-                        <span className="text-slate-500 text-[10px]">-3 diff:</span>
-                        <span className="font-bold text-rose-700">{category.loss_three_level_diff}</span>
-                      </div>
+                      {getRelativeLevels(category.priority).map(({ fieldSuffix, label }) => {
+                        const val = category[`loss_${fieldSuffix}` as keyof Category];
+                        return (
+                          <div key={fieldSuffix} className="flex items-center justify-between bg-white border border-slate-100 rounded-lg px-2 py-1">
+                            <span className="text-slate-500 text-[9px] truncate max-w-[80px]" title={label}>{label}:</span>
+                            <span className="font-bold text-rose-700">{val}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

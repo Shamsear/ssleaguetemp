@@ -66,7 +66,9 @@ function levenshteinDistance(str1: string, str2: string): number {
   // Limit cache size to prevent memory issues (keep last 1000 entries)
   if (distanceCache.size > 1000) {
     const firstKey = distanceCache.keys().next().value;
-    distanceCache.delete(firstKey);
+    if (firstKey !== undefined) {
+      distanceCache.delete(firstKey);
+    }
   }
   
   return result;

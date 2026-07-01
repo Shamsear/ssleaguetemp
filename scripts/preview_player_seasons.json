@@ -1,0 +1,944 @@
+{
+  "updatesCount": 82,
+  "updates": [
+    {
+      "id": "sspslpsl0028_SSPSLS18",
+      "player_name": "ARIF LEO",
+      "team": "TM Asgardians",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0028_SSPSLS17_1778215021057"
+    },
+    {
+      "id": "sspslpsl0028_SSPSLS17",
+      "player_name": "ARIF LEO",
+      "team": "TM Asgardians",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0028_SSPSLS17_1778215021057"
+    },
+    {
+      "id": "sspslpsl0028_SSPSLS17.0",
+      "player_name": "ARIF LEO",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0034_SSPSLS17.0",
+      "player_name": "ASHRAF",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0198_SSPSLS18",
+      "player_name": "Afsal pa",
+      "team": "Qatar Gladiators",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0198_SSPSLS17_1776017626911"
+    },
+    {
+      "id": "sspslpsl0198_SSPSLS17",
+      "player_name": "Afsal pa",
+      "team": "Qatar Gladiators",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0198_SSPSLS17_1776017626911"
+    },
+    {
+      "id": "sspslpsl0088_SSPSLS17",
+      "player_name": "Akhinesh",
+      "team": "Skill 555",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0088_SSPSLS17_1776015629364"
+    },
+    {
+      "id": "sspslpsl0088_SSPSLS18",
+      "player_name": "Akhinesh",
+      "team": "Skill 555",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0088_SSPSLS17_1776015629364"
+    },
+    {
+      "id": "sspslpsl0064_SSPSLS17.0",
+      "player_name": "Ambady ",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0019_SSPSLS17.0",
+      "player_name": "Anshad ameer",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0008_SSPSLS17.0",
+      "player_name": "Ansil",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0006_SSPSLS17.0",
+      "player_name": "Arjun Ravi",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0006_SSPSLS17",
+      "player_name": "Arjun Ravi",
+      "team": "TM Asgardians",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0006_SSPSLS17_1776018867177"
+    },
+    {
+      "id": "sspslpsl0006_SSPSLS18",
+      "player_name": "Arjun Ravi",
+      "team": "TM Asgardians",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0006_SSPSLS17_1776018867177"
+    },
+    {
+      "id": "sspslpsl0017_SSPSLS17.0",
+      "player_name": "Binto K Benny",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0116_SSPSLS18",
+      "player_name": "Dhanus",
+      "team": "Skill 555",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0116_SSPSLS17.5_1779481739011"
+    },
+    {
+      "id": "sspslpsl0116_SSPSLS17",
+      "player_name": "Dhanus",
+      "team": "Skill 555",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0116_SSPSLS17.5_1779481739011"
+    },
+    {
+      "id": "sspslpsl0116_SSPSLS19",
+      "player_name": "Dhanus",
+      "team": "Skill 555",
+      "season_id": "SSPSLS19",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0116_SSPSLS17.5_1779481739011"
+    },
+    {
+      "id": "sspslpsl0062_SSPSLS17.0",
+      "player_name": "FAIZAL ",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0144_SSPSLS17",
+      "player_name": "Fayaz",
+      "team": "Varsity Soccers",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0144_SSPSLS17_1776015331028"
+    },
+    {
+      "id": "sspslpsl0144_SSPSLS18",
+      "player_name": "Fayaz",
+      "team": "Varsity Soccers",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0144_SSPSLS17_1776015331028"
+    },
+    {
+      "id": "sspslpsl0196_SSPSLS18",
+      "player_name": "Fazi",
+      "team": "La Masia",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0196_SSPSLS17_1776016013428"
+    },
+    {
+      "id": "sspslpsl0196_SSPSLS17",
+      "player_name": "Fazi",
+      "team": "La Masia",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0196_SSPSLS17_1776016013428"
+    },
+    {
+      "id": "sspslpsl0194_SSPSLS17",
+      "player_name": "Gautham Krishna ",
+      "team": "Blue Strikers",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0194_SSPSLS17_1776015647725"
+    },
+    {
+      "id": "sspslpsl0194_SSPSLS18",
+      "player_name": "Gautham Krishna ",
+      "team": "Blue Strikers",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0194_SSPSLS17_1776015647725"
+    },
+    {
+      "id": "sspslpsl0087_SSPSLS17",
+      "player_name": "Gokul Krishna",
+      "team": "Psychoz",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0087_SSPSLS17.5_1779481716836"
+    },
+    {
+      "id": "sspslpsl0087_SSPSLS19",
+      "player_name": "Gokul Krishna",
+      "team": "Psychoz",
+      "season_id": "SSPSLS19",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0087_SSPSLS17.5_1779481716836"
+    },
+    {
+      "id": "sspslpsl0087_SSPSLS18",
+      "player_name": "Gokul Krishna",
+      "team": "Psychoz",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0087_SSPSLS17.5_1779481716836"
+    },
+    {
+      "id": "sspslpsl0130_SSPSLS18",
+      "player_name": "Hashim",
+      "team": null,
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0130_SSPSLS16.5_1767291106625"
+    },
+    {
+      "id": "sspslpsl0130_SSPSLS17.0",
+      "player_name": "Hashim",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0130_SSPSLS16",
+      "player_name": "Hashim",
+      "team": "Red Hawks FC",
+      "season_id": "SSPSLS16",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0130_SSPSLS16.5_1767291106625"
+    },
+    {
+      "id": "sspslpsl0089_SSPSLS18",
+      "player_name": "Hemin",
+      "team": "Los Galacticos",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0089_SSPSLS17.5_1779481618152"
+    },
+    {
+      "id": "sspslpsl0089_SSPSLS17",
+      "player_name": "Hemin",
+      "team": "Los Galacticos",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0089_SSPSLS17.5_1779481618152"
+    },
+    {
+      "id": "sspslpsl0089_SSPSLS19",
+      "player_name": "Hemin",
+      "team": "Los Galacticos",
+      "season_id": "SSPSLS19",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0089_SSPSLS17.5_1779481618152"
+    },
+    {
+      "id": "sspslpsl0093_SSPSLS17",
+      "player_name": "Jinto",
+      "team": "Psychoz",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0093_SSPSLS16.5_1767291872601"
+    },
+    {
+      "id": "sspslpsl0093_SSPSLS18",
+      "player_name": "Jinto",
+      "team": "Psychoz",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0093_SSPSLS16.5_1767291872601"
+    },
+    {
+      "id": "sspslpsl0093_SSPSLS16",
+      "player_name": "Jinto",
+      "team": "Psychoz",
+      "season_id": "SSPSLS16",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0093_SSPSLS16.5_1767291872601"
+    },
+    {
+      "id": "sspslpsl0197_SSPSLS17",
+      "player_name": "Joyal K Ittoop",
+      "team": "Portland Timbers",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0197_SSPSLS17_1776015606500"
+    },
+    {
+      "id": "sspslpsl0197_SSPSLS18",
+      "player_name": "Joyal K Ittoop",
+      "team": "Portland Timbers",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0197_SSPSLS17_1776015606500"
+    },
+    {
+      "id": "sspslpsl0199_SSPSLS17",
+      "player_name": "Midhun Martin",
+      "team": "Legends FC",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0199_SSPSLS17_1776015696192"
+    },
+    {
+      "id": "sspslpsl0199_SSPSLS18",
+      "player_name": "Midhun Martin",
+      "team": "Legends FC",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0199_SSPSLS17_1776015696192"
+    },
+    {
+      "id": "sspslpsl0067_SSPSLS17",
+      "player_name": "Mohammed Suhail PA",
+      "team": "FC Barcelona",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0067_SSPSLS17_1776016972197"
+    },
+    {
+      "id": "sspslpsl0067_SSPSLS17.0",
+      "player_name": "Mohammed Suhail PA",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0067_SSPSLS18",
+      "player_name": "Mohammed Suhail PA",
+      "team": "FC Barcelona",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0067_SSPSLS17_1776016972197"
+    },
+    {
+      "id": "sspslpsl0049_SSPSLS17.5",
+      "player_name": "Muhammed Badhusha ",
+      "team": null,
+      "season_id": "SSPSLS17.5",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0136_SSPSLS18",
+      "player_name": "Nidhul",
+      "team": "Portland Timbers",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0136_SSPSLS17_1776015582982"
+    },
+    {
+      "id": "sspslpsl0136_SSPSLS17",
+      "player_name": "Nidhul",
+      "team": "Portland Timbers",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0136_SSPSLS17_1776015582982"
+    },
+    {
+      "id": "sspslpsl0052_SSPSLS17.5",
+      "player_name": "Nihal",
+      "team": null,
+      "season_id": "SSPSLS17.5",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0195_SSPSLS18",
+      "player_name": "Prajith",
+      "team": "Los Galacticos",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0195_SSPSLS17_1776016872670"
+    },
+    {
+      "id": "sspslpsl0195_SSPSLS17",
+      "player_name": "Prajith",
+      "team": "Los Galacticos",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0195_SSPSLS17_1776016872670"
+    },
+    {
+      "id": "sspslpsl0059_SSPSLS17",
+      "player_name": "Rajish",
+      "team": "Qatar Gladiators",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0059_SSPSLS16.5_1767289085877"
+    },
+    {
+      "id": "sspslpsl0059_SSPSLS18",
+      "player_name": "Rajish",
+      "team": "Qatar Gladiators",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0059_SSPSLS16.5_1767289085877"
+    },
+    {
+      "id": "sspslpsl0059_SSPSLS16",
+      "player_name": "Rajish",
+      "team": "Qatar Gladiators",
+      "season_id": "SSPSLS16",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0059_SSPSLS16.5_1767289085877"
+    },
+    {
+      "id": "sspslpsl0094_SSPSLS18",
+      "player_name": "Rukshan",
+      "team": null,
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0094_SSPSLS16.5_1767289383558"
+    },
+    {
+      "id": "sspslpsl0094_SSPSLS16",
+      "player_name": "Rukshan",
+      "team": "Varsity Soccers",
+      "season_id": "SSPSLS16",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0094_SSPSLS16.5_1767289383558"
+    },
+    {
+      "id": "sspslpsl0094_SSPSLS17.0",
+      "player_name": "Rukshan",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0022_SSPSLS17",
+      "player_name": "SHAFIR CKD",
+      "team": null,
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0022_SSPSLS16.5_1768406605797"
+    },
+    {
+      "id": "sspslpsl0022_SSPSLS18",
+      "player_name": "SHAFIR CKD",
+      "team": null,
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0022_SSPSLS16.5_1768406605797"
+    },
+    {
+      "id": "sspslpsl0111_SSPSLS17",
+      "player_name": "Salsabeel",
+      "team": "Red Hawks FC",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0111_SSPSLS17_1776018836656"
+    },
+    {
+      "id": "sspslpsl0111_SSPSLS18",
+      "player_name": "Salsabeel",
+      "team": "Red Hawks FC",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0111_SSPSLS17_1776018836656"
+    },
+    {
+      "id": "sspslpsl0077_SSPSLS16",
+      "player_name": "Savad ",
+      "team": "Kopites",
+      "season_id": "SSPSLS16",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0077_SSPSLS16.5_1768157496389"
+    },
+    {
+      "id": "sspslpsl0077_SSPSLS18",
+      "player_name": "Savad ",
+      "team": "TM Asgardians",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0077_SSPSLS16.5_1768157496389"
+    },
+    {
+      "id": "sspslpsl0077_SSPSLS17",
+      "player_name": "Savad ",
+      "team": "TM Asgardians",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0077_SSPSLS16.5_1768157496389"
+    },
+    {
+      "id": "sspslpsl0003_SSPSLS18",
+      "player_name": "Shamil Mohd",
+      "team": "Red Hawks FC",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0003_SSPSLS17_1776015555408"
+    },
+    {
+      "id": "sspslpsl0003_SSPSLS17.0",
+      "player_name": "Shamil Mohd",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0003_SSPSLS17",
+      "player_name": "Shamil Mohd",
+      "team": "Red Hawks FC",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0003_SSPSLS17_1776015555408"
+    },
+    {
+      "id": "sspslpsl0024_SSPSLS18",
+      "player_name": "Shamsear",
+      "team": "Red Hawks FC",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0024_SSPSLS17_1776016486058"
+    },
+    {
+      "id": "sspslpsl0024_SSPSLS17.0",
+      "player_name": "Shamsear",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0024_SSPSLS17",
+      "player_name": "Shamsear",
+      "team": "Red Hawks FC",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0024_SSPSLS17_1776016486058"
+    },
+    {
+      "id": "sspslpsl0100_SSPSLS17.0",
+      "player_name": "Shinto",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0100_SSPSLS19",
+      "player_name": "Shinto",
+      "team": "Los Blancos",
+      "season_id": "SSPSLS19",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0100_SSPSLS17.5_1779481686902"
+    },
+    {
+      "id": "sspslpsl0100_SSPSLS17",
+      "player_name": "Shinto",
+      "team": "Los Blancos",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0100_SSPSLS17.5_1779481686902"
+    },
+    {
+      "id": "sspslpsl0100_SSPSLS18",
+      "player_name": "Shinto",
+      "team": "Los Blancos",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0100_SSPSLS17.5_1779481686902"
+    },
+    {
+      "id": "sspslpsl0057_SSPSLS17",
+      "player_name": "Thomas joseph",
+      "team": "Skill 555",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0057_SSPSLS17.5_1779481663290"
+    },
+    {
+      "id": "sspslpsl0057_SSPSLS18",
+      "player_name": "Thomas joseph",
+      "team": "Skill 555",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0057_SSPSLS17.5_1779481663290"
+    },
+    {
+      "id": "sspslpsl0057_SSPSLS19",
+      "player_name": "Thomas joseph",
+      "team": "Skill 555",
+      "season_id": "SSPSLS19",
+      "current_end": "SSPSLS19.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0057_SSPSLS17.5_1779481663290"
+    },
+    {
+      "id": "sspslpsl0131_SSPSLS18",
+      "player_name": "Tijo",
+      "team": "Manchester United",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0131_SSPSLS17_1776015667939"
+    },
+    {
+      "id": "sspslpsl0131_SSPSLS17",
+      "player_name": "Tijo",
+      "team": "Manchester United",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0131_SSPSLS17_1776015667939"
+    },
+    {
+      "id": "sspslpsl0007_SSPSLS17.0",
+      "player_name": "Unni Torres",
+      "team": null,
+      "season_id": "SSPSLS17.0",
+      "current_end": "SSPSLS18",
+      "new_end": "SSPSLS17",
+      "contract_id": null
+    },
+    {
+      "id": "sspslpsl0025_SSPSLS18",
+      "player_name": "rishad ",
+      "team": "TM Asgardians",
+      "season_id": "SSPSLS18",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0025_SSPSLS16.5_1769019828172"
+    },
+    {
+      "id": "sspslpsl0025_SSPSLS17",
+      "player_name": "rishad ",
+      "team": "TM Asgardians",
+      "season_id": "SSPSLS17",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0025_SSPSLS16.5_1769019828172"
+    },
+    {
+      "id": "sspslpsl0025_SSPSLS16",
+      "player_name": "rishad ",
+      "team": "Kopites",
+      "season_id": "SSPSLS16",
+      "current_end": "SSPSLS18.5",
+      "new_end": "SSPSLS17",
+      "contract_id": "contract_sspslpsl0025_SSPSLS16.5_1769019828172"
+    }
+  ],
+  "deletionsCount": 33,
+  "deletions": [
+    {
+      "id": "sspslpsl0028_SSPSLS18",
+      "player_name": "ARIF LEO",
+      "team": "TM Asgardians",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0198_SSPSLS18",
+      "player_name": "Afsal pa",
+      "team": "Qatar Gladiators",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0088_SSPSLS18",
+      "player_name": "Akhinesh",
+      "team": "Skill 555",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0006_SSPSLS18",
+      "player_name": "Arjun Ravi",
+      "team": "TM Asgardians",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0116_SSPSLS19",
+      "player_name": "Dhanus",
+      "team": "Skill 555",
+      "season_id": "SSPSLS19"
+    },
+    {
+      "id": "sspslpsl0116_SSPSLS18",
+      "player_name": "Dhanus",
+      "team": "Skill 555",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0144_SSPSLS18",
+      "player_name": "Fayaz",
+      "team": "Varsity Soccers",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0196_SSPSLS18",
+      "player_name": "Fazi",
+      "team": "La Masia",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0194_SSPSLS18",
+      "player_name": "Gautham Krishna ",
+      "team": "Blue Strikers",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0087_SSPSLS19",
+      "player_name": "Gokul Krishna",
+      "team": "Psychoz",
+      "season_id": "SSPSLS19"
+    },
+    {
+      "id": "sspslpsl0087_SSPSLS18",
+      "player_name": "Gokul Krishna",
+      "team": "Psychoz",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0130_SSPSLS18",
+      "player_name": "Hashim",
+      "team": null,
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0089_SSPSLS19",
+      "player_name": "Hemin",
+      "team": "Los Galacticos",
+      "season_id": "SSPSLS19"
+    },
+    {
+      "id": "sspslpsl0089_SSPSLS18",
+      "player_name": "Hemin",
+      "team": "Los Galacticos",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0093_SSPSLS18",
+      "player_name": "Jinto",
+      "team": "Psychoz",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0197_SSPSLS18",
+      "player_name": "Joyal K Ittoop",
+      "team": "Portland Timbers",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0199_SSPSLS18",
+      "player_name": "Midhun Martin",
+      "team": "Legends FC",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0067_SSPSLS18",
+      "player_name": "Mohammed Suhail PA",
+      "team": "FC Barcelona",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0136_SSPSLS18",
+      "player_name": "Nidhul",
+      "team": "Portland Timbers",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0195_SSPSLS18",
+      "player_name": "Prajith",
+      "team": "Los Galacticos",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0059_SSPSLS18",
+      "player_name": "Rajish",
+      "team": "Qatar Gladiators",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0094_SSPSLS18",
+      "player_name": "Rukshan",
+      "team": null,
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0022_SSPSLS18",
+      "player_name": "SHAFIR CKD",
+      "team": null,
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0111_SSPSLS18",
+      "player_name": "Salsabeel",
+      "team": "Red Hawks FC",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0077_SSPSLS18",
+      "player_name": "Savad ",
+      "team": "TM Asgardians",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0003_SSPSLS18",
+      "player_name": "Shamil Mohd",
+      "team": "Red Hawks FC",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0024_SSPSLS18",
+      "player_name": "Shamsear",
+      "team": "Red Hawks FC",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0100_SSPSLS18",
+      "player_name": "Shinto",
+      "team": "Los Blancos",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0100_SSPSLS19",
+      "player_name": "Shinto",
+      "team": "Los Blancos",
+      "season_id": "SSPSLS19"
+    },
+    {
+      "id": "sspslpsl0057_SSPSLS18",
+      "player_name": "Thomas joseph",
+      "team": "Skill 555",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0057_SSPSLS19",
+      "player_name": "Thomas joseph",
+      "team": "Skill 555",
+      "season_id": "SSPSLS19"
+    },
+    {
+      "id": "sspslpsl0131_SSPSLS18",
+      "player_name": "Tijo",
+      "team": "Manchester United",
+      "season_id": "SSPSLS18"
+    },
+    {
+      "id": "sspslpsl0025_SSPSLS18",
+      "player_name": "rishad ",
+      "team": "TM Asgardians",
+      "season_id": "SSPSLS18"
+    }
+  ]
+}

@@ -108,14 +108,25 @@ export async function POST(
     const seasonId = fixture.season_id;
     
     const playerIds = players.map(p => p.player_id);
-    const awayPlayers = await sql`
-      SELECT player_id 
-      FROM player_seasons 
-      WHERE team_id = ${awayTeamId} 
-        AND season_id = ${seasonId}
-        AND player_id = ANY(${playerIds})
-        AND status = 'active'
-    `;
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    const awayPlayers = isModern
+      ? await sql`
+          SELECT player_id 
+          FROM player_seasons 
+          WHERE team_id = ${awayTeamId} 
+            AND season_id = ${seasonId}
+            AND player_id = ANY(${playerIds})
+            AND status = 'active'
+        `
+      : await sql`
+          SELECT player_id 
+          FROM realplayerstats 
+          WHERE team_id = ${awayTeamId} 
+            AND season_id = ${seasonId}
+            AND player_id = ANY(${playerIds})
+        `;
 
     if (awayPlayers.length !== players.length) {
       return NextResponse.json(

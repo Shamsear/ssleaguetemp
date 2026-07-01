@@ -3,10 +3,10 @@ import { updateWindow, getWindowById } from '@/lib/neon/transfer-windows';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     
     const existing = await getWindowById(id);

@@ -1,5 +1,5 @@
 'use client';
-import { Activity, AlertTriangle, ClipboardList, Crown, Pencil, Save, Settings, Trophy, XCircle } from 'lucide-react';
+import { Activity, AlertTriangle, ClipboardList, Crown, Pencil, Save, Settings, Trophy, XCircle, Swords, ArrowLeft } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -362,10 +362,11 @@ export default function CommitteeFixtureDetailPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading fixture...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono text-slate-800">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold animate-pulse">Loading fixture...</p>
         </div>
       </div>
     );
@@ -389,70 +390,72 @@ export default function CommitteeFixtureDetailPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 px-4 sm:px-6">
+      {/* Decorative glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
       {/* Header */}
-      <div className="mb-6">
-        <Link
-          href="/dashboard/committee/team-management/tournament"
-          className="inline-flex items-center text-purple-600 hover:text-purple-700 mb-4"
-        >
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Tournament
-        </Link>
-        <h1 className="text-3xl font-bold gradient-text">Committee Fixture Management</h1>
-        <div className="flex items-center gap-3 mt-2">
-          <p className="text-gray-600">
-            {(fixture as any).knockout_round ? (
-              <>
-                {(fixture as any).knockout_round === 'quarter_finals' && '<Swords className="w-4 h-4 text-rose-500" /> Quarter Finals'}
-                {(fixture as any).knockout_round === 'semi_finals' && '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Semi Finals'}
-                {(fixture as any).knockout_round === 'finals' && '<Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /> Finals'}
-                {(fixture as any).knockout_round === 'third_place' && '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" /> Third Place Playoff'}
-                {' • '}
-              </>
-            ) : (
-              `Round ${fixture.round_number} • `
-            )}
-            Match {fixture.match_number} • {fixture.leg === 'first' ? '1st Leg' : '2nd Leg'}
-          </p>
-          {(fixture as any).knockout_round && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-sm">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-              KNOCKOUT
-            </span>
-          )}
-          {(fixture as any).scoring_system && (
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${(fixture as any).scoring_system === 'wins'
-                ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                : 'bg-blue-100 text-blue-800 border border-blue-300'
-              }`}>
-              {(fixture as any).scoring_system === 'wins' ? (
-                <><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Win-Based Scoring</>
-              ) : (
-                <><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Goal-Based Scoring</>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <Link
+            href={`/dashboard/committee/team-management/tournament?tab=fixtures&tournament=${fixture.tournament_id}&round=${fixture.round_number}`}
+            className="p-3 bg-white border border-slate-200/60 hover:bg-slate-50 rounded-2xl text-slate-600 transition-all shadow-sm shrink-0 cursor-pointer"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+              Committee Fixture Management
+            </h1>
+            <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs font-mono text-slate-500">
+              <span>
+                {(fixture as any).knockout_round ? (
+                  <>
+                    {(fixture as any).knockout_round === 'quarter_finals' && (
+                      <span className="inline-flex items-center gap-1 text-rose-500 font-semibold"><Swords className="w-4 h-4" /> Quarter Finals</span>
+                    )}
+                    {(fixture as any).knockout_round === 'semi_finals' && (
+                      <span className="inline-flex items-center gap-1 text-amber-500 font-semibold"><Trophy className="w-4 h-4" /> Semi Finals</span>
+                    )}
+                    {(fixture as any).knockout_round === 'finals' && (
+                      <span className="inline-flex items-center gap-1 text-amber-500 font-semibold"><Crown className="w-4 h-4" /> Finals</span>
+                    )}
+                    {(fixture as any).knockout_round === 'third_place' && (
+                      <span className="inline-flex items-center gap-1 text-amber-700 font-semibold"><Trophy className="w-4 h-4" /> Third Place Playoff</span>
+                    )}
+                  </>
+                ) : (
+                  `Round ${fixture.round_number}`
+                )}
+              </span>
+              <span>•</span>
+              <span>Match {fixture.match_number}</span>
+              <span>•</span>
+              <span>{fixture.leg === 'first' ? '1st Leg' : '2nd Leg'}</span>
+              
+              {(fixture as any).knockout_round && (
+                <>
+                  <span>•</span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-sm">
+                    KNOCKOUT
+                  </span>
+                </>
               )}
-            </span>
-          )}
-          {fixture.scoring_type && (
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${fixture.scoring_type === 'wins'
-                ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                : fixture.scoring_type === 'hybrid'
-                  ? 'bg-purple-100 text-purple-800 border border-purple-300'
-                  : 'bg-blue-100 text-blue-800 border border-blue-300'
-              }`}>
-              {fixture.scoring_type === 'wins' ? (
-                <><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Win-Based Scoring</>
-              ) : fixture.scoring_type === 'hybrid' ? (
-                <>🎯 Hybrid Scoring</>
-              ) : (
-                <><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Goal-Based Scoring</>
+              
+              {(fixture as any).scoring_system && (
+                <>
+                  <span>•</span>
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${(fixture as any).scoring_system === 'wins'
+                      ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                      : 'bg-blue-50 text-blue-800 border border-blue-200'
+                    }`}>
+                    {(fixture as any).scoring_system === 'wins' ? 'Win-Based' : 'Goal-Based'}
+                  </span>
+                </>
               )}
-            </span>
-          )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -461,90 +464,112 @@ export default function CommitteeFixtureDetailPage() {
         {/* Left Column - Fixture Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* Match Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-6 border-2 border-purple-100">
-            <div className="flex justify-between items-start mb-6">
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-2xl font-bold text-gray-900">{fixture.home_team_name}</h2>
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
+              {/* Home Team */}
+              <div className="flex-1 text-center md:text-left w-full">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
+                  <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">{fixture.home_team_name}</h2>
                   <button
                     onClick={() => setShowLineupEditor('home')}
-                    className="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 font-medium"
+                    className="self-center md:self-auto px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Pencil className="w-4 h-4 text-slate-500" /> Edit Lineup
+                    <Pencil className="w-3.5 h-3.5" /> Edit Lineup
                   </button>
                 </div>
-                <p className="text-sm text-gray-500">Home Team</p>
+                <p className="text-xs font-mono uppercase tracking-wider text-slate-400">Home Team</p>
               </div>
-              <div className="text-center px-6">
-                <div className="text-4xl font-bold text-purple-600">
+
+              {/* Score / Status */}
+              <div className="text-center px-6 py-4 bg-slate-50 border border-slate-100 rounded-3xl shrink-0 min-w-[140px]">
+                <div className="text-3xl font-black text-slate-800 tracking-tight">
                   {fixture.home_score ?? '-'} : {fixture.away_score ?? '-'}
                 </div>
-                <span className={`text-xs px-3 py-1 rounded-full font-medium ${fixture.status === 'completed' ? 'bg-green-100 text-green-700' :
-                  fixture.status === 'in_progress' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-blue-100 text-blue-700'
+                <div className="mt-1">
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono uppercase ${
+                    fixture.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-250' :
+                    fixture.status === 'in_progress' ? 'bg-amber-50 text-amber-700 border border-amber-250' :
+                    'bg-sky-50 text-sky-700 border border-sky-250'
                   }`}>
-                  {fixture.status}
-                </span>
+                    {fixture.status}
+                  </span>
+                </div>
                 {matchups.length === 0 && fixture.status !== 'completed' && (
                   <button
                     onClick={() => setShowMatchupCreator(true)}
-                    className="mt-3 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm rounded-lg hover:from-green-700 hover:to-emerald-700 font-medium block mx-auto"
+                    className="mt-3 px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-bold font-mono uppercase tracking-wider rounded-lg transition-all shadow-sm flex items-center gap-1 mx-auto cursor-pointer"
                   >
-                    <Swords className="w-4 h-4 text-rose-500" /> Add Matchups
+                    <Swords className="w-3 h-3" /> Add Matchups
                   </button>
                 )}
               </div>
-              <div className="flex-1 text-right">
-                <div className="flex items-center justify-between mb-2">
+
+              {/* Away Team */}
+              <div className="flex-1 text-center md:text-right w-full">
+                <div className="flex flex-col md:flex-row-reverse md:items-center justify-between gap-3 mb-2">
+                  <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">{fixture.away_team_name}</h2>
                   <button
                     onClick={() => setShowLineupEditor('away')}
-                    className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 font-medium"
+                    className="self-center md:self-auto px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Pencil className="w-4 h-4 text-slate-500" /> Edit Lineup
+                    <Pencil className="w-3.5 h-3.5" /> Edit Lineup
                   </button>
-                  <h2 className="text-2xl font-bold text-gray-900">{fixture.away_team_name}</h2>
                 </div>
-                <p className="text-sm text-gray-500">Away Team</p>
+                <p className="text-xs font-mono uppercase tracking-wider text-slate-400">Away Team</p>
               </div>
             </div>
 
             {fixture.match_status_reason && (
-              <div className={`p-3 rounded-lg mb-4 ${fixture.match_status_reason.includes('wo') ? 'bg-orange-100 border-l-4 border-orange-500' :
-                'bg-gray-100 border-l-4 border-gray-500'
+              <div className={`p-4 rounded-2xl mb-4 ${fixture.match_status_reason.includes('wo') ? 'bg-orange-50 border border-orange-200 text-orange-850' :
+                'bg-slate-50 border border-slate-200 text-slate-750'
                 }`}>
-                <p className="font-semibold text-sm">
-                  {fixture.match_status_reason === 'wo_home_absent' && '<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Walkover - Home team absent'}
-                  {fixture.match_status_reason === 'wo_away_absent' && '<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Walkover - Away team absent'}
-                  {fixture.match_status_reason === 'null_both_absent' && '<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Match NULL - Both teams absent'}
+                <p className="font-bold text-sm flex items-center gap-1.5">
+                  {fixture.match_status_reason === 'wo_home_absent' && (
+                    <>
+                      <AlertTriangle className="w-4 h-4 text-orange-600" /> Walkover - Home team absent
+                    </>
+                  )}
+                  {fixture.match_status_reason === 'wo_away_absent' && (
+                    <>
+                      <AlertTriangle className="w-4 h-4 text-orange-600" /> Walkover - Away team absent
+                    </>
+                  )}
+                  {fixture.match_status_reason === 'null_both_absent' && (
+                    <>
+                      <XCircle className="w-4 h-4 text-rose-600" /> Match NULL - Both teams absent
+                    </>
+                  )}
                 </p>
               </div>
             )}
 
             {/* Metadata */}
-            <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mt-4 pt-4 border-t">
+            <div className="grid grid-cols-2 gap-4 text-xs font-mono text-slate-500 mt-4 pt-4 border-t border-slate-100">
               <div>
-                <strong>Created:</strong> {fixture.created_at ? new Date(fixture.created_at).toLocaleString() : 'N/A'}
-                {fixture.created_by_name && <span className="text-xs block">by {fixture.created_by_name}</span>}
+                <strong className="text-slate-700 uppercase tracking-wider text-[10px] block mb-1">Created</strong> 
+                {fixture.created_at ? new Date(fixture.created_at).toLocaleString() : 'N/A'}
+                {fixture.created_by_name && <span className="text-[10px] text-slate-400 block mt-0.5">by {fixture.created_by_name}</span>}
               </div>
               {fixture.result_submitted_at && (
                 <div>
-                  <strong>Result Submitted:</strong> {new Date(fixture.result_submitted_at).toLocaleString()}
-                  {fixture.result_submitted_by_name && <span className="text-xs block">by {fixture.result_submitted_by_name}</span>}
+                  <strong className="text-slate-700 uppercase tracking-wider text-[10px] block mb-1">Result Submitted</strong> 
+                  {new Date(fixture.result_submitted_at).toLocaleString()}
+                  {fixture.result_submitted_by_name && <span className="text-[10px] text-slate-400 block mt-0.5">by {fixture.result_submitted_by_name}</span>}
                 </div>
               )}
             </div>
           </div>
 
           {/* Matchups */}
-          <div className="bg-white rounded-2xl shadow-xl p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Individual Matchups</h3>
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-black text-gray-900 tracking-tight">Individual Matchups</h3>
               {!isEditMode && fixture.status === 'completed' && (
                 <button
                   onClick={() => setIsEditMode(true)}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Pencil className="w-4 h-4 text-slate-500" /> Edit Results
+                  <Pencil className="w-3.5 h-3.5" /> Edit Results
                 </button>
               )}
               {isEditMode && (
@@ -554,16 +579,20 @@ export default function CommitteeFixtureDetailPage() {
                       setIsEditMode(false);
                       fetchFixtureData();
                     }}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all border border-slate-200 cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveResults}
                     disabled={isSaving}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                   >
-                    {isSaving ? 'Saving...' : '<Save className="w-4 h-4 text-slate-500" /> Save Changes'}
+                    {isSaving ? 'Saving...' : (
+                      <>
+                        <Save className="w-3.5 h-3.5" /> Save Changes
+                      </>
+                    )}
                   </button>
                 </div>
               )}
@@ -571,12 +600,12 @@ export default function CommitteeFixtureDetailPage() {
 
             <div className="space-y-3">
               {matchups.map((matchup) => (
-                <div key={matchup.id} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold">{matchup.home_player_name}</p>
+                <div key={matchup.id} className="bg-slate-50/60 border border-slate-100 rounded-2xl p-4 hover:bg-slate-50 transition-all">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-slate-800 text-sm truncate">{matchup.home_player_name}</p>
                     </div>
-                    <div className="flex items-center gap-2 mx-4">
+                    <div className="flex items-center gap-2 mx-2 shrink-0">
                       {isEditMode ? (
                         <>
                           <input
@@ -587,9 +616,9 @@ export default function CommitteeFixtureDetailPage() {
                               ...prev,
                               [matchup.position]: { ...prev[matchup.position], home: parseInt(e.target.value) || 0 }
                             }))}
-                            className="w-16 px-2 py-1 border rounded text-center"
+                            className="w-16 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-center font-bold text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                           />
-                          <span>-</span>
+                          <span className="text-slate-400 font-bold">-</span>
                           <input
                             type="number"
                             min="0"
@@ -598,17 +627,17 @@ export default function CommitteeFixtureDetailPage() {
                               ...prev,
                               [matchup.position]: { ...prev[matchup.position], away: parseInt(e.target.value) || 0 }
                             }))}
-                            className="w-16 px-2 py-1 border rounded text-center"
+                            className="w-16 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-center font-bold text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                           />
                         </>
                       ) : (
-                        <span className="text-lg font-bold">
-                          {matchup.home_goals ?? '-'} - {matchup.away_goals ?? '-'}
+                        <span className="px-4 py-1.5 bg-white border border-slate-150 rounded-xl text-sm font-black text-slate-800 font-mono shadow-sm">
+                          {matchup.home_goals ?? '-'} : {matchup.away_goals ?? '-'}
                         </span>
                       )}
                     </div>
-                    <div className="flex-1 text-right">
-                      <p className="font-semibold">{matchup.away_player_name}</p>
+                    <div className="flex-1 text-right min-w-0">
+                      <p className="font-bold text-slate-800 text-sm truncate">{matchup.away_player_name}</p>
                     </div>
                   </div>
                 </div>
@@ -620,19 +649,19 @@ export default function CommitteeFixtureDetailPage() {
         {/* Right Column - Actions & Timeline */}
         <div className="space-y-6">
           {/* Actions */}
-          <div className="bg-white rounded-2xl shadow-xl p-6">
-            <h3 className="text-xl font-bold mb-4">Committee Actions</h3>
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+            <h3 className="text-lg font-black text-gray-900 tracking-tight mb-4">Committee Actions</h3>
             <div className="space-y-3">
               {/* Share Button */}
-              <div className="flex justify-center">
+              <div className="flex justify-center w-full">
                 <FixtureShareButton fixture={fixture} matchups={matchups} />
               </div>
 
               <button
                 onClick={() => setShowTimeline(true)}
-                className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 font-medium flex items-center justify-center"
+                className="w-full px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <ClipboardList className="w-4 h-4 text-slate-500" /> View Complete Timeline
+                <ClipboardList className="w-4 h-4 text-white" /> View Complete Timeline
               </button>
 
               {/* Create Matchups Button - Only show if matchups don't exist */}
@@ -640,9 +669,9 @@ export default function CommitteeFixtureDetailPage() {
                 <>
                   <button
                     onClick={() => setShowMatchupCreator(true)}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 font-medium flex items-center justify-center gap-2"
+                    className="w-full px-4 py-3 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <Swords className="w-4 h-4 text-rose-500" /> Create Matchups
+                    <Swords className="w-4 h-4 text-white" /> Create Matchups
                   </button>
                   
                   {/* Round Robin Auto-Generate Button */}
@@ -650,15 +679,15 @@ export default function CommitteeFixtureDetailPage() {
                     <button
                       onClick={handleGenerateRoundRobinMatchups}
                       disabled={isGeneratingRoundRobin}
-                      className="w-full px-4 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full px-4 py-3 bg-gradient-to-r from-orange-50 to-red-50 hover:from-orange-600 hover:to-red-600 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
                     >
                       {isGeneratingRoundRobin ? (
                         <>
-                          <span className="animate-spin"><Settings className="w-4 h-4 text-slate-500" /></span> Generating...
+                          <span className="animate-spin"><Settings className="w-4 h-4 text-white" /></span> Generating...
                         </>
                       ) : (
                         <>
-                          🎯 Auto-Generate Round Robin (25 Matchups)
+                          🎯 Auto-Generate Round Robin
                         </>
                       )}
                     </button>
@@ -667,52 +696,54 @@ export default function CommitteeFixtureDetailPage() {
               )}
 
               {fixture.status !== 'completed' && (
-                <>
+                <div className="pt-4 border-t border-slate-100 space-y-2.5">
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Administrative Declarations</p>
                   <button
                     onClick={() => handleDeclareWO('home')}
                     disabled={isSaving}
-                    className="w-full px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 font-medium"
+                    className="w-full px-4 py-3 bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl border border-orange-200 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
                   >
-                    <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> WO - Home Team Absent
+                    <AlertTriangle className="w-4 h-4 text-orange-600" /> WO - Home Team Absent
                   </button>
                   <button
                     onClick={() => handleDeclareWO('away')}
                     disabled={isSaving}
-                    className="w-full px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 font-medium"
+                    className="w-full px-4 py-3 bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl border border-orange-200 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
                   >
-                    <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> WO - Away Team Absent
+                    <AlertTriangle className="w-4 h-4 text-orange-600" /> WO - Away Team Absent
                   </button>
                   <button
                     onClick={handleDeclareNull}
                     disabled={isSaving}
-                    className="w-full px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 font-medium"
+                    className="w-full px-4 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl border border-rose-200 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
                   >
-                    <XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> NULL - Both Teams Absent
+                    <XCircle className="w-4 h-4 text-rose-600" /> NULL - Both Teams Absent
                   </button>
-                </>
+                </div>
               )}
             </div>
           </div>
 
           {/* Quick Info */}
-          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl shadow-lg p-6 border border-purple-200">
-            <h3 className="font-bold text-purple-900 mb-3">Quick Info</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Season ID:</span>
-                <span className="font-mono text-xs bg-white px-2 py-1 rounded">{fixture.season_id}</span>
+          <div className="console-card bg-gradient-to-br from-slate-50 to-blue-50/20 border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+            <h3 className="font-bold text-slate-800 text-sm mb-4">Quick Info</h3>
+            <div className="space-y-3 text-xs font-mono text-slate-600">
+              <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                <span className="text-slate-400">Season ID</span>
+                <span className="font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200/50 shadow-2xs">{fixture.season_id}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Fixture ID:</span>
-                <span className="font-mono text-xs bg-white px-2 py-1 rounded">{fixture.id}</span>
+              <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                <span className="text-slate-400">Fixture ID</span>
+                <span className="font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200/50 shadow-2xs truncate max-w-[180px]" title={fixture.id}>{fixture.id}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Matchups:</span>
-                <span className="font-semibold">{matchups.length}</span>
+              <div className="flex justify-between items-center py-1.5">
+                <span className="text-slate-400">Matchups Count</span>
+                <span className="font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200/50 shadow-2xs">{matchups.length}</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Timeline Modal */}
@@ -724,8 +755,8 @@ export default function CommitteeFixtureDetailPage() {
 
       {/* Matchup Creator Modal */}
       {showMatchupCreator && fixture && user && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 transition-all duration-300 animate-in fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl max-w-5xl w-full overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
             <CommitteeMatchupCreator
               fixtureId={fixtureId}
               seasonId={fixture.season_id}
@@ -752,8 +783,8 @@ export default function CommitteeFixtureDetailPage() {
 
       {/* Lineup Editor Modal */}
       {showLineupEditor && fixture && user && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 transition-all duration-300 animate-in fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
             <CommitteeMatchupCreator
               fixtureId={fixtureId}
               seasonId={fixture.season_id}

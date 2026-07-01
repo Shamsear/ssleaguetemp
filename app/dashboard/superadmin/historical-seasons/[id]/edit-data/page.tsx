@@ -460,9 +460,9 @@ export default function EditSeasonDataPage() {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => router.push(`/dashboard/superadmin/historical-seasons/${seasonId}`)}
-                  className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-950 transition-all shadow-sm flex-shrink-0"
+                  className="group p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-950 transition-all shadow-sm flex-shrink-0"
                 >
-                  <svg className="w-5 h-5 text-slate-500 group-hover:text-[#0066FF] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-slate-500 group-hover:text-amber-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
@@ -1018,10 +1018,10 @@ export default function EditSeasonDataPage() {
         </div>
 
         {/* Info Banner */}
-        <div className="mt-6 glass rounded-xl p-4 border border-slate-200/50 bg-gradient-to-r from-blue-50/50 to-indigo-50/30">
+        <div className="mt-6 console-card bg-amber-50/20 border border-amber-200/50 p-4 rounded-xl shadow-sm">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl flex-shrink-0">
+              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>

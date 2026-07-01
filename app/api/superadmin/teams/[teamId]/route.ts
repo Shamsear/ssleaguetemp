@@ -12,7 +12,7 @@ const sql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
     // Verify super admin auth
@@ -24,7 +24,7 @@ export async function PATCH(
       }, { status: 401 });
     }
 
-    const teamId = params.teamId;
+    const { teamId } = await params;
     const body = await request.json();
     const { teamName, logoUrl } = body;
 
@@ -143,7 +143,7 @@ export async function PATCH(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
     // Verify super admin auth
@@ -155,7 +155,7 @@ export async function GET(
       }, { status: 401 });
     }
 
-    const teamId = params.teamId;
+    const { teamId } = await params;
 
     // Get team from Firebase
     const teamDoc = await adminDb.collection('teams').doc(teamId).get();

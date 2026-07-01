@@ -60,13 +60,22 @@ export async function POST(request: NextRequest) {
     // Fetch player data from Neon
     let playerData;
     
+    const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
     if (player_type === 'real') {
       const compositeId = `${player_id}_${season_id}`;
-      const result = await sql`
-        SELECT * FROM player_seasons
-        WHERE id = ${compositeId}
-        LIMIT 1
-      `;
+      const result = isModern
+        ? await sql`
+            SELECT * FROM player_seasons
+            WHERE id = ${compositeId}
+            LIMIT 1
+          `
+        : await sql`
+            SELECT * FROM realplayerstats
+            WHERE id = ${compositeId}
+            LIMIT 1
+          `;
       
       if (result.length === 0) {
         return NextResponse.json(

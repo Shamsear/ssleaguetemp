@@ -16,6 +16,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const targetSeasonNum = parseInt(toSeason.replace(/\D/g, '')) || 0;
+    if (targetSeasonNum >= 18) {
+      return NextResponse.json(
+        { success: false, error: `Carryover is disabled for Season ${targetSeasonNum} (Season 18+ has no contracts or carryovers)` },
+        { status: 400 }
+      );
+    }
+
     if (fromSeason === toSeason) {
       return NextResponse.json(
         { success: false, error: 'Source and target seasons must be different' },

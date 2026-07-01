@@ -1,4 +1,5 @@
-import { auctionSql as sql } from './auction-config';
+import { getAuctionDb } from './auction-config';
+const sql = getAuctionDb();
 
 export interface FootballPlayer {
   id: string;

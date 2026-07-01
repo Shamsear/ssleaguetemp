@@ -68,6 +68,10 @@ export default function CommitteePlayersPage() {
     }
   }, [user, authLoading, router])
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage])
+
   // Fetch players with pagination and filters
   const fetchPlayers = useCallback(async () => {
     setLoading(true)

@@ -5,10 +5,10 @@ const sql = neon(process.env.NEON_TOURNAMENT_DB_URL!);
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
-    const { teamId } = params;
+    const { teamId } = await params;
     const searchParams = request.nextUrl.searchParams;
     const seasonId = searchParams.get('season_id');
 

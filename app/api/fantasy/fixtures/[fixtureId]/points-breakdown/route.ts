@@ -7,10 +7,10 @@ import { getFantasyDb } from '@/lib/neon/fantasy-config';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { fixtureId: string } }
+  { params }: { params: Promise<{ fixtureId: string }> }
 ) {
   try {
-    const { fixtureId } = params;
+    const { fixtureId } = await params;
     const { searchParams } = new URL(request.url);
     const league_id = searchParams.get('league_id');
 

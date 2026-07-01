@@ -171,19 +171,31 @@ export async function releasePlayerNeon(
     const currentBalance = teamSeasonData?.dollar_balance || 0;
     const newBalance = currentBalance + refundAmount;
     
+    const seasonNum = parseInt(currentSeasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
     // Update player status to free agent in Neon
     if (playerData.type === 'real') {
-      // For player_seasons, update the current season record
       const compositeId = `${playerData.player_id}_${currentSeasonId}`;
-      await sql`
-        UPDATE player_seasons
-        SET team_id = NULL,
-            team = NULL,
-            status = 'free_agent',
-            contract_id = NULL,
-            updated_at = NOW()
-        WHERE id = ${compositeId}
-      `;
+      if (isModern) {
+        await sql`
+          UPDATE player_seasons
+          SET team_id = NULL,
+              team = NULL,
+              status = 'free_agent',
+              contract_id = NULL,
+              updated_at = NOW()
+          WHERE id = ${compositeId}
+        `;
+      } else {
+        await sql`
+          UPDATE realplayerstats
+          SET team_id = NULL,
+              team = NULL,
+              updated_at = NOW()
+          WHERE id = ${compositeId}
+        `;
+      }
     } else {
       // For footballplayers - make them auction-eligible again
       await sql`
@@ -342,18 +354,31 @@ export async function transferPlayerNeon(
       };
     }
     
+    const seasonNum = parseInt(currentSeasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
     // Update player in Neon
     if (playerData.type === 'real') {
       const compositeId = `${playerData.player_id}_${currentSeasonId}`;
-      await sql`
-        UPDATE player_seasons
-        SET team_id = ${newTeamId},
-            team = ${newTeamName},
-            auction_value = ${newContractValue},
-            status = 'active',
-            updated_at = NOW()
-        WHERE id = ${compositeId}
-      `;
+      if (isModern) {
+        await sql`
+          UPDATE player_seasons
+          SET team_id = ${newTeamId},
+              team = ${newTeamName},
+              auction_value = ${newContractValue},
+              status = 'active',
+              updated_at = NOW()
+          WHERE id = ${compositeId}
+        `;
+      } else {
+        await sql`
+          UPDATE realplayerstats
+          SET team_id = ${newTeamId},
+              team = ${newTeamName},
+              updated_at = NOW()
+          WHERE id = ${compositeId}
+        `;
+      }
     } else {
       // For footballplayers, use acquisition_value instead of auction_value
       await sql`
@@ -547,27 +572,49 @@ export async function swapPlayersNeon(
       };
     }
     
+    const seasonNum = parseInt(currentSeasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
     // Swap players in Neon
     if (playerAData.type === 'real') {
       const compositeIdA = `${playerAData.player_id}_${currentSeasonId}`;
       const compositeIdB = `${playerBData.player_id}_${currentSeasonId}`;
       
-      await Promise.all([
-        sql`
-          UPDATE player_seasons
-          SET team_id = ${teamBId},
-              team = ${playerBData.team},
-              updated_at = NOW()
-          WHERE id = ${compositeIdA}
-        `,
-        sql`
-          UPDATE player_seasons
-          SET team_id = ${teamAId},
-              team = ${playerAData.team},
-              updated_at = NOW()
-          WHERE id = ${compositeIdB}
-        `
-      ]);
+      if (isModern) {
+        await Promise.all([
+          sql`
+            UPDATE player_seasons
+            SET team_id = ${teamBId},
+                team = ${playerBData.team},
+                updated_at = NOW()
+            WHERE id = ${compositeIdA}
+          `,
+          sql`
+            UPDATE player_seasons
+            SET team_id = ${teamAId},
+                team = ${playerAData.team},
+                updated_at = NOW()
+            WHERE id = ${compositeIdB}
+          `
+        ]);
+      } else {
+        await Promise.all([
+          sql`
+            UPDATE realplayerstats
+            SET team_id = ${teamBId},
+                team = ${playerBData.team},
+                updated_at = NOW()
+            WHERE id = ${compositeIdA}
+          `,
+          sql`
+            UPDATE realplayerstats
+            SET team_id = ${teamAId},
+                team = ${playerAData.team},
+                updated_at = NOW()
+            WHERE id = ${compositeIdB}
+          `
+        ]);
+      }
     } else {
       await Promise.all([
         sql`

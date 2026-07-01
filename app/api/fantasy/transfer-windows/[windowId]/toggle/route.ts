@@ -8,7 +8,7 @@ import { fantasySql } from '@/lib/neon/fantasy-config';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { windowId: string } }
+  { params }: { params: Promise<{ windowId: string }> }
 ) {
   try {
     const auth = await verifyAuth(['committee_admin'], request);
@@ -19,7 +19,7 @@ export async function POST(
       );
     }
 
-    const { windowId } = params;
+    const { windowId } = await params;
 
     if (!windowId) {
       return NextResponse.json(

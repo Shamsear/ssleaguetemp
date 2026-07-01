@@ -23,29 +23,54 @@ export async function GET(request: NextRequest) {
 
         console.log('🔍 Fetching contracted players for season:', seasonId);
 
-        // Fetch all players with contracts from player_seasons table
-        const players = await sql`
-      SELECT 
-        id,
-        player_id,
-        player_name,
-        team_id,
-        team,
-        auction_value,
-        contract_start_season,
-        contract_end_season,
-        star_rating,
-        points,
-        category,
-        matches_played,
-        goals_scored,
-        assists
-      FROM player_seasons
-      WHERE season_id = ${seasonId}
-        AND team_id IS NOT NULL
-        AND auction_value IS NOT NULL
-      ORDER BY team, player_name
-    `;
+        const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+        const isModern = seasonNum === 16 || seasonNum === 17;
+
+        // Fetch all players with contracts or team assignments from correct table
+        const players = isModern
+          ? await sql`
+              SELECT 
+                id,
+                player_id,
+                player_name,
+                team_id,
+                team,
+                auction_value,
+                contract_start_season,
+                contract_end_season,
+                star_rating,
+                points,
+                category,
+                matches_played,
+                goals_scored,
+                assists
+              FROM player_seasons
+              WHERE season_id = ${seasonId}
+                AND team_id IS NOT NULL
+                AND auction_value IS NOT NULL
+              ORDER BY team, player_name
+            `
+          : await sql`
+              SELECT 
+                id,
+                player_id,
+                player_name,
+                team_id,
+                team,
+                0 as auction_value,
+                NULL as contract_start_season,
+                NULL as contract_end_season,
+                star_rating,
+                points,
+                category,
+                matches_played,
+                goals_scored,
+                assists
+              FROM realplayerstats
+              WHERE season_id = ${seasonId}
+                AND team_id IS NOT NULL
+              ORDER BY team, player_name
+            `;
 
         console.log('📊 Found contracted players:', players.length);
 

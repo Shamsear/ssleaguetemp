@@ -773,18 +773,23 @@ export async function PATCH(
       WHERE id = ${fixtureId}
     `;
 
-    // Distribute match rewards based on tournament configuration
-    try {
-      await distributeMatchRewards({
-        fixtureId,
-        matchResult,
-        seasonId: season_id,
-        roundNumber: round_number,
-        leg
-      });
-    } catch (rewardError) {
-      console.error('Failed to distribute match rewards:', rewardError);
-      // Don't fail the entire request if rewards fail
+    // Distribute match rewards based on tournament configuration (S16-17 only)
+    const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+    if (seasonNum < 18) {
+      try {
+        await distributeMatchRewards({
+          fixtureId,
+          matchResult,
+          seasonId: season_id,
+          roundNumber: round_number,
+          leg
+        });
+      } catch (rewardError) {
+        console.error('Failed to distribute match rewards:', rewardError);
+        // Don't fail the entire request if rewards fail
+      }
+    } else {
+      console.log(`ℹ️ Skipping match rewards distribution for Season ${seasonNum}`);
     }
 
     // Update team stats in teamstats table

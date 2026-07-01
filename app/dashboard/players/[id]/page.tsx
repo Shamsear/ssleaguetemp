@@ -924,7 +924,7 @@ export default function PlayerDetailPage() {
             {selectedView !== 'all-seasons' && (
               <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
                 <h3 className="text-sm font-mono font-bold text-slate-800 uppercase tracking-wider mb-5 flex items-center border-b border-slate-100 pb-3">
-                  <svg className="w-4.5 h-4.5 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                   {selectedView === 'overall' ? 'Overall Statistics' : 
@@ -1086,7 +1086,7 @@ export default function PlayerDetailPage() {
                   <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <svg className="w-4.5 h-4.5 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-5 h-5 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                         </svg>
                         <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">League Standings</span>

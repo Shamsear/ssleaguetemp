@@ -508,7 +508,7 @@ export default function BulkRoundTiebreakersPage() {
         <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
             <h2 className="text-sm sm:text-base font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
-              <Layers className="w-4.5 h-4.5 text-amber-500" />
+              <Layers className="w-5 h-5 text-amber-500" />
               Active Tiebreakers
             </h2>
             <span className="bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-mono px-2.5 py-1 rounded-full uppercase tracking-wider font-bold">

@@ -7,10 +7,10 @@ import { fantasySql } from '@/lib/neon/fantasy-config';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
-    const teamId = params.teamId;
+    const { teamId } = await params;
 
     if (!teamId) {
       return NextResponse.json(

@@ -658,7 +658,7 @@ export default function PlayerAwardsManagementPage() {
           {showAddForm && (
             <form onSubmit={handleAddAward} className="mb-6 p-5 bg-slate-50/50 border border-slate-200/60 rounded-2xl shadow-inner font-mono">
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
-                <Plus className="w-4.5 h-4.5 text-emerald-500" />
+                <Plus className="w-5 h-5 text-emerald-500" />
                 <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Add New Award</h3>
               </div>
               

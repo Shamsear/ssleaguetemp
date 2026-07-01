@@ -15,18 +15,32 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('🔍 Fetching players from player_seasons for:', { teamId, seasonId });
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
 
-    // Fetch players from player_seasons table
-    const players = await sql`
-      SELECT *
-      FROM player_seasons
-      WHERE team_id = ${teamId}
-        AND season_id = ${seasonId}
-      ORDER BY category, player_name
-    `;
+    console.log('🔍 Fetching players for:', { teamId, seasonId, table: isModern ? 'player_seasons' : 'realplayerstats' });
 
-    console.log('📊 Found players from player_seasons:', players.length);
+    // Fetch players from correct table
+    let players;
+    if (isModern) {
+      players = await sql`
+        SELECT *
+        FROM player_seasons
+        WHERE team_id = ${teamId}
+          AND season_id = ${seasonId}
+        ORDER BY category, player_name
+      `;
+    } else {
+      players = await sql`
+        SELECT *
+        FROM realplayerstats
+        WHERE team_id = ${teamId}
+          AND season_id = ${seasonId}
+        ORDER BY category, player_name
+      `;
+    }
+
+    console.log('📊 Found players:', players.length);
 
     return NextResponse.json({ players });
   } catch (error: any) {

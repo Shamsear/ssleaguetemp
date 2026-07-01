@@ -92,14 +92,25 @@ export async function POST(
         const seasonId = fixture.season_id;
         const playerIds = players.map(p => p.player_id);
 
-        const teamPlayers = await sql`
-      SELECT player_id 
-      FROM player_seasons 
-      WHERE team_id = ${teamId} 
-        AND season_id = ${seasonId}
-        AND player_id = ANY(${playerIds})
-        AND status = 'active'
-    `;
+        const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+        const isModern = seasonNum === 16 || seasonNum === 17;
+
+        const teamPlayers = isModern
+          ? await sql`
+              SELECT player_id 
+              FROM player_seasons 
+              WHERE team_id = ${teamId} 
+                AND season_id = ${seasonId}
+                AND player_id = ANY(${playerIds})
+                AND status = 'active'
+            `
+          : await sql`
+              SELECT player_id 
+              FROM realplayerstats 
+              WHERE team_id = ${teamId} 
+                AND season_id = ${seasonId}
+                AND player_id = ANY(${playerIds})
+            `;
 
         if (teamPlayers.length !== players.length) {
             return NextResponse.json(
@@ -248,17 +259,31 @@ export async function GET(
         const teamId = teamType === 'home' ? fixture.home_team_id : fixture.away_team_id;
 
         // Get all active players for the team
-        const players = await sql`
-      SELECT 
-        ps.player_id,
-        ps.player_name,
-        ps.status
-      FROM player_seasons ps
-      WHERE ps.team_id = ${teamId}
-        AND ps.season_id = ${fixture.season_id}
-        AND ps.status = 'active'
-      ORDER BY ps.player_name
-    `;
+        const seasonNum = parseInt(fixture.season_id.replace(/\D/g, '')) || 0;
+        const isModern = seasonNum === 16 || seasonNum === 17;
+
+        const players = isModern
+          ? await sql`
+              SELECT 
+                ps.player_id,
+                ps.player_name,
+                ps.status
+              FROM player_seasons ps
+              WHERE ps.team_id = ${teamId}
+                AND ps.season_id = ${fixture.season_id}
+                AND ps.status = 'active'
+              ORDER BY ps.player_name
+            `
+          : await sql`
+              SELECT 
+                ps.player_id,
+                ps.player_name,
+                'active' as status
+              FROM realplayerstats ps
+              WHERE ps.team_id = ${teamId}
+                AND ps.season_id = ${fixture.season_id}
+              ORDER BY ps.player_name
+            `;
 
         return NextResponse.json({
             success: true,

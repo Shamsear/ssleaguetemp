@@ -15,6 +15,9 @@
   --radius-2xl: 1rem;
   --radius-3xl: 1.5rem;
   --radius-4xl: 2rem;
+
+  /* Custom Spacing */
+  --spacing-4\.5: 1.125rem;
 }
 
 /* Vision OS Background - Performance optimized */
@@ -443,11 +446,29 @@ html {
 }
 
 /* Fix text going behind icon inside console cards */
-.console-card input.pl-10,
+.console-card input.pl-9:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.console-card select.pl-9,
+.console-card input[class*="pl-9"]:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.console-card select[class*="pl-9"] {
+  padding-left: 2.25rem !important;
+}
+.console-card input.pl-10:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
 .console-card select.pl-10,
-.console-card input[class*="pl-10"],
+.console-card input[class*="pl-10"]:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
 .console-card select[class*="pl-10"] {
   padding-left: 2.5rem !important;
+}
+.console-card input.pl-11:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.console-card select.pl-11,
+.console-card input[class*="pl-11"]:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.console-card select[class*="pl-11"] {
+  padding-left: 2.75rem !important;
+}
+.console-card input.pl-12:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.console-card select.pl-12,
+.console-card input[class*="pl-12"]:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.console-card select[class*="pl-12"] {
+  padding-left: 3rem !important;
 }
 
 .console-card select:focus,
@@ -535,15 +556,15 @@ html {
 }
 
 /* Override container cards inside forms (excluding small icon wrappers and badges) */
-.console-card .bg-blue-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
-.console-card .bg-purple-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
-.console-card .bg-green-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
-.console-card .bg-red-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
-.console-card .bg-gray-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
-.console-card .bg-slate-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
-.console-card .bg-gradient-to-br:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
-.console-card .border-2:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16),
-.console-card .border-slate-150:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16) {
+.console-card div.bg-blue-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
+.console-card div.bg-purple-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
+.console-card div.bg-green-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
+.console-card div.bg-red-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
+.console-card div.bg-gray-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
+.console-card div.bg-slate-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
+.console-card div.bg-gradient-to-br:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
+.console-card div.border-2:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
+.console-card div.border-slate-150:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24) {
   background-color: #f8fafc !important; /* bg-slate-50 */
   background-image: none !important;
   border: 1px solid rgba(15, 23, 42, 0.06) !important; /* border-slate-100 */

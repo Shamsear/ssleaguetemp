@@ -3,10 +3,10 @@ import { getTournamentDb } from '@/lib/neon/tournament-config';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ lineupId: string }> }
 ) {
   try {
-    const { id: lineupId } = await params;
+    const { lineupId } = await params;
     
     const sql = getTournamentDb();
     

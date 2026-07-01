@@ -249,7 +249,7 @@ export default function Home() {
             <div className="kill-feed-container relative overflow-hidden">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                 <div className="flex items-center gap-2">
-                  <Activity className="w-4.5 h-4.5 text-[#D4AF37] animate-pulse" />
+                  <Activity className="w-5 h-5 text-[#D4AF37] animate-pulse" />
                   <span className="font-bold text-slate-900 text-sm">LOBBY_EVENT_LOG</span>
                 </div>
                 <span className="bg-emerald-100 border border-emerald-200 text-emerald-800 text-[8px] font-mono font-bold px-2 py-0.5 rounded">

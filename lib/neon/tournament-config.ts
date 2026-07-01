@@ -24,7 +24,6 @@ if (!connectionString) {
 // Create SQL query executor for tournament database with increased timeout
 // Neon free tier has cold starts that can take 5-15 seconds
 export const tournamentSql = connectionString ? neon(connectionString, {
-  fetchConnectionTimeout: 30000, // 30 seconds (increased from default 10s)
   connectionTimeout: 30000,
   fetchOptions: {
     cache: 'no-store', // Prevent caching issues

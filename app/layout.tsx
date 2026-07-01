@@ -60,7 +60,7 @@ export default function RootLayout({
               <TournamentProvider>
                 <LanguageProvider>
                   <RegisterServiceWorker />
-                  <Suspense fallback={<div className="h-16 bg-[#1a1a1a]" />}>
+                  <Suspense fallback={<div className="h-16 bg-white/40 backdrop-blur-md border-b border-slate-200/50" />}>
                     <Navbar />
                   </Suspense>
                   <main className="flex-grow">

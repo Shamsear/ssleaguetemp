@@ -3,6 +3,8 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { getIdToken } from 'firebase/auth';
+import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { 
   ArrowLeft, 
   Search, 
@@ -41,150 +43,26 @@ interface PlayerStats {
 }
 
 export default function SeasonPlayerStats() {
-  const { user, loading } = useAuth();
+  const { user, firebaseUser, loading } = useAuth();
   const router = useRouter();
 
-  // Mock data - Replace with actual API calls
-  const [players, setPlayers] = useState<PlayerStats[]>([
-    {
-      id: '1',
-      player_id: 'sspslpsl001',
-      player_name: 'Cristiano Ronaldo',
-      position: 'CF',
-      overall_rating: 91,
-      team_name: 'Manchester United FC',
-      team_code: 'MUN',
-      price_paid: 5000000,
-      auction_date: new Date('2024-02-01'),
-      season_name: 'Season 2024',
-      matches_played: 25,
-      goals: 18,
-      assists: 7,
-      clean_sheets: 0,
-      yellow_cards: 3,
-      red_cards: 0,
-      minutes_played: 2150,
-      is_sold: true,
-    },
-    {
-      id: '2',
-      player_id: 'sspslpsl002',
-      player_name: 'Bruno Fernandes',
-      position: 'AMF',
-      overall_rating: 88,
-      team_name: 'Manchester United FC',
-      team_code: 'MUN',
-      price_paid: 4000000,
-      auction_date: new Date('2024-02-02'),
-      season_name: 'Season 2024',
-      matches_played: 28,
-      goals: 12,
-      assists: 15,
-      clean_sheets: 0,
-      yellow_cards: 5,
-      red_cards: 1,
-      minutes_played: 2480,
-      is_sold: true,
-    },
-    {
-      id: '3',
-      player_id: 'sspslpsl003',
-      player_name: 'David de Gea',
-      position: 'GK',
-      overall_rating: 87,
-      team_name: 'Manchester United FC',
-      team_code: 'MUN',
-      price_paid: 3500000,
-      auction_date: new Date('2024-02-03'),
-      season_name: 'Season 2024',
-      matches_played: 30,
-      goals: 0,
-      assists: 0,
-      clean_sheets: 12,
-      yellow_cards: 2,
-      red_cards: 0,
-      minutes_played: 2700,
-      is_sold: true,
-    },
-    {
-      id: '4',
-      player_id: 'sspslpsl004',
-      player_name: 'Kevin De Bruyne',
-      position: 'AMF',
-      overall_rating: 92,
-      team_name: 'Manchester City FC',
-      team_code: 'MCI',
-      price_paid: 5500000,
-      auction_date: new Date('2024-02-04'),
-      season_name: 'Season 2024',
-      matches_played: 26,
-      goals: 10,
-      assists: 20,
-      clean_sheets: 0,
-      yellow_cards: 4,
-      red_cards: 0,
-      minutes_played: 2340,
-      is_sold: true,
-    },
-    {
-      id: '5',
-      player_id: 'sspslpsl005',
-      player_name: 'Mohamed Salah',
-      position: 'RWF',
-      overall_rating: 90,
-      team_name: 'Liverpool FC',
-      team_code: 'LIV',
-      price_paid: 4800000,
-      auction_date: new Date('2024-02-05'),
-      season_name: 'Season 2024',
-      matches_played: 29,
-      goals: 22,
-      assists: 11,
-      clean_sheets: 0,
-      yellow_cards: 2,
-      red_cards: 0,
-      minutes_played: 2610,
-      is_sold: true,
-    },
-    {
-      id: '6',
-      player_id: 'sspslpsl006',
-      player_name: 'Lionel Messi',
-      position: 'RWF',
-      overall_rating: 93,
-      team_name: undefined,
-      team_code: undefined,
-      price_paid: undefined,
-      auction_date: undefined,
-      season_name: 'Season 2024',
-      matches_played: 0,
-      goals: 0,
-      assists: 0,
-      clean_sheets: 0,
-      yellow_cards: 0,
-      red_cards: 0,
-      minutes_played: 0,
-      is_sold: false,
-    },
-  ]);
-
-  const [stats] = useState({
-    totalPlayers: 150,
-    soldPlayers: 145,
-    unsoldPlayers: 5,
-    totalGoals: 245,
-    totalAssists: 180,
-    totalMatches: 350,
-  });
+  const [seasons, setSeasons] = useState<any[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
+  const [players, setPlayers] = useState<PlayerStats[]>([]);
+  
+  const [loadingSeasons, setLoadingSeasons] = useState<boolean>(true);
+  const [loadingStats, setLoadingStats] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterSeason, setFilterSeason] = useState('all');
   const [filterPosition, setFilterPosition] = useState('all');
   const [filterTeam, setFilterTeam] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState<'goals' | 'assists' | 'rating' | 'price'>('goals');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
+  // Authentication check
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
@@ -194,6 +72,100 @@ export default function SeasonPlayerStats() {
     }
   }, [user, loading, router]);
 
+  // Load Seasons list
+  useEffect(() => {
+    async function loadSeasons() {
+      try {
+        setLoadingSeasons(true);
+        const res = await fetch('/api/seasons/list');
+        if (!res.ok) {
+          throw new Error('Failed to load seasons');
+        }
+        const data = await res.json();
+        if (data.success && data.seasons && data.seasons.length > 0) {
+          setSeasons(data.seasons);
+          
+          // Select first active season, or first season in list
+          const activeSeason = data.seasons.find((s: any) => s.is_active);
+          setSelectedSeasonId(activeSeason ? activeSeason.id : data.seasons[0].id);
+        } else {
+          setSeasons([]);
+        }
+      } catch (err: any) {
+        console.error('Error loading seasons:', err);
+        setErrorMessage(err.message || 'Error loading seasons list');
+      } finally {
+        setLoadingSeasons(false);
+      }
+    }
+
+    if (user && user.role === 'super_admin') {
+      loadSeasons();
+    }
+  }, [user]);
+
+  // Load Stats when selectedSeasonId changes
+  useEffect(() => {
+    async function loadStats() {
+      if (!selectedSeasonId) return;
+      try {
+        setLoadingStats(true);
+        setErrorMessage('');
+        
+        const res = await fetch(`/api/seasons/${selectedSeasonId}/stats`);
+        if (!res.ok) {
+          throw new Error('Failed to load season stats');
+        }
+        const data = await res.json();
+        
+        if (data.success && data.data && data.data.players) {
+          const mappedPlayers: PlayerStats[] = data.data.players.map((p: any) => ({
+            id: p.player_id,
+            player_id: p.player_id,
+            player_name: p.player_name,
+            position: p.category || '',
+            overall_rating: p.star_rating || p.rating || 0,
+            team_name: p.team_name && p.team_name !== 'Unsold' ? p.team_name : undefined,
+            team_code: p.team_id && p.team_id !== 'Unsold' ? p.team_id : undefined,
+            price_paid: p.auction_value || undefined,
+            season_name: data.data.seasonId || selectedSeasonId,
+            matches_played: p.matches_played || 0,
+            goals: p.goals_scored || 0,
+            assists: p.assists || 0,
+            clean_sheets: p.clean_sheets || 0,
+            yellow_cards: p.yellow_cards || 0,
+            red_cards: p.red_cards || 0,
+            minutes_played: p.minutes_played || (p.matches_played * 90) || 0,
+            is_sold: !!p.team_name && p.team_name !== 'Unsold'
+          }));
+          
+          setPlayers(mappedPlayers);
+        } else {
+          setPlayers([]);
+        }
+      } catch (err: any) {
+        console.error('Error loading stats:', err);
+        setErrorMessage(err.message || 'Error fetching stats data');
+      } finally {
+        setLoadingStats(false);
+      }
+    }
+
+    if (selectedSeasonId) {
+      loadStats();
+    }
+  }, [selectedSeasonId]);
+
+  // Calculate live statistics summary cards
+  const statsSummary = {
+    totalPlayers: players.length,
+    soldPlayers: players.filter(p => p.is_sold).length,
+    unsoldPlayers: players.filter(p => !p.is_sold).length,
+    totalGoals: players.reduce((sum, p) => sum + (p.goals || 0), 0),
+    totalAssists: players.reduce((sum, p) => sum + (p.assists || 0), 0),
+    totalMatches: players.reduce((sum, p) => sum + (p.matches_played || 0), 0)
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -202,21 +174,85 @@ export default function SeasonPlayerStats() {
     }).format(amount);
   };
 
-  const handleExportData = () => {
-    alert('Export data functionality - Backend to be implemented');
+  // Secure Excel Export implementation
+  const handleExportData = async () => {
+    if (!firebaseUser) {
+      alert('Authentication error. Please log in again.');
+      return;
+    }
+    if (!selectedSeasonId) {
+      alert('Please select a season to export.');
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      console.log(`Starting Excel export for season: ${selectedSeasonId}`);
+      
+      const token = await getIdToken(firebaseUser);
+      const exportUrl = `/api/seasons/historical/${selectedSeasonId}/export`;
+      
+      const response = await fetchWithTokenRefresh(exportUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        let errorMsg = 'Export failed';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.error || errorMsg;
+        } catch (_) {
+          errorMsg = `${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMsg);
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const disposition = response.headers.get('content-disposition');
+      const filenameMatch = disposition?.match(/filename="(.+)"/);
+      const filename = filenameMatch?.[1] || `season_${selectedSeasonId}_stats.xlsx`;
+      
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('Excel export complete');
+    } catch (err: any) {
+      console.error('Export failed:', err);
+      alert(`Export failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
+  // Extract unique team options from players dynamically
+  const uniqueTeams = Array.from(
+    new Map(
+      players
+        .filter(p => p.team_code && p.team_name)
+        .map(p => [p.team_code, p.team_name])
+    ).entries()
+  ).map(([code, name]) => ({ code, name }));
+
+  // Filters logic
   const filteredPlayers = players.filter(player => {
     const matchesSearch = player.player_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         player.player_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         player.team_name?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSeason = filterSeason === 'all' || player.season_name === filterSeason;
+                          player.player_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          player.team_name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPosition = filterPosition === 'all' || player.position === filterPosition;
     const matchesTeam = filterTeam === 'all' || player.team_code === filterTeam;
     const matchesStatus = filterStatus === 'all' || 
-                         (filterStatus === 'sold' && player.is_sold) ||
-                         (filterStatus === 'unsold' && !player.is_sold);
-    return matchesSearch && matchesSeason && matchesPosition && matchesTeam && matchesStatus;
+                          (filterStatus === 'sold' && player.is_sold) ||
+                          (filterStatus === 'unsold' && !player.is_sold);
+    return matchesSearch && matchesPosition && matchesTeam && matchesStatus;
   });
 
   const sortedPlayers = [...filteredPlayers].sort((a, b) => {
@@ -242,7 +278,7 @@ export default function SeasonPlayerStats() {
   const topAssists = [...players].filter(p => p.is_sold).sort((a, b) => b.assists - a.assists).slice(0, 5);
   const mostExpensive = [...players].filter(p => p.is_sold && p.price_paid).sort((a, b) => (b.price_paid || 0) - (a.price_paid || 0)).slice(0, 5);
 
-  if (loading) {
+  if (loading || loadingSeasons) {
     return (
       <div className="flex items-center justify-center pt-32">
         <div className="text-center space-y-4">
@@ -250,7 +286,7 @@ export default function SeasonPlayerStats() {
             <div className="absolute inset-0 rounded-full border-t-2 border-amber-500 animate-spin" />
             <div className="absolute inset-2 rounded-full border-b-2 border-amber-300 animate-spin animate-reverse" />
           </div>
-          <p className="text-slate-505 font-mono text-xs tracking-widest uppercase animate-pulse">Syncing Stats telemetry...</p>
+          <p className="text-slate-500 font-mono text-xs tracking-widest uppercase animate-pulse">Syncing Seasons...</p>
         </div>
       </div>
     );
@@ -266,7 +302,7 @@ export default function SeasonPlayerStats() {
       <div className="flex items-center gap-4 pb-6 border-b border-slate-200/60">
         <button
           onClick={() => router.push('/dashboard/superadmin')}
-          className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-55 text-slate-600 hover:text-slate-950 transition-all flex-shrink-0 shadow-sm"
+          className="p-3 rounded-2xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-950 transition-all flex-shrink-0 shadow-sm"
           title="Back to Dashboard"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -275,42 +311,60 @@ export default function SeasonPlayerStats() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
             Season Player Statistics
           </h1>
-          <p className="text-xs text-slate-505 font-mono mt-1">
-            Analyze historical drafts, auction valuation trends, and player performance parameters.
+          <p className="text-xs text-slate-500 font-mono mt-1">
+            Analyze drafts, franchise valuations, and performance metrics dynamically.
           </p>
         </div>
       </div>
+
+      {errorMessage && (
+        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl text-xs">
+          ⚠️ {errorMessage}
+        </div>
+      )}
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div className="console-card bg-white border border-slate-200/60 p-5 shadow-sm rounded-2xl">
           <p className="text-[10px] text-slate-450 uppercase tracking-wider mb-1">Total Players</p>
-          <p className="text-2xl font-extrabold text-slate-800">{stats.totalPlayers}</p>
+          <p className="text-2xl font-extrabold text-slate-800">
+            {loadingStats ? '...' : statsSummary.totalPlayers}
+          </p>
         </div>
 
         <div className="console-card bg-white border border-slate-200/60 p-5 shadow-sm rounded-2xl">
           <p className="text-[10px] text-slate-450 uppercase tracking-wider mb-1">Sold Players</p>
-          <p className="text-2xl font-extrabold text-emerald-600">{stats.soldPlayers}</p>
+          <p className="text-2xl font-extrabold text-emerald-600">
+            {loadingStats ? '...' : statsSummary.soldPlayers}
+          </p>
         </div>
 
         <div className="console-card bg-white border border-slate-200/60 p-5 shadow-sm rounded-2xl">
           <p className="text-[10px] text-slate-450 uppercase tracking-wider mb-1">Unsold</p>
-          <p className="text-2xl font-extrabold text-slate-550">{stats.unsoldPlayers}</p>
+          <p className="text-2xl font-extrabold text-slate-500">
+            {loadingStats ? '...' : statsSummary.unsoldPlayers}
+          </p>
         </div>
 
         <div className="console-card bg-white border border-slate-200/60 p-5 shadow-sm rounded-2xl">
           <p className="text-[10px] text-slate-450 uppercase tracking-wider mb-1">Total Goals</p>
-          <p className="text-2xl font-extrabold text-amber-600">{stats.totalGoals}</p>
+          <p className="text-2xl font-extrabold text-amber-600">
+            {loadingStats ? '...' : statsSummary.totalGoals}
+          </p>
         </div>
 
         <div className="console-card bg-white border border-slate-200/60 p-5 shadow-sm rounded-2xl">
           <p className="text-[10px] text-slate-450 uppercase tracking-wider mb-1">Total Assists</p>
-          <p className="text-2xl font-extrabold text-amber-600">{stats.totalAssists}</p>
+          <p className="text-2xl font-extrabold text-amber-600">
+            {loadingStats ? '...' : statsSummary.totalAssists}
+          </p>
         </div>
 
         <div className="console-card bg-white border border-slate-200/60 p-5 shadow-sm rounded-2xl">
           <p className="text-[10px] text-slate-455 uppercase tracking-wider mb-1">Total Matches</p>
-          <p className="text-2xl font-extrabold text-slate-705">{stats.totalMatches}</p>
+          <p className="text-2xl font-extrabold text-slate-700">
+            {loadingStats ? '...' : statsSummary.totalMatches}
+          </p>
         </div>
       </div>
 
@@ -318,96 +372,114 @@ export default function SeasonPlayerStats() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Top Scorers */}
         <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl">
-          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-705 mb-4 flex items-center gap-2">
+          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 mb-4 flex items-center gap-2">
             <Trophy className="w-4 h-4 text-amber-500" />
             Top Scorers
           </h3>
           <div className="space-y-3">
-            {topScorers.map((player, index) => (
-              <div key={player.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/30 transition-colors">
-                <div className="flex items-center flex-1 min-w-0">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs mr-3 flex-shrink-0 ${
-                    index === 0 ? 'bg-amber-100 text-amber-900 border border-amber-200' :
-                    index === 1 ? 'bg-slate-100 text-slate-700 border border-slate-200' :
-                    index === 2 ? 'bg-orange-50 text-orange-900 border border-orange-200' :
-                    'bg-slate-50 text-slate-500 border border-slate-100'
-                  }`}>
-                    {index + 1}
+            {loadingStats ? (
+              <div className="text-center py-8 text-xs text-slate-400">Loading scorers...</div>
+            ) : topScorers.length > 0 ? (
+              topScorers.map((player, index) => (
+                <div key={player.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/30 transition-colors">
+                  <div className="flex items-center flex-1 min-w-0">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs mr-3 flex-shrink-0 ${
+                      index === 0 ? 'bg-amber-100 text-amber-900 border border-amber-200' :
+                      index === 1 ? 'bg-slate-100 text-slate-700 border border-slate-200' :
+                      index === 2 ? 'bg-orange-50 text-orange-900 border border-orange-200' :
+                      'bg-slate-50 text-slate-500 border border-slate-100'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-900 truncate">{player.player_name}</p>
+                      <p className="text-[10px] text-slate-500 font-mono">{player.team_code || 'Unsold'}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate">{player.player_name}</p>
-                    <p className="text-[10px] text-slate-500 font-mono">{player.team_code || 'Unsold'}</p>
+                  <div className="text-right">
+                    <p className="text-sm font-extrabold text-amber-600">{player.goals}</p>
+                    <p className="text-[9px] text-slate-450 uppercase">goals</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-extrabold text-amber-600">{player.goals}</p>
-                  <p className="text-[9px] text-slate-450 uppercase">goals</p>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-center py-8 text-xs text-slate-400">No data found</div>
+            )}
           </div>
         </div>
 
         {/* Top Assists */}
         <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl">
-          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-705 mb-4 flex items-center gap-2">
+          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 mb-4 flex items-center gap-2">
             <Activity className="w-4 h-4 text-amber-500" />
             Top Assists
           </h3>
           <div className="space-y-3">
-            {topAssists.map((player, index) => (
-              <div key={player.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/30 transition-colors">
-                <div className="flex items-center flex-1 min-w-0">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs mr-3 flex-shrink-0 ${
-                    index === 0 ? 'bg-amber-100 text-amber-900 border border-amber-200' :
-                    index === 1 ? 'bg-slate-100 text-slate-700 border border-slate-200' :
-                    index === 2 ? 'bg-orange-50 text-orange-900 border border-orange-200' :
-                    'bg-slate-50 text-slate-500 border border-slate-100'
-                  }`}>
-                    {index + 1}
+            {loadingStats ? (
+              <div className="text-center py-8 text-xs text-slate-400">Loading assists...</div>
+            ) : topAssists.length > 0 ? (
+              topAssists.map((player, index) => (
+                <div key={player.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/30 transition-colors">
+                  <div className="flex items-center flex-1 min-w-0">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs mr-3 flex-shrink-0 ${
+                      index === 0 ? 'bg-amber-100 text-amber-900 border border-amber-200' :
+                      index === 1 ? 'bg-slate-100 text-slate-700 border border-slate-200' :
+                      index === 2 ? 'bg-orange-50 text-orange-900 border border-orange-200' :
+                      'bg-slate-50 text-slate-500 border border-slate-100'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-900 truncate">{player.player_name}</p>
+                      <p className="text-[10px] text-slate-550 font-mono">{player.team_code || 'Unsold'}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate">{player.player_name}</p>
-                    <p className="text-[10px] text-slate-550 font-mono">{player.team_code || 'Unsold'}</p>
+                  <div className="text-right">
+                    <p className="text-sm font-extrabold text-amber-600">{player.assists}</p>
+                    <p className="text-[9px] text-slate-450 uppercase">assists</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-extrabold text-amber-600">{player.assists}</p>
-                  <p className="text-[9px] text-slate-450 uppercase">assists</p>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-center py-8 text-xs text-slate-400">No data found</div>
+            )}
           </div>
         </div>
 
         {/* Most Expensive */}
         <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl">
-          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-705 mb-4 flex items-center gap-2">
+          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 mb-4 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-amber-500" />
             Most Expensive
           </h3>
           <div className="space-y-3">
-            {mostExpensive.map((player, index) => (
-              <div key={player.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/30 transition-colors">
-                <div className="flex items-center flex-1 min-w-0">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs mr-3 flex-shrink-0 ${
-                    index === 0 ? 'bg-amber-100 text-amber-900 border border-amber-200' :
-                    index === 1 ? 'bg-slate-100 text-slate-700 border border-slate-200' :
-                    index === 2 ? 'bg-orange-50 text-orange-900 border border-orange-200' :
-                    'bg-slate-50 text-slate-500 border border-slate-100'
-                  }`}>
-                    {index + 1}
+            {loadingStats ? (
+              <div className="text-center py-8 text-xs text-slate-400">Loading valuation...</div>
+            ) : mostExpensive.length > 0 ? (
+              mostExpensive.map((player, index) => (
+                <div key={player.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/30 transition-colors">
+                  <div className="flex items-center flex-1 min-w-0">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs mr-3 flex-shrink-0 ${
+                      index === 0 ? 'bg-amber-100 text-amber-900 border border-amber-200' :
+                      index === 1 ? 'bg-slate-100 text-slate-700 border border-slate-200' :
+                      index === 2 ? 'bg-orange-50 text-orange-900 border border-orange-200' :
+                      'bg-slate-50 text-slate-500 border border-slate-100'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-900 truncate">{player.player_name}</p>
+                      <p className="text-[10px] text-slate-550 font-mono">{player.team_code}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate">{player.player_name}</p>
-                    <p className="text-[10px] text-slate-550 font-mono">{player.team_code}</p>
+                  <div className="text-right">
+                    <p className="text-xs font-extrabold text-amber-600">{formatCurrency(player.price_paid || 0)}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs font-extrabold text-amber-600">{formatCurrency(player.price_paid || 0)}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-center py-8 text-slate-400 text-xs">No price statistics registered</div>
+            )}
           </div>
         </div>
       </div>
@@ -431,23 +503,36 @@ export default function SeasonPlayerStats() {
 
           <button
             onClick={handleExportData}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm w-full lg:w-auto justify-center"
+            disabled={isExporting || loadingStats || !selectedSeasonId}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-900 disabled:bg-slate-400 text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm w-full lg:w-auto justify-center"
           >
-            <Download className="w-4 h-4" />
-            Export to Excel
+            {isExporting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Exporting...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                Export to Excel
+              </>
+            )}
           </button>
         </div>
 
         {/* Filter Controls Row */}
         <div className="flex flex-wrap gap-3 font-mono text-xs">
           <select
-            value={filterSeason}
-            onChange={(e) => setFilterSeason(e.target.value)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-amber-400/50 outline-none"
+            value={selectedSeasonId}
+            onChange={(e) => setSelectedSeasonId(e.target.value)}
+            disabled={loadingStats}
+            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-amber-400/50 outline-none disabled:bg-slate-100"
           >
-            <option value="all">All Seasons</option>
-            <option value="Season 2024">Season 2024</option>
-            <option value="Season 2023">Season 2023</option>
+            {seasons.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.description || s.id} {s.is_active ? '(Active)' : ''}
+              </option>
+            ))}
           </select>
 
           <select
@@ -474,10 +559,11 @@ export default function SeasonPlayerStats() {
             className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-amber-400/50 outline-none"
           >
             <option value="all">All Teams</option>
-            <option value="MUN">Manchester United (MUN)</option>
-            <option value="MCI">Manchester City (MCI)</option>
-            <option value="LIV">Liverpool (LIV)</option>
-            <option value="CHE">Chelsea (CHE)</option>
+            {uniqueTeams.map((t) => (
+              <option key={t.code} value={t.code}>
+                {t.name} ({t.code})
+              </option>
+            ))}
           </select>
 
           <select
@@ -526,7 +612,12 @@ export default function SeasonPlayerStats() {
           )}
         </div>
 
-        {sortedPlayers.length > 0 ? (
+        {loadingStats ? (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4 bg-white">
+            <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest animate-pulse">Syncing player stats...</p>
+          </div>
+        ) : sortedPlayers.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-100">
               <thead className="bg-slate-50/50 font-mono text-[10px] text-slate-500 uppercase tracking-wider">
@@ -547,7 +638,7 @@ export default function SeasonPlayerStats() {
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white text-xs font-mono text-slate-700">
                 {sortedPlayers.map((player) => (
-                  <tr key={player.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={player.id} className="hover:bg-slate-55 transition-colors">
                     <td className="px-4 py-3.5 whitespace-nowrap font-medium text-amber-600">
                       {player.player_id}
                     </td>
@@ -571,7 +662,7 @@ export default function SeasonPlayerStats() {
                           {player.team_code}
                         </span>
                       ) : (
-                        <span className="text-slate-400">Unsold</span>
+                        <span className="text-slate-400 font-normal">Unsold</span>
                       )}
                     </td>
                     <td className="px-4 py-3.5 whitespace-nowrap font-bold text-slate-900">
@@ -609,7 +700,7 @@ export default function SeasonPlayerStats() {
             <Users className="w-12 h-12 mx-auto text-slate-300 mb-4 animate-pulse" />
             <h4 className="font-extrabold text-slate-800 mb-1 text-sm">No Performance Records Found</h4>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              {searchQuery || filterSeason !== 'all' || filterPosition !== 'all' || filterTeam !== 'all' || filterStatus !== 'all'
+              {searchQuery || filterPosition !== 'all' || filterTeam !== 'all' || filterStatus !== 'all'
                 ? 'No stats match the criteria. Adjust filter query parameters.'
                 : 'No performance telemetry registered for this season context.'}
             </p>

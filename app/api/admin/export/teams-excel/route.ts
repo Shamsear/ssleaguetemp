@@ -111,30 +111,54 @@ export async function GET(request: NextRequest) {
         ORDER BY fp.position, fp.name
       `;
 
-      // Get real players from tournament database player_seasons table
+      // Get real players from tournament database
       let realPlayers: any[] = [];
       let realPlayerBalance = 0;
       let realPlayerSpent = 0;
       try {
-        realPlayers = await tournamentSql`
-          SELECT 
-            ps.id,
-            ps.player_name as name,
-            ps.category as position,
-            ps.auction_value as acquisition_value,
-            ps.salary_per_match,
-            ps.star_rating,
-            ps.points,
-            ps.contract_start_season,
-            ps.contract_end_season,
-            ps.status,
-            NULL as round_number
-          FROM player_seasons ps
-          WHERE ps.team_id = ${team.id}
-          AND ps.season_id = ${seasonId}
-          AND ps.status = 'active'
-          ORDER BY ps.player_name
-        `;
+        const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+        const isModern = seasonNum === 16 || seasonNum === 17;
+
+        if (isModern) {
+          realPlayers = await tournamentSql`
+            SELECT 
+              ps.id,
+              ps.player_name as name,
+              ps.category as position,
+              ps.auction_value as acquisition_value,
+              ps.salary_per_match,
+              ps.star_rating,
+              ps.points,
+              ps.contract_start_season,
+              ps.contract_end_season,
+              ps.status,
+              NULL as round_number
+            FROM player_seasons ps
+            WHERE ps.team_id = ${team.id}
+            AND ps.season_id = ${seasonId}
+            AND ps.status = 'active'
+            ORDER BY ps.player_name
+          `;
+        } else {
+          realPlayers = await tournamentSql`
+            SELECT 
+              ps.id,
+              ps.player_name as name,
+              ps.category as position,
+              0 as acquisition_value,
+              0 as salary_per_match,
+              3 as star_rating,
+              ps.points,
+              NULL as contract_start_season,
+              NULL as contract_end_season,
+              'active' as status,
+              NULL as round_number
+            FROM realplayerstats ps
+            WHERE ps.team_id = ${team.id}
+            AND ps.season_id = ${seasonId}
+            ORDER BY ps.player_name
+          `;
+        }
         
         // Calculate real player spent and balance
         realPlayerSpent = realPlayers.reduce((sum, p) => sum + (parseFloat(p.acquisition_value) || 0), 0);

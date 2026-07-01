@@ -20,7 +20,24 @@ export async function GET(request: NextRequest) {
         ps.created_at,
         ps.updated_at
       FROM player_seasons ps
-      ORDER BY ps.created_at DESC
+      
+      UNION ALL
+      
+      SELECT 
+        rps.id,
+        rps.player_id,
+        rps.team_id,
+        rps.season_id,
+        rps.player_name,
+        rps.category,
+        rps.star_rating,
+        rps.points,
+        'active' as registration_status,
+        rps.created_at,
+        rps.updated_at
+      FROM realplayerstats rps
+      
+      ORDER BY created_at DESC
     `;
     
     return NextResponse.json({

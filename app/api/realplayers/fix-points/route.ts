@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/auth-helper';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { adminDb } from '@/lib/firebase/admin';
 
 // Base points by star rating
 const STAR_RATING_BASE_POINTS: { [key: number]: number } = {
@@ -38,24 +39,58 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    // Fetch Firestore categories to compute category-based points if needed
+    let categoriesMap = new Map();
+    if (!isModern) {
+      const categoriesSnapshot = await adminDb.collection('categories').get();
+      categoriesSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        categoriesMap.set(doc.id.toLowerCase(), data);
+        if (data.name) {
+          categoriesMap.set(data.name.toLowerCase(), data);
+        }
+      });
+    }
+
     const sql = getTournamentDb();
     
     // Get all players for this season with their match history
-    const players = await sql`
-      SELECT 
-        ps.id,
-        ps.player_id,
-        ps.player_name,
-        ps.season_id,
-        ps.star_rating,
-        ps.matches_played,
-        ps.goals_scored,
-        ps.goals_conceded,
-        ps.processed_fixtures
-      FROM player_seasons ps
-      WHERE ps.season_id = ${season_id}
-      ORDER BY ps.player_name
-    `;
+    const players = isModern
+      ? await sql`
+          SELECT 
+            ps.id,
+            ps.player_id,
+            ps.player_name,
+            ps.season_id,
+            ps.star_rating,
+            ps.category,
+            ps.matches_played,
+            ps.goals_scored,
+            ps.goals_conceded,
+            ps.processed_fixtures
+          FROM player_seasons ps
+          WHERE ps.season_id = ${season_id}
+          ORDER BY ps.player_name
+        `
+      : await sql`
+          SELECT 
+            ps.id,
+            ps.player_id,
+            ps.player_name,
+            ps.season_id,
+            3 as star_rating,
+            ps.category,
+            ps.matches_played,
+            ps.goals_scored,
+            ps.goals_conceded,
+            ps.processed_fixtures
+          FROM realplayerstats ps
+          WHERE ps.season_id = ${season_id}
+          ORDER BY ps.player_name
+        `;
 
     console.log(`Found ${players.length} players in season ${season_id}`);
 
@@ -64,8 +99,15 @@ export async function POST(request: NextRequest) {
 
     for (const player of players) {
       try {
-        const starRating = player.star_rating || 3;
-        const basePoints = STAR_RATING_BASE_POINTS[starRating] || 100;
+        let basePoints = 100;
+        if (isModern) {
+          const starRating = player.star_rating || 3;
+          basePoints = STAR_RATING_BASE_POINTS[starRating] || 100;
+        } else {
+          const catName = (player.category || '').toLowerCase();
+          const catData = categoriesMap.get(catName);
+          basePoints = catData ? (parseInt(catData.base_points) || 100) : 100;
+        }
         
         // Calculate total GD from all matches
         // We need to get match-by-match results to calculate GD properly
@@ -89,12 +131,21 @@ export async function POST(request: NextRequest) {
         const newPoints = basePoints + totalPointsChange;
 
         // Update player points
-        await sql`
-          UPDATE player_seasons
-          SET points = ${newPoints},
-              updated_at = NOW()
-          WHERE id = ${player.id}
-        `;
+        if (isModern) {
+          await sql`
+            UPDATE player_seasons
+            SET points = ${newPoints},
+                updated_at = NOW()
+            WHERE id = ${player.id}
+          `;
+        } else {
+          await sql`
+            UPDATE realplayerstats
+            SET points = ${newPoints},
+                updated_at = NOW()
+            WHERE id = ${player.id}
+          `;
+        }
 
         updates.push({
           player_id: player.player_id,

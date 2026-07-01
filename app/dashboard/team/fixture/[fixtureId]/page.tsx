@@ -321,8 +321,48 @@ export default function FixturePage() {
           : 'DRAW'
       : '';
 
-    // Get MOTM player name from fixture
-    const motmName = fixture.motm_player_name || 'Not selected';
+    // Build Score Breakdown details
+    let homeDetails = '';
+    if (hasResults) {
+      if (activeScoring === 'wins') {
+        if (homePenaltyGoals > 0) {
+          homeDetails = `\n   - Fine/Violation Goals: +${homePenaltyGoals}`;
+        }
+      } else {
+        const details = [];
+        if (awaySubPenalties > 0) {
+          details.push(`   - Opponent Sub Penalties: +${awaySubPenalties}`);
+        }
+        if (homePenaltyGoals > 0) {
+          details.push(`   - Fine/Violation Goals: +${homePenaltyGoals}`);
+        }
+        if (details.length > 0) {
+          homeDetails = '\n' + details.join('\n');
+        }
+      }
+    }
+
+    let awayDetails = '';
+    if (hasResults) {
+      if (activeScoring === 'wins') {
+        if (awayPenaltyGoals > 0) {
+          awayDetails = `\n   - Fine/Violation Goals: +${awayPenaltyGoals}`;
+        }
+      } else {
+        const details = [];
+        if (homeSubPenalties > 0) {
+          details.push(`   - Opponent Sub Penalties: +${homeSubPenalties}`);
+        }
+        if (awayPenaltyGoals > 0) {
+          details.push(`   - Fine/Violation Goals: +${awayPenaltyGoals}`);
+        }
+        if (details.length > 0) {
+          awayDetails = '\n' + details.join('\n');
+        }
+      }
+    }
+
+    const motmName = fixture.motm_player_name ? fixture.motm_player_name.toUpperCase() : 'Not selected';
 
     // Extract season number from season_id (e.g., SSPSLS16 {"->"} 16)
     const seasonMatch = fixture.season_id.match(/\d+$/);
@@ -347,81 +387,55 @@ export default function FixturePage() {
     const hasAnySubstitutes = homeSubstitutes.length > 0 || awaySubstitutes.length > 0;
 
     const text = `*SS PES SUPER LEAGUE - S${seasonNumber}*
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-${knockoutRoundName ? `*${knockoutRoundName}* <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />\n\n` : `*MATCHDAY ${fixture.round_number}* - ${fixture.leg === 'first' ? '1st' : '2nd'} Leg\n\n`}*${fixture.home_team_name}*  vs  *${fixture.away_team_name}*
-
-${scoringSystem && scoringSystem !== tournamentSystem ? `\n⚡ *${scoringSystem === 'wins' ? 'WIN-BASED' : 'GOAL-BASED'} SCORING*\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
+${knockoutRoundName ? `*${knockoutRoundName}* 🏆\n` : `*MATCHDAY ${fixture.round_number}* - ${fixture.leg === 'first' ? '1st' : '2nd'} Leg\n`}*${fixture.home_team_name}*  vs  *${fixture.away_team_name}*
+${scoringSystem && scoringSystem !== tournamentSystem ? `⚡ *${scoringSystem === 'wins' ? 'WIN-BASED' : 'GOAL-BASED'} SCORING*\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 *MATCHUPS:*
-
 ${matchups.map((m, idx) => {
       // Format player names - show substitute name only (not original)
-      const homePlayerDisplay = m.home_substituted ? m.home_player_name : m.home_player_name;
-      const awayPlayerDisplay = m.away_substituted ? m.away_player_name : m.away_player_name;
+      const homePlayerDisplay = (m.home_player_name || '').toUpperCase();
+      const awayPlayerDisplay = (m.away_player_name || '').toUpperCase();
 
       let line = '';
       if (hasResults && m.home_goals !== null && m.away_goals !== null) {
-        line = `${idx + 1}. ${homePlayerDisplay} *${m.home_goals}-${m.away_goals}* ${awayPlayerDisplay}`;
+        line = `${homePlayerDisplay} *${m.home_goals}-${m.away_goals}* ${awayPlayerDisplay}`;
       } else {
-        line = `${idx + 1}. ${homePlayerDisplay} vs ${awayPlayerDisplay}`;
+        line = `${homePlayerDisplay} vs ${awayPlayerDisplay}`;
       }
       line += ` (${m.match_duration || 6}min)`;
 
       return line;
-    }).join('\n\n')}
-
-${hasAnySubstitutes ? `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
+    }).join('\n')}
+${hasAnySubstitutes ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 *SUBSTITUTES:*
-
-${homeSubstitutes.length > 0 ? `*${fixture.home_team_name}:*\n${homeSubstitutes.map((sub, idx) => `   ${idx + 1}. ${sub.player_name}`).join('\n')}` : ''}${homeSubstitutes.length > 0 && awaySubstitutes.length > 0 ? '\n\n' : ''}${awaySubstitutes.length > 0 ? `*${fixture.away_team_name}:*\n${awaySubstitutes.map((sub, idx) => `   ${idx + 1}. ${sub.player_name}`).join('\n')}` : ''}
-` : ''}
-
-${hasSubstitutions ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
+${homeSubstitutes.length > 0 ? `*${fixture.home_team_name}:*\n${homeSubstitutes.map((sub, idx) => `   ${idx + 1}. ${(sub.player_name || '').toUpperCase()}`).join('\n')}` : ''}${homeSubstitutes.length > 0 && awaySubstitutes.length > 0 ? '\n\n' : ''}${awaySubstitutes.length > 0 ? `*${fixture.away_team_name}:*\n${awaySubstitutes.map((sub, idx) => `   ${idx + 1}. ${(sub.player_name || '').toUpperCase()}`).join('\n')}` : ''}
+` : ''}${hasSubstitutions ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 *SUBSTITUTIONS MADE:*
-
 ${substitutions.map(m => {
       let subText = [];
       if (m.home_substituted) {
-        subText.push(`⚠️ ${fixture.home_team_name}: ${m.home_original_player_name} {"->"} ${m.home_player_name} (+${m.home_sub_penalty || 0} penalty to opponent)`);
+        subText.push(`⚠️ ${fixture.home_team_name}: ${(m.home_original_player_name || '').toUpperCase()} -> ${(m.home_player_name || '').toUpperCase()} (+${m.home_sub_penalty || 0} penalty to opponent)`);
       }
       if (m.away_substituted) {
-        subText.push(`⚠️ ${fixture.away_team_name}: ${m.away_original_player_name} {"->"} ${m.away_player_name} (+${m.away_sub_penalty || 0} penalty to opponent)`);
+        subText.push(`⚠️ ${fixture.away_team_name}: ${(m.away_original_player_name || '').toUpperCase()} -> ${(m.away_player_name || '').toUpperCase()} (+${m.away_sub_penalty || 0} penalty to opponent)`);
       }
       return subText.join('\n');
     }).join('\n')}
-
 ` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 *SCORE BREAKDOWN:*
 
 *${fixture.home_team_name}*
-Total: *${hasResults ? homeTotalScore : 0}* ${activeScoring === 'wins' ? 'points' : 'goals'}
-${hasResults && activeScoring === 'wins' ? `   - Matchup Points: ${homePlayerScore}
-${homePenaltyGoals > 0 ? `   - Fine/Violation Goals: +${homePenaltyGoals}\n` : ''}` : hasResults ? `   - Player Goals: ${homePlayerScore}
-${awaySubPenalties > 0 ? `   - Opponent Sub Penalties: +${awaySubPenalties}\n` : ''}${homePenaltyGoals > 0 ? `   - Fine/Violation Goals: +${homePenaltyGoals}\n` : ''}` : ''}
-*${fixture.away_team_name}*
-Total: *${hasResults ? awayTotalScore : 0}* ${activeScoring === 'wins' ? 'points' : 'goals'}
-${hasResults && activeScoring === 'wins' ? `   - Matchup Points: ${awayPlayerScore}
-${awayPenaltyGoals > 0 ? `   - Fine/Violation Goals: +${awayPenaltyGoals}\n` : ''}` : hasResults ? `   - Player Goals: ${awayPlayerScore}
-${homeSubPenalties > 0 ? `   - Opponent Sub Penalties: +${homeSubPenalties}\n` : ''}${awayPenaltyGoals > 0 ? `   - Fine/Violation Goals: +${awayPenaltyGoals}\n` : ''}` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total: *${hasResults ? homeTotalScore : 0}* ${activeScoring === 'wins' ? 'points' : 'goals'}${homeDetails}
 
+*${fixture.away_team_name}*
+Total: *${hasResults ? awayTotalScore : 0}* ${activeScoring === 'wins' ? 'points' : 'goals'}${awayDetails}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 *MAN OF THE MATCH*
 ${hasResults ? `${motmName}` : 'To be announced'}
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 ${hasResults ? `*RESULT*
-${winner === 'DRAW' ? '*MATCH DRAWN*' : `*${winner} WON!*`}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━` : `*Match yet to be played*
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━`}
-
+${winner === 'DRAW' ? '*MATCH DRAWN*' : `*${winner.toUpperCase()} WON!*`}` : `*Match yet to be played*`}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 _Powered by SS Super League S${seasonNumber} Committee_`;
 
     return text;

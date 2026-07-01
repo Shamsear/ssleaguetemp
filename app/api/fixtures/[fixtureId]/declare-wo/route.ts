@@ -3,10 +3,9 @@ import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
 
 /**
- * PATCH - Declare Walkover (WO) when one team is absent
- * Awards automatic win to the present team
+ * POST - Declare a Walkover (one team absent)
  */
-export async function PATCH(
+export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ fixtureId: string }> }
 ) {
@@ -16,16 +15,26 @@ export async function PATCH(
     const body = await request.json();
     const { absent_team, declared_by, declared_by_name, notes } = body;
 
-    if (!absent_team || (absent_team !== 'home' && absent_team !== 'away')) {
+    if (!fixtureId) {
       return NextResponse.json(
-        { error: 'Invalid absent_team. Must be "home" or "away"' },
+        { error: 'fixtureId is required' },
         { status: 400 }
       );
     }
 
-    // Fetch fixture
+    if (!absent_team || !['home', 'away'].includes(absent_team)) {
+      return NextResponse.json(
+        { error: 'Valid absent_team (home or away) is required' },
+        { status: 400 }
+      );
+    }
+
+    // Fetch fixture first
     const fixtures = await sql`
-      SELECT * FROM fixtures WHERE id = ${fixtureId} LIMIT 1
+      SELECT id, season_id, round_number, match_number, home_team_name, away_team_name, tournament_id
+      FROM fixtures
+      WHERE id = ${fixtureId}
+      LIMIT 1
     `;
 
     if (fixtures.length === 0) {
@@ -38,13 +47,13 @@ export async function PATCH(
     const fixture = fixtures[0];
 
     // Award WO (typically 3-0 or similar score)
-    const woScore = 3; // Can be configurable
+    const woScore = 3; 
     const matchStatusReason = absent_team === 'home' ? 'wo_home_absent' : 'wo_away_absent';
     const homeScore = absent_team === 'home' ? 0 : woScore;
     const awayScore = absent_team === 'away' ? 0 : woScore;
     const result = absent_team === 'home' ? 'away_win' : 'home_win';
 
-    // Update fixture
+    // Update fixture using valid columns
     await sql`
       UPDATE fixtures
       SET 
@@ -52,86 +61,71 @@ export async function PATCH(
         home_score = ${homeScore},
         away_score = ${awayScore},
         result = ${result},
-        match_status_reason = ${matchStatusReason},
-        declared_by = ${declared_by || null},
-        declared_by_name = ${declared_by_name || null},
-        declared_at = NOW(),
-        updated_by = ${declared_by || null},
-        updated_by_name = ${declared_by_name || null},
+        notes = ${notes || `Walkover declared - ${absent_team === 'home' ? 'Home' : 'Away'} team absent`},
         updated_at = NOW()
       WHERE id = ${fixtureId}
     `;
 
-    // Log in audit trail
+    // Log in audit trail using valid columns
     await sql`
       INSERT INTO fixture_audit_log (
         fixture_id,
-        action_type,
-        action_by,
-        action_by_name,
-        notes,
-        season_id,
-        round_number,
-        match_number,
-        changes
+        change_type,
+        changed_by,
+        changes,
+        tournament_id
       ) VALUES (
         ${fixtureId},
         'wo_declared',
-        ${declared_by || 'system'},
         ${declared_by_name || 'Committee Admin'},
-        ${notes || `Walkover - ${absent_team} team absent`},
-        ${fixture.season_id},
-        ${fixture.round_number},
-        ${fixture.match_number},
         ${JSON.stringify({
           absent_team,
-          awarded_to: absent_team === 'home' ? fixture.away_team_name : fixture.home_team_name,
-          score: `${homeScore}-${awayScore}`
-        })}
+          home_score: homeScore,
+          away_score: awayScore,
+          result,
+          reason: matchStatusReason,
+          note: notes || `Walkover declared - ${absent_team === 'home' ? 'Home' : 'Away'} team absent`,
+          season_id: fixture.season_id,
+          round_number: fixture.round_number,
+          match_number: fixture.match_number,
+          declared_by: declared_by || 'system'
+        })},
+        ${fixture.tournament_id || null}
       )
     `;
 
     // Send FCM notification
-    const winnerTeam = absent_team === 'home' ? fixture.away_team_name : fixture.home_team_name;
     try {
+      const winningTeamName = absent_team === 'home' ? fixture.away_team_name : fixture.home_team_name;
+      const losingTeamName = absent_team === 'home' ? fixture.home_team_name : fixture.away_team_name;
+      
       await sendNotificationToSeason(
         {
-          title: '🚨 Walkover Declared',
-          body: `${fixture.home_team_name} vs ${fixture.away_team_name}: ${winnerTeam} wins by WO (${homeScore}-${awayScore})`,
+          title: '🏆 Walkover Declared',
+          body: `${winningTeamName} awarded Walkover win against ${losingTeamName} (${absent_team === 'home' ? 'Home' : 'Away'} absent)`,
           url: `/fixtures/${fixtureId}`,
           icon: '/logo.png',
           data: {
             type: 'walkover',
             fixture_id: fixtureId,
-            home_team: fixture.home_team_name,
-            away_team: fixture.away_team_name,
-            absent_team,
-            winner: winnerTeam,
-            score: `${homeScore}-${awayScore}`,
+            winner: winningTeamName,
+            loser: losingTeamName,
           }
         },
         fixture.season_id
       );
-    } catch (notifError) {
-      console.error('Failed to send walkover notification:', notifError);
-      // Don't fail the request
+    } catch (notifErr) {
+      console.error('Failed to send declare-wo notification:', notifErr);
     }
 
     return NextResponse.json({
       success: true,
-      message: `Walkover declared - ${absent_team} team absent`,
-      fixture: {
-        id: fixtureId,
-        home_score: homeScore,
-        away_score: awayScore,
-        result,
-        match_status_reason: matchStatusReason
-      }
+      message: 'Walkover successfully declared',
     });
-  } catch (error) {
-    console.error('Error declaring walkover:', error);
+  } catch (error: any) {
+    console.error('Error declaring Walkover:', error);
     return NextResponse.json(
-      { error: 'Failed to declare walkover' },
+      { error: error.message || 'Failed to declare Walkover' },
       { status: 500 }
     );
   }

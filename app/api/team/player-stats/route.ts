@@ -69,121 +69,239 @@ export async function GET(request: NextRequest) {
 
     const sql = getTournamentDb();
 
-    // Get base player info from player_seasons (just for player details and base_points)
-    const playerInfo = await sql`
-      SELECT 
-        id,
-        player_id,
-        player_name,
-        season_id,
-        team,
-        points as total_points,
-        base_points,
-        star_rating,
-        category,
-        auction_value,
-        registration_status
-      FROM player_seasons
-      WHERE team_id = ${teamId}
-        AND season_id = ${seasonId}
-        AND registration_status = 'active'
-    `;
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    // Get base player info from correct table (just for player details and base_points)
+    let playerInfo;
+    if (isModern) {
+      playerInfo = await sql`
+        SELECT 
+          id,
+          player_id,
+          player_name,
+          season_id,
+          team,
+          points as total_points,
+          base_points,
+          star_rating,
+          category,
+          auction_value,
+          registration_status
+        FROM player_seasons
+        WHERE team_id = ${teamId}
+          AND season_id = ${seasonId}
+          AND registration_status = 'active'
+      `;
+    } else {
+      playerInfo = await sql`
+        SELECT 
+          id,
+          player_id,
+          player_name,
+          season_id,
+          team,
+          points as total_points,
+          0 as base_points,
+          star_rating,
+          category,
+          0 as auction_value,
+          'active' as registration_status
+        FROM realplayerstats
+        WHERE team_id = ${teamId}
+          AND season_id = ${seasonId}
+      `;
+    }
 
     // Calculate stats from matchups table for the selected round range
-    const statsFromMatchups = await sql`
-      WITH player_matches AS (
+    let statsFromMatchups;
+    if (isModern) {
+      statsFromMatchups = await sql`
+        WITH player_matches AS (
+          SELECT 
+            ps.id as player_season_id,
+            ps.player_id,
+            m.round_number,
+            m.home_player_id,
+            m.away_player_id,
+            m.home_goals,
+            m.away_goals,
+            CASE 
+              WHEN m.home_player_id = ps.player_id THEN m.home_goals
+              WHEN m.away_player_id = ps.player_id THEN m.away_goals
+            END as goals_scored,
+            CASE 
+              WHEN m.home_player_id = ps.player_id THEN m.away_goals
+              WHEN m.away_player_id = ps.player_id THEN m.home_goals
+            END as goals_conceded,
+            CASE 
+              WHEN m.home_player_id = ps.player_id THEN 
+                CASE 
+                  WHEN m.home_goals > m.away_goals THEN 1
+                  ELSE 0
+                END
+              WHEN m.away_player_id = ps.player_id THEN 
+                CASE 
+                  WHEN m.away_goals > m.home_goals THEN 1
+                  ELSE 0
+                END
+            END as is_win,
+            CASE 
+              WHEN m.home_player_id = ps.player_id THEN 
+                CASE 
+                  WHEN m.home_goals = m.away_goals THEN 1
+                  ELSE 0
+                END
+              WHEN m.away_player_id = ps.player_id THEN 
+                CASE 
+                  WHEN m.away_goals = m.home_goals THEN 1
+                  ELSE 0
+                END
+            END as is_draw,
+            CASE 
+              WHEN m.home_player_id = ps.player_id THEN 
+                CASE 
+                  WHEN m.home_goals < m.away_goals THEN 1
+                  ELSE 0
+                END
+              WHEN m.away_player_id = ps.player_id THEN 
+                CASE 
+                  WHEN m.away_goals < m.home_goals THEN 1
+                  ELSE 0
+                END
+            END as is_loss,
+            CASE 
+              WHEN m.home_player_id = ps.player_id AND m.away_goals = 0 THEN 1
+              WHEN m.away_player_id = ps.player_id AND m.home_goals = 0 THEN 1
+              ELSE 0
+            END as is_clean_sheet
+          FROM player_seasons ps
+          JOIN matchups m ON (m.home_player_id = ps.player_id OR m.away_player_id = ps.player_id)
+          JOIN fixtures f ON m.fixture_id = f.id
+          WHERE ps.team_id = ${teamId}
+            AND ps.season_id = ${seasonId}
+            AND m.season_id = ${seasonId}
+            AND m.round_number >= ${fromRound}
+            AND m.round_number <= ${toRound}
+            AND f.status = 'completed'
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+        )
         SELECT 
-          ps.id as player_season_id,
-          ps.player_id,
-          m.round_number,
-          m.home_player_id,
-          m.away_player_id,
-          m.home_goals,
-          m.away_goals,
-          CASE 
-            WHEN m.home_player_id = ps.player_id THEN m.home_goals
-            WHEN m.away_player_id = ps.player_id THEN m.away_goals
-          END as goals_scored,
-          CASE 
-            WHEN m.home_player_id = ps.player_id THEN m.away_goals
-            WHEN m.away_player_id = ps.player_id THEN m.home_goals
-          END as goals_conceded,
-          CASE 
-            WHEN m.home_player_id = ps.player_id THEN 
-              CASE 
-                WHEN m.home_goals > m.away_goals THEN 1
-                WHEN m.home_goals = m.away_goals THEN 0
-                ELSE 0
-              END
-            WHEN m.away_player_id = ps.player_id THEN 
-              CASE 
-                WHEN m.away_goals > m.home_goals THEN 1
-                WHEN m.away_goals = m.home_goals THEN 0
-                ELSE 0
-              END
-          END as is_win,
-          CASE 
-            WHEN m.home_player_id = ps.player_id THEN 
-              CASE 
-                WHEN m.home_goals = m.away_goals THEN 1
-                ELSE 0
-              END
-            WHEN m.away_player_id = ps.player_id THEN 
-              CASE 
-                WHEN m.away_goals = m.home_goals THEN 1
-                ELSE 0
-              END
-          END as is_draw,
-          CASE 
-            WHEN m.home_player_id = ps.player_id THEN 
-              CASE 
-                WHEN m.home_goals < m.away_goals THEN 1
-                ELSE 0
-              END
-            WHEN m.away_player_id = ps.player_id THEN 
-              CASE 
-                WHEN m.away_goals < m.home_goals THEN 1
-                ELSE 0
-              END
-          END as is_loss,
-          CASE 
-            WHEN m.home_player_id = ps.player_id AND m.away_goals = 0 THEN 1
-            WHEN m.away_player_id = ps.player_id AND m.home_goals = 0 THEN 1
-            ELSE 0
-          END as is_clean_sheet
-        FROM player_seasons ps
-        JOIN matchups m ON (m.home_player_id = ps.player_id OR m.away_player_id = ps.player_id)
-        JOIN fixtures f ON m.fixture_id = f.id
-        WHERE ps.team_id = ${teamId}
-          AND ps.season_id = ${seasonId}
-          AND m.season_id = ${seasonId}
-          AND m.round_number >= ${fromRound}
-          AND m.round_number <= ${toRound}
-          AND f.status = 'completed'
-          AND m.home_goals IS NOT NULL
-          AND m.away_goals IS NOT NULL
-      )
-      SELECT 
-        player_season_id,
-        player_id,
-        COUNT(*) as matches_played,
-        SUM(goals_scored) as goals_scored,
-        SUM(goals_conceded) as goals_conceded,
-        SUM(goals_scored) - SUM(goals_conceded) as goal_difference,
-        SUM(is_win) as wins,
-        SUM(is_draw) as draws,
-        SUM(is_loss) as losses,
-        SUM(is_clean_sheet) as clean_sheets,
-        SUM(
-          CASE 
-            WHEN (goals_scored - goals_conceded) > 5 THEN 5
-            WHEN (goals_scored - goals_conceded) < -5 THEN -5
-            ELSE (goals_scored - goals_conceded)
-          END
-        ) as points
-      FROM player_matches
-      GROUP BY player_season_id, player_id
-    `;
+          player_season_id,
+          player_id,
+          COUNT(*) as matches_played,
+          SUM(goals_scored) as goals_scored,
+          SUM(goals_conceded) as goals_conceded,
+          SUM(goals_scored) - SUM(goals_conceded) as goal_difference,
+          SUM(is_win) as wins,
+          SUM(is_draw) as draws,
+          SUM(is_loss) as losses,
+          SUM(is_clean_sheet) as clean_sheets,
+          SUM(
+            CASE 
+              WHEN (goals_scored - goals_conceded) > 5 THEN 5
+              WHEN (goals_scored - goals_conceded) < -5 THEN -5
+              ELSE (goals_scored - goals_conceded)
+            END
+          ) as points
+        FROM player_matches
+        GROUP BY player_season_id, player_id
+      `;
+    } else {
+      statsFromMatchups = await sql`
+        WITH player_matches AS (
+          SELECT 
+            ps.id as player_season_id,
+            ps.player_id,
+            m.round_number,
+            m.home_player_id,
+            m.away_player_id,
+            m.home_goals,
+            m.away_goals,
+            CASE 
+              WHEN m.home_player_id = ps.player_id THEN m.home_goals
+              WHEN m.away_player_id = ps.player_id THEN m.away_goals
+            END as goals_scored,
+            CASE 
+              WHEN m.home_player_id = ps.player_id THEN m.away_goals
+              WHEN m.away_player_id = ps.player_id THEN m.home_goals
+            END as goals_conceded,
+            CASE 
+              WHEN m.home_player_id = ps.player_id THEN 
+                CASE 
+                  WHEN m.home_goals > m.away_goals THEN 1
+                  ELSE 0
+                END
+              WHEN m.away_player_id = ps.player_id THEN 
+                CASE 
+                  WHEN m.away_goals > m.home_goals THEN 1
+                  ELSE 0
+                END
+            END as is_win,
+            CASE 
+              WHEN m.home_player_id = ps.player_id THEN 
+                CASE 
+                  WHEN m.home_goals = m.away_goals THEN 1
+                  ELSE 0
+                END
+              WHEN m.away_player_id = ps.player_id THEN 
+                CASE 
+                  WHEN m.away_goals = m.home_goals THEN 1
+                  ELSE 0
+                END
+            END as is_draw,
+            CASE 
+              WHEN m.home_player_id = ps.player_id THEN 
+                CASE 
+                  WHEN m.home_goals < m.away_goals THEN 1
+                  ELSE 0
+                END
+              WHEN m.away_player_id = ps.player_id THEN 
+                CASE 
+                  WHEN m.away_goals < m.home_goals THEN 1
+                  ELSE 0
+                END
+            END as is_loss,
+            CASE 
+              WHEN m.home_player_id = ps.player_id AND m.away_goals = 0 THEN 1
+              WHEN m.away_player_id = ps.player_id AND m.home_goals = 0 THEN 1
+              ELSE 0
+            END as is_clean_sheet
+          FROM realplayerstats ps
+          JOIN matchups m ON (m.home_player_id = ps.player_id OR m.away_player_id = ps.player_id)
+          JOIN fixtures f ON m.fixture_id = f.id
+          WHERE ps.team_id = ${teamId}
+            AND ps.season_id = ${seasonId}
+            AND m.season_id = ${seasonId}
+            AND m.round_number >= ${fromRound}
+            AND m.round_number <= ${toRound}
+            AND f.status = 'completed'
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+        )
+        SELECT 
+          player_season_id,
+          player_id,
+          COUNT(*) as matches_played,
+          SUM(goals_scored) as goals_scored,
+          SUM(goals_conceded) as goals_conceded,
+          SUM(goals_scored) - SUM(goals_conceded) as goal_difference,
+          SUM(is_win) as wins,
+          SUM(is_draw) as draws,
+          SUM(is_loss) as losses,
+          SUM(is_clean_sheet) as clean_sheets,
+          SUM(
+            CASE 
+              WHEN (goals_scored - goals_conceded) > 5 THEN 5
+              WHEN (goals_scored - goals_conceded) < -5 THEN -5
+              ELSE (goals_scored - goals_conceded)
+            END
+          ) as points
+        FROM player_matches
+        GROUP BY player_season_id, player_id
+      `;
+    }
 
     // Merge player info with calculated stats
     const players = playerInfo.map(player => {

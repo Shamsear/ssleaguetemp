@@ -28,7 +28,7 @@ export async function GET(
       // Extract season number to determine which table to query
       const seasonNum = parseInt(seasonId.match(/\d+/)?.[0] || '0');
 
-      if (seasonNum >= 16) {
+      if (seasonNum === 16 || seasonNum === 17) {
         // Season 16+: Query player_seasons table
         modernPlayers = await sql`
           SELECT 

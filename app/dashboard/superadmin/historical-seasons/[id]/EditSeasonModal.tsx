@@ -403,10 +403,10 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
             <button
               type="submit"
               disabled={isSaving}
-              className={`px-6 py-2.5 rounded-xl font-medium text-white transition-all ${
+              className={`px-6 py-2.5 text-xs font-mono rounded-xl font-medium text-white transition-all ${
                 isSaving
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-[#0066FF] to-purple-600 hover:shadow-lg transform hover:scale-105'
+                  ? 'bg-slate-400 cursor-not-allowed'
+                  : 'bg-slate-800 hover:bg-slate-900 shadow-sm'
               }`}
             >
               {isSaving ? (

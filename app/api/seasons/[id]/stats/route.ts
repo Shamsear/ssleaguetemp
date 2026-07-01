@@ -66,7 +66,7 @@ export async function GET(
 
     // Determine if season uses player_seasons or realplayerstats
     const seasonNum = parseInt(seasonId.match(/\d+/)?.[0] || '0');
-    const isModernSeason = seasonNum >= 16;
+    const isModernSeason = seasonNum === 16 || seasonNum === 17;
     const isAdjustedSeason = seasonNum === 16 || seasonNum === 17;
 
     let playerStats;
@@ -178,7 +178,9 @@ export async function GET(
         goals_scored: parseInt(player.goals_scored) || 0,
         goals_conceded: parseInt(player.goals_conceded) || 0,
         clean_sheets: parseInt(player.clean_sheets) || 0,
-        points: points
+        points: points,
+        base_points: basePoints,
+        raw_points: rawPoints
       };
     });
 

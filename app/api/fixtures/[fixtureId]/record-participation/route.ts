@@ -7,10 +7,10 @@ import { recordPlayerParticipation } from '@/lib/lineup-stats-integration';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { fixtureId: string } }
+  { params }: { params: Promise<{ fixtureId: string }> }
 ) {
   try {
-    const { fixtureId } = params;
+    const { fixtureId } = await params;
 
     if (!fixtureId) {
       return NextResponse.json(

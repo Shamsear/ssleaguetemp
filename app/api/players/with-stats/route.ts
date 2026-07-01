@@ -189,25 +189,44 @@ export async function GET(request: NextRequest) {
       console.error('[Players API] Error getting active season from Firebase:', err.message);
     }
 
-    // Batch fetch current season info (without teams join since teams are in Firebase)
-    let seasonInfo = [];
+    // Get season info (team/category)
+    let seasonInfo;
     try {
       if (activeSeasonId) {
-        seasonInfo = await sql`
-          SELECT DISTINCT ON (player_id) 
-            player_id,
-            category,
-            team_id,
-            star_rating,
-            season_id
-          FROM player_seasons
-          WHERE season_id = ${activeSeasonId}
-          ORDER BY player_id, created_at DESC
-        `;
+        const activeSeasonNum = parseInt(activeSeasonId.replace(/\D/g, '')) || 0;
+        const isActiveModern = activeSeasonNum === 16 || activeSeasonNum === 17;
+
+        if (isActiveModern) {
+          // Query player_seasons table to get team/category for active season
+          seasonInfo = await sql`
+            SELECT DISTINCT ON (player_id) 
+              player_id,
+              category,
+              team_id,
+              star_rating,
+              season_id
+            FROM player_seasons
+            WHERE season_id = ${activeSeasonId}
+            ORDER BY player_id, created_at DESC
+          `;
+        } else {
+          // Query realplayerstats table to get team/category for active season
+          seasonInfo = await sql`
+            SELECT DISTINCT ON (player_id) 
+              player_id,
+              category,
+              team_id,
+              star_rating,
+              season_id
+            FROM realplayerstats
+            WHERE season_id = ${activeSeasonId}
+            ORDER BY player_id, created_at DESC
+          `;
+        }
         console.log(`[Players API] Found season info for ${seasonInfo.length} players in season ${activeSeasonId}`);
       } else {
-        // Fallback: get the latest recorded season for each player
-        seasonInfo = await sql`
+        // Fallback: get the latest recorded season for each player from both tables and merge
+        const psInfo = await sql`
           SELECT DISTINCT ON (player_id) 
             player_id,
             category,
@@ -217,6 +236,32 @@ export async function GET(request: NextRequest) {
           FROM player_seasons
           ORDER BY player_id, season_id DESC, created_at DESC
         `;
+        
+        const rpsInfo = await sql`
+          SELECT DISTINCT ON (player_id) 
+            player_id,
+            category,
+            team_id,
+            star_rating,
+            season_id
+          FROM realplayerstats
+          ORDER BY player_id, season_id DESC, created_at DESC
+        `;
+
+        const infoMap = new Map();
+        [...psInfo, ...rpsInfo].forEach(info => {
+          const existing = infoMap.get(info.player_id);
+          if (!existing) {
+            infoMap.set(info.player_id, info);
+          } else {
+            const extNum = parseInt(existing.season_id.replace(/\D/g, '')) || 0;
+            const newNum = parseInt(info.season_id.replace(/\D/g, '')) || 0;
+            if (newNum > extNum) {
+              infoMap.set(info.player_id, info);
+            }
+          }
+        });
+        seasonInfo = Array.from(infoMap.values());
         console.log(`[Players API] Found fallback season info for ${seasonInfo.length} players`);
       }
     } catch (seasonError: any) {

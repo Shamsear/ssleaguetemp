@@ -323,7 +323,7 @@ export default function DuplicateManagementPage() {
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => togglePlayerSelection(player.id)}
-                              className="w-4.5 h-4.5 rounded border-slate-300 text-rose-550 focus:ring-rose-500/20 cursor-pointer mt-0.5 shrink-0"
+                              className="w-5 h-5 rounded border-slate-300 text-rose-550 focus:ring-rose-500/20 cursor-pointer mt-0.5 shrink-0"
                             />
                             <div className="flex flex-wrap gap-1 justify-end items-center">
                               {playerIdx === 0 && (

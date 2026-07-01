@@ -10,7 +10,7 @@ import { generatePrompt } from './prompts-bilingual';
 import { determineTone } from './determine-tone';
 
 // Prompt templates for different event types
-const PROMPT_TEMPLATES: Record<NewsEventType, (input: NewsGenerationInput) => string> = {
+const PROMPT_TEMPLATES: Partial<Record<NewsEventType, (input: NewsGenerationInput) => string>> = {
   // Player Registration Events
   player_milestone: (input) => `
 Generate a sports news article reporting on a tournament registration milestone.

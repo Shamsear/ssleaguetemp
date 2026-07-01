@@ -35,18 +35,34 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Get all players from player_seasons table in Neon
-    const sql = getTournamentDb();
-    const playersResult = await sql`
-      SELECT 
-        ps.player_id,
-        ps.player_name,
-        ps.team_id,
-        ps.team,
-        ps.star_rating
-      FROM player_seasons ps
-      WHERE ps.season_id = ${season_id}
-    `;
+    const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    // Get all players from correct database table
+    let playersResult;
+    if (isModern) {
+      playersResult = await sql`
+        SELECT 
+          ps.player_id,
+          ps.player_name,
+          ps.team_id,
+          ps.team,
+          ps.star_rating
+        FROM player_seasons ps
+        WHERE ps.season_id = ${season_id}
+      `;
+    } else {
+      playersResult = await sql`
+        SELECT 
+          ps.player_id,
+          ps.player_name,
+          ps.team_id,
+          ps.team,
+          3 as star_rating
+        FROM realplayerstats ps
+        WHERE ps.season_id = ${season_id}
+      `;
+    }
 
     console.log(`Found ${playersResult.length} players in player_seasons`);
 

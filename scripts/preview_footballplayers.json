@@ -1,0 +1,2741 @@
+{
+  "count": 342,
+  "players": [
+    {
+      "id": "807",
+      "name": "Aaron Wan-Bissaka",
+      "team_name": "West Ham RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "362",
+      "name": "Abdukodir Khusanov",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "772",
+      "name": "Achraf Hakimi",
+      "team_name": "Paris Saint-Germain",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2821",
+      "name": "Ademola Lookman",
+      "team_name": "Madrid Rosas RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "324",
+      "name": "Aitor Paredes",
+      "team_name": "Bilbao BR",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1075",
+      "name": "Alan Varela",
+      "team_name": "FC Porto",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "515",
+      "name": "Alejandro Balde",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2330",
+      "name": "Alejandro Garnacho",
+      "team_name": "Chelsea B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "518",
+      "name": "Alejandro Grimaldo",
+      "team_name": "Bayer 04 Leverkusen",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1052",
+      "name": "Aleksandar Pavlović",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "281",
+      "name": "Alessandro Bastoni",
+      "team_name": "Internazionale Milano",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2984",
+      "name": "Alexander Isak",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3006",
+      "name": "Alexander Sørloth",
+      "team_name": "Madrid Rosas RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1286",
+      "name": "Alexis Mac Allister",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1800",
+      "name": "Alexis Saelemaekers",
+      "team_name": "AC Milan",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "7",
+      "name": "Alisson Becker",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3244",
+      "name": "Alphonso Davies",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1042",
+      "name": "Amadou Onana",
+      "team_name": "Aston RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3077",
+      "name": "Amine Gouiri",
+      "team_name": "Olympique de Marseille",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "316",
+      "name": "Andreas Christensen",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "519",
+      "name": "Andrew Robertson",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2348",
+      "name": "Ansu Fati",
+      "team_name": "AS Monaco",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2317",
+      "name": "Anthony Gordon",
+      "team_name": "Newcastle WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2817",
+      "name": "Antoine Griezmann",
+      "team_name": "Madrid Rosas RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "260",
+      "name": "Antonio Rüdiger",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2592",
+      "name": "Antony",
+      "team_name": "Sevilla Triana VB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "363",
+      "name": "António Silva",
+      "team_name": "SL Benfica",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2074",
+      "name": "Arda Güler",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2351",
+      "name": "Armand Laurienté",
+      "team_name": "Sassuolo NV",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3020",
+      "name": "Artem Dovbyk",
+      "team_name": "Roma GR",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1027",
+      "name": "Aurélien Tchouaméni",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "287",
+      "name": "Aymeric Laporte",
+      "team_name": "Bilbao BR",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "774",
+      "name": "Ben White",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "315",
+      "name": "Benjamin Pavard",
+      "team_name": "Olympique de Marseille",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2999",
+      "name": "Benjamin Šeško",
+      "team_name": "Manchester United",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "458",
+      "name": "Benoît Badiashile",
+      "team_name": "Chelsea B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2058",
+      "name": "Bernardo Silva",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1060",
+      "name": "Boubacar Kamara",
+      "team_name": "Aston RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2310",
+      "name": "Bradley Barcola",
+      "team_name": "Paris Saint-Germain",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2079",
+      "name": "Brahim Díaz",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "282",
+      "name": "Bremer",
+      "team_name": "Piemonte BN",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3116",
+      "name": "Brian Brobbey",
+      "team_name": "Sunderland RWB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2054",
+      "name": "Bruno Fernandes",
+      "team_name": "Manchester United",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1036",
+      "name": "Bruno Guimarães",
+      "team_name": "Newcastle WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2568",
+      "name": "Bryan Mbeumo",
+      "team_name": "Manchester United",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2563",
+      "name": "Bukayo Saka",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3052",
+      "name": "Callum Wilson",
+      "team_name": "West Ham RB",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "325",
+      "name": "Calvin Bassey",
+      "team_name": "Fulham W",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1048",
+      "name": "Casemiro",
+      "team_name": "Manchester United",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2605",
+      "name": "Cengiz Ünder",
+      "team_name": "Beşiktaş JK",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2820",
+      "name": "Charles De Ketelaere",
+      "team_name": "Atalanta BC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2320",
+      "name": "Christian Pulišić",
+      "team_name": "AC Milan",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2822",
+      "name": "Christopher Nkunku",
+      "team_name": "AC Milan",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2316",
+      "name": "Cody Gakpo",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2052",
+      "name": "Cole Palmer",
+      "team_name": "Chelsea B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1323",
+      "name": "Conor Gallagher",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "293",
+      "name": "Cristhian Mosquera",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "283",
+      "name": "Cristian Romero",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2988",
+      "name": "Cristiano Ronaldo",
+      "team_name": "Al Nassr FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3082",
+      "name": "D. Calvert-Lewin",
+      "team_name": "Leeds W",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "352",
+      "name": "Dan Burn",
+      "team_name": "Newcastle WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2373",
+      "name": "Dango Ouattara",
+      "team_name": "Brentford RW",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "782",
+      "name": "Dani Carvajal",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2057",
+      "name": "Dani Olmo",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1316",
+      "name": "Dani Parejo",
+      "team_name": "Villarreal A",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "280",
+      "name": "Dani Vivian",
+      "team_name": "Bilbao BR",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "794",
+      "name": "Danilo",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "3057",
+      "name": "Danny Welbeck",
+      "team_name": "Brighton WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3011",
+      "name": "Darwin Núñez",
+      "team_name": "Al Hilal SFC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "318",
+      "name": "David Alaba",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "6",
+      "name": "David Raya",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "27",
+      "name": "David de Gea",
+      "team_name": "Firenze V",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "348",
+      "name": "Davinson Sánchez",
+      "team_name": "Galatasaray SK",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "267",
+      "name": "Dayot Upamecano",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "276",
+      "name": "Dean Huijsen",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1283",
+      "name": "Declan Rice",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2062",
+      "name": "Dejan Kuluševski",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1062",
+      "name": "Denis Zakaria",
+      "team_name": "AS Monaco",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1797",
+      "name": "Denzel Dumfries",
+      "team_name": "Internazionale Milano",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "20",
+      "name": "Diogo Costa",
+      "team_name": "FC Porto",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "789",
+      "name": "Diogo Dalot",
+      "team_name": "Manchester United",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3028",
+      "name": "Dominic Solanke",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "34",
+      "name": "Dominik Livaković",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "2060",
+      "name": "Dominik Szoboszlai",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3024",
+      "name": "Dušan Vlahović",
+      "team_name": "Piemonte BN",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2567",
+      "name": "Désiré Doué",
+      "team_name": "Paris Saint-Germain",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2064",
+      "name": "Eberechi Eze",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "9",
+      "name": "Ederson Moraes",
+      "team_name": "Fenerbahçe SK",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "279",
+      "name": "Edmond Tapsoba",
+      "team_name": "Bayer 04 Leverkusen",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1285",
+      "name": "Eduardo Camavinga",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3108",
+      "name": "Elye Wahi",
+      "team_name": "OGC Nice",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2098",
+      "name": "Emile Smith Rowe",
+      "team_name": "Fulham W",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "14",
+      "name": "Emiliano Martínez",
+      "team_name": "Aston RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3060",
+      "name": "Endrick",
+      "team_name": "Olympique Lyonnais",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1290",
+      "name": "Enzo Fernández",
+      "team_name": "Chelsea B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "389",
+      "name": "Eric García",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "2982",
+      "name": "Erling Haaland",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "305",
+      "name": "Evan Ndicka",
+      "team_name": "Roma GR",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3113",
+      "name": "Evann Guessand",
+      "team_name": "Crystal Palace RB",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "1041",
+      "name": "Fabinho",
+      "team_name": "Al Ittihad Club",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2334",
+      "name": "Federico Chiesa",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1540",
+      "name": "Federico Dimarco",
+      "team_name": "Internazionale Milano",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "366",
+      "name": "Federico Gatti",
+      "team_name": "Piemonte BN",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "1282",
+      "name": "Federico Valverde",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "534",
+      "name": "Ferland Mendy",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2067",
+      "name": "Fermín López",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2319",
+      "name": "Ferran Torres",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "307",
+      "name": "Fikayo Tomori",
+      "team_name": "AC Milan",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1552",
+      "name": "Filip Kostić",
+      "team_name": "Piemonte BN",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2053",
+      "name": "Florian Wirtz",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3065",
+      "name": "Folarin Balogun",
+      "team_name": "AS Monaco",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1337",
+      "name": "Franck Kessié",
+      "team_name": "Al Ahli Saudi FC",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "1287",
+      "name": "Frenkie de Jong",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3114",
+      "name": "Fábio Silva",
+      "team_name": "Borussia Dortmund",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "3051",
+      "name": "Gabriel Jesus",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "264",
+      "name": "Gabriel Magalhães",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2314",
+      "name": "Gabriel Martinelli",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1297",
+      "name": "Gavi",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1330",
+      "name": "Gerson",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1",
+      "name": "Gianluigi Donnarumma",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2081",
+      "name": "Giovani Lo Celso",
+      "team_name": "Sevilla Triana VB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "773",
+      "name": "Giovanni Di Lorenzo",
+      "team_name": "Napoli A",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1795",
+      "name": "Giuliano Simeone",
+      "team_name": "Madrid Rosas RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3001",
+      "name": "Gonçalo Ramos",
+      "team_name": "Paris Saint-Germain",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1295",
+      "name": "Granit Xhaka",
+      "team_name": "Sunderland RWB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "5",
+      "name": "Gregor Kobel",
+      "team_name": "Borussia Dortmund",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "11",
+      "name": "Guglielmo Vicario",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1127",
+      "name": "Guido Rodríguez",
+      "team_name": "Valencia BN",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1294",
+      "name": "Hakan Çalhanoğlu",
+      "team_name": "Internazionale Milano",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2983",
+      "name": "Harry Kane",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3016",
+      "name": "Hugo Ekitiké",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "269",
+      "name": "Ibrahima Konaté",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2066",
+      "name": "Isco",
+      "team_name": "Sevilla Triana VB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1562",
+      "name": "Ivan Perišić",
+      "team_name": "PSV",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2574",
+      "name": "Iñaki Williams",
+      "team_name": "Bilbao BR",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "274",
+      "name": "Iñigo Martínez",
+      "team_name": "Al Nassr FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2338",
+      "name": "Jack Grealish",
+      "team_name": "Everton B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "294",
+      "name": "Jakub Kiwior",
+      "team_name": "FC Porto",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2050",
+      "name": "Jamal Musiala",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2065",
+      "name": "James Maddison",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3226",
+      "name": "Jamie Vardy",
+      "team_name": "Cremona GR",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3",
+      "name": "Jan Oblak",
+      "team_name": "Madrid Rosas RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3242",
+      "name": "Jarell Quansah",
+      "team_name": "Bayer 04 Leverkusen",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1794",
+      "name": "Jarrod Bowen",
+      "team_name": "West Ham RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "777",
+      "name": "Jeremie Frimpong",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3042",
+      "name": "Jhon Durán",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "19",
+      "name": "Joan García",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1490",
+      "name": "Jobe Bellingham",
+      "team_name": "Borussia Dortmund",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1299",
+      "name": "Joelinton",
+      "team_name": "Newcastle WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "286",
+      "name": "John Stones",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3002",
+      "name": "Jonathan David",
+      "team_name": "Piemonte BN",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "270",
+      "name": "Jonathan Tah",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1137",
+      "name": "Jordan Henderson",
+      "team_name": "Brentford RW",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "24",
+      "name": "Jordan Pickford",
+      "team_name": "Everton B",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "536",
+      "name": "Jordi Alba",
+      "team_name": "Miami BP",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "558",
+      "name": "Jorrel Hato",
+      "team_name": "Chelsea B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1026",
+      "name": "Joshua Kimmich",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "273",
+      "name": "José María Giménez",
+      "team_name": "Madrid Rosas RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "776",
+      "name": "João Cancelo",
+      "team_name": "Al Hilal SFC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2322",
+      "name": "João Félix",
+      "team_name": "Al Nassr FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1296",
+      "name": "João Neves",
+      "team_name": "Paris Saint-Germain",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1030",
+      "name": "João Palhinha",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3019",
+      "name": "João Pedro",
+      "team_name": "Chelsea B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "517",
+      "name": "Joško Gvardiol",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1798",
+      "name": "Juan Cuadrado",
+      "team_name": "Pisa Sporting Club",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "834",
+      "name": "Juan Foyth",
+      "team_name": "Villarreal A",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2049",
+      "name": "Jude Bellingham",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "770",
+      "name": "Jules Koundé",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "785",
+      "name": "Julian Ryerson",
+      "team_name": "Borussia Dortmund",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2989",
+      "name": "Julián Alvarez",
+      "team_name": "Madrid Rosas RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "771",
+      "name": "Jurriën Timber",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2101",
+      "name": "Justin Kluivert",
+      "team_name": "Bournemouth RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2315",
+      "name": "Jérémy Doku",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2307",
+      "name": "K. Kvaratskhelia",
+      "team_name": "Paris Saint-Germain",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2995",
+      "name": "Kai Havertz",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3191",
+      "name": "Kaio Jorge",
+      "team_name": "Cruzeiro EC",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "291",
+      "name": "Kalidou Koulibaly",
+      "team_name": "Al Hilal SFC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1065",
+      "name": "Kalvin Phillips",
+      "team_name": "Sheffield RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1538",
+      "name": "Kaoru Mitoma",
+      "team_name": "Brighton WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2588",
+      "name": "Karim Adeyemi",
+      "team_name": "Borussia Dortmund",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "2987",
+      "name": "Karim Benzema",
+      "team_name": "Al Hilal SFC",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2828",
+      "name": "Kenan Yıldız",
+      "team_name": "Piemonte BN",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2055",
+      "name": "Kevin De Bruyne",
+      "team_name": "Napoli A",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1343",
+      "name": "Khéphren Thuram",
+      "team_name": "Piemonte BN",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "816",
+      "name": "Kieran Trippier",
+      "team_name": "Newcastle WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "784",
+      "name": "Kyle Walker",
+      "team_name": "Burnley RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2981",
+      "name": "Kylian Mbappé",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3126",
+      "name": "Kyogo Furuhashi",
+      "team_name": "Birmingham B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2562",
+      "name": "Lamine Yamal",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2996",
+      "name": "Lautaro Martínez",
+      "team_name": "Internazionale Milano",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1095",
+      "name": "Leandro Paredes",
+      "team_name": "CA Boca Juniors",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1300",
+      "name": "Leon Goretzka",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2570",
+      "name": "Leroy Sané",
+      "team_name": "Galatasaray SK",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "422",
+      "name": "Lewis Dunk",
+      "team_name": "Brighton WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2565",
+      "name": "Lionel Messi",
+      "team_name": "Miami BP",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "284",
+      "name": "Lucas Hernández",
+      "team_name": "Paris Saint-Germain",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2070",
+      "name": "Lucas Paquetá",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2309",
+      "name": "Luis Díaz",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3038",
+      "name": "Luis Suárez",
+      "team_name": "Miami BP",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1304",
+      "name": "Luka Modrić",
+      "team_name": "AC Milan",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "300",
+      "name": "Malick Thiaw",
+      "team_name": "Newcastle WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "272",
+      "name": "Manuel Akanji",
+      "team_name": "Internazionale Milano",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1045",
+      "name": "Manuel Locatelli",
+      "team_name": "Piemonte BN",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3239",
+      "name": "Manuel Neuer",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "545",
+      "name": "Marc Cucurella",
+      "team_name": "Chelsea B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "330",
+      "name": "Marc Guéhi",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "8",
+      "name": "Marc ter Stegen",
+      "team_name": "Girona R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2071",
+      "name": "Marco Asensio",
+      "team_name": "Fenerbahçe SK",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2073",
+      "name": "Marco Reus",
+      "team_name": "Los Angeles WBY",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "775",
+      "name": "Marcos Llorente",
+      "team_name": "Madrid Rosas RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2335",
+      "name": "Marcus Rashford",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1550",
+      "name": "Marcus Tavernier",
+      "team_name": "Bournemouth RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2997",
+      "name": "Marcus Thuram",
+      "team_name": "Internazionale Milano",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "261",
+      "name": "Marquinhos",
+      "team_name": "Paris Saint-Germain",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3148",
+      "name": "Martin Braithwaite",
+      "team_name": "Grêmio FBPA",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "2051",
+      "name": "Martin Ødegaard",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1034",
+      "name": "Martín Zubimendi",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2579",
+      "name": "Mason Greenwood",
+      "team_name": "Olympique de Marseille",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2078",
+      "name": "Mason Mount",
+      "team_name": "Manchester United",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2063",
+      "name": "Matheus Cunha",
+      "team_name": "Manchester United",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2372",
+      "name": "Mathys Tel",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "550",
+      "name": "Mathías Olivera",
+      "team_name": "Napoli A",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "306",
+      "name": "Matthijs de Ligt",
+      "team_name": "Manchester United",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3032",
+      "name": "Mauro Icardi",
+      "team_name": "Galatasaray SK",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "334",
+      "name": "Maxence Lacroix",
+      "team_name": "Crystal Palace RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3062",
+      "name": "Maximilian Beier",
+      "team_name": "Borussia Dortmund",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2564",
+      "name": "Michael Olise",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3152",
+      "name": "Michy Batshuayi",
+      "team_name": "Eintracht Frankfurt",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "278",
+      "name": "Micky van de Ven",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "15",
+      "name": "Mike Maignan",
+      "team_name": "AC Milan",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1293",
+      "name": "Mikel Merino",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "310",
+      "name": "Milan Škriniar",
+      "team_name": "Fenerbahçe SK",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2561",
+      "name": "Mohamed Salah",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1539",
+      "name": "Mohammed Kudus",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3046",
+      "name": "Moise Kean",
+      "team_name": "Firenze V",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1031",
+      "name": "Moisés Caicedo",
+      "team_name": "Chelsea B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2069",
+      "name": "Morgan Gibbs-White",
+      "team_name": "Nottingham RW",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2061",
+      "name": "Morgan Rogers",
+      "team_name": "Aston RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1032",
+      "name": "Morten Hjulmand",
+      "team_name": "Sporting CP",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "2575",
+      "name": "Moussa Diaby",
+      "team_name": "Al Ittihad Club",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "292",
+      "name": "Murillo",
+      "team_name": "Nottingham RW",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1028",
+      "name": "N'Golo Kanté",
+      "team_name": "Al Ittihad Club",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2818",
+      "name": "Neymar Jr",
+      "team_name": "Santos FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3014",
+      "name": "Nick Woltemade",
+      "team_name": "Newcastle WB",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "265",
+      "name": "Nico Schlotterbeck",
+      "team_name": "Borussia Dortmund",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2308",
+      "name": "Nico Williams",
+      "team_name": "Bilbao BR",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1292",
+      "name": "Nicolò Barella",
+      "team_name": "Internazionale Milano",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "308",
+      "name": "Nikola Milenković",
+      "team_name": "Nottingham RW",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3071",
+      "name": "Noah Okafor",
+      "team_name": "Leeds W",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "837",
+      "name": "Nordi Mukiele",
+      "team_name": "Sunderland RWB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "516",
+      "name": "Nuno Mendes",
+      "team_name": "Paris Saint-Germain",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2056",
+      "name": "Oihan Sancet",
+      "team_name": "Bilbao BR",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3004",
+      "name": "Ollie Watkins",
+      "team_name": "Aston RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3000",
+      "name": "Omar Marmoush",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1308",
+      "name": "Orkun Kökçü",
+      "team_name": "Beşiktaş JK",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2985",
+      "name": "Ousmane Dembélé",
+      "team_name": "Paris Saint-Germain",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3056",
+      "name": "P. E. Aubameyang",
+      "team_name": "Olympique de Marseille",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3212",
+      "name": "Patson Daka",
+      "team_name": "Leicester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "275",
+      "name": "Pau Cubarsí",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "340",
+      "name": "Pau Torres",
+      "team_name": "Aston RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2819",
+      "name": "Paulo Dybala",
+      "team_name": "Roma GR",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1281",
+      "name": "Pedri",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2572",
+      "name": "Pedro Neto",
+      "team_name": "Chelsea B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2569",
+      "name": "Phil Foden",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "326",
+      "name": "Pierre Kalulu",
+      "team_name": "Piemonte BN",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "1334",
+      "name": "Piotr Zieliński",
+      "team_name": "Internazionale Milano",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2823",
+      "name": "Rafa Silva",
+      "team_name": "SL Benfica",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2311",
+      "name": "Rafael Leão",
+      "team_name": "AC Milan",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3022",
+      "name": "Randal Kolo Muani",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2106",
+      "name": "Raphael Veiga",
+      "team_name": "Club América",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3245",
+      "name": "Raphaël Guerreiro",
+      "team_name": "TM Asgardians",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2306",
+      "name": "Raphinha",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3063",
+      "name": "Rasmus Højlund",
+      "team_name": "Napoli A",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2075",
+      "name": "Rayan Cherki",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "778",
+      "name": "Reece James",
+      "team_name": "Chelsea B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "531",
+      "name": "Reinildo Mandava",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "523",
+      "name": "Riccardo Calafiori",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3025",
+      "name": "Richarlison",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1386",
+      "name": "Riqui Puig",
+      "team_name": "Los Angeles WBY",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2577",
+      "name": "Riyad Mahrez",
+      "team_name": "Al Ahli Saudi FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1033",
+      "name": "Robert Andrich",
+      "team_name": "Bayer 04 Leverkusen",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2986",
+      "name": "Robert Lewandowski",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "271",
+      "name": "Robin Le Normand",
+      "team_name": "Madrid Rosas RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1025",
+      "name": "Rodri",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1288",
+      "name": "Rodrigo De Paul",
+      "team_name": "Miami BP",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1549",
+      "name": "Rodrigo Riquelme",
+      "team_name": "Sevilla Triana VB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3010",
+      "name": "Romelu Lukaku",
+      "team_name": "Napoli A",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1073",
+      "name": "Roméo Lavia",
+      "team_name": "Chelsea B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "262",
+      "name": "Ronald Araújo",
+      "team_name": "FC Barcelona",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3214",
+      "name": "Rony",
+      "team_name": "SE Palmeiras",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1029",
+      "name": "Ryan Gravenberch",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "259",
+      "name": "Rúben Dias",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1040",
+      "name": "Rúben Neves",
+      "team_name": "Al Hilal SFC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2327",
+      "name": "Sadio Mané",
+      "team_name": "Al Nassr FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1541",
+      "name": "Samuel Lino",
+      "team_name": "CR Flamengo",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1035",
+      "name": "Sandro Tonali",
+      "team_name": "Newcastle WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3128",
+      "name": "Santiago Giménez",
+      "team_name": "AC Milan",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2571",
+      "name": "Savinho",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1037",
+      "name": "Scott McTominay",
+      "team_name": "Napoli A",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2321",
+      "name": "Serge Gnabry",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "529",
+      "name": "Sergi Cardona",
+      "team_name": "Villarreal A",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1050",
+      "name": "Sergio Busquets",
+      "team_name": "Miami BP",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2990",
+      "name": "Serhou Guirassy",
+      "team_name": "Borussia Dortmund",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2312",
+      "name": "Son Heung-Min",
+      "team_name": "Los Angeles BY",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "827",
+      "name": "Stefan Posch",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "356",
+      "name": "Stefan Savić",
+      "team_name": "Trabzonspor",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "289",
+      "name": "Stefan de Vrij",
+      "team_name": "Internazionale Milano",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "769",
+      "name": "T. Alexander-Arnold",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1793",
+      "name": "Takefusa Kubo",
+      "team_name": "Vasco Gipuzkoa AB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2827",
+      "name": "Talisca",
+      "team_name": "Fenerbahçe SK",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3084",
+      "name": "Tammy Abraham",
+      "team_name": "Aston RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "319",
+      "name": "Thiago Silva",
+      "team_name": "FC Porto",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2",
+      "name": "Thibaut Courtois",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1038",
+      "name": "Thomas Partey",
+      "team_name": "Villarreal A",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "513",
+      "name": "Théo Hernández",
+      "team_name": "Al Hilal SFC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1298",
+      "name": "Tijjani Reijnders",
+      "team_name": "Manchester B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1811",
+      "name": "Timothy Weah",
+      "team_name": "Olympique de Marseille",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "540",
+      "name": "Tyrick Mitchell",
+      "team_name": "Crystal Palace RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "12",
+      "name": "Unai Simón",
+      "team_name": "Bilbao BR",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2993",
+      "name": "Victor Osimhen",
+      "team_name": "Galatasaray SK",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2992",
+      "name": "Viktor Gyökeres",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2305",
+      "name": "Vinícius Júnior",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "258",
+      "name": "Virgil van Dijk",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1284",
+      "name": "Vitinha",
+      "team_name": "Paris Saint-Germain",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3105",
+      "name": "Vitor Roque",
+      "team_name": "SE Palmeiras",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1070",
+      "name": "Wataru Endo",
+      "team_name": "Liverpool R",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "268",
+      "name": "Willi Orban",
+      "team_name": "Free Agents",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "257",
+      "name": "William Saliba",
+      "team_name": "Arsenal FC",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "277",
+      "name": "Willian Pacho",
+      "team_name": "Paris Saint-Germain",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2059",
+      "name": "Xavi Simons",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1107",
+      "name": "Y. Ndayishimiye",
+      "team_name": "OGC Nice",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 1
+    },
+    {
+      "id": "1805",
+      "name": "Yankuba Minteh",
+      "team_name": "Brighton WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "10",
+      "name": "Yann Sommer",
+      "team_name": "Internazionale Milano",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3005",
+      "name": "Yoane Wissa",
+      "team_name": "Newcastle WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3047",
+      "name": "Youssef En Nesyri",
+      "team_name": "Fenerbahçe SK",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3127",
+      "name": "Yuri Alberto",
+      "team_name": "SC Corinthians Paulista",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1044",
+      "name": "Yves Bissouma",
+      "team_name": "Tottenham WB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1537",
+      "name": "Álex Baena",
+      "team_name": "Madrid Rosas RB",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "3009",
+      "name": "Álvaro Morata",
+      "team_name": "Como 1907",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "2586",
+      "name": "Ángel Correa",
+      "team_name": "Tigres UANL",
+      "start_season": "SSPSLS16.5",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "263",
+      "name": "Éder Militão",
+      "team_name": "Madrid Chamartin B",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    },
+    {
+      "id": "1315",
+      "name": "İlkay Gündoğan",
+      "team_name": "Galatasaray SK",
+      "start_season": "SSPSLS16",
+      "end_season": "SSPSLS17",
+      "contract_length": 2
+    }
+  ]
+}

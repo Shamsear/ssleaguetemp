@@ -27,11 +27,11 @@ export async function getCurrentTeamName(
   const db = sql || neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
 
   try {
-    const result = await db`
+    const result = (await db`
       SELECT name FROM teams 
       WHERE firebase_uid = ${firebaseUid} OR id = ${firebaseUid}
       LIMIT 1
-    `;
+    `) as any[];
 
     if (result.length > 0 && result[0].name) {
       const name = result[0].name;
@@ -83,11 +83,11 @@ export async function getCurrentTeamNames(
   const db = sql || neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
 
   try {
-    const teams = await db`
+    const teams = (await db`
       SELECT id, firebase_uid, name 
       FROM teams 
       WHERE firebase_uid = ANY(${uncachedUids}) OR id = ANY(${uncachedUids})
-    `;
+    `) as any[];
 
     for (const team of teams) {
       if (team.name) {

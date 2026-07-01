@@ -3,10 +3,9 @@ import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
 
 /**
- * PATCH - Declare match NULL when both teams are absent
- * Match is cancelled and doesn't count in standings
+ * POST - Declare a match NULL (both teams absent)
  */
-export async function PATCH(
+export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ fixtureId: string }> }
 ) {
@@ -16,9 +15,19 @@ export async function PATCH(
     const body = await request.json();
     const { declared_by, declared_by_name, notes } = body;
 
-    // Fetch fixture
+    if (!fixtureId) {
+      return NextResponse.json(
+        { error: 'fixtureId is required' },
+        { status: 400 }
+      );
+    }
+
+    // Fetch fixture first to get details for logging and notifications
     const fixtures = await sql`
-      SELECT * FROM fixtures WHERE id = ${fixtureId} LIMIT 1
+      SELECT id, season_id, round_number, match_number, home_team_name, away_team_name, tournament_id
+      FROM fixtures
+      WHERE id = ${fixtureId}
+      LIMIT 1
     `;
 
     if (fixtures.length === 0) {
@@ -30,47 +39,37 @@ export async function PATCH(
 
     const fixture = fixtures[0];
 
-    // Mark as cancelled/null
+    // Update fixture status using valid columns
     await sql`
       UPDATE fixtures
       SET 
         status = 'cancelled',
-        match_status_reason = 'null_both_absent',
-        declared_by = ${declared_by || null},
-        declared_by_name = ${declared_by_name || null},
-        declared_at = NOW(),
-        updated_by = ${declared_by || null},
-        updated_by_name = ${declared_by_name || null},
+        notes = ${notes || 'Match declared NULL - both teams absent'},
         updated_at = NOW()
       WHERE id = ${fixtureId}
     `;
 
-    // Log in audit trail
+    // Log in audit trail using valid columns
     await sql`
       INSERT INTO fixture_audit_log (
         fixture_id,
-        action_type,
-        action_by,
-        action_by_name,
-        notes,
-        season_id,
-        round_number,
-        match_number,
-        changes
+        change_type,
+        changed_by,
+        changes,
+        tournament_id
       ) VALUES (
         ${fixtureId},
         'null_declared',
-        ${declared_by || 'system'},
         ${declared_by_name || 'Committee Admin'},
-        ${notes || 'Match declared NULL - both teams absent'},
-        ${fixture.season_id},
-        ${fixture.round_number},
-        ${fixture.match_number},
         ${JSON.stringify({
-      reason: 'both_teams_absent',
-      home_team: fixture.home_team_name,
-      away_team: fixture.away_team_name
-    })}
+          reason: 'both_teams_absent',
+          note: notes || 'Match declared NULL - both teams absent',
+          season_id: fixture.season_id,
+          round_number: fixture.round_number,
+          match_number: fixture.match_number,
+          declared_by: declared_by || 'system'
+        })},
+        ${fixture.tournament_id || null}
       )
     `;
 
@@ -92,24 +91,18 @@ export async function PATCH(
         },
         fixture.season_id
       );
-    } catch (notifError) {
-      console.error('Failed to send match cancellation notification:', notifError);
-      // Don't fail the request
+    } catch (notifErr) {
+      console.error('Failed to send declare-null notification:', notifErr);
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Match declared NULL - both teams absent',
-      fixture: {
-        id: fixtureId,
-        status: 'cancelled',
-        match_status_reason: 'null_both_absent'
-      }
+      message: 'Match successfully declared NULL',
     });
-  } catch (error) {
-    console.error('Error declaring NULL:', error);
+  } catch (error: any) {
+    console.error('Error declaring match NULL:', error);
     return NextResponse.json(
-      { error: 'Failed to declare NULL' },
+      { error: error.message || 'Failed to declare match NULL' },
       { status: 500 }
     );
   }

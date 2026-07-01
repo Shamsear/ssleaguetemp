@@ -16,6 +16,7 @@ interface NewsItem {
   is_published: boolean
   generated_by: 'ai' | 'admin'
   edited_by_admin?: boolean
+  image_url?: string
 }
 
 const CATEGORY_COLORS: Record<string, string> = {

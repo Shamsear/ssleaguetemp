@@ -1905,7 +1905,7 @@ export default function HistoricalSeasonDetailPage() {
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                               {/* Points - First and Highlighted */}
                               <div className={`text-center rounded-lg p-2.5 ${
-                                isTopPlayer ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 ring-2 ring-yellow-400' : 'bg-indigo-50'
+                                isTopPlayer ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 ring-2 ring-yellow-400' : 'bg-slate-50'
                               }`}>
                                 <div className="flex items-center justify-center gap-1">
                                   <div className="text-xl font-bold text-amber-600">{stats.points || stats.total_points || 0}</div>
@@ -1996,7 +1996,7 @@ export default function HistoricalSeasonDetailPage() {
                 <div className="mb-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {awards.filter(a => a.award_category?.toLowerCase().includes('league') || a.award_category?.toLowerCase().includes('champion')).map((award, index) => (
-                      <div key={award.id} className="glass rounded-2xl p-6 border border-yellow-200/50 bg-gradient-to-br from-yellow-50/50 to-amber-50/30 hover:shadow-xl transition-all duration-300">
+                      <div key={award.id} className="console-card bg-amber-50/20 border border-amber-200/50 p-6 rounded-2xl hover:shadow-md transition-all duration-300">
                         <div className="flex items-center gap-3 mb-4">
                           <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                             <svg className="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
@@ -2022,7 +2022,7 @@ export default function HistoricalSeasonDetailPage() {
               )}
 
               {/* Team Standings Table */}
-              <div className="glass rounded-2xl p-6 lg:p-8 border border-blue-200/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
+              <div className="console-card bg-white border border-slate-200/60 p-6 lg:p-8 rounded-2xl shadow-sm">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                     <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2041,7 +2041,7 @@ export default function HistoricalSeasonDetailPage() {
                     {/* Desktop Table */}
                     <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/60 rounded-2xl overflow-hidden">
                       <table className="min-w-full bg-white text-slate-700">
-                        <thead className="bg-gradient-to-r from-blue-50 to-indigo-100/80">
+                        <thead className="bg-slate-50">
                           <tr>
                             <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Pos</th>
                             <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Team</th>
@@ -2097,7 +2097,7 @@ export default function HistoricalSeasonDetailPage() {
                                   </td>
                                   <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
-                                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                                      <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-white font-bold text-xs">
                                         {team.team_code || team.team_name.substring(0, 2).toUpperCase()}
                                       </div>
                                       <div>
@@ -2189,7 +2189,7 @@ export default function HistoricalSeasonDetailPage() {
                                   <div className="text-xs text-slate-500">Goals</div>
                                 </div>
                                 <div className={`rounded-lg p-2 ${
-                                  isChampion ? 'bg-yellow-50' : 'bg-indigo-50'
+                                  isChampion ? 'bg-yellow-50' : 'bg-slate-50'
                                 }`}>
                                   <div className={`text-lg font-bold ${
                                     isChampion ? 'text-yellow-600' : 'text-amber-600'
@@ -2224,7 +2224,7 @@ export default function HistoricalSeasonDetailPage() {
 
               {/* Team Trophies Section - Display trophies separately */}
               {trophies.length > 0 && (
-                <div className="mt-8 glass rounded-2xl p-6 lg:p-8 border border-yellow-200/50 bg-gradient-to-br from-yellow-50/50 to-amber-50/30">
+                <div className="mt-8 console-card bg-amber-50/20 border border-amber-200/50 p-6 lg:p-8 rounded-2xl shadow-sm">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                       <svg className="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
@@ -2277,7 +2277,7 @@ export default function HistoricalSeasonDetailPage() {
 
               {/* Cup Winners Section - from team standings cup achievement data */}
               {teamStats.filter(t => t.cupAchievement && t.cupAchievement.trim() !== '').length > 0 && (
-                <div className="mt-8 glass rounded-2xl p-6 lg:p-8 border border-orange-200/50 bg-gradient-to-br from-orange-50/50 to-red-50/30">
+                <div className="mt-8 console-card bg-orange-50/20 border border-orange-200/50 p-6 lg:p-8 rounded-2xl shadow-sm">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                       <svg className="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
@@ -2337,7 +2337,7 @@ export default function HistoricalSeasonDetailPage() {
               
               {/* Cup Awards Section - from awards collection (if available) */}
               {awards.filter(a => a.award_category?.toLowerCase().includes('cup')).length > 0 && (
-                <div className="mt-8 glass rounded-2xl p-6 lg:p-8 border border-orange-200/50 bg-gradient-to-br from-orange-50/50 to-red-50/30">
+                <div className="mt-8 console-card bg-orange-50/20 border border-orange-200/50 p-6 lg:p-8 rounded-2xl shadow-sm">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                       <svg className="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
@@ -2364,7 +2364,7 @@ export default function HistoricalSeasonDetailPage() {
               
               {/* Player Awards Section - from player_awards table */}
               {playerAwards.length > 0 && (
-                <div className="mt-8 glass rounded-2xl p-6 lg:p-8 border border-purple-200/50 bg-gradient-to-br from-purple-50/50 to-pink-50/30">
+                <div className="mt-8 console-card bg-purple-50/20 border border-purple-200/50 p-6 lg:p-8 rounded-2xl shadow-sm">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl">
                       <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
@@ -2472,7 +2472,7 @@ export default function HistoricalSeasonDetailPage() {
                   // Enhanced Upload Mode
                   <>
                     {/* Enhanced Instructions */}
-                    <div className="glass rounded-2xl p-6 lg:p-8 mb-8 border border-blue-200/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
+                    <div className="console-card bg-white border border-slate-200/60 p-6 lg:p-8 mb-8 rounded-2xl shadow-sm">
                       <div className="flex items-start gap-4">
                         <div className="p-3 p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl flex-shrink-0">
                           <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2509,12 +2509,12 @@ export default function HistoricalSeasonDetailPage() {
                     </div>
 
                     {/* Enhanced File Upload Area */}
-                    <div className="glass rounded-2xl p-8 border border-slate-200/60 rounded-2xl overflow-hidden">
+                    <div className="console-card bg-white border border-slate-200/60 p-8 rounded-2xl overflow-hidden shadow-sm">
                       <div
                         className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
                           dragOver 
-                            ? 'border-indigo-400 bg-indigo-50/50 scale-102' 
-                            : 'border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/30'
+                            ? 'border-amber-400 bg-amber-50/20 scale-102' 
+                            : 'border-slate-200 hover:border-amber-400 hover:bg-amber-50/10'
                         }`}
                         onDrop={handleDrop}
                         onDragOver={handleDragOver}
@@ -2883,32 +2883,30 @@ export default function HistoricalSeasonDetailPage() {
                     </div>
 
                     {/* Preview Tab Navigation */}
-                    <div className="rounded-t-xl border-b-0 mb-0 bg-white/10 p-2">
-                      <div className="flex gap-2 overflow-x-auto">
-                        {[
-                          { id: 'teams', name: `Teams (${previewTeams.length})`, icon: '🏆' },
-                          { id: 'players', name: `Players (${previewPlayers.length})`, icon: '👤' },
-                          { id: 'awards', name: `Awards (${previewAwards.length})`, icon: '🏅' },
-                          { id: 'matches', name: `Matches (${previewMatches.length})`, icon: '⚽' },
-                        ].map(tab => (
-                          <button
-                            key={tab.id}
-                            onClick={() => setPreviewTab(tab.id as any)}
-                            className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                              previewTab === tab.id
-                                ? 'bg-slate-800 text-white shadow-md'
-                                : 'text-slate-500 hover:bg-white/30'
-                            }`}
-                          >
-                            <span className="mr-2">{tab.icon}</span>
-                            {tab.name}
-                          </button>
-                        ))}
-                      </div>
+                    <div className="flex gap-2 border-b border-slate-200/60 pb-3 mb-6 overflow-x-auto">
+                      {[
+                        { id: 'teams', name: `Teams (${previewTeams.length})`, icon: '🏆' },
+                        { id: 'players', name: `Players (${previewPlayers.length})`, icon: '👤' },
+                        { id: 'awards', name: `Awards (${previewAwards.length})`, icon: '🏅' },
+                        { id: 'matches', name: `Matches (${previewMatches.length})`, icon: '⚽' },
+                      ].map(tab => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setPreviewTab(tab.id as any)}
+                          className={`flex-shrink-0 px-4 py-2 text-xs font-mono font-bold rounded-xl transition-all ${
+                            previewTab === tab.id
+                              ? 'bg-slate-800 text-white shadow-sm border border-slate-800'
+                              : 'bg-white text-slate-650 hover:text-slate-900 border border-slate-200/60 hover:bg-slate-50'
+                          }`}
+                        >
+                          <span className="mr-2">{tab.icon}</span>
+                          {tab.name}
+                        </button>
+                      ))}
                     </div>
 
                     {/* Preview Tables */}
-                    <div className="rounded-b-xl bg-white/20 border border-slate-200 overflow-hidden">
+                    <div className="console-card bg-white border border-slate-200/60 p-6 rounded-2xl shadow-sm mb-8 overflow-hidden">
                       {/* Teams Preview Table */}
                       {previewTab === 'teams' && previewTeams.length > 0 && (
                         <div className="overflow-x-auto">
@@ -2932,9 +2930,9 @@ export default function HistoricalSeasonDetailPage() {
                                 <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
                               </tr>
                             </thead>
-                            <tbody className="bg-white/20 divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 bg-white">
                               {previewTeams.map((team, index) => (
-                                <tr key={index} className="hover:bg-white/30 transition-colors">
+                                <tr key={index} className="hover:bg-slate-50 transition-colors">
                                   <td className="px-2 py-3">
                                     <input
                                       type="text"
@@ -3111,7 +3109,7 @@ export default function HistoricalSeasonDetailPage() {
                       {previewTab === 'players' && previewPlayers.length > 0 && (
                         <div className="overflow-x-auto">
                           <table className="min-w-full">
-                            <thead className="bg-white/10">
+                            <thead className="bg-slate-50 border-b border-slate-100">
                               <tr>
                                 <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
                                 <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Team</th>
@@ -3133,9 +3131,9 @@ export default function HistoricalSeasonDetailPage() {
                                 <th className="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
                               </tr>
                             </thead>
-                            <tbody className="bg-white/20 divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 bg-white">
                               {previewPlayers.map((player, index) => (
-                                <tr key={index} className="hover:bg-white/30 transition-colors">
+                                <tr key={index} className="hover:bg-slate-50 transition-colors">
                                   <td className="px-2 py-3">
                                     <input
                                       type="text"
@@ -3350,7 +3348,7 @@ export default function HistoricalSeasonDetailPage() {
                       {previewTab === 'awards' && previewAwards.length > 0 && (
                         <div className="overflow-x-auto">
                           <table className="min-w-full">
-                            <thead className="bg-white/10">
+                            <thead className="bg-slate-50 border-b border-slate-100">
                               <tr>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Award Name</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Category</th>
@@ -3360,9 +3358,9 @@ export default function HistoricalSeasonDetailPage() {
                                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
                               </tr>
                             </thead>
-                            <tbody className="bg-white/20 divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 bg-white">
                               {previewAwards.map((award, index) => (
-                                <tr key={index} className="hover:bg-white/30 transition-colors">
+                                <tr key={index} className="hover:bg-slate-50 transition-colors">
                                   <td className="px-4 py-3">
                                     <input
                                       type="text"
@@ -3437,7 +3435,7 @@ export default function HistoricalSeasonDetailPage() {
                       {previewTab === 'matches' && previewMatches.length > 0 && (
                         <div className="overflow-x-auto">
                           <table className="min-w-full">
-                            <thead className="bg-white/10">
+                            <thead className="bg-slate-50 border-b border-slate-100">
                               <tr>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Match Date</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Home Team</th>
@@ -3448,9 +3446,9 @@ export default function HistoricalSeasonDetailPage() {
                                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
                               </tr>
                             </thead>
-                            <tbody className="bg-white/20 divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 bg-white">
                               {previewMatches.map((match, index) => (
-                                <tr key={index} className="hover:bg-white/30 transition-colors">
+                                <tr key={index} className="hover:bg-slate-50 transition-colors">
                                   <td className="px-4 py-3">
                                     <input
                                       type="text"
@@ -3563,7 +3561,7 @@ export default function HistoricalSeasonDetailPage() {
                           <button
                             onClick={handleFinalImport}
                             disabled={importing || validationErrors.size > 0}
-                            className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-[#0066FF] to-[#0066FF]/80 hover:from-[#0066FF]/90 hover:to-[#0066FF]/70 text-white text-sm font-medium rounded-lg transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="inline-flex items-center px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-mono font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {importing ? (
                               <>

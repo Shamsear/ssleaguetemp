@@ -7,10 +7,10 @@ import { getTournamentDb } from '@/lib/neon/tournament-config';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { pollId: string } }
+  { params }: { params: Promise<{ pollId: string }> }
 ) {
   try {
-    const { pollId } = params;
+    const { pollId } = await params;
     const { searchParams } = new URL(request.url);
     const flagged_only = searchParams.get('flagged_only') === 'true';
 

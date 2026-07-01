@@ -402,6 +402,7 @@ export default function PlayerStatsPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full px-4 py-2.5 pl-11 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
+                  style={{ paddingLeft: '2.75rem' }}
                 />
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-405">
                   <Search className="w-4 h-4" />

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { X, Clock, AlertTriangle, RefreshCw, ClipboardList } from 'lucide-react';
 
 interface TimelineEvent {
   id: string | number;
@@ -61,116 +62,123 @@ export default function FixtureTimeline({ fixtureId, isOpen, onClose }: FixtureT
   const getColorClasses = (color: string) => {
     switch (color) {
       case 'blue':
-        return 'bg-blue-100 text-blue-700 border-blue-300';
+        return 'bg-blue-50 text-blue-700 border-blue-200/60 ring-blue-500/10';
       case 'green':
-        return 'bg-green-100 text-green-700 border-green-300';
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200/60 ring-emerald-500/10';
       case 'yellow':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+        return 'bg-amber-50 text-amber-700 border-amber-200/60 ring-amber-500/10';
       case 'orange':
-        return 'bg-orange-100 text-orange-700 border-orange-300';
+        return 'bg-orange-50 text-orange-700 border-orange-200/60 ring-orange-500/10';
       case 'red':
-        return 'bg-red-100 text-red-700 border-red-300';
+        return 'bg-rose-50 text-rose-700 border-rose-200/60 ring-rose-500/10';
       case 'purple':
-        return 'bg-purple-100 text-purple-700 border-purple-300';
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200/60 ring-indigo-500/10';
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-300';
+        return 'bg-slate-50 text-slate-700 border-slate-250 ring-slate-500/10';
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-slate-955/65 backdrop-blur-xs z-[9999] flex items-center justify-center p-4 transition-all duration-300 animate-in fade-in">
+      <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col font-mono text-slate-800 animate-in fade-in-0 zoom-in-95 duration-200">
+        
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-4 flex justify-between items-center">
+        <div className="border-b border-slate-100 px-6 py-5 flex justify-between items-start">
           <div>
-            <h2 className="text-2xl font-bold flex items-center">
-              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Fixture Timeline
+            <h2 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+              <Clock className="w-5 h-5 text-amber-500" /> Fixture Timeline
             </h2>
             {fixture && (
-              <p className="text-sm text-white/80 mt-1">
-                {fixture.home_team} vs {fixture.away_team} • Round {fixture.round_number}, Match {fixture.match_number}
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1 flex items-center gap-1.5">
+                <span>{fixture.home_team}</span>
+                <span className="text-slate-350">vs</span>
+                <span>{fixture.away_team}</span>
+                <span className="text-slate-300">•</span>
+                <span className="bg-slate-50 border border-slate-200/50 px-2 py-0.5 rounded text-slate-650">Round {fixture.round_number}</span>
+                <span className="bg-slate-50 border border-slate-200/50 px-2 py-0.5 rounded text-slate-650">Match {fixture.match_number}</span>
               </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+            className="text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl p-2 transition-all border border-transparent hover:border-slate-150 cursor-pointer"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex items-center justify-center py-20">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading timeline...</p>
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
+                <p className="mt-4 text-xs text-slate-500 font-extrabold uppercase tracking-wider animate-pulse">Loading timeline...</p>
               </div>
             </div>
           ) : error ? (
-            <div className="text-center py-12">
-              <svg className="w-16 h-16 mx-auto text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-red-600 font-medium">{error}</p>
+            <div className="text-center py-16 max-w-md mx-auto">
+              <div className="w-12 h-12 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-6 h-6 text-rose-500" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-800 mb-1">Loading Failed</h3>
+              <p className="text-xs text-slate-550 mb-6 leading-relaxed">{error}</p>
               <button
                 onClick={fetchTimeline}
-                className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 mx-auto cursor-pointer"
               >
-                Try Again
+                <RefreshCw className="w-3.5 h-3.5" /> Try Again
               </button>
             </div>
           ) : timeline.length === 0 ? (
-            <div className="text-center py-12">
-              <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <p className="text-gray-600">No timeline events found</p>
+            <div className="text-center py-20 max-w-sm mx-auto">
+              <div className="w-12 h-12 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <ClipboardList className="w-6 h-6 text-slate-400" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-700 mb-1">No Activity</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">No timeline events have been logged for this fixture yet.</p>
             </div>
           ) : (
-            <div className="relative">
+            <div className="relative pl-4 sm:pl-8">
               {/* Timeline line */}
-              <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-purple-300 via-blue-300 to-purple-300"></div>
+              <div className="absolute left-10 sm:left-14 top-2 bottom-2 w-[1px] bg-slate-200"></div>
 
               {/* Timeline events */}
               <div className="space-y-6">
-                {timeline.map((event, index) => (
-                  <div key={event.id} className="relative pl-16">
-                    {/* Icon */}
-                    <div className={`absolute left-0 w-12 h-12 rounded-full border-4 border-white flex items-center justify-center text-2xl shadow-lg ${getColorClasses(event.color)}`}>
+                {timeline.map((event) => (
+                  <div key={event.id} className="relative pl-14 sm:pl-16">
+                    
+                    {/* Circle Dot with Icon */}
+                    <div className={`absolute left-0 w-10 h-10 sm:w-12 sm:h-12 rounded-2xl border border-slate-250/30 ring-4 ring-white flex items-center justify-center text-lg sm:text-xl shadow-xs transition-all ${getColorClasses(event.color)}`}>
                       {event.icon}
                     </div>
 
-                    {/* Event card */}
-                    <div className="bg-white border-2 border-gray-100 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow">
-                      <div className="flex justify-between items-start mb-2">
+                    {/* Event Card */}
+                    <div className="bg-white border border-slate-200/70 rounded-2xl p-4 shadow-2xs hover:shadow-sm hover:border-slate-300 transition-all duration-200">
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2.5">
                         <div>
-                          <h3 className="font-bold text-gray-900 text-lg">{event.action}</h3>
-                          <p className="text-sm text-gray-600">
-                            by <span className="font-semibold text-purple-600">{event.user}</span>
+                          <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm uppercase tracking-tight">{event.action}</h3>
+                          <p className="text-[10px] text-slate-500 mt-0.5">
+                            by <span className="font-black text-slate-700">{event.user}</span>
                           </p>
                         </div>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                        <span className="text-[9px] font-bold text-slate-450 bg-slate-50 border border-slate-200/50 px-2.5 py-1 rounded-lg shrink-0">
                           {new Date(event.timestamp).toLocaleString()}
                         </span>
                       </div>
 
                       {event.details && (
-                        <p className="text-sm text-gray-700 mt-2 bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-slate-650 leading-relaxed bg-slate-50/75 border border-slate-100 rounded-xl p-3">
                           {event.details}
                         </p>
                       )}
 
                       {event.notes && (
-                        <div className="mt-2 text-xs text-gray-600 italic bg-yellow-50 border-l-4 border-yellow-400 p-2 rounded">
-                          <strong>Note:</strong> {event.notes}
+                        <div className="mt-2.5 text-[10px] text-amber-700 bg-amber-50/50 border border-amber-200/50 p-2.5 rounded-xl flex items-start gap-1.5">
+                          <span className="shrink-0 mt-0.5">⚠️</span>
+                          <div>
+                            <span className="font-extrabold uppercase tracking-wide">Note:</span> {event.notes}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -182,19 +190,19 @@ export default function FixtureTimeline({ fixtureId, isOpen, onClose }: FixtureT
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
-          <p className="text-sm text-gray-600">
+        <div className="bg-slate-50/60 px-6 py-4 border-t border-slate-100 flex justify-between items-center">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             {timeline.length > 0 ? (
               <>
-                <strong>{timeline.length}</strong> event{timeline.length !== 1 ? 's' : ''} recorded
+                Total: <span className="font-extrabold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200/50">{timeline.length}</span> event{timeline.length !== 1 ? 's' : ''}
               </>
             ) : (
-              'No events yet'
+              'No events'
             )}
           </p>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
           >
             Close
           </button>

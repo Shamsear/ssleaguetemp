@@ -233,7 +233,7 @@ export class FantasyDraftService {
                 team_name: draftedByTeam[0]?.team_name || 'Another Team',
                 drafted_at: draftedByTeam[0]?.updated_at || new Date(),
               },
-              await this.getSuggestedAlternatives(playerCategory, league.league_id, tx)
+              await this.getSuggestedAlternatives(playerCategory, league.league_id, league.season_id, tx)
             );
           }
         }
@@ -395,13 +395,24 @@ export class FantasyDraftService {
    * Get player category from tournament database
    */
   private async getPlayerCategory(playerId: string, seasonId: string): Promise<string> {
-    const playerData = await this.tournamentSql`
-      SELECT category
-      FROM player_seasons
-      WHERE player_id = ${playerId}
-        AND season_id = ${seasonId}
-      LIMIT 1
-    `;
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    const playerData = isModern
+      ? await this.tournamentSql`
+          SELECT category
+          FROM player_seasons
+          WHERE player_id = ${playerId}
+            AND season_id = ${seasonId}
+          LIMIT 1
+        `
+      : await this.tournamentSql`
+          SELECT category
+          FROM realplayerstats
+          WHERE player_id = ${playerId}
+            AND season_id = ${seasonId}
+          LIMIT 1
+        `;
 
     if (playerData.length === 0) {
       throw new PlayerNotFoundError(playerId, seasonId);
@@ -490,21 +501,40 @@ export class FantasyDraftService {
   private async getSuggestedAlternatives(
     category: string,
     leagueId: string,
+    seasonId: string,
     tx: any
   ): Promise<Array<{ player_id: string; player_name: string; category: string; draft_price: number }>> {
     try {
-      const alternatives = await this.tournamentSql`
-        SELECT player_id, player_name, category
-        FROM player_seasons ps
-        WHERE ps.category = ${category}
-          AND ps.player_id NOT IN (
-            SELECT real_player_id
-            FROM fantasy_players
-            WHERE league_id = ${leagueId}
-              AND (is_available = false OR drafted_by_team_id IS NOT NULL)
-          )
-        LIMIT 3
-      `;
+      const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+      const isModern = seasonNum === 16 || seasonNum === 17;
+
+      const alternatives = isModern
+        ? await this.tournamentSql`
+            SELECT player_id, player_name, category
+            FROM player_seasons ps
+            WHERE ps.category = ${category}
+              AND ps.season_id = ${seasonId}
+              AND ps.player_id NOT IN (
+                SELECT real_player_id
+                FROM fantasy_players
+                WHERE league_id = ${leagueId}
+                  AND (is_available = false OR drafted_by_team_id IS NOT NULL)
+              )
+            LIMIT 3
+          `
+        : await this.tournamentSql`
+            SELECT player_id, player_name, category
+            FROM realplayerstats ps
+            WHERE ps.category = ${category}
+              AND ps.season_id = ${seasonId}
+              AND ps.player_id NOT IN (
+                SELECT real_player_id
+                FROM fantasy_players
+                WHERE league_id = ${leagueId}
+                  AND (is_available = false OR drafted_by_team_id IS NOT NULL)
+              )
+            LIMIT 3
+          `;
 
       return alternatives.map((p: any) => ({
         player_id: p.player_id,

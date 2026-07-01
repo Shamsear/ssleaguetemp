@@ -21,32 +21,59 @@ export async function GET(
 
     const sql = getTournamentDb();
     
-    // Get all active players for this team in this season from player_seasons table
-    const players = await sql`
-      SELECT 
-        player_id,
-        player_name as name,
-        category,
-        CASE 
-          WHEN registration_status = 'active' THEN true
-          ELSE false
-        END as is_active
-      FROM player_seasons
-      WHERE team_id = ${teamId}
-        AND season_id = ${seasonId}
-        AND registration_status = 'active'
-      ORDER BY player_name
-    `;
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    // Get all active players for this team in this season from correct database table
+    let players;
+    if (isModern) {
+      players = await sql`
+        SELECT 
+          player_id,
+          player_name as name,
+          category,
+          CASE 
+            WHEN registration_status = 'active' THEN true
+            ELSE false
+          END as is_active
+        FROM player_seasons
+        WHERE team_id = ${teamId}
+          AND season_id = ${seasonId}
+          AND registration_status = 'active'
+        ORDER BY player_name
+      `;
+    } else {
+      players = await sql`
+        SELECT 
+          player_id,
+          player_name as name,
+          category,
+          true as is_active
+        FROM realplayerstats
+        WHERE team_id = ${teamId}
+          AND season_id = ${seasonId}
+        ORDER BY player_name
+      `;
+    }
 
     console.log('✅ Found players:', players.length);
     if (players.length === 0) {
       console.log('⚠️ No players found. Checking all records for this team/season...');
-      const allPlayers = await sql`
-        SELECT COUNT(*) as total, registration_status
-        FROM player_seasons
-        WHERE team_id = ${teamId} AND season_id = ${seasonId}
-        GROUP BY registration_status
-      `;
+      let allPlayers;
+      if (isModern) {
+        allPlayers = await sql`
+          SELECT COUNT(*) as total, registration_status
+          FROM player_seasons
+          WHERE team_id = ${teamId} AND season_id = ${seasonId}
+          GROUP BY registration_status
+        `;
+      } else {
+        allPlayers = await sql`
+          SELECT COUNT(*) as total, 'active' as registration_status
+          FROM realplayerstats
+          WHERE team_id = ${teamId} AND season_id = ${seasonId}
+        `;
+      }
       console.log('📊 All player records:', allPlayers);
     }
 

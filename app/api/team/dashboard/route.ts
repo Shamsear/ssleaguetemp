@@ -650,25 +650,46 @@ export async function GET(request: NextRequest) {
         managerData = managerResult[0] || null;
         console.log(`⚽ Manager data found:`, managerData ? `Yes (${managerData.name})` : 'No');
 
-        // Fetch real players assigned to this team from player_seasons (tournament DB)
-        // Note: We avoid joining realplayers; use stored snapshot fields for reliability
-        const realPlayersResult = await tournamentSql`
-          SELECT 
-            id,
-            player_id,
-            team_id,
-            season_id,
-            player_name,
-            category,
-            star_rating,
-            points,
-            registration_status
-          FROM player_seasons
-          WHERE team_id = ${stringTeamId}
-          AND season_id = ${seasonId}
-          AND registration_status = 'active'
-          ORDER BY player_name ASC
-        `;
+        const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+        const isModern = seasonNum === 16 || seasonNum === 17;
+
+        let realPlayersResult;
+        if (isModern) {
+          realPlayersResult = await tournamentSql`
+            SELECT 
+              id,
+              player_id,
+              team_id,
+              season_id,
+              player_name,
+              category,
+              star_rating,
+              points,
+              registration_status
+            FROM player_seasons
+            WHERE team_id = ${stringTeamId}
+            AND season_id = ${seasonId}
+            AND registration_status = 'active'
+            ORDER BY player_name ASC
+          `;
+        } else {
+          realPlayersResult = await tournamentSql`
+            SELECT 
+              id,
+              player_id,
+              team_id,
+              season_id,
+              player_name,
+              category,
+              star_rating,
+              points,
+              'active' as registration_status
+            FROM realplayerstats
+            WHERE team_id = ${stringTeamId}
+            AND season_id = ${seasonId}
+            ORDER BY player_name ASC
+          `;
+        }
         realPlayers = realPlayersResult.map(p => ({
           id: p.id,
           player_id: p.player_id,

@@ -238,7 +238,7 @@ export default function PublicPlayerDetailPage() {
 
   const getPositionColor = (position: string) => {
     switch (position) {
-      case 'GK': return 'bg-amber-50 border border-amber-200 text-amber-805';
+      case 'GK': return 'bg-amber-50 border border-amber-200 text-amber-800';
       case 'CB':
       case 'LB': 
       case 'RB': return 'bg-blue-50 border border-blue-200 text-blue-800';
@@ -246,7 +246,7 @@ export default function PublicPlayerDetailPage() {
       case 'CMF':
       case 'LMF':
       case 'RMF':
-      case 'AMF': return 'bg-emerald-50 border border-emerald-200 text-emerald-805';
+      case 'AMF': return 'bg-emerald-50 border border-emerald-200 text-emerald-800';
       case 'LWF':
       case 'RWF':
       case 'CF':
@@ -256,17 +256,17 @@ export default function PublicPlayerDetailPage() {
   };
 
   const getRatingGradient = (rating: number) => {
-    if (rating >= 85) return 'from-emerald-500 to-teal-650';
-    if (rating >= 75) return 'from-blue-500 to-indigo-650';
-    if (rating >= 65) return 'from-amber-500 to-orange-550';
-    return 'from-slate-400 to-slate-550';
+    if (rating >= 85) return 'from-emerald-500 to-teal-700';
+    if (rating >= 75) return 'from-blue-500 to-indigo-700';
+    if (rating >= 65) return 'from-amber-500 to-orange-600';
+    return 'from-slate-400 to-slate-600';
   };
 
   const getRatingBadge = (rating: number) => {
     if (rating >= 85) return { text: 'Elite', color: 'bg-emerald-50 border border-emerald-200 text-emerald-800 font-mono font-bold uppercase' };
     if (rating >= 75) return { text: 'Excellent', color: 'bg-blue-50 border border-blue-200 text-blue-800 font-mono font-bold uppercase' };
     if (rating >= 65) return { text: 'Good', color: 'bg-amber-50 border border-amber-200 text-amber-800 font-mono font-bold uppercase' };
-    return { text: 'Unrated', color: 'bg-slate-50 border border-slate-200 text-slate-650 font-mono font-bold uppercase' };
+    return { text: 'Unrated', color: 'bg-slate-50 border border-slate-200 text-slate-600 font-mono font-bold uppercase' };
   };
 
   const getRoundTypeFromId = (roundId: string): string => {
@@ -387,7 +387,7 @@ export default function PublicPlayerDetailPage() {
       <div className="min-h-screen flex items-center justify-center console-bg">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-gray-650 font-mono text-sm">Loading player details...</p>
+          <p className="mt-4 text-gray-600 font-mono text-sm">Loading player details...</p>
         </div>
       </div>
     );
@@ -397,7 +397,7 @@ export default function PublicPlayerDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center console-bg">
         <div className="text-center">
-          <p className="text-red-650 text-lg font-mono">{error || 'Player not found'}</p>
+          <p className="text-red-600 text-lg font-mono">{error || 'Player not found'}</p>
           <Link href="/footballplayers" className="mt-4 inline-block text-amber-600 font-bold hover:underline font-mono">
             Back to Player Database
           </Link>
@@ -491,14 +491,14 @@ export default function PublicPlayerDetailPage() {
                 </div>
               </div>
 
-              <div className="space-y-2.5 text-xs border-t border-slate-100 pt-4 font-mono">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400 font-bold uppercase tracking-wider">Nationality:</span>
-                  <span className="font-extrabold text-slate-800">{player.nationality || 'N/A'}</span>
+              <div className="space-y-2 text-xs border-t border-slate-100 pt-4 font-mono text-slate-800">
+                <div className="leading-relaxed">
+                  <span className="text-slate-400 font-bold uppercase tracking-wider mr-1.5">Nationality:</span>
+                  <span className="font-extrabold">{player.nationality || 'N/A'}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400 font-bold uppercase tracking-wider">Playing Style:</span>
-                  <span className="font-extrabold text-slate-805">{player.playing_style || 'N/A'}</span>
+                <div className="leading-relaxed">
+                  <span className="text-slate-400 font-bold uppercase tracking-wider mr-1.5">Playing Style:</span>
+                  <span className="font-extrabold">{player.playing_style || 'N/A'}</span>
                 </div>
               </div>
             </div>
@@ -759,7 +759,7 @@ export default function PublicPlayerDetailPage() {
                                 className={`flex-1 px-3 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all ${
                                   selectedRoundFilter === 'all'
                                     ? 'bg-slate-800 text-white'
-                                    : 'text-slate-650 hover:bg-slate-100/80'
+                                    : 'text-slate-600 hover:bg-slate-100/80'
                                 }`}
                               >
                                 All
@@ -769,7 +769,7 @@ export default function PublicPlayerDetailPage() {
                                 className={`flex-1 px-3 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all ${
                                   selectedRoundFilter === 'normal'
                                     ? 'bg-slate-800 text-white'
-                                    : 'text-slate-650 hover:bg-slate-100/80'
+                                    : 'text-slate-600 hover:bg-slate-100/80'
                                 }`}
                               >
                                 Normal
@@ -779,7 +779,7 @@ export default function PublicPlayerDetailPage() {
                                 className={`flex-1 px-3 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all ${
                                   selectedRoundFilter === 'bulk'
                                     ? 'bg-slate-800 text-white'
-                                    : 'text-slate-650 hover:bg-slate-100/80'
+                                    : 'text-slate-600 hover:bg-slate-100/80'
                                 }`}
                               >
                                 Bulk
@@ -839,7 +839,7 @@ export default function PublicPlayerDetailPage() {
                                         </div>
                                         <div className="text-left sm:text-right shrink-0">
                                           <p className={`text-base font-extrabold ${
-                                            isWinner ? 'text-green-650' : 'text-slate-700'
+                                            isWinner ? 'text-green-600' : 'text-slate-700'
                                           }`}>
                                             £{(bid.bid_amount || 0).toLocaleString()}
                                           </p>
@@ -1104,7 +1104,7 @@ export default function PublicPlayerDetailPage() {
 
                                   {contract.status === 'active' && (
                                     <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-green-50/50 to-emerald-50/50 rounded-2xl border-2 border-dashed border-green-200 text-center shadow-inner h-full min-h-[120px]">
-                                      <CheckCircle2 className="w-8 h-8 text-green-550 mb-1" />
+                                      <CheckCircle2 className="w-8 h-8 text-green-500 mb-1" />
                                       <p className="text-sm font-extrabold text-green-700 uppercase">Currently Active</p>
                                       <p className="text-[10px] text-slate-400 mt-0.5">Player is on the team roster</p>
                                     </div>

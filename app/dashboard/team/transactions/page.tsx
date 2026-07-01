@@ -301,7 +301,7 @@ export default function TransactionsPage() {
             onClick={() => exportTransactions(currencyType)}
             className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200/60 rounded-xl hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold cursor-pointer shadow-sm w-full sm:w-auto"
           >
-            <Download className="w-4.5 h-4.5" />
+            <Download className="w-5 h-5" />
             <span>Export CSV</span>
           </button>
         </div>

@@ -534,26 +534,53 @@ export async function GET(request: NextRequest) {
       case 'TOTS': {
         // For season awards, return all players/teams with season stats
         if (awardType === 'POTS') {
-          const players = await sql`
-            SELECT 
-              ps.player_id,
-              ps.player_name,
-              ps.team_id,
-              ps.goals_scored,
-              ps.assists,
-              ps.matches_played,
-              ps.motm_awards,
-              ps.wins,
-              ps.draws,
-              ps.losses
-            FROM player_seasons ps
-            WHERE ps.season_id = ${seasonId}
-            ORDER BY 
-              ps.goals_scored DESC,
-              ps.assists DESC,
-              ps.motm_awards DESC
-            LIMIT 50
-          `;
+          const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+          const isModern = seasonNum === 16 || seasonNum === 17;
+
+          let players;
+          if (isModern) {
+            players = await sql`
+              SELECT 
+                ps.player_id,
+                ps.player_name,
+                ps.team_id,
+                ps.goals_scored,
+                ps.assists,
+                ps.matches_played,
+                ps.motm_awards,
+                ps.wins,
+                ps.draws,
+                ps.losses
+              FROM player_seasons ps
+              WHERE ps.season_id = ${seasonId}
+              ORDER BY 
+                ps.goals_scored DESC,
+                ps.assists DESC,
+                ps.motm_awards DESC
+              LIMIT 50
+            `;
+          } else {
+            players = await sql`
+              SELECT 
+                ps.player_id,
+                ps.player_name,
+                ps.team_id,
+                ps.goals_scored,
+                ps.assists,
+                ps.matches_played,
+                ps.motm_awards,
+                ps.wins,
+                ps.draws,
+                ps.losses
+              FROM realplayerstats ps
+              WHERE ps.season_id = ${seasonId}
+              ORDER BY 
+                ps.goals_scored DESC,
+                ps.assists DESC,
+                ps.motm_awards DESC
+              LIMIT 50
+            `;
+          }
 
           candidates = players.map((p: any) => ({
             player_id: p.player_id,

@@ -252,7 +252,7 @@ function ImportProgressContent() {
           <p className="text-gray-600">No import ID provided</p>
           <button
             onClick={() => router.push('/dashboard/superadmin/historical-seasons')}
-            className="mt-4 px-4 py-2 bg-[#0066FF] text-white rounded-lg hover:bg-[#0066FF]/90"
+            className="mt-4 px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm"
           >
             Return to Historical Seasons
           </button>

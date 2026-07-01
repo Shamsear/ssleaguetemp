@@ -173,7 +173,10 @@ async function fetchPlayerData(
     let result: any[];
     
     if (playerType === 'real') {
-      // Query player_seasons table
+      const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+      const isModern = seasonNum === 16 || seasonNum === 17;
+
+      // Query player_seasons or realplayerstats table
       query = `
         SELECT 
           id,
@@ -181,12 +184,12 @@ async function fetchPlayerData(
           player_name,
           team_id,
           team_id as team_name,
-          auction_value,
+          ${isModern ? 'auction_value' : '0 as auction_value'},
           category,
           points,
-          salary_per_match,
+          ${isModern ? 'salary_per_match' : '0 as salary_per_match'},
           season_id
-        FROM player_seasons
+        FROM ${isModern ? 'player_seasons' : 'realplayerstats'}
         WHERE player_id = $1 AND season_id = $2
       `;
       result = await executeSql(sql, query, [playerId, seasonId]);
@@ -286,7 +289,7 @@ export async function fetchFutureSeasonContracts(
     let result: any[];
     
     if (playerType === 'real') {
-      // Query player_seasons table for future seasons
+      // Query player_seasons and realplayerstats tables for all seasons
       query = `
         SELECT 
           id,
@@ -301,6 +304,23 @@ export async function fetchFutureSeasonContracts(
           season_id
         FROM player_seasons
         WHERE player_id = $1
+        
+        UNION ALL
+        
+        SELECT 
+          id,
+          player_id,
+          player_name,
+          team_id,
+          team_id as team_name,
+          0 as auction_value,
+          category,
+          points,
+          0 as salary_per_match,
+          season_id
+        FROM realplayerstats
+        WHERE player_id = $1
+        
         ORDER BY season_id
       `;
       result = await executeSql(sql, query, [playerId]);
@@ -510,36 +530,67 @@ async function updatePlayerInNeon(
       // Begin transaction
       await client.query('BEGIN');
       
-      // Update current season with full changes
-      const currentSeasonQuery = `
-        UPDATE ${tableName}
-        SET 
-          team_id = $1,
-          auction_value = $2,
-          category = $3,
-          points = $4,
-          salary_per_match = $5,
-          updated_at = NOW()
-        WHERE player_id = $6 AND season_id = $7
-      `;
-      
-      await client.query(currentSeasonQuery, [
-        currentSeasonUpdates.team_id,
-        Math.round(currentSeasonUpdates.auction_value), // Round to integer
-        currentSeasonUpdates.category,
-        Math.round(currentSeasonUpdates.points), // Round to integer
-        parseFloat(currentSeasonUpdates.salary_per_match.toFixed(2)), // Keep 2 decimals for salary
-        playerId,
-        currentSeasonId
-      ]);
+      const getRealTableName = (sId: string) => {
+        const sNum = parseInt(sId.replace(/\D/g, '')) || 0;
+        const isMod = sNum === 16 || sNum === 17;
+        return playerType === 'real'
+          ? (isMod ? 'player_seasons' : 'realplayerstats')
+          : 'footballplayers';
+      };
+
+      const currentTableName = getRealTableName(currentSeasonId);
+      const isModernCurrent = currentTableName === 'player_seasons' || playerType === 'football';
+
+      if (isModernCurrent) {
+        const currentSeasonQuery = `
+          UPDATE ${currentTableName}
+          SET 
+            team_id = $1,
+            auction_value = $2,
+            category = $3,
+            points = $4,
+            salary_per_match = $5,
+            updated_at = NOW()
+          WHERE player_id = $6 AND season_id = $7
+        `;
+        
+        await client.query(currentSeasonQuery, [
+          currentSeasonUpdates.team_id,
+          Math.round(currentSeasonUpdates.auction_value), // Round to integer
+          currentSeasonUpdates.category,
+          Math.round(currentSeasonUpdates.points), // Round to integer
+          parseFloat(currentSeasonUpdates.salary_per_match.toFixed(2)), // Keep 2 decimals for salary
+          playerId,
+          currentSeasonId
+        ]);
+      } else {
+        const currentSeasonQuery = `
+          UPDATE ${currentTableName}
+          SET 
+            team_id = $1,
+            category = $2,
+            points = $3,
+            updated_at = NOW()
+          WHERE player_id = $4 AND season_id = $5
+        `;
+        
+        await client.query(currentSeasonQuery, [
+          currentSeasonUpdates.team_id,
+          currentSeasonUpdates.category,
+          Math.round(currentSeasonUpdates.points), // Round to integer
+          playerId,
+          currentSeasonId
+        ]);
+      }
       
       updatedSeasonIds.push(currentSeasonId);
       console.log(`   ✅ Updated current season ${currentSeasonId} with full changes`);
       
       // Update future seasons with team_id only
       for (const futureSeasonId of futureSeasonIds) {
+        const futureTableName = getRealTableName(futureSeasonId);
         const futureSeasonQuery = `
-          UPDATE ${tableName}
+          UPDATE ${futureTableName}
           SET 
             team_id = $1,
             updated_at = NOW()
@@ -879,28 +930,56 @@ async function rollbackPlayerUpdate(
     const sql = getPlayerDb(playerType);
     const tableName = getTableName(playerType);
     
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+    const currentTableName = playerType === 'real'
+      ? (isModern ? 'player_seasons' : 'realplayerstats')
+      : 'footballplayers';
+    const isModernOrFootball = currentTableName === 'player_seasons' || playerType === 'football';
+
     // Restore all original values for this season
-    const query = `
-      UPDATE ${tableName}
-      SET 
-        team_id = $1,
-        auction_value = $2,
-        category = $3,
-        points = $4,
-        salary_per_match = $5,
-        updated_at = NOW()
-      WHERE player_id = $6 AND season_id = $7
-    `;
-    
-    await executeSql(sql, query, [
-      originalData.team_id,
-      Math.round(originalData.auction_value),
-      originalData.category,
-      Math.round(originalData.points),
-      originalData.salary_per_match ? parseFloat(originalData.salary_per_match.toFixed(2)) : 0,
-      playerId,
-      seasonId
-    ]);
+    let query: string;
+    if (isModernOrFootball) {
+      query = `
+        UPDATE ${currentTableName}
+        SET 
+          team_id = $1,
+          auction_value = $2,
+          category = $3,
+          points = $4,
+          salary_per_match = $5,
+          updated_at = NOW()
+        WHERE player_id = $6 AND season_id = $7
+      `;
+      
+      await executeSql(sql, query, [
+        originalData.team_id,
+        Math.round(originalData.auction_value),
+        originalData.category,
+        Math.round(originalData.points),
+        originalData.salary_per_match ? parseFloat(originalData.salary_per_match.toFixed(2)) : 0,
+        playerId,
+        seasonId
+      ]);
+    } else {
+      query = `
+        UPDATE ${currentTableName}
+        SET 
+          team_id = $1,
+          category = $2,
+          points = $3,
+          updated_at = NOW()
+        WHERE player_id = $4 AND season_id = $5
+      `;
+      
+      await executeSql(sql, query, [
+        originalData.team_id,
+        originalData.category,
+        Math.round(originalData.points),
+        playerId,
+        seasonId
+      ]);
+    }
     
     console.log(`   ✅ Successfully rolled back season ${seasonId}`);
     

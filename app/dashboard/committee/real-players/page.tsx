@@ -128,7 +128,7 @@ export default function RealPlayersPage() {
 
       try {
         const seasonNum = parseInt(userSeasonId.replace(/\D/g, '')) || 0;
-        const isModernSeason = seasonNum >= 16;
+        const isModernSeason = seasonNum === 16 || seasonNum === 17;
 
         if (isModernSeason) {
           // Fetch from Neon via API

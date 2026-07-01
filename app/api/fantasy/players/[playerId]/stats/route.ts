@@ -8,10 +8,10 @@ import { getTournamentDb } from '@/lib/neon/tournament-config';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { playerId: string } }
+  { params }: { params: Promise<{ playerId: string }> }
 ) {
   try {
-    const { playerId } = params;
+    const { playerId } = await params;
     const searchParams = request.nextUrl.searchParams;
     const league_id = searchParams.get('league_id');
 
@@ -46,13 +46,26 @@ export async function GET(
     const leagueData = leagues[0];
     const tournamentSql = getTournamentDb();
 
-    // Get player info
-    const players = await tournamentSql`
-      SELECT * FROM player_seasons
-      WHERE player_id = ${playerId}
-        AND season_id = ${leagueData.season_id}
-      LIMIT 1
-    `;
+    const seasonNum = parseInt(leagueData.season_id.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    // Get player info from correct table
+    let players;
+    if (isModern) {
+      players = await tournamentSql`
+        SELECT * FROM player_seasons
+        WHERE player_id = ${playerId}
+          AND season_id = ${leagueData.season_id}
+        LIMIT 1
+      `;
+    } else {
+      players = await tournamentSql`
+        SELECT * FROM realplayerstats
+        WHERE player_id = ${playerId}
+          AND season_id = ${leagueData.season_id}
+        LIMIT 1
+      `;
+    }
 
     if (players.length === 0) {
       return NextResponse.json(

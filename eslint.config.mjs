@@ -1,16 +1,11 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
+import nextConfig from "eslint-config-next";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import tseslint from "typescript-eslint";
+import reactPlugin from "eslint-plugin-react";
+import hooksPlugin from "eslint-plugin-react-hooks";
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...nextVitals,
   {
     ignores: [
       "node_modules/**",
@@ -32,17 +27,22 @@ const eslintConfig = [
     ],
   },
   {
+    // Custom overrides block
+    files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
+    plugins: {
+      "react": reactPlugin,
+      "react-hooks": hooksPlugin,
+      "@typescript-eslint": tseslint.plugin,
+    },
     rules: {
-      // Convert errors to warnings to prevent build failures
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": "warn",
       "prefer-const": "warn",
       "react/no-unescaped-entities": "warn",
       "react-hooks/exhaustive-deps": "warn",
       "@next/next/no-img-element": "warn",
       "react/jsx-no-undef": "warn",
-      // Turn off problematic rules that cause build failures
       "no-console": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": "warn",
       "@typescript-eslint/ban-ts-comment": "warn",
     },
   },

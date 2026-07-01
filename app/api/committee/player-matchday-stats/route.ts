@@ -16,13 +16,26 @@ export async function GET(request: NextRequest) {
 
     const sql = getTournamentDb();
 
-    // First, get the actual player_id from player_seasons (not the composite id)
-    const playerInfo = await sql`
-      SELECT player_id, player_name
-      FROM player_seasons
-      WHERE id = ${player_id}
-      LIMIT 1
-    `;
+    const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    // First, get the actual player_id from the correct table
+    let playerInfo;
+    if (isModern) {
+      playerInfo = await sql`
+        SELECT player_id, player_name
+        FROM player_seasons
+        WHERE id = ${player_id}
+        LIMIT 1
+      `;
+    } else {
+      playerInfo = await sql`
+        SELECT player_id, player_name
+        FROM realplayerstats
+        WHERE id = ${player_id}
+        LIMIT 1
+      `;
+    }
 
     if (playerInfo.length === 0) {
       return NextResponse.json(

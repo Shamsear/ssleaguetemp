@@ -17,22 +17,43 @@ export async function GET(request: NextRequest) {
 
     const sql = getTournamentDb();
 
-    // Get all active player_seasons for the season
-    const playerSeasons = await sql`
-      SELECT 
-        ps.id,
-        ps.player_id,
-        ps.player_name,
-        ps.team_id,
-        ps.team as team_name,
-        ps.season_id,
-        ps.category,
-        ps.star_rating
-      FROM player_seasons ps
-      WHERE ps.season_id = ${seasonId}
-        AND ps.status = 'active'
-      ORDER BY ps.team, ps.player_name
-    `;
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    // Get all active players for the season
+    let playerSeasons;
+    if (isModern) {
+      playerSeasons = await sql`
+        SELECT 
+          ps.id,
+          ps.player_id,
+          ps.player_name,
+          ps.team_id,
+          ps.team as team_name,
+          ps.season_id,
+          ps.category,
+          ps.star_rating
+        FROM player_seasons ps
+        WHERE ps.season_id = ${seasonId}
+          AND ps.status = 'active'
+        ORDER BY ps.team, ps.player_name
+      `;
+    } else {
+      playerSeasons = await sql`
+        SELECT 
+          ps.id,
+          ps.player_id,
+          ps.player_name,
+          ps.team_id,
+          ps.team as team_name,
+          ps.season_id,
+          ps.category,
+          ps.star_rating
+        FROM realplayerstats ps
+        WHERE ps.season_id = ${seasonId}
+        ORDER BY ps.team, ps.player_name
+      `;
+    }
 
     // For each player, calculate stats from matchups in the round range
     const playersWithStats = await Promise.all(

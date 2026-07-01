@@ -101,12 +101,22 @@ export async function POST(
     
     // Get player names from player_seasons table
     const allPlayerIds = [...homePlayerIds.slice(0, 5), ...awayPlayerIds.slice(0, 5)];
-    const players = await sql`
-      SELECT player_id, player_name 
-      FROM player_seasons 
-      WHERE player_id = ANY(${allPlayerIds})
-      AND season_id = ${fixture.season_id}
-    `;
+    const seasonNum = parseInt(fixture.season_id.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    const players = isModern
+      ? await sql`
+          SELECT player_id, player_name 
+          FROM player_seasons 
+          WHERE player_id = ANY(${allPlayerIds})
+          AND season_id = ${fixture.season_id}
+        `
+      : await sql`
+          SELECT player_id, player_name 
+          FROM realplayerstats 
+          WHERE player_id = ANY(${allPlayerIds})
+          AND season_id = ${fixture.season_id}
+        `;
     
     // Create a map of player_id to player_name
     const playerMap = new Map(players.map((p: any) => [p.player_id, p.player_name]));

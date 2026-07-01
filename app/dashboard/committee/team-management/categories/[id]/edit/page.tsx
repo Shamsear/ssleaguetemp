@@ -16,6 +16,38 @@ import {
   Plus
 } from 'lucide-react';
 
+const getRelativeLevels = (priority: number) => {
+  if (priority === 1) {
+    return [
+      { fieldSuffix: 'same_category', label: 'Same Level' },
+      { fieldSuffix: 'one_level_diff', label: '1 Level Down' },
+      { fieldSuffix: 'two_level_diff', label: '2 Levels Down' },
+      { fieldSuffix: 'three_level_diff', label: '3 Levels Down' },
+    ];
+  } else if (priority === 2) {
+    return [
+      { fieldSuffix: 'one_level_diff', label: '1 Level Up' },
+      { fieldSuffix: 'same_category', label: 'Same Level' },
+      { fieldSuffix: 'two_level_diff', label: '1 Level Down' },
+      { fieldSuffix: 'three_level_diff', label: '2 Levels Down' },
+    ];
+  } else if (priority === 3) {
+    return [
+      { fieldSuffix: 'two_level_diff', label: '2 Levels Up' },
+      { fieldSuffix: 'one_level_diff', label: '1 Level Up' },
+      { fieldSuffix: 'same_category', label: 'Same Level' },
+      { fieldSuffix: 'three_level_diff', label: '1 Level Down' },
+    ];
+  } else { // priority === 4
+    return [
+      { fieldSuffix: 'three_level_diff', label: '3 Levels Up' },
+      { fieldSuffix: 'two_level_diff', label: '2 Levels Up' },
+      { fieldSuffix: 'one_level_diff', label: '1 Level Up' },
+      { fieldSuffix: 'same_category', label: 'Same Level' },
+    ];
+  }
+};
+
 export default function EditCategoryPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -180,6 +212,8 @@ export default function EditCategoryPage() {
     );
   }
 
+  const priorityNum = parseInt(formData.priority) || 1;
+
   return (
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
@@ -208,7 +242,7 @@ export default function EditCategoryPage() {
               <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
                 Edit Category: {formData.name}
               </h1>
-              <p className="text-xs text-slate-550 font-mono mt-1">
+              <p className="text-xs text-slate-500 font-mono mt-1">
                 Update configurations and priority scoring offsets for this tier.
               </p>
             </div>
@@ -250,18 +284,33 @@ export default function EditCategoryPage() {
                   Category Name *
                 </label>
                 <div className="relative">
-                  <input
-                    type="text"
+                  <select
                     name="name"
                     id="name"
                     required
                     value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 pl-11 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
-                    placeholder="e.g. Red, Blue, Black, White"
-                  />
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData(prev => ({
+                        ...prev,
+                        name: val,
+                        color: val.toLowerCase()
+                      }));
+                    }}
+                    className="w-full px-4 py-2.5 pl-11 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all appearance-none cursor-pointer"
+                    style={{ paddingLeft: '2.75rem' }}
+                  >
+                    <option value="" disabled>Select category name...</option>
+                    <option value="Red">Red Category</option>
+                    <option value="Black">Black Category</option>
+                    <option value="Blue">Blue Category</option>
+                    <option value="White">White Category</option>
+                  </select>
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                     <Layers className="w-4 h-4" />
+                  </div>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                    <ChevronRight className="w-4 h-4 rotate-90" />
                   </div>
                 </div>
               </div>
@@ -283,16 +332,16 @@ export default function EditCategoryPage() {
                 <label htmlFor="priority" className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">
                   Priority Level *
                 </label>
-                <p className="text-[10px] text-slate-550 font-mono mb-4 flex items-start gap-1">
-                  <ChevronRight className="w-3.5 h-3.5 text-amber-550 flex-shrink-0" />
+                <p className="text-[10px] text-slate-500 font-mono mb-4 flex items-start gap-1">
+                  <ChevronRight className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
                   <span>Priority defines hierarchy: 1 = Elite, 4 = Beginner</span>
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { num: 1, label: 'Elite', gradient: 'from-amber-550 to-orange-500' },
-                    { num: 2, label: 'Advanced', gradient: 'from-blue-500 to-cyan-555' },
-                    { num: 3, label: 'Intermediate', gradient: 'from-emerald-500 to-green-555' },
-                    { num: 4, label: 'Beginner', gradient: 'from-purple-500 to-pink-555' }
+                    { num: 1, label: 'Elite', gradient: 'from-amber-500 to-orange-500' },
+                    { num: 2, label: 'Advanced', gradient: 'from-blue-500 to-cyan-500' },
+                    { num: 3, label: 'Intermediate', gradient: 'from-emerald-500 to-green-500' },
+                    { num: 4, label: 'Beginner', gradient: 'from-purple-500 to-pink-500' }
                   ].map(({ num, label, gradient }) => (
                     <button
                       key={num}
@@ -336,7 +385,7 @@ export default function EditCategoryPage() {
               <Info className="w-5 h-5 text-slate-500 flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Points System Offset rules</h4>
-                <p className="text-[10px] text-slate-550 font-mono mt-1">Configure points awarded based on match results and opponent strength. Range: -20 to +20 points.</p>
+                <p className="text-[10px] text-slate-500 font-mono mt-1">Configure points awarded based on match results and opponent strength. Range: -20 to +20 points.</p>
               </div>
             </div>
 
@@ -350,28 +399,26 @@ export default function EditCategoryPage() {
                   <h3 className="text-sm font-extrabold text-emerald-900 uppercase tracking-wider">Win Points</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { name: 'points_same_category', label: 'Same Level' },
-                    { name: 'points_one_level_diff', label: '1 Level Up' },
-                    { name: 'points_two_level_diff', label: '2 Levels Up' },
-                    { name: 'points_three_level_diff', label: '3 Levels Up' }
-                  ].map(({ name, label }) => (
-                    <div key={name}>
-                      <label htmlFor={name} className="block text-[10px] font-black uppercase text-slate-550 tracking-wider mb-2">
-                        {label}
-                      </label>
-                      <input
-                        type="number"
-                        name={name}
-                        id={name}
-                        min="-20"
-                        max="20"
-                        value={formData[name as keyof typeof formData]}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 rounded-xl text-center text-sm font-extrabold font-mono"
-                      />
-                    </div>
-                  ))}
+                  {getRelativeLevels(priorityNum).map(({ fieldSuffix, label }) => {
+                    const name = `points_${fieldSuffix}`;
+                    return (
+                      <div key={name}>
+                        <label htmlFor={name} className="block text-[10px] font-black uppercase text-slate-555 tracking-wider mb-2">
+                          {label}
+                        </label>
+                        <input
+                          type="number"
+                          name={name}
+                          id={name}
+                          min="-20"
+                          max="20"
+                          value={formData[name as keyof typeof formData]}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 rounded-xl text-center text-sm font-extrabold font-mono"
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -384,28 +431,26 @@ export default function EditCategoryPage() {
                   <h3 className="text-sm font-extrabold text-blue-900 uppercase tracking-wider">Draw Points</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { name: 'draw_same_category', label: 'Same Level' },
-                    { name: 'draw_one_level_diff', label: '1 Level Up' },
-                    { name: 'draw_two_level_diff', label: '2 Levels Up' },
-                    { name: 'draw_three_level_diff', label: '3 Levels Up' }
-                  ].map(({ name, label }) => (
-                    <div key={name}>
-                      <label htmlFor={name} className="block text-[10px] font-black uppercase text-slate-550 tracking-wider mb-2">
-                        {label}
-                      </label>
-                      <input
-                        type="number"
-                        name={name}
-                        id={name}
-                        min="-20"
-                        max="20"
-                        value={formData[name as keyof typeof formData]}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 rounded-xl text-center text-sm font-extrabold font-mono"
-                      />
-                    </div>
-                  ))}
+                  {getRelativeLevels(priorityNum).map(({ fieldSuffix, label }) => {
+                    const name = `draw_${fieldSuffix}`;
+                    return (
+                      <div key={name}>
+                        <label htmlFor={name} className="block text-[10px] font-black uppercase text-slate-555 tracking-wider mb-2">
+                          {label}
+                        </label>
+                        <input
+                          type="number"
+                          name={name}
+                          id={name}
+                          min="-20"
+                          max="20"
+                          value={formData[name as keyof typeof formData]}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 rounded-xl text-center text-sm font-extrabold font-mono"
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -418,28 +463,26 @@ export default function EditCategoryPage() {
                   <h3 className="text-sm font-extrabold text-rose-900 uppercase tracking-wider">Loss Points</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { name: 'loss_same_category', label: 'Same Level' },
-                    { name: 'loss_one_level_diff', label: '1 Level Down' },
-                    { name: 'loss_two_level_diff', label: '2 Levels Down' },
-                    { name: 'loss_three_level_diff', label: '3 Levels Down' }
-                  ].map(({ name, label }) => (
-                    <div key={name}>
-                      <label htmlFor={name} className="block text-[10px] font-black uppercase text-slate-550 tracking-wider mb-2">
-                        {label}
-                      </label>
-                      <input
-                        type="number"
-                        name={name}
-                        id={name}
-                        min="-20"
-                        max="20"
-                        value={formData[name as keyof typeof formData]}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 rounded-xl text-center text-sm font-extrabold font-mono"
-                      />
-                    </div>
-                  ))}
+                  {getRelativeLevels(priorityNum).map(({ fieldSuffix, label }) => {
+                    const name = `loss_${fieldSuffix}`;
+                    return (
+                      <div key={name}>
+                        <label htmlFor={name} className="block text-[10px] font-black uppercase text-slate-555 tracking-wider mb-2">
+                          {label}
+                        </label>
+                        <input
+                          type="number"
+                          name={name}
+                          id={name}
+                          min="-20"
+                          max="20"
+                          value={formData[name as keyof typeof formData]}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 rounded-xl text-center text-sm font-extrabold font-mono"
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

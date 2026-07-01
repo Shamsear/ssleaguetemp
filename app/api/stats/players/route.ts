@@ -39,10 +39,10 @@ export async function GET(request: NextRequest) {
     
     let stats;
     
-    // Determine if this is a modern season (16+) or historical (1-15)
+    // Determine if this is a modern season (16-17) or historical (1-15, 18+)
     const isModernSeason = (season: string) => {
       const seasonNum = parseInt(season.replace(/\D/g, '')) || 0;
-      return seasonNum >= 16;
+      return seasonNum === 16 || seasonNum === 17;
     };
 
     // If round range is specified OR if we want matchups-based stats, aggregate from matchups and fixtures tables
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
         useMatchups: searchParams.get('useMatchups')
       });
       
-      if (seasonNum >= 16) {
+      if (seasonNum === 16 || seasonNum === 17) {
         // Extract just the season ID (e.g., "SSPSLS16" from "SSPSLS16L" or "SSPSLS16-LEAGUE")
         const seasonIdFromTournament = tournamentId.includes('-') 
           ? tournamentId.split('-')[0]  // "SEASON16-LEAGUE" -> "SEASON16"
@@ -563,7 +563,7 @@ export async function GET(request: NextRequest) {
       const seasonMatch = tournamentId.match(/SEASON(\d+)/);
       const seasonNum = seasonMatch ? parseInt(seasonMatch[1]) : 0;
       
-      if (seasonNum >= 16) {
+      if (seasonNum === 16 || seasonNum === 17) {
         // Modern season: Query player_seasons table
         const seasonIdFromTournament = tournamentId.split('-')[0]; // e.g., "SEASON16"
         

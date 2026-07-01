@@ -211,25 +211,12 @@ export class FantasyPlayersService {
   }): Promise<any[]> {
     const { seasonId, cursor, limit, category, search } = params;
 
-    // Build the query with filters
-    let query = this.tournamentSql`
-      SELECT 
-        player_id,
-        player_name,
-        team_id,
-        team,
-        category
-      FROM player_seasons
-      WHERE season_id = ${seasonId}
-        AND player_name IS NOT NULL
-        AND team_id IS NOT NULL
-        AND team_id != ''
-        AND team IS NOT NULL
-        AND team != ''
-    `;
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
 
-    // Add cursor pagination (player_id > cursor)
-    if (cursor) {
+    // Build the query with filters
+    let query;
+    if (isModern) {
       query = this.tournamentSql`
         SELECT 
           player_id,
@@ -244,8 +231,61 @@ export class FantasyPlayersService {
           AND team_id != ''
           AND team IS NOT NULL
           AND team != ''
-          AND player_id > ${cursor}
       `;
+      
+      if (cursor) {
+        query = this.tournamentSql`
+          SELECT 
+            player_id,
+            player_name,
+            team_id,
+            team,
+            category
+          FROM player_seasons
+          WHERE season_id = ${seasonId}
+            AND player_name IS NOT NULL
+            AND team_id IS NOT NULL
+            AND team_id != ''
+            AND team IS NOT NULL
+            AND team != ''
+            AND player_id > ${cursor}
+        `;
+      }
+    } else {
+      query = this.tournamentSql`
+        SELECT 
+          player_id,
+          player_name,
+          team_id,
+          team,
+          category
+        FROM realplayerstats
+        WHERE season_id = ${seasonId}
+          AND player_name IS NOT NULL
+          AND team_id IS NOT NULL
+          AND team_id != ''
+          AND team IS NOT NULL
+          AND team != ''
+      `;
+      
+      if (cursor) {
+        query = this.tournamentSql`
+          SELECT 
+            player_id,
+            player_name,
+            team_id,
+            team,
+            category
+          FROM realplayerstats
+          WHERE season_id = ${seasonId}
+            AND player_name IS NOT NULL
+            AND team_id IS NOT NULL
+            AND team_id != ''
+            AND team IS NOT NULL
+            AND team != ''
+            AND player_id > ${cursor}
+        `;
+      }
     }
 
     // Execute query
@@ -312,14 +352,26 @@ export class FantasyPlayersService {
     const league = await this.getLeague(leagueId);
     const draftedPlayerIds = await this.getDraftedPlayerIds(leagueId);
 
-    const allPlayers = await this.tournamentSql`
-      SELECT category
-      FROM player_seasons
-      WHERE season_id = ${league.season_id}
-        AND player_name IS NOT NULL
-        AND team_id IS NOT NULL
-        AND team_id != ''
-    `;
+    const seasonNum = parseInt(league.season_id.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    const allPlayers = isModern
+      ? await this.tournamentSql`
+          SELECT category
+          FROM player_seasons
+          WHERE season_id = ${league.season_id}
+            AND player_name IS NOT NULL
+            AND team_id IS NOT NULL
+            AND team_id != ''
+        `
+      : await this.tournamentSql`
+          SELECT category
+          FROM realplayerstats
+          WHERE season_id = ${league.season_id}
+            AND player_name IS NOT NULL
+            AND team_id IS NOT NULL
+            AND team_id != ''
+        `;
 
     const availablePlayers = allPlayers.filter(
       (p: any) => !draftedPlayerIds.has(p.player_id)

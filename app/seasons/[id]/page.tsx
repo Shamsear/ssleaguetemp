@@ -50,6 +50,8 @@ interface PlayerStat {
   goals_conceded: number;
   clean_sheets: number;
   points: number;
+  base_points?: number;
+  raw_points?: number;
 }
 
 interface PlayerAward {
@@ -795,7 +797,7 @@ export default function SeasonDetailPage() {
                     {knockoutFixtures && Object.keys(knockoutFixtures).length > 0 && (
                       <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
                         <h3 className="font-bold text-slate-900 mb-6 font-mono text-sm uppercase tracking-wider flex items-center gap-2">
-                          <Layers className="w-4.5 h-4.5 text-amber-500" /> Playoff Stage Brackets
+                          <Layers className="w-5 h-5 text-amber-500" /> Playoff Stage Brackets
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {Object.entries(knockoutFixtures).map(([roundName, roundMatches]: [string, any]) => (
@@ -994,9 +996,9 @@ export default function SeasonDetailPage() {
                             <div className="font-bold text-slate-900 text-sm truncate">{player.player_name}</div>
                             <div className="text-[10px] text-slate-400 font-mono mt-0.5">{resolvedSquadName}</div>
                           </div>
-                          <div className="text-right">
-                            <span className="text-sm font-black text-amber-600 font-mono">{player.points} PTS</span>
-                          </div>
+                           <div className="text-right">
+                             <span className="text-sm font-black text-amber-600 font-mono">{player.points} PTS</span>
+                           </div>
                         </div>
                         <div className="grid grid-cols-3 gap-3 text-[10px] text-center text-slate-500 font-mono pt-3 border-t border-slate-100">
                           <div>

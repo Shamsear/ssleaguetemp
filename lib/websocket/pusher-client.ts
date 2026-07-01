@@ -10,7 +10,7 @@ import Pusher from 'pusher-js';
 
 type WebSocketMessage = {
   type: 'bid' | 'round_update' | 'tiebreaker' | 'player_sold' | 'round_status' | 
-        'squad_update' | 'wallet_update' | 'tiebreaker_bid' | 'new_round' | 'tiebreaker_created';
+        'squad_update' | 'wallet_update' | 'tiebreaker_bid' | 'new_round' | 'tiebreaker_created' | 'bid_submitted';
   data: any;
   timestamp?: number;
 };
@@ -38,7 +38,7 @@ export class PusherWSClient {
 
     this.pusher = new Pusher(this.appKey, {
       cluster: this.cluster,
-      encrypted: true,
+      forceTLS: true,
     });
 
     this.pusher.connection.bind('connected', () => {
