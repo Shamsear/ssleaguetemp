@@ -35,35 +35,26 @@ export async function GET() {
       FROM realplayerstats
     `;
     
-    // Get trophy count — using trophy_position for S17+ identification
+    // Get trophy count
     const [trophyStats] = await sql`
       SELECT 
         COUNT(*) FILTER (
-          WHERE 
-            -- S1-S16 historical shield/league titles
-            (trophy_type = 'league' AND trophy_name ILIKE 'league' AND position = 1)
-            OR
-            -- S17+ shield winners identified by trophy_position
-            (trophy_position ILIKE 'Shield Winner')
-            OR
-            -- Auto-awarded league/shield via tournament system
-            (notes ILIKE '%Auto-awarded based on tournament standings%' AND (trophy_position ILIKE 'winner' OR position = 1))
-        ) as shield_titles_awarded,
+          WHERE (
+            COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer < 17 
+            AND trophy_type = 'league'
+          ) OR (
+            COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer >= 17 
+            AND trophy_position ILIKE 'Shield Winner'
+          )
+        ) as league_titles_awarded,
         COUNT(*) FILTER (
           WHERE (
-            -- S1-S16 historical cup titles
-            (trophy_type = 'cup' AND trophy_name ILIKE 'cup' AND position = 1)
-            OR
-            -- S17+ knockout/cup winners by trophy_position
-            (trophy_position ILIKE 'Knockout Winner')
-            OR
-            (trophy_position ILIKE 'winner' AND trophy_position NOT ILIKE 'Shield%')
-            OR
-            (notes ILIKE '%Auto-awarded based on knockout final%' AND (trophy_position ILIKE 'winner' OR position = 1))
+            COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer < 17 
+            AND trophy_type = 'cup'
+          ) OR (
+            COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer >= 17 
+            AND trophy_position ILIKE 'Knockout Winner'
           )
-          AND trophy_position NOT ILIKE 'Shield Winner'
-          AND trophy_position NOT ILIKE '%Runner Up%'
-          AND trophy_position NOT ILIKE '%Third%'
         ) as cup_titles_awarded,
         COUNT(DISTINCT team_id) as teams_with_trophies
       FROM team_trophies
@@ -88,7 +79,7 @@ export async function GET() {
           total_clean_sheets: parseInt(playerStats.total_clean_sheets) || 0,
         },
         trophies: {
-          league_titles: parseInt(trophyStats.shield_titles_awarded) || 0,
+          league_titles: parseInt(trophyStats.league_titles_awarded) || 0,
           cup_titles: parseInt(trophyStats.cup_titles_awarded) || 0,
           teams_with_trophies: parseInt(trophyStats.teams_with_trophies) || 0,
         }

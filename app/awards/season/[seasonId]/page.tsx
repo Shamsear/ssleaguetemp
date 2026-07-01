@@ -130,6 +130,12 @@ function WeeklyAwardCardInner({ award, positionLabel, positionClass, renderStats
 }
 
 function TrophyCardInner({ trophy, cardClass, positionClass, positionLabel }: { trophy: TrophyData; cardClass: string; positionClass: string; positionLabel: string }) {
+  const seasonNum = parseInt(trophy.season_id?.replace(/\D/g, '') || '0');
+  const isS17Plus = seasonNum >= 17;
+  const displayType = isS17Plus
+    ? (trophy.trophy_position?.toLowerCase().includes('shield') ? 'league' : 'cup')
+    : trophy.trophy_type;
+
   return (
     <>
       <div className="flex justify-between items-start">
@@ -151,9 +157,9 @@ function TrophyCardInner({ trophy, cardClass, positionClass, positionLabel }: { 
         <h3 className="font-black text-slate-800 text-[11px] tracking-tight truncate max-w-full">
           {trophy.team_name}
         </h3>
-        {trophy.trophy_type && (
+        {displayType && (
           <span className="text-[8px] font-extrabold text-slate-400 uppercase mt-0.5 bg-slate-100/60 px-1.5 py-0.5 rounded">
-            {trophy.trophy_type.replace('_', ' ')}
+            {displayType.replace('_', ' ')}
           </span>
         )}
       </div>
@@ -652,9 +658,20 @@ export default function SeasonAwardsPage() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 justify-items-center">
               {trophies.map((trophy, index) => {
-                const isChampion = trophy.position === 1 || trophy.trophy_position?.toLowerCase().includes('champion') || trophy.trophy_position?.toLowerCase().includes('1st');
-                const isRunnerUp = trophy.position === 2 || trophy.trophy_position?.toLowerCase().includes('runner') || trophy.trophy_position?.toLowerCase().includes('2nd');
-                const isThird = trophy.position === 3 || trophy.trophy_position?.toLowerCase().includes('third') || trophy.trophy_position?.toLowerCase().includes('3rd');
+                const seasonNum = parseInt(trophy.season_id?.replace(/\D/g, '') || '0');
+                const isS17Plus = seasonNum >= 17;
+                
+                const isChampion = isS17Plus
+                  ? (trophy.trophy_position?.toLowerCase().includes('winner') || trophy.trophy_position?.toLowerCase().includes('champion'))
+                  : (trophy.position === 1 || trophy.trophy_position?.toLowerCase().includes('champion') || trophy.trophy_position?.toLowerCase().includes('1st'));
+
+                const isRunnerUp = isS17Plus
+                  ? (trophy.trophy_position?.toLowerCase().includes('runner'))
+                  : (trophy.position === 2 || trophy.trophy_position?.toLowerCase().includes('runner') || trophy.trophy_position?.toLowerCase().includes('2nd'));
+
+                const isThird = isS17Plus
+                  ? (trophy.trophy_position?.toLowerCase().includes('third'))
+                  : (trophy.position === 3 || trophy.trophy_position?.toLowerCase().includes('third') || trophy.trophy_position?.toLowerCase().includes('3rd'));
                 
                 let cardClass = 'fut-card p-4 flex flex-col justify-between';
                 let positionLabel = 'FINALIST';

@@ -1097,8 +1097,21 @@ export default function PlayerDetailPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {teamTrophies.map((trophy) => {
-                    const isLeague = trophy.trophy_type === 'league';
-                    const isCup = trophy.trophy_type === 'cup';
+                    const seasonNum = parseInt(trophy.season_id?.replace(/\D/g, '') || '0');
+                    const isS17Plus = seasonNum >= 17;
+                    
+                    const isLeague = isS17Plus 
+                      ? (trophy.trophy_position?.toLowerCase().includes('shield winner') || trophy.trophy_type === 'league')
+                      : trophy.trophy_type === 'league';
+                      
+                    const isCup = isS17Plus 
+                      ? (trophy.trophy_position?.toLowerCase().includes('knockout winner') || trophy.trophy_type === 'cup')
+                      : trophy.trophy_type === 'cup';
+
+                    const displayType = isS17Plus
+                      ? (isLeague ? 'league' : isCup ? 'cup' : trophy.trophy_type)
+                      : trophy.trophy_type;
+
                     return (
                       <div
                         key={trophy.id}
@@ -1121,7 +1134,7 @@ export default function PlayerDetailPage() {
 
                         <div className="border-t border-slate-200/50 pt-2 flex justify-between items-center text-[8px] font-mono">
                           <span className="text-slate-400">TYPE:</span>
-                          <span className="font-bold text-slate-700 uppercase">{trophy.trophy_type.replace('_', ' ')}</span>
+                          <span className="font-bold text-slate-700 uppercase">{displayType?.replace(/_/g, ' ')}</span>
                         </div>
                       </div>
                     );

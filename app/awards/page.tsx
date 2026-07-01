@@ -519,25 +519,16 @@ function AwardsContent() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {activeTab === 'awards' ? (
               filteredItems.map((item, index) => {
-                // Determine if it's an Award or PlayerAward
                 const isPlayerAward = 'award_category' in item;
 
                 if (isPlayerAward) {
-                  // Render PlayerAward
                   const award = item as PlayerAward;
                   const isWinner = award.award_position?.toLowerCase().includes('winner');
                   const isRunnerUp = award.award_position?.toLowerCase().includes('runner');
                   const isThird = award.award_position?.toLowerCase().includes('third');
-                  const Wrapper = award.instagram_post_url ? 'a' : 'div';
 
-                  return (
-                    <Wrapper
-                      {...(award.instagram_post_url ? { href: award.instagram_post_url, target: '_blank', rel: 'noopener noreferrer' } : {})}
-                      key={`player-${award.id}-${index}`}
-                      className={`console-card rounded-2xl overflow-hidden bg-white border shadow-sm flex flex-col h-full hover:border-amber-400/40 transition-all duration-250 group ${
-                        isWinner ? 'border-amber-200 bg-gradient-to-br from-amber-50/10 to-white' : 'border-slate-200/60'
-                      }`}
-                    >
+                  const cardContent = (
+                    <>
                       {award.instagram_link && (
                         <div className="relative w-full overflow-hidden bg-slate-50 border-b border-slate-100">
                           <InstagramEmbed
@@ -554,16 +545,16 @@ function AwardsContent() {
                               <div className="flex flex-wrap gap-1">
                                 <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase tracking-wider ${
                                   award.award_category === 'individual'
-                                    ? 'bg-purple-55 border border-purple-150 text-purple-700'
-                                    : 'bg-indigo-50 border border-indigo-150 text-indigo-700'
+                                    ? 'bg-purple-50 border border-purple-100 text-purple-700'
+                                    : 'bg-indigo-50 border border-indigo-100 text-indigo-700'
                                 }`}>
                                   {award.award_category}
                                 </span>
                                 {award.award_position && (
                                   <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase tracking-wider ${
-                                    isWinner ? 'bg-amber-100 border border-amber-250 text-amber-800' :
+                                    isWinner ? 'bg-amber-100 border border-amber-200 text-amber-800' :
                                     isRunnerUp ? 'bg-slate-100 border border-slate-200 text-slate-700' :
-                                    isThird ? 'bg-orange-100 border border-orange-200 text-orange-850' :
+                                    isThird ? 'bg-orange-100 border border-orange-200 text-orange-800' :
                                     'bg-blue-50 border border-blue-200 text-blue-700'
                                   }`}>
                                     {award.award_position}
@@ -604,24 +595,50 @@ function AwardsContent() {
 
                         <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-[9px] text-slate-400 font-mono">
                           <span>SEASON AWARD</span>
-                          <Link href={`/awards/season/${award.season_id}`} className="hover:text-amber-600 font-bold bg-slate-100 text-slate-650 px-2 py-0.5 rounded transition-colors">{award.season_id}</Link>
+                          {award.instagram_post_url ? (
+                            <span className="font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{award.season_id}</span>
+                          ) : (
+                            <Link href={`/awards/season/${award.season_id}`} className="hover:text-amber-600 font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded transition-colors">{award.season_id}</Link>
+                          )}
                         </div>
                       </div>
-                    </Wrapper>
+                    </>
                   );
+
+                  const cardClass = `console-card rounded-2xl overflow-hidden bg-white border shadow-sm flex flex-col h-full hover:border-amber-400/40 transition-all duration-250 group ${
+                    isWinner ? 'border-amber-200 bg-gradient-to-br from-amber-50/10 to-white' : 'border-slate-200/60'
+                  }`;
+
+                  if (award.instagram_post_url) {
+                    return (
+                      <a
+                        href={award.instagram_post_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        key={`player-${award.id}-${index}`}
+                        className={cardClass}
+                      >
+                        {cardContent}
+                      </a>
+                    );
+                  } else {
+                    return (
+                      <div
+                        key={`player-${award.id}-${index}`}
+                        className={cardClass}
+                      >
+                        {cardContent}
+                      </div>
+                    );
+                  }
                 } else {
                   // Render Team/Regular Award
                   const award = item as Award;
-                  const Wrapper = award.instagram_post_url ? 'a' : 'div';
 
-                  return (
-                    <Wrapper
-                      {...(award.instagram_post_url ? { href: award.instagram_post_url, target: '_blank', rel: 'noopener noreferrer' } : {})}
-                      key={`award-${award.id}-${index}`}
-                      className="console-card rounded-2xl overflow-hidden bg-white border border-slate-200/60 shadow-sm flex flex-col h-full hover:border-amber-400/40 transition-all duration-250 group"
-                    >
+                  const cardContent = (
+                    <>
                       {award.instagram_link && (
-                        <div key={`instagram-${award.id}`} className="relative w-full overflow-hidden bg-slate-50 border-b border-slate-100">
+                        <div className="relative w-full overflow-hidden bg-slate-50 border-b border-slate-100">
                           <InstagramEmbed
                             postUrl={award.instagram_link}
                             instagramPostUrl={award.instagram_post_url ? '' : undefined}
@@ -660,40 +677,70 @@ function AwardsContent() {
 
                         <div className="space-y-2.5 pt-3 border-t border-slate-100">
                           {award.notes && (
-                            <div className="p-2.5 bg-amber-50/50 border-l-2 border-amber-500 rounded text-[10px] text-slate-650 font-medium">
-                              <span className="font-bold text-amber-805">NOTE:</span> {award.notes}
+                            <div className="p-2.5 bg-amber-50/50 border-l-2 border-amber-500 rounded text-[10px] text-slate-600 font-medium">
+                              <span className="font-bold text-amber-800">NOTE:</span> {award.notes}
                             </div>
                           )}
                           <div className="flex justify-between items-center text-[9px] text-slate-400 font-mono">
                             <span>DATE: {formatDate(award.selected_at)}</span>
                             {award.instagram_post_url ? (
-                              <span className="font-bold bg-slate-100 text-slate-650 px-2 py-0.5 rounded">{award.season_id}</span>
+                              <span className="font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{award.season_id}</span>
                             ) : (
-                              <Link href={`/awards/season/${award.season_id}`} className="hover:text-amber-600 font-bold bg-slate-100 text-slate-650 px-2 py-0.5 rounded transition-colors">{award.season_id}</Link>
+                              <Link href={`/awards/season/${award.season_id}`} className="hover:text-amber-600 font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded transition-colors">{award.season_id}</Link>
                             )}
                           </div>
                         </div>
                       </div>
-                    </Wrapper>
+                    </>
                   );
+
+                  const cardClass = "console-card rounded-2xl overflow-hidden bg-white border border-slate-200/60 shadow-sm flex flex-col h-full hover:border-amber-400/40 transition-all duration-250 group";
+
+                  if (award.instagram_post_url) {
+                    return (
+                      <a
+                        href={award.instagram_post_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        key={`award-${award.id}-${index}`}
+                        className={cardClass}
+                      >
+                        {cardContent}
+                      </a>
+                    );
+                  } else {
+                    return (
+                      <div
+                        key={`award-${award.id}-${index}`}
+                        className={cardClass}
+                      >
+                        {cardContent}
+                      </div>
+                    );
+                  }
                 }
               })
             ) : (
               // Render Trophies
               filteredItems.map((item, index) => {
                 const trophy = item as TrophyData;
-                const isChampion = trophy.position === 1 || trophy.trophy_position?.toLowerCase().includes('champion') || trophy.trophy_position?.toLowerCase().includes('1st');
-                const isRunnerUp = trophy.position === 2 || trophy.trophy_position?.toLowerCase().includes('runner') || trophy.trophy_position?.toLowerCase().includes('2nd');
-                const Wrapper = trophy.instagram_post_url ? 'a' : 'div';
+                const seasonNum = parseInt(trophy.season_id?.replace(/\D/g, '') || '0');
+                const isS17Plus = seasonNum >= 17;
 
-                return (
-                  <Wrapper
-                    {...(trophy.instagram_post_url ? { href: trophy.instagram_post_url, target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    key={`trophy-${trophy.id}-${index}`}
-                    className={`console-card rounded-2xl overflow-hidden bg-white border shadow-sm flex flex-col h-full hover:border-amber-400/40 transition-all duration-250 group ${
-                      isChampion ? 'border-amber-200 bg-gradient-to-br from-amber-50/10 to-white' : 'border-slate-200/60'
-                    }`}
-                  >
+                const isChampion = isS17Plus
+                  ? (trophy.trophy_position?.toLowerCase().includes('winner') || trophy.trophy_position?.toLowerCase().includes('champion'))
+                  : (trophy.position === 1 || trophy.trophy_position?.toLowerCase().includes('champion') || trophy.trophy_position?.toLowerCase().includes('1st'));
+
+                const isRunnerUp = isS17Plus
+                  ? (trophy.trophy_position?.toLowerCase().includes('runner'))
+                  : (trophy.position === 2 || trophy.trophy_position?.toLowerCase().includes('runner') || trophy.trophy_position?.toLowerCase().includes('2nd'));
+
+                const displayType = isS17Plus
+                  ? (trophy.trophy_position?.toLowerCase().includes('shield') ? 'league' : 'cup')
+                  : trophy.trophy_type;
+
+                const cardContent = (
+                  <>
                     {trophy.instagram_link && (
                       <div className="relative w-full overflow-hidden bg-slate-50 border-b border-slate-100">
                         <InstagramEmbed
@@ -708,11 +755,11 @@ function AwardsContent() {
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-1">
                             <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase tracking-wider ${
-                              trophy.trophy_type === 'league' ? 'bg-amber-105 border border-amber-250 text-amber-800' :
-                              trophy.trophy_type === 'runner_up' ? 'bg-slate-100 border border-slate-200 text-slate-700' :
-                              'bg-orange-50 border border-orange-150 text-orange-700'
+                              displayType === 'league' ? 'bg-amber-50 border border-amber-200 text-amber-800' :
+                              displayType === 'runner_up' ? 'bg-slate-100 border border-slate-200 text-slate-700' :
+                              'bg-orange-50 border border-orange-100 text-orange-700'
                             }`}>
-                              {trophy.trophy_type.replace('_', ' ')}
+                              {displayType?.replace('_', ' ')}
                             </span>
                             <h3 className="font-extrabold text-slate-900 text-base tracking-tight group-hover:text-amber-600 transition-colors mt-1">
                               {trophy.trophy_name}
@@ -739,11 +786,11 @@ function AwardsContent() {
                           <div className="flex flex-wrap gap-1.5 pt-1.5 border-t border-slate-200/50">
                             {trophy.trophy_position && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-[9px] font-mono font-bold text-amber-700 uppercase">
-                                <Star className="w-3.5 h-3.5 text-amber-450 fill-amber-450 inline mr-1" /> {trophy.trophy_position}
+                                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 inline mr-1" /> {trophy.trophy_position}
                               </span>
                             )}
                             {trophy.position && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[9px] font-mono font-bold text-slate-600 uppercase">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[9px] font-mono font-bold text-slate-650 uppercase">
                                 POS: #{trophy.position}
                               </span>
                             )}
@@ -753,11 +800,42 @@ function AwardsContent() {
 
                       <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-[9px] text-slate-400 font-mono">
                         <span>DATE: {formatDate(trophy.awarded_at)}</span>
-                        <Link href={`/awards/season/${trophy.season_id}`} className="hover:text-amber-600 font-bold bg-slate-100 text-slate-650 px-2 py-0.5 rounded transition-colors">{trophy.season_id}</Link>
+                        {trophy.instagram_post_url ? (
+                          <span className="font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{trophy.season_id}</span>
+                        ) : (
+                          <Link href={`/awards/season/${trophy.season_id}`} className="hover:text-amber-600 font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded transition-colors">{trophy.season_id}</Link>
+                        )}
                       </div>
                     </div>
-                  </Wrapper>
+                  </>
                 );
+
+                const cardClass = `console-card rounded-2xl overflow-hidden bg-white border shadow-sm flex flex-col h-full hover:border-amber-400/40 transition-all duration-250 group ${
+                  isChampion ? 'border-amber-200 bg-gradient-to-br from-amber-50/10 to-white' : 'border-slate-200/60'
+                }`;
+
+                if (trophy.instagram_post_url) {
+                  return (
+                    <a
+                      href={trophy.instagram_post_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      key={`trophy-${trophy.id}-${index}`}
+                      className={cardClass}
+                    >
+                      {cardContent}
+                    </a>
+                  );
+                } else {
+                  return (
+                    <div
+                      key={`trophy-${trophy.id}-${index}`}
+                      className={cardClass}
+                    >
+                      {cardContent}
+                    </div>
+                  );
+                }
               })
             )}
           </div>

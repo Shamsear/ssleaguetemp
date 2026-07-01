@@ -8,15 +8,13 @@ export async function GET() {
   try {
     const sql = getTournamentDb();
     
-    // Get all league/shield champions:
-    //  - S1-S16 historical: trophy_type='league', trophy_name='League', position=1
-    //  - S17+ committee/auto-awarded: identified by trophy_position='Shield Winner'
+    // Get all league/shield champions — both historical (trophy_name='League') and modern (trophy_position = 'Shield Winner' for S17+)
     const champions = await sql`
       SELECT 
         tt.team_id,
         tt.team_name,
-        COUNT(DISTINCT tt.season_id) as championship_count,
-        ARRAY_AGG(DISTINCT tt.season_id ORDER BY tt.season_id) as seasons_won,
+        COUNT(*) as championship_count,
+        ARRAY_AGG(tt.season_id ORDER BY tt.season_id) as seasons_won,
         MAX(ts.points) as best_points,
         SUM(ts.wins) as total_wins,
         SUM(ts.goals_for) as total_goals
@@ -27,40 +25,53 @@ export async function GET() {
         GROUP BY team_id, season_id
       ) ts ON tt.team_id = ts.team_id AND tt.season_id = ts.season_id
       WHERE (
-          -- S1-S16 historical: league type + league name + winner position
-          (tt.trophy_type ILIKE 'league' AND tt.trophy_name ILIKE 'league' AND tt.position = 1)
-          OR
-          -- S17+ auto/committee awarded: trophy_position explicitly says 'Shield Winner'
-          (tt.trophy_position ILIKE 'Shield Winner')
+        -- S1-S16 historical: exact type+name match
+        (
+          COALESCE(NULLIF(REGEXP_REPLACE(tt.season_id, '[^0-9]', '', 'g'), ''), '0')::integer < 17
+          AND (
+            ((tt.trophy_type ILIKE 'league' AND tt.trophy_name ILIKE 'league')
+             OR 
+             (tt.trophy_name ~* '^SS Super League S[0-9]+ League$' AND tt.notes ILIKE '%Auto-awarded based on tournament standings%'))
+            AND (tt.trophy_position ILIKE 'winner%' OR tt.trophy_position ILIKE 'champion%' OR tt.position = 1)
+          )
         )
+        OR
+        -- S17+ modern: trophy_position contains 'Shield Winner'
+        (
+          COALESCE(NULLIF(REGEXP_REPLACE(tt.season_id, '[^0-9]', '', 'g'), ''), '0')::integer >= 17
+          AND tt.trophy_position ILIKE 'Shield Winner'
+        )
+      )
       GROUP BY tt.team_id, tt.team_name
       ORDER BY championship_count DESC, tt.team_name ASC
     `;
 
-    // Get cup/knockout tournament winners:
-    //  - S1-S16 historical: trophy_type='cup', trophy_name='Cup', position=1
-    //  - S17+ committee/auto-awarded: trophy_position='Knockout Winner' or 'Winner' (pure knockout, non-shield)
+    // Get cup/tournament winners — both historical (trophy_name='Cup') and modern (trophy_position = 'Knockout Winner' for S17+)
     const cupWinners = await sql`
       SELECT 
         team_id,
         team_name,
-        COUNT(DISTINCT season_id) as cup_count,
-        ARRAY_AGG(DISTINCT season_id ORDER BY season_id) as seasons
+        COUNT(*) as cup_count,
+        ARRAY_AGG(season_id ORDER BY season_id) as seasons
       FROM team_trophies
       WHERE (
-          -- S1-S16 historical: exact cup type + cup name match (NOT league type)
-          (trophy_type ILIKE 'cup' AND trophy_name ILIKE 'cup' AND position = 1)
-          OR
-          -- S17+ explicitly named knockout winner
-          (trophy_position ILIKE 'Knockout Winner')
-          OR
-          -- S17+ pure knockout 'Winner' — exclude historical league trophies that also have position='Winner'
-          (
-            trophy_position ILIKE 'winner'
-            AND trophy_position NOT ILIKE 'Shield%'
-            AND NOT (trophy_type ILIKE 'league' AND trophy_name ILIKE 'league')
+        -- S1-S16 historical: exact type+name match
+        (
+          COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer < 17
+          AND (
+            ((trophy_type ILIKE 'cup' AND trophy_name ILIKE 'cup')
+             OR 
+             (trophy_name ~* '^SS Super League S[0-9]+ League$' AND notes ILIKE '%Auto-awarded based on knockout final%'))
+            AND (trophy_position ILIKE 'winner%' OR trophy_position ILIKE 'champion%' OR position = 1)
           )
         )
+        OR
+        -- S17+ modern: trophy_position contains 'Knockout Winner'
+        (
+          COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer >= 17
+          AND trophy_position ILIKE 'Knockout Winner'
+        )
+      )
       GROUP BY team_id, team_name
       ORDER BY cup_count DESC, team_name ASC
     `;
