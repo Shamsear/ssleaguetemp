@@ -58,21 +58,6 @@ export default function Home() {
     }
   }, [user, authLoading, router]);
 
-  // Prevent flash of content during redirect
-  if (authLoading || user) {
-    return (
-      <div className="console-bg min-h-screen flex items-center justify-center relative">
-        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
-        <div className="text-center relative z-10 font-mono">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">
-            {user ? 'Redirecting to your dashboard...' : 'Loading...'}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -159,6 +144,21 @@ export default function Home() {
 
     fetchData();
   }, []);
+
+  // Prevent flash of content during redirect
+  if (authLoading || user) {
+    return (
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">
+            {user ? 'Redirecting to your dashboard...' : 'Loading...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Removed podium order
 

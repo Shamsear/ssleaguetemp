@@ -1324,11 +1324,30 @@ export default function SeasonDetailPage() {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 justify-items-center">
                 {trophies.map((trophy) => {
-                  const isChampion = trophy.position === 1 || trophy.trophy_position?.toLowerCase().includes('champion');
-                  const isRunnerUp = trophy.position === 2 || trophy.trophy_position?.toLowerCase().includes('runner');
-                  const isThird = trophy.position === 3 || trophy.trophy_position?.toLowerCase().includes('third');
+                  // Check position from: numeric position field, OR trophy_position text (winner/champion/runner up/third)
+                  const trophyPosLower = trophy.trophy_position?.toLowerCase() || '';
+                  const isChampion = trophy.position === 1
+                    || trophyPosLower.includes('champion')
+                    || trophyPosLower === 'winner'
+                    || trophyPosLower.startsWith('winner');
+                  const isRunnerUp = trophy.position === 2
+                    || trophyPosLower.includes('runner');
+                  const isThird = trophy.position === 3
+                    || trophyPosLower.includes('third');
                   const resolvedSquadName = getResolvedTeamName(trophy.team_id, trophy.team_name);
-                  
+
+                  // Derive a label for the top of the card based on trophy_name
+                  const trophyNameLower = trophy.trophy_name?.toLowerCase() || '';
+                  let cardLabel = 'Trophy';
+                  if (trophyNameLower.includes('shield')) cardLabel = 'Shield';
+                  else if (trophyNameLower.includes('cup')) cardLabel = 'Cup';
+                  else if (trophyNameLower.includes('league')) cardLabel = 'League';
+                  else if (trophyNameLower.includes('fantasy')) cardLabel = 'Fantasy';
+                  else if (trophyNameLower.includes('special') || trophy.trophy_type === 'special') cardLabel = 'Special';
+
+                  // Pick trophy icon color
+                  const iconColorClass = isChampion ? 'text-amber-500' : isRunnerUp ? 'text-slate-400' : isThird ? 'text-amber-700' : 'text-slate-300';
+
                   return (
                     <div
                       key={trophy.id}
@@ -1340,20 +1359,16 @@ export default function SeasonDetailPage() {
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <span className="text-[8px] font-mono text-slate-400 uppercase tracking-wider block">Shield Title</span>
+                          <span className="text-[8px] font-mono text-slate-400 uppercase tracking-wider block">{cardLabel}</span>
                           <h4 className="font-bold text-slate-900 text-xs sm:text-sm truncate max-w-[150px] mt-0.5">
                             {trophy.trophy_name}
                           </h4>
                         </div>
-                        <TrophyIcon className={`w-5 h-5 ${
-                          isChampion ? 'text-amber-500' :
-                          isRunnerUp ? 'text-slate-400' :
-                          isThird ? 'text-amber-700' : 'text-slate-300'
-                        }`} />
+                        <TrophyIcon className={`w-5 h-5 ${iconColorClass}`} />
                       </div>
                       
                       <div className="text-center py-4 flex flex-col items-center">
-                        <TrophyIcon className="w-12 h-12 text-amber-500 mb-2 fill-amber-500/10" />
+                        <TrophyIcon className={`w-12 h-12 mb-2 fill-current/10 ${iconColorClass}`} />
                         <h3 className="font-black text-slate-955 text-base tracking-tight hover:underline">
                           <Link href={`/teams/${trophy.team_id}?season=${seasonId}`}>
                             {resolvedSquadName}
@@ -1373,7 +1388,7 @@ export default function SeasonDetailPage() {
                           isRunnerUp ? 'text-slate-700' :
                           isThird ? 'text-slate-600' : 'text-slate-500'
                         }`}>
-                          {trophy.trophy_type.replace('_', ' ')}
+                          {trophy.trophy_type?.replace(/_/g, ' ')}
                         </span>
                       </div>
                     </div>

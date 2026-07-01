@@ -938,50 +938,72 @@ function TeamDetailContent() {
                           ...trophy,
                           season: seasonData.season_name
                         }))
-                      ).map((trophy: any) => (
-                        <div
-                          key={trophy.id}
-                          className="fut-card fut-card-gold p-4 flex flex-col justify-between"
-                        >
-                          <div className="flex justify-between items-start">
-                            <span className="text-[8px] font-mono text-slate-400 uppercase block">TROPHY</span>
-                            <TrophyIcon className="w-4 h-4 text-amber-500" />
+                      ).map((trophy: any) => {
+                        const trophyPosLower = trophy.trophy_position?.toLowerCase() || '';
+                        const isTrophyChampion = trophy.position === 1 || trophyPosLower === 'winner' || trophyPosLower.startsWith('winner') || trophyPosLower.includes('champion');
+                        const isTrophyRunnerUp = trophy.position === 2 || trophyPosLower.includes('runner');
+                        const isTrophyThird = trophy.position === 3 || trophyPosLower.includes('third');
+                        const trophyNameLower = trophy.trophy_name?.toLowerCase() || '';
+                        let trophyCardLabel = 'Trophy';
+                        if (trophyNameLower.includes('shield')) trophyCardLabel = 'Shield';
+                        else if (trophyNameLower.includes('cup')) trophyCardLabel = 'Cup';
+                        else if (trophyNameLower.includes('league')) trophyCardLabel = 'League';
+                        else if (trophyNameLower.includes('fantasy')) trophyCardLabel = 'Fantasy';
+                        const trophyCardClass = isTrophyChampion ? 'fut-card-gold' : isTrophyRunnerUp ? 'fut-card-silver' : isTrophyThird ? 'fut-card-bronze' : 'fut-card-gold';
+                        const trophyIconColor = isTrophyChampion ? 'text-amber-500' : isTrophyRunnerUp ? 'text-slate-400' : isTrophyThird ? 'text-amber-700' : 'text-amber-500';
+                        return (
+                          <div key={trophy.id} className={`fut-card ${trophyCardClass} p-4 flex flex-col justify-between`}>
+                            <div className="flex justify-between items-start">
+                              <span className="text-[8px] font-mono text-slate-400 uppercase block">{trophyCardLabel}</span>
+                              <TrophyIcon className={`w-4 h-4 ${trophyIconColor}`} />
+                            </div>
+                            <div className="text-center py-2">
+                              <TrophyIcon className={`w-9 h-9 mx-auto mb-1.5 ${trophyIconColor}`} />
+                              <h4 className="font-bold text-slate-900 text-xs text-center mx-auto px-2">{trophy.trophy_name}</h4>
+                              <p className="text-[9px] text-slate-500 font-mono mt-0.5">{trophy.season}</p>
+                            </div>
+                            <div className="border-t border-slate-200/50 pt-2 flex justify-between items-center text-[8px] font-mono">
+                              <span className="text-slate-400">RANK:</span>
+                              <span className={`font-bold uppercase ${isTrophyChampion ? 'text-amber-700' : isTrophyRunnerUp ? 'text-slate-700' : 'text-slate-600'}`}>
+                                {trophy.trophy_position || `#${trophy.position}`}
+                              </span>
+                            </div>
                           </div>
-
-                          <div className="text-center py-2">
-                            <TrophyIcon className="w-9 h-9 text-amber-500/80 mx-auto mb-1.5" />
-                            <h4 className="font-bold text-slate-900 text-xs text-center mx-auto px-2">{trophy.trophy_name}</h4>
-                            <p className="text-[9px] text-slate-500 font-mono mt-0.5">{trophy.season}</p>
-                          </div>
-
-                          <div className="border-t border-slate-200/50 pt-2 flex justify-between items-center text-[8px] font-mono">
-                            <span className="text-slate-400">RANK:</span>
-                            <span className="font-bold text-amber-700 uppercase">{trophy.trophy_position || `#${trophy.position}`}</span>
-                          </div>
-                        </div>
-                      ))
+                        );
+                      })
                     ) : (
-                      currentSeasonData.trophies?.map((trophy: any) => (
-                        <div
-                          key={trophy.id}
-                          className="fut-card fut-card-gold p-4 flex flex-col justify-between"
-                        >
-                          <div className="flex justify-between items-start">
-                            <span className="text-[8px] font-mono text-slate-400 uppercase block">TROPHY</span>
-                            <TrophyIcon className="w-4 h-4 text-amber-500" />
+                      currentSeasonData.trophies?.map((trophy: any) => {
+                        const trophyPosLower = trophy.trophy_position?.toLowerCase() || '';
+                        const isTrophyChampion = trophy.position === 1 || trophyPosLower === 'winner' || trophyPosLower.startsWith('winner') || trophyPosLower.includes('champion');
+                        const isTrophyRunnerUp = trophy.position === 2 || trophyPosLower.includes('runner');
+                        const isTrophyThird = trophy.position === 3 || trophyPosLower.includes('third');
+                        const trophyNameLower = trophy.trophy_name?.toLowerCase() || '';
+                        let trophyCardLabel = 'Trophy';
+                        if (trophyNameLower.includes('shield')) trophyCardLabel = 'Shield';
+                        else if (trophyNameLower.includes('cup')) trophyCardLabel = 'Cup';
+                        else if (trophyNameLower.includes('league')) trophyCardLabel = 'League';
+                        else if (trophyNameLower.includes('fantasy')) trophyCardLabel = 'Fantasy';
+                        const trophyCardClass = isTrophyChampion ? 'fut-card-gold' : isTrophyRunnerUp ? 'fut-card-silver' : isTrophyThird ? 'fut-card-bronze' : 'fut-card-gold';
+                        const trophyIconColor = isTrophyChampion ? 'text-amber-500' : isTrophyRunnerUp ? 'text-slate-400' : isTrophyThird ? 'text-amber-700' : 'text-amber-500';
+                        return (
+                          <div key={trophy.id} className={`fut-card ${trophyCardClass} p-4 flex flex-col justify-between`}>
+                            <div className="flex justify-between items-start">
+                              <span className="text-[8px] font-mono text-slate-400 uppercase block">{trophyCardLabel}</span>
+                              <TrophyIcon className={`w-4 h-4 ${trophyIconColor}`} />
+                            </div>
+                            <div className="text-center py-2">
+                              <TrophyIcon className={`w-9 h-9 mx-auto mb-1.5 ${trophyIconColor}`} />
+                              <h4 className="font-bold text-slate-900 text-xs text-center mx-auto px-2">{trophy.trophy_name}</h4>
+                            </div>
+                            <div className="border-t border-slate-200/50 pt-2 flex justify-between items-center text-[8px] font-mono">
+                              <span className="text-slate-400">RANK:</span>
+                              <span className={`font-bold uppercase ${isTrophyChampion ? 'text-amber-700' : isTrophyRunnerUp ? 'text-slate-700' : 'text-slate-600'}`}>
+                                {trophy.trophy_position || `#${trophy.position}`}
+                              </span>
+                            </div>
                           </div>
-
-                          <div className="text-center py-2">
-                            <TrophyIcon className="w-9 h-9 text-amber-500/80 mx-auto mb-1.5" />
-                            <h4 className="font-bold text-slate-900 text-xs text-center mx-auto px-2">{trophy.trophy_name}</h4>
-                          </div>
-
-                          <div className="border-t border-slate-200/50 pt-2 flex justify-between items-center text-[8px] font-mono">
-                            <span className="text-slate-400">RANK:</span>
-                            <span className="font-bold text-amber-700 uppercase">{trophy.trophy_position || `#${trophy.position}`}</span>
-                          </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>
