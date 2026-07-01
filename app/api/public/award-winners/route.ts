@@ -57,7 +57,8 @@ export async function GET() {
           award_position as position,
           player_category as category,
           notes,
-          NULL as round_number
+          NULL as round_number,
+          NULL as team_name
         FROM player_awards
         WHERE award_position = 'Winner' OR award_position IS NULL
         
@@ -71,12 +72,14 @@ export async function GET() {
           'Winner' as position,
           NULL as category,
           notes,
-          round_number
+          round_number,
+          team_name
         FROM awards
       )
       SELECT 
         a.*,
         COALESCE(
+          a.team_name,
           (SELECT team FROM player_seasons ps WHERE ps.player_id = a.player_id AND ps.season_id = a.season_id LIMIT 1),
           (SELECT team FROM realplayerstats rps WHERE rps.player_id = a.player_id AND rps.season_id = a.season_id LIMIT 1)
         ) as team_name
