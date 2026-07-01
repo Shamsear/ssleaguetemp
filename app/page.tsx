@@ -6,8 +6,12 @@ import HallOfFameSelector from '././components/HallOfFameSelector';
 import { useEffect, useState } from 'react';
 import { useResolvedTeamData } from '@/hooks/useResolveTeamNames';
 import { Activity, ArrowRight, Award, Crown, Flame, Medal, RotateCcw, Shield, Star, Target, TrendingUp, Trophy, Zap } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [leagueStats, setLeagueStats] = useState<any>(null);
   const [hallOfFame, setHallOfFame] = useState<any>(null);
@@ -37,6 +41,37 @@ export default function Home() {
   const displayTopTeams = topTeams || [];
   const displayChampions = champions || [];
   const displayCupWinners = cupWinners || [];
+
+  // Redirect to dashboard if logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      let targetUrl = '/dashboard';
+      if (user.role === 'super_admin') {
+        targetUrl = '/dashboard/superadmin';
+      } else if (user.role === 'committee_admin') {
+        targetUrl = '/dashboard/committee';
+      } else if (user.role === 'team') {
+        targetUrl = '/dashboard/team';
+      }
+      console.log('[Home] User is logged in, redirecting to:', targetUrl);
+      router.replace(targetUrl);
+    }
+  }, [user, authLoading, router]);
+
+  // Prevent flash of content during redirect
+  if (authLoading || user) {
+    return (
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">
+            {user ? 'Redirecting to your dashboard...' : 'Loading...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     const fetchData = async () => {
