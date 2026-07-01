@@ -151,7 +151,7 @@ export default function MobileNav() {
 
     // Public links (Visible to all)
     links.push(
-      { href: '/', label: 'Home Lobby', cat: 'League Portals' },
+      { href: '/', label: 'League Home', cat: 'League Portals' },
       { href: '/season/current', label: 'Current Season', cat: 'League Portals' },
       { href: '/players', label: 'Players Database', cat: 'League Portals' },
       { href: '/footballplayers', label: 'Football Players', cat: 'League Portals' },
@@ -460,7 +460,7 @@ export default function MobileNav() {
                         }`}
                         onClick={() => toggleMenu(false)}
                       >
-                        <span className={`font-mono select-none ${isActiveLink('/') ? 'text-[#D4AF37]' : 'text-slate-400'}`}>&gt;</span> Home Lobby
+                        <span className={`font-mono select-none ${isActiveLink('/') ? 'text-[#D4AF37]' : 'text-slate-400'}`}>&gt;</span> League Home
                       </Link>
                       {!user ? (
                         <Link

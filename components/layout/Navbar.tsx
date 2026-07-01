@@ -81,7 +81,7 @@ export default function Navbar() {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       const isOutside = Object.values(dropdownRefs.current).every(
-        (ref) => ref && !ref.contains(target)
+        (ref) => !ref || !ref.contains(target)
       );
       if (isOutside) {
         setOpenDropdown(null);

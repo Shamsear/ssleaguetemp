@@ -180,7 +180,7 @@ export default function Footer() {
             <ul className="space-y-2.5">
               <li>
                 <Link href="/" className="text-slate-600 hover:text-[#D4AF37] hover:translate-x-1 text-xs transition-all duration-150 inline-block font-medium">
-                  Home Lobby
+                  League Home
                 </Link>
               </li>
               <li>

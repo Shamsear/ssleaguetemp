@@ -514,7 +514,7 @@ export default function PlayerDetailPage() {
 
           <div className="flex items-center gap-2 font-mono text-xs">
             <span className="bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-xl font-bold">
-              LOBBY_ID: {player.player_id || player.id}
+              PLAYER_ID: {player.player_id || player.id}
             </span>
             {allSeasonData.length > 1 && (
               <span className="bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-amber-700 px-3 py-1.5 rounded-xl font-bold">

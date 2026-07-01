@@ -43,7 +43,7 @@ export default function HeroSection() {
       <div className="max-w-3xl mx-auto text-center relative z-10 py-4">
         {/* Gaming active status tag */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/5 border border-amber-500/20 text-amber-800 text-[10px] font-mono font-bold uppercase tracking-wider mb-6">
-          <Swords className="w-3.5 h-3.5 text-[#D4AF37] animate-pulse" /> MULTIPLAYER LOBBY ONLINE // ACTIVE_12
+          <Swords className="w-3.5 h-3.5 text-[#D4AF37] animate-pulse" /> SS SUPER LEAGUE ONLINE // SEASON 17
         </div>
 
         {/* Hero title */}
@@ -71,7 +71,7 @@ export default function HeroSection() {
               href="/login"
               className="inline-flex items-center gap-2 bg-slate-950 hover:bg-slate-900 text-white px-8 py-3 rounded-xl text-xs font-mono font-bold shadow-md hover:shadow-lg transition-all hover:scale-105 border border-slate-950"
             >
-              Join Lobby (Sign In)
+              Sign In to Account
               <ArrowRight className="w-4 h-4 text-[#D4AF37]" />
             </Link>
           )}
