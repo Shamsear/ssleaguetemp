@@ -10,6 +10,7 @@ import { TournamentProvider } from "@/contexts/TournamentContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Analytics } from "@vercel/analytics/next";
 import RegisterServiceWorker from "./register-sw";
+import ScrollAnimationProvider from "@/components/common/ScrollAnimationProvider";
 
 import { Suspense } from "react";
 
@@ -60,6 +61,7 @@ export default function RootLayout({
               <TournamentProvider>
                 <LanguageProvider>
                   <RegisterServiceWorker />
+                  <ScrollAnimationProvider />
                   <Suspense fallback={<div className="h-16 bg-white/40 backdrop-blur-md border-b border-slate-200/50" />}>
                     <Navbar />
                   </Suspense>

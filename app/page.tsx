@@ -226,11 +226,12 @@ export default function Home() {
         {/* Hero Section */}
         <HeroSection />
 
+
         {/* Dashboard Panels */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start" data-scroll-no-auto>
           
           {/* LEFT PANEL: 3D Standings Podium (7 Cols) */}
-          <div className="lg:col-span-7 bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+          <div className="lg:col-span-7 bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm relative overflow-hidden" data-scroll="fade-up">
             
             {/* Header info */}
             <div className="mb-6 flex justify-between items-start">
@@ -332,7 +333,7 @@ export default function Home() {
           </div>
 
           {/* RIGHT PANEL: eSports Event Log (5 Cols) */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5" data-scroll="fade-up" data-scroll-delay="150">
             
             {/* Live event feed (kill-feed style) */}
             <div className="kill-feed-container relative overflow-hidden">
@@ -375,7 +376,7 @@ export default function Home() {
         </div>
 
         {/* Quick Stats / Historical Metrics (Full Width Horizontal Grid) */}
-        <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
+        <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm" data-scroll="fade-up">
           <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">League Ledger</span>
           <h3 className="text-xl font-bold text-slate-900 mt-0.5 mb-6">Historical Metrics</h3>
 
@@ -425,7 +426,7 @@ export default function Home() {
         <HallOfFameSelector hallOfFame={hallOfFame || { topScorers: [], topAssisters: [], cleanSheetKings: [], mostAppearances: [], mostPoints: [], bestWinRate: [] }} />
 
         {/* League Records Section */}
-        <div className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
+        <div className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm" data-scroll="fade-up">
           <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">Honours Ledger</span>
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-0.5 mb-8 tracking-tight">
             <TrendingUp className="w-6 h-6 inline-block text-amber-500 mr-2 align-text-bottom" /> League Records & Milestones
@@ -516,7 +517,7 @@ export default function Home() {
 
         {/* Trophy Cabinet - Champions */}
         {!loading && displayChampions.length > 0 && (
-          <div className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+          <div className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm relative overflow-hidden" data-scroll="fade-up">
             <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">Trophy Cabinet</span>
             <div className="flex items-center justify-between mb-8 flex-wrap gap-4 mt-0.5">
               <div>
@@ -595,7 +596,7 @@ export default function Home() {
 
         {/* Cup Winners */}
         {!loading && displayCupWinners && displayCupWinners.length > 0 && (
-          <div className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
+          <div className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm" data-scroll="fade-up">
             <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">Shield Honours</span>
             <h2 className="text-2xl font-bold text-slate-900 mt-0.5 mb-6 tracking-tight">
               <Medal className="w-6 h-6 inline-block text-amber-500 mr-2 align-text-bottom" /> Tournament Cup Winners
@@ -701,7 +702,7 @@ export default function Home() {
         )}
 
         {/* Quick Links */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" data-scroll="fade-up">
           <Link href="/players" className="console-card rounded-xl p-5 hover:border-amber-400/40 group">
             <div className="w-10 h-10 rounded-lg bg-amber-500/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
               <Zap className="w-5 h-5 text-amber-600" />

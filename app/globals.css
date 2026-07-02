@@ -446,6 +446,81 @@ button[class*="hover:translate-x-"]:hover::before {
   text-shadow: 0 0 12px rgba(217, 119, 6, 0.15);
 }
 
+/* ===== SCROLL ANIMATIONS ===== */
+/* Base state: all scroll-animated elements start invisible */
+[data-scroll] {
+  opacity: 0;
+  will-change: transform, opacity;
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transition-duration: var(--scroll-duration, 700ms);
+}
+
+/* Visible state: applied by IntersectionObserver */
+[data-scroll].scroll-visible {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* --- Fade Up --- */
+[data-scroll="fade-up"] {
+  transform: translateY(40px);
+}
+
+/* --- Fade Down --- */
+[data-scroll="fade-down"] {
+  transform: translateY(-40px);
+}
+
+/* --- Fade Left (slide in from left) --- */
+[data-scroll="fade-left"] {
+  transform: translateX(-50px);
+}
+
+/* --- Fade Right (slide in from right) --- */
+[data-scroll="fade-right"] {
+  transform: translateX(50px);
+}
+
+/* --- Zoom In --- */
+[data-scroll="zoom-in"] {
+  transform: scale(0.9);
+}
+
+/* --- Zoom Out (starts bigger) --- */
+[data-scroll="zoom-out"] {
+  transform: scale(1.1);
+}
+
+/* --- Flip Up (3D perspective) --- */
+[data-scroll="flip-up"] {
+  transform: perspective(600px) rotateX(15deg) translateY(30px);
+}
+
+/* --- Simple Fade (no movement) --- */
+[data-scroll="fade"] {
+  transform: none;
+}
+
+/* Custom duration via data attribute (set as inline CSS var) */
+[data-scroll][data-scroll-duration] {
+  transition-duration: var(--scroll-duration, 700ms);
+}
+
+/* Staggered children helper: add data-scroll-stagger to a parent */
+[data-scroll-stagger] > [data-scroll]:nth-child(1) { --scroll-delay: 0ms; }
+[data-scroll-stagger] > [data-scroll]:nth-child(2) { --scroll-delay: 80ms; }
+[data-scroll-stagger] > [data-scroll]:nth-child(3) { --scroll-delay: 160ms; }
+[data-scroll-stagger] > [data-scroll]:nth-child(4) { --scroll-delay: 240ms; }
+[data-scroll-stagger] > [data-scroll]:nth-child(5) { --scroll-delay: 320ms; }
+[data-scroll-stagger] > [data-scroll]:nth-child(6) { --scroll-delay: 400ms; }
+[data-scroll-stagger] > [data-scroll]:nth-child(7) { --scroll-delay: 480ms; }
+[data-scroll-stagger] > [data-scroll]:nth-child(8) { --scroll-delay: 560ms; }
+
+[data-scroll-stagger] > [data-scroll] {
+  transition-delay: var(--scroll-delay, 0ms);
+}
+/* ===== END SCROLL ANIMATIONS ===== */
 
 /* Reduce motion for accessibility and performance */
 @media (prefers-reduced-motion: reduce) {

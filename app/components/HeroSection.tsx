@@ -33,7 +33,7 @@ export default function HeroSection() {
   }
 
   return (
-    <div className="bg-white border border-slate-200/60 p-8 sm:p-10 rounded-2xl shadow-sm relative overflow-hidden">
+    <div className="bg-white border border-slate-200/60 p-8 sm:p-10 rounded-2xl shadow-sm relative overflow-hidden" data-scroll="zoom-in">
       
       {/* Decorative Console Elements */}
       <div className="absolute top-0 right-0 p-4 font-mono text-[9px] text-slate-300 pointer-events-none select-none hidden sm:block">

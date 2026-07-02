@@ -40,7 +40,7 @@ export default function HallOfFameSelector({ hallOfFame }: HallOfFameProps) {
   };
 
   return (
-    <div className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm relative">
+    <div className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm relative" data-scroll="fade-up">
       <div className="mb-6">
         <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">Leaderboard Room</span>
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mt-0.5">
