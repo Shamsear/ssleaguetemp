@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getSeasonById } from '@/lib/firebase/seasons';
+import { getTeamsBySeason } from '@/lib/firebase/teams';
 import { Season } from '@/types/season';
 import { usePlayerStats, useTeamStats } from '@/hooks';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
@@ -47,6 +48,7 @@ export default function SeasonDetails() {
   const [players, setPlayers] = useState<any[]>([]);
   const [rounds, setRounds] = useState<any[]>([]);
   const [topBids, setTopBids] = useState<any[]>([]);
+  const [firebaseTeams, setFirebaseTeams] = useState<any[]>([]);
   
   // Use React Query hooks for stats from Neon
   const { data: teamStatsData, isLoading: teamStatsLoading } = useTeamStats({
@@ -82,12 +84,20 @@ export default function SeasonDetails() {
       }));
     }
     if (teamStatsData) {
-      setTeams(teamStatsData);
+      // Merge with firebaseTeams to resolve owner names
+      const merged = teamStatsData.map((t: any) => {
+        const fbTeam = firebaseTeams.find((ft: any) => ft.team_id === t.team_id || ft.id === t.team_id);
+        return {
+          ...t,
+          owner_name: fbTeam?.owner_name || t.owner_name || 'N/A'
+        };
+      });
+      setTeams(merged);
     }
     if (playerStatsData) {
       setPlayers(playerStatsData);
     }
-  }, [teamStatsData, playerStatsData]);
+  }, [teamStatsData, playerStatsData, firebaseTeams]);
 
   const fetchSeasonData = async () => {
     try {
@@ -99,6 +109,14 @@ export default function SeasonDetails() {
         throw new Error('Season not found');
       }
       setSeason(seasonData);
+      
+      // Fetch teams from Firebase to get owner names
+      try {
+        const fbTeams = await getTeamsBySeason(seasonId);
+        setFirebaseTeams(fbTeams || []);
+      } catch (fbError) {
+        console.error('Error fetching firebase teams:', fbError);
+      }
       
       // For multi-season types (season 16+), fetch auction data from Neon
       if (seasonData.type === 'multi') {
@@ -325,14 +343,14 @@ export default function SeasonDetails() {
                     <td className="px-6 py-4 font-bold text-slate-800">
                       {team.team_name || team.name || 'Unknown Team'}
                     </td>
-                    <td className="px-6 py-4 font-mono text-slate-500">
+                    <td className="px-6 py-4 font-mono text-slate-550">
                       {team.owner_name || 'N/A'}
                     </td>
                     <td className="px-6 py-4 font-mono font-bold text-amber-600 text-center">
-                      {team.stats?.p || team.stats?.points || 0}
+                      {team.points !== undefined ? team.points : (team.stats?.p || team.stats?.points || 0)}
                     </td>
-                    <td className="px-6 py-4 font-mono text-slate-500 text-right">
-                      {team.stats?.mp || team.stats?.matches_played || 0}
+                    <td className="px-6 py-4 font-mono text-slate-550 text-right">
+                      {team.matches_played !== undefined ? team.matches_played : (team.stats?.mp || team.stats?.matches_played || 0)}
                     </td>
                   </tr>
                 ))
@@ -348,103 +366,75 @@ export default function SeasonDetails() {
         </div>
       </div>
 
-      {/* Rounds Table (Multi-currency only) */}
-      {season.type === 'multi' && rounds.length > 0 && (
-        <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200/60 bg-slate-50/50">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-slate-500" />
-              Active Draft Rounds ({rounds.length})
-            </span>
-          </div>
+      {/* Real Players Section */}
+      <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl overflow-hidden mt-8">
+        <div className="px-6 py-4 border-b border-slate-200/60 bg-slate-50/50 flex items-center justify-between">
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+            <Users className="w-4 h-4 text-slate-500" />
+            Registered Players ({players.length})
+          </span>
+        </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200/60">
-              <thead className="bg-slate-50/50">
-                <tr className="font-mono text-left text-xs font-bold uppercase tracking-wider text-slate-500">
-                  <th className="px-6 py-3.5">Round</th>
-                  <th className="px-6 py-3.5">Status</th>
-                  <th className="px-6 py-3.5 text-center">Bids Count</th>
-                  <th className="px-6 py-3.5 text-right">End Time</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200/60 text-xs text-slate-700">
-                {rounds.map((round: any) => (
-                  <tr key={round.id} className="hover:bg-slate-50/40 transition-colors">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-200/60">
+            <thead className="bg-slate-50/50">
+              <tr className="font-mono text-left text-xs font-bold uppercase tracking-wider text-slate-500">
+                <th className="px-6 py-3.5">Player Name</th>
+                <th className="px-6 py-3.5">Team</th>
+                <th className="px-6 py-3.5 text-center">Category</th>
+                <th className="px-6 py-3.5 text-center">Star Rating</th>
+                <th className="px-6 py-3.5 text-center">Points</th>
+                <th className="px-6 py-3.5 text-center">Matches</th>
+                <th className="px-6 py-3.5 text-center">Goals</th>
+                <th className="px-6 py-3.5 text-center">Assists</th>
+                <th className="px-6 py-3.5 text-right">Salary</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200/60 text-xs text-slate-700">
+              {players.length > 0 ? (
+                players.map((player) => (
+                  <tr key={player.id} className="hover:bg-slate-50/40 transition-colors">
                     <td className="px-6 py-4 font-bold text-slate-800">
-                      Round {round.round_number || round.position}
+                      {player.player_name || 'Unknown Player'}
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-0.5 text-[10px] font-mono font-bold uppercase border rounded ${
-                        round.status === 'active' 
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-250' 
-                          : round.status === 'completed'
-                          ? 'bg-slate-100 text-slate-650 border-slate-200'
-                          : 'bg-amber-50 text-amber-705 border-amber-200'
-                      }`}>
-                        {round.status}
-                      </span>
+                    <td className="px-6 py-4 font-mono text-slate-550">
+                      {player.team || 'Free Agent'}
+                    </td>
+                    <td className="px-6 py-4 text-center font-mono text-slate-500">
+                      {player.category || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 text-center font-mono text-slate-500">
+                      {player.star_rating !== null && player.star_rating !== undefined ? `${player.star_rating}⭐` : 'N/A'}
                     </td>
                     <td className="px-6 py-4 font-mono font-bold text-amber-600 text-center">
-                      {round.bidCount || 0}
+                      {player.points || 0}
                     </td>
-                    <td className="px-6 py-4 font-mono text-slate-550 text-right">
-                      {round.end_time ? formatDateTime(round.end_time) : 'N/A'}
+                    <td className="px-6 py-4 font-mono text-slate-500 text-center">
+                      {player.matches_played || 0}
+                    </td>
+                    <td className="px-6 py-4 font-mono text-slate-550 text-center">
+                      {player.goals_scored || 0}
+                    </td>
+                    <td className="px-6 py-4 font-mono text-slate-550 text-center">
+                      {player.assists || 0}
+                    </td>
+                    <td className="px-6 py-4 font-mono text-emerald-700 text-right">
+                      €{player.salary_per_match || '0.00'}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Top Bids Section (Multi-currency only) */}
-      {season.type === 'multi' && topBids.length > 0 && (
-        <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200/60 bg-slate-50/50">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
-              <Coins className="w-4 h-4 text-slate-500" />
-              Top Bid Placements
-            </span>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200/60">
-              <thead className="bg-slate-50/50">
-                <tr className="font-mono text-left text-xs font-bold uppercase tracking-wider text-slate-500">
-                  <th className="px-6 py-3.5">Player</th>
-                  <th className="px-6 py-3.5">Position</th>
-                  <th className="px-6 py-3.5">Assigned Team</th>
-                  <th className="px-6 py-3.5 text-center">Amount</th>
-                  <th className="px-6 py-3.5 text-right">Draft Round</th>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center text-slate-400 font-mono">
+                    No players registered for this season.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200/60 text-xs text-slate-700">
-                {topBids.map((bid: any, index: number) => (
-                  <tr key={index} className="hover:bg-slate-50/40 transition-colors">
-                    <td className="px-6 py-4 font-bold text-slate-800">
-                      {bid.player_name || 'Unknown'}
-                    </td>
-                    <td className="px-6 py-4 font-mono text-slate-500">
-                      {bid.player_position || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 font-mono text-slate-500">
-                      {bid.player_team || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 font-mono font-bold text-emerald-700 text-center">
-                      €{bid.amount?.toLocaleString() || 0}
-                    </td>
-                    <td className="px-6 py-4 font-mono text-slate-500 text-right">
-                      Round {bid.round_number || 'N/A'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </div>
   );
+}
 }
