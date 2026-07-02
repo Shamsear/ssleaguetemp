@@ -58,8 +58,14 @@ export function useScrollAnimation() {
       // Top-level section cards (direct children of common containers)
       'main > div > div > .bg-white',
       'main > div > .bg-white',
+      'main section',
+      'main article',
       'main .console-card',
       'main .glass',
+      'main .border.rounded-2xl',
+      'main .border.rounded-xl',
+      'main .shadow-sm',
+      'main .shadow-md',
       // Grid children (cards in grids)
       'main .grid > div',
       'main .grid > a',
