@@ -53,6 +53,12 @@ body::before {
   z-index: 0;
 }
 
+@media (max-width: 768px) {
+  body::before {
+    background-size: 75%;
+  }
+}
+
 /* Smooth Scrolling */
 html {
   scroll-behavior: smooth;
@@ -250,7 +256,7 @@ html {
 
 /* eSports Game Lobby Console Grid */
 .console-bg {
-  background-color: #f8fafc;
+  background-color: transparent;
   background-image: 
     radial-gradient(rgba(212, 175, 55, 0.015) 1px, transparent 1px),
     radial-gradient(rgba(15, 23, 42, 0.01) 1px, transparent 1px);
