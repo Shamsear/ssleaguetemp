@@ -534,24 +534,50 @@ export async function GET(request: NextRequest) {
     }
     // Get all players for a season (for contracts page, registration page, etc.)
     else if (seasonId && !playerId) {
-      // Always query realplayerstats table for all seasons
-      stats = await sql`
-        SELECT 
-          id, player_id, player_name, season_id, tournament_id,
-          team, team_id, category,
-          matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
-          clean_sheets, motm_awards, points,
-          NULL as base_points,
-          NULL as contract_id, NULL as contract_start_season, NULL as contract_end_season,
-          NULL as is_auto_registered, NULL as registration_type,
-          NULL as auction_value, NULL as salary_per_match,
-          NULL as prevent_auto_promotion,
-          created_at, updated_at
-        FROM realplayerstats 
-        WHERE season_id = ${seasonId}
-        ORDER BY created_at ASC
-        LIMIT ${limit}
-      `;
+      if (isModernSeason(seasonId)) {
+        // Modern season (16-17): Query player_seasons table
+        stats = await sql`
+          SELECT 
+            id, player_id, player_name, season_id,
+            team, team_id, category,
+            matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
+            clean_sheets, motm_awards, 
+            CASE 
+              WHEN season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%' 
+              THEN points - COALESCE(base_points, 0)
+              ELSE points
+            END as points,
+            base_points,
+            contract_id, contract_start_season, contract_end_season,
+            is_auto_registered, registration_type,
+            auction_value, salary_per_match,
+            prevent_auto_promotion,
+            created_at, updated_at
+          FROM player_seasons 
+          WHERE season_id = ${seasonId}
+          ORDER BY player_name ASC
+          LIMIT ${limit}
+        `;
+      } else {
+        // Historical season: Query realplayerstats table
+        stats = await sql`
+          SELECT 
+            id, player_id, player_name, season_id, tournament_id,
+            team, team_id, category,
+            matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
+            clean_sheets, motm_awards, points,
+            NULL as base_points,
+            NULL as contract_id, NULL as contract_start_season, NULL as contract_end_season,
+            NULL as is_auto_registered, NULL as registration_type,
+            NULL as auction_value, NULL as salary_per_match,
+            NULL as prevent_auto_promotion,
+            created_at, updated_at
+          FROM realplayerstats 
+          WHERE season_id = ${seasonId}
+          ORDER BY created_at ASC
+          LIMIT ${limit}
+        `;
+      }
       
       // Debug: Log first player
       if (stats.length > 0) {
@@ -564,13 +590,14 @@ export async function GET(request: NextRequest) {
     }
     // Get season/tournament stats with filters
     else if (tournamentId) {
-      // Extract season from tournamentId (format: SEASON16-LEAGUE)
-      const seasonMatch = tournamentId.match(/SEASON(\d+)/);
-      const seasonNum = seasonMatch ? parseInt(seasonMatch[1]) : 0;
+      // Extract season from tournamentId (format: SEASON16-LEAGUE or SSPSLS17-LEAGUE)
+      const seasonNum = parseInt(tournamentId.replace(/\D/g, '')) || 0;
       
       if (seasonNum === 16 || seasonNum === 17) {
         // Modern season: Query player_seasons table
-        const seasonIdFromTournament = tournamentId.split('-')[0]; // e.g., "SEASON16"
+        const seasonIdFromTournament = tournamentId.includes('-') 
+          ? tournamentId.split('-')[0]  // "SSPSLS17-LEAGUE" -> "SSPSLS17"
+          : tournamentId.replace(/[A-Z]+$/, ''); // "SSPSLS16L" -> "SSPSLS16"
         
         const validSortFields = ['points', 'goals_scored', 'assists', 'motm_awards', 'matches_played'];
         const sortField = validSortFields.includes(sortBy) ? sortBy : 'points';
