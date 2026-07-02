@@ -331,8 +331,8 @@ export default function Home() {
             )}
           </div>
 
-          {/* RIGHT PANEL: eSports Event Log & Stats (5 Cols) */}
-          <div className="lg:col-span-5 space-y-6">
+          {/* RIGHT PANEL: eSports Event Log (5 Cols) */}
+          <div className="lg:col-span-5">
             
             {/* Live event feed (kill-feed style) */}
             <div className="kill-feed-container relative overflow-hidden">
@@ -371,54 +371,54 @@ export default function Home() {
                 <span>SS_LEAGUE_SYSTEM</span>
               </div>
             </div>
-
-            {/* Quick Stats Grid */}
-            <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
-              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">League Ledger</span>
-              <h3 className="text-xl font-bold text-slate-900 mt-0.5 mb-6">Historical Metrics</h3>
-
-              {loading ? (
-                /* Stats Skeleton Loader */
-                <div className="grid grid-cols-1 gap-4 animate-pulse">
-                  <div className="bg-slate-100 rounded-xl h-20"></div>
-                  <div className="bg-slate-100 rounded-xl h-20"></div>
-                  <div className="bg-slate-100 rounded-xl h-20"></div>
-                </div>
-              ) : leagueStats ? (
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="console-card rounded-xl p-4 flex items-center justify-between">
-                    <div>
-                      <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wide">Total Seasons</div>
-                      <div className="text-2xl font-black text-slate-900 mt-1">
-                        {leagueStats.league.total_seasons}
-                      </div>
-                    </div>
-                    <Trophy className="w-8 h-8 text-amber-500/20" />
-                  </div>
-
-                  <div className="console-card rounded-xl p-4 flex items-center justify-between">
-                    <div>
-                      <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wide">Goals Recorded</div>
-                      <div className="text-2xl font-black text-slate-900 mt-1">
-                        {leagueStats.league.total_goals.toLocaleString()}
-                      </div>
-                    </div>
-                    <Target className="w-8 h-8 text-amber-500/20" />
-                  </div>
-
-                  <div className="console-card rounded-xl p-4 flex items-center justify-between">
-                    <div>
-                      <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wide">Registered Managers</div>
-                      <div className="text-2xl font-black text-slate-900 mt-1">
-                        {leagueStats.players.total_players}+
-                      </div>
-                    </div>
-                    <Shield className="w-8 h-8 text-amber-500/20" />
-                  </div>
-                </div>
-              ) : null}
-            </div>
           </div>
+        </div>
+
+        {/* Quick Stats / Historical Metrics (Full Width Horizontal Grid) */}
+        <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
+          <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">League Ledger</span>
+          <h3 className="text-xl font-bold text-slate-900 mt-0.5 mb-6">Historical Metrics</h3>
+
+          {loading ? (
+            /* Stats Skeleton Loader */
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-pulse">
+              <div className="bg-slate-100 rounded-xl h-20"></div>
+              <div className="bg-slate-100 rounded-xl h-20"></div>
+              <div className="bg-slate-100 rounded-xl h-20"></div>
+            </div>
+          ) : leagueStats ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="console-card rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wide">Total Seasons</div>
+                  <div className="text-2xl font-black text-slate-900 mt-1">
+                    {leagueStats.league.total_seasons}
+                  </div>
+                </div>
+                <Trophy className="w-8 h-8 text-amber-500/20" />
+              </div>
+
+              <div className="console-card rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wide">Goals Recorded</div>
+                  <div className="text-2xl font-black text-slate-900 mt-1">
+                    {leagueStats.league.total_goals.toLocaleString()}
+                  </div>
+                </div>
+                <Target className="w-8 h-8 text-amber-500/20" />
+              </div>
+
+              <div className="console-card rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wide">Registered Managers</div>
+                  <div className="text-2xl font-black text-slate-900 mt-1">
+                    {leagueStats.players.total_players}+
+                  </div>
+                </div>
+                <Shield className="w-8 h-8 text-amber-500/20" />
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {/* Hall of Fame Selector */}
