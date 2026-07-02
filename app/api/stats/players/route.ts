@@ -555,7 +555,7 @@ export async function GET(request: NextRequest) {
             created_at, updated_at
           FROM player_seasons 
           WHERE season_id = ${seasonId}
-          ORDER BY player_name ASC
+          ORDER BY points DESC
           LIMIT ${limit}
         `;
       } else {
@@ -574,7 +574,7 @@ export async function GET(request: NextRequest) {
             created_at, updated_at
           FROM realplayerstats 
           WHERE season_id = ${seasonId}
-          ORDER BY created_at ASC
+          ORDER BY points DESC
           LIMIT ${limit}
         `;
       }
