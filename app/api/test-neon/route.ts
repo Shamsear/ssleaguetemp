@@ -4,6 +4,9 @@ import { neon } from '@neondatabase/serverless';
 export const maxDuration = 10;
 
 export async function GET() {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ success: false, error: 'Not Found' }, { status: 404 });
+  }
   try {
     console.log('[Neon Test] Starting test...');
     

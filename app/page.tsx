@@ -29,13 +29,9 @@ export default function Home() {
   // Category expansion for "Show More" functionality on awards
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
-  // Mock kill-feed transfer log
-  const [killFeedLogs] = useState([
-    { type: 'SIGNING', team: 'Kopites', detail: 'signed Erling Haaland for 85M', time: '5m ago' },
-    { type: 'BID', team: 'ASGARD', detail: 'bid 40M on Bukayo Saka', time: '42m ago' },
-    { type: 'RELEASE', team: 'Galacticos', detail: 'released Gabriel Magalhães', time: '2h ago' },
-    { type: 'SYSTEM', team: 'League', detail: 'Auction Round 12 Finalized', time: '1d ago' },
-    { type: 'STATUS', team: 'System', detail: 'Season 17 is now active', time: '2d ago' },
+  // Kill-feed transfer log loaded dynamically from transfer history
+  const [killFeedLogs, setKillFeedLogs] = useState<any[]>([
+    { type: 'STATUS', team: 'System', detail: 'Connecting to live events...', time: 'Connecting' }
   ]);
 
   const displayTopTeams = topTeams || [];
@@ -110,6 +106,64 @@ export default function Home() {
 
         // Fetch current season standings from Neon tournament table
         if (season) {
+          // Fetch live feed from transfer history
+          try {
+            const transfersRes = await fetch(`/api/transfers/history?season_id=${season.id}&limit=10&t=${Date.now()}`);
+            const transfersData = await transfersRes.json();
+            
+            const getRelativeTime = (dateString: string) => {
+              const date = new Date(dateString);
+              const now = new Date();
+              const diffMs = now.getTime() - date.getTime();
+              const diffMins = Math.floor(diffMs / 60000);
+              const diffHours = Math.floor(diffMins / 60);
+              const diffDays = Math.floor(diffHours / 24);
+
+              if (diffMins < 1) return 'just now';
+              if (diffMins < 60) return `${diffMins}m ago`;
+              if (diffHours < 24) return `${diffHours}h ago`;
+              return `${diffDays}d ago`;
+            };
+
+            if (transfersData.success && transfersData.data?.transactions?.length > 0) {
+              const mappedLogs = transfersData.data.transactions.map((tx: any) => {
+                let type = 'SYSTEM';
+                let detail = '';
+                let team = tx.team_name || 'System';
+
+                if (tx.transaction_type === 'release') {
+                  type = 'RELEASE';
+                  detail = `released ${tx.player_name || tx.player?.name || 'player'} (${tx.refund_amount || 0}M refund)`;
+                } else if (tx.transaction_type === 'transfer' || tx.transaction_type === 'player_transfer') {
+                  type = 'SIGNING';
+                  detail = `signed ${tx.player_name || tx.player?.name || 'player'} for ${tx.auction_value || 0}M`;
+                } else if (tx.transaction_type === 'swap') {
+                  type = 'SWAP';
+                  team = tx.processed_by_name || 'System';
+                  detail = `swapped ${tx.player_a?.name || 'player A'} and ${tx.player_b?.name || 'player B'}`;
+                } else {
+                  detail = `${tx.transaction_type} of ${tx.player_name || 'player'}`;
+                }
+
+                return {
+                  type,
+                  team,
+                  detail,
+                  time: getRelativeTime(tx.created_at)
+                };
+              });
+              setKillFeedLogs(mappedLogs);
+            } else {
+              setKillFeedLogs([
+                { type: 'SYSTEM', team: 'League', detail: 'Welcome to Super Soccer League!', time: 'Active' },
+                { type: 'STATUS', team: 'System', detail: `Season ${season.name || season.id} is now active`, time: 'Active' },
+                { type: 'SYSTEM', team: 'League', detail: 'Waiting for transfer activities...', time: 'Active' }
+              ]);
+            }
+          } catch (err) {
+            console.error('Error fetching live transfer history:', err);
+          }
+
           try {
             const tournamentsRes = await fetch(`/api/tournaments?season_id=${season.id}`);
             const tournamentsData = await tournamentsRes.json();

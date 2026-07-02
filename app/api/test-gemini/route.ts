@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ success: false, error: 'Not Found' }, { status: 404 });
+  }
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     

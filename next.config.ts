@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Enable React strict mode for better development experience
   reactStrictMode: true,
+
+  // Automatically strip console.log/info/debug (but keep console.error/warn) in production build
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
+  },
   
   // Compress responses
   compress: true,

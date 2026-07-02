@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ success: false, error: 'Not Found' }, { status: 404 });
+  }
   try {
     console.log('Searching for TITANS FC across collections...');
     

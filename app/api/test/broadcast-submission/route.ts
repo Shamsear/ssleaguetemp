@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { broadcastRoundUpdate } from '@/lib/realtime/broadcast';
 
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ success: false, error: 'Not Found' }, { status: 404 });
+  }
   try {
     const body = await request.json();
     const { seasonId, roundId, teamId } = body;
