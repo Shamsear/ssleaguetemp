@@ -52,16 +52,31 @@ export async function GET(request: NextRequest) {
     let stats;
 
     if (teamId) {
-      stats = await sql`
-        SELECT * FROM teamstats 
-        WHERE team_id = ${teamId} AND tournament_id = ${tournamentId}
-      `;
+      if (tournamentId === 'historical' && seasonId) {
+        stats = await sql`
+          SELECT * FROM teamstats 
+          WHERE team_id = ${teamId} AND tournament_id = ${tournamentId} AND season_id = ${seasonId}
+        `;
+      } else {
+        stats = await sql`
+          SELECT * FROM teamstats 
+          WHERE team_id = ${teamId} AND tournament_id = ${tournamentId}
+        `;
+      }
     } else {
-      stats = await sql`
-        SELECT * FROM teamstats 
-        WHERE tournament_id = ${tournamentId}
-        ORDER BY points DESC, goal_difference DESC, goals_for DESC
-      `;
+      if (tournamentId === 'historical' && seasonId) {
+        stats = await sql`
+          SELECT * FROM teamstats 
+          WHERE tournament_id = ${tournamentId} AND season_id = ${seasonId}
+          ORDER BY points DESC, goal_difference DESC, goals_for DESC
+        `;
+      } else {
+        stats = await sql`
+          SELECT * FROM teamstats 
+          WHERE tournament_id = ${tournamentId}
+          ORDER BY points DESC, goal_difference DESC, goals_for DESC
+        `;
+      }
     }
 
     return NextResponse.json({
