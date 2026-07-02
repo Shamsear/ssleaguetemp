@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getSeasonById } from '@/lib/firebase/seasons';
-import { getTeamsBySeason } from '@/lib/firebase/teams';
+import { getTeamsBySeason, getAllTeams } from '@/lib/firebase/teams';
 import { Season } from '@/types/season';
 import { usePlayerStats, useTeamStats } from '@/hooks';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
@@ -44,11 +44,15 @@ export default function SeasonDetails() {
     totalBids: 0,
   });
 
+  const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+  const showSalaryAndStars = seasonNum === 16 || seasonNum === 17;
+
   const [teams, setTeams] = useState<any[]>([]);
   const [players, setPlayers] = useState<any[]>([]);
   const [rounds, setRounds] = useState<any[]>([]);
   const [topBids, setTopBids] = useState<any[]>([]);
   const [firebaseTeams, setFirebaseTeams] = useState<any[]>([]);
+  const [allTeams, setAllTeams] = useState<any[]>([]);
   
   // Use React Query hooks for stats from Neon
   const { data: teamStatsData, isLoading: teamStatsLoading } = useTeamStats({
@@ -84,9 +88,10 @@ export default function SeasonDetails() {
       }));
     }
     if (teamStatsData) {
-      // Merge with firebaseTeams to resolve owner names
+      // Merge with firebaseTeams & allTeams to resolve owner names
       const merged = teamStatsData.map((t: any) => {
-        const fbTeam = firebaseTeams.find((ft: any) => ft.team_id === t.team_id || ft.id === t.team_id);
+        const fbTeam = firebaseTeams.find((ft: any) => ft.team_id === t.team_id || ft.id === t.team_id)
+          || allTeams.find((at: any) => at.team_id === t.team_id || at.id === t.team_id);
         return {
           ...t,
           owner_name: fbTeam?.owner_name || t.owner_name || 'N/A'
@@ -97,7 +102,7 @@ export default function SeasonDetails() {
     if (playerStatsData) {
       setPlayers(playerStatsData);
     }
-  }, [teamStatsData, playerStatsData, firebaseTeams]);
+  }, [teamStatsData, playerStatsData, firebaseTeams, allTeams]);
 
   const fetchSeasonData = async () => {
     try {
@@ -116,6 +121,14 @@ export default function SeasonDetails() {
         setFirebaseTeams(fbTeams || []);
       } catch (fbError) {
         console.error('Error fetching firebase teams:', fbError);
+      }
+
+      // Fetch all teams from Firebase for fallback owner names resolution
+      try {
+        const allFbTeams = await getAllTeams();
+        setAllTeams(allFbTeams || []);
+      } catch (allError) {
+        console.error('Error fetching all firebase teams:', allError);
       }
       
       // For multi-season types (season 16+), fetch auction data from Neon
@@ -382,12 +395,12 @@ export default function SeasonDetails() {
                 <th className="px-6 py-3.5">Player Name</th>
                 <th className="px-6 py-3.5">Team</th>
                 <th className="px-6 py-3.5 text-center">Category</th>
-                <th className="px-6 py-3.5 text-center">Star Rating</th>
+                {showSalaryAndStars && <th className="px-6 py-3.5 text-center">Star Rating</th>}
                 <th className="px-6 py-3.5 text-center">Points</th>
                 <th className="px-6 py-3.5 text-center">Matches</th>
                 <th className="px-6 py-3.5 text-center">Goals</th>
                 <th className="px-6 py-3.5 text-center">Assists</th>
-                <th className="px-6 py-3.5 text-right">Salary</th>
+                {showSalaryAndStars && <th className="px-6 py-3.5 text-right">Salary</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200/60 text-xs text-slate-700">
@@ -403,13 +416,15 @@ export default function SeasonDetails() {
                     <td className="px-6 py-4 text-center font-mono text-slate-500">
                       {player.category || 'N/A'}
                     </td>
-                    <td className="px-6 py-4 text-center font-mono text-slate-500">
-                      {player.star_rating !== null && player.star_rating !== undefined ? `${player.star_rating}⭐` : 'N/A'}
-                    </td>
+                    {showSalaryAndStars && (
+                      <td className="px-6 py-4 text-center font-mono text-slate-500">
+                        {player.star_rating !== null && player.star_rating !== undefined ? `${player.star_rating}⭐` : 'N/A'}
+                      </td>
+                    )}
                     <td className="px-6 py-4 font-mono font-bold text-amber-600 text-center">
                       {player.points || 0}
                     </td>
-                    <td className="px-6 py-4 font-mono text-slate-500 text-center">
+                    <td className="px-6 py-4 font-mono text-slate-550 text-center">
                       {player.matches_played || 0}
                     </td>
                     <td className="px-6 py-4 font-mono text-slate-550 text-center">
@@ -418,14 +433,16 @@ export default function SeasonDetails() {
                     <td className="px-6 py-4 font-mono text-slate-550 text-center">
                       {player.assists || 0}
                     </td>
-                    <td className="px-6 py-4 font-mono text-emerald-700 text-right">
-                      €{player.salary_per_match || '0.00'}
-                    </td>
+                    {showSalaryAndStars && (
+                      <td className="px-6 py-4 font-mono text-emerald-700 text-right">
+                        €{player.salary_per_match || '0.00'}
+                      </td>
+                    )}
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-slate-400 font-mono">
+                  <td colSpan={showSalaryAndStars ? 9 : 7} className="px-6 py-12 text-center text-slate-400 font-mono">
                     No players registered for this season.
                   </td>
                 </tr>

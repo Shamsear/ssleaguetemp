@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
 
     // Backward compatibility: If only seasonId provided, get primary tournament
     if (seasonId && !tournamentId) {
+      // 1. Check for primary tournament
       const primaryTournament = await sql`
         SELECT id FROM tournaments 
         WHERE season_id = ${seasonId} AND is_primary = true
@@ -26,8 +27,18 @@ export async function GET(request: NextRequest) {
       if (primaryTournament.length > 0) {
         tournamentId = primaryTournament[0].id;
       } else {
-        // Fallback to LEAGUE tournament
-        tournamentId = `${seasonId}-LEAGUE`;
+        // 2. Check if historical stats exist for this season
+        const historicalStats = await sql`
+          SELECT 1 FROM teamstats 
+          WHERE season_id = ${seasonId} AND tournament_id = 'historical'
+          LIMIT 1
+        `;
+        if (historicalStats.length > 0) {
+          tournamentId = 'historical';
+        } else {
+          // 3. Fallback to LEAGUE tournament
+          tournamentId = `${seasonId}-LEAGUE`;
+        }
       }
     }
 
