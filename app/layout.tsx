@@ -18,7 +18,7 @@ const geistSans = { variable: "font-sans" };
 const geistMono = { variable: "font-mono" };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://ssleaguetemp.vercel.app'),
   title: "SS League - Football Auction Platform",
   description: "Experience the thrill of building your dream football team through strategic bidding and competitive auctions",
   icons: {
