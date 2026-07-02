@@ -280,11 +280,44 @@ html {
   height: 100%;
   background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0) 100%);
   transform: skewX(-25deg);
-  transition: 0.75s;
+  transition: none; /* Snap back instantly on unhover to prevent reverse animation playing twice */
 }
 .console-card:hover::after {
   left: 125%;
+  transition: left 0.75s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* Prevent hover jittering (rapidly repeating animation) by keeping the pointer target active during translation */
+.hover-float:hover::before,
+.vision-button:hover::before,
+.console-card:hover::before,
+.fut-card:hover::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% - 4px); /* Overlaps slightly with the bottom edge of the parent to prevent micro-gaps */
+  height: 20px; /* Creates a transparent 20px bridge below to keep the cursor active when the element shifts up */
+  background: transparent;
+  pointer-events: auto;
+  z-index: 50;
+}
+
+/* Prevent hover jittering for horizontally translated elements (like footer links) */
+a[class*="hover:translate-x-"]:hover::before,
+button[class*="hover:translate-x-"]:hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: calc(100% - 3px); /* Overlaps slightly with the left edge of the parent */
+  width: 12px; /* Creates a transparent 12px bridge to the left to keep the cursor active when the element shifts right */
+  background: transparent;
+  pointer-events: auto;
+  z-index: 50;
+}
+
+
 
 /* 3D-Style Leaderboard Podium */
 .podium-container {
