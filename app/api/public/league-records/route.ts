@@ -51,11 +51,11 @@ export async function GET() {
       FROM (
         SELECT player_name, COALESCE(goals_scored, 0) as goals_scored, season_id, COALESCE(matches_played, 0) as matches_played, team
         FROM realplayerstats
-        WHERE season_id NOT IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id NOT LIKE 'SSPSLS16%' AND season_id NOT LIKE 'SSPSLS17%'
         UNION ALL
         SELECT player_name, COALESCE(goals_scored, 0) as goals_scored, season_id, COALESCE(matches_played, 0) as matches_played, team
         FROM player_seasons
-        WHERE season_id IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%'
       ) as combined
       ORDER BY goals_scored DESC
       LIMIT 1
@@ -67,11 +67,11 @@ export async function GET() {
       FROM (
         SELECT player_name, COALESCE(assists, 0) as assists, season_id, COALESCE(matches_played, 0) as matches_played, team
         FROM realplayerstats
-        WHERE season_id NOT IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id NOT LIKE 'SSPSLS16%' AND season_id NOT LIKE 'SSPSLS17%'
         UNION ALL
         SELECT player_name, COALESCE(assists, 0) as assists, season_id, COALESCE(matches_played, 0) as matches_played, team
         FROM player_seasons
-        WHERE season_id IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%'
       ) as combined
       ORDER BY assists DESC
       LIMIT 1
@@ -83,11 +83,11 @@ export async function GET() {
       FROM (
         SELECT player_name, COALESCE(clean_sheets, 0) as clean_sheets, season_id, COALESCE(matches_played, 0) as matches_played, team
         FROM realplayerstats
-        WHERE season_id NOT IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id NOT LIKE 'SSPSLS16%' AND season_id NOT LIKE 'SSPSLS17%'
         UNION ALL
         SELECT player_name, COALESCE(clean_sheets, 0) as clean_sheets, season_id, COALESCE(matches_played, 0) as matches_played, team
         FROM player_seasons
-        WHERE season_id IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%'
       ) as combined
       ORDER BY clean_sheets DESC
       LIMIT 1
@@ -99,11 +99,11 @@ export async function GET() {
       FROM (
         SELECT player_name, COALESCE(points, 0) as points, season_id, COALESCE(matches_played, 0) as matches_played, team
         FROM realplayerstats
-        WHERE season_id NOT IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id NOT LIKE 'SSPSLS16%' AND season_id NOT LIKE 'SSPSLS17%'
         UNION ALL
         SELECT player_name, (COALESCE(points, 0) - COALESCE(base_points, 0)) as points, season_id, COALESCE(matches_played, 0) as matches_played, team
         FROM player_seasons
-        WHERE season_id IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%'
       ) as combined
       ORDER BY points DESC
       LIMIT 1

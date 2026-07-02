@@ -413,7 +413,7 @@ export async function GET(request: NextRequest) {
             matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
             clean_sheets, motm_awards, 
             CASE 
-              WHEN season_id IN ('SSPSLS16', 'SSPSLS17') 
+              WHEN season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%' 
               THEN points - COALESCE(base_points, 0)
               ELSE points
             END as points,
@@ -466,7 +466,7 @@ export async function GET(request: NextRequest) {
             matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
             clean_sheets, motm_awards, 
             CASE 
-              WHEN season_id IN ('SSPSLS16', 'SSPSLS17') 
+              WHEN season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%' 
               THEN points - COALESCE(base_points, 0)
               ELSE points
             END as points,
@@ -502,7 +502,12 @@ export async function GET(request: NextRequest) {
             id, player_id, player_name, season_id,
             team, team_id, category,
             matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
-            clean_sheets, motm_awards, points,
+            clean_sheets, motm_awards, 
+            CASE 
+              WHEN season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%' 
+              THEN points - COALESCE(base_points, 0)
+              ELSE points
+            END as points,
             base_points,
             contract_id, contract_start_season, contract_end_season,
             is_auto_registered, registration_date, registration_type,
@@ -511,7 +516,7 @@ export async function GET(request: NextRequest) {
             created_at, updated_at
           FROM player_seasons 
           WHERE team_id = ${teamId} AND season_id = ${seasonId}
-          ORDER BY points DESC
+          ORDER BY (points - COALESCE(base_points, 0)) DESC
         `;
       } else {
         stats = await sql`
@@ -577,7 +582,12 @@ export async function GET(request: NextRequest) {
               id, player_id, player_name, season_id,
               team, team_id, category,
               matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
-              clean_sheets, motm_awards, points,
+              clean_sheets, motm_awards, 
+              CASE 
+                WHEN season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%' 
+                THEN points - COALESCE(base_points, 0)
+                ELSE points
+              END as points,
               base_points,
               contract_id, contract_start_season, contract_end_season,
               is_auto_registered, registration_date
@@ -592,7 +602,12 @@ export async function GET(request: NextRequest) {
               id, player_id, player_name, season_id,
               team, team_id, category,
               matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
-              clean_sheets, motm_awards, points,
+              clean_sheets, motm_awards, 
+              CASE 
+                WHEN season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%' 
+                THEN points - COALESCE(base_points, 0)
+                ELSE points
+              END as points,
               base_points,
               contract_id, contract_start_season, contract_end_season,
               is_auto_registered, registration_date

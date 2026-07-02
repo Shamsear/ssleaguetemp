@@ -102,10 +102,10 @@ export async function GET(
         MAX(star_rating) as star_rating,
         SUM(matches_played) as matches_played,
         SUM(goals_scored) as goals_scored,
-        SUM(points) as points
+        SUM(points - COALESCE(base_points, 0)) as points
       FROM player_seasons
       WHERE team_id = ${teamId}
-        AND season_id IN ('SSPSLS16', 'SSPSLS17')
+        AND (season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%')
       GROUP BY player_id, player_name, category, season_id
       ORDER BY season_id DESC, points DESC
     `;
@@ -122,7 +122,7 @@ export async function GET(
         SUM(points) as points
       FROM realplayerstats
       WHERE team_id = ${teamId}
-        AND season_id NOT IN ('SSPSLS16', 'SSPSLS17')
+        AND (season_id NOT LIKE 'SSPSLS16%' AND season_id NOT LIKE 'SSPSLS17%')
       GROUP BY player_id, player_name, category, season_id
       ORDER BY season_id DESC, points DESC
     `;

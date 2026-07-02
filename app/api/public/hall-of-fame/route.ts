@@ -24,11 +24,11 @@ export async function GET() {
       FROM (
         SELECT player_id, player_name, season_id, COALESCE(goals_scored, 0) as goals_scored, COALESCE(assists, 0) as assists, COALESCE(clean_sheets, 0) as clean_sheets, COALESCE(matches_played, 0) as matches_played, COALESCE(wins, 0) as wins, COALESCE(points, 0) as points
         FROM realplayerstats
-        WHERE season_id NOT IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id NOT LIKE 'SSPSLS16%' AND season_id NOT LIKE 'SSPSLS17%'
         UNION ALL
         SELECT player_id, player_name, season_id, COALESCE(goals_scored, 0) as goals_scored, COALESCE(assists, 0) as assists, COALESCE(clean_sheets, 0) as clean_sheets, COALESCE(matches_played, 0) as matches_played, COALESCE(wins, 0) as wins, (COALESCE(points, 0) - COALESCE(base_points, 0)) as points
         FROM player_seasons
-        WHERE season_id IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%'
       ) as realplayerstats
       GROUP BY player_id
       HAVING SUM(goals_scored) > 0
@@ -47,11 +47,11 @@ export async function GET() {
       FROM (
         SELECT player_id, player_name, season_id, COALESCE(goals_scored, 0) as goals_scored, COALESCE(assists, 0) as assists, COALESCE(clean_sheets, 0) as clean_sheets, COALESCE(matches_played, 0) as matches_played, COALESCE(wins, 0) as wins, COALESCE(points, 0) as points
         FROM realplayerstats
-        WHERE season_id NOT IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id NOT LIKE 'SSPSLS16%' AND season_id NOT LIKE 'SSPSLS17%'
         UNION ALL
         SELECT player_id, player_name, season_id, COALESCE(goals_scored, 0) as goals_scored, COALESCE(assists, 0) as assists, COALESCE(clean_sheets, 0) as clean_sheets, COALESCE(matches_played, 0) as matches_played, COALESCE(wins, 0) as wins, (COALESCE(points, 0) - COALESCE(base_points, 0)) as points
         FROM player_seasons
-        WHERE season_id IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%'
       ) as realplayerstats
       GROUP BY player_id
       HAVING SUM(assists) > 0
@@ -70,11 +70,11 @@ export async function GET() {
       FROM (
         SELECT player_id, player_name, season_id, COALESCE(goals_scored, 0) as goals_scored, COALESCE(assists, 0) as assists, COALESCE(clean_sheets, 0) as clean_sheets, COALESCE(matches_played, 0) as matches_played, COALESCE(wins, 0) as wins, COALESCE(points, 0) as points
         FROM realplayerstats
-        WHERE season_id NOT IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id NOT LIKE 'SSPSLS16%' AND season_id NOT LIKE 'SSPSLS17%'
         UNION ALL
         SELECT player_id, player_name, season_id, COALESCE(goals_scored, 0) as goals_scored, COALESCE(assists, 0) as assists, COALESCE(clean_sheets, 0) as clean_sheets, COALESCE(matches_played, 0) as matches_played, COALESCE(wins, 0) as wins, (COALESCE(points, 0) - COALESCE(base_points, 0)) as points
         FROM player_seasons
-        WHERE season_id IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%'
       ) as realplayerstats
       GROUP BY player_id
       HAVING SUM(clean_sheets) > 0
@@ -94,11 +94,11 @@ export async function GET() {
       FROM (
         SELECT player_id, player_name, season_id, COALESCE(goals_scored, 0) as goals_scored, COALESCE(assists, 0) as assists, COALESCE(clean_sheets, 0) as clean_sheets, COALESCE(matches_played, 0) as matches_played, COALESCE(wins, 0) as wins, COALESCE(points, 0) as points
         FROM realplayerstats
-        WHERE season_id NOT IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id NOT LIKE 'SSPSLS16%' AND season_id NOT LIKE 'SSPSLS17%'
         UNION ALL
         SELECT player_id, player_name, season_id, COALESCE(goals_scored, 0) as goals_scored, COALESCE(assists, 0) as assists, COALESCE(clean_sheets, 0) as clean_sheets, COALESCE(matches_played, 0) as matches_played, COALESCE(wins, 0) as wins, (COALESCE(points, 0) - COALESCE(base_points, 0)) as points
         FROM player_seasons
-        WHERE season_id IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%'
       ) as realplayerstats
       GROUP BY player_id
       ORDER BY total_matches DESC
@@ -116,11 +116,11 @@ export async function GET() {
       FROM (
         SELECT player_id, player_name, season_id, COALESCE(goals_scored, 0) as goals_scored, COALESCE(assists, 0) as assists, COALESCE(clean_sheets, 0) as clean_sheets, COALESCE(matches_played, 0) as matches_played, COALESCE(wins, 0) as wins, COALESCE(points, 0) as points
         FROM realplayerstats
-        WHERE season_id NOT IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id NOT LIKE 'SSPSLS16%' AND season_id NOT LIKE 'SSPSLS17%'
         UNION ALL
         SELECT player_id, player_name, season_id, COALESCE(goals_scored, 0) as goals_scored, COALESCE(assists, 0) as assists, COALESCE(clean_sheets, 0) as clean_sheets, COALESCE(matches_played, 0) as matches_played, COALESCE(wins, 0) as wins, (COALESCE(points, 0) - COALESCE(base_points, 0)) as points
         FROM player_seasons
-        WHERE season_id IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%'
       ) as realplayerstats
       GROUP BY player_id
       HAVING SUM(points) > 0
@@ -140,11 +140,11 @@ export async function GET() {
       FROM (
         SELECT player_id, player_name, season_id, COALESCE(goals_scored, 0) as goals_scored, COALESCE(assists, 0) as assists, COALESCE(clean_sheets, 0) as clean_sheets, COALESCE(matches_played, 0) as matches_played, COALESCE(wins, 0) as wins, COALESCE(points, 0) as points
         FROM realplayerstats
-        WHERE season_id NOT IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id NOT LIKE 'SSPSLS16%' AND season_id NOT LIKE 'SSPSLS17%'
         UNION ALL
         SELECT player_id, player_name, season_id, COALESCE(goals_scored, 0) as goals_scored, COALESCE(assists, 0) as assists, COALESCE(clean_sheets, 0) as clean_sheets, COALESCE(matches_played, 0) as matches_played, COALESCE(wins, 0) as wins, (COALESCE(points, 0) - COALESCE(base_points, 0)) as points
         FROM player_seasons
-        WHERE season_id IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%'
       ) as realplayerstats
       GROUP BY player_id
       HAVING SUM(matches_played) >= 20

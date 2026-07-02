@@ -66,11 +66,11 @@ export async function GET(request: NextRequest) {
           COALESCE(AVG(NULLIF(star_rating, 0)), 0) as average_rating,
           COALESCE(SUM(points - COALESCE(base_points, 0)), 0) as total_points
         FROM player_seasons
-        WHERE season_id IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%'
         GROUP BY player_id
       `;
       console.log(`[Players API] Found S16/S17 adjusted stats for ${s16s17Stats.length} players`);
-
+ 
       // Fetch from player_seasons for other seasons (S18+) - points as-is
       const futureStats = await sql`
         SELECT 
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
           COALESCE(AVG(NULLIF(star_rating, 0)), 0) as average_rating,
           COALESCE(SUM(points), 0) as total_points
         FROM player_seasons
-        WHERE season_id NOT IN ('SSPSLS16', 'SSPSLS17')
+        WHERE season_id NOT LIKE 'SSPSLS16%' AND season_id NOT LIKE 'SSPSLS17%' AND matches_played > 0
         GROUP BY player_id
       `;
       console.log(`[Players API] Found future season stats for ${futureStats.length} players`);
