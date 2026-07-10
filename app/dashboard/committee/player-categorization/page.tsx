@@ -159,10 +159,12 @@ export default function PlayerCategorizationPage() {
     return activePlayers.map(player => {
       const stats = historicalByPlayer.get(player.player_id) || [];
       
-      // Calculate weighted score using decay weightage
+      // Calculate weighted score using decay weightage and PPM (points per match)
       let weightedSum = 0;
       let weightSum = 0;
-      const seasonPointsMap = new Map<string, number>();
+      const seasonPointsMap = new Map<string, { points: number; matches: number; ppm: number }>();
+
+      const MIN_MATCHES = 3;
 
       stats.forEach(stat => {
         const seasonNum = parseInt(stat.season_id.replace(/\D/g, '')) || 0;
@@ -171,14 +173,24 @@ export default function PlayerCategorizationPage() {
           // Exponential decay weight: 1.0 for dist 1, 0.5 for dist 2, 0.25 for dist 3...
           const weight = Math.pow(0.5, distance - 1);
           
-          weightedSum += (stat.points || 0) * weight;
-          weightSum += weight;
+          const matches = stat.matches_played || 0;
+          if (matches >= MIN_MATCHES) {
+            const ppm = (stat.points || 0) / matches;
+            weightedSum += ppm * weight;
+            weightSum += weight;
+          }
           
-          seasonPointsMap.set(stat.season_id, stat.points);
+          const ppmVal = matches > 0 ? parseFloat(((stat.points || 0) / matches).toFixed(1)) : 0;
+          seasonPointsMap.set(stat.season_id, {
+            points: stat.points || 0,
+            matches: matches,
+            ppm: ppmVal
+          });
         }
       });
 
-      const weightedScore = weightSum > 0 ? Math.round(weightedSum / weightSum) : null;
+      // AI Score is the weighted PPM (rounded to 2 decimal places for sorting precision)
+      const weightedScore = weightSum > 0 ? parseFloat((weightedSum / weightSum).toFixed(2)) : null;
 
       return {
         ...player,
@@ -356,7 +368,8 @@ export default function PlayerCategorizationPage() {
 
       // Add historical seasons columns
       historicalSeasonsList.forEach(seasonId => {
-        row[`${seasonId} Points`] = p.seasonPointsMap.get(seasonId) || 'N/A';
+        const data = p.seasonPointsMap.get(seasonId);
+        row[`${seasonId} Points`] = data ? `${data.points} pts (${data.matches} matches, ${data.ppm} PPM)` : 'N/A';
       });
 
       return row;
@@ -516,7 +529,7 @@ export default function PlayerCategorizationPage() {
                 <div className="flex gap-2">
                   <div className="font-bold text-amber-500 flex-shrink-0">Step 2:</div>
                   <div>
-                    <strong>Decay-Weighted Historical Averaging:</strong> The algorithm queries the points of every registered player across all past seasons. To keep the ratings relevant, older seasons are penalized:
+                    <strong>Decay-Weighted Points Per Match (PPM):</strong> For each past season, the player's Points Per Match (PPM) is calculated (requiring at least 3 matches played in that season). To keep the ratings relevant, older seasons are penalized:
                     <ul className="list-disc pl-5 mt-2 space-y-1 font-mono text-[10px] text-slate-550 uppercase">
                       <li>1 season ago (e.g. S17 for S18): Weight = <strong>1.00</strong></li>
                       <li>2 seasons ago (e.g. S16 for S18): Weight = <strong>0.50</strong></li>
@@ -627,7 +640,7 @@ export default function PlayerCategorizationPage() {
                     <th className="px-6 py-3.5">Player</th>
                     <th className="px-6 py-3.5">Current Category</th>
                     <th className="px-6 py-3.5 text-center">AI Rating Suggestion</th>
-                    <th className="px-6 py-3.5 text-center">AI Score</th>
+                    <th className="px-6 py-3.5 text-center">AI Score (PPM)</th>
                     {historicalSeasonsList.map(seasonId => (
                       <th key={seasonId} className="px-4 py-3.5 text-center font-mono">{seasonId}</th>
                     ))}
@@ -675,10 +688,15 @@ export default function PlayerCategorizationPage() {
 
                         {/* Historical Season Stats */}
                         {historicalSeasonsList.map(seasonId => {
-                          const pts = player.seasonPointsMap.get(seasonId);
+                          const data = player.seasonPointsMap.get(seasonId);
                           return (
                             <td key={seasonId} className="px-4 py-4 font-mono text-center text-slate-500">
-                              {pts !== undefined ? pts : '—'}
+                              {data !== undefined ? (
+                                <div className="leading-tight">
+                                  <div className="font-bold text-slate-700">{data.points} pts</div>
+                                  <div className="text-[10px] text-slate-400">{data.matches}m ({data.ppm} PPM)</div>
+                                </div>
+                              ) : '—'}
                             </td>
                           );
                         })}
