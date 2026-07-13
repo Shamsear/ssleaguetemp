@@ -20,8 +20,25 @@ const geistMono = { variable: "font-mono" };
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://ssleaguetemp.vercel.app'),
-  title: "SS Super Soccer League (South Soccers) - Football Auction Platform",
+  title: {
+    default: "SS Super Soccer League (South Soccers) - Football Auction Platform",
+    template: "%s | SS Super Soccer League"
+  },
   description: "Welcome to the SS Super Soccer League (South Soccers). Experience the thrill of building your dream football team through strategic bidding, competitive auctions, and manager statistics.",
+  keywords: [
+    "SS Super Soccer League",
+    "South Soccers",
+    "Football Auction",
+    "Fantasy Football",
+    "Football bidding",
+    "SS League",
+    "SS League Auction",
+    "Football Manager",
+    "Soccer Auction"
+  ],
+  alternates: {
+    canonical: './',
+  },
   icons: {
     icon: '/logo.png',
     apple: '/logo.png',
@@ -36,12 +53,26 @@ export const metadata: Metadata = {
     title: "SS Super Soccer League (South Soccers) - Football Auction Platform",
     description: "Welcome to the SS Super Soccer League (South Soccers). Experience the thrill of building your dream football team through strategic bidding, competitive auctions, and manager statistics.",
     images: ['/logo.png'],
+    locale: 'en_US',
+    type: 'website',
+    siteName: 'SS Super Soccer League',
   },
   twitter: {
     card: 'summary_large_image',
     title: "SS Super Soccer League (South Soccers) - Football Auction Platform",
     description: "Welcome to the SS Super Soccer League (South Soccers). Experience the thrill of building your dream football team through strategic bidding, competitive auctions, and manager statistics.",
     images: ['/logo.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 

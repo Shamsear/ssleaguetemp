@@ -25,18 +25,21 @@ export async function generateMetadata({
 
   if (!season) {
     return {
-      title: 'Season Details Not Found | SS League',
+      title: 'Season Details Not Found',
       description: 'The requested season details could not be found.',
     };
   }
 
   const seasonName = season.name || `Season ${season.season_number || id}`;
-  const title = `${seasonName} - Standings, Stats & Awards | SS League`;
+  const title = `${seasonName} - Standings, Stats & Awards`;
   const description = `Follow the action from ${seasonName} on SS League. View team standings, player performance charts, match day results, and award winners.`;
 
   return {
     title,
     description,
+    alternates: {
+      canonical: `/seasons/${id}`,
+    },
     openGraph: {
       title,
       description,
@@ -52,6 +55,35 @@ export async function generateMetadata({
   };
 }
 
-export default function Page() {
-  return <SeasonDetailPage />;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const season = await getSeasonData(id);
+
+  const jsonLd = season ? {
+    "@context": "https://schema.org",
+    "@type": "SportsEvent",
+    "name": season.name || `Season ${season.season_number || id}`,
+    "description": `Follow the action from ${season.name || `Season ${season.season_number || id}`} on SS League. View team standings, player performance charts, match day results, and award winners.`,
+    "sport": "Association Football",
+    "organizer": {
+      "@type": "SportsOrganization",
+      "name": "SS Super Soccer League"
+    }
+  } : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <SeasonDetailPage />
+    </>
+  );
 }

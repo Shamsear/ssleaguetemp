@@ -40,13 +40,16 @@ export async function generateMetadata({
   const { id } = await params;
   const team = await getTeamData(id);
 
-  const title = `${team.teamName} - Club Profile & Stats | SS League`;
+  const title = `${team.teamName} - Club Profile & Stats`;
   const description = `Official page of ${team.teamName} on SS League. View squad players, match history, league table position, and trophies.`;
   const imageUrl = team.logoUrl || '/logo.png';
 
   return {
     title,
     description,
+    alternates: {
+      canonical: `/teams/${id}`,
+    },
     openGraph: {
       title,
       description,
@@ -62,6 +65,37 @@ export async function generateMetadata({
   };
 }
 
-export default function Page() {
-  return <TeamDetailPage />;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const team = await getTeamData(id);
+
+  const jsonLd = team ? {
+    "@context": "https://schema.org",
+    "@type": "SportsTeam",
+    "name": team.teamName,
+    "sport": "Association Football",
+    "logo": team.logoUrl || 'https://ssleaguetemp.vercel.app/logo.png',
+    "image": team.logoUrl || 'https://ssleaguetemp.vercel.app/logo.png',
+    "description": `Official team page for ${team.teamName} in the SS Super Soccer League. View roster, stats, match history, and achievements.`,
+    "memberOf": {
+      "@type": "SportsOrganization",
+      "name": "SS Super Soccer League"
+    }
+  } : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <TeamDetailPage />
+    </>
+  );
 }

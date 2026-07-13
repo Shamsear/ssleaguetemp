@@ -30,18 +30,21 @@ export async function generateMetadata({
 
   if (!player) {
     return {
-      title: 'Player Profile Not Found | SS League',
+      title: 'Player Profile Not Found',
       description: 'The requested player profile could not be found.',
     };
   }
 
-  const title = `${player.name} - Player Profile | SS League`;
+  const title = `${player.name} - Player Profile`;
   const description = `${player.name} (${player.category || 'Player'}) profile on SS League. View player stats, ratings, match performance, and awards.`;
   const imageUrl = player.photo_url || '/logo.png';
 
   return {
     title,
     description,
+    alternates: {
+      canonical: `/players/${id}`,
+    },
     openGraph: {
       title,
       description,
@@ -59,6 +62,36 @@ export async function generateMetadata({
   };
 }
 
-export default function Page() {
-  return <PlayerDetailPage />;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const player = await getPlayerData(id);
+
+  const jsonLd = player ? {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": player.name,
+    "image": player.photo_url || 'https://ssleaguetemp.vercel.app/logo.png',
+    "description": `${player.name} is a ${player.category || 'Player'} in the SS Super Soccer League. View stats, ratings, match performance, and awards.`,
+    "jobTitle": "Football Player",
+    "memberOf": {
+      "@type": "SportsOrganization",
+      "name": "SS Super Soccer League"
+    }
+  } : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <PlayerDetailPage />
+    </>
+  );
 }

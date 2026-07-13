@@ -218,6 +218,21 @@ export default function Home() {
 
   return (
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 pb-8 sm:pt-24 sm:pb-12 px-4 sm:px-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SportsOrganization",
+            "name": "SS Super Soccer League (South Soccers)",
+            "url": "https://ssleaguetemp.vercel.app",
+            "logo": "https://ssleaguetemp.vercel.app/logo.png",
+            "image": "https://ssleaguetemp.vercel.app/logo.png",
+            "description": "Experience the thrill of building your dream football team through strategic bidding, competitive auctions, and manager statistics.",
+            "sport": "Association Football"
+          })
+        }}
+      />
       
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>

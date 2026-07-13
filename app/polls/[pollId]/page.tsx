@@ -30,17 +30,20 @@ export async function generateMetadata({
 
   if (!poll) {
     return {
-      title: 'Poll Details Not Found | SS League',
+      title: 'Poll Details Not Found',
       description: 'The requested community poll could not be found.',
     };
   }
 
-  const title = `${poll.title_en || 'Community Poll'} | SS League`;
+  const title = poll.title_en || 'Community Poll';
   const description = `Cast your vote on: ${poll.question_en || poll.title_en || 'SS League Poll'}. Participate in community decisions, predictions, and discussions.`;
 
   return {
     title,
     description,
+    alternates: {
+      canonical: `/polls/${pollId}`,
+    },
     openGraph: {
       title,
       description,
@@ -56,6 +59,36 @@ export async function generateMetadata({
   };
 }
 
-export default function Page() {
-  return <PollPage />;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ pollId: string }>;
+}) {
+  const { pollId } = await params;
+  const poll = await getPollData(pollId);
+
+  const jsonLd = poll ? {
+    "@context": "https://schema.org",
+    "@type": "Question",
+    "name": poll.title_en || poll.question_en || 'Community Poll',
+    "text": poll.question_en || poll.title_en || 'SS League Poll',
+    "dateCreated": poll.created_at,
+    "answerCount": 0,
+    "author": {
+      "@type": "Organization",
+      "name": "SS Super Soccer League"
+    }
+  } : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <PollPage />
+    </>
+  );
 }

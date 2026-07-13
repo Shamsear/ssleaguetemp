@@ -28,12 +28,12 @@ export async function generateMetadata({
 
   if (!news) {
     return {
-      title: 'Article Not Found | SS League',
+      title: 'Article Not Found',
       description: 'The requested news article could not be found.',
     };
   }
 
-  const title = (news.title_en || news.title || 'League News') + ' | SS League';
+  const title = news.title_en || news.title || 'League News';
   const description =
     news.summary_en ||
     news.summary ||
@@ -44,6 +44,9 @@ export async function generateMetadata({
   return {
     title,
     description,
+    alternates: {
+      canonical: `/news/${id}`,
+    },
     openGraph: {
       title,
       description,
@@ -60,6 +63,45 @@ export async function generateMetadata({
   };
 }
 
-export default function Page() {
-  return <NewsArticleClient />;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const news = await getNewsItem(id);
+
+  const jsonLd = news ? {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "headline": news.title_en || news.title || 'League News',
+    "description": news.summary_en || news.summary || (news.content_en || news.content || '').substring(0, 160),
+    "image": news.image_url || 'https://ssleaguetemp.vercel.app/logo.png',
+    "datePublished": news.published_at || news.created_at,
+    "dateModified": news.updated_at || news.created_at,
+    "author": {
+      "@type": "Person",
+      "name": news.reporter_en || "SS League Reporter"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "SS Super Soccer League",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://ssleaguetemp.vercel.app/logo.png"
+      }
+    }
+  } : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <NewsArticleClient />
+    </>
+  );
 }
