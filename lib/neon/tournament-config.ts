@@ -28,7 +28,7 @@ export const tournamentSql = connectionString ? neon(connectionString, {
   fetchOptions: {
     cache: 'no-store', // Prevent caching issues
   },
-}) : null;
+} as any) as any : null;
 
 // Type-safe check for tournament database availability
 export function isTournamentDbAvailable(): boolean {
@@ -36,7 +36,7 @@ export function isTournamentDbAvailable(): boolean {
 }
 
 // Get tournament database or throw error
-export function getTournamentDb() {
+export function getTournamentDb(): any {
   if (!tournamentSql) {
     throw new Error('Tournament database not configured. Check NEON_TOURNAMENT_DB_URL.');
   }

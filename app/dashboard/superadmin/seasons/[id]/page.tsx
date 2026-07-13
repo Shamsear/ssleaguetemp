@@ -8,6 +8,7 @@ import { getTeamsBySeason, getAllTeams } from '@/lib/firebase/teams';
 import { Season } from '@/types/season';
 import { usePlayerStats, useTeamStats } from '@/hooks';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { getIdToken } from 'firebase/auth';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -23,11 +24,12 @@ import {
   DollarSign,
   Briefcase,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Download
 } from 'lucide-react';
 
 export default function SeasonDetails() {
-  const { user, loading } = useAuth();
+  const { user, firebaseUser, loading } = useAuth();
   const router = useRouter();
   const params = useParams();
   const seasonId = params.id as string;
@@ -53,6 +55,7 @@ export default function SeasonDetails() {
   const [topBids, setTopBids] = useState<any[]>([]);
   const [firebaseTeams, setFirebaseTeams] = useState<any[]>([]);
   const [allTeams, setAllTeams] = useState<any[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
   
   // Use React Query hooks for stats from Neon
   const { data: teamStatsData, isLoading: teamStatsLoading } = useTeamStats({
@@ -88,7 +91,6 @@ export default function SeasonDetails() {
       }));
     }
     if (teamStatsData) {
-      // Merge with firebaseTeams & allTeams to resolve owner names
       const merged = teamStatsData.map((t: any) => {
         const fbTeam = firebaseTeams.find((ft: any) => ft.team_id === t.team_id || ft.id === t.team_id)
           || allTeams.find((at: any) => at.team_id === t.team_id || at.id === t.team_id);
@@ -97,6 +99,22 @@ export default function SeasonDetails() {
           owner_name: fbTeam?.owner_name || t.owner_name || 'N/A'
         };
       });
+
+      // Sort teams by points desc, then goal difference desc, then goals scored desc
+      merged.sort((a: any, b: any) => {
+        const pA = a.points !== undefined ? a.points : (a.stats?.p || a.stats?.points || 0);
+        const pB = b.points !== undefined ? b.points : (b.stats?.p || b.stats?.points || 0);
+        if (pB !== pA) return pB - pA;
+        
+        const gdA = a.goal_difference !== undefined ? a.goal_difference : (a.stats?.gd || a.stats?.goal_difference || 0);
+        const gdB = b.goal_difference !== undefined ? b.goal_difference : (b.stats?.gd || b.stats?.goal_difference || 0);
+        if (gdB !== gdA) return gdB - gdA;
+        
+        const gfA = a.goals_for !== undefined ? a.goals_for : (a.stats?.f || a.stats?.goals_for || 0);
+        const gfB = b.goals_for !== undefined ? b.goals_for : (b.stats?.f || b.stats?.goals_for || 0);
+        return gfB - gfA;
+      });
+
       setTeams(merged);
     }
     if (playerStatsData) {
@@ -189,6 +207,62 @@ export default function SeasonDetails() {
     });
   };
 
+  const handleExportExcel = async () => {
+    if (!firebaseUser) {
+      alert('Error: User session not found. Please refresh and try again.');
+      return;
+    }
+    
+    try {
+      setIsExporting(true);
+      console.log('🔄 Starting Excel export for season:', seasonId);
+      
+      const token = await getIdToken(firebaseUser);
+      
+      const exportUrl = `/api/seasons/historical/${seasonId}/export`;
+      console.log('📡 Fetching export from:', exportUrl);
+      
+      const response = await fetchWithTokenRefresh(exportUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        let errorMessage = 'Export failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const disposition = response.headers.get('content-disposition');
+      const filenameMatch = disposition?.match(/filename="(.+)"/);
+      const filename = filenameMatch?.[1] || `season_${seasonId}_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('✅ Excel export completed successfully');
+    } catch (error: any) {
+      console.error('❌ Error exporting Excel:', error);
+      alert(`Export failed: ${error.message}`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (loading || loadingSeason || teamStatsLoading || playerStatsLoading) {
     return (
       <div className="flex items-center justify-center pt-32">
@@ -259,6 +333,14 @@ export default function SeasonDetails() {
         </div>
         
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportExcel}
+            disabled={isExporting}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-mono font-bold rounded-xl transition-all shadow-sm disabled:opacity-50"
+          >
+            <Download className="w-4 h-4 text-slate-550" />
+            {isExporting ? 'Exporting...' : 'Export Excel'}
+          </button>
           <button
             onClick={() => alert('Player stats feature - To be implemented')}
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-mono text-xs font-bold rounded-xl transition-all shadow-sm"

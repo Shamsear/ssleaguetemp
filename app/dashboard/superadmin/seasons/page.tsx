@@ -35,6 +35,13 @@ export default function SeasonsManagement() {
   // Real-time seasons data
   const { seasons, loading: loadingSeasons, error } = useRealtimeSeasons(user, loading);
 
+  // Sort seasons by season_number descending (high to low)
+  const sortedSeasons = [...seasons].sort((a, b) => {
+    const numA = a.season_number || 0;
+    const numB = b.season_number || 0;
+    return numB - numA;
+  });
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
@@ -199,7 +206,7 @@ export default function SeasonsManagement() {
 
         {seasons.length > 0 ? (
           <div className="divide-y divide-slate-200/60">
-            {seasons.map((season) => (
+            {sortedSeasons.map((season) => (
               <div 
                 key={season.id} 
                 className="p-6 hover:bg-slate-50/40 transition-all duration-200 group flex flex-col lg:flex-row lg:items-center justify-between gap-6"
@@ -233,10 +240,6 @@ export default function SeasonsManagement() {
                           <span>{season.totalTeams || 0} Registered Teams</span>
                         </div>
 
-                        <div className="flex items-center gap-1.5">
-                          <FileText className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{season.totalRounds || 0} Auction Rounds</span>
-                        </div>
 
                         <button
                           onClick={() => handleToggleRegistration(season.id, season.registrationOpen)}

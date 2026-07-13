@@ -60,20 +60,10 @@ export default function UpdatePreviewPage() {
   }, [user])
 
   const loadComparison = async () => {
-    const parsedData = sessionStorage.getItem('parsedPlayers')
-    if (!parsedData) {
-      router.push('/dashboard/committee/database')
-      return
-    }
-
     try {
       setLoading(true)
-      const players = JSON.parse(parsedData)
-
-      const response = await fetchWithTokenRefresh('/api/players/compare-import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPlayers: players })
+      const response = await fetchWithTokenRefresh('/api/players/database/compare', {
+        method: 'GET'
       })
 
       const result = await response.json()
@@ -101,26 +91,18 @@ export default function UpdatePreviewPage() {
   }
 
   const handleConfirmUpdate = async () => {
-    // Filter out excluded players from toCreate list
-    const playersToCreate = comparison.toCreate.filter(
-      (player: any) => !excludedPlayerIds.has(player.player_id)
-    );
-    
-    const totalChanges = comparison.summary.willUpdate + playersToCreate.length;
-    
-    const confirmMessage = `This will update ${comparison.summary.willUpdate} players and create ${playersToCreate.length} new entries.
+    const confirmMessage = `This will update ${comparison.summary.willUpdate} existing players' stats from the temporary database.
 
 WHAT WILL BE UPDATED:
-<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Player stats (ratings, speed, shooting, passing, etc.)
-<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Position, playing style, nationality, age
-<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Club name (real-world team)
+- Player stats (ratings, speed, shooting, passing, etc.)
+- Position, playing style, nationality, age
 
-WHAT WILL BE PRESERVED (NOT changed):
-<Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Team assignments (team_id, team_name)
-<Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Ownership status (is_sold)
-<Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Purchase price (acquisition_value)
-<Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Season ID and Round ID
-<Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Contract information
+WHAT WILL BE PRESERVED:
+- Team assignments (team_id, team_name)
+- Ownership status (is_sold)
+- Contract and purchase details
+
+NOTE: The ${comparison.summary.willCreate} players in the "Not In Active DB" tab will NOT be created here. Use the separate "Add New Players" portal for that.
 
 Continue?`;
     
@@ -128,70 +110,26 @@ Continue?`;
       return
     }
 
-    const parsedData = sessionStorage.getItem('parsedPlayers')
-    if (!parsedData) {
-      alert('No data found. Please upload again.')
-      return
-    }
-
     try {
       setImporting(true)
-      setImportStatus('Updating player stats...')
+      setImportStatus('Applying updates to active database...')
 
-      const parsedData = sessionStorage.getItem('parsedPlayers')
-      if (!parsedData) {
-        alert('No data found. Please upload again.')
-        return
-      }
-
-      const allPlayers = JSON.parse(parsedData)
-      
-      // Create a map of player_id to full player data
-      const playerDataMap = new Map();
-      allPlayers.forEach((player: any) => {
-        if (player.player_id) {
-          playerDataMap.set(player.player_id.toString(), player);
-        }
-      });
-
-      // Get full player data for updates and creates
-      const playersToProcess = [
-        ...comparison.toUpdate.map((p: any) => playerDataMap.get(p.player_id.toString())).filter(Boolean),
-        ...comparison.toCreate.filter((player: any) => !excludedPlayerIds.has(player.player_id?.toString())).map((p: any) => playerDataMap.get(p.player_id.toString())).filter(Boolean)
-      ];
-
-      console.log(`<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Processing ${playersToProcess.length} players (${comparison.toUpdate.length} updates + ${comparison.toCreate.filter((p: any) => !excludedPlayerIds.has(p.player_id?.toString())).length} creates)`);
-
-      const response = await fetchWithTokenRefresh('/api/players/bulk', {
+      const response = await fetchWithTokenRefresh('/api/players/database/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'updateStats',
-          players: playersToProcess.map((player: any) => ({
-            ...player,
-            // Normalize name field - handle multiple column name variations
-            name: player.name || player.player_name || player.full_name || player.Name || `Player ${player.player_id}`,
-            // Normalize team_name field - ensure it's set from various possible column names
-            team_name: player.team_name || player.team || player.club || player.current_club || player.Team || '',
-            is_auction_eligible: player.is_auction_eligible || false
-          }))
+          createNew: false // Do NOT import/create new players here
         })
       })
 
       const result = await response.json()
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to update players')
+        throw new Error(result.error || 'Failed to apply updates')
       }
-
-      const excludedCount = comparison.toCreate.length - playersToCreate.length;
-      const statusMsg = excludedCount > 0 
-        ? `Successfully updated ${result.updated} players and added ${result.inserted} new players! (${excludedCount} duplicate(s) skipped)`
-        : `Successfully updated ${result.updated} players and added ${result.inserted} new players!`;
       
-      setImportStatus(statusMsg)
-      sessionStorage.removeItem('parsedPlayers')
-
+      setImportStatus(result.message || 'Successfully updated database!')
+      
       setTimeout(() => {
         router.push('/dashboard/committee/database')
       }, 2000)
@@ -230,7 +168,7 @@ Continue?`;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-screen-2xl">
+    <div className="container mx-auto px-4 pt-5 lg:pt-24 pb-8 max-w-screen-2xl">
       {/* Header */}
       <div className="glass rounded-3xl p-6 mb-8 shadow-lg">
         <div className="flex justify-between items-center">
@@ -251,19 +189,22 @@ Continue?`;
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
         <div className="glass rounded-xl p-4 text-center">
           <div className="text-3xl font-bold text-blue-600">{comparison.summary.totalExisting}</div>
-          <div className="text-sm text-gray-600 mt-1">Existing Players</div>
+          <div className="text-sm text-gray-600 mt-1">Active DB Players</div>
         </div>
         <div className="glass rounded-xl p-4 text-center">
           <div className="text-3xl font-bold text-purple-600">{comparison.summary.totalNew}</div>
-          <div className="text-sm text-gray-600 mt-1">In Upload</div>
+          <div className="text-sm text-gray-600 mt-1">In Temp DB</div>
         </div>
         <div className="glass rounded-xl p-4 text-center bg-orange-50/50">
           <div className="text-3xl font-bold text-orange-600">{comparison.summary.willUpdate}</div>
-          <div className="text-sm text-gray-600 mt-1">Will Update</div>
+          <div className="text-sm text-gray-600 mt-1">Will Update ✓</div>
         </div>
-        <div className="glass rounded-xl p-4 text-center bg-green-50/50">
-          <div className="text-3xl font-bold text-green-600">{comparison.summary.willCreate}</div>
-          <div className="text-sm text-gray-600 mt-1">Will Create</div>
+        <div className="glass rounded-xl p-4 text-center bg-slate-50/80 border border-slate-200">
+          <div className="text-3xl font-bold text-slate-400">{comparison.summary.willCreate}</div>
+          <div className="text-sm text-slate-500 mt-1 flex items-center justify-center gap-1">
+            <Lock className="w-3.5 h-3.5" />
+            Not In Active DB
+          </div>
         </div>
         <div className="glass rounded-xl p-4 text-center bg-gray-50/50">
           <div className="text-3xl font-bold text-gray-600">{comparison.summary.unchanged}</div>
@@ -271,7 +212,7 @@ Continue?`;
         </div>
         <div className="glass rounded-xl p-4 text-center bg-red-50/50">
           <div className="text-3xl font-bold text-red-600">{comparison.summary.notFound}</div>
-          <div className="text-sm text-gray-600 mt-1">Not in Upload</div>
+          <div className="text-sm text-gray-600 mt-1">Not in Temp DB</div>
         </div>
       </div>
 
@@ -292,11 +233,11 @@ Continue?`;
             onClick={() => setActiveTab('create')}
             className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
               activeTab === 'create'
-                ? 'bg-green-50 text-green-700 border-b-2 border-green-500'
+                ? 'bg-slate-100 text-slate-700 border-b-2 border-slate-500'
                 : 'text-gray-600 hover:bg-gray-50'
             }`}
           >
-            ➕ Will Create ({comparison.summary.willCreate})
+            <Lock className="w-3.5 h-3.5 inline-block text-slate-400 mr-1 align-text-bottom" /> Not In Active DB ({comparison.summary.willCreate})
           </button>
           <button
             onClick={() => setActiveTab('unchanged')}
@@ -649,14 +590,12 @@ Continue?`;
           {/* New Players to Create */}
           {activeTab === 'create' && (
             <div>
-              <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-sm text-green-800">
-                  <strong>These players will be CREATED:</strong> New entries will be added to the database.
-                  {comparison.toCreate.some((p: any) => p.hasDuplicates) && (
-                    <span className="block mt-2 text-orange-700 font-medium">
-                      <AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Some players have potential duplicates (same name). Uncheck to skip creation.
-                    </span>
-                  )}
+              <div className="mb-4 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                <p className="text-sm text-slate-800">
+                  <strong>Notice:</strong> These new players were found during scraping but do not exist in the active registry.
+                  <span className="block mt-2 font-bold text-rose-700 bg-rose-50/50 border border-rose-200 p-3 rounded-xl">
+                    ⚠️ New player entries are NOT created from this screen. To import and add these new players, please use the separate <Link href="/dashboard/committee/database/add-new" className="underline text-rose-800 hover:text-rose-900 font-extrabold">Add New Players Page &rarr;</Link>
+                  </span>
                 </p>
               </div>
               
@@ -1071,10 +1010,10 @@ Continue?`;
           <div>
             <h3 className="text-lg font-semibold mb-1">Ready to Update?</h3>
             <p className="text-sm text-gray-600">
-              This will update {comparison.summary.willUpdate} players and create {comparison.summary.willCreate - excludedPlayerIds.size} new entries
-              {excludedPlayerIds.size > 0 && (
-                <span className="text-orange-600 font-medium"> ({excludedPlayerIds.size} duplicate(s) skipped)</span>
-              )}
+              This will update <strong>{comparison.summary.willUpdate}</strong> existing players' stats only.
+              <span className="block text-xs text-slate-400 mt-0.5">
+                The {comparison.summary.willCreate} players in "Not In Active DB" will <strong>not</strong> be created — use the Add New Players portal for that.
+              </span>
             </p>
           </div>
           <button

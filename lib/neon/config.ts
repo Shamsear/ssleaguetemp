@@ -11,7 +11,7 @@ if (!connectionString) {
 }
 
 // Create SQL query function (use empty string as fallback to prevent build errors)
-export const sql = neon(connectionString || '');
+export const sql = neon(connectionString || '') as any;
 
 // Helper function to test connection
 export async function testNeonConnection() {

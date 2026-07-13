@@ -54,7 +54,8 @@ export default function HistoricalSeasons() {
         const data = await response.json();
         
         if (data.success) {
-          setSeasons(data.seasons);
+          // Filter to only display historical seasons to prevent console errors when loading details of non-historical seasons
+          setSeasons((data.seasons || []).filter((season: any) => season.is_historical));
         } else {
           setError(data.error || 'Failed to fetch seasons');
         }
@@ -139,7 +140,7 @@ export default function HistoricalSeasons() {
       setDeleting(seasonId);
       setError(null);
       
-      const response = await fetchWithTokenRefresh(`/api/seasons/historical/delete?season_id=${seasonId}`, {
+      const response = await fetchWithTokenRefresh(`/api/seasons/historical/${seasonId}`, {
         method: 'DELETE',
       });
       

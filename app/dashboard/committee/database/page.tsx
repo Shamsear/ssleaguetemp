@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
@@ -19,6 +19,299 @@ export default function DatabaseManagementPage() {
   const [playerCount, setPlayerCount] = useState<PlayerCount>({ total: 0, byPosition: {} })
   const [loading, setLoading] = useState(false)
   const [showPositions, setShowPositions] = useState(false)
+  
+  // Scraper & Photo Sync States
+  const [scraping, setScraping] = useState(false)
+  const [scrapePosition, setScrapePosition] = useState('')
+  const [scrapePage, setScrapePage] = useState(1)
+  const [scrapedCount, setScrapedCount] = useState(0)
+  const [selectedScrapePos, setSelectedScrapePos] = useState('ALL')
+  const [scrapeLog, setScrapeLog] = useState<string[]>([])
+  const [maxScrapePlayers, setMaxScrapePlayers] = useState<number | ''>(200)
+  const [minScrapeRating, setMinScrapeRating] = useState<number | ''>(75)
+  const [workersCount, setWorkersCount] = useState(2)
+  
+  const [downloadingPhotos, setDownloadingPhotos] = useState(false)
+  const [photosTotal, setPhotosTotal] = useState(0)
+  const [photosCurrentIndex, setPhotosCurrentIndex] = useState(0)
+  const [photosSuccessCount, setPhotosSuccessCount] = useState(0)
+  const [photosFailedCount, setPhotosFailedCount] = useState(0)
+  const [photosLog, setPhotosLog] = useState<string[]>([])
+  const [missingPhotosCount, setMissingPhotosCount] = useState<number | null>(null)
+  const [missingPlayersList, setMissingPlayersList] = useState<{ player_id: string; name: string }[]>([])
+  const [showMissingList, setShowMissingList] = useState(false)
+
+  const scrapingActiveRef = useRef(false)
+  const photosActiveRef = useRef(false)
+
+  const fetchMissingPhotosCount = async () => {
+    try {
+      const res = await fetch('/api/players/photos/download-missing')
+      const result = await res.json()
+      if (result.success) {
+        setMissingPhotosCount(result.missingCount)
+        setMissingPlayersList(result.missingPlayers || [])
+      }
+    } catch (e) {
+      console.error('Error fetching missing photos count:', e)
+    }
+  }
+
+  const handleStartScrape = async () => {
+    if (scraping) return
+    scrapingActiveRef.current = true
+    setScraping(true)
+    setScrapedCount(0)
+    setScrapeLog([`🚀 Initializing eFootball scraper and verifying local cache...`])
+
+    // Pre-fetch current temp database players to determine starting page for each position
+    let existingScrapedPlayers: any[] = []
+    try {
+      const tempRes = await fetch('/api/players/database/temp')
+      const tempResult = await tempRes.json()
+      if (tempResult.success) {
+        existingScrapedPlayers = tempResult.players || []
+      }
+    } catch (err) {
+      console.error('Failed to pre-fetch existing scraped players count:', err)
+    }
+
+    setScrapeLog(prev => [...prev, `🚀 Starting eFootball scraping with ${workersCount} worker(s)...`].slice(-100))
+
+    const resolvedMaxPlayers = typeof maxScrapePlayers === 'number' ? Math.max(5, maxScrapePlayers) : 200
+    const resolvedMinRating = typeof minScrapeRating === 'number' ? Math.max(40, minScrapeRating) : 75
+
+    const positionsQueue = selectedScrapePos === 'ALL'
+      ? ['GK', 'CB', 'LB', 'RB', 'DMF', 'CMF', 'LMF', 'RMF', 'AMF', 'LWF', 'RWF', 'SS', 'CF']
+      : [selectedScrapePos]
+
+    let totalScraped = existingScrapedPlayers.length
+    setScrapedCount(totalScraped)
+
+    // Logger utility for thread safety
+    const logMessage = (msg: string) => {
+      setScrapeLog(prev => [...prev, msg].slice(-100))
+    }
+
+    const addScrapedCount = (count: number) => {
+      totalScraped += count
+      setScrapedCount(totalScraped)
+    }
+
+    // Parallel worker function
+    const runWorker = async (workerId: number) => {
+      while (positionsQueue.length > 0 && scrapingActiveRef.current) {
+        const position = positionsQueue.shift()
+        if (!position) break
+
+        const existingCount = existingScrapedPlayers.filter(p => p.position?.toUpperCase() === position.toUpperCase()).length
+        
+        // Already have enough — skip this position entirely
+        if (existingCount >= resolvedMaxPlayers) {
+          logMessage(`[Worker ${workerId}] ⏭️ Skipping ${position} — already have ${existingCount} players (max: ${resolvedMaxPlayers}).`)
+          continue
+        }
+
+        const startPage = Math.floor(existingCount / 32) + 1
+        let page = startPage
+        let hasMore = true
+        let positionScrapedCount = existingCount
+
+        if (existingCount > 0) {
+          logMessage(`[Worker ${workerId}] 🚀 Assigned position: ${position} (Resuming from page ${startPage} - found ${existingCount} existing players)`)
+        } else {
+          logMessage(`[Worker ${workerId}] 🚀 Assigned position: ${position}`)
+        }
+
+
+        while (hasMore && scrapingActiveRef.current) {
+          const currentPage = page
+          logMessage(`[Worker ${workerId}] 🔍 Scraping ${position} page ${currentPage}...`)
+
+          let retries = 0
+          const MAX_RETRIES = 3
+
+          while (retries <= MAX_RETRIES && scrapingActiveRef.current) {
+            try {
+              const res = await fetch(`/api/players/database/scrape?pos=${position}&page=${currentPage}&minRating=${resolvedMinRating}`)
+              
+              if (res.status === 429) {
+                logMessage(`[Worker ${workerId}] ❌ Rate limit hit (429) on ${position} page ${currentPage}. Aborting scraper pool to prevent IP ban.`)
+                scrapingActiveRef.current = false
+                hasMore = false
+                break
+              }
+
+              const result = await res.json()
+
+              // Cookie was stripped by proxy — retry the same page with a longer delay
+              if (!result.success && result.cookieError) {
+                retries++
+                if (retries > MAX_RETRIES) {
+                  logMessage(`[Worker ${workerId}] ⚠️ Page ${currentPage} (${position}) failed ${MAX_RETRIES} times due to missing stat columns. Skipping page.`)
+                  page++ // skip this page rather than looping forever
+                  break
+                }
+                logMessage(`[Worker ${workerId}] ⚠️ Cookie error on ${position} page ${currentPage} — retrying (${retries}/${MAX_RETRIES})...`)
+                await new Promise(r => setTimeout(r, 3000 + retries * 1000))
+                continue // retry same page
+              }
+
+              if (result.success) {
+                if (result.minRatingReached) {
+                  logMessage(`[Worker ${workerId}] ✓ Minimum rating cutoff (${resolvedMinRating} OVR) reached. Skipping rest of ${position}.`)
+                  hasMore = false
+                } else if (result.count === 0) {
+                  logMessage(`[Worker ${workerId}] ✅ Finished scraping all pages for ${position}.`)
+                  hasMore = false
+                } else {
+                  const skippedNote = result.noStatsSkipped > 0 ? ` (⚠️ ${result.noStatsSkipped} stat-less skipped)` : ''
+                  addScrapedCount(result.count)
+                  positionScrapedCount += result.count
+                  logMessage(`[Worker ${workerId}] ✓ Added ${result.count} players from page ${currentPage} (${position})${skippedNote}.`)
+                  
+                  if (positionScrapedCount >= resolvedMaxPlayers) {
+                    logMessage(`[Worker ${workerId}] ✓ Max player limit (${resolvedMaxPlayers}) reached for ${position}.`)
+                    hasMore = false
+                  } else {
+                    page++
+                    // Add random delay to prevent hitting rate limit simultaneously
+                    const delay = 1000 + Math.random() * 800
+                    await new Promise(r => setTimeout(r, delay))
+                  }
+                }
+              } else {
+                logMessage(`[Worker ${workerId}] ❌ Error on ${position} page ${currentPage}: ${result.error || 'Unknown error'}`)
+                hasMore = false
+              }
+              break // success or non-retryable error — exit retry loop
+            } catch (err: any) {
+              logMessage(`[Worker ${workerId}] ❌ Network error on ${position} page ${currentPage}: ${err.message}`)
+              hasMore = false
+              break
+            }
+          }
+        }
+
+      }
+    }
+
+    // Launch workers up to the configured threads limit
+    const workersList: Promise<void>[] = []
+    const concurrency = Math.min(workersCount, positionsQueue.length)
+    
+    for (let i = 1; i <= concurrency; i++) {
+      workersList.push(runWorker(i))
+    }
+
+    try {
+      await Promise.all(workersList)
+      if (scrapingActiveRef.current) {
+        logMessage(`🎉 Scraping completed! Total players added to temp database: ${totalScraped}`)
+      } else {
+        logMessage(`🛑 Scraping stopped by user or rate limiter. Total players parsed: ${totalScraped}`)
+      }
+    } catch (e: any) {
+      logMessage(`❌ Fatal scraper pool error: ${e.message}`)
+    } finally {
+      scrapingActiveRef.current = false
+      setScraping(false)
+    }
+  }
+
+  const handleStopScrape = () => {
+    scrapingActiveRef.current = false
+    setScraping(false)
+    setScrapeLog(prev => [...prev, '⏳ Stopping scraper, waiting for active request to finish...'].slice(-100))
+  }
+
+  const handleStartPhotoSync = async () => {
+    if (downloadingPhotos) return
+    photosActiveRef.current = true
+    setDownloadingPhotos(true)
+    setPhotosLog(['🚀 Initiating player photo synchronization...'])
+    setPhotosSuccessCount(0)
+    setPhotosFailedCount(0)
+
+    try {
+      setPhotosLog(prev => [...prev, '🔍 Querying database for active players missing images...'])
+      const res = await fetch('/api/players/photos/download-missing')
+      const result = await res.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to query missing photos count')
+      }
+
+      const missing = result.missingPlayers || []
+      if (missing.length === 0) {
+        setPhotosLog(prev => [...prev, '✅ All players in the database have active photos! No downloads needed.'])
+        setMissingPhotosCount(0)
+        setDownloadingPhotos(false)
+        return
+      }
+
+      setPhotosTotal(missing.length)
+      setPhotosLog(prev => [...prev, `Found ${missing.length} players missing photos. Fetching cards from pesdb.net...`])
+
+      let success = 0
+      let failed = 0
+
+      for (let i = 0; i < missing.length; i++) {
+        if (!photosActiveRef.current) break
+        
+        const player = missing[i]
+        setPhotosCurrentIndex(i + 1)
+        setPhotosLog(prev => [...prev, `⏳ Downloading and processing card: ${player.name} (ID: ${player.player_id})`].slice(-100))
+
+        try {
+          const syncRes = await fetch('/api/players/photos/download-missing', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId: player.player_id })
+          })
+          const syncResult = await syncRes.json()
+
+          if (syncResult.success) {
+            success++
+            setPhotosSuccessCount(success)
+            setPhotosLog(prev => [...prev, `✅ Saved WebP for ${player.name} (${syncResult.method === 'github' ? 'Committed to GitHub' : 'Saved locally'})`].slice(-100))
+          } else {
+            failed++
+            setPhotosFailedCount(failed)
+            setPhotosLog(prev => [...prev, `❌ Failed for ${player.name}: ${syncResult.error || 'Download failed'}`].slice(-100))
+          }
+        } catch (err: any) {
+          failed++
+          setPhotosFailedCount(failed)
+          setPhotosLog(prev => [...prev, `❌ Net error for ${player.name}: ${err.message}`].slice(-100))
+        }
+
+        // Throttle to respect rate limits
+        await new Promise(r => setTimeout(r, 1000))
+      }
+
+      // Re-fetch missing count
+      await fetchMissingPhotosCount()
+
+      if (photosActiveRef.current) {
+        setPhotosLog(prev => [...prev, `🎉 Photo sync complete! Success: ${success}, Failed: ${failed}.`].slice(-100))
+      } else {
+        setPhotosLog(prev => [...prev, `🛑 Photo sync stopped. Processed: ${success + failed} players.`].slice(-100))
+      }
+
+    } catch (e: any) {
+      setPhotosLog(prev => [...prev, `❌ Fatal error syncing photos: ${e.message}`].slice(-100))
+    } finally {
+      photosActiveRef.current = false
+      setDownloadingPhotos(false)
+    }
+  }
+
+  const handleStopPhotoSync = () => {
+    photosActiveRef.current = false
+    setDownloadingPhotos(false)
+    setPhotosLog(prev => [...prev, '⏳ Cancelling downloader, finishing active request...'].slice(-100))
+  }
   const [deleteConfirmed, setDeleteConfirmed] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadStatus, setUploadStatus] = useState('')
@@ -45,8 +338,44 @@ export default function DatabaseManagementPage() {
   useEffect(() => {
     if (user?.role === 'committee_admin') {
       fetchPlayerCount()
+      fetchMissingPhotosCount()
+      fetchScrapedCount()
     }
   }, [user])
+
+  const fetchScrapedCount = async () => {
+    try {
+      const res = await fetchWithTokenRefresh('/api/players/database/temp')
+      const result = await res.json()
+      if (result.success) {
+        setScrapedCount(result.players?.length || 0)
+      }
+    } catch (e) {
+      console.error('Error fetching temp players count:', e)
+    }
+  }
+
+  const handleClearTempDb = async () => {
+    if (!confirm('Are you sure you want to delete all scraped players from the temporary database? This cannot be undone.')) {
+      return
+    }
+    try {
+      const res = await fetchWithTokenRefresh('/api/players/database/temp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clear' })
+      })
+      const result = await res.json()
+      if (result.success) {
+        alert('Temporary database successfully cleared.')
+        setScrapedCount(0)
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (e: any) {
+      alert(`Error: ${e.message}`)
+    }
+  }
 
   const fetchPlayerCount = async () => {
     try {
@@ -582,6 +911,281 @@ export default function DatabaseManagementPage() {
               <span>{uploadStatus}</span>
             </div>
           )}
+        </div>
+
+        {/* eFootball Web Scraper Console */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+          <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <Activity className="w-4 h-4 text-emerald-500" />
+            eFootball Live Database Scraper
+          </h3>
+          <p className="text-[11px] text-slate-400 font-mono mb-4 font-semibold">
+            Scrape player stats directly from pesdb.net into the temporary Neon PostgreSQL database. Once scraped, you can compare differences and update your active players list.
+          </p>
+
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-600 font-mono">Position:</span>
+                <select
+                  value={selectedScrapePos}
+                  onChange={(e) => setSelectedScrapePos(e.target.value)}
+                  disabled={scraping}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold font-mono focus:outline-none"
+                >
+                  <option value="ALL">ALL POSITIONS</option>
+                  <option value="GK">GK (Goalkeeper)</option>
+                  <option value="CB">CB (Centre Back)</option>
+                  <option value="LB">LB (Left Back)</option>
+                  <option value="RB">RB (Right Back)</option>
+                  <option value="DMF">DMF (Defensive Midfielder)</option>
+                  <option value="CMF">CMF (Central Midfielder)</option>
+                  <option value="LMF">LMF (Left Midfielder)</option>
+                  <option value="RMF">RMF (Right Midfielder)</option>
+                  <option value="AMF">AMF (Attacking Midfielder)</option>
+                  <option value="LWF">LWF (Left Wing Forward)</option>
+                  <option value="RWF">RWF (Right Wing Forward)</option>
+                  <option value="SS">SS (Second Striker)</option>
+                  <option value="CF">CF (Centre Forward)</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-600 font-mono">Max Players:</span>
+                <input
+                  type="number"
+                  min="5"
+                  max="2000"
+                  step="5"
+                  value={maxScrapePlayers}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setMaxScrapePlayers(val === '' ? '' : parseInt(val) || 0);
+                  }}
+                  disabled={scraping}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 w-20 text-xs font-bold font-mono focus:outline-none text-center"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-600 font-mono">Min Rating:</span>
+                <input
+                  type="number"
+                  min="40"
+                  max="105"
+                  value={minScrapeRating}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setMinScrapeRating(val === '' ? '' : parseInt(val) || 0);
+                  }}
+                  disabled={scraping}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 w-16 text-xs font-bold font-mono focus:outline-none text-center"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-600 font-mono">Workers:</span>
+                <select
+                  value={workersCount}
+                  onChange={(e) => setWorkersCount(parseInt(e.target.value))}
+                  disabled={scraping}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs font-bold font-mono focus:outline-none"
+                >
+                  <option value={1}>1 Worker (Sequential)</option>
+                  <option value={2}>2 Parallel Workers</option>
+                  <option value={3}>3 Parallel Workers</option>
+                  <option value={4}>4 Parallel Workers</option>
+                </select>
+              </div>
+
+              {!scraping ? (
+                <button
+                  onClick={handleStartScrape}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md"
+                >
+                  Start Scraper
+                </button>
+              ) : (
+                <button
+                  onClick={handleStopScrape}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md flex items-center gap-1.5"
+                >
+                  <RefreshCw className="animate-spin w-3.5 h-3.5" />
+                  Stop Scraper
+                </button>
+              )}
+
+              <Link
+                href="/dashboard/committee/database/update-preview"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md text-center"
+              >
+                Compare & Sync database
+              </Link>
+
+              <Link
+                href="/dashboard/committee/database/scraped"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md text-center"
+              >
+                View Scraped Players
+              </Link>
+
+              <Link
+                href="/dashboard/committee/database/add-new"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md text-center"
+              >
+                Add New Players
+              </Link>
+
+              <button
+                onClick={handleClearTempDb}
+                disabled={scraping || scrapedCount === 0}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-900 disabled:opacity-40 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md text-center cursor-pointer disabled:cursor-not-allowed"
+              >
+                Clear Temp Database
+              </button>
+            </div>
+
+            {/* Scraping Progress Panel */}
+            {(scraping || scrapedCount > 0 || scrapeLog.length > 0) && (
+              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-4 space-y-3 font-mono text-[11px] text-slate-600">
+                <div className="flex flex-wrap justify-between items-center font-bold text-slate-700">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Status: {scraping ? `Active (${workersCount} parallel workers)` : 'Idle'}</span>
+                  </div>
+                  <span>Scraped Count: <strong className="text-emerald-600">{scrapedCount}</strong></span>
+                </div>
+                
+                {/* Scrolling Logs Console */}
+                <div className="bg-slate-900 text-emerald-400 p-3 rounded-xl h-36 overflow-y-auto text-[10px] space-y-1 scrollbar-thin">
+                  {scrapeLog.map((log, i) => (
+                    <div key={i}>{log}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Missing Photos Sync Console */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+          <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <DownloadCloud className="w-4 h-4 text-sky-500" />
+            Missing Player Photos Sync
+          </h3>
+          <p className="text-[11px] text-slate-400 font-mono mb-4 font-semibold">
+            Scan your active database players and automatically pull their cropped & enhanced face photos from pesdb.net.
+          </p>
+
+          {/* Missing players badge + list */}
+          {missingPhotosCount !== null && (
+            <div className="mb-4 font-mono">
+              <button
+                onClick={() => setShowMissingList(v => !v)}
+                className="flex items-center gap-2 px-3 py-2 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-xl transition-all cursor-pointer w-full text-left"
+              >
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-500 text-white text-[10px] font-extrabold shrink-0">
+                  {missingPhotosCount}
+                </span>
+                <span className="text-xs font-bold text-sky-700">
+                  {missingPhotosCount === 0
+                    ? 'All player photos are present ✓'
+                    : `${missingPhotosCount} player${missingPhotosCount !== 1 ? 's' : ''} missing photos`}
+                </span>
+                {missingPhotosCount > 0 && (
+                  <span className="ml-auto text-[10px] text-sky-500 font-bold">
+                    {showMissingList ? '▲ Hide list' : '▼ Show list'}
+                  </span>
+                )}
+              </button>
+
+              {showMissingList && missingPlayersList.length > 0 && (
+                <div className="mt-2 border border-sky-100 rounded-xl overflow-hidden">
+                  <div className="max-h-56 overflow-y-auto">
+                    <table className="w-full text-[11px] font-mono">
+                      <thead>
+                        <tr className="bg-sky-50 border-b border-sky-100 text-[10px] text-sky-600 uppercase font-bold tracking-wider">
+                          <th className="py-2 px-3 text-left">#</th>
+                          <th className="py-2 px-3 text-left">Player ID</th>
+                          <th className="py-2 px-3 text-left">Name</th>
+                          <th className="py-2 px-3 text-left">Preview</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-sky-50 bg-white">
+                        {missingPlayersList.map((p, i) => (
+                          <tr key={p.player_id} className="hover:bg-sky-50/40 transition-colors">
+                            <td className="py-1.5 px-3 text-slate-400">{i + 1}</td>
+                            <td className="py-1.5 px-3 font-bold text-slate-500">{p.player_id}</td>
+                            <td className="py-1.5 px-3 font-extrabold text-slate-800">{p.name}</td>
+                            <td className="py-1.5 px-3">
+                              <img
+                                src={`https://pesdb.net/assets/img/card/f${p.player_id}max.png`}
+                                alt={p.name}
+                                onError={(e) => { e.currentTarget.style.display = 'none' }}
+                                className="w-7 h-10 object-contain rounded shadow-sm border border-slate-100"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              {!downloadingPhotos ? (
+                <button
+                  onClick={handleStartPhotoSync}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md flex items-center gap-1.5"
+                >
+                  <DownloadCloud className="w-3.5 h-3.5" />
+                  Download Missing Photos
+                </button>
+              ) : (
+                <button
+                  onClick={handleStopPhotoSync}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md flex items-center gap-1.5"
+                >
+                  <RefreshCw className="animate-spin w-3.5 h-3.5" />
+                  Stop Download
+                </button>
+              )}
+            </div>
+
+            {/* Photo Download Progress Panel */}
+            {(downloadingPhotos || photosLog.length > 0) && (
+              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-4 space-y-3 font-mono text-[11px] text-slate-600">
+                <div className="flex flex-wrap justify-between items-center font-bold text-slate-700">
+                  <span>Progress: {photosCurrentIndex} / {photosTotal} players checked</span>
+                  <div className="flex gap-3">
+                    <span className="text-emerald-600">Success: {photosSuccessCount}</span>
+                    <span className="text-rose-600">Failed: {photosFailedCount}</span>
+                  </div>
+                </div>
+                
+                {/* Progress bar */}
+                {photosTotal > 0 && (
+                  <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-sky-500 h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${(photosCurrentIndex / photosTotal) * 100}%` }}
+                    />
+                  </div>
+                )}
+                
+                {/* Scrolling Logs Console */}
+                <div className="bg-slate-900 text-sky-400 p-3 rounded-xl h-36 overflow-y-auto text-[10px] space-y-1 scrollbar-thin">
+                  {photosLog.map((log, i) => (
+                    <div key={i}>{log}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Import Players */}

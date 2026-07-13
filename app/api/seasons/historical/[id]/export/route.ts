@@ -106,7 +106,7 @@ export async function GET(
     });
     
     // Process teams data
-    const teams = teamsSnapshot.docs.map(doc => {
+    const rawTeams = teamsSnapshot.docs.map(doc => {
       const teamData = doc.data();
       const teamStats = teamStatsMap.get(doc.id) || {};
       
@@ -116,19 +116,31 @@ export async function GET(
         team_code: teamData.team_code || '',
         owner_name: teamData.owner_name || '',
         owner_email: teamData.owner_email || '',
-        rank: teamStats.rank || 0,
-        p: teamStats.points || 0,
-        mp: teamStats.matches_played || 0,
-        w: teamStats.wins || 0,
-        d: teamStats.draws || 0,
-        l: teamStats.losses || 0,
-        f: teamStats.goals_for || 0,
-        a: teamStats.goals_against || 0,
-        gd: teamStats.goal_difference || 0,
-        percentage: teamStats.win_percentage || 0,
+        p: parseInt(teamStats.points) || 0,
+        mp: parseInt(teamStats.matches_played) || 0,
+        w: parseInt(teamStats.wins) || 0,
+        d: parseInt(teamStats.draws) || 0,
+        l: parseInt(teamStats.losses) || 0,
+        f: parseInt(teamStats.goals_for) || 0,
+        a: parseInt(teamStats.goals_against) || 0,
+        gd: parseInt(teamStats.goal_difference) || 0,
+        percentage: parseFloat(teamStats.win_percentage) || 0,
         cup: teamStats.cup_achievement || ''
       };
     });
+
+    // Sort teams by points desc, then goal difference desc, then goals scored desc
+    rawTeams.sort((a, b) => {
+      if (b.p !== a.p) return b.p - a.p;
+      if (b.gd !== a.gd) return b.gd - a.gd;
+      return b.f - a.f;
+    });
+
+    // Map to teams with rank
+    const teams = rawTeams.map((team, index) => ({
+      ...team,
+      rank: index + 1
+    }));
 
     // Process players data
     const players = playerStatsData.map((statsData: any) => {

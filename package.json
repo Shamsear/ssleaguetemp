@@ -16,7 +16,8 @@
     "test:performance": "vitest run tests/performance/**/*.test.ts",
     "test:coverage": "vitest run --coverage",
     "cleanup": "node scripts/clear-all-keep-superadmin.js",
-    "db:clear": "npx tsx scripts/clear-database.ts"
+    "db:clear": "npx tsx scripts/clear-database.ts",
+    "download-photos": "python scripts/download_missing_photos.py"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -31,6 +32,7 @@
     "@vercel/analytics": "^1.5.0",
     "@vercel/blob": "^2.0.0",
     "bcryptjs": "^3.0.2",
+    "cheerio": "^1.2.0",
     "dotenv": "^17.2.3",
     "exceljs": "^4.4.0",
     "firebase": "^12.3.0",

@@ -18,15 +18,15 @@ export const fantasySql = neon(connectionString, {
   fetchOptions: {
     cache: 'no-store',
   },
-});
+} as any) as any;
 
 // Export as getFantasyDb for consistency with other database configs
-export function getFantasyDb() {
+export function getFantasyDb(): any {
   return fantasySql;
 }
 
 // Tournament DB is just an alias for fantasy DB (same database)
-export function getTournamentDb() {
+export function getTournamentDb(): any {
   return fantasySql;
 }
 

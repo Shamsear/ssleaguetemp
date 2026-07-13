@@ -509,6 +509,7 @@ export async function GET(request: NextRequest) {
               ELSE points
             END as points,
             base_points,
+            star_rating,
             contract_id, contract_start_season, contract_end_season,
             is_auto_registered, registration_date, registration_type,
             auction_value, salary_per_match,
@@ -548,6 +549,7 @@ export async function GET(request: NextRequest) {
               ELSE points
             END as points,
             base_points,
+            star_rating,
             contract_id, contract_start_season, contract_end_season,
             is_auto_registered, registration_type,
             auction_value, salary_per_match,
@@ -616,6 +618,7 @@ export async function GET(request: NextRequest) {
                 ELSE points
               END as points,
               base_points,
+              star_rating,
               contract_id, contract_start_season, contract_end_season,
               is_auto_registered, registration_date
             FROM player_seasons 
@@ -636,6 +639,7 @@ export async function GET(request: NextRequest) {
                 ELSE points
               END as points,
               base_points,
+              star_rating,
               contract_id, contract_start_season, contract_end_season,
               is_auto_registered, registration_date
             FROM player_seasons 
