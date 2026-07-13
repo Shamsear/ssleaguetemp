@@ -111,7 +111,9 @@ export default function Footer() {
                 </svg>
               </a>
               <a 
-                href="#" 
+                href="https://www.instagram.com/ss_superleague/" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-8 h-8 rounded-xl bg-slate-900/5 hover:bg-[#E4405F]/10 border border-slate-200/60 hover:border-[#E4405F]/30 text-slate-500 hover:text-[#E4405F] flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-sm hover:shadow-md group" 
                 aria-label="Instagram"
               >
