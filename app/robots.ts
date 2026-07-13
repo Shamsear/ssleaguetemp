@@ -1,7 +1,10 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ssleaguetemp.vercel.app';
+  let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ssleaguetemp.vercel.app';
+  if (baseUrl.endsWith('/')) {
+    baseUrl = baseUrl.slice(0, -1);
+  }
   
   return {
     rules: {
