@@ -76,7 +76,7 @@ export default async function Page({
     "@type": "NewsArticle",
     "headline": news.title_en || news.title || 'League News',
     "description": news.summary_en || news.summary || (news.content_en || news.content || '').substring(0, 160),
-    "image": news.image_url || 'https://ssleaguetemp.vercel.app/logo.png',
+    "image": news.image_url || 'https://ssleague.vercel.app/logo.png',
     "datePublished": news.published_at || news.created_at,
     "dateModified": news.updated_at || news.created_at,
     "author": {
@@ -88,7 +88,7 @@ export default async function Page({
       "name": "SS Super Soccer League",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://ssleaguetemp.vercel.app/logo.png"
+        "url": "https://ssleague.vercel.app/logo.png"
       }
     }
   } : null;

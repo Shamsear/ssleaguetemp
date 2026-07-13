@@ -73,7 +73,7 @@ export default async function Page({
     "@context": "https://schema.org",
     "@type": "Person",
     "name": player.name,
-    "image": 'https://ssleaguetemp.vercel.app/logo.png',
+    "image": 'https://ssleague.vercel.app/logo.png',
     "description": `${player.name} is a ${player.position || 'Player'} rating ${player.overall_rating || ''} in the SS Super Soccer League. View stats, market value history, and transfers.`,
     "jobTitle": "Football Player",
     "memberOf": {

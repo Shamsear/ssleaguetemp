@@ -19,7 +19,7 @@ const geistSans = { variable: "font-sans" };
 const geistMono = { variable: "font-mono" };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://ssleaguetemp.vercel.app'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://ssleague.vercel.app'),
   title: {
     default: "SS Super Soccer League (South Soccers) - Football Auction Platform",
     template: "%s | SS Super Soccer League"

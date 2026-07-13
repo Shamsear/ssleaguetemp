@@ -225,9 +225,9 @@ export default function Home() {
             "@context": "https://schema.org",
             "@type": "SportsOrganization",
             "name": "SS Super Soccer League (South Soccers)",
-            "url": "https://ssleaguetemp.vercel.app",
-            "logo": "https://ssleaguetemp.vercel.app/logo.png",
-            "image": "https://ssleaguetemp.vercel.app/logo.png",
+            "url": "https://ssleague.vercel.app",
+            "logo": "https://ssleague.vercel.app/logo.png",
+            "image": "https://ssleague.vercel.app/logo.png",
             "description": "Experience the thrill of building your dream football team through strategic bidding, competitive auctions, and manager statistics.",
             "sport": "Association Football"
           })

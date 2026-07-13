@@ -78,8 +78,8 @@ export default async function Page({
     "@type": "SportsTeam",
     "name": team.teamName,
     "sport": "Association Football",
-    "logo": team.logoUrl || 'https://ssleaguetemp.vercel.app/logo.png',
-    "image": team.logoUrl || 'https://ssleaguetemp.vercel.app/logo.png',
+    "logo": team.logoUrl || 'https://ssleague.vercel.app/logo.png',
+    "image": team.logoUrl || 'https://ssleague.vercel.app/logo.png',
     "description": `Official team page for ${team.teamName} in the SS Super Soccer League. View roster, stats, match history, and achievements.`,
     "memberOf": {
       "@type": "SportsOrganization",
