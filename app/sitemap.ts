@@ -1,6 +1,4 @@
 import { MetadataRoute } from 'next';
-import { adminDb } from '@/lib/firebase/admin';
-import { getTournamentDb } from '@/lib/neon/tournament-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 2. Dynamic Seasons from Firestore
   let seasonUrls: any[] = [];
   try {
+    const { adminDb } = await import('@/lib/firebase/admin');
     const seasonsSnapshot = await adminDb.collection('seasons').get();
     seasonUrls = seasonsSnapshot.docs.map((doc) => ({
       url: `${baseUrl}/seasons/${doc.id}`,
@@ -43,6 +42,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 3. Dynamic Real Players from Firestore
   let playerUrls: any[] = [];
   try {
+    const { adminDb } = await import('@/lib/firebase/admin');
     const playersSnapshot = await adminDb
       .collection('realplayers')
       .where('is_active', '==', true)
@@ -67,6 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 4. Dynamic Teams from Firestore
   let teamUrls: any[] = [];
   try {
+    const { adminDb } = await import('@/lib/firebase/admin');
     const teamsSnapshot = await adminDb.collection('teams').get();
     teamUrls = teamsSnapshot.docs.map((doc) => ({
       url: `${baseUrl}/teams/${doc.id}`,
@@ -81,6 +82,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 5. Dynamic News Articles from Neon
   let newsUrls: any[] = [];
   try {
+    const { getTournamentDb } = await import('@/lib/neon/tournament-config');
     const sql = getTournamentDb();
     const newsItems = await sql`
       SELECT id, updated_at 
@@ -102,6 +104,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 6. Dynamic Polls from Neon
   let pollUrls: any[] = [];
   try {
+    const { getTournamentDb } = await import('@/lib/neon/tournament-config');
     const sql = getTournamentDb();
     const polls = await sql`
       SELECT id, created_at 
@@ -122,6 +125,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 7. Dynamic Football Players from Neon
   let footballPlayerUrls: any[] = [];
   try {
+    const { getTournamentDb } = await import('@/lib/neon/tournament-config');
     const sql = getTournamentDb();
     const footballPlayers = await sql`
       SELECT player_id, updated_at 
