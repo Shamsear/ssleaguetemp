@@ -221,16 +221,25 @@ export default function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SportsOrganization",
-            "name": "SS Super Soccer League (South Soccers)",
-            "url": "https://ssleague.vercel.app",
-            "logo": "https://ssleague.vercel.app/logo.png",
-            "image": "https://ssleague.vercel.app/logo.png",
-            "description": "Experience the thrill of building your dream football team through strategic bidding, competitive auctions, and manager statistics.",
-            "sport": "Association Football"
-          })
+          __html: JSON.stringify([
+            {
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "SS Super Soccer League",
+              "alternateName": ["South Soccers", "SS League", "Super League"],
+              "url": "https://ssleague.vercel.app"
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "SportsOrganization",
+              "name": "SS Super Soccer League (South Soccers)",
+              "url": "https://ssleague.vercel.app",
+              "logo": "https://ssleague.vercel.app/logo.png",
+              "image": "https://ssleague.vercel.app/logo.png",
+              "description": "Experience the thrill of building your dream football team through strategic bidding, competitive auctions, and manager statistics.",
+              "sport": "Association Football"
+            }
+          ])
         }}
       />
       

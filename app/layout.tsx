@@ -21,7 +21,7 @@ const geistMono = { variable: "font-mono" };
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://ssleague.vercel.app'),
   title: {
-    default: "SS Super Soccer League (South Soccers) - Football Auction Platform",
+    default: "SS Super Soccer League (South Soccers)",
     template: "%s | SS Super Soccer League"
   },
   description: "Welcome to the SS Super Soccer League (South Soccers). Experience the thrill of building your dream football team through strategic bidding, competitive auctions, and manager statistics.",
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     title: 'SS League',
   },
   openGraph: {
-    title: "SS Super Soccer League (South Soccers) - Football Auction Platform",
+    title: "SS Super Soccer League (South Soccers)",
     description: "Welcome to the SS Super Soccer League (South Soccers). Experience the thrill of building your dream football team through strategic bidding, competitive auctions, and manager statistics.",
     images: ['/logo.png'],
     locale: 'en_US',
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "SS Super Soccer League (South Soccers) - Football Auction Platform",
+    title: "SS Super Soccer League (South Soccers)",
     description: "Welcome to the SS Super Soccer League (South Soccers). Experience the thrill of building your dream football team through strategic bidding, competitive auctions, and manager statistics.",
     images: ['/logo.png'],
   },
