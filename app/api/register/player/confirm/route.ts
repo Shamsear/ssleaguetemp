@@ -83,8 +83,15 @@ export async function POST(request: NextRequest) {
 
     // Wrap database operations in try-catch to rollback Firestore counter if they fail
     try {
-      // Determine tournament_id (using season-based pattern)
-      const tournament_id = `${season_id}-LEAGUE`;
+      // Determine tournament_id dynamically from Neon tournaments table
+      const tournaments = await sql`
+        SELECT id FROM tournaments 
+        WHERE season_id = ${season_id} 
+          AND (tournament_name ILIKE '%League%' OR id LIKE '%-LEAGUE' OR id LIKE '%L')
+        LIMIT 1
+      `;
+      
+      const tournament_id = tournaments.length > 0 ? tournaments[0].id : null;
       
       // Create registration for season in Neon realplayerstats table
       // Use ON CONFLICT to detect race condition duplicates

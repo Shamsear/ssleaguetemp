@@ -945,7 +945,7 @@ function PlayersRegistrationPageContent() {
               <div className="space-y-6">
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 font-mono">
-                  <div className="console-card bg-white rounded-2xl p-5 border border-slate-200/60 hover:border-amber-400/40 transition-all hover:-translate-y-1">
+                  <div className="console-card bg-gradient-to-br from-blue-50/60 to-white rounded-2xl p-5 border border-blue-100/80 hover:border-blue-400/40 transition-all hover:-translate-y-1">
                     <div className="flex items-center justify-between mb-3">
                       <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-md">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -953,11 +953,11 @@ function PlayersRegistrationPageContent() {
                         </svg>
                       </div>
                     </div>
-                    <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Total Players</div>
-                    <div className="text-2xl font-black text-slate-800">{totalMasterPlayers}</div>
+                    <div className="text-[10px] uppercase font-bold text-blue-600/80 tracking-wider mb-1">Total Players</div>
+                    <div className="text-2xl font-black text-blue-900">{totalMasterPlayers}</div>
                   </div>
 
-                  <div className="console-card bg-white rounded-2xl p-5 border border-slate-200/60 hover:border-green-500/40 transition-all hover:-translate-y-1">
+                  <div className="console-card bg-gradient-to-br from-green-50/60 to-white rounded-2xl p-5 border border-green-100/80 hover:border-green-400/40 transition-all hover:-translate-y-1">
                     <div className="flex items-center justify-between mb-3">
                       <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-md">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -965,11 +965,11 @@ function PlayersRegistrationPageContent() {
                         </svg>
                       </div>
                     </div>
-                    <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Registered</div>
-                    <div className="text-2xl font-black text-green-600">{stats?.total_registrations || 0}</div>
+                    <div className="text-[10px] uppercase font-bold text-green-600/80 tracking-wider mb-1">Registered</div>
+                    <div className="text-2xl font-black text-green-700">{stats?.total_registrations || 0}</div>
                   </div>
 
-                  <div className="console-card bg-white rounded-2xl p-5 border border-slate-200/60 hover:border-amber-500/40 transition-all hover:-translate-y-1">
+                  <div className="console-card bg-gradient-to-br from-amber-50/60 to-white rounded-2xl p-5 border border-amber-100/80 hover:border-amber-400/40 transition-all hover:-translate-y-1">
                     <div className="flex items-center justify-between mb-3">
                       <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-md">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -977,8 +977,8 @@ function PlayersRegistrationPageContent() {
                         </svg>
                       </div>
                     </div>
-                    <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Available</div>
-                    <div className="text-2xl font-black text-amber-600">{totalMasterPlayers - (stats?.total_registrations || 0)}</div>
+                    <div className="text-[10px] uppercase font-bold text-amber-600/80 tracking-wider mb-1">Available</div>
+                    <div className="text-2xl font-black text-amber-700">{totalMasterPlayers - (stats?.total_registrations || 0)}</div>
                   </div>
                 </div>
 

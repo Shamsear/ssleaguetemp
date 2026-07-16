@@ -952,7 +952,7 @@ function PlayerVerifyContent() {
                         </div>
                       )}
                       {photoFile && (
-                        <div className="mb-3 px-3 py-2 bg-amber-550/[0.04] border border-amber-500/20 rounded-xl text-amber-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                        <div className="mb-3 px-3 py-2 bg-amber-500/[0.04] border border-amber-500/20 rounded-xl text-amber-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 font-mono">
                           <Star className="w-3.5 h-3.5 text-amber-600 fill-amber-500/20" />
                           <span>New photo selected. It will be uploaded on registration.</span>
                         </div>
@@ -1115,7 +1115,7 @@ function PlayerVerifyContent() {
                         </div>
                       )}
                       {photoFile && (
-                        <div className="mb-3 px-3 py-2 bg-amber-550/[0.04] border border-amber-500/20 rounded-xl text-amber-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                        <div className="mb-3 px-3 py-2 bg-amber-500/[0.04] border border-amber-500/20 rounded-xl text-amber-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 font-mono">
                           <Star className="w-3.5 h-3.5 text-amber-600 fill-amber-500/20" />
                           <span>New photo selected. It will be uploaded on registration.</span>
                         </div>
