@@ -125,6 +125,8 @@ function PlayersRegistrationPageContent() {
           player_name: player.player_name,
           registration_date: player.registration_date
             ? new Timestamp(Math.floor(parseNeonTimestampUTC(player.registration_date) / 1000), 0)
+            : player.created_at
+            ? new Timestamp(Math.floor(parseNeonTimestampUTC(player.created_at) / 1000), 0)
             : Timestamp.now(),
           additional_info: '',
           used_smart_assist: player.used_smart_assist || null,
@@ -215,6 +217,8 @@ function PlayersRegistrationPageContent() {
               player_name: player.player_name,
               registration_date: player.registration_date
                 ? new Timestamp(Math.floor(parseNeonTimestampUTC(player.registration_date) / 1000), 0)
+                : player.created_at
+                ? new Timestamp(Math.floor(parseNeonTimestampUTC(player.created_at) / 1000), 0)
                 : Timestamp.now(),
               additional_info: '',
               used_smart_assist: player.used_smart_assist || null,
