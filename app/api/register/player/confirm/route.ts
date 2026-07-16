@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { player_id, season_id, user_email, user_uid, player_data, is_admin_registration } = body;
+    const { player_id, season_id, user_email, user_uid, player_data, is_admin_registration, used_smart_assist } = body;
 
     const sql = getTournamentDb();
     const registrationId = `${player_id}_${season_id}`;
@@ -97,6 +97,7 @@ export async function POST(request: NextRequest) {
           goals_scored, goals_conceded, assists, clean_sheets, own_goals, saves, penalties_saved,
           wins, draws, losses, motm_awards,
           trophies,
+          used_smart_assist,
           created_at, updated_at
         )
         VALUES (
@@ -107,6 +108,7 @@ export async function POST(request: NextRequest) {
           0, 0, 0, 0, 0, 0, 0,
           0, 0, 0, 0,
           '[]'::jsonb,
+          ${used_smart_assist || null},
           (NOW() AT TIME ZONE 'UTC')::timestamp, (NOW() AT TIME ZONE 'UTC')::timestamp
         )
         ON CONFLICT (player_id, season_id) DO NOTHING
@@ -223,6 +225,10 @@ export async function POST(request: NextRequest) {
         registration_date: FieldValue.serverTimestamp(),
         updated_at: FieldValue.serverTimestamp(),
       };
+
+      if (used_smart_assist) {
+        updateData.used_smart_assist = used_smart_assist;
+      }
 
       // Update any missing player data if provided
       if (player_data) {

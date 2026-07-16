@@ -69,6 +69,7 @@ function PlayerVerifyContent() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [usedSmartAssist, setUsedSmartAssist] = useState<string>('')
 
   // Kerala districts list
   const keralaDistricts = [
@@ -421,6 +422,12 @@ function PlayerVerifyContent() {
       return
     }
 
+    // Validate smart assist option for existing players
+    if (!isNewPlayer && !usedSmartAssist) {
+      setError('Please select whether you used smart assist last season.')
+      return
+    }
+
     // Validate form if shown
     if (showForm) {
       // For existing players, only validate missing fields
@@ -532,6 +539,7 @@ function PlayerVerifyContent() {
           user_email: user.email,
           user_uid: user.uid,
           player_data: playerData,
+          used_smart_assist: !isNewPlayer ? usedSmartAssist : null,
         }),
       })
 
@@ -893,6 +901,27 @@ function PlayerVerifyContent() {
                       </div>
                     </div>
 
+                    {/* Smart Assist Option for Existing Players */}
+                    {!isNewPlayer && (
+                      <div className="bg-amber-500/[0.03] border border-amber-500/10 rounded-2xl p-5 mb-4">
+                        <label className="block text-[10px] uppercase font-bold text-slate-500 mb-2">
+                          Did you use Smart Assist in the last season? *
+                          <span className="text-rose-500 font-extrabold ml-1">Required</span>
+                        </label>
+                        <select
+                          value={usedSmartAssist}
+                          onChange={(e) => setUsedSmartAssist(e.target.value)}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-705"
+                        >
+                          <option value="">Select option...</option>
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                          <option value="partially">Partially (Used for some time last season)</option>
+                          <option value="didnt_play">Didn't play last season</option>
+                        </select>
+                      </div>
+                    )}
+
                     {/* Photo Upload - Required for all players */}
                     <div className="bg-amber-500/[0.02] border border-amber-500/10 rounded-2xl p-6 mt-4">
                       <label className="block text-[10px] uppercase font-bold text-slate-500 mb-3">
@@ -1021,6 +1050,27 @@ function PlayerVerifyContent() {
                       )}
                     </div>
                     
+                    {/* Smart Assist Option for Existing Players */}
+                    {!isNewPlayer && (
+                      <div className="bg-amber-500/[0.03] border border-amber-500/10 rounded-2xl p-5 mb-4">
+                        <label className="block text-[10px] uppercase font-bold text-slate-500 mb-2">
+                          Did you use Smart Assist in the last season? *
+                          <span className="text-rose-500 font-extrabold ml-1">Required</span>
+                        </label>
+                        <select
+                          value={usedSmartAssist}
+                          onChange={(e) => setUsedSmartAssist(e.target.value)}
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-705"
+                        >
+                          <option value="">Select option...</option>
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                          <option value="partially">Partially (Used for some time last season)</option>
+                          <option value="didnt_play">Didn't play last season</option>
+                        </select>
+                      </div>
+                    )}
+
                     {/* Photo Upload - Required for all players */}
                     <div className="bg-amber-500/[0.02] border border-amber-500/10 rounded-2xl p-6 mt-4">
                       <label className="block text-[10px] uppercase font-bold text-slate-500 mb-3">
