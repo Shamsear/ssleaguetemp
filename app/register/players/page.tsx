@@ -18,6 +18,7 @@ interface RegisteredPlayer {
   player_name: string
   registration_date: Timestamp
   additional_info?: string
+  used_smart_assist?: string | null
 }
 
 interface RegistrationStats {
@@ -87,9 +88,9 @@ function PlayersRegistrationPageContent() {
     try {
       const [seasonDoc, statsResponse, masterPlayersSnapshot, playersResponse] = await Promise.all([
         getDoc(doc(db, 'seasons', seasonId)),
-        fetch(`/api/admin/registration-phases?season_id=${seasonId}`),
+        fetch(`/api/admin/registration-phases?season_id=${seasonId}`, { cache: 'no-store' }),
         getDocs(collection(db, 'realplayers')),
-        fetch(`/api/stats/players?seasonId=${seasonId}&limit=1000`)
+        fetch(`/api/stats/players?seasonId=${seasonId}&limit=1000`, { cache: 'no-store' })
       ])
 
       if (!seasonDoc.exists()) {
@@ -126,6 +127,7 @@ function PlayersRegistrationPageContent() {
             ? new Timestamp(Math.floor(parseNeonTimestampUTC(player.registration_date) / 1000), 0)
             : Timestamp.now(),
           additional_info: '',
+          used_smart_assist: player.used_smart_assist || null,
         }))
         .sort((a: RegisteredPlayer, b: RegisteredPlayer) => 
           a.registration_date.toMillis() - b.registration_date.toMillis()
@@ -172,7 +174,7 @@ function PlayersRegistrationPageContent() {
 
     const fetchStats = async () => {
       try {
-        const statsResponse = await fetch(`/api/admin/registration-phases?season_id=${seasonId}`)
+        const statsResponse = await fetch(`/api/admin/registration-phases?season_id=${seasonId}`, { cache: 'no-store' })
         const statsResult = await statsResponse.json()
         if (statsResult.success) {
           setStats(statsResult.data)
@@ -201,7 +203,7 @@ function PlayersRegistrationPageContent() {
 
     const fetchPlayers = async () => {
       try {
-        const playersResponse = await fetch(`/api/stats/players?seasonId=${seasonId}&limit=1000`)
+        const playersResponse = await fetch(`/api/stats/players?seasonId=${seasonId}&limit=1000`, { cache: 'no-store' })
         const playersResult = await playersResponse.json()
         const playersData = playersResult.success ? playersResult.data : []
         
@@ -215,6 +217,7 @@ function PlayersRegistrationPageContent() {
                 ? new Timestamp(Math.floor(parseNeonTimestampUTC(player.registration_date) / 1000), 0)
                 : Timestamp.now(),
               additional_info: '',
+              used_smart_assist: player.used_smart_assist || null,
             };
           })
           .sort((a: RegisteredPlayer, b: RegisteredPlayer) => 
@@ -414,7 +417,13 @@ function PlayersRegistrationPageContent() {
           'Player ID': player.player_id,
           'Registration Date': formatDateIST(player.registration_date),
           'Email': details.email,
-          'Phone Number': details.phone
+          'Phone Number': details.phone,
+          'Smart Assist': player.used_smart_assist 
+            ? (player.used_smart_assist === 'yes' ? 'Yes' : 
+               player.used_smart_assist === 'no' ? 'No' : 
+               player.used_smart_assist === 'partially' ? 'Partially' : 
+               player.used_smart_assist === 'didnt_play' ? "Didn't Play" : player.used_smart_assist) 
+            : 'N/A (Admin/New)'
         }
       })
 
@@ -426,7 +435,8 @@ function PlayersRegistrationPageContent() {
         { wch: 15 }, // Player ID
         { wch: 20 }, // Registration Date
         { wch: 30 }, // Email
-        { wch: 15 }  // Phone Number
+        { wch: 15 }, // Phone Number
+        { wch: 18 }  // Smart Assist
       ]
 
       const wb = XLSX.utils.book_new()
@@ -788,6 +798,7 @@ function PlayersRegistrationPageContent() {
                           <th className="p-4">Name</th>
                           <th className="p-4 hidden sm:table-cell">Player ID</th>
                           <th className="p-4 hidden md:table-cell">Registration Date</th>
+                          <th className="p-4 hidden md:table-cell">Smart Assist</th>
                           <th className="p-4 text-right">Actions</th>
                         </tr>
                       </thead>
@@ -818,6 +829,26 @@ function PlayersRegistrationPageContent() {
                               </td>
                               <td className="p-4 text-slate-500 hidden md:table-cell">
                                 {formatDateIST(player.registration_date)}
+                              </td>
+                              <td className="p-4 hidden md:table-cell">
+                                {player.used_smart_assist ? (
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                    player.used_smart_assist === 'yes'
+                                      ? 'bg-green-50 text-green-700 border border-green-200/40'
+                                      : player.used_smart_assist === 'no'
+                                      ? 'bg-red-50 text-red-700 border border-red-200/40'
+                                      : player.used_smart_assist === 'partially'
+                                      ? 'bg-amber-50 text-amber-700 border border-amber-200/40'
+                                      : 'bg-slate-50 text-slate-700 border border-slate-200/40'
+                                  }`}>
+                                    {player.used_smart_assist === 'yes' ? 'Yes' : 
+                                     player.used_smart_assist === 'no' ? 'No' : 
+                                     player.used_smart_assist === 'partially' ? 'Partially' : 
+                                     player.used_smart_assist === 'didnt_play' ? "Didn't Play" : player.used_smart_assist}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-400 italic text-[10px]">N/A (Admin/New)</span>
+                                )}
                               </td>
                               <td className="p-4 text-right">
                                 <button
@@ -966,7 +997,7 @@ function PlayersRegistrationPageContent() {
                       </div>
                     </div>
                     <div className="text-[10px] uppercase font-bold text-green-600/80 tracking-wider mb-1">Registered</div>
-                    <div className="text-2xl font-black text-green-700">{stats?.total_registrations || 0}</div>
+                    <div className="text-2xl font-black text-green-700">{registeredPlayers.length}</div>
                   </div>
 
                   <div className="console-card bg-gradient-to-br from-amber-50/60 to-white rounded-2xl p-5 border border-amber-100/80 hover:border-amber-400/40 transition-all hover:-translate-y-1">
@@ -978,7 +1009,7 @@ function PlayersRegistrationPageContent() {
                       </div>
                     </div>
                     <div className="text-[10px] uppercase font-bold text-amber-600/80 tracking-wider mb-1">Available</div>
-                    <div className="text-2xl font-black text-amber-700">{totalMasterPlayers - (stats?.total_registrations || 0)}</div>
+                    <div className="text-2xl font-black text-amber-700">{totalMasterPlayers - registeredPlayers.length}</div>
                   </div>
                 </div>
 

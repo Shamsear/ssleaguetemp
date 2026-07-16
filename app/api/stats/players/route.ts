@@ -568,6 +568,7 @@ export async function GET(request: NextRequest) {
             team, team_id, category,
             matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
             clean_sheets, motm_awards, points,
+            used_smart_assist,
             NULL as base_points,
             NULL as contract_id, NULL as contract_start_season, NULL as contract_end_season,
             NULL as is_auto_registered, NULL as registration_type,
@@ -656,6 +657,7 @@ export async function GET(request: NextRequest) {
             team, team_id, category,
             matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
             clean_sheets, motm_awards, points,
+            used_smart_assist,
             NULL as base_points
           FROM realplayerstats 
           WHERE tournament_id = $1
