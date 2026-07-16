@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, Clock, Star, Trophy, User, Users } from 'lucide-react';
+import { Calendar, Clock, Star, Trophy, User, Users, Megaphone, Medal, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamRegistration } from '@/contexts/TeamRegistrationContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
@@ -35,6 +35,7 @@ export default function TeamDashboard() {
   const [ownerName, setOwnerName] = useState<string>('');
   const [checkingRegistration, setCheckingRegistration] = useState(true);
   const [teamDocId, setTeamDocId] = useState<string>('');
+  const [loadingTeamDoc, setLoadingTeamDoc] = useState(true);
 
   // [INFO] Enable WebSocket for real-time dashboard updates (wallet, notifications)
   // Note: seasonId will be available after seasonStatus is loaded
@@ -73,7 +74,10 @@ export default function TeamDashboard() {
   // Fetch team logo and owner name from teams collection
   useEffect(() => {
     const fetchTeamData = async () => {
-      if (!user?.uid) return;
+      if (!user?.uid) {
+        setLoadingTeamDoc(false);
+        return;
+      }
 
       try {
         const { db } = await import('@/lib/firebase/config');
@@ -134,6 +138,8 @@ export default function TeamDashboard() {
         if (user.teamLogoUrl) {
           setTeamLogoUrl(user.teamLogoUrl);
         }
+      } finally {
+        setLoadingTeamDoc(false);
       }
     };
 
@@ -215,14 +221,7 @@ export default function TeamDashboard() {
 
   // Process data to determine season status
   useEffect(() => {
-    if (!user || user.role !== 'team' || teamHistoryLoading || activeSeasonsLoading) {
-      return;
-    }
-    
-    // IMPORTANT: Wait for teamDocId to be set before checking registration
-    // This prevents race conditions where we check before team data is loaded
-    if (!teamDocId && (!teamHistory || teamHistory.length === 0)) {
-      console.log('[PENDING] Waiting for team ID to be set...');
+    if (!user || user.role !== 'team' || teamHistoryLoading || activeSeasonsLoading || loadingTeamDoc) {
       return;
     }
 
@@ -335,7 +334,7 @@ export default function TeamDashboard() {
     };
 
     checkRegistrationStatus();
-  }, [user, teamHistory, activeSeasons, teamHistoryLoading, activeSeasonsLoading, teamDocId]);
+  }, [user, teamHistory, activeSeasons, teamHistoryLoading, activeSeasonsLoading, teamDocId, loadingTeamDoc]);
 
   // Fetch historical stats
   useEffect(() => {
@@ -394,7 +393,7 @@ export default function TeamDashboard() {
     });
   };
 
-  const isCheckingStatus = teamHistoryLoading || activeSeasonsLoading || checkingRegistration;
+  const isCheckingStatus = teamHistoryLoading || activeSeasonsLoading || checkingRegistration || loadingTeamDoc;
 
   if (loading || isCheckingStatus) {
     return (
@@ -500,8 +499,8 @@ export default function TeamDashboard() {
           {!seasonStatus?.hasActiveSeason && (
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-xl">
-                  📢
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+                  <Megaphone className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-extrabold text-slate-900 leading-tight">No Active Season</h3>
@@ -558,8 +557,8 @@ export default function TeamDashboard() {
                       <span className="text-slate-400">Contact committee to register</span>
                     </div>
                   </div>
-                  <div className="text-right flex-shrink-0 text-3xl">
-                    🏅
+                  <div className="text-right flex-shrink-0">
+                    <Medal className="w-8 h-8 text-amber-500 fill-amber-500/20" />
                   </div>
                 </div>
               </div>
@@ -677,8 +676,8 @@ export default function TeamDashboard() {
 
                 <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:border-amber-400/40 transition-all duration-250 group">
                   <div className="p-4 flex items-center justify-between">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-xl">
-                      ⚡
+                    <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+                      <Zap className="w-5 h-5 text-amber-500 fill-amber-500/20" />
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] text-slate-400 font-mono font-bold uppercase tracking-wider">Win Rate</span>
@@ -720,29 +719,75 @@ export default function TeamDashboard() {
                       <p className="text-xl font-extrabold text-slate-800 mt-1">{historicalStats.summary.totalPoints}</p>
                     </div>
                   </div>
-                  {historicalStats.summary.cups > 0 && (
-                    <div className="p-4 bg-amber-50/50 border border-amber-200/60 rounded-2xl">
-                      <p className="text-xs font-mono font-bold text-amber-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  {/* Trophies Section - Beautiful cards style */}
+                  {historicalStats.trophies && historicalStats.trophies.length > 0 ? (
+                    <div className="p-4 bg-amber-50/10 border border-amber-200/40 rounded-2xl space-y-4">
+                      <p className="text-xs font-mono font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
                         <span><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /></span> TROPHY CABINET
                       </p>
-                      <div className="flex flex-wrap gap-2">
-                        {historicalStats.summary.championships > 0 && (
-                          <span className="px-3 py-1 bg-amber-100 border border-amber-200 text-amber-800 rounded-full text-xs font-mono font-bold uppercase">
-                            <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> {historicalStats.summary.championships} Championship{historicalStats.summary.championships > 1 ? 's' : ''}
-                          </span>
-                        )}
-                        {historicalStats.summary.runnerUps > 0 && (
-                          <span className="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 rounded-full text-xs font-mono font-bold uppercase">
-                            <Trophy className="w-4 h-4 text-slate-400 fill-slate-400" /> {historicalStats.summary.runnerUps} Runner-up{historicalStats.summary.runnerUps > 1 ? 's' : ''}
-                          </span>
-                        )}
-                        {historicalStats.summary.cups > 0 && (
-                          <span className="px-3 py-1 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-mono font-bold uppercase">
-                            <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> {historicalStats.summary.cups} Cup{historicalStats.summary.cups > 1 ? 's' : ''}
-                          </span>
-                        )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {historicalStats.trophies.map((trophy: any) => {
+                          const trophyPosLower = trophy.trophy_position?.toLowerCase() || '';
+                          const isTrophyChampion = trophy.position === 1 || trophyPosLower === 'winner' || trophyPosLower.startsWith('winner') || trophyPosLower.includes('champion');
+                          const isTrophyRunnerUp = trophy.position === 2 || trophyPosLower.includes('runner');
+                          const isTrophyThird = trophy.position === 3 || trophyPosLower.includes('third');
+                          const trophyNameLower = trophy.trophy_name?.toLowerCase() || '';
+                          let trophyCardLabel = 'Trophy';
+                          if (trophyNameLower.includes('shield')) trophyCardLabel = 'Shield';
+                          else if (trophyNameLower.includes('cup')) trophyCardLabel = 'Cup';
+                          else if (trophyNameLower.includes('league')) trophyCardLabel = 'League';
+                          else if (trophyNameLower.includes('fantasy')) trophyCardLabel = 'Fantasy';
+                          const trophyCardClass = isTrophyChampion ? 'fut-card-gold' : isTrophyRunnerUp ? 'fut-card-silver' : isTrophyThird ? 'fut-card-bronze' : 'fut-card-gold';
+                          const trophyIconColor = isTrophyChampion ? 'text-amber-500' : isTrophyRunnerUp ? 'text-slate-400' : isTrophyThird ? 'text-amber-700' : 'text-amber-500';
+                          const seasonLabel = trophy.season_id ? `Season ${trophy.season_id.replace('SSPSLS', '')}` : '';
+
+                          return (
+                            <div key={trophy.id} className={`fut-card ${trophyCardClass} p-4 flex flex-col justify-between`}>
+                              <div className="flex justify-between items-start">
+                                <span className="text-[8px] font-mono text-slate-400 uppercase block">{trophyCardLabel}</span>
+                                <Trophy className={`w-4 h-4 ${trophyIconColor}`} />
+                              </div>
+                              <div className="text-center py-2">
+                                <Trophy className={`w-9 h-9 mx-auto mb-1.5 ${trophyIconColor}`} />
+                                <h4 className="font-bold text-slate-900 text-xs text-center mx-auto px-2">{trophy.trophy_name}</h4>
+                                {seasonLabel && <p className="text-[9px] text-slate-500 font-mono mt-0.5">{seasonLabel}</p>}
+                              </div>
+                              <div className="border-t border-slate-200/50 pt-2 flex justify-between items-center text-[8px] font-mono">
+                                <span className="text-slate-400">RANK:</span>
+                                <span className={`font-bold uppercase ${isTrophyChampion ? 'text-amber-700' : isTrophyRunnerUp ? 'text-slate-700' : 'text-slate-600'}`}>
+                                  {trophy.trophy_position || `#${trophy.position}`}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
+                  ) : (
+                    historicalStats.summary.cups > 0 && (
+                      <div className="p-4 bg-amber-50/50 border border-amber-200/60 rounded-2xl">
+                        <p className="text-xs font-mono font-bold text-amber-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <span><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /></span> TROPHY CABINET
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {historicalStats.summary.championships > 0 && (
+                            <span className="px-3 py-1 bg-amber-100 border border-amber-200 text-amber-800 rounded-full text-xs font-mono font-bold uppercase">
+                              <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> {historicalStats.summary.championships} Championship{historicalStats.summary.championships > 1 ? 's' : ''}
+                            </span>
+                          )}
+                          {historicalStats.summary.runnerUps > 0 && (
+                            <span className="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 rounded-full text-xs font-mono font-bold uppercase">
+                              <Trophy className="w-4 h-4 text-slate-400 fill-slate-400" /> {historicalStats.summary.runnerUps} Runner-up{historicalStats.summary.runnerUps > 1 ? 's' : ''}
+                            </span>
+                          )}
+                          {historicalStats.summary.cups > 0 && (
+                            <span className="px-3 py-1 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-mono font-bold uppercase">
+                              <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> {historicalStats.summary.cups} Cup{historicalStats.summary.cups > 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )
                   )}
                 </div>
               )}
@@ -781,6 +826,9 @@ export default function TeamDashboard() {
                   const seasonPlayers = historicalStats.playerStats.filter(
                     (p: any) => p.season_id === teamSeason.season_id
                   );
+                  const seasonTrophies = historicalStats.trophies?.filter(
+                    (t: any) => t.season_id === teamSeason.season_id
+                  ) || [];
 
                   return (
                     <div key={teamSeason.id} className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm">
@@ -875,6 +923,50 @@ export default function TeamDashboard() {
                               </p>
                             </div>
                           </div>
+
+                          {/* Season Trophies */}
+                          {seasonTrophies.length > 0 && (
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-bold text-slate-900 font-mono uppercase tracking-wider flex items-center gap-2">
+                                <span>Trophies Won</span>
+                                <div className="h-[1px] flex-1 bg-slate-200"></div>
+                              </h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {seasonTrophies.map((trophy: any) => {
+                                  const trophyPosLower = trophy.trophy_position?.toLowerCase() || '';
+                                  const isTrophyChampion = trophy.position === 1 || trophyPosLower === 'winner' || trophyPosLower.startsWith('winner') || trophyPosLower.includes('champion');
+                                  const isTrophyRunnerUp = trophy.position === 2 || trophyPosLower.includes('runner');
+                                  const isTrophyThird = trophy.position === 3 || trophyPosLower.includes('third');
+                                  const trophyNameLower = trophy.trophy_name?.toLowerCase() || '';
+                                  let trophyCardLabel = 'Trophy';
+                                  if (trophyNameLower.includes('shield')) trophyCardLabel = 'Shield';
+                                  else if (trophyNameLower.includes('cup')) trophyCardLabel = 'Cup';
+                                  else if (trophyNameLower.includes('league')) trophyCardLabel = 'League';
+                                  else if (trophyNameLower.includes('fantasy')) trophyCardLabel = 'Fantasy';
+                                  const trophyCardClass = isTrophyChampion ? 'fut-card-gold' : isTrophyRunnerUp ? 'fut-card-silver' : isTrophyThird ? 'fut-card-bronze' : 'fut-card-gold';
+                                  const trophyIconColor = isTrophyChampion ? 'text-amber-500' : isTrophyRunnerUp ? 'text-slate-400' : isTrophyThird ? 'text-amber-700' : 'text-amber-500';
+                                  return (
+                                    <div key={trophy.id} className={`fut-card ${trophyCardClass} p-4 flex flex-col justify-between`}>
+                                      <div className="flex justify-between items-start">
+                                        <span className="text-[8px] font-mono text-slate-400 uppercase block">{trophyCardLabel}</span>
+                                        <Trophy className={`w-4 h-4 ${trophyIconColor}`} />
+                                      </div>
+                                      <div className="text-center py-2">
+                                        <Trophy className={`w-9 h-9 mx-auto mb-1.5 ${trophyIconColor}`} />
+                                        <h4 className="font-bold text-slate-900 text-xs text-center mx-auto px-2">{trophy.trophy_name}</h4>
+                                      </div>
+                                      <div className="border-t border-slate-200/50 pt-2 flex justify-between items-center text-[8px] font-mono">
+                                        <span className="text-slate-400">RANK:</span>
+                                        <span className={`font-bold uppercase ${isTrophyChampion ? 'text-amber-700' : isTrophyRunnerUp ? 'text-slate-700' : 'text-slate-600'}`}>
+                                          {trophy.trophy_position || `#${trophy.position}`}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
 
                           {/* Players List */}
                           <div className="space-y-3">

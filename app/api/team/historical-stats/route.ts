@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 
     // ✅ Fetch trophies from team_trophies table
     const teamTrophies = await sql`
-      SELECT trophy_type, trophy_name, season_id
+      SELECT id, trophy_type, trophy_name, trophy_position, position, season_id, notes
       FROM team_trophies
       WHERE team_name = ${teamName}
       ORDER BY season_id DESC
@@ -150,6 +150,7 @@ export async function GET(request: NextRequest) {
         },
         teamStats: teamStats,
         playerStats: playerStats,
+        trophies: teamTrophies,
         currentSeason: currentSeasonInfo,
       },
     });
