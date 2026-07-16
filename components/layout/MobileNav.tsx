@@ -71,6 +71,64 @@ export default function MobileNav() {
     };
   }, []);
 
+  const [isShrunk, setIsShrunk] = useState(false);
+
+  // Handle scroll direction to shrink/enlarge the navigation bar
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let lastScrollY = window.scrollY;
+    let accumulatedDiff = 0;
+
+    const handleScroll = () => {
+      // Disable scroll-shrink when full-screen menu overlay is open
+      if (isMenuOpen) {
+        setIsShrunk(false);
+        return;
+      }
+
+      const currentScrollY = window.scrollY;
+      
+      // Snap to expanded state at the very top of the page
+      if (currentScrollY < 10) {
+        setIsShrunk(false);
+        lastScrollY = currentScrollY;
+        accumulatedDiff = 0;
+        return;
+      }
+
+      // Snap to expanded state near page bottom boundary (so it's fully interactive at the bottom)
+      if (currentScrollY + window.innerHeight >= document.documentElement.scrollHeight - 10) {
+        setIsShrunk(false);
+        return;
+      }
+
+      const diff = currentScrollY - lastScrollY;
+      
+      // Track scroll direction with a threshold to avoid jittering on micro-scrolls
+      if (diff > 0) {
+        // Scrolling down
+        if (accumulatedDiff < 0) accumulatedDiff = 0;
+        accumulatedDiff += diff;
+        if (accumulatedDiff > 15) {
+          setIsShrunk(true);
+        }
+      } else {
+        // Scrolling up
+        if (accumulatedDiff > 0) accumulatedDiff = 0;
+        accumulatedDiff += diff;
+        if (accumulatedDiff < -15) {
+          setIsShrunk(false);
+        }
+      }
+      
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isMenuOpen]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({
     'League Portals': false,
@@ -238,7 +296,11 @@ export default function MobileNav() {
     <>
       {/* Mobile Navigation Bar */}
       <nav
-        className="mobile-bottom-nav md:hidden fixed left-4 right-4 z-[1001] transition-none rounded-2xl border bg-white/85 backdrop-blur-xl border-[#D4AF37]/25 shadow-lg shadow-black/5 shadow-[#D4AF37]/5 px-2 py-1.5"
+        className={`mobile-bottom-nav md:hidden fixed left-4 right-4 z-[1001] rounded-2xl border bg-white/85 backdrop-blur-xl border-[#D4AF37]/25 shadow-lg shadow-black/5 shadow-[#D4AF37]/5 px-2 py-1.5 transition-all duration-300 ease-in-out origin-bottom ${
+          isShrunk 
+            ? 'scale-90 opacity-60 translate-y-2 hover:scale-100 hover:opacity-100 hover:translate-y-0 active:scale-100 active:opacity-100 active:translate-y-0 focus-within:scale-100 focus-within:opacity-100 focus-within:translate-y-0' 
+            : 'scale-100 opacity-100 translate-y-0'
+        }`}
         style={{
           bottom: keyboardOffset > 0 
             ? `calc(${keyboardOffset}px + ${isStandalone ? '1.5rem' : '0.5rem'})`
