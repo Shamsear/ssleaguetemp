@@ -25,6 +25,8 @@ interface Player {
   is_registered?: boolean
   previous_season_team?: string
   previous_season_category?: string
+  photo_url?: string
+  photo_file_id?: string
 }
 
 interface FormData {
@@ -169,6 +171,11 @@ function PlayerVerifyContent() {
         } else if (playerSnapshot && !playerSnapshot.empty) {
           const playerData = { id: playerSnapshot.docs[0].id, ...playerSnapshot.docs[0].data() } as Player
           setPlayer(playerData)
+
+          // Pre-fill photo preview if player already has a photo
+          if (playerData.photo_url) {
+            setPhotoPreview(playerData.photo_url)
+          }
 
           // Check if player has complete details
           const hasCompleteDetails = playerData.place && playerData.date_of_birth && playerData.email && playerData.phone
@@ -326,6 +333,11 @@ function PlayerVerifyContent() {
     setPlayer(selectedPlayer)
     setShowSearchStep(false)
 
+    // Pre-fill photo preview if player already has a photo
+    if (selectedPlayer.photo_url) {
+      setPhotoPreview(selectedPlayer.photo_url)
+    }
+
     // Check if player has missing details
     const hasCompleteDetails = selectedPlayer.place && selectedPlayer.date_of_birth && selectedPlayer.email && selectedPlayer.phone
 
@@ -416,8 +428,8 @@ function PlayerVerifyContent() {
   const handleConfirm = async () => {
     if (!seasonId || !user?.email) return
 
-    // Validate photo upload (required for all players)
-    if (!photoFile) {
+    // Validate photo upload (required for all players, check both uploaded file or existing preview)
+    if (!photoFile && !photoPreview) {
       setError('Please upload your photo. This is required for registration.')
       return
     }
@@ -932,6 +944,20 @@ function PlayerVerifyContent() {
                         Please upload a clear photo of yourself. This will be used for your player profile.
                       </p>
                       
+                      {/* Photo Status Info */}
+                      {player?.photo_url && photoPreview === player.photo_url && (
+                        <div className="mb-3 px-3 py-2 bg-emerald-50 border border-emerald-200/30 rounded-xl text-emerald-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Using existing photo. Tap Upload/Change to update.</span>
+                        </div>
+                      )}
+                      {photoFile && (
+                        <div className="mb-3 px-3 py-2 bg-amber-550/[0.04] border border-amber-500/20 rounded-xl text-amber-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                          <Star className="w-3.5 h-3.5 text-amber-600 fill-amber-500/20" />
+                          <span>New photo selected. It will be uploaded on registration.</span>
+                        </div>
+                      )}
+
                       <div className="flex flex-col sm:flex-row gap-4 items-start">
                         {/* Photo Preview */}
                         {photoPreview ? (
@@ -972,7 +998,7 @@ function PlayerVerifyContent() {
                             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
-                            {photoFile ? 'Change Photo' : 'Upload Photo'}
+                            {photoPreview ? 'Change Photo' : 'Upload Photo'}
                           </label>
                           <p className="text-[9px] text-slate-400 font-bold mt-2 uppercase tracking-wider">
                             Max 5MB • JPG, PNG, GIF
@@ -1081,6 +1107,20 @@ function PlayerVerifyContent() {
                         Please upload a clear photo of yourself. This will be used for your player profile.
                       </p>
                       
+                      {/* Photo Status Info */}
+                      {player?.photo_url && photoPreview === player.photo_url && (
+                        <div className="mb-3 px-3 py-2 bg-emerald-50 border border-emerald-200/30 rounded-xl text-emerald-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Using existing photo. Tap Upload/Change to update.</span>
+                        </div>
+                      )}
+                      {photoFile && (
+                        <div className="mb-3 px-3 py-2 bg-amber-550/[0.04] border border-amber-500/20 rounded-xl text-amber-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                          <Star className="w-3.5 h-3.5 text-amber-600 fill-amber-500/20" />
+                          <span>New photo selected. It will be uploaded on registration.</span>
+                        </div>
+                      )}
+
                       <div className="flex flex-col sm:flex-row gap-4 items-start">
                         {/* Photo Preview */}
                         {photoPreview ? (
@@ -1121,7 +1161,7 @@ function PlayerVerifyContent() {
                             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
-                            {photoFile ? 'Change Photo' : 'Upload Photo'}
+                            {photoPreview ? 'Change Photo' : 'Upload Photo'}
                           </label>
                           <p className="text-[9px] text-slate-400 font-bold mt-2 uppercase tracking-wider">
                             Max 5MB • JPG, PNG, GIF
