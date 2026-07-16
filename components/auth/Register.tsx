@@ -9,6 +9,31 @@ import { uploadTeamLogo } from '@/lib/firebase/auth';
 import { validateAdminInvite, markInviteAsUsed } from '@/lib/firebase/invites';
 import { AdminInvite } from '@/types/invite';
 
+// Helper to extract season suffix (e.g. s18) from invite data
+const getSeasonSuffix = (invite: AdminInvite | null): string => {
+  if (!invite) return 's18';
+  
+  // 1. Try to extract digits from seasonId (e.g., "SSPSLS18" -> "s18", "SSPSLFLS16" -> "s16")
+  const idMatch = invite.seasonId.match(/\d+$/);
+  if (idMatch) {
+    return `s${idMatch[0]}`;
+  }
+
+  // 2. Try to find "Season X" or "S X" in seasonName (e.g. "Season 18" or "S18" or "Season-18")
+  const nameMatch = invite.seasonName.match(/season\s*(\d+)/i) || invite.seasonName.match(/s\s*(\d+)/i);
+  if (nameMatch) {
+    return `s${nameMatch[1]}`;
+  }
+
+  // 3. Fallback to any digits in seasonName
+  const digitMatch = invite.seasonName.match(/\d+/);
+  if (digitMatch) {
+    return `s${digitMatch[0]}`;
+  }
+
+  return 's18'; // Absolute fallback
+};
+
 function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -21,6 +46,7 @@ function RegisterContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({ strength: 0, color: 'red' });
   const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');
   
   // Invite handling
   const [inviteCode, setInviteCode] = useState<string | null>(null);
@@ -68,6 +94,7 @@ function RegisterContent() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
     // Wait for validation to complete if still in progress
     if (validatingInvite) {
@@ -81,8 +108,17 @@ function RegisterContent() {
       return;
     }
 
+    // Determine final username: append season suffix for admin registrations
+    let finalUsername = username.trim();
+    if (isAdminInvite && invite) {
+      const suffix = getSeasonSuffix(invite);
+      if (!finalUsername.toLowerCase().endsWith(suffix.toLowerCase())) {
+        finalUsername = `${finalUsername}${suffix}`;
+      }
+    }
+
     // Create email from username
-    const email = username.includes('@') ? username : `${username}@ssleague.com`;
+    const email = finalUsername.includes('@') ? finalUsername : `${finalUsername}@ssleague.com`;
 
     try {
       // Determine role and additional data based on invite
@@ -105,7 +141,7 @@ function RegisterContent() {
       const { user, firebaseUser } = await signUp(
         email,
         password,
-        username,
+        finalUsername,
         role,
         additionalData
       );
@@ -119,8 +155,8 @@ function RegisterContent() {
           body: JSON.stringify({
             uid: firebaseUser.uid,
             email,
-            username,
-            teamName: teamName || username,
+            username: finalUsername,
+            teamName: teamName || finalUsername,
           }),
         }).catch((teamError) => {
           console.error('Failed to create team document:', teamError);
@@ -141,21 +177,12 @@ function RegisterContent() {
         return;
       }
       
-      // For admins, redirect to dashboard immediately (auto-approved)
-      switch (role as string) {
-        case 'super_admin':
-          router.push('/dashboard/superadmin');
-          break;
-        case 'committee_admin':
-          router.push('/dashboard/committee');
-          break;
-        default:
-          router.push('/dashboard');
-      }
+      // Inform the admin of successful registration and the final username
+      setSuccess(`Registration successful! Your admin username is "${finalUsername}". Redirecting to dashboard...`);
       
       // Do background tasks asynchronously (don't block redirect)
       if (firebaseUser) {
-        // Create team document for team registrations (non-blocking)
+        // Create team document for team registrations (non-blocking) - fallback safety
         if (role === 'team') {
           fetch('/api/teams/create', {
             method: 'POST',
@@ -163,8 +190,8 @@ function RegisterContent() {
             body: JSON.stringify({
               uid: firebaseUser.uid,
               email,
-              username,
-              teamName: teamName || username,
+              username: finalUsername,
+              teamName: teamName || finalUsername,
             }),
           }).catch((teamError) => {
             console.error('Failed to create team document:', teamError);
@@ -173,7 +200,7 @@ function RegisterContent() {
         
         // Mark invite as used (non-blocking)
         if (isAdminInvite && inviteCode) {
-          markInviteAsUsed(inviteCode, firebaseUser.uid, username, email).catch((inviteError) => {
+          markInviteAsUsed(inviteCode, firebaseUser.uid, finalUsername, email).catch((inviteError) => {
             console.error('Failed to mark invite as used:', inviteError);
           });
         }
@@ -185,6 +212,21 @@ function RegisterContent() {
           });
         }
       }
+
+      // Delay redirect by 2.5s to let the user see their registered username
+      setTimeout(() => {
+        switch (role as string) {
+          case 'super_admin':
+            router.push('/dashboard/superadmin');
+            break;
+          case 'committee_admin':
+            router.push('/dashboard/committee');
+            break;
+          default:
+            router.push('/dashboard');
+        }
+      }, 2500);
+
     } catch (error: any) {
       console.error('Registration failed:', error);
       setError(error.message || 'Registration failed. Please try again.');
@@ -284,6 +326,18 @@ function RegisterContent() {
             </div>
           )}
           
+          {/* Success Alert */}
+          {success && (
+            <div className="mb-6 px-4 py-3 rounded-xl border border-l-4 font-mono font-bold text-xs uppercase tracking-wide bg-emerald-50 border-emerald-250 text-emerald-800 animate-fade-in" role="alert">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 mr-3 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1 leading-normal">{success}</div>
+              </div>
+            </div>
+          )}
+
           {/* Error Alert */}
           {error && (
             <div className="mb-6 px-4 py-3 rounded-xl border border-l-4 font-mono font-bold text-xs uppercase tracking-wide bg-rose-50 border-rose-250 text-rose-800" role="alert">
@@ -317,10 +371,23 @@ function RegisterContent() {
                     autoComplete="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
+                    className={`${isAdminInvite ? 'pr-16' : ''} pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450`}
                     placeholder="Choose a unique username"
                   />
+                  {isAdminInvite && invite && (
+                    <span style={{ position: "absolute", top: 0, bottom: 0, right: 0, height: "100%", display: "flex", alignItems: "center", paddingRight: "1rem", pointerEvents: "none" }} className="text-amber-600 font-mono text-sm font-bold select-none">
+                      {getSeasonSuffix(invite)}
+                    </span>
+                  )}
                 </div>
+                {isAdminInvite && invite && username.trim() && (
+                  <p className="mt-1.5 text-[10px] font-mono text-amber-600 font-bold uppercase tracking-wider">
+                    Your username will be saved as:{' '}
+                    <span className="text-slate-900 underline font-extrabold bg-amber-50 px-1.5 py-0.5 rounded">
+                      {username.trim().toLowerCase()}{getSeasonSuffix(invite)}
+                    </span>
+                  </p>
+                )}
               </div>
               
               {/* Password Field */}
@@ -463,7 +530,7 @@ function RegisterContent() {
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={authLoading || validatingInvite}
+                disabled={authLoading || validatingInvite || !!success}
                 className="group relative w-full py-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-mono font-bold text-xs uppercase transition-all duration-300 hover:shadow-md hover:shadow-amber-600/10 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
