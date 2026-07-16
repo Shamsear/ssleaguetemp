@@ -309,6 +309,11 @@ export default function MobileNav() {
     <>
       {/* Mobile Navigation Bar */}
       <nav
+        onClick={() => {
+          if (isShrunk) {
+            setIsShrunk(false);
+          }
+        }}
         className={`mobile-bottom-nav md:hidden fixed left-4 right-4 z-[1001] rounded-3xl border bg-white/85 backdrop-blur-xl border-[#D4AF37]/25 shadow-lg shadow-black/5 shadow-[#D4AF37]/5 px-2 py-1.5 transition-all duration-300 ease-in-out origin-bottom ${
           isShrunk 
             ? 'scale-90 opacity-60 translate-y-2 hover:scale-100 hover:opacity-100 hover:translate-y-0 active:scale-100 active:opacity-100 active:translate-y-0 focus-within:scale-100 focus-within:opacity-100 focus-within:translate-y-0' 
