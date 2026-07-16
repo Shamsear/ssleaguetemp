@@ -664,7 +664,7 @@ function PlayersRegistrationPageContent() {
           <div className="animate-fade-in space-y-2">
             {error && (
               <div className="p-4 bg-red-50/50 border border-red-200/40 text-red-800 rounded-xl text-xs uppercase font-bold tracking-wider flex items-center gap-2">
-                <svg className="w-4 h-4 text-red-550 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>{error}</span>
@@ -672,7 +672,7 @@ function PlayersRegistrationPageContent() {
             )}
             {success && (
               <div className="p-4 bg-green-50/50 border border-green-200/40 text-green-800 rounded-xl text-xs uppercase font-bold tracking-wider flex items-center gap-2">
-                <svg className="w-4 h-4 text-green-550 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>{success}</span>
@@ -689,7 +689,7 @@ function PlayersRegistrationPageContent() {
               className={`px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer hover:-translate-y-0.5 active:translate-y-0 ${
                 activeTab === 'manage'
                   ? 'bg-slate-800 text-white shadow-sm border border-slate-900'
-                  : 'bg-white hover:bg-slate-50/80 text-slate-705 border border-slate-200/60'
+                  : 'bg-white hover:bg-slate-50/80 text-slate-700 border border-slate-200/60'
               }`}
             >
               Manage Players
@@ -699,7 +699,7 @@ function PlayersRegistrationPageContent() {
               className={`px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer hover:-translate-y-0.5 active:translate-y-0 ${
                 activeTab === 'register'
                   ? 'bg-slate-800 text-white shadow-sm border border-slate-900'
-                  : 'bg-white hover:bg-slate-50/80 text-slate-705 border border-slate-200/60'
+                  : 'bg-white hover:bg-slate-50/80 text-slate-700 border border-slate-200/60'
               }`}
             >
               Quick Register
@@ -709,7 +709,7 @@ function PlayersRegistrationPageContent() {
               className={`px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer hover:-translate-y-0.5 active:translate-y-0 ${
                 activeTab === 'registration'
                   ? 'bg-slate-800 text-white shadow-sm border border-slate-900'
-                  : 'bg-white hover:bg-slate-50/80 text-slate-705 border border-slate-200/60'
+                  : 'bg-white hover:bg-slate-50/80 text-slate-700 border border-slate-200/60'
               }`}
             >
               Registration Control
@@ -762,7 +762,7 @@ function PlayersRegistrationPageContent() {
                 <div className="overflow-x-auto border border-slate-200/60 rounded-2xl">
                   {filteredRegisteredPlayers.length === 0 ? (
                     <div className="p-12 text-center">
-                      <svg className="w-16 h-16 mx-auto text-slate-350 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                       <h3 className="text-base font-bold text-slate-800 uppercase tracking-wider mb-1">
@@ -775,7 +775,7 @@ function PlayersRegistrationPageContent() {
                   ) : (
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="bg-slate-50 border-b border-slate-200/60 text-[10px] uppercase font-black tracking-wider text-slate-505 font-mono">
+                        <tr className="bg-slate-50 border-b border-slate-200/60 text-[10px] uppercase font-black tracking-wider text-slate-500 font-mono">
                           <th className="p-4 w-12">
                             <input
                               type="checkbox"
@@ -848,7 +848,7 @@ function PlayersRegistrationPageContent() {
                 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="relative">
-                    <label className="block text-[10px] uppercase font-bold text-slate-505 tracking-wider mb-2">
+                    <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">
                       Search Player <span className="text-rose-500">*</span>
                     </label>
                     <input
@@ -904,7 +904,7 @@ function PlayersRegistrationPageContent() {
 
                   {selectedPlayers.length > 0 && (
                     <div>
-                      <p className="text-[10px] uppercase font-bold text-slate-505 tracking-wider mb-2">
+                      <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">
                         Selected Players ({selectedPlayers.length}):
                       </p>
                       <div className="space-y-2">
@@ -986,7 +986,7 @@ function PlayersRegistrationPageContent() {
                 <div className="console-card bg-white rounded-3xl p-6 border border-slate-200/60 font-mono">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-3">
-                      <span className="text-xs uppercase font-bold text-slate-505 tracking-wider">Registration Status:</span>
+                      <span className="text-xs uppercase font-bold text-slate-500 tracking-wider">Registration Status:</span>
                       {season?.is_player_registration_open ? (
                         <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-green-50 text-green-700 border border-green-200/40 uppercase tracking-wider">
                           <svg className="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
@@ -1042,8 +1042,8 @@ function PlayersRegistrationPageContent() {
                   {season?.is_player_registration_open ? (
                     <div className="space-y-4">
                       <div className="p-4 bg-green-50/50 border border-green-200/50 rounded-xl">
-                        <p className="text-[10px] uppercase font-bold text-green-850 flex items-start leading-relaxed tracking-wider">
-                          <svg className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 text-green-650" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <p className="text-[10px] uppercase font-bold text-green-800 flex items-start leading-relaxed tracking-wider">
+                          <svg className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <span><strong>Registration Active:</strong> Share the link below with players to register for {season?.name}.</span>
@@ -1074,8 +1074,8 @@ function PlayersRegistrationPageContent() {
                     </div>
                   ) : (
                     <div className="p-4 bg-red-50/50 border border-red-200/50 rounded-xl">
-                      <p className="text-[10px] uppercase font-bold text-red-850 flex items-start leading-relaxed tracking-wider">
-                        <svg className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 text-red-650" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <p className="text-[10px] uppercase font-bold text-red-800 flex items-start leading-relaxed tracking-wider">
+                        <svg className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                         <span><strong>Registration Closed:</strong> Players cannot register at this time. Click "Open Registration" to allow new player registrations.</span>
@@ -1092,7 +1092,7 @@ function PlayersRegistrationPageContent() {
                     </svg>
                     Registration Information
                   </h3>
-                  <div className="space-y-3 text-[10px] font-bold uppercase tracking-wider text-slate-505">
+                  <div className="space-y-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     <p>
                       <span className="text-slate-700">1. Season-Specific Link:</span> The registration link is tied directly to {season?.name}. Players will automatically register for this season.
                     </p>
