@@ -768,71 +768,170 @@ function PlayersRegistrationPageContent() {
                   </div>
                 </div>
 
-                {/* Table */}
-                <div className="overflow-x-auto border border-slate-200/60 rounded-2xl">
-                  {filteredRegisteredPlayers.length === 0 ? (
-                    <div className="p-12 text-center">
-                      <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      <h3 className="text-base font-bold text-slate-800 uppercase tracking-wider mb-1">
-                        {playerSearchQuery ? 'No players found' : 'No players registered'}
-                      </h3>
-                      <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">
-                        {playerSearchQuery ? 'Try adjusting your search criteria' : 'Registered players will appear here'}
-                      </p>
+                {/* Table & Mobile Cards */}
+                {filteredRegisteredPlayers.length === 0 ? (
+                  <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-12 text-center">
+                    <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <h3 className="text-base font-bold text-slate-800 uppercase tracking-wider mb-1">
+                      {playerSearchQuery ? 'No players found' : 'No players registered'}
+                    </h3>
+                    <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">
+                      {playerSearchQuery ? 'Try adjusting your search criteria' : 'Registered players will appear here'}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Desktop Table View */}
+                    <div className="hidden sm:block overflow-x-auto border border-slate-200/60 rounded-2xl">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-200/60 text-[10px] uppercase font-black tracking-wider text-slate-500 font-mono">
+                            <th className="p-4 w-12">
+                              <input
+                                type="checkbox"
+                                checked={selectedPlayerIds.length === filteredRegisteredPlayers.length && filteredRegisteredPlayers.length > 0}
+                                onChange={toggleSelectAll}
+                                className="w-4 h-4 text-amber-500 border-slate-300 rounded focus:ring-2 focus:ring-amber-500/20 checked:bg-amber-500 cursor-pointer"
+                              />
+                            </th>
+                            <th className="p-4 w-16">#</th>
+                            <th className="p-4">Name</th>
+                            <th className="p-4 hidden sm:table-cell">Player ID</th>
+                            <th className="p-4 hidden md:table-cell">Registration Date</th>
+                            <th className="p-4 hidden md:table-cell">Smart Assist</th>
+                            <th className="p-4 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
+                          {filteredRegisteredPlayers.map((player, index) => {
+                            const isActioning = actioningPlayer === player.player_id
+                            
+                            return (
+                              <tr key={player.id} className="hover:bg-amber-500/[0.02] transition-colors">
+                                <td className="p-4">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedPlayerIds.includes(player.player_id)}
+                                    onChange={() => togglePlayerSelection(player.player_id)}
+                                    className="w-4 h-4 text-amber-500 border-slate-300 rounded focus:ring-2 focus:ring-amber-500/20 checked:bg-amber-500 cursor-pointer"
+                                  />
+                                </td>
+                                <td className="p-4 font-mono">
+                                  <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded border border-slate-200/30 text-[10px] font-bold">
+                                    #{index + 1}
+                                  </span>
+                                </td>
+                                <td className="p-4 text-slate-900 uppercase tracking-wide">{player.player_name || 'Unknown'}</td>
+                                <td className="p-4 font-mono hidden sm:table-cell text-slate-500">
+                                  <span className="px-2 py-0.5 bg-slate-50 text-slate-600 rounded border border-slate-200/40 text-[10px]">
+                                    {player.player_id}
+                                  </span>
+                                </td>
+                                <td className="p-4 text-slate-500 hidden md:table-cell">
+                                  {formatDateIST(player.registration_date)}
+                                </td>
+                                <td className="p-4 hidden md:table-cell">
+                                  {player.used_smart_assist ? (
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                      player.used_smart_assist === 'yes'
+                                        ? 'bg-green-50 text-green-700 border border-green-200/40'
+                                        : player.used_smart_assist === 'no'
+                                        ? 'bg-red-50 text-red-700 border border-red-200/40'
+                                        : player.used_smart_assist === 'partially'
+                                        ? 'bg-amber-50 text-amber-700 border border-amber-200/40'
+                                        : 'bg-slate-50 text-slate-700 border border-slate-200/40'
+                                    }`}>
+                                      {player.used_smart_assist === 'yes' ? 'Yes' : 
+                                       player.used_smart_assist === 'no' ? 'No' : 
+                                       player.used_smart_assist === 'partially' ? 'Partially' : 
+                                       player.used_smart_assist === 'didnt_play' ? "Didn't Play" : player.used_smart_assist}
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400 italic text-[10px]">N/A (Admin/New)</span>
+                                  )}
+                                </td>
+                                <td className="p-4 text-right">
+                                  <button
+                                    onClick={() => handleDeleteRegistration(player.player_id)}
+                                    disabled={isActioning}
+                                    className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-all border border-transparent hover:border-rose-200/40 cursor-pointer disabled:opacity-50"
+                                    title="Delete registration"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </button>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
                     </div>
-                  ) : (
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-slate-50 border-b border-slate-200/60 text-[10px] uppercase font-black tracking-wider text-slate-500 font-mono">
-                          <th className="p-4 w-12">
-                            <input
-                              type="checkbox"
-                              checked={selectedPlayerIds.length === filteredRegisteredPlayers.length && filteredRegisteredPlayers.length > 0}
-                              onChange={toggleSelectAll}
-                              className="w-4 h-4 text-amber-500 border-slate-300 rounded focus:ring-2 focus:ring-amber-500/20 checked:bg-amber-500 cursor-pointer"
-                            />
-                          </th>
-                          <th className="p-4 w-16">#</th>
-                          <th className="p-4">Name</th>
-                          <th className="p-4 hidden sm:table-cell">Player ID</th>
-                          <th className="p-4 hidden md:table-cell">Registration Date</th>
-                          <th className="p-4 hidden md:table-cell">Smart Assist</th>
-                          <th className="p-4 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
-                        {filteredRegisteredPlayers.map((player, index) => {
-                          const isActioning = actioningPlayer === player.player_id
-                          
-                          return (
-                            <tr key={player.id} className="hover:bg-amber-500/[0.02] transition-colors">
-                              <td className="p-4">
+
+                    {/* Mobile Cards View */}
+                    <div className="sm:hidden space-y-4">
+                      {filteredRegisteredPlayers.map((player, index) => {
+                        const isActioning = actioningPlayer === player.player_id
+                        const isSelected = selectedPlayerIds.includes(player.player_id)
+                        
+                        return (
+                          <div 
+                            key={player.id} 
+                            className={`p-4 rounded-2xl border transition-all ${
+                              isSelected 
+                                ? 'bg-amber-500/[0.02] border-amber-500/30 shadow-sm font-mono' 
+                                : 'bg-white border-slate-200/60 shadow-sm font-mono'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3 mb-3">
+                              <div className="flex items-center gap-2">
                                 <input
                                   type="checkbox"
-                                  checked={selectedPlayerIds.includes(player.player_id)}
+                                  checked={isSelected}
                                   onChange={() => togglePlayerSelection(player.player_id)}
                                   className="w-4 h-4 text-amber-500 border-slate-300 rounded focus:ring-2 focus:ring-amber-500/20 checked:bg-amber-500 cursor-pointer"
                                 />
-                              </td>
-                              <td className="p-4 font-mono">
-                                <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded border border-slate-200/30 text-[10px] font-bold">
+                                <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded border border-slate-200/30 text-[9px] font-bold">
                                   #{index + 1}
                                 </span>
-                              </td>
-                              <td className="p-4 text-slate-900 uppercase tracking-wide">{player.player_name || 'Unknown'}</td>
-                              <td className="p-4 font-mono hidden sm:table-cell text-slate-500">
-                                <span className="px-2 py-0.5 bg-slate-50 text-slate-600 rounded border border-slate-200/40 text-[10px]">
+                              </div>
+                              
+                              <button
+                                onClick={() => handleDeleteRegistration(player.player_id)}
+                                disabled={isActioning}
+                                className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-all border border-transparent hover:border-rose-200/40 cursor-pointer disabled:opacity-50"
+                                title="Delete registration"
+                              >
+                                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <div className="text-xs uppercase font-bold text-slate-900 tracking-wide">
+                                {player.player_name || 'Unknown'}
+                              </div>
+                              
+                              <div className="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-100/60 pt-2">
+                                <span>Player ID:</span>
+                                <span className="px-1.5 py-0.5 bg-slate-50 text-slate-600 rounded border border-slate-200/40 font-bold">
                                   {player.player_id}
                                 </span>
-                              </td>
-                              <td className="p-4 text-slate-500 hidden md:table-cell">
-                                {formatDateIST(player.registration_date)}
-                              </td>
-                              <td className="p-4 hidden md:table-cell">
+                              </div>
+
+                              <div className="flex items-center justify-between text-[10px] text-slate-500">
+                                <span>Registered:</span>
+                                <span className="font-bold text-slate-700">{formatDateIST(player.registration_date)}</span>
+                              </div>
+
+                              <div className="flex items-center justify-between text-[10px] text-slate-500">
+                                <span>Smart Assist:</span>
                                 {player.used_smart_assist ? (
-                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                  <span className={`px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
                                     player.used_smart_assist === 'yes'
                                       ? 'bg-green-50 text-green-700 border border-green-200/40'
                                       : player.used_smart_assist === 'no'
@@ -847,28 +946,16 @@ function PlayersRegistrationPageContent() {
                                      player.used_smart_assist === 'didnt_play' ? "Didn't Play" : player.used_smart_assist}
                                   </span>
                                 ) : (
-                                  <span className="text-slate-400 italic text-[10px]">N/A (Admin/New)</span>
+                                  <span className="text-slate-400 italic">N/A (Admin/New)</span>
                                 )}
-                              </td>
-                              <td className="p-4 text-right">
-                                <button
-                                  onClick={() => handleDeleteRegistration(player.player_id)}
-                                  disabled={isActioning}
-                                  className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-all border border-transparent hover:border-rose-200/40 cursor-pointer disabled:opacity-50"
-                                  title="Delete registration"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                  </svg>
-                                </button>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -976,7 +1063,7 @@ function PlayersRegistrationPageContent() {
               <div className="space-y-6">
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 font-mono">
-                  <div className="console-card bg-gradient-to-br from-blue-50/60 to-white rounded-2xl p-5 border border-blue-100/80 hover:border-blue-400/40 transition-all hover:-translate-y-1">
+                  <div className="console-card rounded-2xl p-5 border border-blue-100/80 hover:border-blue-400/40 transition-all hover:-translate-y-1" style={{ background: 'linear-gradient(to bottom right, rgba(219, 234, 254, 0.7), #ffffff)' }}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-md">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -988,7 +1075,7 @@ function PlayersRegistrationPageContent() {
                     <div className="text-2xl font-black text-blue-900">{totalMasterPlayers}</div>
                   </div>
 
-                  <div className="console-card bg-gradient-to-br from-green-50/60 to-white rounded-2xl p-5 border border-green-100/80 hover:border-green-400/40 transition-all hover:-translate-y-1">
+                  <div className="console-card rounded-2xl p-5 border border-green-100/80 hover:border-green-400/40 transition-all hover:-translate-y-1" style={{ background: 'linear-gradient(to bottom right, rgba(220, 252, 231, 0.7), #ffffff)' }}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-md">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1000,7 +1087,7 @@ function PlayersRegistrationPageContent() {
                     <div className="text-2xl font-black text-green-700">{registeredPlayers.length}</div>
                   </div>
 
-                  <div className="console-card bg-gradient-to-br from-amber-50/60 to-white rounded-2xl p-5 border border-amber-100/80 hover:border-amber-400/40 transition-all hover:-translate-y-1">
+                  <div className="console-card rounded-2xl p-5 border border-amber-100/80 hover:border-amber-400/40 transition-all hover:-translate-y-1" style={{ background: 'linear-gradient(to bottom right, rgba(254, 243, 199, 0.7), #ffffff)' }}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-md">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
