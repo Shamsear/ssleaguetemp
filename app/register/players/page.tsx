@@ -47,9 +47,8 @@ function PlayersRegistrationPageContent() {
     }
   }
 
-  const formatDateIST = (timestamp: Timestamp) => {
-    return timestamp.toDate().toLocaleString('en-IN', {
-      timeZone: 'Asia/Kolkata',
+  const formatDateLocal = (timestamp: Timestamp) => {
+    return timestamp.toDate().toLocaleString(undefined, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -419,7 +418,7 @@ function PlayersRegistrationPageContent() {
           '#': index + 1,
           'Name': player.player_name || 'Unknown',
           'Player ID': player.player_id,
-          'Registration Date': formatDateIST(player.registration_date),
+          'Registration Date': formatDateLocal(player.registration_date),
           'Email': details.email,
           'Phone Number': details.phone,
           'Smart Assist': player.used_smart_assist 
@@ -834,7 +833,7 @@ function PlayersRegistrationPageContent() {
                                   </span>
                                 </td>
                                 <td className="p-4 text-slate-500 hidden md:table-cell">
-                                  {formatDateIST(player.registration_date)}
+                                   {formatDateLocal(player.registration_date)}
                                 </td>
                                 <td className="p-4 hidden md:table-cell">
                                   {player.used_smart_assist ? (
@@ -929,7 +928,7 @@ function PlayersRegistrationPageContent() {
 
                               <div className="flex items-center justify-between text-[10px] text-slate-500">
                                 <span>Registered:</span>
-                                <span className="font-bold text-slate-700">{formatDateIST(player.registration_date)}</span>
+                                  <span className="font-bold text-slate-700">{formatDateLocal(player.registration_date)}</span>
                               </div>
 
                               <div className="flex items-center justify-between text-[10px] text-slate-500">
