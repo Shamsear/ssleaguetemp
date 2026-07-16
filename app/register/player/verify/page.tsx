@@ -668,9 +668,9 @@ function PlayerVerifyContent() {
                     {player?.previous_season_team && (
                       <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 mb-4 font-mono">
                         <p className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">Previous Season Info</p>
-                        <p className="text-[10px] uppercase font-bold text-slate-505 tracking-wider">Team: <strong className="text-slate-800">{player.previous_season_team}</strong></p>
+                        <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Team: <strong className="text-slate-800">{player.previous_season_team}</strong></p>
                         {player.previous_season_category && (
-                          <p className="text-[10px] uppercase font-bold text-slate-505 tracking-wider mt-1">Category: <strong className="text-slate-800 capitalize">{player.previous_season_category}</strong></p>
+                          <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mt-1">Category: <strong className="text-slate-800 capitalize">{player.previous_season_category}</strong></p>
                         )}
                       </div>
                     )}
@@ -782,7 +782,7 @@ function PlayerVerifyContent() {
                                     <div
                                       key={district}
                                       onClick={() => handleDistrictSelect(district)}
-                                      className={`px-4 py-3 cursor-pointer transition-colors flex items-center gap-3 text-xs uppercase font-bold text-slate-705 ${
+                                      className={`px-4 py-3 cursor-pointer transition-colors flex items-center gap-3 text-xs uppercase font-bold text-slate-700 ${
                                         formData.place === district 
                                           ? 'bg-amber-500/[0.04] text-amber-700 border-l-4 border-amber-500 font-extrabold' 
                                           : 'hover:bg-slate-50 text-slate-700'
@@ -850,7 +850,7 @@ function PlayerVerifyContent() {
                           }`}
                         />
                         {!isNewPlayer && player?.date_of_birth && (
-                          <p className="text-[9px] text-slate-450 mt-1">This field cannot be changed as it exists in our database</p>
+                          <p className="text-[9px] text-slate-400 mt-1">This field cannot be changed as it exists in our database</p>
                         )}
                       </div>
 
@@ -873,7 +873,7 @@ function PlayerVerifyContent() {
                           placeholder="Enter your email"
                         />
                         {!isNewPlayer && player?.email && (
-                          <p className="text-[9px] text-slate-450 mt-1">This field cannot be changed as it exists in our database</p>
+                          <p className="text-[9px] text-slate-400 mt-1">This field cannot be changed as it exists in our database</p>
                         )}
                       </div>
 
@@ -896,7 +896,7 @@ function PlayerVerifyContent() {
                           placeholder="Enter your phone number"
                         />
                         {!isNewPlayer && player?.phone && (
-                          <p className="text-[9px] text-slate-450 mt-1">This field cannot be changed as it exists in our database</p>
+                          <p className="text-[9px] text-slate-400 mt-1">This field cannot be changed as it exists in our database</p>
                         )}
                       </div>
                     </div>
@@ -911,7 +911,7 @@ function PlayerVerifyContent() {
                         <select
                           value={usedSmartAssist}
                           onChange={(e) => setUsedSmartAssist(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-705"
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-700"
                         >
                           <option value="">Select option...</option>
                           <option value="yes">Yes</option>
@@ -947,7 +947,7 @@ function PlayerVerifyContent() {
                                 setPhotoFile(null)
                                 setPhotoPreview(null)
                               }}
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-rose-505 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors"
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors"
                             >
                               ×
                             </button>
@@ -994,7 +994,7 @@ function PlayerVerifyContent() {
                           </p>
                           <ul className="text-[10px] uppercase font-bold text-blue-700 space-y-1 ml-4">
                             <li className="flex items-center">
-                              <Check className="w-4 h-4 text-emerald-550 inline mr-2" />
+                              <Check className="w-4 h-4 text-emerald-500 inline mr-2" />
                               <strong>{season?.name || 'Current Season'}</strong>
                             </li>
                           </ul>
@@ -1060,7 +1060,7 @@ function PlayerVerifyContent() {
                         <select
                           value={usedSmartAssist}
                           onChange={(e) => setUsedSmartAssist(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-705"
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-700"
                         >
                           <option value="">Select option...</option>
                           <option value="yes">Yes</option>
@@ -1143,7 +1143,7 @@ function PlayerVerifyContent() {
                           </p>
                           <ul className="text-[10px] uppercase font-bold text-blue-700 space-y-1 ml-4">
                             <li className="flex items-center">
-                              <Check className="w-4 h-4 text-emerald-550 inline mr-2" />
+                              <Check className="w-4 h-4 text-emerald-500 inline mr-2" />
                               <strong>{season?.name || 'Current Season'}</strong>
                             </li>
                           </ul>

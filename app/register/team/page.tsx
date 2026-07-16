@@ -334,7 +334,7 @@ function SeasonRegistrationContent() {
               <div className="glass rounded-2xl p-6 border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 text-center">
                 <div className="flex items-center justify-center mb-4">
                   <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center mr-3">
-                    <span className="text-2xl text-emerald-550"><DollarSign className="w-6 h-6 inline" /></span>
+                    <span className="text-2xl text-emerald-400"><DollarSign className="w-6 h-6 inline" /></span>
                   </div>
                   <div>
                     <dt className="text-sm font-semibold text-blue-900">Starting Budget</dt>
