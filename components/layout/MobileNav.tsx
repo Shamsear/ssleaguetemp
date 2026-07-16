@@ -54,9 +54,22 @@ export default function MobileNav() {
       const vv = window.visualViewport;
       if (!vv) return;
       
+      // Only offset navbar if an input element has active focus (meaning keyboard is open)
+      const activeEl = document.activeElement;
+      const isInputFocused = activeEl && (
+        activeEl.tagName === 'INPUT' || 
+        activeEl.tagName === 'TEXTAREA' || 
+        activeEl.getAttribute('contenteditable') === 'true'
+      );
+
+      if (!isInputFocused) {
+        setKeyboardOffset(0);
+        return;
+      }
+      
       const offset = window.innerHeight - vv.height - vv.offsetTop;
-      // Only apply offset if significant (e.g. > 10px) to ignore small scroll jitters
-      setKeyboardOffset(offset > 10 ? offset : 0);
+      // Only apply offset if significant (e.g. > 50px) to avoid minor address bar shifting
+      setKeyboardOffset(offset > 50 ? offset : 0);
     };
 
     const vv = window.visualViewport;
@@ -296,7 +309,7 @@ export default function MobileNav() {
     <>
       {/* Mobile Navigation Bar */}
       <nav
-        className={`mobile-bottom-nav md:hidden fixed left-4 right-4 z-[1001] rounded-2xl border bg-white/85 backdrop-blur-xl border-[#D4AF37]/25 shadow-lg shadow-black/5 shadow-[#D4AF37]/5 px-2 py-1.5 transition-all duration-300 ease-in-out origin-bottom ${
+        className={`mobile-bottom-nav md:hidden fixed left-4 right-4 z-[1001] rounded-3xl border bg-white/85 backdrop-blur-xl border-[#D4AF37]/25 shadow-lg shadow-black/5 shadow-[#D4AF37]/5 px-2 py-1.5 transition-all duration-300 ease-in-out origin-bottom ${
           isShrunk 
             ? 'scale-90 opacity-60 translate-y-2 hover:scale-100 hover:opacity-100 hover:translate-y-0 active:scale-100 active:opacity-100 active:translate-y-0 focus-within:scale-100 focus-within:opacity-100 focus-within:translate-y-0' 
             : 'scale-100 opacity-100 translate-y-0'
