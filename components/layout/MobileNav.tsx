@@ -44,6 +44,33 @@ export default function MobileNav() {
     }
   }, []);
 
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+  // Monitor visual viewport height shifts (e.g. keyboard open/close, status bar notifications)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+
+    const handleViewportChange = () => {
+      const vv = window.visualViewport;
+      if (!vv) return;
+      
+      const offset = window.innerHeight - vv.height - vv.offsetTop;
+      // Only apply offset if significant (e.g. > 10px) to ignore small scroll jitters
+      setKeyboardOffset(offset > 10 ? offset : 0);
+    };
+
+    const vv = window.visualViewport;
+    vv.addEventListener('resize', handleViewportChange);
+    vv.addEventListener('scroll', handleViewportChange);
+    
+    handleViewportChange();
+
+    return () => {
+      vv.removeEventListener('resize', handleViewportChange);
+      vv.removeEventListener('scroll', handleViewportChange);
+    };
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({
     'League Portals': false,
@@ -213,11 +240,11 @@ export default function MobileNav() {
       <nav
         className="mobile-bottom-nav md:hidden fixed left-4 right-4 z-[1001] transition-none rounded-2xl border bg-white/85 backdrop-blur-xl border-[#D4AF37]/25 shadow-lg shadow-black/5 shadow-[#D4AF37]/5 px-2 py-1.5"
         style={{
-          bottom: isStandalone 
-            ? 'max(1.5rem, env(safe-area-inset-bottom, 24px))' 
-            : 'max(0.5rem, env(safe-area-inset-bottom, 0px))',
-          transform: 'translate3d(0, 0, 0)',
-          WebkitTransform: 'translate3d(0, 0, 0)'
+          bottom: keyboardOffset > 0 
+            ? `calc(${keyboardOffset}px + ${isStandalone ? '1.5rem' : '0.5rem'})`
+            : (isStandalone 
+                ? 'max(1.5rem, env(safe-area-inset-bottom, 24px))' 
+                : 'max(0.5rem, env(safe-area-inset-bottom, 0px))')
         }}
       >
         <div className="flex items-center justify-between relative px-2">
