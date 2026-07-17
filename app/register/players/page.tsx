@@ -37,11 +37,24 @@ function PlayersRegistrationPageContent() {
   const searchParams = useSearchParams()
   const seasonId = searchParams.get('season')
 
-  const parseNeonTimestampUTC = (s: string): number => {
+  const parseNeonTimestampUTC = (s: any): number => {
+    if (!s) return Date.now()
     try {
-      const date = new Date(s)
+      let parsedString = String(s).trim()
+      
+      // Replace space between date and time with 'T' (Safari/iOS compatibility)
+      if (parsedString.includes(' ') && !parsedString.includes('T')) {
+        parsedString = parsedString.replace(' ', 'T')
+      }
+      
+      // If there is no timezone suffix, append 'Z' to treat it as UTC
+      if (!parsedString.endsWith('Z') && !parsedString.includes('+') && !parsedString.match(/-\d{2}:\d{2}$/)) {
+        parsedString = parsedString + 'Z'
+      }
+      
+      const date = new Date(parsedString)
       if (isNaN(date.getTime())) return Date.now()
-      return date.getTime() + (4 * 60 * 60 * 1000)
+      return date.getTime()
     } catch {
       return Date.now()
     }
