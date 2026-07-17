@@ -46,20 +46,67 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const searchLower = term && term !== 'all' ? term.toLowerCase() : '';
+    let allPlayers: any[] = [];
 
-    // Get all players from cache or fetch
-    const allPlayersData = await getAllPlayers();
+    if (!term || term === 'all') {
+      // Get all players from cache or fetch (fallback/initial listing)
+      const allPlayersData = await getAllPlayers();
+      allPlayers = allPlayersData.slice(0, limit);
+    } else {
+      // Query Firestore directly for prefix matches (highly optimized, only fetches needed docs)
+      const realPlayersRef = collection(db, 'realplayers');
+      const termLower = term.toLowerCase();
+      
+      // Capitalize first letters of name search to match CamelCase formatting in Firestore
+      const termCapitalized = term.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
 
-    // Filter in memory
-    const filteredPlayers = searchLower
-      ? allPlayersData.filter(p =>
-          p.player_id?.toLowerCase().includes(searchLower) ||
-          p.name?.toLowerCase().includes(searchLower)
+      const [idSnapshot, nameSnapshot] = await Promise.all([
+        getDocs(
+          query(
+            realPlayersRef,
+            where('player_id', '>=', termLower),
+            where('player_id', '<=', termLower + '\uf8ff'),
+            firestoreLimit(limit)
+          )
+        ),
+        getDocs(
+          query(
+            realPlayersRef,
+            where('name', '>=', termCapitalized),
+            where('name', '<=', termCapitalized + '\uf8ff'),
+            firestoreLimit(limit)
+          )
         )
-      : allPlayersData;
+      ]);
 
-    const allPlayers = filteredPlayers.slice(0, limit);
+      const playerMap = new Map<string, any>();
+      
+      idSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.player_id) {
+          playerMap.set(data.player_id, {
+            id: doc.id,
+            player_id: data.player_id,
+            name: data.name,
+          });
+        }
+      });
+
+      nameSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.player_id) {
+          playerMap.set(data.player_id, {
+            id: doc.id,
+            player_id: data.player_id,
+            name: data.name,
+          });
+        }
+      });
+
+      allPlayers = Array.from(playerMap.values()).slice(0, limit);
+    }
 
     if (allPlayers.length === 0) {
       return NextResponse.json({
