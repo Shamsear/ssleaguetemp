@@ -519,6 +519,7 @@ function PlayerSearchContent() {
                       player.status === 'registered_other' ? 'bg-amber-50/60 text-amber-700 border border-amber-200/30' :
                       'bg-green-50/60 text-green-700 border border-green-200/30'
 
+                      
                     const cardBgClass =
                       player.status === 'registered_current' ? 'bg-blue-50/[0.03] border-blue-200/20' :
                       player.status === 'registered_other' ? 'bg-amber-50/[0.03] border-amber-200/20' :
@@ -542,6 +543,7 @@ function PlayerSearchContent() {
                             {player.status_text}
                           </span>
                         </div>
+                        
 
                         <div className="flex items-center justify-end border-t border-slate-100/60 pt-3 mt-1">
                           {player.status === 'available' ? (

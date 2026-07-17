@@ -45,10 +45,11 @@ export async function uploadImage(options: UploadOptions): Promise<UploadResult>
     const ik = getImageKit();
     
     // Get authentication parameters from server
-    // Use absolute URL for server-side fetch
-    const authEndpoint = imagekitConfig.authenticationEndpoint.startsWith('http') 
+    // This runs client-side (browser), so relative URL works fine.
+    // Avoid constructing absolute URL with NEXT_PUBLIC_BASE_URL which may be wrong in production.
+    const authEndpoint = imagekitConfig.authenticationEndpoint.startsWith('http')
       ? imagekitConfig.authenticationEndpoint
-      : `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}${imagekitConfig.authenticationEndpoint}`;
+      : imagekitConfig.authenticationEndpoint; // Keep relative — browser resolves it correctly
     
     const authResponse = await fetch(authEndpoint);
     if (!authResponse.ok) {
