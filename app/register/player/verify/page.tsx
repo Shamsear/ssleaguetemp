@@ -428,15 +428,21 @@ function PlayerVerifyContent() {
   const handleConfirm = async () => {
     if (!seasonId || !user?.email) return
 
+    // Disable button immediately to prevent double-submissions
+    setSubmitting(true)
+    setError(null)
+
     // Validate photo upload (required for all players, check both uploaded file or existing preview)
     if (!photoFile && !photoPreview) {
       setError('Please upload your photo. This is required for registration.')
+      setSubmitting(false)
       return
     }
 
     // Validate smart assist option for existing players
     if (!isNewPlayer && !usedSmartAssist) {
       setError('Please select whether you used smart assist last season.')
+      setSubmitting(false)
       return
     }
 
@@ -447,6 +453,7 @@ function PlayerVerifyContent() {
         // New player: all fields required
         if (!formData.name || !formData.place || !formData.date_of_birth || !formData.email || !formData.phone) {
           setError('Please fill in all required fields')
+          setSubmitting(false)
           return
         }
       } else {
@@ -460,13 +467,11 @@ function PlayerVerifyContent() {
         
         if (missingFields.length > 0) {
           setError(`Please fill in the missing required fields: ${missingFields.join(', ')}`)
+          setSubmitting(false)
           return
         }
       }
     }
-
-    setSubmitting(true)
-    setError(null)
 
     try {
       // For new players, generate a player ID first
