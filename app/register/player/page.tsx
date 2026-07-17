@@ -76,6 +76,7 @@ function PlayerSearchContent() {
 
   const [season, setSeason] = useState<Season | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [allPlayers, setAllPlayers] = useState<Player[]>([])
   const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
   const [searching, setSearching] = useState(false)
@@ -161,54 +162,47 @@ function PlayerSearchContent() {
     checkEmailUsage()
   }, [user, seasonId])
 
-  const searchPlayers = useCallback(async (term: string) => {
-    if (!seasonId) return
-
-    // Only search if term has at least 2 characters
-    if (term.trim().length < 2) {
-      setPlayers([])
-      return
-    }
-
-    setSearching(true)
-    try {
-      // Use API endpoint for optimized search with caching
-      const response = await fetch(
-        `/api/players/search?term=${encodeURIComponent(term)}&seasonId=${seasonId}&limit=20`,
-        {
+  // Fetch all players on mount for client-side search to save Firestore reads
+  useEffect(() => {
+    const loadAllPlayers = async () => {
+      if (!seasonId) return
+      setSearching(true)
+      try {
+        const response = await fetch(`/api/players/search?term=all&seasonId=${seasonId}&limit=1000`, {
           cache: 'no-store'
+        })
+        if (response.ok) {
+          const { players: list } = await response.json()
+          setAllPlayers(list || [])
         }
-      )
-      
-      if (!response.ok) {
-        throw new Error('Failed to search players')
+      } catch (err) {
+        console.error('Error loading all players:', err)
+      } finally {
+        setSearching(false)
       }
-      
-      const { players: searchResults } = await response.json()
-      setPlayers(searchResults || [])
-    } catch (err) {
-      console.error('Error searching players:', err)
-      setError('Failed to search players')
-      setPlayers([])
-    } finally {
-      setSearching(false)
     }
+
+    loadAllPlayers()
   }, [seasonId])
 
-  // Add debounce state - optimized to 100ms for instant feel
+  // Debounced client-side filtering to achieve instant feel and 0 Firestore reads on keystroke
   useEffect(() => {
-    if (searchTerm.length < 2) {
+    if (searchTerm.trim().length < 2) {
       setPlayers([])
       return
     }
 
-    // Reduced debounce to 100ms for faster response
     const timer = setTimeout(() => {
-      searchPlayers(searchTerm)
+      const searchLower = searchTerm.toLowerCase()
+      const filtered = allPlayers.filter(p => 
+        p.player_id?.toLowerCase().includes(searchLower) ||
+        p.name?.toLowerCase().includes(searchLower)
+      )
+      setPlayers(filtered.slice(0, 20))
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [searchTerm, seasonId])
+  }, [searchTerm, allPlayers])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)

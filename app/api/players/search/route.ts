@@ -39,10 +39,6 @@ export async function GET(request: NextRequest) {
     const seasonId = searchParams.get('seasonId');
     const limit = parseInt(searchParams.get('limit') || '20');
 
-    if (!term || term.length < 2) {
-      return NextResponse.json({ players: [] });
-    }
-
     if (!seasonId) {
       return NextResponse.json(
         { error: 'Season ID is required' },
@@ -50,18 +46,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const searchLower = term.toLowerCase();
+    const searchLower = term && term !== 'all' ? term.toLowerCase() : '';
 
     // Get all players from cache or fetch
     const allPlayersData = await getAllPlayers();
 
     // Filter in memory
-    const allPlayers = allPlayersData
-      .filter(p =>
-        p.player_id?.toLowerCase().includes(searchLower) ||
-        p.name?.toLowerCase().includes(searchLower)
-      )
-      .slice(0, limit);
+    const filteredPlayers = searchLower
+      ? allPlayersData.filter(p =>
+          p.player_id?.toLowerCase().includes(searchLower) ||
+          p.name?.toLowerCase().includes(searchLower)
+        )
+      : allPlayersData;
+
+    const allPlayers = filteredPlayers.slice(0, limit);
 
     if (allPlayers.length === 0) {
       return NextResponse.json({
