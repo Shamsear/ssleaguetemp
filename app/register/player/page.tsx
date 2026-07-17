@@ -176,8 +176,7 @@ function PlayerSearchContent() {
       const response = await fetch(
         `/api/players/search?term=${encodeURIComponent(term)}&seasonId=${seasonId}&limit=20`,
         {
-          // Let browser cache identical searches
-          cache: 'default'
+          cache: 'no-store'
         }
       )
       

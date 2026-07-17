@@ -74,6 +74,41 @@ function PlayerVerifyContent() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [usedSmartAssist, setUsedSmartAssist] = useState<string>('')
 
+  // Check if confirm registration is disabled based on completeness of required fields
+  const isConfirmDisabled = useMemo(() => {
+    if (submitting || uploadingPhoto) return true
+
+    // Photo upload is always required
+    if (!photoFile && !photoPreview) return true
+
+    // Smart assist is required for existing players
+    if (!isNewPlayer && !usedSmartAssist) return true
+
+    // Validate form inputs if registration form is active
+    if (showForm) {
+      if (isNewPlayer) {
+        if (
+          !formData.name?.trim() ||
+          !formData.place ||
+          !formData.date_of_birth ||
+          !formData.email?.trim() ||
+          !formData.phone?.trim()
+        ) {
+          return true
+        }
+      } else {
+        if (!player) return true
+        if (!player.name && !formData.name?.trim()) return true
+        if (!player.place && !formData.place) return true
+        if (!player.date_of_birth && !formData.date_of_birth) return true
+        if (!player.email && !formData.email?.trim()) return true
+        if (!player.phone && !formData.phone?.trim()) return true
+      }
+    }
+
+    return false
+  }, [submitting, uploadingPhoto, photoFile, photoPreview, isNewPlayer, usedSmartAssist, showForm, formData, player])
+
   // Kerala districts list
   const keralaDistricts = [
     'Alappuzha',
@@ -1058,8 +1093,8 @@ function PlayerVerifyContent() {
                     
                     <button
                       onClick={handleConfirm}
-                      disabled={submitting || uploadingPhoto}
-                      className="w-full mt-4 py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all shadow-sm hover:-translate-y-0.5 active:translate-y-0 text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isConfirmDisabled}
+                      className="w-full mt-4 py-3 px-4 font-bold rounded-xl transition-all shadow-sm text-xs uppercase tracking-wider bg-amber-500 text-white enabled:hover:bg-amber-600 enabled:hover:-translate-y-0.5 enabled:active:translate-y-0 enabled:cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none"
                     >
                       {uploadingPhoto ? `Uploading Photo (${uploadProgress}%)` : submitting ? 'Submitting...' : 'Complete Registration'}
                     </button>
@@ -1237,8 +1272,8 @@ function PlayerVerifyContent() {
                     
                     <button
                       onClick={handleConfirm}
-                      disabled={submitting || uploadingPhoto}
-                      className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all shadow-sm hover:-translate-y-0.5 active:translate-y-0 text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                      disabled={isConfirmDisabled}
+                      className="w-full py-3 px-4 font-bold rounded-xl transition-all shadow-sm text-xs uppercase tracking-wider bg-amber-500 text-white enabled:hover:bg-amber-600 enabled:hover:-translate-y-0.5 enabled:active:translate-y-0 enabled:cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none mt-4"
                     >
                       {uploadingPhoto ? `Uploading Photo (${uploadProgress}%)` : submitting ? 'Registering...' : 'Confirm Registration'}
                     </button>
