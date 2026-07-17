@@ -455,43 +455,114 @@ function PlayerSearchContent() {
             </div>
           
             <div className="max-h-[500px] overflow-y-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200/60 text-[10px] uppercase font-black tracking-wider text-slate-500 font-mono">
-                    <th className="p-4 w-32">Player ID</th>
-                    <th className="p-4">Name</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
-                  {players.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="p-12 text-center font-mono">
-                        <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <h3 className="text-base font-bold text-slate-800 uppercase tracking-wider mb-1">
-                          {searchTerm.trim().length >= 2 ? 'No players found' : 'Ready to search'}
-                        </h3>
-                        <p className="text-xs text-slate-400 uppercase font-bold tracking-wider leading-relaxed">
-                          {searchTerm.trim().length >= 2
-                            ? 'Try adjusting your search terms'
-                            : 'Enter at least 2 characters of your ID or Name above'}
-                        </p>
-                      </td>
+              {/* Desktop Table View */}
+              <div className="hidden sm:block">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200/60 text-[10px] uppercase font-black tracking-wider text-slate-500 font-mono">
+                      <th className="p-4 w-32">Player ID</th>
+                      <th className="p-4">Name</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4 text-right">Action</th>
                     </tr>
-                  ) : (
-                    players.map((player) => (
-                      <PlayerRow 
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
+                    {players.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="p-12 text-center font-mono">
+                          <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                          <h3 className="text-base font-bold text-slate-800 uppercase tracking-wider mb-1">
+                            {searchTerm.trim().length >= 2 ? 'No players found' : 'Ready to search'}
+                          </h3>
+                          <p className="text-xs text-slate-400 uppercase font-bold tracking-wider leading-relaxed">
+                            {searchTerm.trim().length >= 2
+                              ? 'Try adjusting your search terms'
+                              : 'Enter at least 2 characters of your ID or Name above'}
+                          </p>
+                        </td>
+                      </tr>
+                    ) : (
+                      players.map((player) => (
+                        <PlayerRow 
+                          key={player.id} 
+                          player={player} 
+                          onSelect={onSelect}
+                        />
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Cards View */}
+              <div className="sm:hidden p-4 space-y-4">
+                {players.length === 0 ? (
+                  <div className="p-8 text-center font-mono">
+                    <svg className="w-12 h-12 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-1">
+                      {searchTerm.trim().length >= 2 ? 'No players found' : 'Ready to search'}
+                    </h3>
+                    <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider leading-relaxed">
+                      {searchTerm.trim().length >= 2
+                        ? 'Try adjusting your search terms'
+                        : 'Enter at least 2 characters of your ID or Name above'}
+                    </p>
+                  </div>
+                ) : (
+                  players.map((player) => {
+                    const statusClass = 
+                      player.status === 'registered_current' ? 'bg-blue-50/60 text-blue-700 border border-blue-200/30' :
+                      player.status === 'registered_other' ? 'bg-amber-50/60 text-amber-700 border border-amber-200/30' :
+                      'bg-green-50/60 text-green-700 border border-green-200/30'
+
+                    const cardBgClass =
+                      player.status === 'registered_current' ? 'bg-blue-50/[0.03] border-blue-200/20' :
+                      player.status === 'registered_other' ? 'bg-amber-50/[0.03] border-amber-200/20' :
+                      'bg-white border-slate-200/60'
+
+                    return (
+                      <div 
                         key={player.id} 
-                        player={player} 
-                        onSelect={handleSelectPlayer}
-                      />
-                    ))
-                  )}
-                </tbody>
-              </table>
+                        className={`p-4 rounded-2xl border font-mono transition-all flex flex-col gap-3 shadow-sm ${cardBgClass}`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <span className="px-1.5 py-0.5 bg-slate-50 text-slate-600 rounded border border-slate-200/40 text-[9px] font-bold">
+                              {player.player_id}
+                            </span>
+                            <div className="text-xs font-bold text-slate-800 uppercase tracking-wide mt-1">
+                              {player.name}
+                            </div>
+                          </div>
+                          <span className={`inline-flex px-2 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider ${statusClass}`}>
+                            {player.status_text}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-end border-t border-slate-100/60 pt-3 mt-1">
+                          {player.status === 'available' ? (
+                            <button
+                              type="button"
+                              onClick={() => onSelect(player.player_id)}
+                              className="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm active:translate-y-0 cursor-pointer"
+                            >
+                              Select Player
+                            </button>
+                          ) : (
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 text-center w-full">
+                              {player.status === 'registered_current' ? 'Already Registered' : 'Unavailable for Registration'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
             </div>
           </div>
         )}
