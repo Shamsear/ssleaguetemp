@@ -488,7 +488,7 @@ function PlayerSearchContent() {
                         <PlayerRow 
                           key={player.id} 
                           player={player} 
-                          onSelect={onSelect}
+                          onSelect={handleSelectPlayer}
                         />
                       ))
                     )}
@@ -547,7 +547,7 @@ function PlayerSearchContent() {
                           {player.status === 'available' ? (
                             <button
                               type="button"
-                              onClick={() => onSelect(player.player_id)}
+                              onClick={() => handleSelectPlayer(player.player_id)}
                               className="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm active:translate-y-0 cursor-pointer"
                             >
                               Select Player
