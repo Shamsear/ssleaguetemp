@@ -70,6 +70,7 @@ function PlayerVerifyContent() {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [usedSmartAssist, setUsedSmartAssist] = useState<string>('')
 
@@ -500,13 +501,16 @@ function PlayerVerifyContent() {
 
       // Upload photo to ImageKit
       setUploadingPhoto(true)
+      setUploadProgress(0)
       let photoUrl = ''
       let photoFileId = ''
       
       if (photoFile && finalPlayerId) {
         try {
-          const { uploadPlayerPhoto } = await import('@/lib/imagekit/playerPhotos')
-          const result = await uploadPlayerPhoto(finalPlayerId, photoFile)
+          const { uploadPlayerPhotoWithProgress } = await import('@/lib/imagekit/playerPhotos')
+          const result = await uploadPlayerPhotoWithProgress(finalPlayerId, photoFile, (progress) => {
+            setUploadProgress(progress)
+          })
           photoUrl = result.url
           photoFileId = result.fileId
         } catch (photoError) {
@@ -1010,6 +1014,22 @@ function PlayerVerifyContent() {
                           </p>
                         </div>
                       </div>
+                      
+                      {/* Photo Upload Progress Bar */}
+                      {uploadingPhoto && (
+                        <div className="mt-4 font-mono">
+                          <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                            <span>Uploading photo...</span>
+                            <span>{uploadProgress}%</span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/50">
+                            <div 
+                              className="bg-amber-500 h-full rounded-full transition-all duration-300 ease-out" 
+                              style={{ width: `${uploadProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Season Registration Information */}
@@ -1041,7 +1061,7 @@ function PlayerVerifyContent() {
                       disabled={submitting || uploadingPhoto}
                       className="w-full mt-4 py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all shadow-sm hover:-translate-y-0.5 active:translate-y-0 text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {uploadingPhoto ? 'Uploading Photo...' : submitting ? 'Submitting...' : 'Complete Registration'}
+                      {uploadingPhoto ? `Uploading Photo (${uploadProgress}%)` : submitting ? 'Submitting...' : 'Complete Registration'}
                     </button>
                   </div>
                 )}
@@ -1173,6 +1193,22 @@ function PlayerVerifyContent() {
                           </p>
                         </div>
                       </div>
+                      
+                      {/* Photo Upload Progress Bar */}
+                      {uploadingPhoto && (
+                        <div className="mt-4 font-mono">
+                          <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                            <span>Uploading photo...</span>
+                            <span>{uploadProgress}%</span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/50">
+                            <div 
+                              className="bg-amber-500 h-full rounded-full transition-all duration-300 ease-out" 
+                              style={{ width: `${uploadProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Season Registration Information */}
@@ -1204,7 +1240,7 @@ function PlayerVerifyContent() {
                       disabled={submitting || uploadingPhoto}
                       className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all shadow-sm hover:-translate-y-0.5 active:translate-y-0 text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed mt-4"
                     >
-                      {uploadingPhoto ? 'Uploading Photo...' : submitting ? 'Registering...' : 'Confirm Registration'}
+                      {uploadingPhoto ? `Uploading Photo (${uploadProgress}%)` : submitting ? 'Registering...' : 'Confirm Registration'}
                     </button>
                   </div>
                 )}

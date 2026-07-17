@@ -32,6 +32,43 @@ export async function uploadPlayerPhoto(playerId: string, file: File): Promise<{
 }
 
 /**
+ * Upload player photo to ImageKit with progress callback
+ * @param playerId - Unique player ID
+ * @param file - Image file to upload
+ * @param onProgress - Progress callback function (0-100)
+ * @returns ImageKit URL and fileId
+ */
+export async function uploadPlayerPhotoWithProgress(
+  playerId: string,
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<{ url: string; fileId: string }> {
+  try {
+    const fileExtension = file.name.split('.').pop();
+    const timestamp = Date.now();
+    const fileName = `${playerId}_${timestamp}.${fileExtension}`;
+    
+    const { uploadImageWithProgress } = await import('./upload');
+    const result = await uploadImageWithProgress({
+      file,
+      fileName,
+      folder: '/player-photos',
+      tags: ['player', 'photo', playerId],
+      useUniqueFileName: false, // Use timestamp-based naming to prevent conflicts
+    }, onProgress);
+    
+    console.log('✅ Player photo uploaded successfully:', result.url);
+    return {
+      url: result.url,
+      fileId: result.fileId,
+    };
+  } catch (error) {
+    console.error('❌ Error uploading player photo:', error);
+    throw error;
+  }
+}
+
+/**
  * Delete player photo from ImageKit
  * @param fileId - ImageKit file ID
  */

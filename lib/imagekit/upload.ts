@@ -122,6 +122,86 @@ export async function uploadImage(options: UploadOptions): Promise<UploadResult>
 }
 
 /**
+ * Upload an image to ImageKit with upload progress callbacks
+ */
+export async function uploadImageWithProgress(
+  options: UploadOptions,
+  onProgress?: (progress: number) => void
+): Promise<UploadResult> {
+  try {
+    const authEndpoint = imagekitConfig.authenticationEndpoint;
+    const authResponse = await fetch(authEndpoint);
+    if (!authResponse.ok) {
+      throw new Error('Failed to get authentication parameters');
+    }
+    const authParams = await authResponse.json();
+
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      
+      if (onProgress && xhr.upload) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round((event.loaded / event.total) * 100);
+            onProgress(percentComplete);
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+             const result = JSON.parse(xhr.responseText);
+             resolve({
+               url: result.url,
+               fileId: result.fileId,
+               name: result.name,
+               size: result.size,
+               filePath: result.filePath,
+               thumbnailUrl: result.thumbnailUrl,
+             });
+          } catch (e) {
+            reject(new Error('Invalid response from ImageKit'));
+          }
+        } else {
+          try {
+            const err = JSON.parse(xhr.responseText);
+            reject(new Error(err.message || 'Upload failed'));
+          } catch {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        }
+      };
+
+      xhr.onerror = () => {
+        reject(new Error('Network error during upload'));
+      };
+
+      const formData = new FormData();
+      formData.append('file', options.file);
+      formData.append('fileName', options.fileName);
+      formData.append('publicKey', imagekitConfig.publicKey);
+      formData.append('signature', authParams.signature);
+      formData.append('token', authParams.token);
+      formData.append('expire', String(authParams.expire));
+      if (options.folder) {
+        formData.append('folder', options.folder);
+      }
+      if (options.tags && options.tags.length > 0) {
+        formData.append('tags', options.tags.join(','));
+      }
+      formData.append('useUniqueFileName', String(options.useUniqueFileName !== false));
+
+      xhr.open('POST', 'https://upload.imagekit.io/api/v1/files/upload', true);
+      xhr.send(formData);
+    });
+  } catch (error) {
+    console.error('Error in uploadImageWithProgress:', error);
+    throw error;
+  }
+}
+
+/**
  * Get optimized image URL with transformations
  */
 export function getOptimizedImageUrl(
