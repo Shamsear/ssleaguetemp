@@ -1,7 +1,7 @@
 'use client'
 
 import { Check, Crown, Lock, Medal, Star, TrendingUp, Trophy } from 'lucide-react';
-import { Suspense, useState, useEffect, useRef } from 'react'
+import { Suspense, useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { db, auth } from '@/lib/firebase/config'
 import { collection, addDoc, doc, getDoc, query, where, getDocs, Timestamp, updateDoc } from 'firebase/firestore'
