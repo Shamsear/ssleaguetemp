@@ -417,7 +417,7 @@ function PlayerSearchContent() {
                   value={searchTerm}
                   onChange={handleSearchChange}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 text-xs font-bold uppercase tracking-wider"
-                  placeholder="Start typing your Player ID (sspslpsl001) or Full Name"
+                  placeholder="Search by Player Name or ID"
                   autoComplete="off"
                 />
                 {searching && (
