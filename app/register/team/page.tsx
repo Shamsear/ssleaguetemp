@@ -34,6 +34,7 @@ function SeasonRegistrationContent() {
   const [joinFantasy, setJoinFantasy] = useState(false);
   const [registerOwnerNow, setRegisterOwnerNow] = useState(false);
   const [showOwnerForm, setShowOwnerForm] = useState(false);
+  const [ownerAlreadyRegistered, setOwnerAlreadyRegistered] = useState(false);
   
   const {
     alertState,
@@ -107,6 +108,37 @@ function SeasonRegistrationContent() {
           } catch (err) {
             // No existing registration
             setRegistrationStatus('none');
+          }
+
+          // Check if owner already registered
+          try {
+            const { collection, query, where, getDocs } = await import('firebase/firestore');
+            const teamsRef = collection(db, 'teams');
+            
+            // Try query by userId or uid or owner_uid
+            let querySnapshot = await getDocs(query(teamsRef, where('userId', '==', user.uid)));
+            if (querySnapshot.empty) {
+              querySnapshot = await getDocs(query(teamsRef, where('uid', '==', user.uid)));
+            }
+            if (querySnapshot.empty) {
+              querySnapshot = await getDocs(query(teamsRef, where('owner_uid', '==', user.uid)));
+            }
+            
+            let teamIdParam = user.uid; // Fallback
+            if (!querySnapshot.empty) {
+              teamIdParam = querySnapshot.docs[0].id;
+            }
+            
+            if (teamIdParam) {
+              const ownerRes = await fetch(`/api/owners?teamId=${teamIdParam}`);
+              const ownerData = await ownerRes.json();
+              if (ownerData?.success && ownerData?.data) {
+                setOwnerAlreadyRegistered(true);
+                setRegisterOwnerNow(false);
+              }
+            }
+          } catch (ownerErr) {
+            console.error('Error checking owner status:', ownerErr);
           }
         } else {
           showAlert({
@@ -502,25 +534,45 @@ function SeasonRegistrationContent() {
                   
                   <div className="space-y-6">
                     {/* Owner Registration Option */}
-                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200">
-                      <div className="flex items-start">
-                        <input
-                          type="checkbox"
-                          id="registerOwnerNow"
-                          checked={registerOwnerNow}
-                          onChange={(e) => setRegisterOwnerNow(e.target.checked)}
-                          className="mt-1 h-5 w-5 text-[#0066FF] rounded focus:ring-[#0066FF] border-gray-300 cursor-pointer"
-                        />
-                        <label htmlFor="registerOwnerNow" className="ml-3 cursor-pointer">
-                          <span className="block text-base font-semibold text-blue-900 mb-1">
-                            <span className="flex items-center gap-1.5"><User className="w-4 h-4 text-slate-500" /> Register Team Owner Now (Optional)</span>
-                          </span>
-                          <span className="block text-sm text-blue-700">
-                            Add owner information now, or you can do this later from your dashboard.
-                          </span>
-                        </label>
+                    {ownerAlreadyRegistered ? (
+                      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
+                        <div className="flex items-start">
+                          <div className="mt-1 flex-shrink-0 bg-green-500 rounded-full p-1 text-white">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <span className="block text-base font-semibold text-green-950 mb-1">
+                              <span className="flex items-center gap-1.5"><User className="w-4 h-4 text-green-600" /> Owner Already Registered</span>
+                            </span>
+                            <span className="block text-sm text-green-700">
+                              Your team owner details are already registered in the system. No action is required.
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200">
+                        <div className="flex items-start">
+                          <input
+                            type="checkbox"
+                            id="registerOwnerNow"
+                            checked={registerOwnerNow}
+                            onChange={(e) => setRegisterOwnerNow(e.target.checked)}
+                            className="mt-1 h-5 w-5 text-[#0066FF] rounded focus:ring-[#0066FF] border-gray-300 cursor-pointer"
+                          />
+                          <label htmlFor="registerOwnerNow" className="ml-3 cursor-pointer">
+                            <span className="block text-base font-semibold text-blue-900 mb-1">
+                              <span className="flex items-center gap-1.5"><User className="w-4 h-4 text-slate-500" /> Register Team Owner Now (Optional)</span>
+                            </span>
+                            <span className="block text-sm text-blue-700">
+                              Add owner information now, or you can do this later from your dashboard.
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Fantasy League Opt-in */}
                     <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-200">

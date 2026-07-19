@@ -15,6 +15,7 @@ interface TeamSeasonData {
   season_id: string;
   season_name: string;
   logo_url?: string;
+  owner_name?: string;
   manager_name?: string;
   
   stats: {
@@ -319,13 +320,19 @@ export default function TeamDetailPage() {
                   <h1 className="text-2xl font-bold text-dark mb-1">{currentSeasonData.team_name}</h1>
                   <p className="text-sm text-gray-500 mb-4">{team.team_code}</p>
                   
-                  {currentSeasonData.manager_name && (
-                    <div className="mb-4">
+                  <div className="flex flex-col items-center gap-2 mb-4">
+                    {currentSeasonData.owner_name && (
+                      <span className="px-3 py-1.5 rounded-lg text-sm font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                        Owner: {currentSeasonData.owner_name}
+                      </span>
+                    )}
+                    
+                    {currentSeasonData.manager_name && (
                       <span className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
                         Manager: {currentSeasonData.manager_name}
                       </span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                   
                   {/* Season Info */}
                   {selectedView === 'season' && selectedSeasonId && (

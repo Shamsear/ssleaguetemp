@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
     
     // Create teamData with CORRECT team ID from database
     const teamData: any = {
-      id: dbTeamId || userId, // Use database team ID if exists, fallback to userId
+      id: dbTeamId || teamSeasonData?.team_id || userId, // Use database team ID if exists, fallback to team_id then userId
       name: teamSeasonData?.team_name || userData?.teamName || 'Team',
       logo_url: teamSeasonData?.team_logo || userData?.logoUrl || null,
       currency_system: budgets.system, // 'dual' or 'single'
@@ -629,20 +629,20 @@ export async function GET(request: NextRequest) {
     
     if (stringTeamId) {
       try {
-        // Fetch owner (uses numeric Neon team_id)
+        // Fetch owner
         const ownerResult = await tournamentSql`
           SELECT * FROM owners 
-          WHERE team_id = ${dbTeamId} 
+          WHERE team_id = ${stringTeamId} 
           AND is_active = true 
           LIMIT 1
         `;
         ownerData = ownerResult[0] || null;
         console.log(`👤 Owner data found:`, ownerData ? `Yes (${ownerData.name})` : 'No');
 
-        // Fetch manager (uses numeric Neon team_id)
+        // Fetch manager
         const managerResult = await tournamentSql`
           SELECT * FROM managers 
-          WHERE team_id = ${dbTeamId} 
+          WHERE team_id = ${stringTeamId} 
           AND season_id = ${seasonId} 
           AND is_active = true 
           LIMIT 1

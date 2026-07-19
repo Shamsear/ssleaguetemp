@@ -18,6 +18,22 @@ export async function GET(
       }, { status: 500 });
     }
 
+    // Fetch team owner from tournament database
+    let ownerName = null;
+    try {
+      const ownerResult = await sql`
+        SELECT name FROM owners 
+        WHERE team_id = ${teamId} 
+        AND is_active = true 
+        LIMIT 1
+      `;
+      if (ownerResult && ownerResult.length > 0) {
+        ownerName = ownerResult[0].name;
+      }
+    } catch (ownerError) {
+      console.error('Error fetching team owner:', ownerError);
+    }
+
     // Fetch team info from Firebase for logo
     let logoUrl = null;
     try {
@@ -114,6 +130,23 @@ export async function GET(
         continue;
       }
 
+      // Fetch manager for this team and season
+      let managerName = null;
+      try {
+        const managerResult = await sql`
+          SELECT name FROM managers 
+          WHERE team_id = ${teamId} 
+          AND season_id = ${seasonId}
+          AND is_active = true 
+          LIMIT 1
+        `;
+        if (managerResult && managerResult.length > 0) {
+          managerName = managerResult[0].name;
+        }
+      } catch (managerError) {
+        console.error('Error fetching manager:', managerError);
+      }
+
       // Fetch players for this team and season
       let players: any[] = [];
       try {
@@ -182,6 +215,8 @@ export async function GET(
         season_id: seasonId,
         season_name: seasonId,
         logo_url: logoUrl,
+        owner_name: ownerName,
+        manager_name: managerName,
         stats: {
           matches_played: seasonData.matches_played || 0,
           wins: seasonData.wins || 0,
