@@ -8,6 +8,7 @@ import { useFirebaseAuth } from '@/hooks/useFirebase';
 import { uploadTeamLogo } from '@/lib/firebase/auth';
 import { validateAdminInvite, markInviteAsUsed } from '@/lib/firebase/invites';
 import { AdminInvite } from '@/types/invite';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Helper to extract season suffix (e.g. s18) from invite data
 const getSeasonSuffix = (invite: AdminInvite | null): string => {
@@ -38,6 +39,7 @@ function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signUp, loading: authLoading } = useFirebaseAuth();
+  const { user, loading: authStateLoading } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [teamName, setTeamName] = useState('');
@@ -53,6 +55,22 @@ function RegisterContent() {
   const [invite, setInvite] = useState<AdminInvite | null>(null);
   const [validatingInvite, setValidatingInvite] = useState(false);
   const [isAdminInvite, setIsAdminInvite] = useState(false);
+
+  // Guard 1: Redirect logged-in users to their dashboard
+  useEffect(() => {
+    if (!authStateLoading && user) {
+      switch (user.role) {
+        case 'super_admin':
+          router.replace('/dashboard/superadmin');
+          break;
+        case 'committee_admin':
+          router.replace('/dashboard/committee');
+          break;
+        default:
+          router.replace('/dashboard');
+      }
+    }
+  }, [user, authStateLoading, router]);
 
   // Validate invite code on component mount
   useEffect(() => {
@@ -102,15 +120,19 @@ function RegisterContent() {
       return;
     }
     
-    // Double-check invite is valid for admin registrations
-    if (isAdminInvite && !invite) {
+    // Double-check invite is valid
+    if (!invite) {
       setError('Invalid or expired invite code. Please request a new invitation.');
       return;
     }
 
-    // Determine final username: append season suffix for admin registrations
+    // Determine invite type (default to committee_admin for backwards compat)
+    const inviteType = invite.type || 'committee_admin';
+    const isCommitteeAdminInvite = inviteType === 'committee_admin';
+
+    // Determine final username: append season suffix only for admin registrations
     let finalUsername = username.trim();
-    if (isAdminInvite && invite) {
+    if (isCommitteeAdminInvite) {
       const suffix = getSeasonSuffix(invite);
       if (!finalUsername.toLowerCase().endsWith(suffix.toLowerCase())) {
         finalUsername = `${finalUsername}${suffix}`;
@@ -121,9 +143,9 @@ function RegisterContent() {
     const email = finalUsername.includes('@') ? finalUsername : `${finalUsername}@ssleague.com`;
 
     try {
-      // Determine role and additional data based on invite
-      const role = isAdminInvite ? 'committee_admin' : 'team';
-      const additionalData = isAdminInvite && invite
+      // Determine role and additional data based on invite type
+      const role = isCommitteeAdminInvite ? 'committee_admin' : 'team';
+      const additionalData = isCommitteeAdminInvite
         ? {
             seasonId: invite.seasonId,
             seasonName: invite.seasonName,
@@ -305,6 +327,41 @@ function RegisterContent() {
     }
   };
 
+  // Guard 2: No invite code → show registrations-closed wall
+  const hasInvite = searchParams.get('invite');
+  if (!hasInvite) {
+    return (
+      <div className="console-bg min-h-screen flex items-center justify-center px-4 pb-12 sm:px-6 lg:px-8 relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="max-w-md w-full relative z-10 text-center">
+          <div className="console-card bg-white p-10 rounded-3xl border border-slate-200/60 shadow-sm">
+            {/* Lock icon */}
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200/60 flex items-center justify-center mb-6">
+              <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">Member Portal</span>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1 mb-3">Registrations Closed</h1>
+            <p className="text-xs text-slate-500 font-mono uppercase tracking-wide leading-relaxed mb-8">
+              New team registrations are currently by invitation only.<br />
+              Contact a committee admin if you need access.
+            </p>
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-colors duration-200"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              Sign In Instead
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="console-bg min-h-screen flex items-center justify-center px-4 pt-5 lg:pt-24 pb-12 sm:px-6 lg:px-8 relative">
       {/* Decorative eSports glowing ambient overlay */}
@@ -314,16 +371,22 @@ function RegisterContent() {
         <div className="console-card bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm transition-all duration-300 animate-fade-in">
           <div className="text-center mb-8">
             <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">
-              {isAdminInvite ? 'ADMIN REGISTRATION' : 'MEMBER PORTAL'}
+              {isAdminInvite
+                ? invite?.type === 'team' ? 'TEAM REGISTRATION' : 'ADMIN REGISTRATION'
+                : 'MEMBER PORTAL'}
             </span>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5">
-              {isAdminInvite ? 'Join as Committee' : 'Create Account'}
+              {isAdminInvite
+                ? invite?.type === 'team' ? 'Create Team Account' : 'Join as Committee'
+                : 'Create Account'}
             </h1>
             <p className="text-xs text-slate-500 font-mono mt-1 uppercase">
-              {isAdminInvite && invite 
+              {isAdminInvite && invite && invite.type !== 'team'
                 ? `You're invited to manage ${invite.seasonName} (${invite.seasonYear})`
+                : isAdminInvite && invite && invite.type === 'team'
+                ? `You're invited to join ${invite.seasonName} (${invite.seasonYear}) as a team`
                 : isAdminInvite && validatingInvite
-                ? 'Validating your admin invitation...'
+                ? 'Validating your invitation...'
                 : 'Join Football Auction and start building your dream team'
               }
             </p>
@@ -345,11 +408,14 @@ function RegisterContent() {
                 )}
                 <div className="flex-1 leading-normal">
                   <p>
-                    {validatingInvite ? 'Validating Invite...' : 'Admin Invite Detected'}
+                    {validatingInvite ? 'Validating Invite...' : invite?.type === 'team' ? 'Team Invite Detected' : 'Admin Invite Detected'}
                   </p>
                   {invite && (
                     <p className="text-[10px] text-amber-700 font-medium mt-1">
-                      You'll be registered as a Committee Admin for <strong>{invite.seasonName} ({invite.seasonYear})</strong>.
+                      {invite.type === 'team'
+                        ? <>You'll be registered as a <strong>Team</strong> for <strong>{invite.seasonName} ({invite.seasonYear})</strong>.</>
+                        : <>You'll be registered as a <strong>Committee Admin</strong> for <strong>{invite.seasonName} ({invite.seasonYear})</strong>.</>
+                      }
                     </p>
                   )}
                 </div>

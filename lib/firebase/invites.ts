@@ -99,6 +99,7 @@ export const createAdminInvite = async (
       createdByUsername,
       isActive: true,
       usedBy: [],
+      type: inviteData.type || 'committee_admin',
     };
 
     await setDoc(inviteRef, newInvite);

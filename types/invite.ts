@@ -13,6 +13,7 @@ export interface AdminInvite {
   createdByUsername: string;
   isActive: boolean;
   usedBy: string[]; // Array of user IDs who used this invite
+  type?: 'committee_admin' | 'team'; // defaults to committee_admin if not set
 }
 
 export interface CreateInviteData {
@@ -20,6 +21,7 @@ export interface CreateInviteData {
   description: string;
   maxUses: number;
   expiresInHours: number;
+  type?: 'committee_admin' | 'team';
 }
 
 export interface InviteUsage {
