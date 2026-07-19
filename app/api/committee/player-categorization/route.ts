@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
 
     const sql = getTournamentDb();
     const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
-    const isModern = seasonNum === 16 || seasonNum === 17 || seasonNum >= 18;
+    const isModern = seasonNum === 16 || seasonNum === 17;
 
     let activePlayers;
     if (isModern) {
@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
 
     const sql = getTournamentDb();
     const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
-    const isModern = seasonNum === 16 || seasonNum === 17 || seasonNum >= 18;
+    const isModern = seasonNum === 16 || seasonNum === 17;
 
     const promises = updates.map(async (u: { id: string; category: string }) => {
       if (isModern) {
