@@ -12,6 +12,7 @@ interface ImportTeamData {
   linked_team_id?: string;
   // Team standings data from Excel
   rank?: number;
+  position?: number;
   p?: number; // Points
   mp?: number; // Matches Played
   w?: number; // Wins
