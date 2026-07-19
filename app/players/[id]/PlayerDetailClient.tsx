@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
@@ -113,6 +113,7 @@ export default function PlayerDetailPage() {
 
   const playerId = params.id as string;
   const [firebaseSeasons, setFirebaseSeasons] = useState<any[]>([]);
+  const [didBypassCache, setDidBypassCache] = useState(false);
 
   // Use React Query hook for player stats from Neon
   const { data: playerStatsData, isLoading: statsLoading } = usePlayerStats({
@@ -120,9 +121,9 @@ export default function PlayerDetailPage() {
   });
 
   // Fetch seasons from cache or Firebase
-  useEffect(() => {
-    const fetchSeasons = async () => {
-      try {
+  const fetchSeasons = useCallback(async (bypassCache = false) => {
+    try {
+      if (!bypassCache) {
         // Try to get from localStorage cache first (expires after 1 hour)
         const cached = localStorage.getItem('seasons_cache');
         const cacheTime = localStorage.getItem('seasons_cache_time');
@@ -134,26 +135,29 @@ export default function PlayerDetailPage() {
             return;
           }
         }
-
-        // Fetch from Firebase if no cache or expired
-        const seasonsRef = collection(db, 'seasons');
-        const seasonsSnapshot = await getDocs(seasonsRef);
-        const seasonsData = seasonsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-
-        // Cache the results
-        localStorage.setItem('seasons_cache', JSON.stringify(seasonsData));
-        localStorage.setItem('seasons_cache_time', Date.now().toString());
-
-        setFirebaseSeasons(seasonsData);
-      } catch (error) {
-        console.error('Error fetching seasons:', error);
       }
-    };
-    fetchSeasons();
+
+      // Fetch from Firebase if no cache, expired, or bypassed
+      const seasonsRef = collection(db, 'seasons');
+      const seasonsSnapshot = await getDocs(seasonsRef);
+      const seasonsData = seasonsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Cache the results
+      localStorage.setItem('seasons_cache', JSON.stringify(seasonsData));
+      localStorage.setItem('seasons_cache_time', Date.now().toString());
+
+      setFirebaseSeasons(seasonsData);
+    } catch (error) {
+      console.error('Error fetching seasons:', error);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchSeasons();
+  }, [fetchSeasons]);
 
   // Fetch player awards for currently selected season
   const currentSeasonIdForAwards = selectedView === 'season' && selectedSeasonId ? selectedSeasonId : null;
@@ -194,6 +198,19 @@ export default function PlayerDetailPage() {
       // Only show error if done loading and no data
       if (!playerStatsData || playerStatsData.length === 0) {
         setError('No season stats found for this player');
+        return;
+      }
+
+      // Check if any season ID from Neon stats is missing in firebaseSeasons
+      const missingSeason = playerStatsData.some((statsData: any) => 
+        !firebaseSeasons.some(s => s.id === statsData.season_id)
+      );
+
+      // If there are missing seasons and we haven't already bypassed the cache once
+      if (missingSeason && !didBypassCache) {
+        setDidBypassCache(true);
+        console.log("🔍 Missing season detected in cache, bypassing cache to fetch latest seasons...");
+        await fetchSeasons(true);
         return;
       }
 
