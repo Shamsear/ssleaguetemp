@@ -271,10 +271,11 @@ function SeasonRegistrationContent() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading season registration...</p>
         </div>
       </div>
     );
@@ -285,61 +286,71 @@ function SeasonRegistrationContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
-      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <Link
-            href="/dashboard/team"
-            className="inline-flex items-center px-4 py-2 rounded-2xl text-gray-700 glass backdrop-blur-md border border-white/20 hover:shadow-lg transition-all duration-300"
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative z-10 space-y-6 font-mono">
+        <div className="flex justify-start">
+          <button
+            onClick={() => router.push('/dashboard/team')}
+            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all text-xs uppercase tracking-wider font-bold cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Back to Dashboard
-          </Link>
+            <span>Back to Dashboard</span>
+          </button>
         </div>
 
-        <div className="text-center mb-12">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-[#0066FF]/20 to-[#0066FF]/10 flex items-center justify-center">
-            <svg className="w-10 h-10 text-[#0066FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+        <div className="console-card bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 overflow-hidden mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-100">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Season Invitation
+              </h1>
+              {season && (
+                <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
+                  Season: <span className="font-extrabold text-amber-500">{season.name}</span>
+                </p>
+              )}
+            </div>
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-[#0066FF] via-blue-500 to-[#0066FF] bg-clip-text text-transparent mb-4">
-            Season Invitation
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            You've been invited to participate in {season.name}. Choose whether you'd like to join this season.
+          <p className="text-xs text-slate-500 uppercase font-semibold leading-relaxed">
+            You've been invited to participate in <span className="text-slate-800 font-extrabold">{season.name}</span>. Choose whether you'd like to join this season.
           </p>
         </div>
 
-        <div className="glass rounded-3xl shadow-xl backdrop-blur-md border border-white/20 overflow-hidden mb-8">
-          <div className="p-8">
-            <div className="flex items-center justify-between mb-8">
+        <div className="console-card bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden mb-8">
+          <div className="p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">{season.name}</h2>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 uppercase tracking-wide">{season.name}</h2>
                 {season.short_name && (
-                  <p className="text-lg text-gray-600">{season.short_name}</p>
+                  <p className="text-xs text-slate-500 uppercase font-bold mt-0.5">{season.short_name}</p>
                 )}
               </div>
-              <div className="text-right">
-                <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
+              <div className="sm:text-right">
+                <span className={`inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
                   season.is_active
-                    ? 'bg-green-100 text-green-800'
+                    ? 'bg-green-50/60 text-green-700 border border-green-200/30'
                     : season.status === 'upcoming'
-                    ? 'bg-blue-100 text-blue-800'
-                    : 'bg-gray-100 text-gray-800'
+                    ? 'bg-blue-50/60 text-blue-700 border border-blue-200/30'
+                    : 'bg-slate-50/60 text-slate-700 border border-slate-200/30'
                 }`}>
                   {season.is_active ? (
                     <>
-                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
                       </svg>
                       Active Season
                     </>
                   ) : season.status === 'upcoming' ? (
                     <>
-                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                       </svg>
                       Upcoming Season
@@ -351,43 +362,47 @@ function SeasonRegistrationContent() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="glass rounded-2xl p-6 border border-white/10">
-                <dt className="text-sm font-semibold text-gray-600 mb-2">Your Team</dt>
-                <dd className="text-xl font-bold text-gray-900">{user.teamName || 'My Team'}</dd>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-slate-50/60 border border-slate-200/40 rounded-xl p-4">
+                <dt className="text-[10px] uppercase font-bold text-slate-500 mb-1">Your Team</dt>
+                <dd className="text-sm font-extrabold text-slate-800 uppercase tracking-wide">{user.teamName || 'My Team'}</dd>
               </div>
-              <div className="glass rounded-2xl p-6 border border-white/10">
-                <dt className="text-sm font-semibold text-gray-600 mb-2">Season Status</dt>
-                <dd className="text-xl font-bold text-gray-900">{season.is_active ? 'Active' : season.status === 'upcoming' ? 'Upcoming' : 'Scheduled'}</dd>
+              <div className="bg-slate-50/60 border border-slate-200/40 rounded-xl p-4">
+                <dt className="text-[10px] uppercase font-bold text-slate-500 mb-1">Season Status</dt>
+                <dd className="text-sm font-extrabold text-slate-800 uppercase tracking-wide">
+                  {season.is_active ? 'Active' : season.status === 'upcoming' ? 'Upcoming' : 'Scheduled'}
+                </dd>
               </div>
             </div>
             
-            <div className="mb-8">
-              <div className="glass rounded-2xl p-6 border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 text-center">
-                <div className="flex items-center justify-center mb-4">
-                  <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center mr-3">
-                    <span className="text-2xl text-emerald-400"><DollarSign className="w-6 h-6 inline" /></span>
+            <div className="mb-6">
+              <div className="bg-gradient-to-br from-amber-50/40 to-yellow-50/40 rounded-xl p-5 border border-amber-200/40 text-center">
+                <div className="flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-900 flex items-center justify-center mr-3 shadow-sm">
+                    <DollarSign className="w-5 h-5 text-amber-500" />
                   </div>
-                  <div>
-                    <dt className="text-sm font-semibold text-blue-900">Starting Budget</dt>
-                    <dd className="text-3xl font-bold text-blue-900">{(season.starting_balance || 15000).toLocaleString()}</dd>
+                  <div className="text-left">
+                    <dt className="text-[10px] uppercase font-bold text-slate-500">Starting Budget</dt>
+                    <dd className="text-2xl font-black text-slate-800 leading-tight">{(season.starting_balance || 15000).toLocaleString()}</dd>
                   </div>
                 </div>
-                <p className="text-xs text-blue-700">For all players and team management</p>
+                <p className="text-[9px] uppercase font-bold text-slate-400 mt-2">For all players and team management</p>
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 mb-8 border border-blue-200">
-              <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-slate-50/60 rounded-xl p-5 mb-6 border border-slate-200/40">
+              <h3 className="text-xs uppercase font-extrabold text-slate-800 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 What to Expect
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-[11px] font-semibold text-slate-600">
                 <div>
-                  <h4 className="font-semibold text-blue-900 mb-2"><span className="flex items-center gap-1.5 text-blue-900 font-semibold"><CheckCircle className="w-4 h-4 text-emerald-500" /> As a Participant:</span></h4>
-                  <ul className="text-blue-800 text-sm space-y-1">
+                  <h4 className="text-slate-800 uppercase font-extrabold mb-2.5 flex items-center gap-1.5">
+                    <CheckCircle className="w-4 h-4 text-emerald-500" /> As a Participant:
+                  </h4>
+                  <ul className="space-y-1.5 leading-relaxed">
                     <li>• Receive {(season.starting_balance || 15000).toLocaleString()} starting budget</li>
                     <li>• Build your squad with top players</li>
                     <li>• Track your team's performance throughout the season</li>
@@ -395,8 +410,10 @@ function SeasonRegistrationContent() {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-blue-900 mb-2"><span className="flex items-center gap-1.5 text-blue-900 font-semibold"><Target className="w-4 h-4 text-rose-500" /> Season Features:</span></h4>
-                  <ul className="text-blue-800 text-sm space-y-1">
+                  <h4 className="text-slate-800 uppercase font-extrabold mb-2.5 flex items-center gap-1.5">
+                    <Target className="w-4 h-4 text-rose-500" /> Season Features:
+                  </h4>
+                  <ul className="space-y-1.5 leading-relaxed">
                     <li>• Single currency system - unified budget for all players</li>
                     <li>• Season leaderboards and comprehensive statistics</li>
                     <li>• Compete for top positions in the league</li>
@@ -409,36 +426,36 @@ function SeasonRegistrationContent() {
             <div className="space-y-6">
               {registrationStatus === 'registered' ? (
                 // Already registered message
-                <div className="text-center">
-                  <div className="mb-6 inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100">
-                    <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="text-center py-4">
+                  <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50/60 border border-green-200/30 text-green-600 shadow-sm">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-3xl font-bold text-gray-900 mb-4">You're Already Registered!</h3>
-                  <p className="text-lg text-gray-600 mb-8">
+                  <h3 className="text-lg font-extrabold text-slate-800 uppercase tracking-wider mb-2">You're Already Registered!</h3>
+                  <p className="text-xs text-slate-500 uppercase font-semibold mb-6">
                     <strong>{user.teamName || 'Your team'}</strong> has already joined <strong>{season.name}</strong>.
                   </p>
-                  <div className="bg-green-50 border border-green-200 rounded-2xl p-6 mb-8">
-                    <p className="text-green-800 font-medium mb-2">Registration Confirmed</p>
-                    <p className="text-green-700 text-sm mb-3">
+                  <div className="bg-gradient-to-r from-green-50/40 to-emerald-50/40 border border-green-200/40 rounded-xl p-5 mb-6 text-xs font-semibold">
+                    <p className="text-green-800 font-extrabold uppercase mb-2">Registration Confirmed</p>
+                    <p className="text-green-700 uppercase tracking-wide leading-relaxed mb-3">
                       Your starting budget has been allocated:
                     </p>
                     <div className="flex justify-center mb-3">
-                      <div className="bg-white rounded-lg px-4 py-2">
-                        <p className="text-xs text-blue-600 font-medium">Starting Balance</p>
-                        <p className="text-lg font-bold text-blue-900">{(season.starting_balance || 15000).toLocaleString()}</p>
+                      <div className="bg-white border border-green-200/20 rounded-lg px-4 py-2 text-center shadow-sm">
+                        <p className="text-[9px] text-slate-400 uppercase font-extrabold">Starting Balance</p>
+                        <p className="text-base font-black text-slate-800 font-mono">{(season.starting_balance || 15000).toLocaleString()}</p>
                       </div>
                     </div>
-                    <p className="text-green-700 text-sm">
+                    <p className="text-green-700 uppercase tracking-wide leading-relaxed">
                       Check your dashboard to start building your squad!
                     </p>
                   </div>
                   <Link
                     href="/dashboard/team"
-                    className="inline-flex items-center px-8 py-4 rounded-2xl bg-gradient-to-r from-[#0066FF] to-[#9580FF] text-white font-semibold hover:from-[#0052CC] hover:to-[#7A66CC] transition-all duration-300 shadow-lg"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-white font-bold rounded-xl transition-all shadow-sm text-xs uppercase tracking-wider cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
                   >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
                     Go to Dashboard
@@ -446,38 +463,38 @@ function SeasonRegistrationContent() {
                 </div>
               ) : registrationStatus === 'declined' ? (
                 // Already declined message
-                <div className="text-center">
-                  <div className="mb-6 inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100">
-                    <svg className="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="text-center py-4">
+                  <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50/60 border border-slate-200/30 text-slate-500 shadow-sm">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-3xl font-bold text-gray-900 mb-4">You Declined This Season</h3>
-                  <p className="text-lg text-gray-600 mb-8">
+                  <h3 className="text-lg font-extrabold text-slate-800 uppercase tracking-wider mb-2">You Declined This Season</h3>
+                  <p className="text-xs text-slate-500 uppercase font-semibold mb-6">
                     <strong>{user.teamName || 'Your team'}</strong> has declined to join <strong>{season.name}</strong>.
                   </p>
-                  <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8">
-                    <p className="text-gray-800 font-medium mb-2">Season Declined</p>
-                    <p className="text-gray-700 text-sm">
+                  <div className="bg-slate-50/60 border border-slate-200/40 rounded-xl p-5 mb-6 text-xs font-semibold leading-relaxed">
+                    <p className="text-slate-800 font-extrabold uppercase mb-2">Season Declined</p>
+                    <p className="text-slate-500 uppercase">
                       You declined to participate in this season. If you made a mistake or changed your mind, you can choose to join below.
                     </p>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <button
                       type="button"
                       onClick={() => setRegistrationStatus('none')}
-                      className="inline-flex items-center px-8 py-4 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-white font-bold rounded-xl transition-all shadow-sm text-xs uppercase tracking-wider cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
                     >
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       Change Mind & Join
                     </button>
                     <Link
                       href="/dashboard/team"
-                      className="inline-flex items-center px-8 py-4 rounded-2xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-all duration-300"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold rounded-xl transition-all shadow-sm text-xs uppercase tracking-wider cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
                     >
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                       </svg>
                       Back to Dashboard
@@ -490,15 +507,15 @@ function SeasonRegistrationContent() {
                   <button
                     type="button"
                     onClick={() => setShowOwnerForm(false)}
-                    className="mb-6 text-gray-600 hover:text-gray-900 flex items-center transition-colors"
+                    className="mb-6 text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition-colors uppercase text-xs font-bold"
                   >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                     </svg>
                     Back
                   </button>
 
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Register Team Owner</h3>
+                  <h3 className="text-base font-extrabold text-slate-800 uppercase tracking-wider mb-6 text-center">Register Team Owner</h3>
                   
                   <OwnerRegistrationForm
                     teamId={user.teamId || user.uid}
@@ -522,51 +539,51 @@ function SeasonRegistrationContent() {
                   <button
                     type="button"
                     onClick={() => setShowRegistrationForm(false)}
-                    className="mb-6 text-gray-600 hover:text-gray-900 flex items-center transition-colors"
+                    className="mb-6 text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition-colors uppercase text-xs font-bold"
                   >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                     </svg>
                     Back
                   </button>
 
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Complete Your Registration</h3>
+                  <h3 className="text-base font-extrabold text-slate-800 uppercase tracking-wider mb-6 text-center">Complete Your Registration</h3>
                   
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {/* Owner Registration Option */}
                     {ownerAlreadyRegistered ? (
-                      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
+                      <div className="bg-gradient-to-br from-green-50/50 to-emerald-50/50 rounded-xl p-5 border border-green-200/40 text-xs font-semibold">
                         <div className="flex items-start">
-                          <div className="mt-1 flex-shrink-0 bg-green-500 rounded-full p-1 text-white">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="mt-0.5 flex-shrink-0 bg-green-500 rounded-full p-0.5 text-white">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
                             </svg>
                           </div>
                           <div className="ml-3">
-                            <span className="block text-base font-semibold text-green-950 mb-1">
+                            <span className="block font-extrabold text-green-950 uppercase tracking-wide mb-1">
                               <span className="flex items-center gap-1.5"><User className="w-4 h-4 text-green-600" /> Owner Already Registered</span>
                             </span>
-                            <span className="block text-sm text-green-700">
+                            <span className="block text-green-700 uppercase tracking-wide leading-normal">
                               Your team owner details are already registered in the system. No action is required.
                             </span>
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200">
+                      <div className="bg-gradient-to-br from-slate-50/50 to-zinc-50/50 rounded-xl p-5 border border-slate-200/40 text-xs font-semibold">
                         <div className="flex items-start">
                           <input
                             type="checkbox"
                             id="registerOwnerNow"
                             checked={registerOwnerNow}
                             onChange={(e) => setRegisterOwnerNow(e.target.checked)}
-                            className="mt-1 h-5 w-5 text-[#0066FF] rounded focus:ring-[#0066FF] border-gray-300 cursor-pointer"
+                            className="mt-0.5 h-4.5 w-4.5 text-slate-800 rounded focus:ring-slate-500 border-slate-300 cursor-pointer"
                           />
-                          <label htmlFor="registerOwnerNow" className="ml-3 cursor-pointer">
-                            <span className="block text-base font-semibold text-blue-900 mb-1">
-                              <span className="flex items-center gap-1.5"><User className="w-4 h-4 text-slate-500" /> Register Team Owner Now (Optional)</span>
+                          <label htmlFor="registerOwnerNow" className="ml-3 cursor-pointer select-none">
+                            <span className="block font-extrabold text-slate-800 uppercase tracking-wide mb-1">
+                              <span className="flex items-center gap-1.5"><User className="w-4 h-4 text-slate-400" /> Register Team Owner Now (Optional)</span>
                             </span>
-                            <span className="block text-sm text-blue-700">
+                            <span className="block text-slate-500 uppercase tracking-wide leading-normal">
                               Add owner information now, or you can do this later from your dashboard.
                             </span>
                           </label>
@@ -575,41 +592,41 @@ function SeasonRegistrationContent() {
                     )}
 
                     {/* Fantasy League Opt-in */}
-                    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-200">
+                    <div className="bg-gradient-to-br from-purple-50/50 to-indigo-50/50 rounded-xl p-5 border border-purple-200/40 text-xs font-semibold">
                       <div className="flex items-start">
                         <input
                           type="checkbox"
                           id="joinFantasy"
                           checked={joinFantasy}
                           onChange={(e) => setJoinFantasy(e.target.checked)}
-                          className="mt-1 h-5 w-5 text-[#0066FF] rounded focus:ring-[#0066FF] border-gray-300 cursor-pointer"
+                          className="mt-0.5 h-4.5 w-4.5 text-slate-800 rounded focus:ring-slate-500 border-slate-300 cursor-pointer"
                         />
-                        <label htmlFor="joinFantasy" className="ml-3 cursor-pointer">
-                          <span className="block text-base font-semibold text-purple-900 mb-1">
-                            <span className="flex items-center gap-1.5"><Gamepad2 className="w-4 h-4 text-indigo-500" /> Join Fantasy League</span>
+                        <label htmlFor="joinFantasy" className="ml-3 cursor-pointer select-none">
+                          <span className="block font-extrabold text-purple-900 uppercase tracking-wide mb-1">
+                            <span className="flex items-center gap-1.5"><Gamepad2 className="w-4 h-4 text-indigo-400" /> Join Fantasy League</span>
                           </span>
-                          <span className="block text-sm text-purple-700">
-                            Participate in the fantasy league! Draft players, set your captain & vice-captain, earn points based on real match performance, and compete against other managers.
+                          <span className="block text-purple-700 uppercase tracking-wide leading-normal">
+                            Participate in the fantasy league! Draft players, set lineups, earn points, and compete against other managers.
                           </span>
                         </label>
                       </div>
                       
                       {joinFantasy && (
-                        <div className="mt-4 pl-8 bg-white/60 rounded-xl p-4 border border-purple-100">
-                          <p className="text-sm font-semibold text-purple-900 mb-2"><span className="flex items-center gap-1.5 text-purple-900 font-semibold"><Sparkles className="w-4 h-4 text-purple-500" /> Fantasy Features:</span></p>
-                          <ul className="text-xs text-purple-800 space-y-1">
-                            <li>• Draft players from your real team's roster</li>
-                            <li>• Set weekly lineups with Captain/Vice-Captain</li>
-                            <li>• Earn bonus points when your real team wins</li>
-                            <li>• Track dual scoring: player points + team bonuses</li>
-                            <li>• Compete on fantasy league leaderboards</li>
+                        <div className="mt-4 pl-7 border-l-2 border-purple-200/40 space-y-2 text-[10px] uppercase font-bold text-purple-800">
+                          <p className="flex items-center gap-1.5 text-[11px] font-extrabold text-purple-900"><Sparkles className="w-4 h-4 text-purple-500" /> Fantasy Features:</p>
+                          <ul className="space-y-1 leading-normal list-disc list-inside pl-1">
+                            <li>Draft players from your real team's roster</li>
+                            <li>Set weekly lineups with Captain/Vice-Captain</li>
+                            <li>Earn bonus points when your real team wins</li>
+                            <li>Track dual scoring: player points + team bonuses</li>
+                            <li>Compete on fantasy league leaderboards</li>
                           </ul>
                         </div>
                       )}
                     </div>
 
                     {/* Submit Button */}
-                    <div className="flex gap-4">
+                    <div className="pt-2">
                       <button
                         type="button"
                         onClick={() => {
@@ -620,9 +637,9 @@ function SeasonRegistrationContent() {
                           }
                         }}
                         disabled={isSubmitting}
-                        className="flex-1 group relative px-10 py-4 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg shadow-green-600/20 hover:shadow-xl hover:shadow-green-600/30 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full py-3 px-6 bg-slate-800 hover:bg-slate-700 border border-slate-900 hover:border-slate-800 text-white font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 text-xs uppercase tracking-wider cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <span>{isSubmitting ? 'Processing...' : (registerOwnerNow ? 'Continue to Owner Registration' : 'Confirm Registration')}</span>
@@ -632,56 +649,49 @@ function SeasonRegistrationContent() {
                 </div>
               ) : (
                 // Initial decision buttons
-                <div className="text-center">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">Make Your Decision</h3>
-                  <p className="text-gray-600 mb-8">
+                <div className="text-center py-2">
+                  <h3 className="text-base font-extrabold text-slate-800 uppercase tracking-wider mb-2">Make Your Decision</h3>
+                  <p className="text-xs text-slate-500 uppercase font-semibold mb-6">
                     Would you like <strong>{user.teamName || 'your team'}</strong> to participate in <strong>{season.name}</strong>?
                   </p>
 
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button
-                    type="button"
-                    onClick={() => handleDecision('join')}
-                    disabled={isSubmitting}
-                    className="group relative px-10 py-4 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg shadow-green-600/20 hover:shadow-xl hover:shadow-green-600/30 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{isSubmitting ? 'Processing...' : `Join ${season.name}`}</span>
-                    {!isSubmitting && (
-                      <span className="absolute right-4 opacity-0 group-hover:opacity-100 group-hover:right-3 transition-all duration-300">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </span>
-                    )}
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button
+                      type="button"
+                      onClick={() => handleDecision('join')}
+                      disabled={isSubmitting}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-900 hover:border-slate-800 text-white font-bold rounded-xl transition-all shadow-sm text-xs uppercase tracking-wider cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>{isSubmitting ? 'Processing...' : `Join ${season.name}`}</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleDecision('decline')}
-                    disabled={isSubmitting}
-                    className="group relative px-10 py-4 rounded-2xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    <span>Skip This Season</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDecision('decline')}
+                      disabled={isSubmitting}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 hover:border-rose-400/40 hover:text-rose-600 text-slate-700 font-bold rounded-xl transition-all shadow-sm text-xs uppercase tracking-wider cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      <span>Skip This Season</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             </div>
 
-            <div className="mt-8 p-6 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-2xl border border-amber-200">
-              <h4 className="font-semibold text-amber-900 mb-3 flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mt-6 p-5 bg-gradient-to-r from-amber-50/40 to-yellow-50/40 rounded-xl border border-amber-200/40 text-xs font-semibold text-amber-800">
+              <h4 className="font-extrabold uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 Important Notes
               </h4>
-              <ul className="text-amber-800 text-sm space-y-1">
+              <ul className="space-y-1.5 leading-relaxed">
                 <li>• Once you join a season, you cannot change your decision without admin assistance</li>
                 <li>• If you decline, you can participate in future seasons</li>
                 <li>• Your team will remain registered in the system regardless of your choice</li>
@@ -718,10 +728,11 @@ function SeasonRegistrationContent() {
 export default function SeasonRegistrationPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading season registration...</p>
         </div>
       </div>
     }>
