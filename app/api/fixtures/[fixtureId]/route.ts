@@ -43,19 +43,17 @@ export async function GET(
     let home_team_logo = null;
     let away_team_logo = null;
     
-    if (fixture.home_team_id && fixture.home_team_id !== 'TBD' && fixture.home_team_id !== 'bye') {
-      try {
-        const doc = await adminDb.collection('teams').doc(fixture.home_team_id).get();
-        if (doc.exists) home_team_logo = doc.data()?.logo_url || null;
-      } catch(e) { console.error(e); }
-    }
-    
-    if (fixture.away_team_id && fixture.away_team_id !== 'TBD' && fixture.away_team_id !== 'bye') {
-      try {
-        const doc = await adminDb.collection('teams').doc(fixture.away_team_id).get();
-        if (doc.exists) away_team_logo = doc.data()?.logo_url || null;
-      } catch(e) { console.error(e); }
-    }
+    const homePromise = (fixture.home_team_id && fixture.home_team_id !== 'TBD' && fixture.home_team_id !== 'bye')
+      ? adminDb.collection('teams').doc(fixture.home_team_id).get().then(doc => doc.exists ? doc.data()?.logo_url || null : null).catch(() => null)
+      : Promise.resolve(null);
+
+    const awayPromise = (fixture.away_team_id && fixture.away_team_id !== 'TBD' && fixture.away_team_id !== 'bye')
+      ? adminDb.collection('teams').doc(fixture.away_team_id).get().then(doc => doc.exists ? doc.data()?.logo_url || null : null).catch(() => null)
+      : Promise.resolve(null);
+
+    const [home_logo_result, away_logo_result] = await Promise.all([homePromise, awayPromise]);
+    home_team_logo = home_logo_result;
+    away_team_logo = away_logo_result;
 
     const fixtureWithLogos = {
       ...fixture,

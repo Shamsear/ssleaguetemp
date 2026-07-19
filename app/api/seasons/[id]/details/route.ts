@@ -82,21 +82,51 @@ export async function GET(
 
     // Get players who have stats in this season from NEON
     const sql = getTournamentDb();
-    const playerStatsData = await sql`
-      SELECT DISTINCT player_id 
-      FROM realplayerstats 
-      WHERE season_id = ${seasonId}
-    `;
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const isModern = seasonNum === 16 || seasonNum === 17;
+
+    let playerStatsData;
+    let registeredPlayersData;
+    
+    if (isModern) {
+      playerStatsData = await sql`
+        SELECT DISTINCT player_id 
+        FROM player_seasons 
+        WHERE season_id = ${seasonId} AND matches_played > 0
+      `;
+      registeredPlayersData = await sql`
+        SELECT DISTINCT player_id 
+        FROM player_seasons 
+        WHERE season_id = ${seasonId}
+      `;
+    } else {
+      playerStatsData = await sql`
+        SELECT DISTINCT player_id 
+        FROM realplayerstats 
+        WHERE season_id = ${seasonId} AND matches_played > 0
+      `;
+      registeredPlayersData = await sql`
+        SELECT DISTINCT player_id 
+        FROM realplayerstats 
+        WHERE season_id = ${seasonId}
+      `;
+    }
 
     const playersWithStats = new Set(
       playerStatsData.map((stat: any) => stat.player_id)
     );
 
-    // Mark players who have played in this season
-    const players = allPlayers.map(player => ({
-      ...player,
-      hasPlayedThisSeason: playersWithStats.has(player.player_id),
-    }));
+    const registeredPlayerIds = new Set(
+      registeredPlayersData.map((stat: any) => stat.player_id)
+    );
+
+    // Filter to only show registered players and mark who has played in this season
+    const players = allPlayers
+      .filter(player => registeredPlayerIds.has(player.player_id))
+      .map(player => ({
+        ...player,
+        hasPlayedThisSeason: playersWithStats.has(player.player_id),
+      }));
 
     return NextResponse.json({
       success: true,

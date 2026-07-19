@@ -66,29 +66,33 @@ export async function GET(
     
     console.log('Player history records found:', playerHistory.length);
     
-    // Fetch team names from Firebase for each unique team_id
+    // Fetch team names from Firebase for each unique team_id in parallel
     const uniqueTeamIds = [...new Set(playerHistory.map((h: any) => h.team_id).filter(Boolean))];
     const teamNamesMap: Record<string, string> = {};
     
-    console.log('Fetching team names for:', uniqueTeamIds);
+    console.log('Fetching team names in parallel for:', uniqueTeamIds);
     
-    for (const teamId of uniqueTeamIds) {
-      try {
-        const teamDoc = await adminDb.collection('teams').doc(teamId).get();
-        console.log(`Team ${teamId}: exists=${teamDoc.exists}`);
-        if (teamDoc.exists) {
-          const teamData = teamDoc.data();
-          // Try team_name first, then name, then fallback to Unknown Team
-          teamNamesMap[teamId] = teamData?.team_name || teamData?.name || 'Unknown Team';
-          console.log(`  -> Name: ${teamNamesMap[teamId]}`);
-        } else {
-          console.log(`  -> Team ${teamId} not found in Firebase`);
-          teamNamesMap[teamId] = 'Unknown Team';
-        }
-      } catch (error: any) {
-        console.error(`Error fetching team ${teamId}:`, error.message);
-        teamNamesMap[teamId] = 'Unknown Team';
-      }
+    if (uniqueTeamIds.length > 0) {
+      await Promise.all(
+        uniqueTeamIds.map(async (teamId) => {
+          try {
+            const teamDoc = await adminDb.collection('teams').doc(teamId).get();
+            console.log(`Team ${teamId}: exists=${teamDoc.exists}`);
+            if (teamDoc.exists) {
+              const teamData = teamDoc.data();
+              // Try team_name first, then name, then fallback to Unknown Team
+              teamNamesMap[teamId] = teamData?.team_name || teamData?.name || 'Unknown Team';
+              console.log(`  -> Name: ${teamNamesMap[teamId]}`);
+            } else {
+              console.log(`  -> Team ${teamId} not found in Firebase`);
+              teamNamesMap[teamId] = 'Unknown Team';
+            }
+          } catch (error: any) {
+            console.error(`Error fetching team ${teamId}:`, error.message);
+            teamNamesMap[teamId] = 'Unknown Team';
+          }
+        })
+      );
     }
     
     // Add team names to player history records

@@ -1092,7 +1092,7 @@ export default function TeamDashboard() {
                         {activeSeasonDetails.players.map((player: any) => (
                           <button
                             key={player.id}
-                            onClick={() => router.push(`/dashboard/players/${player.id}`)}
+                            onClick={() => router.push(`/dashboard/players/${player.id}?from=dashboard`)}
                             className={`rounded-xl p-3.5 transition-all text-left w-full cursor-pointer flex flex-col justify-between border ${
                               player.hasPlayedThisSeason 
                                 ? 'bg-amber-50/20 border-amber-200 hover:bg-amber-50/40' 

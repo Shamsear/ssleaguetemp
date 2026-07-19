@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
@@ -111,6 +111,7 @@ interface AuctionBid {
 export default function PlayerDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [allSeasonData, setAllSeasonData] = useState<PlayerData[]>([]);
@@ -510,10 +511,10 @@ export default function PlayerDetailPage() {
         {/* Navigation */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <Link
-            href="/dashboard/team/players-database"
+            href={searchParams?.get('from') === 'dashboard' ? '/dashboard/team' : '/dashboard/team/players-database'}
             className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
-            ← Back to Database
+            {searchParams?.get('from') === 'dashboard' ? '← Back to Dashboard' : '← Back to Database'}
           </Link>
           
           <div className="flex items-center gap-3">
