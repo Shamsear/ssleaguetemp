@@ -674,9 +674,10 @@ async function importTeams(
 
       console.log(`Found existing team: ${normalizedTeamName} (${teamId})`);
 
-      // Update existing team - only permanent data
       const existingData = existingTeam.doc;
-      const updatedSeasons = existingData.seasons ? [...existingData.seasons, seasonId] : [seasonId];
+      const updatedSeasons = existingData.seasons 
+        ? (existingData.seasons.includes(seasonId) ? existingData.seasons : [...existingData.seasons, seasonId])
+        : [seasonId];
 
       // Check if team name has changed
       const nameChanged = existingData.team_name !== normalizedTeamName;

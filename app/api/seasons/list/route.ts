@@ -18,8 +18,10 @@ export async function GET(request: NextRequest) {
     allTeamsSnapshot.docs.forEach(teamDoc => {
       const teamData = teamDoc.data();
       const seasons = teamData.seasons || [];
+      // Deduplicate seasons list to avoid double-counting if duplicate IDs exist in the array
+      const uniqueSeasons = Array.from(new Set(seasons));
       
-      seasons.forEach((seasonId: string) => {
+      uniqueSeasons.forEach((seasonId: string) => {
         teamCountsBySeasonId.set(
           seasonId,
           (teamCountsBySeasonId.get(seasonId) || 0) + 1
