@@ -632,13 +632,16 @@ export default function HistoricalSeasonDetailPage() {
     // Get team names for cross-referential validation
     // Use linked team names (if teams are linked) or existing database team names
     const validTeamNames = new Set<string>();
+    const cleanTeamName = (name: string): string => {
+      return name.replace(/\s+/g, ' ').trim().toLowerCase();
+    };
     
     // Add linked team names
     previewTeams.forEach(previewTeam => {
       if (previewTeam.linked_team_id && existingEntities?.teams) {
         const linkedTeam = existingEntities.teams.find(t => t.teamId === previewTeam.linked_team_id);
         if (linkedTeam?.name) {
-          validTeamNames.add(linkedTeam.name.trim().toLowerCase());
+          validTeamNames.add(cleanTeamName(linkedTeam.name));
         }
       }
     });
@@ -646,13 +649,13 @@ export default function HistoricalSeasonDetailPage() {
     // Add all existing database team names AND their previous names
     teams.forEach(team => {
       // Add current name
-      validTeamNames.add(team.team_name.trim().toLowerCase());
+      validTeamNames.add(cleanTeamName(team.team_name));
       
       // Add previous names from name_history or previous_names array
       const previousNames = (team as any).previous_names || (team as any).name_history || [];
       previousNames.forEach((oldName: string) => {
         if (oldName && oldName.trim()) {
-          validTeamNames.add(oldName.trim().toLowerCase());
+          validTeamNames.add(cleanTeamName(oldName));
         }
       });
     });
@@ -724,7 +727,7 @@ export default function HistoricalSeasonDetailPage() {
       
       // Cross-referential validation: player team must exist in valid teams (linked or database)
       if (player.team && player.team.trim()) {
-        if (!validTeamNames.has(player.team.trim().toLowerCase())) {
+        if (!validTeamNames.has(cleanTeamName(player.team))) {
           errors.add(`player-${index}-team`);
         }
       }

@@ -273,6 +273,18 @@ export default function EditSeasonDataPage() {
     );
   };
 
+  const handleRemovePlayer = (playerId: string) => {
+    if (confirm('Are you sure you want to remove this player from this season? Note: This will delete their season stats and awards, but keep their permanent profile.')) {
+      setPlayers(prevPlayers => prevPlayers.filter(p => p.id !== playerId));
+    }
+  };
+
+  const handleRemoveTeam = (teamId: string) => {
+    if (confirm('Are you sure you want to remove this team from this season? Note: This will delete their season stats.')) {
+      setTeams(prevTeams => prevTeams.filter(t => t.id !== teamId));
+    }
+  };
+
   // Save all changes
   const handleSaveAll = async () => {
     if (!firebaseUser) {
@@ -652,11 +664,14 @@ export default function EditSeasonDataPage() {
                         {sortConfig?.key === 'season_stats.cup' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('season_stats.players_count')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider min-w-[120px] cursor-pointer hover:bg-slate-100">
+                    <th onClick={() => handleSort('season_stats.players_count')} className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[120px] cursor-pointer hover:bg-slate-100">
                       <div className="flex items-center gap-1">
                         Players Count
                         {sortConfig?.key === 'season_stats.players_count' && <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                       </div>
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 uppercase tracking-wider min-w-[80px]">
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -785,6 +800,18 @@ export default function EditSeasonDataPage() {
                           className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTeam(team.id)}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1.5 rounded-lg transition-colors"
+                          title="Remove team from season"
+                        >
+                          <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -821,7 +848,8 @@ export default function EditSeasonDataPage() {
                     <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[150px]">Category Trophy 1</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[150px]">Category Trophy 2</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[160px]">Individual Trophy 1</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider min-w-[160px]">Individual Trophy 2</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider border-r border-slate-200 min-w-[160px]">Individual Trophy 2</th>
+                    <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 uppercase tracking-wider min-w-[80px]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-slate-100 text-slate-700">
@@ -995,13 +1023,25 @@ export default function EditSeasonDataPage() {
                           className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 border-r border-slate-100">
                         <input
                           type="text"
                           value={player.individual_wise_trophy_2 || ''}
                           onChange={(e) => updatePlayerField(player.id, 'individual_wise_trophy_2', e.target.value)}
                           className="w-full px-2 py-1 border border-slate-200 bg-slate-50/40 rounded focus:border-amber-450 focus:ring-1 focus:ring-amber-400/20 outline-none text-xs font-mono transition-all"
                         />
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePlayer(player.id)}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1.5 rounded-lg transition-colors"
+                          title="Remove player from season"
+                        >
+                          <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </td>
                     </tr>
                   ))}

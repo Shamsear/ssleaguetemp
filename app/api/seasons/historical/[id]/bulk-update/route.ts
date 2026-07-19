@@ -45,6 +45,88 @@ export async function POST(
     // Use Firestore batch for atomic updates
     const batch = adminDb.batch();
     let updateCount = 0;
+    const sql = getTournamentDb();
+
+    // 1. Delete removed teams and their stats/trophies from Firestore/Neon
+    if (teams && Array.isArray(teams)) {
+      const sentTeamIds = new Set(teams.map(t => t.id).filter(Boolean));
+      
+      const existingTeamsSnapshot = await adminDb.collection('teams')
+        .where('seasons', 'array-contains', seasonId)
+        .where('is_historical', '==', true)
+        .get();
+
+      const deletedTeamIds: string[] = [];
+
+      for (const doc of existingTeamsSnapshot.docs) {
+        if (!sentTeamIds.has(doc.id)) {
+          const teamData = doc.data();
+          const updatedSeasons = (teamData.seasons || []).filter((s: string) => s !== seasonId);
+          
+          if (updatedSeasons.length === 0) {
+            batch.delete(doc.ref);
+          } else {
+            batch.update(doc.ref, { seasons: updatedSeasons, updated_at: new Date() });
+          }
+          deletedTeamIds.push(doc.id);
+        }
+      }
+
+      console.log(`🗑️ Deleting ${deletedTeamIds.length} teams from Firestore/Neon:`, deletedTeamIds);
+
+      if (deletedTeamIds.length > 0) {
+        // Delete teamstats
+        await sql`
+          DELETE FROM teamstats
+          WHERE season_id = ${seasonId} AND team_id IN (${deletedTeamIds})
+        `;
+
+        // Delete team trophies
+        await sql`
+          DELETE FROM team_trophies
+          WHERE season_id = ${seasonId} AND team_id IN (${deletedTeamIds})
+        `;
+      }
+    }
+
+    // 2. Delete removed players and their stats/awards from Firestore/Neon
+    if (players && Array.isArray(players)) {
+      const sentPlayerStatsIds = new Set(players.map(p => p.id).filter(Boolean));
+      
+      const existingStatsSnapshot = await adminDb.collection('realplayerstats')
+        .where('season_id', '==', seasonId)
+        .get();
+        
+      const deletedPlayerStatsIds: string[] = [];
+      const deletedPlayerIds: string[] = [];
+
+      existingStatsSnapshot.forEach(doc => {
+        if (!sentPlayerStatsIds.has(doc.id)) {
+          batch.delete(doc.ref);
+          deletedPlayerStatsIds.push(doc.id);
+          const data = doc.data();
+          if (data.player_id) {
+            deletedPlayerIds.push(data.player_id);
+          }
+        }
+      });
+
+      console.log(`🗑️ Deleting ${deletedPlayerStatsIds.length} player stats from Firestore/Neon:`, deletedPlayerStatsIds);
+
+      if (deletedPlayerIds.length > 0) {
+        // Delete stats
+        await sql`
+          DELETE FROM realplayerstats
+          WHERE season_id = ${seasonId} AND player_id IN (${deletedPlayerIds})
+        `;
+        
+        // Delete awards
+        await sql`
+          DELETE FROM player_awards
+          WHERE season_id = ${seasonId} AND player_id IN (${deletedPlayerIds})
+        `;
+      }
+    }
 
     // Update teams and their stats
     if (teams && Array.isArray(teams)) {
@@ -70,7 +152,6 @@ export async function POST(
 
         // Update teamstats in NEON if season_stats are provided
         if (team.season_stats && seasonId) {
-          const sql = getTournamentDb();
           const tournamentId = 'historical';
           const teamStatsId = `${team.id}_${seasonId}_${tournamentId}`;
 
@@ -124,8 +205,8 @@ export async function POST(
       for (const player of players) {
         if (!player.id) continue;
 
-        // First check if this is a realplayer or realplayerstats document
-        const realPlayerRef = adminDb.collection('realplayers').doc(player.id);
+        const permanentId = player.player_id || player.id.split('_')[0];
+        const realPlayerRef = adminDb.collection('realplayers').doc(permanentId);
         const realPlayerStatsRef = adminDb.collection('realplayerstats').doc(player.id);
 
         const realPlayerDoc = await realPlayerRef.get();
@@ -191,10 +272,62 @@ export async function POST(
           updateCount++;
         }
 
+        // Also update/insert in Neon realplayerstats
+        const pStats = player.stats || {};
+        
+        // Clean sheets handles both clean_sheets and cleansheets
+        const cleanSheets = pStats.clean_sheets !== undefined ? pStats.clean_sheets : (pStats.cleansheets !== undefined ? pStats.cleansheets : 0);
+        // POTM is motm_awards in Neon database
+        const motmAwards = pStats.potm !== undefined ? pStats.potm : 0;
+        // Matches won/lost/drawn
+        const wins = pStats.win !== undefined ? pStats.win : (pStats.matches_won !== undefined ? pStats.matches_won : 0);
+        const draws = pStats.draw !== undefined ? pStats.draw : (pStats.matches_drawn !== undefined ? pStats.matches_drawn : 0);
+        const losses = pStats.loss !== undefined ? pStats.loss : (pStats.matches_lost !== undefined ? pStats.matches_lost : 0);
+        const matchesPlayed = pStats.total_matches !== undefined ? pStats.total_matches : (pStats.matches_played !== undefined ? pStats.matches_played : 0);
+
+        await sql`
+          INSERT INTO realplayerstats (
+            id, player_id, season_id, player_name,
+            category, team, team_id,
+            matches_played, matches_won, matches_drawn, matches_lost,
+            goals_scored, goals_conceded, assists, wins, draws, losses,
+            clean_sheets, motm_awards, points, star_rating,
+            created_at, updated_at
+          )
+          VALUES (
+            ${player.id}, ${permanentId}, ${seasonId}, ${player.name},
+            ${player.category || ''}, ${player.team || ''}, ${player.team_id || null},
+            ${matchesPlayed}, ${wins}, ${draws}, ${losses},
+            ${pStats.goals_scored || 0}, ${pStats.goals_conceded || 0},
+            ${pStats.assists || 0}, ${wins}, ${draws}, ${losses},
+            ${cleanSheets}, ${motmAwards}, ${pStats.points || pStats.total_points || 0}, 3,
+            NOW(), NOW()
+          )
+          ON CONFLICT (player_id, season_id) DO UPDATE
+          SET
+            player_name = EXCLUDED.player_name,
+            category = EXCLUDED.category,
+            team = EXCLUDED.team,
+            team_id = EXCLUDED.team_id,
+            matches_played = EXCLUDED.matches_played,
+            matches_won = EXCLUDED.matches_won,
+            matches_drawn = EXCLUDED.matches_drawn,
+            matches_lost = EXCLUDED.matches_lost,
+            goals_scored = EXCLUDED.goals_scored,
+            goals_conceded = EXCLUDED.goals_conceded,
+            assists = EXCLUDED.assists,
+            wins = EXCLUDED.wins,
+            draws = EXCLUDED.draws,
+            losses = EXCLUDED.losses,
+            clean_sheets = EXCLUDED.clean_sheets,
+            motm_awards = EXCLUDED.motm_awards,
+            points = EXCLUDED.points,
+            updated_at = NOW()
+        `;
+        updateCount++;
+
         // If neither exists, it might be in a different collection
-        // Check if it's in historicalplayers or similar
         if (!realPlayerDoc.exists && !realPlayerStatsDoc.exists) {
-          // Try to update as a single document in a players collection
           const playerRef = adminDb.collection('players').doc(player.id);
           const playerDoc = await playerRef.get();
 
