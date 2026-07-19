@@ -175,6 +175,37 @@ function RegisterContent() {
         
         router.push('/register/pending-approval');
         return;
+      } else if (role === 'committee_admin' && firebaseUser) {
+        // Set custom claims for committee admin
+        try {
+          const claimsRes = await fetch('/api/auth/register-admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              uid: firebaseUser.uid,
+              inviteCode: inviteCode,
+            }),
+          });
+          
+          if (!claimsRes.ok) {
+            const errorText = await claimsRes.text();
+            throw new Error(`Failed to set admin custom claims: ${errorText}`);
+          }
+          
+          // Force-refresh token to fetch the new custom claims
+          const idToken = await firebaseUser.getIdToken(true);
+          
+          // Update the token cookie with the new claim-bearing token
+          await fetch('/api/auth/set-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: idToken }),
+          });
+          
+          console.log('✅ Admin claims and token cookie updated successfully');
+        } catch (claimsError) {
+          console.error('Failed to configure admin claims/token:', claimsError);
+        }
       }
       
       // Inform the admin of successful registration and the final username

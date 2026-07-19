@@ -456,8 +456,9 @@ button[class*="hover:translate-x-"]:hover::before {
   transition-duration: var(--scroll-duration, 700ms);
 }
 
-/* Visible state: applied by IntersectionObserver */
-[data-scroll].scroll-visible {
+/* Visible state: applied by IntersectionObserver or permanent animation finish attribute */
+[data-scroll].scroll-visible,
+[data-scroll][data-scroll-finished="true"] {
   opacity: 1 !important;
   transform: none !important;
 }
@@ -532,17 +533,11 @@ button[class*="hover:translate-x-"]:hover::before {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
 
-/* Reduce motion for accessibility and performance */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  [data-scroll] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }
 

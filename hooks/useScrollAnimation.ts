@@ -145,9 +145,11 @@ export function useScrollAnimation() {
             if (delay > 0) {
               setTimeout(() => {
                 el.classList.add('scroll-visible');
+                el.setAttribute('data-scroll-finished', 'true');
               }, delay);
             } else {
               el.classList.add('scroll-visible');
+              el.setAttribute('data-scroll-finished', 'true');
             }
 
             // Unobserve unless data-scroll-once="false"
@@ -160,13 +162,14 @@ export function useScrollAnimation() {
             const once = el.getAttribute('data-scroll-once');
             if (once === 'false') {
               el.classList.remove('scroll-visible');
+              el.removeAttribute('data-scroll-finished');
             }
           }
         });
       },
       {
-        threshold: 0.05,
-        rootMargin: '0px 0px -40px 0px',
+        threshold: 0.01,
+        rootMargin: '0px 0px -10px 0px',
       }
     );
 
@@ -179,30 +182,52 @@ export function useScrollAnimation() {
       autoDetectElements();
     }, 100);
 
-    // Watch for dynamically added elements (Next.js route changes, lazy content)
-    mutationObserverRef.current = new MutationObserver((mutations) => {
-      let hasNewElements = false;
-      for (const mutation of mutations) {
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          hasNewElements = true;
-          break;
-        }
-      }
-      if (hasNewElements) {
+    let checkTimeout: NodeJS.Timeout | null = null;
+    
+    const triggerCheck = () => {
+      if (checkTimeout) clearTimeout(checkTimeout);
+      checkTimeout = setTimeout(() => {
         requestAnimationFrame(() => {
           observeElements();
           autoDetectElements();
         });
+      }, 100);
+    };
+
+    // Watch for dynamically added elements or visibility changes (tabs, modals, route changes)
+    mutationObserverRef.current = new MutationObserver((mutations) => {
+      let shouldCheck = false;
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          shouldCheck = true;
+          break;
+        }
+        if (
+          mutation.type === 'attributes' &&
+          (mutation.attributeName === 'class' || mutation.attributeName === 'style')
+        ) {
+          const target = mutation.target as HTMLElement;
+          if (target && !target.classList.contains('scroll-visible') && !target.hasAttribute('data-scroll-finished')) {
+            shouldCheck = true;
+            break;
+          }
+        }
+      }
+      if (shouldCheck) {
+        triggerCheck();
       }
     });
 
     mutationObserverRef.current.observe(document.body, {
       childList: true,
       subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style'],
     });
 
     return () => {
       clearTimeout(autoDetectTimer);
+      if (checkTimeout) clearTimeout(checkTimeout);
       observerRef.current?.disconnect();
       mutationObserverRef.current?.disconnect();
     };
