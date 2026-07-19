@@ -1279,346 +1279,347 @@ async function importPlayers(
   // Get SQL connection for checking existing stats (resume functionality)
   const sqlPlayer = getTournamentDb();
 
-  for (let i = 0; i < players.length; i++) {
-    const player = players[i];
+  // Pre-load all existing stats for this season from NEON database in a single query
+  console.log(`🔍 Pre-loading existing player stats from NEON for season: ${seasonId}...`);
+  const existingStatsRows = await sqlPlayer`
+    SELECT player_id FROM realplayerstats 
+    WHERE season_id = ${seasonId}
+  `;
+  const existingPlayerIds = new Set(existingStatsRows.map((row: any) => row.player_id));
+  console.log(`✅ Loaded ${existingPlayerIds.size} existing player stats from NEON`);
 
-    // Normalize player name to Title Case
-    const normalizedPlayerName = toTitleCase(player.name);
-    const normalizedPlayerTeam = toTitleCase(player.team);
-    console.log(`Processing player ${i + 1}/${players.length}: "${player.name}" → "${normalizedPlayerName}" (Team: "${player.team}" → "${normalizedPlayerTeam}")`);
+  const chunkSize = 20;
+  for (let i = 0; i < players.length; i += chunkSize) {
+    const chunk = players.slice(i, i + chunkSize);
+    const chunkPromises: Promise<any>[] = [];
 
-    // Check if player is manually linked to an existing player
-    let playerId: string;
-    let isNewPlayer: boolean;
-    let playerDoc: any;
+    for (let j = 0; j < chunk.length; j++) {
+      const playerIndex = i + j;
+      const player = chunk[j];
 
-    if (player.linked_player_id) {
-      // User manually linked this player - use the linked player ID
-      playerId = player.linked_player_id;
-      isNewPlayer = false;
-      // Find the linked player doc from batch lookup
-      playerDoc = null;
-      for (const [_, existingPlayer] of batchLookup.existingPlayers) {
-        if (existingPlayer.playerId === player.linked_player_id) {
-          playerDoc = existingPlayer.doc;
-          break;
+      // Normalize player name to Title Case
+      const normalizedPlayerName = toTitleCase(player.name);
+      const normalizedPlayerTeam = toTitleCase(player.team);
+      console.log(`Processing player ${playerIndex + 1}/${players.length}: "${player.name}" → "${normalizedPlayerName}" (Team: "${player.team}" → "${normalizedPlayerTeam}")`);
+
+      // Check if player is manually linked to an existing player
+      let playerId: string;
+      let isNewPlayer: boolean;
+      let playerDoc: any;
+
+      if (player.linked_player_id) {
+        // User manually linked this player - use the linked player ID
+        playerId = player.linked_player_id;
+        isNewPlayer = false;
+        // Find the linked player doc from batch lookup
+        playerDoc = null;
+        for (const [_, existingPlayer] of batchLookup.existingPlayers) {
+          if (existingPlayer.playerId === player.linked_player_id) {
+            playerDoc = existingPlayer.doc;
+            break;
+          }
         }
+        console.log(`  🔗 Using manually linked player: ${normalizedPlayerName} → ${playerId}`);
+      } else {
+        // Get existing player by name or create new one (using batch lookup - no Firebase read!)
+        const result = getOrCreatePlayerByName(normalizedPlayerName, batchLookup);
+        playerId = result.playerId;
+        isNewPlayer = result.isNew;
+        playerDoc = result.playerDoc;
       }
-      console.log(`  🔗 Using manually linked player: ${normalizedPlayerName} → ${playerId}`);
-    } else {
-      // Get existing player by name or create new one (using batch lookup - no Firebase read!)
-      const result = getOrCreatePlayerByName(normalizedPlayerName, batchLookup);
-      playerId = result.playerId;
-      isNewPlayer = result.isNew;
-      playerDoc = result.playerDoc;
-    }
-    playerIds.push(playerId);
+      playerIds.push(playerId);
 
-    // RESUME CHECK: Skip if this player already has stats in the database
-    const existingStatsCheck = await sqlPlayer`
-      SELECT id FROM realplayerstats 
-      WHERE player_id = ${playerId} AND season_id = ${seasonId}
-      LIMIT 1
-    `;
-
-    if (existingStatsCheck.length > 0) {
-      console.log(`  ⏭️  Skipping ${normalizedPlayerName} - already imported`);
-      // Update progress
-      await updateProgress(importId, {
-        processedItems: i + 1,
-        progress: ((i + 1) / players.length) * 100,
-        currentTask: `Skipped (already imported): ${normalizedPlayerName}`
-      });
-      continue; // Skip to next player
-    }
-
-    // Use existing player data from batch lookup (no Firebase read!)
-    const currentPlayerData: any = playerDoc || {};
-
-    // Create new stats object in the realplayers format with ALL statistics fields
-    const matchesPlayed = player.total_matches || 0;
-    const goalsScored = player.goals_scored || 0;
-    const goalsConceded = player.goals_conceded || 0;
-    const matchesWon = player.win || 0;
-    const matchesDrawn = player.draw || 0;
-    const matchesLost = player.loss || 0;
-    const cleanSheets = player.cleansheets || 0;
-    const totalPoints = player.total_points || player.points || 0;
-    const potm = player.potm ?? null; // Player of the Match (nullable)
-
-    const newStats = {
-      // Match statistics
-      matches_played: matchesPlayed,
-      matches_won: matchesWon,
-      matches_lost: matchesLost,
-      matches_drawn: matchesDrawn,
-
-      // Goal statistics
-      goals_scored: goalsScored,
-      goals_per_game: matchesPlayed > 0 ? parseFloat((goalsScored / matchesPlayed).toFixed(2)) : 0,
-      goals_conceded: goalsConceded,
-      conceded_per_game: matchesPlayed > 0 ? parseFloat((goalsConceded / matchesPlayed).toFixed(2)) : 0,
-      net_goals: goalsScored - goalsConceded,
-
-      // Other statistics
-      clean_sheets: cleanSheets,
-      potm: potm, // Player of the Match (nullable)
-
-      // Points and ratings
-      points: totalPoints,
-      total_points: totalPoints,
-      win_rate: matchesPlayed > 0 ? parseFloat(((matchesWon / matchesPlayed) * 100).toFixed(2)) : 0,
-      average_rating: 0, // Default to 0 for new season
-
-      // Current season tracking
-      current_season_matches: matchesPlayed,
-      current_season_wins: matchesWon
-    };
-
-    // 1. Create/Update permanent player document in realplayers collection
-    const permanentPlayerDoc: any = {
-      player_id: playerId,
-      name: player.name,
-
-      // Basic permanent info (keep existing or set defaults)
-      display_name: currentPlayerData?.display_name || player.name,
-      email: currentPlayerData?.email || '',
-      phone: currentPlayerData?.phone || '',
-      role: currentPlayerData?.role || 'player',
-      psn_id: currentPlayerData?.psn_id || '',
-      xbox_id: currentPlayerData?.xbox_id || '',
-      steam_id: currentPlayerData?.steam_id || '',
-      is_registered: currentPlayerData?.is_registered || false,
-      is_active: true,
-      is_available: currentPlayerData?.is_available !== false,
-      notes: currentPlayerData?.notes || '',
-
-      // Metadata
-      updated_at: FieldValue.serverTimestamp()
-    };
-
-    if (isNewPlayer) {
-      permanentPlayerDoc.created_at = FieldValue.serverTimestamp();
-      permanentPlayerDoc.joined_date = FieldValue.serverTimestamp();
-    }
-
-    // Update name to normalized version
-    permanentPlayerDoc.name = normalizedPlayerName;
-    permanentPlayerDoc.display_name = currentPlayerData?.display_name || normalizedPlayerName;
-
-    // Save to realplayers collection
-    const playerRef = adminDb.collection('realplayers').doc(playerId);
-    batch.set(playerRef, permanentPlayerDoc, { merge: true });
-
-    // 2. Create/Update season-specific stats document in realplayerstats collection
-    // Use composite ID: player_id_seasonId for easy lookup
-    const statsDocId = `${playerId}_${seasonId}`;
-    const existingStatsDocId = batchLookup.existingStats.get(statsDocId);
-
-    let isNewStats = false;
-
-    if (existingStatsDocId) {
-      console.log(`  📋 Updating stats for ${player.name} in season ${seasonId}`);
-    } else {
-      isNewStats = true;
-      console.log(`  🆕 Creating stats for ${player.name} in season ${seasonId}`);
-    }
-
-    // Write player stats to NEON instead of Firebase
-    // sqlPlayer is already declared at the function level (line 1279)
-    const teamIdForPlayer = teamMap.get(normalizedPlayerTeam) || null;
-
-    // Parse trophies from Excel data (handles numbered columns like category_wise_trophy_1, category_wise_trophy_2, etc.)
-    const playerAwards: Array<{ award_name: string; award_position: string | null; type: 'category' | 'individual' }> = [];
-
-    // Helper function to parse trophy/award name and extract position
-    const parseAwardName = (rawName: any): { name: string; position: string | null } => {
-      // Convert to string and handle non-string values
-      const nameStr = String(rawName || '').trim();
-      if (!nameStr) return { name: '', position: null };
-
-      const normalized = nameStr.toUpperCase();
-
-      // Check for position indicators
-      if (normalized.endsWith('RUNNER UP') || normalized.endsWith('RUNNER-UP')) {
-        const awardName = normalized.replace(/RUNNER[\s-]*UP$/, '').trim();
-        return { name: awardName, position: 'Runner-up' };
-      }
-      if (normalized.endsWith('WINNER') || normalized.endsWith('WINNERS')) {
-        const awardName = normalized.replace(/WINNERS?$/, '').trim();
-        return { name: awardName, position: 'Winner' };
-      }
-      if (normalized.endsWith('THIRD PLACE') || normalized.endsWith('3RD PLACE')) {
-        const awardName = normalized.replace(/(THIRD|3RD)\s+PLACE$/, '').trim();
-        return { name: awardName, position: 'Third Place' };
+      // RESUME CHECK: Skip if this player already has stats in the database (using our pre-loaded Set)
+      if (existingPlayerIds.has(playerId)) {
+        console.log(`  ⏭️  Skipping ${normalizedPlayerName} - already imported`);
+        continue; // Skip database inserts for this player
       }
 
-      // If no position indicator found, return name with null position
-      return { name: nameStr, position: null };
-    };
+      // Use existing player data from batch lookup (no Firebase read!)
+      const currentPlayerData: any = playerDoc || {};
 
-    // First, check if trophies come as arrays from preview (category_trophies, individual_trophies)
-    if (Array.isArray((player as any).category_trophies)) {
-      (player as any).category_trophies.forEach((trophy: string) => {
-        if (trophy && trophy.trim()) {
-          const parsed = parseAwardName(trophy);
-          if (parsed.name) {
+      // Create new stats object in the realplayers format with ALL statistics fields
+      const matchesPlayed = player.total_matches || 0;
+      const goalsScored = player.goals_scored || 0;
+      const goalsConceded = player.goals_conceded || 0;
+      const matchesWon = player.win || 0;
+      const matchesDrawn = player.draw || 0;
+      const matchesLost = player.loss || 0;
+      const cleanSheets = player.cleansheets || 0;
+      const totalPoints = player.total_points || player.points || 0;
+      const potm = player.potm ?? null; // Player of the Match (nullable)
+
+      const newStats = {
+        // Match statistics
+        matches_played: matchesPlayed,
+        matches_won: matchesWon,
+        matches_lost: matchesLost,
+        matches_drawn: matchesDrawn,
+
+        // Goal statistics
+        goals_scored: goalsScored,
+        goals_per_game: matchesPlayed > 0 ? parseFloat((goalsScored / matchesPlayed).toFixed(2)) : 0,
+        goals_conceded: goalsConceded,
+        conceded_per_game: matchesPlayed > 0 ? parseFloat((goalsConceded / matchesPlayed).toFixed(2)) : 0,
+        net_goals: goalsScored - goalsConceded,
+
+        // Other statistics
+        clean_sheets: cleanSheets,
+        potm: potm, // Player of the Match (nullable)
+
+        // Points and ratings
+        points: totalPoints,
+        total_points: totalPoints,
+        win_rate: matchesPlayed > 0 ? parseFloat(((matchesWon / matchesPlayed) * 100).toFixed(2)) : 0,
+        average_rating: 0, // Default to 0 for new season
+
+        // Current season tracking
+        current_season_matches: matchesPlayed,
+        current_season_wins: matchesWon
+      };
+
+      // 1. Create/Update permanent player document in realplayers collection
+      const permanentPlayerDoc: any = {
+        player_id: playerId,
+        name: player.name,
+
+        // Basic permanent info (keep existing or set defaults)
+        display_name: currentPlayerData?.display_name || player.name,
+        email: currentPlayerData?.email || '',
+        phone: currentPlayerData?.phone || '',
+        role: currentPlayerData?.role || 'player',
+        psn_id: currentPlayerData?.psn_id || '',
+        xbox_id: currentPlayerData?.xbox_id || '',
+        steam_id: currentPlayerData?.steam_id || '',
+        is_registered: currentPlayerData?.is_registered || false,
+        is_active: true,
+        is_available: currentPlayerData?.is_available !== false,
+        notes: currentPlayerData?.notes || '',
+
+        // Metadata
+        updated_at: FieldValue.serverTimestamp()
+      };
+
+      if (isNewPlayer) {
+        permanentPlayerDoc.created_at = FieldValue.serverTimestamp();
+        permanentPlayerDoc.joined_date = FieldValue.serverTimestamp();
+      }
+
+      // Update name to normalized version
+      permanentPlayerDoc.name = normalizedPlayerName;
+      permanentPlayerDoc.display_name = currentPlayerData?.display_name || normalizedPlayerName;
+
+      // Save to realplayers collection
+      const playerRef = adminDb.collection('realplayers').doc(playerId);
+      batch.set(playerRef, permanentPlayerDoc, { merge: true });
+
+      // 2. Create/Update season-specific stats document in realplayerstats collection
+      const statsDocId = `${playerId}_${seasonId}`;
+      const existingStatsDocId = batchLookup.existingStats.get(statsDocId);
+
+      if (existingStatsDocId) {
+        console.log(`  📋 Will update stats for ${player.name} in season ${seasonId}`);
+      } else {
+        console.log(`  🆕 Will create stats for ${player.name} in season ${seasonId}`);
+      }
+
+      const teamIdForPlayer = teamMap.get(normalizedPlayerTeam) || null;
+
+      // Parse trophies from Excel data (handles numbered columns like category_wise_trophy_1, category_wise_trophy_2, etc.)
+      const playerAwards: Array<{ award_name: string; award_position: string | null; type: 'category' | 'individual' }> = [];
+
+      // Helper function to parse trophy/award name and extract position
+      const parseAwardName = (rawName: any): { name: string; position: string | null } => {
+        // Convert to string and handle non-string values
+        const nameStr = String(rawName || '').trim();
+        if (!nameStr) return { name: '', position: null };
+
+        const normalized = nameStr.toUpperCase();
+
+        // Check for position indicators
+        if (normalized.endsWith('RUNNER UP') || normalized.endsWith('RUNNER-UP')) {
+          const awardName = normalized.replace(/RUNNER[\s-]*UP$/, '').trim();
+          return { name: awardName, position: 'Runner-up' };
+        }
+        if (normalized.endsWith('WINNER') || normalized.endsWith('WINNERS')) {
+          const awardName = normalized.replace(/WINNERS?$/, '').trim();
+          return { name: awardName, position: 'Winner' };
+        }
+        if (normalized.endsWith('THIRD PLACE') || normalized.endsWith('3RD PLACE')) {
+          const awardName = normalized.replace(/(THIRD|3RD)\s+PLACE$/, '').trim();
+          return { name: awardName, position: 'Third Place' };
+        }
+
+        // If no position indicator found, return name with null position
+        return { name: nameStr, position: null };
+      };
+
+      // First, check if trophies come as arrays from preview (category_trophies, individual_trophies)
+      if (Array.isArray((player as any).category_trophies)) {
+        (player as any).category_trophies.forEach((trophy: string) => {
+          if (trophy && trophy.trim()) {
+            const parsed = parseAwardName(trophy);
+            if (parsed.name) {
+              playerAwards.push({ award_name: parsed.name, award_position: parsed.position, type: 'category' });
+            }
+          }
+        });
+      }
+
+      if (Array.isArray((player as any).individual_trophies)) {
+        (player as any).individual_trophies.forEach((trophy: string) => {
+          if (trophy && trophy.trim()) {
+            const parsed = parseAwardName(trophy);
+            if (parsed.name) {
+              playerAwards.push({ award_name: parsed.name, award_position: parsed.position, type: 'individual' });
+            }
+          }
+        });
+      }
+
+      // Also scan all player properties for trophy columns (for direct Excel imports)
+      Object.keys(player).forEach((key) => {
+        const lowerKey = key.toLowerCase();
+        const value = (player as any)[key];
+
+        // Skip if already processed as arrays
+        if (lowerKey === 'category_trophies' || lowerKey === 'individual_trophies') return;
+
+        // Skip empty values
+        if (!value || value === '') return;
+
+        const parsed = parseAwardName(value);
+
+        // Only add if award name is not empty
+        if (parsed.name) {
+          // Check for category trophies (Cat Trophy, category_wise_trophy_1, etc.)
+          if ((lowerKey.includes('category') || lowerKey.includes('cat')) && lowerKey.includes('trophy')) {
             playerAwards.push({ award_name: parsed.name, award_position: parsed.position, type: 'category' });
+            console.log(`    🏆 Found category trophy from column "${key}": ${parsed.name}`);
           }
-        }
-      });
-    }
-
-    if (Array.isArray((player as any).individual_trophies)) {
-      (player as any).individual_trophies.forEach((trophy: string) => {
-        if (trophy && trophy.trim()) {
-          const parsed = parseAwardName(trophy);
-          if (parsed.name) {
+          // Check for individual trophies (Ind Trophy, individual_wise_trophy_1, etc.)
+          else if ((lowerKey.includes('individual') || lowerKey.includes('ind')) && lowerKey.includes('trophy')) {
             playerAwards.push({ award_name: parsed.name, award_position: parsed.position, type: 'individual' });
+            console.log(`    🏆 Found individual trophy from column "${key}": ${parsed.name}`);
           }
         }
       });
-    }
 
-    // Also scan all player properties for trophy columns (for direct Excel imports)
-    Object.keys(player).forEach((key) => {
-      const lowerKey = key.toLowerCase();
-      const value = (player as any)[key];
-
-      // Skip if already processed as arrays
-      if (lowerKey === 'category_trophies' || lowerKey === 'individual_trophies') return;
-
-      // Skip empty values
-      if (!value || value === '') return;
-
-      const parsed = parseAwardName(value);
-
-      // Only add if award name is not empty
-      if (parsed.name) {
-        // Check for category trophies (Cat Trophy, category_wise_trophy_1, etc.)
-        if ((lowerKey.includes('category') || lowerKey.includes('cat')) && lowerKey.includes('trophy')) {
-          playerAwards.push({ award_name: parsed.name, award_position: parsed.position, type: 'category' });
-          console.log(`    🏆 Found category trophy from column "${key}": ${parsed.name}`);
-        }
-        // Check for individual trophies (Ind Trophy, individual_wise_trophy_1, etc.)
-        else if ((lowerKey.includes('individual') || lowerKey.includes('ind')) && lowerKey.includes('trophy')) {
-          playerAwards.push({ award_name: parsed.name, award_position: parsed.position, type: 'individual' });
-          console.log(`    🏆 Found individual trophy from column "${key}": ${parsed.name}`);
-        }
+      console.log(`  🏆 Total awards found for ${normalizedPlayerName}: ${playerAwards.length}`);
+      if (playerAwards.length > 0) {
+        console.log(`  🏆 Awards: ${playerAwards.map(a => `${a.award_name} (${a.type})`).join(', ')}`);
       }
-    });
 
-    console.log(`  🏆 Total awards found for ${normalizedPlayerName}: ${playerAwards.length}`);
-    if (playerAwards.length > 0) {
-      console.log(`  🏆 Awards: ${playerAwards.map(a => `${a.award_name} (${a.type})`).join(', ')}`);
-    }
+      // For backward compatibility, still store in trophies JSONB (but we'll use player_awards table as primary)
+      const trophiesJson = JSON.stringify(playerAwards.map(a => ({ type: a.type, name: a.award_name })));
 
-    // For backward compatibility, still store in trophies JSONB (but we'll use player_awards table as primary)
-    const trophiesJson = JSON.stringify(playerAwards.map(a => ({ type: a.type, name: a.award_name })));
-
-    await sqlPlayer`
-      INSERT INTO realplayerstats (
-        id, player_id, season_id, player_name, tournament_id,
-        category, team, team_id,
-        matches_played, matches_won, matches_drawn, matches_lost,
-        goals_scored, goals_conceded, assists, wins, draws, losses,
-        clean_sheets, motm_awards, points, star_rating, trophies,
-        created_at, updated_at
-      )
-      VALUES (
-        ${statsDocId}, ${playerId}, ${seasonId}, ${normalizedPlayerName}, 'historical',
-        ${player.category || ''}, ${normalizedPlayerTeam}, ${teamIdForPlayer},
-        ${newStats.matches_played || 0}, ${newStats.matches_won || 0}, 
-        ${newStats.matches_drawn || 0}, ${newStats.matches_lost || 0},
-        ${newStats.goals_scored || 0}, ${newStats.goals_conceded || 0},
-        ${(player as any).assists || 0}, 
-        ${newStats.matches_won || 0}, ${newStats.matches_drawn || 0}, ${newStats.matches_lost || 0},
-        ${newStats.clean_sheets || 0}, ${newStats.potm || 0},
-        ${newStats.total_points || 0}, 3, ${trophiesJson}::jsonb,
-        NOW(), NOW()
-      )
-      ON CONFLICT (player_id, season_id) DO UPDATE
-      SET
-        id = EXCLUDED.id,
-        tournament_id = EXCLUDED.tournament_id,
-        player_name = EXCLUDED.player_name,
-        category = EXCLUDED.category,
-        team = EXCLUDED.team,
-        team_id = EXCLUDED.team_id,
-        matches_played = realplayerstats.matches_played + EXCLUDED.matches_played,
-        matches_won = realplayerstats.matches_won + EXCLUDED.matches_won,
-        matches_drawn = realplayerstats.matches_drawn + EXCLUDED.matches_drawn,
-        matches_lost = realplayerstats.matches_lost + EXCLUDED.matches_lost,
-        goals_scored = realplayerstats.goals_scored + EXCLUDED.goals_scored,
-        goals_conceded = realplayerstats.goals_conceded + EXCLUDED.goals_conceded,
-        assists = realplayerstats.assists + EXCLUDED.assists,
-        wins = realplayerstats.wins + EXCLUDED.wins,
-        draws = realplayerstats.draws + EXCLUDED.draws,
-        losses = realplayerstats.losses + EXCLUDED.losses,
-        clean_sheets = realplayerstats.clean_sheets + EXCLUDED.clean_sheets,
-        motm_awards = realplayerstats.motm_awards + EXCLUDED.motm_awards,
-        points = realplayerstats.points + EXCLUDED.points,
-        trophies = EXCLUDED.trophies,
-        updated_at = NOW()
-    `;
-
-    console.log(`✅ Created/Updated player stats in NEON: ${normalizedPlayerName}`);
-
-    // ✅ Insert player awards into player_awards table with separate name and position
-    for (const award of playerAwards) {
-      try {
-        // Determine player_category: use player's position category
-        const playerCategory = player.category || null;
-
+      // Perform SQL insertions inside an async Promise block so we can run them in parallel
+      const sqlPromise = (async () => {
         await sqlPlayer`
-          INSERT INTO player_awards (
-            player_id, player_name, season_id, 
-            award_category, award_type, award_position,
-            player_category, created_at, updated_at
+          INSERT INTO realplayerstats (
+            id, player_id, season_id, player_name, tournament_id,
+            category, team, team_id,
+            matches_played, matches_won, matches_drawn, matches_lost,
+            goals_scored, goals_conceded, assists, wins, draws, losses,
+            clean_sheets, motm_awards, points, star_rating, trophies,
+            created_at, updated_at
           )
           VALUES (
-            ${playerId}, ${normalizedPlayerName}, ${seasonId},
-            ${award.type}, ${award.award_name}, ${award.award_position},
-            ${playerCategory}, NOW(), NOW()
+            ${statsDocId}, ${playerId}, ${seasonId}, ${normalizedPlayerName}, 'historical',
+            ${player.category || ''}, ${normalizedPlayerTeam}, ${teamIdForPlayer},
+            ${newStats.matches_played || 0}, ${newStats.matches_won || 0}, 
+            ${newStats.matches_drawn || 0}, ${newStats.matches_lost || 0},
+            ${newStats.goals_scored || 0}, ${newStats.goals_conceded || 0},
+            ${(player as any).assists || 0}, 
+            ${newStats.matches_won || 0}, ${newStats.matches_drawn || 0}, ${newStats.matches_lost || 0},
+            ${newStats.clean_sheets || 0}, ${newStats.potm || 0},
+            ${newStats.total_points || 0}, 3, ${trophiesJson}::jsonb,
+            NOW(), NOW()
           )
-          ON CONFLICT (player_id, season_id, award_category, award_type, award_position) 
-          DO UPDATE SET
+          ON CONFLICT (player_id, season_id) DO UPDATE
+          SET
+            id = EXCLUDED.id,
+            tournament_id = EXCLUDED.tournament_id,
             player_name = EXCLUDED.player_name,
-            player_category = EXCLUDED.player_category,
+            category = EXCLUDED.category,
+            team = EXCLUDED.team,
+            team_id = EXCLUDED.team_id,
+            matches_played = realplayerstats.matches_played + EXCLUDED.matches_played,
+            matches_won = realplayerstats.matches_won + EXCLUDED.matches_won,
+            matches_drawn = realplayerstats.matches_drawn + EXCLUDED.matches_drawn,
+            matches_lost = realplayerstats.matches_lost + EXCLUDED.matches_lost,
+            goals_scored = realplayerstats.goals_scored + EXCLUDED.goals_scored,
+            goals_conceded = realplayerstats.goals_conceded + EXCLUDED.goals_conceded,
+            assists = realplayerstats.assists + EXCLUDED.assists,
+            wins = realplayerstats.wins + EXCLUDED.wins,
+            draws = realplayerstats.draws + EXCLUDED.draws,
+            losses = realplayerstats.losses + EXCLUDED.losses,
+            clean_sheets = realplayerstats.clean_sheets + EXCLUDED.clean_sheets,
+            motm_awards = realplayerstats.motm_awards + EXCLUDED.motm_awards,
+            points = realplayerstats.points + EXCLUDED.points,
+            trophies = EXCLUDED.trophies,
             updated_at = NOW()
         `;
-      } catch (awardError) {
-        console.error(`⚠️  Error inserting award for ${normalizedPlayerName}:`, awardError);
-        // Continue with other awards even if one fails
+
+        // ✅ Insert player awards into player_awards table with separate name and position
+        for (const award of playerAwards) {
+          try {
+            // Determine player_category: use player's position category
+            const playerCategory = player.category || null;
+
+            await sqlPlayer`
+              INSERT INTO player_awards (
+                player_id, player_name, season_id, 
+                award_category, award_type, award_position,
+                player_category, created_at, updated_at
+              )
+              VALUES (
+                ${playerId}, ${normalizedPlayerName}, ${seasonId},
+                ${award.type}, ${award.award_name}, ${award.award_position},
+                ${playerCategory}, NOW(), NOW()
+              )
+              ON CONFLICT (player_id, season_id, award_category, award_type, award_position) 
+              DO UPDATE SET
+                player_name = EXCLUDED.player_name,
+                player_category = EXCLUDED.player_category,
+                updated_at = NOW()
+            `;
+          } catch (awardError) {
+            console.error(`⚠️  Error inserting award for ${normalizedPlayerName}:`, awardError);
+          }
+        }
+      })();
+
+      chunkPromises.push(sqlPromise);
+
+      // Update team statistics
+      const teamStats = normalizedPlayerTeam ? teamStatsMap.get(normalizedPlayerTeam.toLowerCase()) : null;
+      if (teamStats) {
+        teamStats.playerCount++;
+        teamStats.totalGoals += player.goals_scored || 0;
+        teamStats.totalPoints += player.total_points || 0;
+        teamStats.totalMatches = Math.max(teamStats.totalMatches, player.total_matches || 0);
+      }
+
+      // Commit batch every 400 documents to avoid Firestore limits
+      if ((playerIndex + 1) % 400 === 0) {
+        await batch.commit();
+        batch = adminDb.batch();
       }
     }
 
-    if (playerAwards.length > 0) {
-      console.log(`✅ Inserted ${playerAwards.length} awards for ${normalizedPlayerName}`);
+    // Wait for all SQL inserts in this chunk to complete in parallel
+    if (chunkPromises.length > 0) {
+      await Promise.all(chunkPromises);
     }
 
-    // Update team statistics
-    const teamStats = normalizedPlayerTeam ? teamStatsMap.get(normalizedPlayerTeam.toLowerCase()) : null;
-    if (teamStats) {
-      teamStats.playerCount++;
-      teamStats.totalGoals += player.goals_scored || 0;
-      teamStats.totalPoints += player.total_points || 0;
-      teamStats.totalMatches = Math.max(teamStats.totalMatches, player.total_matches || 0);
-    }
-
-    // Update progress
+    // Update progress after each chunk
+    const currentProcessed = Math.min(i + chunkSize, players.length);
     await updateProgress(importId, {
-      processedItems: i + 1,
-      progress: ((i + 1) / players.length) * 100,
-      currentTask: `Creating player: ${normalizedPlayerName} (${normalizedPlayerTeam})`
+      processedItems: currentProcessed,
+      progress: (currentProcessed / players.length) * 100,
+      currentTask: `Created ${currentProcessed} of ${players.length} players...`
     });
-
-    // Commit batch every 400 documents to avoid Firestore limits
-    if ((i + 1) % 400 === 0) {
-      await batch.commit();
-      // Start new batch for remaining items
-      batch = adminDb.batch();
-    }
   }
 
   await batch.commit();
