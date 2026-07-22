@@ -64,10 +64,12 @@ const validateTeam = (team: any, index: number): { team?: ParsedTeam; errors: st
   }
   
   // Required numeric fields
-  const numericFields = ['rank', 'p', 'mp', 'w', 'd', 'l', 'f', 'a', 'gd', 'percentage'];
+  const requiredNumericFields = ['rank', 'p', 'mp', 'w', 'd', 'l', 'percentage'];
+  // Optional numeric fields (goals stats)
+  const optionalNumericFields = ['f', 'a', 'gd'];
   const numericValues: any = {};
   
-  numericFields.forEach(field => {
+  requiredNumericFields.forEach(field => {
     let rawValue = team[field];
     // Trim whitespace if it's a string
     if (typeof rawValue === 'string') {
@@ -78,6 +80,31 @@ const validateTeam = (team: any, index: number): { team?: ParsedTeam; errors: st
       errors.push(`Row ${index + 1}: ${field.toUpperCase()} must be a valid number`);
     } else {
       numericValues[field] = value;
+    }
+  });
+
+  // Parse optional numeric fields (default to 0 if missing)
+  optionalNumericFields.forEach(field => {
+    let rawValue = team[field];
+    // Trim whitespace if it's a string
+    if (typeof rawValue === 'string') {
+      rawValue = rawValue.trim();
+    }
+    
+    if (rawValue === undefined || rawValue === null || rawValue === '') {
+      // Calculate gd dynamically if f and a are provided
+      if (field === 'gd' && numericValues.f !== undefined && numericValues.a !== undefined) {
+        numericValues.gd = numericValues.f - numericValues.a;
+      } else {
+        numericValues[field] = 0;
+      }
+    } else {
+      const value = Number(rawValue);
+      if (isNaN(value)) {
+        errors.push(`Row ${index + 1}: ${field.toUpperCase()} must be a valid number or empty`);
+      } else {
+        numericValues[field] = value;
+      }
     }
   });
   

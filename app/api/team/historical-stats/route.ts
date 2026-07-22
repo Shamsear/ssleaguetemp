@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
         points, position
       FROM teamstats
       WHERE team_name = ${teamName}
-      ORDER BY season_id DESC
+      ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC
     `;
 
     // ✅ Fetch player stats from NEON for this team across all seasons (optimized - only needed columns)
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         clean_sheets, points
       FROM realplayerstats
       WHERE team = ${teamName}
-      ORDER BY season_id DESC, player_name
+      ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC, player_name
     `;
 
     // Calculate aggregated statistics
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       SELECT id, trophy_type, trophy_name, trophy_position, position, season_id, notes
       FROM team_trophies
       WHERE team_name = ${teamName}
-      ORDER BY season_id DESC
+      ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC
     `;
     
     // Count trophies by type

@@ -108,7 +108,7 @@ export async function GET(
       FROM teamstats
       WHERE team_id = ${teamId}
       GROUP BY team_id, season_id
-      ORDER BY season_id DESC
+      ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC
     `;
 
     if (!seasonStats || seasonStats.length === 0) {
@@ -243,7 +243,11 @@ export async function GET(
     }
 
     // Sort by most recent season first
-    seasons.sort((a, b) => b.season_name.localeCompare(a.season_name));
+    seasons.sort((a, b) => {
+      const numA = parseInt(a.season_id.replace(/\D/g, '')) || 0;
+      const numB = parseInt(b.season_id.replace(/\D/g, '')) || 0;
+      return numB - numA;
+    });
 
     return NextResponse.json({
       success: true,

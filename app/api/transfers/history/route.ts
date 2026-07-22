@@ -194,7 +194,10 @@ export async function GET(request: NextRequest) {
         transactions: paginatedTxns,
         totalCount,
         hasMore: endIndex < allTxns.length,
-        availableSeasons: Array.from(seasonsSet).sort().reverse(),
+        availableSeasons: Array.from(seasonsSet).sort((a, b) => {
+          const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
+          return getSeasonNum(b) - getSeasonNum(a);
+        }),
       },
     });
 

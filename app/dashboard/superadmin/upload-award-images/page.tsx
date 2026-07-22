@@ -117,7 +117,8 @@ export default function UploadAwardImagesPage() {
       allTrophies.forEach((t: any) => t.season_id && seasonSet.add(t.season_id));
 
       if (seasonSet.size > 0) {
-        const uniqueSeasons = Array.from(seasonSet).sort().reverse();
+        const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
+        const uniqueSeasons = Array.from(seasonSet).sort((a, b) => getSeasonNum(b) - getSeasonNum(a));
         setSeasons(uniqueSeasons);
       }
     } catch (error) {

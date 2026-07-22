@@ -14,7 +14,7 @@ export async function GET() {
         tt.team_id,
         tt.team_name,
         COUNT(*) as championship_count,
-        ARRAY_AGG(tt.season_id ORDER BY tt.season_id) as seasons_won,
+        ARRAY_AGG(tt.season_id ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(tt.season_id, '[^0-9]', '', 'g'), ''), '0')::integer) as seasons_won,
         MAX(ts.points) as best_points,
         SUM(ts.wins) as total_wins,
         SUM(ts.goals_for) as total_goals
@@ -52,7 +52,7 @@ export async function GET() {
         team_id,
         team_name,
         COUNT(*) as cup_count,
-        ARRAY_AGG(season_id ORDER BY season_id) as seasons
+        ARRAY_AGG(season_id ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer) as seasons
       FROM team_trophies
       WHERE (
         -- S1-S16 historical: exact type+name match

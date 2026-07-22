@@ -80,7 +80,8 @@ export async function GET(request: NextRequest) {
     });
 
     // Get unique seasons
-    const seasons = [...new Set(items.map(i => i.season_id))].sort().reverse();
+    const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
+    const seasons = [...new Set(items.map(i => i.season_id))].sort((a, b) => getSeasonNum(b) - getSeasonNum(a));
 
     return NextResponse.json({
       success: true,

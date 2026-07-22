@@ -63,7 +63,7 @@ export async function GET(
         position as rank
       FROM teamstats
       WHERE team_id = ${teamId}
-      ORDER BY season_id DESC
+      ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC
     `;
 
     // 4. Fetch championships/achievements from Firebase seasons
@@ -107,7 +107,7 @@ export async function GET(
       WHERE team_id = ${teamId}
         AND (season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%')
       GROUP BY player_id, player_name, category, season_id
-      ORDER BY season_id DESC, points DESC
+      ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC, points DESC
     `;
 
     // From realplayerstats (season 1-15 and S18+)
@@ -124,7 +124,7 @@ export async function GET(
       WHERE team_id = ${teamId}
         AND (season_id NOT LIKE 'SSPSLS16%' AND season_id NOT LIKE 'SSPSLS17%')
       GROUP BY player_id, player_name, category, season_id
-      ORDER BY season_id DESC, points DESC
+      ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC, points DESC
     `;
 
     // Combine and aggregate player stats
@@ -170,7 +170,7 @@ export async function GET(
         status
       FROM fixtures
       WHERE home_team_id = ${teamId} OR away_team_id = ${teamId}
-      ORDER BY season_id DESC, match_day DESC
+      ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC, match_day DESC
       LIMIT 20
     `;
 

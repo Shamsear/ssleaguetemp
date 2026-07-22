@@ -74,9 +74,10 @@ async function executeRealPlayerTakeover() {
 
     // Get unique players and their latest data
     const playerMap = new Map();
+    const getSeasonNum = (id) => parseInt(id.replace(/\D/g, '')) || 0;
     kopitesRecords.forEach(record => {
       const key = record.player_id;
-      if (!playerMap.has(key) || record.season_id > playerMap.get(key).season_id) {
+      if (!playerMap.has(key) || getSeasonNum(record.season_id) > getSeasonNum(playerMap.get(key).season_id)) {
         playerMap.set(key, record);
       }
     });

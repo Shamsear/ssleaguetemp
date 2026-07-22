@@ -40,8 +40,9 @@ async function previewHistoricalTeams() {
         current.seasons.push(seasonId);
         current.allNames.add(teamName);
         
-        // Update to latest season (lexicographic comparison for season IDs)
-        if (seasonId > current.seasonId) {
+        // Update to latest season (compare season IDs numerically)
+        const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
+        if (getSeasonNum(seasonId) > getSeasonNum(current.seasonId)) {
           current.seasonId = seasonId;
           current.name = teamName;
         }
@@ -75,7 +76,11 @@ async function previewHistoricalTeams() {
           final_name: data.name,
           latest_season: data.seasonId,
           total_seasons: data.seasons.length,
-          seasons: data.seasons.sort(),
+          seasons: data.seasons.sort((a, b) => {
+            const numA = parseInt(a.replace(/\D/g, '')) || 0;
+            const numB = parseInt(b.replace(/\D/g, '')) || 0;
+            return numA - numB;
+          }),
           had_multiple_names: data.allNames.size > 1,
           all_names: Array.from(data.allNames)
         };

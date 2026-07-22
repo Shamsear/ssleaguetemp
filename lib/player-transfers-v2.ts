@@ -321,7 +321,7 @@ export async function fetchFutureSeasonContracts(
         FROM realplayerstats
         WHERE player_id = $1
         
-        ORDER BY season_id
+        ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer ASC
       `;
       result = await executeSql(sql, query, [playerId]);
     } else {
@@ -340,7 +340,7 @@ export async function fetchFutureSeasonContracts(
           season_id
         FROM footballplayers
         WHERE player_id = $1
-        ORDER BY season_id
+        ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer ASC
       `;
       result = await executeSql(sql, query, [playerId]);
     }

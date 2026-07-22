@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         SELECT *
         FROM team_trophies
         WHERE team_id = ${teamId}
-        ORDER BY season_id DESC,
+        ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC,
           CASE trophy_type
             WHEN 'league' THEN 1
             WHEN 'runner_up' THEN 2

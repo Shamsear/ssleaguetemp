@@ -236,7 +236,7 @@ export default function ImportHistoricalSeason() {
           <div className="space-y-2 text-xs leading-relaxed text-slate-600">
             <p className="font-bold text-slate-800">Spreadsheet Schema Requirements:</p>
             <ul className="list-disc list-inside space-y-1 text-slate-600 font-mono text-[11px]">
-              <li><strong>Teams Sheet:</strong> Columns: <code className="text-amber-700 font-bold">rank, team, owner_name, p, mp, w, d, l, f, a, gd, percentage, cup (optional)</code>.</li>
+              <li><strong>Teams Sheet:</strong> Columns: <code className="text-amber-705 font-bold">rank, team, owner_name, p, mp, w, d, l, percentage, f (optional), a (optional), gd (optional), cup (optional)</code>.</li>
               <li><strong>Players Sheet:</strong> Columns: <code className="text-amber-700 font-bold">name, team, category, goals_scored, goals_per_game, goals_conceded, conceded_per_game, net_goals, cleansheets, points, win, draw, loss, total_matches, total_points</code>.</li>
               <li><strong>Workbook structure:</strong> Must be a standard Excel (.xlsx, .xls) workbook with exactly two sheets: <code className="font-semibold text-slate-800">Teams</code> and <code className="font-semibold text-slate-800">Players</code>.</li>
             </ul>

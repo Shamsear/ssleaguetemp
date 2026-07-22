@@ -129,7 +129,7 @@ export async function GET(
             'modern' as data_source
           FROM player_seasons
           WHERE team_id = ${teamId}
-          ORDER BY season_id DESC, points DESC, player_name ASC
+          ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC, points DESC, player_name ASC
         `,
         // Historical seasons (1-15)
         // Use LEFT JOIN with teamstats to match by team name when team_id is NULL
@@ -155,7 +155,7 @@ export async function GET(
           FROM realplayerstats rps
           LEFT JOIN teamstats ts ON rps.season_id = ts.season_id AND rps.team = ts.team_name
           WHERE rps.team_id = ${teamId} OR ts.team_id = ${teamId}
-          ORDER BY rps.season_id DESC, rps.points DESC, rps.player_name ASC
+          ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(rps.season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC, rps.points DESC, rps.player_name ASC
         `
       ]);
     }

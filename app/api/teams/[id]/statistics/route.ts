@@ -436,7 +436,7 @@ async function getSeasonSummary(sql: any, teamId: string, seasonId: string | nul
         AND status = 'completed'
         AND home_score IS NOT NULL
         AND away_score IS NOT NULL
-      ORDER BY season_id DESC
+      ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC
     `;
   }
 

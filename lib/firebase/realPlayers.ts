@@ -153,7 +153,8 @@ export const getAllRealPlayers = async (): Promise<RealPlayerData[]> => {
         result.data.forEach((ps: any) => {
           // Keep only the latest season for each player
           const existing = playerSeasonsMap.get(ps.player_id);
-          if (!existing || ps.season_id > existing.season_id) {
+          const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
+          if (!existing || getSeasonNum(ps.season_id) > getSeasonNum(existing.season_id)) {
             playerSeasonsMap.set(ps.player_id, ps);
           }
         });

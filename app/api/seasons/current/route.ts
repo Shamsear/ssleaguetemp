@@ -18,7 +18,7 @@ export async function GET() {
       FROM tournaments
       WHERE status = 'active'
       GROUP BY season_id
-      ORDER BY season_id DESC
+      ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC
       LIMIT 1
     `;
 
@@ -31,7 +31,7 @@ export async function GET() {
           MAX(status) as status
         FROM tournaments
         GROUP BY season_id
-        ORDER BY season_id DESC
+        ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC
         LIMIT 1
       `;
 

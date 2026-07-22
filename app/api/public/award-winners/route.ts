@@ -154,7 +154,11 @@ export async function GET() {
       .map((stat: any) => ({
         ...stat,
         seasons: Array.isArray(stat.seasons) 
-          ? stat.seasons.sort((a: any, b: any) => String(a).localeCompare(String(b))) 
+          ? stat.seasons.sort((a: any, b: any) => {
+              const numA = parseInt(String(a).replace(/\D/g, '')) || 0;
+              const numB = parseInt(String(b).replace(/\D/g, '')) || 0;
+              return numA - numB;
+            }) 
           : []
       }));
 

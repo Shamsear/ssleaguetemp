@@ -21,9 +21,10 @@ export async function GET(request: NextRequest) {
       
       if (!allTeamsSnapshot.empty) {
         // Get all unique season IDs and sort to find the latest
+        const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
         const seasons = Array.from(new Set(
           allTeamsSnapshot.docs.map(doc => doc.data().season_id)
-        )).sort().reverse();
+        )).sort((a, b) => getSeasonNum(b) - getSeasonNum(a));
         
         targetSeasonId = seasons[0]; // Most recent season (e.g., SSPSLS17)
         console.log('📅 Available seasons:', seasons);
