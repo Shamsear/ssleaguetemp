@@ -25,7 +25,8 @@ import {
   Edit, 
   Award, 
   ListOrdered, 
-  BarChart3 
+  BarChart3,
+  DollarSign
 } from 'lucide-react';
 
 export default function SuperAdminDashboard() {
@@ -460,6 +461,19 @@ export default function SuperAdminDashboard() {
                 </div>
                 <h3 className="font-bold text-slate-800 text-sm">Team Seasons Balance</h3>
                 <p className="text-[11px] text-slate-550 mt-1.5 font-sans leading-relaxed">Directly modify team budget files (eCoin and SSCoin balances) and slot totals.</p>
+              </div>
+            </button>
+
+            <button 
+              onClick={() => router.push('/dashboard/superadmin/cash-balances')}
+              className="console-card bg-white border border-slate-200/60 hover:border-emerald-400/40 p-5 shadow-sm transition-all hover:-translate-y-0.5 flex flex-col justify-between min-h-[160px] text-left"
+            >
+              <div>
+                <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 w-fit mb-4 border border-emerald-100">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-800 text-sm">Season Cash Balances</h3>
+                <p className="text-[11px] text-slate-550 mt-1.5 font-sans leading-relaxed">Manage real-world team cash payments (upfront 5-season subscriptions vs seasonal payments) and transaction history.</p>
               </div>
             </button>
           </div>

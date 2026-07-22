@@ -512,33 +512,59 @@ export async function POST(
           // Normalize team name: if it's a previous name, use the current name
           let normalizedTeamName = row.team || row.team_name || '';
           let teamNameMatched = false;
+          let matchedTeamId: string | null = null;
 
           if (normalizedTeamName) {
             const teamNameLower = normalizedTeamName.trim().toLowerCase();
 
-            // Check if this team name matches any current or previous team name
+            // Pass 1: Match by name AND check if the team played/registered for this season (best match for duplicate names)
             for (const [teamId, teamData] of teamsCache.entries()) {
               const currentNameLower = teamData.team_name?.trim().toLowerCase();
               const previousNames = teamData.previous_names || teamData.name_history || [];
+              const playedThisSeason = (teamData.seasons || []).includes(seasonId);
 
-              // Check if it matches the current team name
-              if (currentNameLower === teamNameLower) {
+              if (currentNameLower === teamNameLower && playedThisSeason) {
                 teamNameMatched = true;
-                normalizedTeamName = teamData.team_name; // Use exact casing from database
+                normalizedTeamName = teamData.team_name;
+                matchedTeamId = teamId;
                 break;
               }
 
-              // Check if it matches any previous name
               const matchesPreviousName = previousNames.some((oldName: string) =>
                 oldName && oldName.trim().toLowerCase() === teamNameLower
               );
-
-              if (matchesPreviousName) {
-                // Use the current team name instead
-                console.log(`  🔄 Normalizing team name: "${normalizedTeamName}" → "${teamData.team_name}"`);
+              if (matchesPreviousName && playedThisSeason) {
+                console.log(`  🔄 Normalizing team name: "${normalizedTeamName}" → "${teamData.team_name}" (Season: ${seasonId})`);
                 normalizedTeamName = teamData.team_name;
                 teamNameMatched = true;
+                matchedTeamId = teamId;
                 break;
+              }
+            }
+
+            // Pass 2: Fallback to match by name only if no season match was found
+            if (!teamNameMatched) {
+              for (const [teamId, teamData] of teamsCache.entries()) {
+                const currentNameLower = teamData.team_name?.trim().toLowerCase();
+                const previousNames = teamData.previous_names || teamData.name_history || [];
+
+                if (currentNameLower === teamNameLower) {
+                  teamNameMatched = true;
+                  normalizedTeamName = teamData.team_name;
+                  matchedTeamId = teamId;
+                  break;
+                }
+
+                const matchesPreviousName = previousNames.some((oldName: string) =>
+                  oldName && oldName.trim().toLowerCase() === teamNameLower
+                );
+                if (matchesPreviousName) {
+                  console.log(`  🔄 Normalizing team name: "${normalizedTeamName}" → "${teamData.team_name}" (Name fallback)`);
+                  normalizedTeamName = teamData.team_name;
+                  teamNameMatched = true;
+                  matchedTeamId = teamId;
+                  break;
+                }
               }
             }
 
@@ -557,7 +583,7 @@ export async function POST(
             season_id: seasonId,
             season_name: seasonName,
             team: normalizedTeamName,
-            team_id: teamsCache.get(normalizedTeamName.toLowerCase())?.id || null,
+            team_id: matchedTeamId,
             category: row.category || '', // Season-specific
             is_active: row.is_active !== false,
             is_available: row.is_available !== false,

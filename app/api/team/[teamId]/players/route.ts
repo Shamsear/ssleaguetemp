@@ -128,8 +128,11 @@ export async function GET(
       INNER JOIN footballplayers fp ON tp.player_id = fp.id
       WHERE tp.team_id = ${teamId}
         AND (
-          fp.contract_start_season <= ${seasonId} 
-          AND fp.contract_end_season >= ${seasonId}
+          tp.season_id = ${seasonId}
+          OR (
+            fp.contract_start_season <= ${seasonId} 
+            AND fp.contract_end_season >= ${seasonId}
+          )
         )
       ORDER BY tp.acquired_at DESC
     `;

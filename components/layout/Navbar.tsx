@@ -316,10 +316,10 @@ export default function Navbar() {
                   <div className="relative" ref={(el) => { dropdownRefs.current['management'] = el; }}>
                     <button
                       onClick={() => toggleDropdown('management')}
-                      className={getDropdownClass(['/dashboard/superadmin/users', '/dashboard/superadmin/teams', '/dashboard/superadmin/players', '/dashboard/superadmin/invites', '/dashboard/superadmin/password-requests', '/dashboard/superadmin/monitoring'])}
+                      className={getDropdownClass(['/dashboard/superadmin/users', '/dashboard/superadmin/teams', '/dashboard/superadmin/players', '/dashboard/superadmin/invites', '/dashboard/superadmin/password-requests', '/dashboard/superadmin/monitoring', '/dashboard/superadmin/cash-balances'])}
                     >
                       Management
-                      <span className={getDropdownSpanClass(['/dashboard/superadmin/users', '/dashboard/superadmin/teams', '/dashboard/superadmin/players', '/dashboard/superadmin/invites', '/dashboard/superadmin/password-requests', '/dashboard/superadmin/monitoring'])}></span>
+                      <span className={getDropdownSpanClass(['/dashboard/superadmin/users', '/dashboard/superadmin/teams', '/dashboard/superadmin/players', '/dashboard/superadmin/invites', '/dashboard/superadmin/password-requests', '/dashboard/superadmin/monitoring', '/dashboard/superadmin/cash-balances'])}></span>
                       <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openDropdown === 'management' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -414,6 +414,21 @@ export default function Navbar() {
                               isActiveLink('/dashboard/superadmin/monitoring') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                             }`}></span>
                             Monitoring
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/superadmin/cash-balances" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/superadmin/cash-balances')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/superadmin/cash-balances') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Cash Balances
                           </span>
                         </Link>
                       </div>
@@ -904,10 +919,10 @@ export default function Navbar() {
                   <div className="relative" ref={(el) => { dropdownRefs.current['leaderboards'] = el; }}>
                     <button
                       onClick={() => toggleDropdown('leaderboards')}
-                      className={getDropdownClass(['/dashboard/team/team-leaderboard', '/dashboard/team/player-leaderboard', '/dashboard/team/all-teams'])}
+                      className={getDropdownClass(['/dashboard/team/team-leaderboard', '/dashboard/team/player-leaderboard', '/dashboard/team/all-teams', '/dashboard/team/cash-balances'])}
                     >
                       Leaderboards
-                      <span className={getDropdownSpanClass(['/dashboard/team/team-leaderboard', '/dashboard/team/player-leaderboard', '/dashboard/team/all-teams'])}></span>
+                      <span className={getDropdownSpanClass(['/dashboard/team/team-leaderboard', '/dashboard/team/player-leaderboard', '/dashboard/team/all-teams', '/dashboard/team/cash-balances'])}></span>
                       <svg className={`w-4 h-4 ml-1.5 transition-transform duration-350 ${openDropdown === 'leaderboards' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -957,6 +972,21 @@ export default function Navbar() {
                               isActiveLink('/dashboard/team/all-teams') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                             }`}></span>
                             All Teams
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/team/cash-balances" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/team/cash-balances')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/team/cash-balances') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Cash Balances
                           </span>
                         </Link>
                       </div>

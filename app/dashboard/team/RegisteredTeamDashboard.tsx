@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { AlertCircle, ArrowRightLeft, BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Flame, Info, Settings, Star, TrendingUp, Trophy, User, UserMinus, Users } from 'lucide-react';
+import { AlertCircle, ArrowRightLeft, BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Flame, Info, Settings, Star, TrendingUp, Trophy, User, UserMinus, Users, Coins } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
@@ -688,13 +688,15 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-3 text-xs font-mono text-slate-500">
                 {dashboardData?.owner && (
                   <div className="flex items-center gap-1.5">
-                    <span><Crown className="w-4 h-4 text-amber-500 fill-amber-500" /> Owner:</span>
+                    <Crown className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    <span>Owner:</span>
                     <span className="font-bold text-slate-700">{dashboardData.owner.name}</span>
                   </div>
                 )}
                 {dashboardData?.manager && (
                   <div className="flex items-center gap-1.5">
-                    <span><SoccerBallIcon className="w-4 h-4" /> Manager:</span>
+                    <SoccerBallIcon className="w-4 h-4" />
+                    <span>Manager:</span>
                     <span className="font-bold text-slate-700">{dashboardData.manager.name}</span>
                   </div>
                 )}
@@ -715,9 +717,9 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
             <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 sm:p-4 text-center font-mono">
               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Squad</div>
               <div className="text-sm sm:text-lg lg:text-2xl font-black text-slate-800">
-                {stats.playerCount}/{team.football_total_slots || MAX_PLAYERS_PER_TEAM}
+                {players.length}/{team.football_total_slots || MAX_PLAYERS_PER_TEAM}
               </div>
-              {team.football_purchased_slots && team.football_purchased_slots > 0 && (
+              {Number(team.football_purchased_slots || 0) > 0 && (
                 <div className="text-[9px] text-emerald-600 font-bold mt-0.5">
                   +{team.football_purchased_slots} extra
                 </div>
@@ -1093,6 +1095,13 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 <span>Transactions</span>
               </Link>
               <Link
+                href="/dashboard/team/cash-balances"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <Coins className="w-4 h-4 text-amber-500" />
+                <span>Cash Ledger</span>
+              </Link>
+              <Link
                 href="/dashboard/team/profile/edit"
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
               >
@@ -1156,54 +1165,59 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
         <div className="bg-white border border-slate-200/60 rounded-t-3xl p-2 shadow-sm flex flex-wrap gap-1">
           <button
             onClick={() => setActiveTab('auctions')}
-            className={`flex-1 px-6 py-3 rounded-2xl font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex items-center justify-center gap-2 flex-1 px-6 py-3 rounded-2xl font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'auctions'
                 ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10'
                 : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
             }`}
           >
-            <Flame className="w-4 h-4 text-orange-500" /> Auctions {(activeRounds.length > 0 || activeBids.length > 0 || (pendingRounds && pendingRounds.length > 0)) && `(${activeRounds.length + activeBids.length + (pendingRounds?.length || 0)})`}
+            <Flame className="w-4 h-4 text-orange-500" /> 
+            <span>Auctions {(activeRounds.length > 0 || activeBids.length > 0 || (pendingRounds && pendingRounds.length > 0)) && `(${activeRounds.length + activeBids.length + (pendingRounds?.length || 0)})`}</span>
           </button>
           <button
             onClick={() => setActiveTab('squad')}
-            className={`flex-1 px-6 py-3 rounded-2xl font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex items-center justify-center gap-2 flex-1 px-6 py-3 rounded-2xl font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'squad'
                 ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10'
                 : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
             }`}
           >
-            <SoccerBallIcon className="w-4 h-4" /> Squad {players.length > 0 && `(${players.length})`}
+            <SoccerBallIcon className="w-4 h-4" /> 
+            <span>Squad {players.length > 0 && `(${players.length})`}</span>
           </button>
           <button
             onClick={() => setActiveTab('results')}
-            className={`flex-1 px-6 py-3 rounded-2xl font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex items-center justify-center gap-2 flex-1 px-6 py-3 rounded-2xl font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'results'
                 ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10'
                 : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
             }`}
           >
-            <BarChart2 className="w-4 h-4 text-slate-500" /> Results {roundResults.length > 0 && `(${roundResults.length})`}
+            <BarChart2 className="w-4 h-4 text-slate-500" /> 
+            <span>Results {roundResults.length > 0 && `(${roundResults.length})`}</span>
           </button>
           <button
             onClick={() => setActiveTab('overview')}
-            className={`flex-1 px-6 py-3 rounded-2xl font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex items-center justify-center gap-2 flex-1 px-6 py-3 rounded-2xl font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'overview'
                 ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10'
                 : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
             }`}
           >
-            <TrendingUp className="w-4 h-4 text-emerald-500" /> Overview
+            <TrendingUp className="w-4 h-4 text-emerald-500" /> 
+            <span>Overview</span>
           </button>
           {dashboardData?.hasFantasyTeam && (
             <button
               onClick={() => setActiveTab('fantasy')}
-              className={`flex-1 px-6 py-3 rounded-2xl font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-2 flex-1 px-6 py-3 rounded-2xl font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
                 activeTab === 'fantasy'
                   ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10'
                   : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
               }`}
             >
-              <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Fantasy
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> 
+              <span>Fantasy</span>
             </button>
           )}
         </div>
@@ -1745,21 +1759,25 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
               {/* Quick Actions */}
               <div>
                 <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider font-mono mb-3">Quick Links</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 font-mono text-center">
                   <Link href="/dashboard/team/profile" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
-                    <div className="text-3xl mb-2"><User className="w-4 h-4 text-slate-500" /></div>
+                    <div className="flex justify-center text-3xl mb-2"><User className="w-5 h-5 text-slate-500" /></div>
                     <div className="font-bold text-slate-800 text-sm uppercase">Team Profile</div>
                   </Link>
                   <Link href="/dashboard/team/budget-planner" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
                     <div className="text-3xl mb-2">💰</div>
                     <div className="font-bold text-slate-800 text-sm uppercase">Budget Planner</div>
                   </Link>
+                  <Link href="/dashboard/team/cash-balances" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
+                    <div className="flex justify-center text-3xl mb-2"><Coins className="w-5 h-5 text-amber-500" /></div>
+                    <div className="font-bold text-slate-800 text-sm uppercase">Cash Ledger</div>
+                  </Link>
                   <Link href="/dashboard/team/real-players-planner" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
-                    <div className="text-3xl mb-2"><Users className="w-4 h-4 text-slate-500" /></div>
+                    <div className="flex justify-center text-3xl mb-2"><Users className="w-5 h-5 text-slate-500" /></div>
                     <div className="font-bold text-slate-800 text-sm uppercase">Real Players Planner</div>
                   </Link>
                   <Link href="/dashboard/team/matches" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
-                    <div className="text-3xl mb-2"><Calendar className="w-4 h-4 text-slate-500" /></div>
+                    <div className="flex justify-center text-3xl mb-2"><Calendar className="w-5 h-5 text-slate-500" /></div>
                     <div className="font-bold text-slate-800 text-sm uppercase">Match Schedule</div>
                   </Link>
                 </div>

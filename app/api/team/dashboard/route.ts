@@ -461,7 +461,6 @@ export async function GET(request: NextRequest) {
     
     console.log(`✅ Fetched ${activeBids.length} active bids from SQL for team ${dbTeamId || userId}`);
 
-    // Fetch team's players from Neon (team_players table)
     const playersResult = dbTeamId ? await sql`
       SELECT 
         tp.id,
@@ -478,6 +477,13 @@ export async function GET(request: NextRequest) {
       FROM team_players tp
       INNER JOIN footballplayers fp ON tp.player_id = fp.id
       WHERE tp.team_id = ${dbTeamId}
+        AND (
+          tp.season_id = ${seasonId}
+          OR (
+            fp.contract_start_season <= ${seasonId} 
+            AND fp.contract_end_season >= ${seasonId}
+          )
+        )
       ORDER BY tp.acquired_at DESC
     ` : [];
     

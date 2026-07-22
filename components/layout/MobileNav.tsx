@@ -256,7 +256,8 @@ export default function MobileNav() {
         { href: '/dashboard/superadmin/players', label: 'Players Registry', cat: 'System Admin', roles: ['super_admin'] },
         { href: '/dashboard/superadmin/invites', label: 'Access Invites', cat: 'System Admin', roles: ['super_admin'] },
         { href: '/dashboard/superadmin/password-requests', label: 'Credentials Reset', cat: 'System Admin', roles: ['super_admin'] },
-        { href: '/dashboard/superadmin/monitoring', label: 'System Logs', cat: 'System Admin', roles: ['super_admin'] }
+        { href: '/dashboard/superadmin/monitoring', label: 'System Logs', cat: 'System Admin', roles: ['super_admin'] },
+        { href: '/dashboard/superadmin/cash-balances', label: 'Cash Balances', cat: 'System Admin', roles: ['super_admin'] }
       );
     }
 
@@ -298,7 +299,8 @@ export default function MobileNav() {
         { href: '/dashboard/team/fixtures', label: 'Season Matchups', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
         { href: '/dashboard/team/team-leaderboard', label: 'Team Leaderboard', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
         { href: '/dashboard/team/player-leaderboard', label: 'Player Leaderboard', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
-        { href: '/dashboard/team/all-teams', label: 'League Clubs', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true }
+        { href: '/dashboard/team/all-teams', label: 'League Clubs', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
+        { href: '/dashboard/team/cash-balances', label: 'Cash Balances', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true }
       );
     }
 

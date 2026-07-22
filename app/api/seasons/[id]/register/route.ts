@@ -6,6 +6,7 @@ import { triggerNews } from '@/lib/news/trigger';
 import { logInitialBalance } from '@/lib/transaction-logger';
 import { getFantasyDb } from '@/lib/neon/fantasy-config';
 import { sendNotification } from '@/lib/notifications/send-notification';
+import { getOrCreateTeamCashBalance, recordCashDeduction } from '@/lib/cash-balance-utils';
 
 export async function POST(
   request: NextRequest,
@@ -222,6 +223,16 @@ export async function POST(
 
       // Commit all operations
       await batch.commit();
+
+      // 6. Record Season Cash Deduction
+      try {
+        const cashBalance = await getOrCreateTeamCashBalance(teamDocId, teamName);
+        const deductionAmount = 100;
+        await recordCashDeduction(teamDocId, teamName, deductionAmount, seasonId);
+      } catch (cashError) {
+        console.error('Failed to process cash deduction:', cashError);
+        // Don't fail the registration if cash deduction recording fails
+      }
 
       // Update season participant count (separate operation)
       await adminDb.collection('seasons').doc(seasonId).update({
