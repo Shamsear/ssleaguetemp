@@ -82,21 +82,50 @@ export async function GET(request: NextRequest) {
           };
         });
       } else {
-        // For active/completed seasons, get from registered team_seasons
+        const showAllTeams = searchParams.get('show_all_teams') === 'true';
+
+        // Fetch all registered team_seasons for this season
         const teamSeasonsSnapshot = await adminDb
           .collection('team_seasons')
           .where('season_id', '==', seasonId)
           .where('status', '==', 'registered')
           .get();
+          
+        const registeredTeamIds = new Set(
+          teamSeasonsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return data.team_id || data.teamId || doc.id.split('_')[0];
+          })
+        );
 
-        teamSeasons = teamSeasonsSnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            team_id: data.team_id || data.teamId,
-            team_name: data.team_name || data.teamName,
-            team_logo: data.team_logo || '',
-          };
-        });
+        if (showAllTeams) {
+          // For committee view, get all teams from the teams collection
+          const teamsSnapshot = await adminDb.collection('teams').get();
+          teamSeasons = teamsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            const teamId = doc.id;
+            return {
+              team_id: teamId,
+              team_name: data.name || data.team_name || teamId,
+              team_logo: data.logo_url || data.team_logo || '',
+              is_registered: registeredTeamIds.has(teamId)
+            };
+          });
+        } else {
+          // For super admin filter view, get ONLY registered teams
+          const teamsSnapshot = await adminDb.collection('teams').get();
+          const allTeams = teamsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            const teamId = doc.id;
+            return {
+              team_id: teamId,
+              team_name: data.name || data.team_name || teamId,
+              team_logo: data.logo_url || data.team_logo || '',
+              is_registered: true
+            };
+          });
+          teamSeasons = allTeams.filter(t => registeredTeamIds.has(t.team_id));
+        }
       }
     }
 
@@ -119,8 +148,9 @@ export async function GET(request: NextRequest) {
       // Get all seasons they registered for (including historical ones)
       let joinedSeasons = (teamData?.seasons || []).map((s: any) => typeof s === 'string' ? s.trim() : s);
       
-      // Ensure the current seasonId is included in the list for display if they are in this query
-      if (seasonId && seasonId !== 'all' && !joinedSeasons.includes(seasonId)) {
+      // Ensure the current seasonId is included in the list for display if they are registered for it
+      const isRegisteredForCurrentSeason = ts.is_registered || joinedSeasons.includes(seasonId);
+      if (seasonId && seasonId !== 'all' && isRegisteredForCurrentSeason && !joinedSeasons.includes(seasonId)) {
         joinedSeasons = [...joinedSeasons, seasonId];
       }
 
@@ -205,6 +235,7 @@ export async function GET(request: NextRequest) {
         seasons_played: joinedSeasons,
         payments,
         deductions,
+        is_registered: (ts as any).is_registered ?? false,
       };
     });
 
@@ -234,8 +265,8 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify auth - strictly super_admin/admin role
-    const auth = await verifyAuth(['super_admin', 'admin'], request);
+    // Verify auth - super_admin/admin/committee_admin roles
+    const auth = await verifyAuth(['super_admin', 'admin', 'committee_admin'], request);
     if (!auth.authenticated) {
       return NextResponse.json(
         { success: false, error: auth.error || 'Unauthorized' },

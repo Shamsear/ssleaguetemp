@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, Clock, Star, Trophy, User, Users, Megaphone, Medal, Zap } from 'lucide-react';
+import { Calendar, Clock, Star, Trophy, User, Users, Megaphone, Medal, Zap, Settings, Coins } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamRegistration } from '@/contexts/TeamRegistrationContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
@@ -495,8 +495,11 @@ export default function TeamDashboard() {
             </div>
           )}
 
-          {/* No Active Season */}
-          {!seasonStatus?.hasActiveSeason && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Main Content */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* No Active Season */}
+              {!seasonStatus?.hasActiveSeason && (
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center">
@@ -1129,6 +1132,58 @@ export default function TeamDashboard() {
               )}
             </div>
           )}
+        </div>
+
+            {/* Right Column - Sidebar */}
+            <div className="space-y-8">
+              {/* Planning Card */}
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm hover:border-amber-400/40 transition-all duration-250">
+                <div className="flex items-center gap-3 mb-4 border-b border-slate-100 pb-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-lg">
+                    <Settings className="w-4 h-4 text-slate-500" />
+                  </div>
+                  <h3 className="font-extrabold text-slate-900 uppercase tracking-tight text-sm">Planning</h3>
+                </div>
+                <div className="space-y-2">
+                  <Link
+                    href="/dashboard/team/budget-planner"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+                  >
+                    <span>💰</span>
+                    <span>Budget Planner</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/team/real-players-planner"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+                  >
+                    <Users className="w-4 h-4 text-slate-500" />
+                    <span>Real Players Planner</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/team/transactions"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+                  >
+                    <span>💳</span>
+                    <span>Transactions</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/team/cash-balances"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+                  >
+                    <Coins className="w-4 h-4 text-amber-500" />
+                    <span>Cash Ledger</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/team/profile/edit"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
+                  >
+                    <Settings className="w-4 h-4 text-slate-500" />
+                    <span>Settings</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

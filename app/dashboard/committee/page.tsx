@@ -1,5 +1,5 @@
 'use client';
-import { Shield, Settings, Activity, BarChart2, Layers } from 'lucide-react';
+import { Shield, Settings, Activity, BarChart2, Layers, Coins } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -580,7 +580,20 @@ export default function CommitteeDashboard() {
             </button>
 
             {expandedSections.contracts && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 pt-4 border-t border-slate-100">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-4 border-t border-slate-100">
+                <Link href="/dashboard/committee/cash-balances" className="group bg-slate-50 border border-slate-200/60 rounded-xl p-4 hover:border-amber-400 hover:shadow-md hover:bg-white transition-all">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2 rounded-lg bg-slate-850 text-amber-400 border border-slate-905 flex-shrink-0">
+                      <Coins className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <svg className="w-4 h-4 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider group-hover:text-amber-600 transition-colors mb-1">Cash Balances</h4>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">Manage team offline payments & plans</p>
+                </Link>
+
                 <Link href="/dashboard/committee/all-transactions" className="group bg-slate-50 border border-slate-200/60 rounded-xl p-4 hover:border-amber-400 hover:shadow-md hover:bg-white transition-all">
                   <div className="flex items-center justify-between mb-3">
                     <div className="p-2 rounded-lg bg-slate-850 text-amber-400 border border-slate-905 flex-shrink-0">

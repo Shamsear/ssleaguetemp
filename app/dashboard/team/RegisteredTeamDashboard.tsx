@@ -1759,7 +1759,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
               {/* Quick Actions */}
               <div>
                 <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider font-mono mb-3">Quick Links</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 font-mono text-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 font-mono text-center">
                   <Link href="/dashboard/team/profile" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
                     <div className="flex justify-center text-3xl mb-2"><User className="w-5 h-5 text-slate-500" /></div>
                     <div className="font-bold text-slate-800 text-sm uppercase">Team Profile</div>
@@ -1767,10 +1767,6 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   <Link href="/dashboard/team/budget-planner" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
                     <div className="text-3xl mb-2">💰</div>
                     <div className="font-bold text-slate-800 text-sm uppercase">Budget Planner</div>
-                  </Link>
-                  <Link href="/dashboard/team/cash-balances" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
-                    <div className="flex justify-center text-3xl mb-2"><Coins className="w-5 h-5 text-amber-500" /></div>
-                    <div className="font-bold text-slate-800 text-sm uppercase">Cash Ledger</div>
                   </Link>
                   <Link href="/dashboard/team/real-players-planner" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
                     <div className="flex justify-center text-3xl mb-2"><Users className="w-5 h-5 text-slate-500" /></div>

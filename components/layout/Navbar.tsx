@@ -444,10 +444,10 @@ export default function Navbar() {
                   <div className="relative" ref={(el) => { dropdownRefs.current['teams'] = el; }}>
                     <button
                       onClick={() => toggleDropdown('teams')}
-                      className={getDropdownClass(['/dashboard/committee/teams', '/dashboard/committee/players', '/dashboard/committee/registration', '/dashboard/committee/database'])}
+                      className={getDropdownClass(['/dashboard/committee/teams', '/dashboard/committee/players', '/dashboard/committee/registration', '/dashboard/committee/database', '/dashboard/committee/cash-balances'])}
                     >
                       Teams & Players
-                      <span className={getDropdownSpanClass(['/dashboard/committee/teams', '/dashboard/committee/players', '/dashboard/committee/registration', '/dashboard/committee/database'])}></span>
+                      <span className={getDropdownSpanClass(['/dashboard/committee/teams', '/dashboard/committee/players', '/dashboard/committee/registration', '/dashboard/committee/database', '/dashboard/committee/cash-balances'])}></span>
                       <svg className={`w-4 h-4 ml-1.5 transition-transform duration-350 ${openDropdown === 'teams' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -497,6 +497,21 @@ export default function Navbar() {
                               isActiveLink('/dashboard/committee/registration') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                             }`}></span>
                             Registration
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/committee/cash-balances" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/committee/cash-balances')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/committee/cash-balances') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Cash Balances
                           </span>
                         </Link>
                         <Link 

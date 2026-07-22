@@ -1,5 +1,5 @@
 'use client';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Search } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -19,6 +19,10 @@ export default function TeamRegistrationPage() {
   
   const [registeredTeamsCount, setRegisteredTeamsCount] = useState(0);
   const [totalTeamsCount, setTotalTeamsCount] = useState(0);
+  const [teams, setTeams] = useState<any[]>([]);
+  const [teamRegistrationStatuses, setTeamRegistrationStatuses] = useState<Record<string, string>>({});
+  const [registeringTeamId, setRegisteringTeamId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loadingData, setLoadingData] = useState(true);
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
@@ -46,6 +50,19 @@ export default function TeamRegistrationPage() {
         setCurrentSeason(season);
         
         const teamsSnapshot = await getDocs(collection(db, 'teams'));
+        const teamsList = teamsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        // Sort teams alphabetically
+        teamsList.sort((a: any, b: any) => {
+          const nameA = (a.team_name || a.name || '').toUpperCase();
+          const nameB = (b.team_name || b.name || '').toUpperCase();
+          return nameA.localeCompare(nameB);
+        });
+        
+        setTeams(teamsList);
         setTotalTeamsCount(teamsSnapshot.docs.length);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -56,27 +73,37 @@ export default function TeamRegistrationPage() {
 
     fetchInitialData();
 
-    // Set up real-time listener for team registrations
+    // Set up real-time listener for all team registration statuses in this season
     console.log('🔴 Setting up real-time listener for season:', userSeasonId);
     
     const teamSeasonsQuery = query(
       collection(db, 'team_seasons'),
-      where('season_id', '==', userSeasonId),
-      where('status', '==', 'registered')
+      where('season_id', '==', userSeasonId)
     );
 
     const unsubscribe = onSnapshot(
       teamSeasonsQuery,
       (snapshot) => {
-        console.log('🟢 Real-time update received! Registered teams:', snapshot.docs.length);
-        setRegisteredTeamsCount(snapshot.docs.length);
+        console.log('🟢 Real-time update received! Team seasons count:', snapshot.docs.length);
+        const statuses: Record<string, string> = {};
+        let regCount = 0;
+        
+        snapshot.docs.forEach(doc => {
+          const data = doc.data();
+          const teamId = data.team_id || doc.id.split('_')[0];
+          statuses[teamId] = data.status;
+          if (data.status === 'registered') {
+            regCount++;
+          }
+        });
+        
+        setTeamRegistrationStatuses(statuses);
+        setRegisteredTeamsCount(regCount);
       },
       (error) => {
-        console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Error listening to team registrations:', error);
+        console.error('Error listening to team registrations:', error);
       }
     );
-
-    console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Real-time listener set up successfully');
 
     return () => {
       console.log('🔴 Cleaning up real-time listener');
@@ -126,6 +153,50 @@ export default function TeamRegistrationPage() {
     }).catch(() => {
       alert('Failed to copy link');
     });
+  };
+
+  const handleRegisterTeam = async (team: any) => {
+    if (!currentSeason) return;
+    
+    // Check if team owner ID is present (required for API registration)
+    const ownerUid = team.owner_uid || team.userId || team.uid;
+    if (!ownerUid) {
+      alert(`Cannot register ${team.team_name || team.name}: No associated owner user ID found on the team document.`);
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to register ${team.team_name || team.name} for ${currentSeason.name}?`)) {
+      return;
+    }
+
+    try {
+      setRegisteringTeamId(team.id);
+      
+      const response = await fetch(`/api/seasons/${currentSeason.id}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'join',
+          userId: ownerUid,
+          joinFantasy: true, // Auto-join fantasy by default
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`Successfully registered ${team.team_name || team.name} for ${currentSeason.name}!`);
+      } else {
+        alert(`Failed to register team: ${result.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error registering team:', error);
+      alert('An error occurred while registering the team.');
+    } finally {
+      setRegisteringTeamId(null);
+    }
   };
 
   if (loading || loadingData) {
@@ -202,8 +273,8 @@ export default function TeamRegistrationPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 font-mono">
           <div className="console-card bg-white rounded-2xl p-5 border border-slate-200/60 hover:border-amber-400/40 transition-all hover:-translate-y-1">
             <div className="flex items-center justify-between mb-3">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-md">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-3 rounded-xl bg-blue-50 text-blue-600 border border-blue-100/50">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
@@ -214,8 +285,8 @@ export default function TeamRegistrationPage() {
 
           <div className="console-card bg-white rounded-2xl p-5 border border-slate-200/60 hover:border-green-500/40 transition-all hover:-translate-y-1">
             <div className="flex items-center justify-between mb-3">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-md">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-3 rounded-xl bg-green-50 text-green-600 border border-green-100/50">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -226,8 +297,8 @@ export default function TeamRegistrationPage() {
 
           <div className="console-card bg-white rounded-2xl p-5 border border-slate-200/60 hover:border-amber-500/40 transition-all hover:-translate-y-1">
             <div className="flex items-center justify-between mb-3">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-md">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-3 rounded-xl bg-amber-50 text-amber-600 border border-amber-100/50">
+                <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -244,16 +315,12 @@ export default function TeamRegistrationPage() {
               <span className="text-xs uppercase font-bold text-slate-500 tracking-wider">Registration Status:</span>
               {currentSeason.is_team_registration_open ? (
                 <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-green-50 text-green-700 border border-green-200/40 uppercase tracking-wider">
-                  <svg className="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/>
-                  </svg>
+                  <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-green-700" />
                   OPEN
                 </span>
               ) : (
                 <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-200/40 uppercase tracking-wider">
-                  <svg className="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.3 4.3a1 1 0 011.4 0L10 8.6l4.3-4.3a1 1 0 111.4 1.4L11.4 10l4.3 4.3a1 1 0 01-1.4 1.4L10 11.4l-4.3 4.3a1 1 0 01-1.4-1.4L8.6 10 4.3 5.7a1 1 0 010-1.4z" clipRule="evenodd"/>
-                  </svg>
+                  <XCircle className="w-3.5 h-3.5 mr-1.5 text-red-700" />
                   CLOSED
                 </span>
               )}
@@ -337,6 +404,139 @@ export default function TeamRegistrationPage() {
               </p>
             </div>
           )}
+        </div>
+
+        {/* Teams Directory Roster */}
+        <div className="console-card bg-white rounded-3xl p-6 shadow-sm border border-slate-200/60 font-mono">
+          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center mb-4">
+            <svg className="w-4 h-4 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            League Teams Roster ({teams.length})
+          </h2>
+          <p className="text-[10px] text-slate-550 font-bold uppercase mb-4 leading-relaxed">
+            Monitor and register teams directly into the active season.
+          </p>
+
+          {/* Search bar */}
+          <div className="mb-4 relative max-w-md">
+            <input
+              type="text"
+              placeholder="Search team name or ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-3 py-2 pl-9 bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-amber-400 focus:bg-white transition-all font-sans"
+            />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-slate-200/60">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-550/5 border-b border-slate-200/60">
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-wider">Logo</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-wider">Team Name</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-wider">Manager / Owner</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-wider text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {(() => {
+                  const filteredTeams = teams.filter(team => 
+                    (team.team_name || team.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    team.id.toLowerCase().includes(searchQuery.toLowerCase())
+                  );
+
+                  if (filteredTeams.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-xs font-bold uppercase text-slate-400">
+                          {searchQuery ? "No matching teams found" : "No teams registered in system database"}
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  return filteredTeams.map((team) => {
+                    const status = teamRegistrationStatuses[team.id] || 'none';
+                    const isRegistering = registeringTeamId === team.id;
+                    return (
+                      <tr key={team.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 py-3">
+                          {team.logo_url || team.teamLogo ? (
+                            <img
+                              src={team.logo_url || team.teamLogo}
+                              alt={team.team_name || team.name}
+                              className="w-8 h-8 rounded-lg object-contain bg-slate-50 p-0.5 border border-slate-200/40"
+                              onError={(e) => {
+                                e.currentTarget.src = "/placeholder-logo.png";
+                              }}
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/40 flex items-center justify-center text-xs font-black text-slate-400 uppercase">
+                              {(team.team_name || team.name || "T").substring(0, 2)}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-xs font-black text-slate-800 uppercase tracking-wide">
+                          {team.team_name || team.name}
+                        </td>
+                        <td className="px-4 py-3 text-xs font-bold text-slate-550 uppercase tracking-wider">
+                          {team.owner_name || team.manager_name || "Owner"}
+                          <div className="text-[9px] font-mono text-slate-450 mt-0.5 select-all normal-case">
+                            {team.owner_uid || team.userId || team.uid || "No UID"}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {status === 'registered' ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black tracking-wider bg-green-50 text-green-700 border border-green-200/40 uppercase">
+                              <CheckCircle className="w-3 h-3 mr-1 text-green-600" />
+                              Registered
+                            </span>
+                          ) : status === 'declined' ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black tracking-wider bg-red-50 text-red-700 border border-red-200/40 uppercase">
+                              <XCircle className="w-3 h-3 mr-1 text-red-600" />
+                              Declined
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black tracking-wider bg-slate-50 text-slate-500 border border-slate-200/40 uppercase">
+                              Pending
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {status !== 'registered' ? (
+                            <button
+                              onClick={() => handleRegisterTeam(team)}
+                              disabled={isRegistering || !currentSeason}
+                              className="inline-flex items-center px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg bg-slate-800 hover:bg-slate-700 hover:text-amber-500 text-white border border-slate-900 transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                            >
+                              {isRegistering ? (
+                                <>
+                                  <svg className="animate-spin w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  Registering...
+                                </>
+                              ) : (
+                                "Register Team"
+                              )}
+                            </button>
+                          ) : (
+                            <span className="text-[10px] font-extrabold text-green-600 uppercase tracking-wider mr-2">
+                              Joined
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  });
+                })()}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Info Section */}

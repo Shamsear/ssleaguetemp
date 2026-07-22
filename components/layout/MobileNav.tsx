@@ -279,6 +279,7 @@ export default function MobileNav() {
         { href: '/dashboard/committee/team-management/player-stats', label: 'Player Standings', cat: 'Match Operations', roles: ['committee_admin'] },
         
         { href: '/dashboard/committee/database', label: 'Database Manager', cat: 'Platform Settings', roles: ['committee_admin'] },
+        { href: '/dashboard/committee/cash-balances', label: 'Cash Balances', cat: 'Platform Settings', roles: ['committee_admin'] },
         { href: '/dashboard/committee/auction-settings', label: 'Auction Parameters', cat: 'Platform Settings', roles: ['committee_admin'] },
         { href: '/dashboard/committee/position-groups', label: 'Position Groups', cat: 'Platform Settings', roles: ['committee_admin'] },
         { href: '/dashboard/committee/player-selection', label: 'Market Pool', cat: 'Platform Settings', roles: ['committee_admin'] },

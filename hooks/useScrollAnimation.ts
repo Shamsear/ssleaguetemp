@@ -48,6 +48,11 @@ export function useScrollAnimation() {
   const autoDetectElements = useCallback(() => {
     if (!observerRef.current) return;
 
+    // Disable auto-detection in dashboard routes to keep forms and tables static and responsive
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard')) {
+      return;
+    }
+
     // Target the main content area
     const main = document.querySelector('main');
     if (!main) return;
@@ -169,7 +174,7 @@ export function useScrollAnimation() {
       },
       {
         threshold: 0.01,
-        rootMargin: '0px 0px -10px 0px',
+        rootMargin: '0px 0px 150px 0px',
       }
     );
 
