@@ -18,8 +18,20 @@ import {
   CheckCircle, 
   HelpCircle, 
   Info,
-  ChevronDown
+  ChevronDown,
+  ChevronUp,
+  Sliders,
+  Search,
+  Check
 } from 'lucide-react';
+
+// Helper to group sub-seasons (like 16.5 into 16, 17.5 into 17)
+function getBaseSeasonId(seasonId: string): string {
+  if (!seasonId) return '';
+  if (seasonId.startsWith('SSPSLS16')) return 'SSPSLS16';
+  if (seasonId.startsWith('SSPSLS17')) return 'SSPSLS17';
+  return seasonId;
+}
 
 interface Player {
   id: string;
@@ -74,6 +86,19 @@ export default function PlayerCategorizationPage() {
   const [proposedCategories, setProposedCategories] = useState<Map<string, string>>(new Map());
   const [manualOverrides, setManualOverrides] = useState<Map<string, string>>(new Map());
 
+  // AI Configuration state enhancements
+  const [maxSeasons, setMaxSeasons] = useState<number | 'all'>('all');
+  const [minMatches, setMinMatches] = useState<number>(3);
+  const [weightPreset, setWeightPreset] = useState<'decay' | 'equal' | 'linear' | 'custom'>('decay');
+  const [seasonWeights, setSeasonWeights] = useState<number[]>([1.0, 0.5, 0.25, 0.12, 0.06]); // Corresponds to 1, 2, 3, 4, 5 seasons ago
+  const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
+
+  // Table Filter states
+  const [filterProposedCategory, setFilterProposedCategory] = useState<string>('all');
+  const [filterOverrideStatus, setFilterOverrideStatus] = useState<string>('all'); // 'all', 'overridden', 'proposed'
+  const [filterPlayerStatus, setFilterPlayerStatus] = useState<string>('all'); // 'all', 'new', 'rated'
+  const [selectedHistoricalSeasons, setSelectedHistoricalSeasons] = useState<string[]>([]);
+
   // Redirect if unauthorized
   useEffect(() => {
     if (!authLoading && !user) {
@@ -83,6 +108,29 @@ export default function PlayerCategorizationPage() {
       router.push('/dashboard');
     }
   }, [user, authLoading, router, isCommitteeAdmin]);
+
+  // Update weights based on preset and maxSeasons
+  useEffect(() => {
+    if (weightPreset === 'custom') return;
+
+    const count = 5; // We always show 5 weight slots in UI for seasons 1-5 ago
+    let newWeights = Array(count).fill(1.0);
+
+    if (weightPreset === 'decay') {
+      newWeights = newWeights.map((_, i) => parseFloat(Math.pow(0.5, i).toFixed(2)));
+    } else if (weightPreset === 'linear') {
+      newWeights = newWeights.map((_, i) => parseFloat(Math.max(0, 1.0 - i * 0.2).toFixed(2)));
+    } else if (weightPreset === 'equal') {
+      newWeights = Array(count).fill(1.0);
+    }
+
+    // Apply maxSeasons mask: if i >= maxSeasons, set weight to 0
+    if (maxSeasons !== 'all') {
+      newWeights = newWeights.map((w, i) => (i < maxSeasons ? w : 0.0));
+    }
+
+    setSeasonWeights(newWeights);
+  }, [weightPreset, maxSeasons]);
 
   // Load initial data
   useEffect(() => {
@@ -107,6 +155,18 @@ export default function PlayerCategorizationPage() {
         if (dataResult.success) {
           setActivePlayers(dataResult.activePlayers || []);
           setHistoricalStats(dataResult.historicalStats || []);
+          
+          // Pre-select all fetched seasons
+          const seasons = new Set<string>();
+          (dataResult.historicalStats || []).forEach((stat: any) => {
+            if (stat.season_id) seasons.add(stat.season_id);
+          });
+          const sortedSeasons = Array.from(seasons).sort((a: string, b: string) => {
+            const numA = parseInt(a.replace(/\D/g, '')) || 0;
+            const numB = parseInt(b.replace(/\D/g, '')) || 0;
+            return numB - numA;
+          });
+          setSelectedHistoricalSeasons(sortedSeasons);
         } else {
           throw new Error(dataResult.error || 'Failed to fetch player stats');
         }
@@ -145,7 +205,7 @@ export default function PlayerCategorizationPage() {
   const historicalSeasonsList = useMemo(() => {
     const seasons = new Set<string>();
     historicalStats.forEach(stat => {
-      if (stat.season_id) seasons.add(stat.season_id);
+      if (stat.season_id) seasons.add(getBaseSeasonId(stat.season_id));
     });
     return Array.from(seasons).sort((a, b) => {
       const numA = parseInt(a.replace(/\D/g, '')) || 0;
@@ -162,32 +222,106 @@ export default function PlayerCategorizationPage() {
       // Calculate weighted score using decay weightage and PPM (points per match)
       let weightedSum = 0;
       let weightSum = 0;
-      const seasonPointsMap = new Map<string, { points: number; matches: number; ppm: number }>();
+      const seasonPointsMap = new Map<string, { points: number; matches: number; ppm: number; appliedWeight: number }>();
 
-      const MIN_MATCHES = 3;
+      // Group historical stats by base season ID (e.g. S16.5 and S16.0 merge into S16)
+      const baseSeasonStats = new Map<string, { pointsSum: number; matchesSum: number }>();
 
       stats.forEach(stat => {
-        const seasonNum = parseInt(stat.season_id.replace(/\D/g, '')) || 0;
+        const baseId = getBaseSeasonId(stat.season_id);
+        const points = stat.points || 0;
+
+        if (!baseSeasonStats.has(baseId)) {
+          baseSeasonStats.set(baseId, { pointsSum: 0, matchesSum: 0 });
+        }
+
+        const existing = baseSeasonStats.get(baseId)!;
+        baseSeasonStats.set(baseId, {
+          pointsSum: existing.pointsSum + points,
+          matchesSum: existing.matchesSum + (stat.matches_played || 0)
+        });
+      });
+
+      // Process grouped base season stats
+      const baseSeasonsSorted = Array.from(baseSeasonStats.keys()).sort((a, b) => {
+        const numA = parseInt(a.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b.replace(/\D/g, '')) || 0;
+        return numB - numA; // Descending (most recent first)
+      });
+
+      baseSeasonsSorted.forEach(baseId => {
+        // Ignore seasons not selected in the Season filter
+        if (!selectedHistoricalSeasons.includes(baseId)) {
+          return;
+        }
+
+        const seasonNum = parseInt(baseId.replace(/\D/g, '')) || 0;
         if (seasonNum > 0 && seasonNum < currentSeasonNum) {
           const distance = currentSeasonNum - seasonNum;
-          // Exponential decay weight: 1.0 for dist 1, 0.5 for dist 2, 0.25 for dist 3...
-          const weight = Math.pow(0.5, distance - 1);
+
+          // Check if distance is within maxSeasons constraint
+          if (maxSeasons !== 'all' && distance > maxSeasons) {
+            return; // Ignore older seasons
+          }
+
+          // Get weight from seasonWeights array (index = distance - 1)
+          const weight = (distance - 1 < seasonWeights.length) ? seasonWeights[distance - 1] : 0.0;
           
-          const matches = stat.matches_played || 0;
-          if (matches >= MIN_MATCHES) {
-            const ppm = (stat.points || 0) / matches;
+          const data = baseSeasonStats.get(baseId)!;
+          const matches = data.matchesSum;
+          const points = data.pointsSum;
+
+          if (matches >= minMatches) {
+            const ppm = points / matches;
             weightedSum += ppm * weight;
             weightSum += weight;
           }
           
-          const ppmVal = matches > 0 ? parseFloat(((stat.points || 0) / matches).toFixed(1)) : 0;
-          seasonPointsMap.set(stat.season_id, {
-            points: stat.points || 0,
+          const ppmVal = matches > 0 ? parseFloat((points / matches).toFixed(1)) : 0;
+          seasonPointsMap.set(baseId, {
+            points: points,
             matches: matches,
-            ppm: ppmVal
+            ppm: ppmVal,
+            appliedWeight: weight
           });
         }
       });
+
+      // Track any seasons this player has stats in, but were excluded by our settings
+      const excludedSeasons: string[] = [];
+      baseSeasonsSorted.forEach(baseId => {
+        const seasonNum = parseInt(baseId.replace(/\D/g, '')) || 0;
+        const distance = currentSeasonNum - seasonNum;
+
+        const isUnselected = !selectedHistoricalSeasons.includes(baseId);
+        const isPastLimit = maxSeasons !== 'all' && distance > maxSeasons;
+
+        if (isUnselected || isPastLimit) {
+          excludedSeasons.push(baseId);
+        }
+      });
+
+      // Calculate hypothetical score including all seasons (ignoring checklist and distance limits)
+      let hypotheticalWeightedSum = 0;
+      let hypotheticalWeightSum = 0;
+      baseSeasonsSorted.forEach(baseId => {
+        const seasonNum = parseInt(baseId.replace(/\D/g, '')) || 0;
+        if (seasonNum > 0 && seasonNum < currentSeasonNum) {
+          const distance = currentSeasonNum - seasonNum;
+          const weight = (distance - 1 < seasonWeights.length) ? seasonWeights[distance - 1] : 0.0;
+          
+          const data = baseSeasonStats.get(baseId)!;
+          const matches = data.matchesSum;
+          const points = data.pointsSum;
+
+          if (matches >= minMatches) {
+            const ppm = points / matches;
+            hypotheticalWeightedSum += ppm * weight;
+            hypotheticalWeightSum += weight;
+          }
+        }
+      });
+      const hypotheticalScore = hypotheticalWeightSum > 0 ? parseFloat((hypotheticalWeightedSum / hypotheticalWeightSum).toFixed(2)) : null;
 
       // AI Score is the weighted PPM (rounded to 2 decimal places for sorting precision)
       const weightedScore = weightSum > 0 ? parseFloat((weightedSum / weightSum).toFixed(2)) : null;
@@ -195,11 +329,13 @@ export default function PlayerCategorizationPage() {
       return {
         ...player,
         weightedScore,
+        hypotheticalScore,
         seasonPointsMap,
-        isNewPlayer: weightedScore === null
+        isNewPlayer: weightedScore === null,
+        excludedSeasons: Array.from(new Set(excludedSeasons))
       };
     });
-  }, [activePlayers, historicalByPlayer, currentSeasonNum]);
+  }, [activePlayers, historicalByPlayer, currentSeasonNum, maxSeasons, minMatches, seasonWeights, selectedHistoricalSeasons]);
 
   // Sort players: unrated/new at the bottom, others sorted by weightedScore descending
   const sortedPlayers = useMemo(() => {
@@ -238,15 +374,16 @@ export default function PlayerCategorizationPage() {
       return;
     }
 
-    // 2. Partition sorted players based on targets
+    // 2. Partition sorted players based on targets (excluding new players)
     const proposals = new Map<string, string>();
+    const ratedPlayersOnly = sortedPlayers.filter(p => !p.isNewPlayer);
     let currentIndex = 0;
 
     // Categories are sorted by priority (e.g. Red, Black, Blue, White)
     categories.forEach(cat => {
       const count = categoryTargets[cat.id] || 0;
       for (let i = 0; i < count; i++) {
-        const player = sortedPlayers[currentIndex];
+        const player = ratedPlayersOnly[currentIndex];
         if (player) {
           proposals.set(player.id, cat.name);
           currentIndex++;
@@ -254,15 +391,22 @@ export default function PlayerCategorizationPage() {
       }
     });
 
-    // Handle any leftover players just in case
-    while (currentIndex < sortedPlayers.length) {
-      const player = sortedPlayers[currentIndex];
+    // Handle any leftover rated players just in case
+    while (currentIndex < ratedPlayersOnly.length) {
+      const player = ratedPlayersOnly[currentIndex];
       const lowestCat = categories[categories.length - 1];
       if (player && lowestCat) {
         proposals.set(player.id, lowestCat.name);
       }
       currentIndex++;
     }
+
+    // For new players, default their proposed category to 'N/A' (Unrated)
+    sortedPlayers.forEach(player => {
+      if (player.isNewPlayer) {
+        proposals.set(player.id, 'N/A');
+      }
+    });
 
     setProposedCategories(proposals);
     setHasCalculated(true);
@@ -302,6 +446,15 @@ export default function PlayerCategorizationPage() {
 
     return counts;
   }, [sortedPlayers, proposedCategories, manualOverrides, categories]);
+
+  // Computed unallocated players count
+  const totalQuotasSelected = useMemo(() => {
+    return Object.values(categoryTargets).reduce((a, b) => a + b, 0);
+  }, [categoryTargets]);
+
+  const unallocatedCount = useMemo(() => {
+    return activePlayers.length - totalQuotasSelected;
+  }, [activePlayers, totalQuotasSelected]);
 
   // Bulk Save and Apply updates
   const handleSaveCategories = async () => {
@@ -399,12 +552,36 @@ export default function PlayerCategorizationPage() {
     XLSX.writeFile(workbook, `AI-Player-Categorization-Season-${userSeasonId}.xlsx`);
   };
 
-  // Filtered player list based on search term
+  // Filtered player list based on search term and advanced selectors
   const filteredPlayers = useMemo(() => {
-    return sortedPlayers.filter(p => 
-      p.player_name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [sortedPlayers, searchTerm]);
+    return sortedPlayers.filter(p => {
+      // 1. Search term (by name)
+      const matchesSearch = p.player_name.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // 2. Proposed Category filter
+      const proposed = proposedCategories.get(p.id) || '';
+      const finalCategory = getPlayerCategory(p.id, proposed);
+      const matchesCategory = filterProposedCategory === 'all' || finalCategory === filterProposedCategory;
+
+      // 3. Override Status filter
+      let matchesOverride = true;
+      if (filterOverrideStatus === 'overridden') {
+        matchesOverride = manualOverrides.has(p.id);
+      } else if (filterOverrideStatus === 'proposed') {
+        matchesOverride = !manualOverrides.has(p.id) && hasCalculated && proposed !== 'N/A';
+      }
+
+      // 4. Player Status filter (New vs Rated)
+      let matchesPlayerStatus = true;
+      if (filterPlayerStatus === 'new') {
+        matchesPlayerStatus = p.isNewPlayer;
+      } else if (filterPlayerStatus === 'rated') {
+        matchesPlayerStatus = !p.isNewPlayer;
+      }
+
+      return matchesSearch && matchesCategory && matchesOverride && matchesPlayerStatus;
+    });
+  }, [sortedPlayers, searchTerm, proposedCategories, filterProposedCategory, filterOverrideStatus, filterPlayerStatus, manualOverrides, hasCalculated]);
 
   // Loading skeleton UI
   if (authLoading || loading) {
@@ -412,7 +589,7 @@ export default function PlayerCategorizationPage() {
       <div className="min-h-screen flex items-center justify-center console-bg font-mono">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading Categorization Assistant...</p>
+          <p className="mt-4 text-xs text-slate-500 uppercase tracking-wider font-extrabold font-mono">Loading Categorization Assistant...</p>
         </div>
       </div>
     );
@@ -473,13 +650,14 @@ export default function PlayerCategorizationPage() {
           <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl lg:col-span-1 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-                <Layers className="w-5 h-5 text-slate-650" />
+                <Layers className="w-5 h-5 text-slate-600" />
                 <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Category Quotas</h3>
               </div>
 
-              <p className="text-[10px] text-slate-500 font-bold uppercase mb-4 leading-relaxed">
-                Specify the maximum number of players you want in each category. The AI will sort players by points and fill the quotas starting from the highest tier.
-              </p>
+              <div className="p-3 mb-4 rounded-xl border border-slate-150 bg-slate-50 flex items-center justify-between text-xs font-mono font-bold uppercase">
+                <span className="text-slate-500">Total Players:</span>
+                <span className="text-slate-800">{activePlayers.length}</span>
+              </div>
 
               <div className="space-y-4">
                 {categories.map(cat => (
@@ -498,66 +676,199 @@ export default function PlayerCategorizationPage() {
                   </div>
                 ))}
               </div>
+
+              <div className={`p-3 mt-4 rounded-xl border text-xs font-mono font-bold uppercase flex items-center justify-between transition-colors ${
+                unallocatedCount === 0 
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                  : unallocatedCount > 0 
+                    ? 'bg-amber-50 border-amber-200 text-amber-800' 
+                    : 'bg-rose-50 border-rose-200 text-rose-800'
+              }`}>
+                <span>{unallocatedCount === 0 ? 'Remaining:' : unallocatedCount > 0 ? 'Unallocated:' : 'Overallocated:'}</span>
+                <span>{Math.abs(unallocatedCount)}</span>
+              </div>
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100">
               <button
                 onClick={handleCalculateProposals}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-900 font-mono font-black text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                disabled={unallocatedCount !== 0}
+                className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-mono font-black text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer ${
+                  unallocatedCount === 0
+                    ? 'bg-amber-500 hover:bg-amber-600 text-slate-900 active:scale-95'
+                    : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                }`}
               >
-                <Sparkles className="w-4 h-4" /> Generate Proposals
+                {unallocatedCount === 0 ? (
+                  <>
+                    <Sparkles className="w-4 h-4" /> Generate Proposals
+                  </>
+                ) : (
+                  <span>Allocate All Players ({unallocatedCount > 0 ? `${unallocatedCount} left` : `${Math.abs(unallocatedCount)} over`})</span>
+                )}
               </button>
             </div>
           </div>
 
-          {/* AI Explanation / Information card */}
-          <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl lg:col-span-2 space-y-4 flex flex-col justify-between">
+          {/* AI Settings / Sliders Card */}
+          <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl lg:col-span-1 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-                <Info className="w-5 h-5 text-slate-650" />
-                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">How the AI Suggests Categories</h3>
+                <Sliders className="w-5 h-5 text-slate-600" />
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Algorithm Tuning</h3>
+              </div>
+
+              <div className="space-y-4 text-xs font-mono">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Max Seasons</label>
+                    <select
+                      className="w-full px-2 py-1.5 border border-slate-250 rounded-lg font-bold text-slate-800 bg-white"
+                      value={maxSeasons}
+                      onChange={(e) => setMaxSeasons(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+                    >
+                      <option value="all">All Seasons</option>
+                      <option value="1">Last 1 Season</option>
+                      <option value="2">Last 2 Seasons</option>
+                      <option value="3">Last 3 Seasons</option>
+                      <option value="4">Last 4 Seasons</option>
+                      <option value="5">Last 5 Seasons</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Min Matches</label>
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-full px-2 py-1.5 border border-slate-250 rounded-lg text-center font-bold text-slate-800 bg-white"
+                      value={minMatches}
+                      onChange={(e) => setMinMatches(Math.max(1, parseInt(e.target.value) || 3))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Weight Preset</label>
+                  <select
+                    className="w-full px-2 py-1.5 border border-slate-250 rounded-lg font-bold text-slate-800 bg-white"
+                    value={weightPreset}
+                    onChange={(e) => setWeightPreset(e.target.value as any)}
+                  >
+                    <option value="decay">Exponential Decay (Default)</option>
+                    <option value="equal">Equal Weight (1.0)</option>
+                    <option value="linear">Linear Decay</option>
+                    <option value="custom">Custom (Drag Sliders)</option>
+                  </select>
+                </div>
+
+                {/* Seasons Checkboxes */}
+                <div className="space-y-2 pt-2 border-t border-slate-50">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Seasons to Consider</span>
+                  <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto p-1.5 border border-slate-150 rounded-lg bg-slate-50/50">
+                    {historicalSeasonsList.map(seasonId => {
+                      const isChecked = selectedHistoricalSeasons.includes(seasonId);
+                      return (
+                        <label key={seasonId} className="flex items-center gap-1.5 p-1 rounded hover:bg-slate-100/80 cursor-pointer text-[10px] font-bold text-slate-700 font-mono">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedHistoricalSeasons(prev => [...prev, seasonId]);
+                              } else {
+                                setSelectedHistoricalSeasons(prev => prev.filter(s => s !== seasonId));
+                              }
+                            }}
+                            className="rounded border-slate-350 text-amber-500 focus:ring-amber-400 w-3.5 h-3.5"
+                          />
+                          <span>{seasonId}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-slate-50">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Season Weights / Intensity</span>
+                  
+                  {seasonWeights.map((w, idx) => {
+                    const disabled = maxSeasons !== 'all' && idx >= maxSeasons;
+                    return (
+                      <div key={idx} className={`flex flex-col gap-1 p-2 rounded-xl border border-slate-100 bg-slate-50/50 ${disabled ? 'opacity-40' : ''}`}>
+                        <div className="flex justify-between items-center text-[9px] font-bold text-slate-500 uppercase">
+                          <span>{idx + 1} Season{idx > 0 ? 's' : ''} Ago</span>
+                          <span className="text-slate-800 font-mono font-black">{disabled ? 'Ignored' : `${Math.round(w * 100)}%`}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          disabled={disabled}
+                          value={disabled ? 0 : w}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            setWeightPreset('custom');
+                            setSeasonWeights(prev => {
+                              const copy = [...prev];
+                              copy[idx] = val;
+                              return copy;
+                            });
+                          }}
+                          className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Explanation / Information card */}
+          <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl lg:col-span-1 flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+                <Info className="w-5 h-5 text-slate-600" />
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">AI Calculation Guide</h3>
               </div>
 
               <div className="space-y-3 text-slate-700 text-xs leading-relaxed">
                 <div className="flex gap-2">
                   <div className="font-bold text-amber-500 flex-shrink-0">Step 1:</div>
                   <div>
-                    <strong>Skip Active Season stats:</strong> Since categorization occurs at the start of a season or for replacement players, the active season stats are ignored.
+                    <strong>Skip Active Season:</strong> Current season stats are ignored for objectivity.
                   </div>
                 </div>
                 
                 <div className="flex gap-2">
                   <div className="font-bold text-amber-500 flex-shrink-0">Step 2:</div>
                   <div>
-                    <strong>Decay-Weighted Points Per Match (PPM):</strong> For each past season, the player's Points Per Match (PPM) is calculated (requiring at least 3 matches played in that season). To keep the ratings relevant, older seasons are penalized:
-                    <ul className="list-disc pl-5 mt-2 space-y-1 font-mono text-[10px] text-slate-550 uppercase">
-                      <li>1 season ago (e.g. S17 for S18): Weight = <strong>1.00</strong></li>
-                      <li>2 seasons ago (e.g. S16 for S18): Weight = <strong>0.50</strong></li>
-                      <li>3 seasons ago (e.g. S15 for S18): Weight = <strong>0.25</strong></li>
-                    </ul>
+                    <strong>Group Sub-Seasons:</strong> Sub-seasons (like S16.5 and S16) are merged into their base season to ensure balanced statistics.
                   </div>
                 </div>
 
                 <div className="flex gap-2">
                   <div className="font-bold text-amber-500 flex-shrink-0">Step 3:</div>
                   <div>
-                    <strong>Quotas Allocation:</strong> All players are sorted by their performance scores. Category tiers are filled sequentially matching your requested sizes.
+                    <strong>Weighted PPM:</strong> For each qualifying past season, the Points Per Match (PPM) is multiplied by its slider weight to compute a weighted performance index.
                   </div>
                 </div>
 
                 <div className="flex gap-2">
                   <div className="font-bold text-amber-500 flex-shrink-0">Step 4:</div>
                   <div>
-                    <strong>New/Replacement Players Handling:</strong> Players with no historical records are placed in an <em>Unrated / New Players</em> pool at the bottom of the list for easy manual category assignment.
+                    <strong>Quotas & New Players:</strong> Rated players are sorted and allocated to category quotas. New players are excluded and marked <strong>Unrated (N/A)</strong> for manual evaluation.
                   </div>
                 </div>
               </div>
             </div>
 
             {hasCalculated && (
-              <div className="p-4 border border-emerald-200 bg-emerald-50/50 text-emerald-800 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2">
+              <div className="p-3 border border-emerald-250 bg-emerald-50 text-emerald-800 rounded-xl text-[9px] font-bold uppercase tracking-wider flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                Category allocation generated! Review the suggestions below.
+                Proposals computed! Review the breakdown below.
               </div>
             )}
           </div>
@@ -583,38 +894,78 @@ export default function PlayerCategorizationPage() {
           <div className="console-card bg-white border border-slate-200/60 shadow-sm rounded-2xl overflow-hidden space-y-4">
             
             {/* Table Header controls */}
-            <div className="px-6 py-4 border-b border-slate-200/60 bg-slate-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-slate-550" />
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700">
-                  Player Recommendations ({filteredPlayers.length})
-                </span>
+            <div className="px-6 py-4 border-b border-slate-200/60 bg-slate-50/50 flex flex-col gap-4">
+              {/* Top Tier: Title and Action Buttons */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-slate-500" />
+                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700">
+                    Player Recommendations ({filteredPlayers.length})
+                  </span>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleExportExcel}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border border-slate-250 hover:bg-slate-50 font-mono font-bold text-xs uppercase tracking-wider text-slate-700 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export Excel
+                  </button>
+
+                  <button
+                    onClick={handleSaveCategories}
+                    disabled={saving}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:bg-slate-400 text-white font-mono font-bold text-xs uppercase tracking-wider cursor-pointer"
+                  >
+                    <Save className="w-3.5 h-3.5" /> {saving ? 'Saving...' : 'Apply Categories'}
+                  </button>
+                </div>
               </div>
 
-              {/* Action buttons */}
-              <div className="flex flex-wrap gap-3 w-full md:w-auto">
-                <input
-                  type="text"
-                  placeholder="Search player name..."
-                  className="px-3 py-1.5 border border-slate-250 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-amber-500 w-full md:w-48"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                
-                <button
-                  onClick={handleExportExcel}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border border-slate-250 hover:bg-slate-50 font-mono font-bold text-xs uppercase tracking-wider text-slate-700 cursor-pointer flex-1 md:flex-none"
-                >
-                  <Download className="w-3.5 h-3.5" /> Export Excel
-                </button>
+              {/* Bottom Tier: Advanced Filters and Search */}
+              <div className="flex flex-wrap gap-2 items-center bg-white p-3 border border-slate-150 rounded-xl">
+                <div className="relative flex items-center flex-1 sm:flex-none sm:w-64">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Search player name..."
+                    className="pl-9 pr-3 py-1.5 border border-slate-250 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-amber-500 w-full"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
 
-                <button
-                  onClick={handleSaveCategories}
-                  disabled={saving}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:bg-slate-400 text-white font-mono font-bold text-xs uppercase tracking-wider cursor-pointer flex-1 md:flex-none"
+                <select
+                  className="px-2 py-1.5 border border-slate-250 rounded-lg text-xs font-mono text-slate-800 bg-white focus:outline-none focus:border-amber-500 flex-1 sm:flex-none sm:w-40"
+                  value={filterProposedCategory}
+                  onChange={(e) => setFilterProposedCategory(e.target.value)}
                 >
-                  <Save className="w-3.5 h-3.5" /> {saving ? 'Saving...' : 'Apply Categories'}
-                </button>
+                  <option value="all">All Categories</option>
+                  <option value="N/A">Unrated (N/A)</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                  ))}
+                </select>
+
+                <select
+                  className="px-2 py-1.5 border border-slate-250 rounded-lg text-xs font-mono text-slate-800 bg-white focus:outline-none focus:border-amber-500 flex-1 sm:flex-none sm:w-40"
+                  value={filterOverrideStatus}
+                  onChange={(e) => setFilterOverrideStatus(e.target.value)}
+                >
+                  <option value="all">All Overrides</option>
+                  <option value="overridden">Overridden Only</option>
+                  <option value="proposed">Auto AI Proposals</option>
+                </select>
+
+                <select
+                  className="px-2 py-1.5 border border-slate-250 rounded-lg text-xs font-mono text-slate-800 bg-white focus:outline-none focus:border-amber-500 flex-1 sm:flex-none sm:w-40"
+                  value={filterPlayerStatus}
+                  onChange={(e) => setFilterPlayerStatus(e.target.value)}
+                >
+                  <option value="all">All Players</option>
+                  <option value="new">New Players Only</option>
+                  <option value="rated">Rated Only</option>
+                </select>
               </div>
             </div>
 
@@ -641,7 +992,7 @@ export default function PlayerCategorizationPage() {
                     <th className="px-6 py-3.5">Current Category</th>
                     <th className="px-6 py-3.5 text-center">AI Rating Suggestion</th>
                     <th className="px-6 py-3.5 text-center">AI Score (PPM)</th>
-                    {historicalSeasonsList.map(seasonId => (
+                    {historicalSeasonsList.filter(s => selectedHistoricalSeasons.includes(s)).map(seasonId => (
                       <th key={seasonId} className="px-4 py-3.5 text-center font-mono">{seasonId}</th>
                     ))}
                     <th className="px-6 py-3.5 text-right">Manual Override</th>
@@ -652,75 +1003,211 @@ export default function PlayerCategorizationPage() {
                     const proposed = proposedCategories.get(player.id) || '';
                     const finalCategory = getPlayerCategory(player.id, proposed);
                     const isOverridden = manualOverrides.has(player.id);
+                    const isExpanded = expandedPlayerId === player.id;
+
+                    const proposedCatObj = categories.find(c => c.name === proposed);
+                    const currentCatObj = categories.find(c => c.name === player.category);
+                    let categoryBadgeClass = 'bg-slate-50 text-slate-500 border border-slate-200';
+                    let changeLabel = null;
+
+                    if (proposed === 'Red') categoryBadgeClass = 'bg-rose-50 text-rose-700 border border-rose-200';
+                    else if (proposed === 'Black') categoryBadgeClass = 'bg-slate-900 text-slate-100 border border-slate-950';
+                    else if (proposed === 'Blue') categoryBadgeClass = 'bg-blue-50 text-blue-700 border border-blue-200';
+                    else if (proposed === 'White') categoryBadgeClass = 'bg-slate-50 text-slate-700 border border-slate-200';
+
+                    if (proposed && player.category && proposed !== 'N/A' && proposed !== player.category) {
+                      if (proposedCatObj && currentCatObj) {
+                        const isUpgrade = proposedCatObj.priority < currentCatObj.priority;
+                        changeLabel = isUpgrade ? (
+                          <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-250 rounded px-1.5 py-0.5 ml-1.5 uppercase tracking-wider inline-block">Upgrade</span>
+                        ) : (
+                          <span className="text-[8px] font-bold text-rose-600 bg-rose-50 border border-rose-250 rounded px-1.5 py-0.5 ml-1.5 uppercase tracking-wider inline-block">Downgrade</span>
+                        );
+                      }
+                    }
                     
                     return (
-                      <tr key={player.id} className={`hover:bg-slate-50/30 transition-colors ${player.isNewPlayer ? 'bg-amber-50/15' : ''}`}>
-                        
-                        {/* Player name */}
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-slate-800">{player.player_name}</div>
-                          {player.isNewPlayer && (
-                            <span className="text-[9px] font-mono font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 mt-1 inline-block uppercase">New / Replacement</span>
-                          )}
-                        </td>
-
-                        {/* Current assigned category */}
-                        <td className="px-6 py-4 font-mono text-slate-500">
-                          {player.category || 'None'}
-                        </td>
-
-                        {/* Proposed Category */}
-                        <td className="px-6 py-4 text-center">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                            proposed === 'Red' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
-                            proposed === 'Black' ? 'bg-slate-100 text-slate-700 border border-slate-200' :
-                            proposed === 'Blue' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                            'bg-slate-50 text-slate-500 border border-slate-200'
-                          }`}>
-                            {proposed || 'N/A'}
-                          </span>
-                        </td>
-
-                        {/* AI Score */}
-                        <td className="px-6 py-4 font-mono font-bold text-center text-slate-700">
-                          {player.weightedScore !== null ? player.weightedScore : '—'}
-                        </td>
-
-                        {/* Historical Season Stats */}
-                        {historicalSeasonsList.map(seasonId => {
-                          const data = player.seasonPointsMap.get(seasonId);
-                          return (
-                            <td key={seasonId} className="px-4 py-4 font-mono text-center text-slate-500">
-                              {data !== undefined ? (
-                                <div className="leading-tight">
-                                  <div className="font-bold text-slate-700">{data.points} pts</div>
-                                  <div className="text-[10px] text-slate-400">{data.matches}m ({data.ppm} PPM)</div>
-                                </div>
-                              ) : '—'}
-                            </td>
-                          );
-                        })}
-
-                        {/* Manual override dropdown */}
-                        <td className="px-6 py-4 text-right">
-                          <div className="inline-block relative">
-                            <select
-                              value={finalCategory}
-                              onChange={(e) => handleCategoryOverride(player.id, e.target.value)}
-                              className={`appearance-none bg-white border pr-8 pl-3 py-1 rounded-lg text-xs font-mono font-bold uppercase tracking-wider text-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer ${
-                                isOverridden ? 'border-amber-500 ring-2 ring-amber-100' : 'border-slate-250'
-                              }`}
+                      <React.Fragment key={player.id}>
+                        <tr className={`hover:bg-slate-50/30 transition-colors ${player.isNewPlayer ? 'bg-amber-50/15' : ''}`}>
+                          
+                          {/* Player name with Expand Toggle */}
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => setExpandedPlayerId(isExpanded ? null : player.id)}
+                              className="flex items-center gap-1.5 font-bold text-slate-800 hover:text-amber-600 transition-colors font-mono text-left focus:outline-none"
                             >
-                              <option value="N/A">Select...</option>
-                              {categories.map(cat => (
-                                <option key={cat.id} value={cat.name}>{cat.name}</option>
-                              ))}
-                            </select>
-                            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2 pointer-events-none" />
-                          </div>
-                        </td>
+                              {isExpanded ? (
+                                <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
+                              ) : (
+                                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                              )}
+                              <span>{player.player_name}</span>
+                            </button>
+                            {player.isNewPlayer && (
+                              <span className="text-[9px] font-mono font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 mt-1 inline-block uppercase">New / Replacement</span>
+                            )}
+                          </td>
 
-                      </tr>
+                          {/* Current assigned category */}
+                          <td className="px-6 py-4 font-mono text-slate-500">
+                            {player.category || 'None'}
+                          </td>
+
+                          {/* Proposed Category */}
+                          <td className="px-6 py-4 text-center">
+                            <div className="flex items-center justify-center">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${categoryBadgeClass}`}>
+                                {proposed || 'N/A'}
+                              </span>
+                              {changeLabel}
+                            </div>
+                          </td>
+
+                          {/* AI Score */}
+                          <td className="px-6 py-4 font-mono font-bold text-center text-slate-700">
+                            {player.weightedScore !== null ? player.weightedScore : '—'}
+                          </td>
+
+                          {/* Historical Season Stats */}
+                          {historicalSeasonsList.filter(s => selectedHistoricalSeasons.includes(s)).map(seasonId => {
+                            const data = player.seasonPointsMap.get(seasonId);
+                            return (
+                              <td key={seasonId} className="px-4 py-4 font-mono text-center text-slate-500">
+                                {data !== undefined ? (
+                                  <div className="leading-tight">
+                                    <div className="font-bold text-slate-700">{data.points} pts</div>
+                                    <div className="text-[10px] text-slate-400">{data.matches}m ({data.ppm} PPM)</div>
+                                  </div>
+                                ) : '—'}
+                              </td>
+                            );
+                          })}
+
+                          {/* Manual override dropdown */}
+                          <td className="px-6 py-4 text-right">
+                            <div className="inline-block relative">
+                              <select
+                                value={finalCategory}
+                                onChange={(e) => handleCategoryOverride(player.id, e.target.value)}
+                                className={`appearance-none bg-white border pr-8 pl-3 py-1 rounded-lg text-xs font-mono font-bold uppercase tracking-wider text-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer ${
+                                  isOverridden ? 'border-amber-500 ring-2 ring-amber-100' : 'border-slate-250'
+                                }`}
+                              >
+                                <option value="N/A">Select...</option>
+                                {categories.map(cat => (
+                                  <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                ))}
+                              </select>
+                              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2 pointer-events-none" />
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* Calculation Breakdown expanded view */}
+                        {isExpanded && (
+                          <tr>
+                            <td colSpan={5 + historicalSeasonsList.filter(s => selectedHistoricalSeasons.includes(s)).length} className="px-6 py-4 bg-slate-50/50 border-t border-b border-slate-200">
+                              {player.isNewPlayer ? (
+                                <div className="p-4 bg-amber-50/40 border border-amber-200/80 rounded-xl space-y-2 font-mono text-slate-700">
+                                  <div className="font-bold text-amber-800 text-[10px] uppercase tracking-wider">AI Calculation Breakdown</div>
+                                  <p className="text-[11px] leading-relaxed">
+                                    This player is a newly registered or replacement player with no qualified historical stats (has played fewer than {minMatches} matches in all of the past seasons).
+                                  </p>
+                                  <p className="text-[11px] text-amber-700 font-bold uppercase">
+                                    Recommendation: Keep category as Unrated (N/A) for manual evaluation by the committee.
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-4 font-mono text-[11px] text-slate-700 shadow-sm">
+                                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                                    <span className="font-black text-slate-800 uppercase tracking-wider text-xs">AI Performance Breakdown: {player.player_name}</span>
+                                    <span className="text-[9px] text-slate-550 uppercase font-bold">Min Matches Limit: {minMatches}</span>
+                                  </div>
+
+                                  {/* Formula representation */}
+                                  <div className="space-y-1 bg-slate-50 p-3 rounded-lg border border-slate-150">
+                                    <div className="text-slate-500 uppercase text-[9px] font-bold">Calculation Formula:</div>
+                                    <div className="text-slate-800 text-xs font-bold py-0.5">
+                                      Weighted Score = &Sigma;(Season_PPM &times; Weight) / &Sigma;(Weights)
+                                    </div>
+                                    <div className="text-slate-600 text-[10px] pt-1 leading-relaxed">
+                                      {"Weighted Score = ("}
+                                      {
+                                        Array.from(player.seasonPointsMap.entries())
+                                          .filter(([_, data]) => data.matches >= minMatches)
+                                          .map(([seasonId, data]) => `${data.ppm} [${seasonId}] * ${data.appliedWeight}`)
+                                          .join(' + ') || 'No qualifying seasons'
+                                      }
+                                      {") / ("}
+                                      {
+                                        Array.from(player.seasonPointsMap.entries())
+                                          .filter(([_, data]) => data.matches >= minMatches)
+                                          .map(([_, data]) => data.appliedWeight)
+                                          .join(' + ') || '0'
+                                      }
+                                      {") = "}
+                                      <strong className="text-amber-600 text-sm ml-1">{player.weightedScore ?? 'N/A'}</strong>
+                                    </div>
+                                  </div>
+
+                                  {/* Excluded seasons warning notice */}
+                                  {player.excludedSeasons && player.excludedSeasons.length > 0 && player.weightedScore === null && (
+                                    <div className="p-3 bg-amber-50/40 border border-amber-250/70 rounded-xl text-[10px] text-amber-800 leading-relaxed font-mono flex flex-col gap-1">
+                                      <div className="flex items-start gap-2">
+                                        <span className="text-amber-600 font-bold">⚠️ Excluded Stats:</span>
+                                        <span>
+                                          Stats for <strong>{player.excludedSeasons.join(', ')}</strong> were fetched but ignored under your current settings (Max Seasons limit or unselected checkboxes).
+                                        </span>
+                                      </div>
+                                      {player.hypotheticalScore !== null && player.hypotheticalScore !== player.weightedScore && (
+                                        <div className="pl-6 text-[10px] text-slate-600 font-bold">
+                                          Hypothetical AI Score if these seasons were included: <span className="text-amber-700">{player.hypotheticalScore} PPM</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Stats Table */}
+                                  <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-slate-200 border border-slate-200 text-left rounded-lg overflow-hidden">
+                                      <thead>
+                                        <tr className="text-[9px] font-bold uppercase text-slate-500 bg-slate-100">
+                                          <th className="px-3 py-2">Season</th>
+                                          <th className="px-3 py-2 text-right">Points</th>
+                                          <th className="px-3 py-2 text-right">Matches Played</th>
+                                          <th className="px-3 py-2 text-right">PPM</th>
+                                          <th className="px-3 py-2 text-right">Intensity Weight</th>
+                                          <th className="px-3 py-2 text-right">Weighted Contribution</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-slate-150 bg-white">
+                                        {Array.from(player.seasonPointsMap.entries()).map(([seasonId, data]) => {
+                                          const qualified = data.matches >= minMatches;
+                                          const contribution = qualified ? (data.ppm * data.appliedWeight).toFixed(2) : '0.00';
+                                          return (
+                                            <tr key={seasonId} className={qualified ? 'text-slate-800 font-bold bg-white' : 'text-slate-400 font-normal bg-slate-50/40'}>
+                                              <td className="px-3 py-2">{seasonId}</td>
+                                              <td className="px-3 py-2 text-right">{data.points}</td>
+                                              <td className="px-3 py-2 text-right">
+                                                <span className={qualified ? '' : 'text-rose-600 font-bold'}>
+                                                  {data.matches} {!qualified && `(< ${minMatches})`}
+                                                </span>
+                                              </td>
+                                              <td className="px-3 py-2 text-right">{data.ppm}</td>
+                                              <td className="px-3 py-2 text-right">{data.appliedWeight}</td>
+                                              <td className="px-3 py-2 text-right font-bold text-amber-600">{qualified ? contribution : '—'}</td>
+                                            </tr>
+                                          );
+                                        })}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
