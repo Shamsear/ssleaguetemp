@@ -394,21 +394,25 @@ function RegisterContent() {
           <div className="text-center mb-8">
             <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">
               {isAdminInvite
-                ? invite?.type === 'team' ? 'TEAM REGISTRATION' : 'ADMIN REGISTRATION'
+                ? validatingInvite
+                  ? 'VALIDATING INVITE...'
+                  : invite?.type === 'team' ? 'TEAM REGISTRATION' : 'ADMIN REGISTRATION'
                 : 'MEMBER PORTAL'}
             </span>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5">
               {isAdminInvite
-                ? invite?.type === 'team' ? 'Create Team Account' : 'Join as Committee'
+                ? validatingInvite
+                  ? 'Checking Invite...'
+                  : invite?.type === 'team' ? 'Create Team Account' : 'Join as Committee'
                 : 'Create Account'}
             </h1>
             <p className="text-xs text-slate-500 font-mono mt-1 uppercase">
-              {isAdminInvite && invite && invite.type !== 'team'
+              {validatingInvite
+                ? 'Verifying invitation code details...'
+                : invite?.type === 'team'
+                ? 'You are invited to register a team globally'
+                : invite && invite.type !== 'team'
                 ? `You're invited to manage ${invite.seasonName} (${invite.seasonYear})`
-                : isAdminInvite && invite && invite.type === 'team'
-                ? `You're invited to join ${invite.seasonName} (${invite.seasonYear}) as a team`
-                : isAdminInvite && validatingInvite
-                ? 'Validating your invitation...'
                 : 'Join Football Auction and start building your dream team'
               }
             </p>
