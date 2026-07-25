@@ -236,7 +236,7 @@ export default function FinalizationProgress({
         )}
       </div>
 
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes slideIn {
           from {
             opacity: 0;
@@ -252,7 +252,7 @@ export default function FinalizationProgress({
           animation: slideIn 0.3s ease-out forwards;
           opacity: 0;
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }

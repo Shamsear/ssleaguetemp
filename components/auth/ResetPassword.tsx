@@ -464,7 +464,7 @@ function ResetPasswordContent() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes fadeIn {
           from {
             opacity: 0;
@@ -479,7 +479,7 @@ function ResetPasswordContent() {
         .animate-fade-in {
           animation: fadeIn 0.4s ease-out forwards;
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }

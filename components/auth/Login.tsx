@@ -368,7 +368,7 @@ export default function Login() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes fadeIn {
           from {
             opacity: 0;
@@ -383,7 +383,7 @@ export default function Login() {
         .animate-fade-in {
           animation: fadeIn 0.4s ease-out forwards;
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }
