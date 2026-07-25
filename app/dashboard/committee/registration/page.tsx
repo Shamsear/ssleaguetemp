@@ -27,6 +27,18 @@ export default function TeamRegistrationPage() {
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
+  // New states for direct team creation
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newTeamName, setNewTeamName] = useState('');
+  const [newOwnerName, setNewOwnerName] = useState('');
+  const [newManagerName, setNewManagerName] = useState('');
+  const [newUsername, setNewUsername] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [isUsernameCustom, setIsUsernameCustom] = useState(false);
+  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
+  const [createTeamError, setCreateTeamError] = useState('');
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
@@ -196,6 +208,80 @@ export default function TeamRegistrationPage() {
       alert('An error occurred while registering the team.');
     } finally {
       setRegisteringTeamId(null);
+    }
+  };
+
+  const handleNewTeamNameChange = (val: string) => {
+    setNewTeamName(val);
+    if (!isUsernameCustom) {
+      const generatedUsername = val.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+      setNewUsername(generatedUsername);
+      setNewEmail(`${generatedUsername}@ssleague.com`);
+      setNewPassword(`${generatedUsername}123`);
+    }
+  };
+
+  const handleCreateTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTeamName.trim() || !newUsername.trim() || !newEmail.trim() || !newPassword.trim()) {
+      setCreateTeamError('Please fill in all required fields.');
+      return;
+    }
+
+    try {
+      setIsCreatingTeam(true);
+      setCreateTeamError('');
+
+      const response = await fetch('/api/admin/create-team', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          teamName: newTeamName.trim(),
+          ownerName: newOwnerName.trim() || newUsername.trim(),
+          managerName: newManagerName.trim(),
+          username: newUsername.trim().toLowerCase(),
+          email: newEmail.trim(),
+          password: newPassword,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`Successfully created team account for "${newTeamName}"!`);
+        setShowCreateModal(false);
+        // Reset state
+        setNewTeamName('');
+        setNewOwnerName('');
+        setNewManagerName('');
+        setNewUsername('');
+        setNewEmail('');
+        setNewPassword('');
+        setIsUsernameCustom(false);
+        
+        // Refresh team list
+        const teamsSnapshot = await getDocs(collection(db, 'teams'));
+        const teamsList = teamsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        teamsList.sort((a: any, b: any) => {
+          const nameA = (a.team_name || a.name || '').toUpperCase();
+          const nameB = (b.team_name || b.name || '').toUpperCase();
+          return nameA.localeCompare(nameB);
+        });
+        setTeams(teamsList);
+        setTotalTeamsCount(teamsList.length);
+      } else {
+        setCreateTeamError(result.error || 'Failed to create team account.');
+      }
+    } catch (err: any) {
+      console.error('Error creating team:', err);
+      setCreateTeamError('An error occurred. Please try again.');
+    } finally {
+      setIsCreatingTeam(false);
     }
   };
 
@@ -408,12 +494,24 @@ export default function TeamRegistrationPage() {
 
         {/* Teams Directory Roster */}
         <div className="console-card bg-white rounded-3xl p-6 shadow-sm border border-slate-200/60 font-mono">
-          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center mb-4">
-            <svg className="w-4 h-4 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            League Teams Roster ({teams.length})
-          </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center">
+              <svg className="w-4 h-4 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              League Teams Roster ({teams.length})
+            </h2>
+            
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center justify-center px-4 py-2 bg-slate-800 hover:bg-slate-700 hover:text-amber-500 text-white border border-slate-900 rounded-xl text-xs uppercase tracking-wider font-bold transition-all shadow-sm cursor-pointer"
+            >
+              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+              Create Team Account
+            </button>
+          </div>
           <p className="text-[10px] text-slate-550 font-bold uppercase mb-4 leading-relaxed">
             Monitor and register teams directly into the active season.
           </p>
@@ -559,6 +657,142 @@ export default function TeamRegistrationPage() {
             </p>
           </div>
         </div>
+
+        {/* Create Team Modal */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl border border-slate-200 max-w-md w-full p-6 space-y-4 shadow-xl animate-fade-in font-mono text-left">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Create Team Account</h3>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="text-slate-400 hover:text-slate-650 transition-colors text-lg"
+                >
+                  &times;
+                </button>
+              </div>
+
+              {createTeamError && (
+                <div className="p-3.5 bg-rose-50 border border-rose-250 text-rose-800 rounded-xl text-[10px] font-bold uppercase tracking-wide leading-relaxed">
+                  ⚠️ {createTeamError}
+                </div>
+              )}
+
+              <form onSubmit={handleCreateTeam} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Team Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newTeamName}
+                    onChange={(e) => handleNewTeamNameChange(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
+                    placeholder="e.g. Madrid FC"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Owner Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newOwnerName}
+                    onChange={(e) => setNewOwnerName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
+                    placeholder="e.g. John Smith"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Manager Name (Optional)</label>
+                  <input
+                    type="text"
+                    value={newManagerName}
+                    onChange={(e) => setNewManagerName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
+                    placeholder="e.g. Carlos Ancelotti"
+                  />
+                </div>
+
+                <div className="border-t border-slate-100 pt-3 space-y-3">
+                  <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Login Credentials (Auto-Generated)</div>
+                  
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Username *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newUsername}
+                      onChange={(e) => {
+                        setNewUsername(e.target.value);
+                        setIsUsernameCustom(true);
+                      }}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
+                      placeholder="e.g. madridfc"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Email *</label>
+                    <input
+                      type="email"
+                      required
+                      value={newEmail}
+                      onChange={(e) => {
+                        setNewEmail(e.target.value);
+                        setIsUsernameCustom(true);
+                      }}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
+                      placeholder="e.g. madridfc@ssleague.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Password *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newPassword}
+                      onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        setIsUsernameCustom(true);
+                      }}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
+                      placeholder="Enter a secure password"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
+                    className="flex-1 py-2.5 border border-slate-200 text-slate-500 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-slate-50 transition-all cursor-pointer text-center"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isCreatingTeam}
+                    className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl text-xs uppercase tracking-wider font-bold transition-all shadow-sm flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {isCreatingTeam ? (
+                      <>
+                        <svg className="animate-spin w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Creating...
+                      </>
+                    ) : (
+                      "Create Team"
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

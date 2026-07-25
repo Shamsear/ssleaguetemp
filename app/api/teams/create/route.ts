@@ -10,7 +10,7 @@ import { formatId, ID_PREFIXES, ID_PADDING } from '@/lib/id-utils';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { uid, email, username, teamName } = await request.json();
+    const { uid, email, username, teamName, ownerName, managerName } = await request.json();
 
     if (!uid || !email || !username) {
       return NextResponse.json(
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     await adminDb.collection('teams').doc(teamId).set({
       id: teamId,
       team_name: teamName || username,
-      owner_name: username,
+      owner_name: ownerName || username,
       uid: uid,
       userId: uid,
       owner_uid: uid,
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       total_seasons_participated: 0,
       fantasy_participating: false,
       fantasy_joined_at: null,
-      manager_name: '',
+      manager_name: managerName || '',
       created_at: FieldValue.serverTimestamp(),
       createdAt: FieldValue.serverTimestamp(),
       updated_at: FieldValue.serverTimestamp(),

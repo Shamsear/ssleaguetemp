@@ -43,6 +43,9 @@ function RegisterContent() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [teamName, setTeamName] = useState('');
+  const [ownerName, setOwnerName] = useState('');
+  const [managerName, setManagerName] = useState('');
+  const [isUsernameManuallyEdited, setIsUsernameManuallyEdited] = useState(false);
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
@@ -156,6 +159,8 @@ function RegisterContent() {
           }
         : {
             teamName,
+            ownerName,
+            managerName,
             players: [],
           };
       
@@ -179,6 +184,8 @@ function RegisterContent() {
             email,
             username: finalUsername,
             teamName: teamName || finalUsername,
+            ownerName,
+            managerName,
           }),
         }).catch((teamError) => {
           console.error('Failed to create team document:', teamError);
@@ -245,6 +252,8 @@ function RegisterContent() {
               email,
               username: finalUsername,
               teamName: teamName || finalUsername,
+              ownerName,
+              managerName,
             }),
           }).catch((teamError) => {
             console.error('Failed to create team document:', teamError);
@@ -324,6 +333,20 @@ function RegisterContent() {
     setPassword(pass);
     if (pass.length > 0) {
       setPasswordStrength(calculatePasswordStrength(pass));
+    }
+  };
+
+  const handleUsernameChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setUsername(e.target.value);
+    setIsUsernameManuallyEdited(true);
+  };
+
+  const handleTeamNameChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setTeamName(val);
+    if (!isUsernameManuallyEdited) {
+      const generatedUsername = val.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+      setUsername(generatedUsername);
     }
   };
 
@@ -413,7 +436,7 @@ function RegisterContent() {
                   {invite && (
                     <p className="text-[10px] text-amber-700 font-medium mt-1">
                       {invite.type === 'team'
-                        ? <>You'll be registered as a <strong>Team</strong> for <strong>{invite.seasonName} ({invite.seasonYear})</strong>.</>
+                        ? <>A <strong>Team</strong> will be created globally on the platform.</>
                         : <>You'll be registered as a <strong>Committee Admin</strong> for <strong>{invite.seasonName} ({invite.seasonYear})</strong>.</>
                       }
                     </p>
@@ -467,7 +490,7 @@ function RegisterContent() {
                     required
                     autoComplete="username"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={handleUsernameChange}
                     className={`${isAdminInvite ? 'pr-16' : ''} pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450`}
                     placeholder="Choose a unique username"
                   />
@@ -551,9 +574,10 @@ function RegisterContent() {
                 )}
               </div>
               
-              {/* Team Name Field */}
-              {!isAdminInvite && (
+              {/* Team Fields */}
+              {(!isAdminInvite || (isAdminInvite && invite?.type === 'team')) && (
                 <>
+                  {/* Team Name Field */}
                   <div>
                     <label htmlFor="team_name" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
                       Team Name
@@ -570,13 +594,60 @@ function RegisterContent() {
                         name="team_name"
                         required
                         value={teamName}
-                        onChange={(e) => setTeamName(e.target.value)}
+                        onChange={handleTeamNameChange}
                         className="pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
                         placeholder="Enter your team name"
                       />
                     </div>
                   </div>
                   
+                  {/* Owner Name Field */}
+                  <div>
+                    <label htmlFor="owner_name" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+                      Owner Name
+                    </label>
+                    <div style={{ position: "relative" }} className="relative group">
+                      <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-gray-400 group-focus-within:text-amber-600 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </span>
+                      <input
+                        type="text"
+                        id="owner_name"
+                        name="owner_name"
+                        required
+                        value={ownerName}
+                        onChange={(e) => setOwnerName(e.target.value)}
+                        className="pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
+                        placeholder="Enter owner's name"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Manager Name Field */}
+                  <div>
+                    <label htmlFor="manager_name" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+                      Manager Name (Optional)
+                    </label>
+                    <div style={{ position: "relative" }} className="relative group">
+                      <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-gray-400 group-focus-within:text-amber-600 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </span>
+                      <input
+                        type="text"
+                        id="manager_name"
+                        name="manager_name"
+                        value={managerName}
+                        onChange={(e) => setManagerName(e.target.value)}
+                        className="pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
+                        placeholder="Enter manager's name"
+                      />
+                    </div>
+                  </div>
+
                   {/* Team Logo Upload */}
                   <div>
                     <label htmlFor="team_logo" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">

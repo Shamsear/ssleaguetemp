@@ -303,10 +303,32 @@ export const uploadTeamLogo = async (
     const base64String = await fileToBase64(file);
     
     // Update user document with Base64 string
-    await updateDoc(doc(db, 'users', uid), {
+    const userRef = doc(db, 'users', uid);
+    await updateDoc(userRef, {
       teamLogo: base64String,
+      logoUrl: base64String, // Compatibility
       updatedAt: serverTimestamp(),
     });
+
+    // Also update team document in teams collection if teamId exists on user doc
+    try {
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        if (userData.teamId) {
+          await updateDoc(doc(db, 'teams', userData.teamId), {
+            logo_url: base64String,
+            teamLogo: base64String,
+            logoUrl: base64String,
+            updated_at: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+          console.log(`✅ Updated team logo in teams collection for team ID: ${userData.teamId}`);
+        }
+      }
+    } catch (teamLogoError) {
+      console.error('Error updating team document logo:', teamLogoError);
+    }
 
     return base64String;
   } catch (error: any) {
