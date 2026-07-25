@@ -44,7 +44,6 @@ function RegisterContent() {
   const [password, setPassword] = useState('');
   const [teamName, setTeamName] = useState('');
   const [ownerName, setOwnerName] = useState('');
-  const [managerName, setManagerName] = useState('');
   const [isUsernameManuallyEdited, setIsUsernameManuallyEdited] = useState(false);
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
@@ -160,7 +159,7 @@ function RegisterContent() {
         : {
             teamName,
             ownerName,
-            managerName,
+            managerName: '',
             players: [],
           };
       
@@ -185,7 +184,7 @@ function RegisterContent() {
             username: finalUsername,
             teamName: teamName || finalUsername,
             ownerName,
-            managerName,
+            managerName: '',
           }),
         }).catch((teamError) => {
           console.error('Failed to create team document:', teamError);
@@ -253,7 +252,7 @@ function RegisterContent() {
               username: finalUsername,
               teamName: teamName || finalUsername,
               ownerName,
-              managerName,
+              managerName: '',
             }),
           }).catch((teamError) => {
             console.error('Failed to create team document:', teamError);
@@ -625,28 +624,7 @@ function RegisterContent() {
                     </div>
                   </div>
 
-                  {/* Manager Name Field */}
-                  <div>
-                    <label htmlFor="manager_name" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
-                      Manager Name (Optional)
-                    </label>
-                    <div style={{ position: "relative" }} className="relative group">
-                      <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-gray-400 group-focus-within:text-amber-600 transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </span>
-                      <input
-                        type="text"
-                        id="manager_name"
-                        name="manager_name"
-                        value={managerName}
-                        onChange={(e) => setManagerName(e.target.value)}
-                        className="pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
-                        placeholder="Enter manager's name"
-                      />
-                    </div>
-                  </div>
+
 
                   {/* Team Logo Upload */}
                   <div>
@@ -747,7 +725,7 @@ function RegisterContent() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes fadeIn {
           from {
             opacity: 0;
@@ -762,7 +740,7 @@ function RegisterContent() {
         .animate-fade-in {
           animation: fadeIn 0.4s ease-out forwards;
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }

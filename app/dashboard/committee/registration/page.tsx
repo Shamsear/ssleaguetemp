@@ -31,13 +31,9 @@ export default function TeamRegistrationPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
   const [newOwnerName, setNewOwnerName] = useState('');
-  const [newManagerName, setNewManagerName] = useState('');
-  const [newUsername, setNewUsername] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [isUsernameCustom, setIsUsernameCustom] = useState(false);
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
   const [createTeamError, setCreateTeamError] = useState('');
+  const [createdTeamCredentials, setCreatedTeamCredentials] = useState<{ teamName: string; username: string; email: string; password: string } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -211,22 +207,21 @@ export default function TeamRegistrationPage() {
     }
   };
 
-  const handleNewTeamNameChange = (val: string) => {
-    setNewTeamName(val);
-    if (!isUsernameCustom) {
-      const generatedUsername = val.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-      setNewUsername(generatedUsername);
-      setNewEmail(`${generatedUsername}@ssleague.com`);
-      setNewPassword(`${generatedUsername}123`);
-    }
-  };
-
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTeamName.trim() || !newUsername.trim() || !newEmail.trim() || !newPassword.trim()) {
+    if (!newTeamName.trim() || !newOwnerName.trim()) {
       setCreateTeamError('Please fill in all required fields.');
       return;
     }
+
+    // Auto-generate username, email, and password
+    const generatedUsername = newTeamName.trim().toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+    if (!generatedUsername) {
+      setCreateTeamError('Invalid team name. It must contain letters or numbers.');
+      return;
+    }
+    const generatedEmail = `${generatedUsername}@ssleague.com`;
+    const generatedPassword = `${generatedUsername}123`;
 
     try {
       setIsCreatingTeam(true);
@@ -239,27 +234,31 @@ export default function TeamRegistrationPage() {
         },
         body: JSON.stringify({
           teamName: newTeamName.trim(),
-          ownerName: newOwnerName.trim() || newUsername.trim(),
-          managerName: newManagerName.trim(),
-          username: newUsername.trim().toLowerCase(),
-          email: newEmail.trim(),
-          password: newPassword,
+          ownerName: newOwnerName.trim(),
+          managerName: '',
+          username: generatedUsername,
+          email: generatedEmail,
+          password: generatedPassword,
         }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        alert(`Successfully created team account for "${newTeamName}"!`);
+        // Set credentials to trigger Success Modal
+        setCreatedTeamCredentials({
+          teamName: newTeamName.trim(),
+          username: generatedUsername,
+          email: generatedEmail,
+          password: generatedPassword,
+        });
+
+        // Close form modal
         setShowCreateModal(false);
-        // Reset state
+
+        // Reset state inputs
         setNewTeamName('');
         setNewOwnerName('');
-        setNewManagerName('');
-        setNewUsername('');
-        setNewEmail('');
-        setNewPassword('');
-        setIsUsernameCustom(false);
         
         // Refresh team list
         const teamsSnapshot = await getDocs(collection(db, 'teams'));
@@ -685,7 +684,7 @@ export default function TeamRegistrationPage() {
                     type="text"
                     required
                     value={newTeamName}
-                    onChange={(e) => handleNewTeamNameChange(e.target.value)}
+                    onChange={(e) => setNewTeamName(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
                     placeholder="e.g. Madrid FC"
                   />
@@ -703,65 +702,6 @@ export default function TeamRegistrationPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Manager Name (Optional)</label>
-                  <input
-                    type="text"
-                    value={newManagerName}
-                    onChange={(e) => setNewManagerName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
-                    placeholder="e.g. Carlos Ancelotti"
-                  />
-                </div>
-
-                <div className="border-t border-slate-100 pt-3 space-y-3">
-                  <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Login Credentials (Auto-Generated)</div>
-                  
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Username *</label>
-                    <input
-                      type="text"
-                      required
-                      value={newUsername}
-                      onChange={(e) => {
-                        setNewUsername(e.target.value);
-                        setIsUsernameCustom(true);
-                      }}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
-                      placeholder="e.g. madridfc"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Email *</label>
-                    <input
-                      type="email"
-                      required
-                      value={newEmail}
-                      onChange={(e) => {
-                        setNewEmail(e.target.value);
-                        setIsUsernameCustom(true);
-                      }}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
-                      placeholder="e.g. madridfc@ssleague.com"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Password *</label>
-                    <input
-                      type="text"
-                      required
-                      value={newPassword}
-                      onChange={(e) => {
-                        setNewPassword(e.target.value);
-                        setIsUsernameCustom(true);
-                      }}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
-                      placeholder="Enter a secure password"
-                    />
-                  </div>
-                </div>
 
                 <div className="flex gap-3 pt-3 border-t border-slate-100">
                   <button
@@ -790,6 +730,66 @@ export default function TeamRegistrationPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Credentials Success Modal */}
+        {createdTeamCredentials && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl border border-slate-200 max-w-md w-full p-6 space-y-4 shadow-xl animate-fade-in font-mono text-left">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                <CheckCircle className="w-5 h-5 text-emerald-500" />
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Account Created</h3>
+              </div>
+
+              <div className="p-3.5 bg-emerald-50 border border-emerald-250 text-emerald-800 rounded-xl text-[10px] font-bold uppercase tracking-wide leading-relaxed">
+                🎉 Team account has been created globally. Copy or screenshot these credentials now to share with the team owner.
+              </div>
+
+              <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-150 text-xs">
+                <div className="grid grid-cols-3 gap-2">
+                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Team Name:</span>
+                  <span className="col-span-2 text-slate-800 font-extrabold">{createdTeamCredentials.teamName}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Username:</span>
+                  <span className="col-span-2 text-slate-800 font-bold select-all bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/50">{createdTeamCredentials.username}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Email:</span>
+                  <span className="col-span-2 text-slate-850 select-all">{createdTeamCredentials.email}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Password:</span>
+                  <span className="col-span-2 text-slate-850 font-bold select-all bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/50">{createdTeamCredentials.password}</span>
+                </div>
+              </div>
+
+              <div className="text-[10px] text-amber-600 font-bold uppercase tracking-wider leading-normal">
+                ⚠️ WARNING: These credentials will not be displayed again. Please save them before clicking Done.
+              </div>
+
+              <div className="flex gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = `Team Name: ${createdTeamCredentials.teamName}\nUsername: ${createdTeamCredentials.username}\nEmail: ${createdTeamCredentials.email}\nPassword: ${createdTeamCredentials.password}`;
+                    navigator.clipboard.writeText(text);
+                    alert('Credentials copied to clipboard!');
+                  }}
+                  className="flex-1 py-2.5 border border-slate-200 text-slate-700 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-slate-50 transition-all cursor-pointer text-center"
+                >
+                  Copy Credentials
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreatedTeamCredentials(null)}
+                  className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl text-xs uppercase tracking-wider font-bold transition-all shadow-sm flex items-center justify-center cursor-pointer text-center"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         )}
