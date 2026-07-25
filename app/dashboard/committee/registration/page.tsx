@@ -31,7 +31,6 @@ export default function TeamRegistrationPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
   const [newOwnerName, setNewOwnerName] = useState('');
-  const [newPassword, setNewPassword] = useState('');
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
   const [createTeamError, setCreateTeamError] = useState('');
   const [createdTeamCredentials, setCreatedTeamCredentials] = useState<{ teamName: string; username: string; email: string; password: string } | null>(null);
@@ -223,7 +222,6 @@ export default function TeamRegistrationPage() {
     }
     const generatedEmail = `${generatedUsername}@ssleague.com`;
     const generatedPassword = `${generatedUsername}123`;
-    const finalPassword = newPassword.trim() || generatedPassword;
 
     try {
       setIsCreatingTeam(true);
@@ -240,7 +238,7 @@ export default function TeamRegistrationPage() {
           managerName: '',
           username: generatedUsername,
           email: generatedEmail,
-          password: finalPassword,
+          password: generatedPassword,
         }),
       });
 
@@ -252,7 +250,7 @@ export default function TeamRegistrationPage() {
           teamName: newTeamName.trim(),
           username: generatedUsername,
           email: generatedEmail,
-          password: finalPassword,
+          password: generatedPassword,
         });
 
         // Close form modal
@@ -261,7 +259,6 @@ export default function TeamRegistrationPage() {
         // Reset state inputs
         setNewTeamName('');
         setNewOwnerName('');
-        setNewPassword('');
         
         // Refresh team list
         const teamsSnapshot = await getDocs(collection(db, 'teams'));
@@ -687,12 +684,7 @@ export default function TeamRegistrationPage() {
                     type="text"
                     required
                     value={newTeamName}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setNewTeamName(val);
-                      const generatedUsername = val.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-                      setNewPassword(`${generatedUsername}123`);
-                    }}
+                    onChange={(e) => setNewTeamName(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
                     placeholder="e.g. Madrid FC"
                   />
@@ -707,18 +699,6 @@ export default function TeamRegistrationPage() {
                     onChange={(e) => setNewOwnerName(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
                     placeholder="e.g. John Smith"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Password *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
-                    placeholder="Enter a password"
                   />
                 </div>
 

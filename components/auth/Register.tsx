@@ -384,6 +384,18 @@ function RegisterContent() {
     );
   }
 
+  if (authStateLoading || validatingInvite) {
+    return (
+      <div className="console-bg min-h-screen flex items-center justify-center px-4 pb-12 sm:px-6 lg:px-8 relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="max-w-md w-full relative z-10 text-center font-mono">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto font-sans"></div>
+          <p className="mt-4 text-[10px] text-slate-500 uppercase tracking-widest font-black">Validating Invitation...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="console-bg min-h-screen flex items-center justify-center px-4 pt-5 lg:pt-24 pb-12 sm:px-6 lg:px-8 relative">
       {/* Decorative eSports glowing ambient overlay */}
@@ -476,42 +488,44 @@ function RegisterContent() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-4">
               {/* Username Field */}
-              <div>
-                <label htmlFor="username" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
-                  Username
-                </label>
-                <div style={{ position: "relative" }} className="relative group">
-                  <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-gray-400 group-focus-within:text-amber-600 transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </span>
-                  <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    required
-                    autoComplete="username"
-                    value={username}
-                    onChange={handleUsernameChange}
-                    className={`${isAdminInvite ? 'pr-16' : ''} pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450`}
-                    placeholder="Choose a unique username"
-                  />
-                  {isAdminInvite && invite && (
-                    <span style={{ position: "absolute", top: 0, bottom: 0, right: 0, height: "100%", display: "flex", alignItems: "center", paddingRight: "1rem", pointerEvents: "none" }} className="text-amber-600 font-mono text-sm font-bold select-none">
-                      {getSeasonSuffix(invite)}
+              {(!isAdminInvite || (isAdminInvite && invite?.type !== 'team')) && (
+                <div>
+                  <label htmlFor="username" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+                    Username
+                  </label>
+                  <div style={{ position: "relative" }} className="relative group">
+                    <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-gray-400 group-focus-within:text-amber-600 transition-colors">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
                     </span>
+                    <input
+                      type="text"
+                      id="username"
+                      name="username"
+                      required
+                      autoComplete="username"
+                      value={username}
+                      onChange={handleUsernameChange}
+                      className={`${isAdminInvite ? 'pr-16' : ''} pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450`}
+                      placeholder="Choose a unique username"
+                    />
+                    {isAdminInvite && invite && (
+                      <span style={{ position: "absolute", top: 0, bottom: 0, right: 0, height: "100%", display: "flex", alignItems: "center", paddingRight: "1rem", pointerEvents: "none" }} className="text-amber-600 font-mono text-sm font-bold select-none">
+                        {getSeasonSuffix(invite)}
+                      </span>
+                    )}
+                  </div>
+                  {isAdminInvite && invite && username.trim() && (
+                    <p className="mt-1.5 text-[10px] font-mono text-amber-600 font-bold uppercase tracking-wider">
+                      Your username will be saved as:{' '}
+                      <span className="text-slate-900 underline font-extrabold bg-amber-50 px-1.5 py-0.5 rounded">
+                        {username.trim().toLowerCase()}{getSeasonSuffix(invite)}
+                      </span>
+                    </p>
                   )}
                 </div>
-                {isAdminInvite && invite && username.trim() && (
-                  <p className="mt-1.5 text-[10px] font-mono text-amber-600 font-bold uppercase tracking-wider">
-                    Your username will be saved as:{' '}
-                    <span className="text-slate-900 underline font-extrabold bg-amber-50 px-1.5 py-0.5 rounded">
-                      {username.trim().toLowerCase()}{getSeasonSuffix(invite)}
-                    </span>
-                  </p>
-                )}
-              </div>
+              )}
               
               {/* Password Field */}
               <div>
