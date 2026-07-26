@@ -45,26 +45,36 @@ export async function POST(request: NextRequest) {
 
     const uid = userRecord.uid;
 
-    // 3. Generate team ID
-    const teamsSnapshot = await adminDb.collection('teams')
-      .orderBy('createdAt', 'desc')
-      .limit(1)
-      .get();
+    // 3. Generate a robust and unique team ID
+    const teamsSnapshot = await adminDb.collection('teams').get();
+    let maxCounter = 0;
     
-    let nextCounter = 1;
-    if (!teamsSnapshot.empty) {
-      const lastDoc = teamsSnapshot.docs[0];
-      const lastId = lastDoc.id;
-      const numericPart = lastId.replace(/\D/g, '');
+    teamsSnapshot.forEach((doc) => {
+      const id = doc.id;
+      // Extract numeric part from ID (e.g., SSPSLT0012 or team0012)
+      const numericPart = id.replace(/\D/g, '');
       if (numericPart) {
-        const lastCounter = parseInt(numericPart, 10);
-        if (!isNaN(lastCounter)) {
-          nextCounter = lastCounter + 1;
+        const counter = parseInt(numericPart, 10);
+        if (!isNaN(counter) && counter > maxCounter) {
+          maxCounter = counter;
         }
       }
-    }
+    });
     
-    const teamId = formatId(ID_PREFIXES.TEAM, nextCounter, ID_PADDING.TEAM);
+    let nextCounter = maxCounter + 1;
+    let teamId = formatId(ID_PREFIXES.TEAM, nextCounter, ID_PADDING.TEAM);
+    
+    // Safety check: ensure document does not exist (prevent overwriting existing team data)
+    let docExists = true;
+    while (docExists) {
+      const docSnap = await adminDb.collection('teams').doc(teamId).get();
+      if (docSnap.exists) {
+        nextCounter++;
+        teamId = formatId(ID_PREFIXES.TEAM, nextCounter, ID_PADDING.TEAM);
+      } else {
+        docExists = false;
+      }
+    }
     const { FieldValue } = await import('firebase-admin/firestore');
 
     // 4. Batch write: Reserve username, Create User Doc, Create Team Doc

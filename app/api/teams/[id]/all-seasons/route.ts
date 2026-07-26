@@ -112,6 +112,86 @@ export async function GET(
     `;
 
     if (!seasonStats || seasonStats.length === 0) {
+      // Fallback: Check if team exists in Firebase teams collection
+      try {
+        const teamDoc = await adminDb.collection('teams').doc(teamId).get();
+        if (teamDoc.exists) {
+          const teamData = teamDoc.data()!;
+          const fbTeamName = teamData.team_name || teamData.name || teamId;
+          const fbOwnerName = teamData.owner_name || teamData.ownerName || null;
+          const fbManagerName = teamData.manager_name || teamData.managerName || null;
+          const logoUrl = teamData.logo_url || teamData.logoUrl || null;
+
+          // Find the active season or use the latest started season
+          let activeSeasonId = 'SSPSLS18'; // default fallback
+          let foundActive = false;
+          
+          firebaseSeasons.docs.forEach(doc => {
+            const data = doc.data();
+            if (data.is_active === true) {
+              activeSeasonId = doc.id;
+              foundActive = true;
+            }
+          });
+
+          if (!foundActive && firebaseSeasons.docs.length > 0) {
+            // Filter to started seasons
+            const startedSeasons = firebaseSeasons.docs
+              .map(doc => ({ id: doc.id, ...doc.data() as any }))
+              .filter((s: any) => {
+                if (s.start_date) {
+                  const startDate = s.start_date.toDate ? s.start_date.toDate() : new Date(s.start_date);
+                  return startDate <= new Date();
+                }
+                return s.status === 'completed' || s.status === 'active';
+              });
+            
+            if (startedSeasons.length > 0) {
+              startedSeasons.sort((a: any, b: any) => {
+                const numA = parseInt(a.id.replace(/\D/g, '')) || 0;
+                const numB = parseInt(b.id.replace(/\D/g, '')) || 0;
+                return numB - numA;
+              });
+              activeSeasonId = startedSeasons[0].id;
+            }
+          }
+
+          const fallbackSeason = {
+            id: `${teamId}_${activeSeasonId}`,
+            team_id: teamId,
+            team_name: fbTeamName,
+            team_code: teamId,
+            season_id: activeSeasonId,
+            season_name: activeSeasonId,
+            logo_url: logoUrl,
+            owner_name: ownerName || fbOwnerName,
+            manager_name: fbManagerName,
+            stats: {
+              matches_played: 0,
+              wins: 0,
+              draws: 0,
+              losses: 0,
+              goals_for: 0,
+              goals_against: 0,
+              goal_difference: 0,
+              points: 0,
+              clean_sheets: 0,
+              position: null,
+              form: null
+            },
+            players: [],
+            trophies: []
+          };
+
+          return NextResponse.json({
+            success: true,
+            seasons: [fallbackSeason]
+          });
+        }
+      } catch (fbError) {
+        console.error('Error fetching fallback team from Firebase:', fbError);
+      }
+
       return NextResponse.json({
         success: false,
         error: 'No team data found'

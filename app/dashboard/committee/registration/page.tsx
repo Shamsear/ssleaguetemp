@@ -27,13 +27,7 @@ export default function TeamRegistrationPage() {
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
-  // New states for direct team creation
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newTeamName, setNewTeamName] = useState('');
-  const [newOwnerName, setNewOwnerName] = useState('');
-  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
-  const [createTeamError, setCreateTeamError] = useState('');
-  const [createdTeamCredentials, setCreatedTeamCredentials] = useState<{ teamName: string; username: string; email: string; password: string } | null>(null);
+
 
   useEffect(() => {
     if (!loading && !user) {
@@ -207,82 +201,7 @@ export default function TeamRegistrationPage() {
     }
   };
 
-  const handleCreateTeam = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTeamName.trim() || !newOwnerName.trim()) {
-      setCreateTeamError('Please fill in all required fields.');
-      return;
-    }
 
-    // Auto-generate username, email, and password
-    const generatedUsername = newTeamName.trim().toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-    if (!generatedUsername) {
-      setCreateTeamError('Invalid team name. It must contain letters or numbers.');
-      return;
-    }
-    const generatedEmail = `${generatedUsername}@ssleague.com`;
-    const generatedPassword = `${generatedUsername}123`;
-
-    try {
-      setIsCreatingTeam(true);
-      setCreateTeamError('');
-
-      const response = await fetch('/api/admin/create-team', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          teamName: newTeamName.trim(),
-          ownerName: newOwnerName.trim(),
-          managerName: '',
-          username: generatedUsername,
-          email: generatedEmail,
-          password: generatedPassword,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        // Set credentials to trigger Success Modal
-        setCreatedTeamCredentials({
-          teamName: newTeamName.trim(),
-          username: generatedUsername,
-          email: generatedEmail,
-          password: generatedPassword,
-        });
-
-        // Close form modal
-        setShowCreateModal(false);
-
-        // Reset state inputs
-        setNewTeamName('');
-        setNewOwnerName('');
-        
-        // Refresh team list
-        const teamsSnapshot = await getDocs(collection(db, 'teams'));
-        const teamsList = teamsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        teamsList.sort((a: any, b: any) => {
-          const nameA = (a.team_name || a.name || '').toUpperCase();
-          const nameB = (b.team_name || b.name || '').toUpperCase();
-          return nameA.localeCompare(nameB);
-        });
-        setTeams(teamsList);
-        setTotalTeamsCount(teamsList.length);
-      } else {
-        setCreateTeamError(result.error || 'Failed to create team account.');
-      }
-    } catch (err: any) {
-      console.error('Error creating team:', err);
-      setCreateTeamError('An error occurred. Please try again.');
-    } finally {
-      setIsCreatingTeam(false);
-    }
-  };
 
   if (loading || loadingData) {
     return (
@@ -501,15 +420,7 @@ export default function TeamRegistrationPage() {
               League Teams Roster ({teams.length})
             </h2>
             
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center justify-center px-4 py-2 bg-slate-800 hover:bg-slate-700 hover:text-amber-500 text-white border border-slate-900 rounded-xl text-xs uppercase tracking-wider font-bold transition-all shadow-sm cursor-pointer"
-            >
-              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-              Create Team Account
-            </button>
+
           </div>
           <p className="text-[10px] text-slate-550 font-bold uppercase mb-4 leading-relaxed">
             Monitor and register teams directly into the active season.
@@ -657,142 +568,7 @@ export default function TeamRegistrationPage() {
           </div>
         </div>
 
-        {/* Create Team Modal */}
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl border border-slate-200 max-w-md w-full p-6 space-y-4 shadow-xl animate-fade-in font-mono text-left">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Create Team Account</h3>
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="text-slate-400 hover:text-slate-650 transition-colors text-lg"
-                >
-                  &times;
-                </button>
-              </div>
 
-              {createTeamError && (
-                <div className="p-3.5 bg-rose-50 border border-rose-250 text-rose-800 rounded-xl text-[10px] font-bold uppercase tracking-wide leading-relaxed">
-                  ⚠️ {createTeamError}
-                </div>
-              )}
-
-              <form onSubmit={handleCreateTeam} className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Team Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newTeamName}
-                    onChange={(e) => setNewTeamName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
-                    placeholder="e.g. Madrid FC"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Owner Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newOwnerName}
-                    onChange={(e) => setNewOwnerName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20 transition-all"
-                    placeholder="e.g. John Smith"
-                  />
-                </div>
-
-
-                <div className="flex gap-3 pt-3 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateModal(false)}
-                    className="flex-1 py-2.5 border border-slate-200 text-slate-500 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-slate-50 transition-all cursor-pointer text-center"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isCreatingTeam}
-                    className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl text-xs uppercase tracking-wider font-bold transition-all shadow-sm flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    {isCreatingTeam ? (
-                      <>
-                        <svg className="animate-spin w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Creating...
-                      </>
-                    ) : (
-                      "Create Team"
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Credentials Success Modal */}
-        {createdTeamCredentials && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl border border-slate-200 max-w-md w-full p-6 space-y-4 shadow-xl animate-fade-in font-mono text-left">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <CheckCircle className="w-5 h-5 text-emerald-500" />
-                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Account Created</h3>
-              </div>
-
-              <div className="p-3.5 bg-emerald-50 border border-emerald-250 text-emerald-800 rounded-xl text-[10px] font-bold uppercase tracking-wide leading-relaxed">
-                🎉 Team account has been created globally. Copy or screenshot these credentials now to share with the team owner.
-              </div>
-
-              <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-150 text-xs">
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Team Name:</span>
-                  <span className="col-span-2 text-slate-800 font-extrabold">{createdTeamCredentials.teamName}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Username:</span>
-                  <span className="col-span-2 text-slate-800 font-bold select-all bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/50">{createdTeamCredentials.username}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Email:</span>
-                  <span className="col-span-2 text-slate-850 select-all">{createdTeamCredentials.email}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Password:</span>
-                  <span className="col-span-2 text-slate-850 font-bold select-all bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/50">{createdTeamCredentials.password}</span>
-                </div>
-              </div>
-
-              <div className="text-[10px] text-amber-600 font-bold uppercase tracking-wider leading-normal">
-                ⚠️ WARNING: These credentials will not be displayed again. Please save them before clicking Done.
-              </div>
-
-              <div className="flex gap-3 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const text = `Team Name: ${createdTeamCredentials.teamName}\nUsername: ${createdTeamCredentials.username}\nEmail: ${createdTeamCredentials.email}\nPassword: ${createdTeamCredentials.password}`;
-                    navigator.clipboard.writeText(text);
-                    alert('Credentials copied to clipboard!');
-                  }}
-                  className="flex-1 py-2.5 border border-slate-200 text-slate-700 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-slate-50 transition-all cursor-pointer text-center"
-                >
-                  Copy Credentials
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCreatedTeamCredentials(null)}
-                  className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl text-xs uppercase tracking-wider font-bold transition-all shadow-sm flex items-center justify-center cursor-pointer text-center"
-                >
-                  Done
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
