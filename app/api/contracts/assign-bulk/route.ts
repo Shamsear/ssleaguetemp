@@ -9,6 +9,11 @@ import { adminDb } from '@/lib/firebase/admin';
  *   seasonId: string,
  *   players: Array<{ id: string, teamId: string, playerName: string, auctionValue: number }>
  * }
+ * 
+ * OPTIMIZED FOR SPEED:
+ * - Parallel database operations
+ * - Batched Firestore writes
+ * - Minimal sequential operations
  */
 export async function POST(request: NextRequest) {
   try {
@@ -35,124 +40,144 @@ export async function POST(request: NextRequest) {
 
     const sql = getTournamentDb();
 
-    // Fetch team name mapping from Firestore team_seasons to set human-readable team names
-    const teamNameMap = new Map<string, string>();
-    try {
-      const teamSeasonsSnap = await adminDb.collection('team_seasons')
-        .where('season_id', '==', seasonId)
-        .get();
-      teamSeasonsSnap.docs.forEach(doc => {
-        const data = doc.data();
-        const tId = data.team_id || doc.id.split('_')[0];
-        const tName = data.team_name || data.team_code || 'Unknown Team';
-        teamNameMap.set(tId, tName);
-      });
-    } catch (e) {
-      console.error('Error fetching team names from Firestore:', e);
-    }
+    // Fetch team name mapping from Firestore team_seasons (parallel with SQL updates)
+    const teamNameMapPromise = (async () => {
+      const teamNameMap = new Map<string, string>();
+      try {
+        const teamSeasonsSnap = await adminDb.collection('team_seasons')
+          .where('season_id', '==', seasonId)
+          .get();
+        teamSeasonsSnap.docs.forEach(doc => {
+          const data = doc.data();
+          const tId = data.team_id || doc.id.split('_')[0];
+          const tName = data.team_name || data.team_code || 'Unknown Team';
+          teamNameMap.set(tId, tName);
+        });
+      } catch (e) {
+        console.error('Error fetching team names from Firestore:', e);
+      }
+      return teamNameMap;
+    })();
+
+    // Update all players in parallel (SQL operations)
+    const sqlUpdatesPromise = Promise.all(
+      players.map(async (player) => {
+        if (isModern) {
+          // S16 / S17: update player_seasons table
+          return sql`
+            UPDATE player_seasons
+            SET team_id = ${player.teamId},
+                auction_value = ${player.auctionValue},
+                updated_at = NOW()
+            WHERE id = ${player.id}
+          `;
+        } else {
+          // S18+: update realplayerstats table
+          return sql`
+            UPDATE realplayerstats
+            SET team_id = ${player.teamId},
+                price = ${player.auctionValue},
+                updated_at = NOW()
+            WHERE id = ${player.id}
+          `;
+        }
+      })
+    );
+
+    // Wait for both team names and SQL updates to complete
+    const [teamNameMap] = await Promise.all([
+      teamNameMapPromise,
+      sqlUpdatesPromise
+    ]);
 
     // Track budget changes per team
     const teamBudgetChanges = new Map<string, number>();
-
-    for (const player of players) {
-      const teamName = teamNameMap.get(player.teamId) || 'Unknown Team';
-
-      if (isModern) {
-        // S16 / S17: update player_seasons table
-        await sql`
-          UPDATE player_seasons
-          SET team_id = ${player.teamId},
-              team = ${teamName},
-              auction_value = ${player.auctionValue},
-              updated_at = NOW()
-          WHERE id = ${player.id}
-        `;
-      } else {
-        // S18+: update realplayerstats table
-        await sql`
-          UPDATE realplayerstats
-          SET team_id = ${player.teamId},
-              team = ${teamName},
-              price = ${player.auctionValue},
-              updated_at = NOW()
-          WHERE id = ${player.id}
-        `;
-      }
-
-      // Track budget change for this team
+    players.forEach(player => {
       const currentChange = teamBudgetChanges.get(player.teamId) || 0;
       teamBudgetChanges.set(player.teamId, currentChange + player.auctionValue);
-    }
+    });
 
-    // Update team budgets in Firestore
-    for (const [teamId, totalSpent] of teamBudgetChanges.entries()) {
+    // Prepare all Firestore operations
+    // We need to read team budgets first (unavoidable for accuracy)
+    const teamBudgetReads = Array.from(teamBudgetChanges.keys()).map(async (teamId) => {
+      const teamSeasonId = `${teamId}_${seasonId}`;
+      const teamSeasonRef = adminDb.collection('team_seasons').doc(teamSeasonId);
       try {
-        const teamSeasonId = `${teamId}_${seasonId}`;
-        const teamSeasonRef = adminDb.collection('team_seasons').doc(teamSeasonId);
-        const teamSeasonDoc = await teamSeasonRef.get();
-
-        if (teamSeasonDoc.exists) {
-          const data = teamSeasonDoc.data()!;
-          const currentBudget = data.real_player_budget || 1000;
-          const currentSpent = data.real_player_spent || 0;
-
-          await teamSeasonRef.update({
-            real_player_budget: currentBudget - totalSpent,
-            real_player_spent: currentSpent + totalSpent,
-            updated_at: new Date(),
-          });
-
-          console.log(`[assign-bulk] Updated team ${teamId}: spent ${totalSpent}, new budget: ${currentBudget - totalSpent}`);
-        }
+        const doc = await teamSeasonRef.get();
+        return { teamId, teamSeasonRef, data: doc.exists ? doc.data() : null };
       } catch (error) {
-        console.error(`[assign-bulk] Error updating budget for team ${teamId}:`, error);
+        console.error(`Error reading team ${teamId} budget:`, error);
+        return { teamId, teamSeasonRef, data: null };
       }
-    }
+    });
 
-    // Create transactions and notifications for each player assignment
-    for (const player of players) {
-      try {
-        const teamName = teamNameMap.get(player.teamId) || 'Unknown Team';
-        const transactionId = `${player.teamId}_${seasonId}_${player.id}_${Date.now()}`;
-        
-        // Create transaction record
-        await adminDb.collection('transactions').doc(transactionId).set({
-          team_id: player.teamId,
-          team_name: teamName,
-          season_id: seasonId,
+    // Execute all team budget reads in parallel
+    const teamBudgetData = await Promise.all(teamBudgetReads);
+
+    // Now create batch with all operations
+    const batch = adminDb.batch();
+    const timestamp = new Date();
+
+    // Add team budget updates to batch
+    teamBudgetData.forEach(({ teamId, teamSeasonRef, data }) => {
+      if (data) {
+        const totalSpent = teamBudgetChanges.get(teamId) || 0;
+        const currentBudget = data.real_player_budget || 1000;
+        const currentSpent = data.real_player_spent || 0;
+
+        batch.update(teamSeasonRef, {
+          real_player_budget: currentBudget - totalSpent,
+          real_player_spent: currentSpent + totalSpent,
+          updated_at: timestamp,
+        });
+      }
+    });
+
+    // Add transactions and notifications to batch
+    players.forEach(player => {
+      const teamName = teamNameMap.get(player.teamId) || 'Unknown Team';
+      
+      // Transaction
+      const transactionId = `${player.teamId}_${seasonId}_${player.id}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+      const transactionRef = adminDb.collection('transactions').doc(transactionId);
+      batch.set(transactionRef, {
+        team_id: player.teamId,
+        team_name: teamName,
+        season_id: seasonId,
+        player_id: player.id,
+        player_name: player.playerName,
+        transaction_type: 'player_assignment',
+        amount: player.auctionValue,
+        currency_type: 'real_player',
+        description: `${player.playerName} assigned to ${teamName} for ${player.auctionValue} coins`,
+        created_at: timestamp,
+        created_by: auth.userId || 'system',
+      });
+
+      // Notification
+      const notificationId = `${player.teamId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const notificationRef = adminDb.collection('notifications').doc(notificationId);
+      batch.set(notificationRef, {
+        team_id: player.teamId,
+        season_id: seasonId,
+        type: 'player_assignment',
+        title: 'New Player Assigned',
+        message: `${player.playerName} has been assigned to your team for ${player.auctionValue} coins`,
+        read: false,
+        created_at: timestamp,
+        data: {
           player_id: player.id,
           player_name: player.playerName,
-          transaction_type: 'player_assignment',
-          amount: player.auctionValue,
-          currency_type: 'real_player',
-          description: `${player.playerName} assigned to ${teamName} for ${player.auctionValue} coins`,
-          created_at: new Date(),
-          created_by: auth.userId || 'system',
-        });
+          auction_value: player.auctionValue,
+          team_name: teamName,
+        }
+      });
+    });
 
-        // Create notification for team
-        const notificationId = `${player.teamId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        await adminDb.collection('notifications').doc(notificationId).set({
-          team_id: player.teamId,
-          season_id: seasonId,
-          type: 'player_assignment',
-          title: 'New Player Assigned',
-          message: `${player.playerName} has been assigned to your team for ${player.auctionValue} coins`,
-          read: false,
-          created_at: new Date(),
-          data: {
-            player_id: player.id,
-            player_name: player.playerName,
-            auction_value: player.auctionValue,
-            team_name: teamName,
-          }
-        });
+    // Commit all Firestore operations in a single batch (atomic & fast)
+    await batch.commit();
 
-        console.log(`[assign-bulk] Created transaction and notification for ${player.playerName}`);
-      } catch (error) {
-        console.error(`[assign-bulk] Error creating transaction/notification for player ${player.id}:`, error);
-      }
-    }
+    console.log(`[assign-bulk] Successfully assigned ${players.length} players with batched operations`);
 
     return NextResponse.json({
       success: true,

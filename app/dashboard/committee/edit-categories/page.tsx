@@ -8,6 +8,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import OptimizedImage from '@/components/OptimizedImage';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 
 interface Player {
   id: string;
@@ -20,12 +22,22 @@ interface Player {
   matches_played: number;
 }
 
-const CATEGORIES = ['Legend', 'Icon', 'Star', 'Rising'];
+interface Category {
+  id: string;
+  name: string;
+  color?: string;
+  priority: number;
+}
 
 const CATEGORY_STYLES: Record<string, { badge: string; border: string }> = {
-  legend: { badge: 'bg-amber-100 text-amber-800 border-amber-300',   border: 'border-l-amber-400' },
-  icon:   { badge: 'bg-violet-100 text-violet-800 border-violet-300', border: 'border-l-violet-400' },
-  star:   { badge: 'bg-blue-100 text-blue-800 border-blue-300',       border: 'border-l-blue-400' },
+  red: { badge: 'bg-rose-100 text-rose-800 border-rose-300', border: 'border-l-rose-400' },
+  black: { badge: 'bg-slate-100 text-slate-800 border-slate-300', border: 'border-l-slate-400' },
+  blue: { badge: 'bg-blue-100 text-blue-800 border-blue-300', border: 'border-l-blue-400' },
+  white: { badge: 'bg-gray-100 text-gray-800 border-gray-300', border: 'border-l-gray-400' },
+  iconic: { badge: 'bg-amber-100 text-amber-800 border-amber-300', border: 'border-l-amber-400' },
+  legend: { badge: 'bg-purple-100 text-purple-800 border-purple-300', border: 'border-l-purple-400' },
+  icon: { badge: 'bg-violet-100 text-violet-800 border-violet-300', border: 'border-l-violet-400' },
+  star: { badge: 'bg-cyan-100 text-cyan-800 border-cyan-300', border: 'border-l-cyan-400' },
   rising: { badge: 'bg-emerald-100 text-emerald-800 border-emerald-300', border: 'border-l-emerald-400' },
 };
 
@@ -34,10 +46,11 @@ const getCatStyle = (cat?: string) =>
 
 export default function EditCategoriesPage() {
   const { user, loading } = useAuth();
-  const { userSeasonId } = useTournamentContext();
+  const { seasonId: userSeasonId } = useTournamentContext();
   const router = useRouter();
 
   const [players, setPlayers] = useState<Player[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [pendingChanges, setPendingChanges] = useState<Map<string, string>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -51,6 +64,30 @@ export default function EditCategoriesPage() {
     if (!loading && !user) router.push('/login');
     if (!loading && user && user.role !== 'committee_admin') router.push('/dashboard');
   }, [user, loading, router]);
+
+  // Fetch categories from Firestore
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categoriesQuery = query(
+          collection(db, 'categories'),
+          orderBy('priority', 'asc')
+        );
+        const categoriesSnapshot = await getDocs(categoriesQuery);
+        const categoriesData = categoriesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Category[];
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+
+    if (user?.role === 'committee_admin') {
+      fetchCategories();
+    }
+  }, [user]);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -272,22 +309,27 @@ export default function EditCategoriesPage() {
 
         {/* Stats strip */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          {[
-            { label: 'All', key: 'all', color: 'border-l-slate-400' },
-            { label: 'Legend', key: 'legend', color: 'border-l-amber-400' },
-            { label: 'Icon', key: 'icon', color: 'border-l-violet-400' },
-            { label: 'Star', key: 'star', color: 'border-l-blue-400' },
-            { label: 'Rising', key: 'rising', color: 'border-l-emerald-400' },
-          ].map(({ label, key, color }) => (
-            <button
-              key={key}
-              onClick={() => setFilterCat(key)}
-              className={`console-card bg-white border border-slate-200/60 border-l-4 ${color} rounded-xl p-3 shadow-sm text-left transition-all cursor-pointer hover:shadow-md ${filterCat === key ? 'ring-2 ring-slate-800/10' : ''}`}
-            >
-              <p className="text-xl font-black text-slate-800">{catCounts[key] || 0}</p>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{label}</p>
-            </button>
-          ))}
+          <button
+            onClick={() => setFilterCat('all')}
+            className={`console-card bg-white border border-slate-200/60 border-l-4 border-l-slate-400 rounded-xl p-3 shadow-sm text-left transition-all cursor-pointer hover:shadow-md ${filterCat === 'all' ? 'ring-2 ring-slate-800/10' : ''}`}
+          >
+            <p className="text-xl font-black text-slate-800">{catCounts.all || 0}</p>
+            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">All</p>
+          </button>
+          {categories.map((cat) => {
+            const catKey = cat.name.toLowerCase();
+            const style = getCatStyle(catKey);
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setFilterCat(catKey)}
+                className={`console-card bg-white border border-slate-200/60 border-l-4 ${style.border} rounded-xl p-3 shadow-sm text-left transition-all cursor-pointer hover:shadow-md ${filterCat === catKey ? 'ring-2 ring-slate-800/10' : ''}`}
+              >
+                <p className="text-xl font-black text-slate-800">{catCounts[catKey] || 0}</p>
+                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{cat.name}</p>
+              </button>
+            );
+          })}
         </div>
 
         {/* Search + filter row */}
@@ -308,7 +350,11 @@ export default function EditCategoriesPage() {
             className="py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 cursor-pointer"
           >
             <option value="all">All Categories</option>
-            {CATEGORIES.map((c) => <option key={c} value={c.toLowerCase()}>{c}</option>)}
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.name.toLowerCase()}>
+                {cat.name}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -385,17 +431,18 @@ export default function EditCategoriesPage() {
 
                       {isOpen && (
                         <div className="absolute right-0 top-full mt-1.5 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
-                          {CATEGORIES.map((cat) => {
-                            const cs = getCatStyle(cat);
-                            const isCurrent = effectiveCat?.toLowerCase() === cat.toLowerCase();
+                          {categories.map((category) => {
+                            const catName = category.name;
+                            const cs = getCatStyle(catName);
+                            const isCurrent = effectiveCat?.toLowerCase() === catName.toLowerCase();
                             return (
                               <button
-                                key={cat}
-                                onClick={() => setCategory(player.id, cat)}
+                                key={category.id}
+                                onClick={() => setCategory(player.id, catName)}
                                 className={`w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase transition-colors cursor-pointer hover:bg-slate-50 ${isCurrent ? 'bg-slate-50' : ''}`}
                               >
                                 <span className={`px-1.5 py-0.5 rounded border text-[9px] font-black ${cs.badge}`}>
-                                  {cat}
+                                  {catName}
                                 </span>
                                 {isCurrent && <Check className="w-3 h-3 text-slate-400" />}
                               </button>

@@ -59,6 +59,13 @@ export default function RealPlayersPage() {
   const [isQuickAssigning, setIsQuickAssigning] = useState(false);
   const [showActualBudget, setShowActualBudget] = useState(true);
   const [isModernSeason, setIsModernSeason] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [lastUsedTeam, setLastUsedTeam] = useState<string>('');
+  
+  // Refs for auto-focus
+  const playerSelectRef = useRef<HTMLSelectElement>(null);
+  const teamSelectRef = useRef<HTMLSelectElement>(null);
+  const auctionInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -83,6 +90,34 @@ export default function RealPlayersPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [dropdownOpen]);
+
+  // Keyboard shortcuts for quick assign
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Enter key to assign (when all fields are filled)
+      if (e.key === 'Enter' && quickAssignPlayer && quickAssignTeam && quickAssignAuction && !isQuickAssigning) {
+        e.preventDefault();
+        handleQuickAssign();
+      }
+      // Escape key to clear form
+      if (e.key === 'Escape') {
+        setQuickAssignPlayer(null);
+        setQuickAssignTeam(lastUsedTeam); // Keep last team
+        setQuickAssignAuction('');
+        playerSelectRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [quickAssignPlayer, quickAssignTeam, quickAssignAuction, isQuickAssigning, lastUsedTeam]);
+
+  // Auto-populate last used team on mount
+  useEffect(() => {
+    if (lastUsedTeam && !quickAssignTeam) {
+      setQuickAssignTeam(lastUsedTeam);
+    }
+  }, [availablePlayers]); // Trigger when players reload
 
   // Remove contract duration initialization - using single season model
 
@@ -389,16 +424,31 @@ export default function RealPlayersPage() {
       const teamName = teams.find(t => t.id === quickAssignTeam)?.name || 'Team';
       setSuccess(`${quickAssignPlayer.playerName} assigned to ${teamName} for $${auctionValue.toLocaleString()}!`);
 
-      // Reset form
+      // Play success sound (optional)
+      try {
+        const audio = new Audio('data:audio/wav;base64,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');
+        audio.volume = 0.3;
+        audio.play().catch(() => {}); // Ignore errors if audio fails
+      } catch {}
+
+      // Store last used team for next assignment
+      setLastUsedTeam(quickAssignTeam);
+
+      // Reset form but keep team selected
       setQuickAssignPlayer(null);
-      setQuickAssignTeam('');
       setQuickAssignAuction('');
+      
+      // Auto-focus back to player select for next assignment
+      setTimeout(() => {
+        playerSelectRef.current?.focus();
+      }, 100);
 
       setTimeout(() => {
         setSuccess(null);
-      }, 3000);
+      }, 2000); // Shorter timeout for faster flow
     } catch (err: any) {
       setError(err.message || 'Failed to assign player');
+      setTimeout(() => setError(null), 4000);
     } finally {
       setIsQuickAssigning(false);
     }
@@ -604,47 +654,96 @@ export default function RealPlayersPage() {
           </div>
 
           <div className="p-6">
+            <div className="grid grid-cols-1 gap-4 mb-4">
+              {/* Category Filter Row */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">Filter:</span>
+                <button
+                  onClick={() => setCategoryFilter('all')}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase whitespace-nowrap transition-all ${
+                    categoryFilter === 'all'
+                      ? 'bg-slate-800 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  All ({availablePlayers.length})
+                </button>
+                {Array.from(new Set(availablePlayers.map(p => p.category))).sort().map(cat => {
+                  const count = availablePlayers.filter(p => p.category === cat).length;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setCategoryFilter(cat)}
+                      className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase whitespace-nowrap transition-all ${
+                        categoryFilter === cat
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100'
+                      }`}
+                    >
+                      {cat} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Player Selection */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">1. Select Player</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  1. Select Player <span className="text-rose-500">*</span>
+                </label>
                 <select
+                  ref={playerSelectRef}
                   value={quickAssignPlayer?.id || ''}
                   onChange={(e) => {
                     const player = availablePlayers.find(p => p.id === e.target.value);
                     setQuickAssignPlayer(player || null);
                     if (player) {
                       setQuickAssignAuction(String(player.basePrice !== undefined && player.basePrice > 0 ? player.basePrice : 0));
+                      // Auto-focus team select
+                      setTimeout(() => teamSelectRef.current?.focus(), 50);
                     }
                   }}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer"
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer hover:border-slate-300 transition-all"
                 >
                   <option value="">Choose player...</option>
                   {availablePlayers
+                    .filter(p => categoryFilter === 'all' || p.category === categoryFilter)
                     .sort((a, b) => a.playerName.localeCompare(b.playerName))
                     .map(player => (
                       <option key={player.id} value={player.id}>
-                        {player.playerName} ({player.category}) - Min {player.basePrice !== undefined && player.basePrice > 0 ? player.basePrice : 0}
+                        {player.playerName} ({player.category}) - Min ${player.basePrice !== undefined && player.basePrice > 0 ? player.basePrice : 0}
                       </option>
                     ))}
                 </select>
                 {quickAssignPlayer && (
-                  <div className="mt-2 px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
-                    <span className="text-[9px] font-extrabold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded uppercase">
+                  <div className="mt-2 px-3 py-2 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
+                    <span className="text-[9px] font-extrabold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-1 rounded uppercase">
                       {quickAssignPlayer.category}
                     </span>
-                    <span className="text-[10px] font-black text-slate-600">MIN <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{quickAssignPlayer.basePrice !== undefined && quickAssignPlayer.basePrice > 0 ? quickAssignPlayer.basePrice : 0}</span>
+                    <span className="text-[10px] font-black text-slate-600">
+                      MIN <DollarSign className="w-3 h-3 inline-block text-emerald-500 align-text-bottom" />
+                      {quickAssignPlayer.basePrice !== undefined && quickAssignPlayer.basePrice > 0 ? quickAssignPlayer.basePrice : 0}
+                    </span>
                   </div>
                 )}
               </div>
 
               {/* Team Selection */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">2. Select Team</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  2. Select Team <span className="text-rose-500">*</span>
+                </label>
                 <select
+                  ref={teamSelectRef}
                   value={quickAssignTeam}
-                  onChange={(e) => setQuickAssignTeam(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer"
+                  onChange={(e) => {
+                    setQuickAssignTeam(e.target.value);
+                    // Auto-focus auction input
+                    setTimeout(() => auctionInputRef.current?.focus(), 50);
+                  }}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer hover:border-slate-300 transition-all"
                 >
                   <option value="">Choose team...</option>
                   {teams
@@ -657,13 +756,13 @@ export default function RealPlayersPage() {
                           value={team.id}
                           disabled={slots <= 0}
                         >
-                          {team.name} ({team.assignedPlayers.length}/{maxPlayers}) {slots > 0 ? `- ${slots} needed` : '- COMPLETE'}
+                          {team.name} ({team.assignedPlayers.length}/{maxPlayers}) {slots > 0 ? `- ${slots} slots` : '- FULL'}
                         </option>
                       );
                     })}
                 </select>
                 {quickAssignTeam && (
-                  <div className="mt-2 px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
+                  <div className="mt-2 px-3 py-2 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
                     {(() => {
                       const team = teams.find(t => t.id === quickAssignTeam);
                       if (!team) return null;
@@ -672,9 +771,10 @@ export default function RealPlayersPage() {
                         : (team.originalBudget - team.assignedPlayers.reduce((sum, p) => sum + p.auctionValue, 0));
                       return (
                         <>
-                          <span className="text-[10px] text-slate-500 font-bold uppercase">BUDGET LEFT:</span>
+                          <span className="text-[10px] text-slate-500 font-bold uppercase">Budget:</span>
                           <span className={`text-[10px] font-black ${remaining < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                            <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{remaining.toLocaleString()}
+                            <DollarSign className="w-3 h-3 inline-block text-emerald-500 align-text-bottom" />
+                            {remaining.toLocaleString()}
                           </span>
                         </>
                       );
@@ -685,24 +785,34 @@ export default function RealPlayersPage() {
 
               {/* Auction Value Input */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">3. Auction Value</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  3. Auction Value <span className="text-rose-500">*</span>
+                </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-semibold"><DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /></span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-semibold text-sm">$</span>
                   <input
+                    ref={auctionInputRef}
                     type="number"
                     value={quickAssignAuction}
                     onChange={(e) => setQuickAssignAuction(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && quickAssignPlayer && quickAssignTeam && quickAssignAuction) {
+                        e.preventDefault();
+                        handleQuickAssign();
+                      }
+                    }}
                     placeholder="0"
-                    min={250}
-                    step="10"
-                    className="w-full pl-8 pr-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide text-right"
+                    min={quickAssignPlayer?.basePrice || 0}
+                    step="5"
+                    className="w-full pl-8 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-sm font-bold outline-none tracking-wide text-right hover:border-slate-300 transition-all"
                   />
                 </div>
                 {quickAssignPlayer && quickAssignAuction && (
-                  <div className="mt-2 px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase">FINAL PRICE:</span>
-                    <span className="text-[10px] font-black text-blue-600">
-                      <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{(parseInt(quickAssignAuction) || 0).toLocaleString()}
+                  <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200/60 rounded-xl flex items-center justify-between">
+                    <span className="text-[10px] text-blue-600 font-bold uppercase">Final:</span>
+                    <span className="text-[10px] font-black text-blue-700">
+                      <DollarSign className="w-3 h-3 inline-block text-blue-600 align-text-bottom" />
+                      {(parseInt(quickAssignAuction) || 0).toLocaleString()}
                     </span>
                   </div>
                 )}
@@ -713,24 +823,41 @@ export default function RealPlayersPage() {
                 <button
                   onClick={handleQuickAssign}
                   disabled={!quickAssignPlayer || !quickAssignTeam || !quickAssignAuction || isQuickAssigning}
-                  className={`w-full py-2.5 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm ${
+                  className={`w-full py-3.5 font-mono font-bold text-sm uppercase tracking-wider rounded-xl transition-all shadow-sm ${
                     !quickAssignPlayer || !quickAssignTeam || !quickAssignAuction || isQuickAssigning
                       ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed'
-                      : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                      : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-500/20 hover:shadow-lg'
                   }`}
                 >
                   {isQuickAssigning ? (
-                    <span className="flex items-center justify-center gap-1.5">
-                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       Assigning...
                     </span>
                   ) : (
-                    <span className="flex items-center justify-center gap-1.5">
+                    <span className="flex items-center justify-center gap-2">
                       ⚡ Assign Now
+                      <span className="text-[9px] opacity-70">(Enter)</span>
                     </span>
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* Keyboard shortcuts help */}
+            <div className="mt-4 flex items-center justify-between px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl">
+              <div className="flex items-center gap-3 text-[9px] text-amber-800 font-bold uppercase">
+                <span>⌨️ Shortcuts:</span>
+                <span className="px-2 py-0.5 bg-white rounded border border-amber-300">Enter</span>
+                <span>= Assign</span>
+                <span className="px-2 py-0.5 bg-white rounded border border-amber-300">Esc</span>
+                <span>= Clear</span>
+              </div>
+              {lastUsedTeam && (
+                <div className="text-[9px] text-amber-700 font-bold">
+                  Last: {teams.find(t => t.id === lastUsedTeam)?.name}
+                </div>
+              )}
             </div>
           </div>
         </div>

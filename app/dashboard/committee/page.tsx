@@ -548,7 +548,22 @@ export default function CommitteeDashboard() {
                     </svg>
                   </div>
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider group-hover:text-amber-600 transition-colors mb-1">Edit Categories</h4>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase">Manually change individual player categories</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">Change player categories manually</p>
+                </Link>
+
+                <Link href="/dashboard/committee/export-players" className="group bg-emerald-50 border border-emerald-200/60 rounded-xl p-4 hover:border-emerald-400 hover:shadow-md hover:bg-white transition-all">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2 rounded-lg bg-emerald-600 text-white border border-emerald-700 flex-shrink-0">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <svg className="w-4 h-4 text-emerald-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                  <h4 className="text-xs font-black text-emerald-800 uppercase tracking-wider group-hover:text-emerald-600 transition-colors mb-1">Export to Excel</h4>
+                  <p className="text-[10px] text-emerald-600 font-bold uppercase">Download players stats as Excel</p>
                 </Link>
 
                 <Link href="/dashboard/committee/team-management/player-stats-by-round" className="group bg-slate-50 border border-slate-200/60 rounded-xl p-4 hover:border-amber-400 hover:shadow-md hover:bg-white transition-all">
