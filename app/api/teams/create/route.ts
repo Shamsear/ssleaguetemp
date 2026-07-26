@@ -51,8 +51,20 @@ export async function POST(request: NextRequest) {
 
     // Create team document using Admin SDK
     const { FieldValue } = await import('firebase-admin/firestore');
-    
-    await adminDb.collection('teams').doc(teamId).set({
+
+    const teamRef = adminDb.collection('teams').doc(teamId);
+
+    // Final pre-write safety check — even after the while-loop above, do one
+    // last read immediately before writing. If a document exists at this ID,
+    // abort hard rather than silently overwrite existing team data.
+    const finalCheck = await teamRef.get();
+    if (finalCheck.exists) {
+      throw new Error(`Team document ${teamId} already exists — aborting to protect existing data`);
+    }
+
+    // Use .create() instead of .set() so Firestore itself enforces the
+    // no-overwrite guarantee at the database level (throws ALREADY_EXISTS).
+    await teamRef.create({
       id: teamId,
       team_name: teamName || username,
       owner_name: ownerName || username,

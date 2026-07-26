@@ -104,9 +104,19 @@ export async function POST(request: NextRequest) {
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    // Create Team document
+    // Create Team document — use batch.create() so Firestore REJECTS the
+    // write with an ALREADY_EXISTS error if the document somehow exists,
+    // guaranteeing we never silently overwrite an existing team.
     const teamRef = adminDb.collection('teams').doc(teamId);
-    batch.set(teamRef, {
+
+    // Final pre-write safety check before committing the batch
+    const finalCheck = await teamRef.get();
+    if (finalCheck.exists) {
+      // This should never happen after the while-loop above, but guard anyway
+      throw new Error(`Team document ${teamId} already exists — aborting to protect existing data`);
+    }
+
+    batch.create(teamRef, {
       id: teamId,
       team_name: teamName.trim(),
       owner_name: ownerName.trim(),
