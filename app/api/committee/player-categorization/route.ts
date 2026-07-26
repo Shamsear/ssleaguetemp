@@ -79,14 +79,14 @@ export async function GET(request: NextRequest) {
     let activePlayers;
     if (isModern) {
       activePlayers = await sql`
-        SELECT id, player_id, player_name, category, points, matches_played
+        SELECT id, player_id, player_name, category, points, matches_played, NULL as used_smart_assist
         FROM player_seasons
         WHERE season_id = ${seasonId}
         ORDER BY player_name ASC
       `;
     } else {
       activePlayers = await sql`
-        SELECT id, player_id, player_name, category, points, matches_played
+        SELECT id, player_id, player_name, category, points, matches_played, used_smart_assist
         FROM realplayerstats
         WHERE season_id = ${seasonId}
         ORDER BY player_name ASC
