@@ -1,5 +1,5 @@
 'use client';
-import { Shield, Settings, Activity, BarChart2, Layers, Coins } from 'lucide-react';
+import { Shield, Settings, Activity, BarChart2, Layers, Coins, Users } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -493,6 +493,19 @@ export default function CommitteeDashboard() {
                   </div>
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider group-hover:text-amber-600 transition-colors mb-1">SS Members</h4>
                   <p className="text-[10px] text-slate-500 font-bold uppercase">Real player assignments</p>
+                </Link>
+
+                <Link href="/dashboard/committee/retain-players" className="group bg-slate-50 border border-slate-200/60 rounded-xl p-4 hover:border-amber-400 hover:shadow-md hover:bg-white transition-all">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2 rounded-lg bg-slate-850 text-amber-400 border border-slate-905 flex-shrink-0">
+                      <Users className="w-4 h-4" />
+                    </div>
+                    <svg className="w-4 h-4 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider group-hover:text-amber-600 transition-colors mb-1">Retain Players</h4>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">Assign players at % of base price</p>
                 </Link>
 
                 <Link href="/dashboard/committee/player-stats" className="group bg-slate-50 border border-slate-200/60 rounded-xl p-4 hover:border-amber-400 hover:shadow-md hover:bg-white transition-all">
