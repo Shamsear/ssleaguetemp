@@ -199,7 +199,7 @@ export default function EditCategoriesPage() {
     );
   }
 
-  if (!user || user.role !== 'committee') return null;
+  if (!user || user.role !== 'committee_admin') return null;
 
   return (
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-10 px-4 sm:px-6">
