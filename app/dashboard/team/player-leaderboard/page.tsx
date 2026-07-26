@@ -1,7 +1,7 @@
 'use client';
 
 import { GloveIcon, SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { BarChart2, Globe, Star, TrendingUp, Trophy, User, Users, XCircle } from 'lucide-react';
+import { BarChart2, Globe, Star, Trophy, User, Users, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
 import { useRouter } from 'next/navigation';
@@ -33,7 +33,6 @@ interface PlayerStats {
   goals_conceded: number;
   clean_sheets: number;
   potm: number;
-  points_change?: number; // For most improved tab
 }
 
 interface Team {
@@ -49,7 +48,7 @@ interface Category {
 
 type SortField = 'points' | 'matches_played' | 'wins' | 'losses' | 'draws' | 'win_rate' | 'name';
 type SortOrder = 'asc' | 'desc';
-type TabType = 'all' | 'golden-boot' | 'golden-glove' | 'rankings' | 'most-improved';
+type TabType = 'all' | 'golden-boot' | 'golden-glove' | 'rankings';
 
 export default function PlayerLeaderboardPage() {
   const { user, loading } = useAuth();
@@ -130,7 +129,7 @@ export default function PlayerLeaderboardPage() {
           console.log('⚠️ [Player Leaderboard] No active season found');
         }
       } catch (error) {
-        console.error('<XCircle className="w-4 h-4 text-rose-500" /> [Player Leaderboard] Error fetching team season:', error);
+        console.error('[Player Leaderboard] Error fetching team season:', error);
       }
     };
 
@@ -232,17 +231,6 @@ export default function PlayerLeaderboardPage() {
       filtered = filtered
         .sort((a, b) => b.points - a.points)
         .slice(0, 20);
-    } else if (activeTab === 'most-improved') {
-      // Top 10 most improved (highest positive points change)
-      filtered = filtered
-        .filter(p => p.base_points && p.base_points > 0)
-        .map(p => ({
-          ...p,
-          id: p.id || p.player_id, // Ensure id is always present
-          points_change: p.points - (p.base_points || 0)
-        }))
-        .sort((a: any, b: any) => b.points_change - a.points_change)
-        .slice(0, 10);
     }
 
     // Search filter (only for 'all' tab)
@@ -474,7 +462,11 @@ export default function PlayerLeaderboardPage() {
                 : 'bg-white text-slate-700 border border-slate-200/60 hover:border-amber-400/40 hover:text-amber-600'
             }`}
           >
-            {showOverall ? '<Globe className="w-4 h-4 text-slate-500" /> Overall Stats' : '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Tournament Stats'}
+            {showOverall ? (
+              <span className="inline-flex items-center gap-1.5"><Globe className="w-4 h-4" /> Overall Stats</span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Tournament Stats</span>
+            )}
           </button>
         </div>
 
@@ -493,7 +485,7 @@ export default function PlayerLeaderboardPage() {
                   : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              <Users className="w-4 h-4 text-slate-500" /> All Players
+              <span className="inline-flex items-center gap-1.5"><Users className="w-4 h-4" /> All Players</span>
             </button>
             <button
               onClick={() => setActiveTab('golden-boot')}
@@ -503,7 +495,7 @@ export default function PlayerLeaderboardPage() {
                   : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              <SoccerBallIcon className="w-4 h-4" /> Golden Boot
+              <span className="inline-flex items-center gap-1.5"><SoccerBallIcon className="w-4 h-4" /> Golden Boot</span>
             </button>
             <button
               onClick={() => setActiveTab('golden-glove')}
@@ -513,7 +505,7 @@ export default function PlayerLeaderboardPage() {
                   : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              <GloveIcon className="w-4 h-4" /> Golden Glove
+              <span className="inline-flex items-center gap-1.5"><GloveIcon className="w-4 h-4" /> Golden Glove</span>
             </button>
             <button
               onClick={() => setActiveTab('rankings')}
@@ -523,17 +515,7 @@ export default function PlayerLeaderboardPage() {
                   : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
               }`}
             >
-              <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Top Rankings
-            </button>
-            <button
-              onClick={() => setActiveTab('most-improved')}
-              className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer ${
-                activeTab === 'most-improved'
-                  ? 'bg-slate-800 text-amber-400 border border-slate-900'
-                  : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
-              }`}
-            >
-              <TrendingUp className="w-4 h-4 text-emerald-500" /> Most Improved
+              <span className="inline-flex items-center gap-1.5"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Top Rankings</span>
             </button>
           </div>
         </div>
@@ -580,27 +562,22 @@ export default function PlayerLeaderboardPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-xl">
-                    {activeTab === 'golden-boot' && '<SoccerBallIcon className="w-4 h-4" />'}
-                    {activeTab === 'golden-glove' && '<GloveIcon className="w-4 h-4" />'}
-                    {activeTab === 'rankings' && '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />'}
-                    {activeTab === 'most-improved' && '<TrendingUp className="w-4 h-4 text-emerald-500" />'}
-                    {activeTab === 'all' && '<Users className="w-4 h-4 text-slate-500" />'}
-                  </span>
+                  {activeTab === 'golden-boot' && <SoccerBallIcon className="w-5 h-5" />}
+                  {activeTab === 'golden-glove' && <GloveIcon className="w-5 h-5" />}
+                  {activeTab === 'rankings' && <Trophy className="w-5 h-5 text-amber-500 fill-amber-500" />}
+                  {activeTab === 'all' && <Users className="w-5 h-5 text-slate-500" />}
                 </div>
                 <div>
                   <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">
                     {activeTab === 'golden-boot' && 'Golden Boot - Top Scorers'}
                     {activeTab === 'golden-glove' && 'Golden Glove - Clean Sheet Leaders'}
                     {activeTab === 'rankings' && 'Top 20 Rankings'}
-                    {activeTab === 'most-improved' && 'Most Improved Players'}
                     {activeTab === 'all' && 'Player Rankings'}
                   </h3>
                   <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
                     {activeTab === 'golden-boot' && 'Top 10 players by goals scored'}
                     {activeTab === 'golden-glove' && 'Top 10 players by clean sheets'}
                     {activeTab === 'rankings' && 'Top 20 players by points'}
-                    {activeTab === 'most-improved' && 'Top 10 players with highest points gain'}
                     {activeTab === 'all' && `${filteredPlayers.length} players competing`}
                   </p>
                 </div>
@@ -630,6 +607,9 @@ export default function PlayerLeaderboardPage() {
                   </th>
                   <th className="px-4 py-3.5 text-left font-bold uppercase tracking-wider">
                     Team
+                  </th>
+                  <th className="px-4 py-3.5 text-left font-bold uppercase tracking-wider">
+                    Category
                   </th>
                   <th 
                     className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
@@ -702,8 +682,8 @@ export default function PlayerLeaderboardPage() {
               <tbody className="bg-white/40 divide-y divide-slate-100/60">
                 {filteredPlayers.length === 0 ? (
                   <tr>
-                    <td colSpan={13} className="px-6 py-12 text-center text-slate-400 font-mono">
-                      <span className="text-4xl mb-3 block"><User className="w-4 h-4 text-slate-500" /></span>
+                    <td colSpan={14} className="px-6 py-12 text-center text-slate-400 font-mono">
+                      <span className="flex justify-center mb-3"><User className="w-8 h-8 text-slate-300" /></span>
                       <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Players Found</h3>
                       <p className="text-[10px] text-slate-450 uppercase font-semibold">Try adjusting your filters</p>
                     </td>
@@ -721,9 +701,9 @@ export default function PlayerLeaderboardPage() {
                         className={`hover:bg-slate-50/50 transition-colors text-center ${rankClass}`}
                       >
                         <td className="px-4 py-3.5 whitespace-nowrap text-left text-xs font-black text-slate-800">
-                          {index === 0 && <span className="text-lg"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /></span>}
-                          {index === 1 && <span className="text-lg"><Trophy className="w-4 h-4 text-slate-400 fill-slate-400" /></span>}
-                          {index === 2 && <span className="text-lg"><Trophy className="w-4 h-4 text-amber-700 fill-amber-700" /></span>}
+                          {index === 0 && <Trophy className="w-5 h-5 text-amber-500 fill-amber-500 inline" />}
+                          {index === 1 && <Trophy className="w-5 h-5 text-slate-400 fill-slate-400 inline" />}
+                          {index === 2 && <Trophy className="w-5 h-5 text-amber-700 fill-amber-700 inline" />}
                           {index > 2 && <span className="text-slate-400">#{index + 1}</span>}
                         </td>
                         <td className="px-4 py-3.5 text-left">
@@ -737,29 +717,19 @@ export default function PlayerLeaderboardPage() {
                             {player.team_name || <span className="text-slate-450 italic">Unassigned</span>}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap">
-                          {activeTab === 'most-improved' && player.points_change !== undefined ? (
-                            <div className="flex flex-col items-center gap-0.5">
-                              <span 
-                                className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-extrabold border ${
-                                  player.points_change > 0 
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
-                                    : player.points_change < 0
-                                    ? 'bg-rose-50 text-rose-700 border-rose-200/50'
-                                    : 'bg-slate-50 text-slate-650 border-slate-200/50'
-                                }`}
-                              >
-                                {player.points_change > 0 ? '+' : ''}{player.points_change}
-                              </span>
-                              <span className="text-[9px] text-slate-400 font-semibold uppercase">
-                                {player.base_points} {"->"} {player.points}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black border uppercase tracking-wider bg-slate-800 text-amber-400 border-slate-900">
-                              {player.points}
+                        <td className="px-4 py-3.5 text-left whitespace-nowrap">
+                          {player.category_name && player.category_name !== 'Unknown' ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-violet-50 border border-violet-200 text-violet-800">
+                              {player.category_name}
                             </span>
+                          ) : (
+                            <span className="text-slate-300 text-[10px]">—</span>
                           )}
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black border uppercase tracking-wider bg-slate-800 text-amber-400 border-slate-900">
+                            {player.points}
+                          </span>
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span className="text-xs text-slate-600 font-bold">{player.matches_played}</span>
@@ -806,7 +776,7 @@ export default function PlayerLeaderboardPage() {
           <div className="md:hidden space-y-4 px-2 pb-4">
             {filteredPlayers.length === 0 ? (
               <div className="text-center py-12 text-slate-400 font-mono">
-                <span className="text-4xl mb-3 block"><User className="w-4 h-4 text-slate-500" /></span>
+                <span className="flex justify-center mb-3"><User className="w-8 h-8 text-slate-300" /></span>
                 <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Players Found</h3>
                 <p className="text-[10px] text-slate-450 uppercase font-semibold">Try adjusting your filters</p>
               </div>
@@ -826,9 +796,9 @@ export default function PlayerLeaderboardPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2.5">
                         <div className="text-xl font-bold flex-shrink-0">
-                          {index === 0 && '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />'}
-                          {index === 1 && '<Trophy className="w-4 h-4 text-slate-400 fill-slate-400" />'}
-                          {index === 2 && '<Trophy className="w-4 h-4 text-amber-700 fill-amber-700" />'}
+                          {index === 0 && <Trophy className="w-5 h-5 text-amber-500 fill-amber-500" />}
+                          {index === 1 && <Trophy className="w-5 h-5 text-slate-400 fill-slate-400" />}
+                          {index === 2 && <Trophy className="w-5 h-5 text-amber-700 fill-amber-700" />}
                           {index > 2 && <span className="text-xs text-slate-400 font-bold">#{index + 1}</span>}
                         </div>
                         <div>
@@ -837,30 +807,16 @@ export default function PlayerLeaderboardPage() {
                           <p className="text-[9px] text-slate-500 font-bold uppercase mt-0.5">
                             {player.team_name || <span className="text-slate-400 italic">Unassigned</span>}
                           </p>
+                          {player.category_name && player.category_name !== 'Unknown' && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-violet-50 border border-violet-200 text-violet-800 mt-0.5">
+                              {player.category_name}
+                            </span>
+                          )}
                         </div>
                       </div>
-                      {activeTab === 'most-improved' && player.points_change !== undefined ? (
-                        <div className="text-right">
-                          <span 
-                            className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-extrabold border ${
-                              player.points_change > 0 
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
-                                : player.points_change < 0
-                                ? 'bg-rose-50 text-rose-700 border-rose-200/50'
-                                : 'bg-slate-50 text-slate-650 border-slate-200/50'
-                            }`}
-                          >
-                            {player.points_change > 0 ? '+' : ''}{player.points_change}
-                          </span>
-                          <p className="text-[9px] text-slate-450 font-semibold uppercase mt-0.5">
-                            {player.base_points} {"->"} {player.points}
-                          </p>
-                        </div>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black border uppercase tracking-wider bg-slate-800 text-amber-400 border-slate-900">
-                          {player.points}
-                        </span>
-                      )}
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black border uppercase tracking-wider bg-slate-800 text-amber-400 border-slate-900">
+                        {player.points}
+                      </span>
                     </div>
 
                     {/* Stats Grid */}
@@ -915,7 +871,7 @@ export default function PlayerLeaderboardPage() {
         <div className="console-card mt-6 bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm font-mono">
           <div className="flex items-start gap-3.5">
             <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <span className="text-xl"><BarChart2 className="w-4 h-4 text-slate-500" /></span>
+              <BarChart2 className="w-5 h-5 text-amber-600" />
             </div>
             <div>
               <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-3">Leaderboard Legend</h3>

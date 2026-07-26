@@ -687,7 +687,6 @@ export async function GET(request: NextRequest) {
               season_id,
               player_name,
               category,
-              star_rating,
               points,
               'active' as registration_status
             FROM realplayerstats
@@ -701,8 +700,9 @@ export async function GET(request: NextRequest) {
           player_id: p.player_id,
           name: p.player_name,
           position: p.category,
+          category: p.category,
           jersey_number: null,
-          overall_rating: p.star_rating || 0,
+          overall_rating: 0,
           photo_url: null,
         }));
         console.log(`👥 Real players found:`, realPlayers.length);

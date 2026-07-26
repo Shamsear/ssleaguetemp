@@ -14,45 +14,63 @@ export async function GET(request: NextRequest) {
     }
 
     const uid = auth.userId!;
+    const { searchParams } = new URL(request.url);
+    const seasonId = searchParams.get('seasonId');
 
     // Get the team's database ID from Neon
     const teamResult = await sql`
       SELECT id FROM teams WHERE firebase_uid = ${uid} LIMIT 1
     `;
-    
+
     if (!teamResult || teamResult.length === 0) {
-      // No team found in Neon database - return empty array
       console.log(`No team found in Neon for uid: ${uid}`);
       return NextResponse.json({
         success: true,
-        data: {
-          players: [],
-          count: 0,
-        },
+        data: { players: [], count: 0 },
       });
     }
 
     const teamId = teamResult[0].id;
 
-    // Fetch team's won football players from Neon (team_players table)
-    const playersResult = await sql`
-      SELECT 
-        tp.id,
-        tp.player_id,
-        tp.team_id,
-        tp.purchase_price,
-        tp.acquired_at,
-        fp.name,
-        fp.position,
-        fp.position_group,
-        fp.team_name as nfl_team,
-        fp.overall_rating,
-        fp.player_id as football_player_id
-      FROM team_players tp
-      INNER JOIN footballplayers fp ON tp.player_id = fp.id
-      WHERE tp.team_id = ${teamId}
-      ORDER BY tp.acquired_at DESC
-    `;
+    // Fetch team's football (auction) players — filter to active season if provided
+    const playersResult = seasonId
+      ? await sql`
+          SELECT
+            tp.id,
+            tp.player_id,
+            tp.team_id,
+            tp.purchase_price,
+            tp.acquired_at,
+            fp.name,
+            fp.position,
+            fp.position_group,
+            fp.team_name as nfl_team,
+            fp.overall_rating,
+            fp.player_id as football_player_id
+          FROM team_players tp
+          INNER JOIN footballplayers fp ON tp.player_id = fp.id
+          WHERE tp.team_id = ${teamId}
+            AND tp.season_id = ${seasonId}
+          ORDER BY tp.acquired_at DESC
+        `
+      : await sql`
+          SELECT
+            tp.id,
+            tp.player_id,
+            tp.team_id,
+            tp.purchase_price,
+            tp.acquired_at,
+            fp.name,
+            fp.position,
+            fp.position_group,
+            fp.team_name as nfl_team,
+            fp.overall_rating,
+            fp.player_id as football_player_id
+          FROM team_players tp
+          INNER JOIN footballplayers fp ON tp.player_id = fp.id
+          WHERE tp.team_id = ${teamId}
+          ORDER BY tp.acquired_at DESC
+        `;
 
     const players = playersResult.map(player => ({
       id: player.id,
@@ -65,23 +83,17 @@ export async function GET(request: NextRequest) {
       player_id: player.football_player_id || player.player_id || null,
     }));
 
-    console.log(`✅ Fetched ${players.length} players for team ${teamId} (uid: ${uid})`);
+    console.log(`✅ Fetched ${players.length} players for team ${teamId} (uid: ${uid}, season: ${seasonId || 'all'})`);
 
     return NextResponse.json({
       success: true,
-      data: {
-        players,
-        count: players.length,
-      },
+      data: { players, count: players.length },
     });
 
   } catch (error: any) {
     console.error('Error fetching team players:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error.message || 'Failed to fetch players'
-      },
+      { success: false, error: error.message || 'Failed to fetch players' },
       { status: 500 }
     );
   }

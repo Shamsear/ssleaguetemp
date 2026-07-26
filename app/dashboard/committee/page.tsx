@@ -523,6 +523,21 @@ export default function CommitteeDashboard() {
                   <p className="text-[10px] text-slate-500 font-bold uppercase">Assign players to categories using AI</p>
                 </Link>
 
+                <Link href="/dashboard/committee/edit-categories" className="group bg-slate-50 border border-slate-200/60 rounded-xl p-4 hover:border-amber-400 hover:shadow-md hover:bg-white transition-all">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2 rounded-lg bg-slate-850 text-amber-400 border border-slate-905 flex-shrink-0">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                    </div>
+                    <svg className="w-4 h-4 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider group-hover:text-amber-600 transition-colors mb-1">Edit Categories</h4>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">Manually change individual player categories</p>
+                </Link>
+
                 <Link href="/dashboard/committee/team-management/player-stats-by-round" className="group bg-slate-50 border border-slate-200/60 rounded-xl p-4 hover:border-amber-400 hover:shadow-md hover:bg-white transition-all">
                   <div className="flex items-center justify-between mb-3">
                     <div className="p-2 rounded-lg bg-slate-855 text-amber-400 border border-slate-905 flex-shrink-0">

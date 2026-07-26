@@ -603,10 +603,20 @@ export default function PlayerCategorizationPage() {
       const finalCatObj = categories.find(c => c.name === finalCategory);
       const basePriceVal = finalCatObj?.base_price ?? 0;
 
+      const smartAssistLabel = (val: string | null | undefined) => {
+        const v = (val || '').toLowerCase();
+        if (v === 'yes') return 'Yes';
+        if (v === 'partially') return 'Partially';
+        if (v === 'no') return 'No';
+        if (v === 'didnt_play') return "Didn't Play";
+        return 'N/A';
+      };
+
       const row: { [key: string]: any } = {
         'Player Name': p.player_name,
+        'Smart Assist?': smartAssistLabel(p.used_smart_assist),
         'Final Category': finalCategory,
-        'Base Price': basePriceVal > 0 ? `${basePriceVal} PTS` : '—',
+        'Base Price': basePriceVal > 0 ? `${basePriceVal} COINS` : '—',
         'AI Proposed': proposed || 'N/A',
         'Override?': isOverridden ? `Yes (was: ${proposed || 'N/A'})` : 'No',
         'AI Score (PPM)': p.weightedScore !== null ? p.weightedScore : 'Unrated',
@@ -1104,6 +1114,7 @@ export default function PlayerCategorizationPage() {
                     <th className="px-6 py-3.5 text-center">AI Rating Suggestion</th>
                     <th className="px-6 py-3.5 text-center">Base Price</th>
                     <th className="px-6 py-3.5 text-center">AI Score (PPM)</th>
+                    <th className="px-6 py-3.5 text-center">Smart Assist</th>
                     {historicalSeasonsList.filter(s => selectedHistoricalSeasons.includes(s)).map(seasonId => (
                       <th key={seasonId} className="px-4 py-3.5 text-center font-mono">{seasonId}</th>
                     ))}
@@ -1178,12 +1189,32 @@ export default function PlayerCategorizationPage() {
 
                           {/* Base Price */}
                           <td className="px-6 py-4 font-mono font-bold text-center text-slate-700">
-                            {basePrice > 0 ? `${basePrice} PTS` : '—'}
+                            {basePrice > 0 ? `${basePrice} COINS` : '—'}
                           </td>
 
                           {/* AI Score */}
                           <td className="px-6 py-4 font-mono font-bold text-center text-slate-700">
                             {player.weightedScore !== null ? player.weightedScore : '—'}
+                          </td>
+
+                          {/* Smart Assist */}
+                          <td className="px-6 py-4 text-center">
+                            {(() => {
+                              const v = (player.used_smart_assist || '').toLowerCase();
+                              if (v === 'yes') return (
+                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-violet-50 border border-violet-200 text-violet-800 font-mono">✓ Yes</span>
+                              );
+                              if (v === 'partially') return (
+                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-amber-50 border border-amber-200 text-amber-800 font-mono">∼ Partial</span>
+                              );
+                              if (v === 'no') return (
+                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 border border-slate-200 text-slate-500 font-mono">No</span>
+                              );
+                              if (v === 'didnt_play') return (
+                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-rose-50 border border-rose-200 text-rose-600 font-mono">Didn't Play</span>
+                              );
+                              return <span className="text-slate-300 font-mono text-[10px]">—</span>;
+                            })()}
                           </td>
 
                           {/* Historical Season Stats */}
@@ -1224,7 +1255,7 @@ export default function PlayerCategorizationPage() {
                         {/* Calculation Breakdown expanded view */}
                         {isExpanded && (
                           <tr>
-                            <td colSpan={6 + historicalSeasonsList.filter(s => selectedHistoricalSeasons.includes(s)).length} className="px-6 py-4 bg-slate-50/50 border-t border-b border-slate-200">
+                            <td colSpan={7 + historicalSeasonsList.filter(s => selectedHistoricalSeasons.includes(s)).length} className="px-6 py-4 bg-slate-50/50 border-t border-b border-slate-200">
                               {player.isNewPlayer ? (
                                 <div className="p-4 bg-amber-50/40 border border-amber-200/80 rounded-xl space-y-2 font-mono text-slate-700">
                                   <div className="font-bold text-amber-800 text-[10px] uppercase tracking-wider">AI Calculation Breakdown</div>

@@ -34,9 +34,11 @@ interface TournamentPlayer {
   team_id?: string;
   team_name?: string;
   category?: string;
-  star_rating: number;
+  star_rating?: number;
   points: number;
   auction_value: number;
+  base_price: number;
+  price: number;
   status: string;
   season_id: string;
   updated_at: string;
@@ -76,7 +78,6 @@ export default function TeamPlayersPage() {
   const [positionGroupFilter, setPositionGroupFilter] = useState('all');
   // Tournament player filters
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [starRatingFilter, setStarRatingFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
@@ -95,11 +96,16 @@ export default function TeamPlayersPage() {
         return;
       }
 
+      const effectiveSeasonId = userSeasonId || activeSeasonId;
+
       console.log('Fetching auction players...');
       setIsLoadingAuction(true);
 
       try {
-        const response = await fetchWithTokenRefresh('/api/team/players', {
+        const url = effectiveSeasonId
+          ? `/api/team/players?seasonId=${effectiveSeasonId}`
+          : '/api/team/players';
+        const response = await fetchWithTokenRefresh(url, {
           headers: { 'Cache-Control': 'no-cache' },
         });
         
@@ -126,7 +132,7 @@ export default function TeamPlayersPage() {
     };
 
     fetchAuctionPlayers();
-  }, [user]);
+  }, [user, userSeasonId, activeSeasonId]);
 
   useEffect(() => {
     const fetchTournamentPlayers = async () => {
@@ -205,10 +211,9 @@ export default function TeamPlayersPage() {
         
         // Tournament player filters
         const matchesCategory = categoryFilter === 'all' || tournamentPlayer.category === categoryFilter;
-        const matchesStarRating = starRatingFilter === 'all' || tournamentPlayer.star_rating === parseInt(starRatingFilter);
         const matchesStatus = statusFilter === 'all' || tournamentPlayer.status === statusFilter;
         
-        return searchMatch && matchesCategory && matchesStarRating && matchesStatus;
+        return searchMatch && matchesCategory && matchesStatus;
       }
     })
     .sort((a, b) => {
@@ -230,7 +235,6 @@ export default function TeamPlayersPage() {
   // Tournament filters
   const categories = Array.from(new Set(tournamentPlayers.filter(p => p.category).map(p => p.category!))).sort();
   const statuses = Array.from(new Set(tournamentPlayers.filter(p => p.status).map(p => p.status!))).sort();
-  const starRatings = Array.from(new Set(tournamentPlayers.map(p => p.star_rating))).sort((a, b) => b - a);
   
   // Auction filters - get positions from actual auction players data (football positions)
   const positions = Array.from(new Set(auctionPlayers.filter(p => p.position).map(p => p.position!))).sort();
@@ -455,7 +459,7 @@ export default function TeamPlayersPage() {
                         <option key={position} value={position}>{position}</option>
                       ))}
                     </select>
-                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -475,7 +479,7 @@ export default function TeamPlayersPage() {
                         <option key={group} value={group}>{group}</option>
                       ))}
                     </select>
-                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -497,31 +501,12 @@ export default function TeamPlayersPage() {
                         <option key={category} value={category}>{category}</option>
                       ))}
                     </select>
-                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
                 </div>
                 
-                {/* Star Rating Filter */}
-                <div>
-                  <label className="block text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">Star Rating</label>
-                  <div className="relative">
-                    <select 
-                      value={starRatingFilter}
-                      onChange={(e) => setStarRatingFilter(e.target.value)}
-                      className="w-full pl-8 py-2 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-xs font-mono font-bold uppercase tracking-wider cursor-pointer"
-                    >
-                      <option value="all">All Star Ratings</option>
-                      {starRatings.map(rating => (
-                        <option key={rating} value={rating}>{rating} <Star className="w-4 h-4 text-amber-400 fill-amber-400" /></option>
-                      ))}
-                    </select>
-                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                    </svg>
-                  </div>
-                </div>
 
                 {/* Status Filter */}
                 <div>
@@ -537,7 +522,7 @@ export default function TeamPlayersPage() {
                         <option key={status} value={status}>{status}</option>
                       ))}
                     </select>
-                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
@@ -620,12 +605,14 @@ export default function TeamPlayersPage() {
                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase ${getCategoryColor((player as TournamentPlayer).category || '')}`}>
                               {(player as TournamentPlayer).category || 'N/A'}
                             </span>
-                            <span className="text-[9px] px-2 py-0.5 bg-amber-50 text-amber-700 font-bold rounded uppercase border border-amber-200/50">
-                              {(player as TournamentPlayer).star_rating}<Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                            </span>
                             <span className="text-[9px] px-2 py-0.5 bg-blue-50 text-blue-700 font-bold rounded uppercase border border-blue-200/50">
                               {(player as TournamentPlayer).points} pts
                             </span>
+                            {(player as TournamentPlayer).price > 0 && (
+                              <span className="text-[9px] px-2 py-0.5 bg-amber-50 text-amber-700 font-bold rounded uppercase border border-amber-200/50">
+                                {(player as TournamentPlayer).price} COINS
+                              </span>
+                            )}
                           </>
                         )}
                       </div>
@@ -720,7 +707,7 @@ export default function TeamPlayersPage() {
                   ) : (
                     <>
                       <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider">Category</th>
-                      <th className="px-6 py-4 text-center font-bold text-slate-500 uppercase tracking-wider">Star Rating</th>
+                      <th className="px-6 py-4 text-center font-bold text-slate-500 uppercase tracking-wider">Price</th>
                       <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider">Points</th>
                       <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider">Auction Value</th>
                       <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider">Status</th>
@@ -803,12 +790,13 @@ export default function TeamPlayersPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
-                            <div className="flex items-center justify-center">
-                              <span className={`inline-flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold border shadow-sm ${getStarRatingColor((player as TournamentPlayer).star_rating)}`}>
-                                {(player as TournamentPlayer).star_rating}
-                              </span>
-                              <span className="ml-1 text-amber-500 text-[10px]"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /></span>
-                            </div>
+                            <span className="font-mono font-bold text-amber-700">
+                              {(player as TournamentPlayer).price > 0
+                                ? `${(player as TournamentPlayer).price} COINS`
+                                : (player as TournamentPlayer).base_price > 0
+                                  ? `${(player as TournamentPlayer).base_price} COINS`
+                                  : '—'}
+                            </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="font-bold text-slate-800">{(player as TournamentPlayer).points}</span>
