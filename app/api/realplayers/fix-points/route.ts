@@ -20,7 +20,7 @@ const STAR_RATING_BASE_POINTS: { [key: number]: number } = {
  */
 export async function POST(request: NextRequest) {
   try {
-    const auth = await verifyAuth(['committee'], request);
+    const auth = await verifyAuth(['committee_admin'], request);
     if (!auth.authenticated) {
       return NextResponse.json(
         { error: auth.error || 'Unauthorized' },

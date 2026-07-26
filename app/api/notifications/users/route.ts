@@ -11,7 +11,7 @@ const sql = neon(process.env.NEON_TOURNAMENT_DB_URL!);
 export async function GET(request: NextRequest) {
   try {
     // Verify authentication (only committee/admin can view notification users)
-    const auth = await verifyAuth(['admin', 'committee', 'committee_admin'], request);
+    const auth = await verifyAuth(['admin', 'committee_admin', 'committee_admin'], request);
     if (!auth.authenticated) {
       return NextResponse.json(
         { success: false, error: auth.error || 'Unauthorized' },

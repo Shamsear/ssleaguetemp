@@ -4,7 +4,7 @@ import { verifyAuth } from '@/lib/auth-helper';
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await verifyAuth(['team', 'committee'], request);
+    const auth = await verifyAuth(['team', 'committee_admin'], request);
     if (!auth.authenticated) {
       return NextResponse.json(
         { success: false, message: auth.error || 'Unauthorized' },

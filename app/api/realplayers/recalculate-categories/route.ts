@@ -74,20 +74,19 @@ async function recalculateSeasonCategories(season_id: string) {
     const updates: any[] = [];
     const updatePromises = players.map(async (player, index) => {
       const isLegend = index < legendThreshold;
-      const newCategory = isLegend ? 'legend' : 'classic';
-      const newCategoryName = isLegend ? 'Legend' : 'Classic';
+      const newCategory = isLegend ? 'LEGEND' : 'CLASSIC';
       
       // Update in Neon
       if (isModernSeason(season_id)) {
         await sql`
           UPDATE player_seasons
-          SET category = ${newCategoryName}, updated_at = NOW()
+          SET category = ${newCategory}, updated_at = NOW()
           WHERE id = ${player.id}
         `;
       } else {
         await sql`
           UPDATE realplayerstats
-          SET category = ${newCategoryName}, updated_at = NOW()
+          SET category = ${newCategory}, updated_at = NOW()
           WHERE id = ${player.id}
         `;
       }
@@ -104,15 +103,15 @@ async function recalculateSeasonCategories(season_id: string) {
       
       return { 
         playerId: player.playerId, 
-        category: newCategoryName, 
+        category: newCategory, 
         rank: index + 1 
       };
     });
     
     await Promise.all(updatePromises);
     
-    const legendCount = updates.filter(u => u.newCategory === 'legend').length;
-    const classicCount = updates.filter(u => u.newCategory === 'classic').length;
+    const legendCount = updates.filter(u => u.newCategory === 'LEGEND').length;
+    const classicCount = updates.filter(u => u.newCategory === 'CLASSIC').length;
     
     console.log(`✅ Categories updated: ${legendCount} Legend / ${classicCount} Classic`);
     

@@ -77,7 +77,7 @@ export async function POST(
     const { id: seasonId } = await params;
     console.log(`📝 Parsing Excel file for historical season ID: ${seasonId}`);
 
-    const auth = await verifyAuth(['committee'], request);
+    const auth = await verifyAuth(['committee_admin'], request);
     if (!auth.authenticated) {
       return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
     }

@@ -1496,11 +1496,11 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                               <div>
                                 <div className="font-bold text-slate-800 mb-1">{player.name}</div>
                                 <div className="flex items-center gap-2">
-                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${player.category === 'legend'
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${player.category?.toUpperCase() === 'LEGEND'
                                     ? 'bg-amber-100 border border-amber-200 text-amber-800'
                                     : 'bg-slate-200 border border-slate-300 text-slate-700'
                                     }`}>
-                                    {player.category === 'legend' ? '<Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Legend' : 'Classic'}
+                                    {player.category?.toUpperCase() === 'LEGEND' ? '<Star className="w-4 h-4 text-amber-400 fill-amber-400" /> LEGEND' : player.category?.toUpperCase() || 'CLASSIC'}
                                   </span>
                                   <span className="text-[10px] text-amber-500 tracking-wider">
                                     {'<Star className="w-4 h-4 text-amber-400 fill-amber-400" />'.repeat(player.starRating)}{'<Star className="w-4 h-4 text-slate-300" />'.repeat(10 - player.starRating)}

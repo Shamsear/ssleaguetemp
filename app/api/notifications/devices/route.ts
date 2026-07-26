@@ -10,7 +10,7 @@ const sql = neon(process.env.NEON_TOURNAMENT_DB_URL!);
  */
 export async function GET(request: NextRequest) {
   try {
-    const auth = await verifyAuth(['team', 'committee'], request);
+    const auth = await verifyAuth(['team', 'committee_admin'], request);
     if (!auth.authenticated) {
       return NextResponse.json(
         { success: false, error: auth.error || 'Unauthorized' },
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const auth = await verifyAuth(['team', 'committee'], request);
+    const auth = await verifyAuth(['team', 'committee_admin'], request);
     if (!auth.authenticated) {
       return NextResponse.json(
         { success: false, error: auth.error || 'Unauthorized' },

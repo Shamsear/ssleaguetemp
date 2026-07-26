@@ -29,7 +29,7 @@ import { calculateLineupPoints } from '@/lib/fantasy/points-calculator-v2';
 export async function POST(request: NextRequest) {
   try {
     // Verify committee authorization
-    const auth = await verifyAuth(['committee'], request);
+    const auth = await verifyAuth(['committee_admin']), request);
     if (!auth.authenticated) {
       return NextResponse.json(
         { 

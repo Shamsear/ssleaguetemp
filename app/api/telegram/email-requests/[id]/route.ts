@@ -98,7 +98,7 @@ export async function POST(
           `;
         } else {
           // Register in realplayerstats for S18+ and S1-15
-          const category = requestData.category || 'White';
+          const category = (requestData.category || 'WHITE').toUpperCase().trim();
           await sql`
             INSERT INTO realplayerstats (
               id, player_id, season_id, player_name,

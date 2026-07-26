@@ -135,92 +135,90 @@ export default function RealPlayersPage() {
         const isModern = seasonNum === 16 || seasonNum === 17;
         setIsModernSeason(isModern);
 
-        if (isModern) {
-          // S16/S17 – use the dedicated season-players endpoint
-          const response = await fetchWithTokenRefresh(`/api/realplayers/season-players?seasonId=${userSeasonId}`);
-          const result = await response.json();
+        // Use the dedicated season-players endpoint for all seasons (S16, S17, S18+)
+        const response = await fetchWithTokenRefresh(`/api/realplayers/season-players?seasonId=${userSeasonId}`);
+        const result = await response.json();
 
-          if (result.success && result.data && result.data.length > 0) {
-            const realPlayersData = result.data.filter((p: any) => p.category && p.category.trim() !== '');
+        if (result.success && result.data && result.data.length > 0) {
+          const realPlayersData = result.data.filter((p: any) => p.category && p.category.trim() !== '');
 
-            const teamMap: { [key: string]: Player[] } = {};
-            const unassignedPlayers: Player[] = [];
+          const teamMap: { [key: string]: Player[] } = {};
+          const unassignedPlayers: Player[] = [];
 
-            realPlayersData.forEach((data: any) => {
-              const category = data.category || 'Bronze';
-              const isS18Plus = !result.isModern;
+          realPlayersData.forEach((data: any) => {
+            const category = data.category || 'BRONZE';
+            const isS18Plus = !result.isModern;
 
-              // For S18+: price = auction bid (what team paid), base_price = category base
-              // For S16/S17: auction_value = what was paid
-              let auctionValue: number;
-              let basePrice: number | undefined;
-              if (isS18Plus) {
-                auctionValue = parseInt(data.price) || 0;
-                basePrice = parseInt(data.base_price) || 0;
-                // If not sold yet, show base_price as a guide
-                if (auctionValue === 0 && basePrice > 0) {
-                  auctionValue = basePrice;
-                }
-              } else {
-                auctionValue = typeof data.auction_value === 'number'
-                  ? data.auction_value
-                  : parseFloat(String(data.auction_value || '0'));
-                if (auctionValue === 0 || isNaN(auctionValue)) auctionValue = 250;
+            // For S18+: price = auction bid (what team paid), base_price = category base
+            // For S16/S17: auction_value = what was paid
+            let auctionValue: number;
+            let basePrice: number | undefined;
+            if (isS18Plus) {
+              auctionValue = parseInt(data.price) || 0;
+              basePrice = parseInt(data.base_price) || 0;
+              // If not sold yet, show base_price as a guide
+              if (auctionValue === 0 && basePrice > 0) {
+                auctionValue = basePrice;
               }
+            } else {
+              auctionValue = typeof data.auction_value === 'number'
+                ? data.auction_value
+                : parseFloat(String(data.auction_value || '0'));
+              if (auctionValue === 0 || isNaN(auctionValue)) auctionValue = 250;
+            }
 
-              const player: Player = {
-                id: data.player_id || data.id,
-                playerName: data.player_name || '',
-                category,
-                auctionValue,
-                basePrice,
-              };
+            const player: Player = {
+              id: data.id,
+              playerName: data.player_name || '',
+              category,
+              auctionValue,
+              basePrice,
+            };
 
-              const teamId = data.team_id;
-              if (teamId && teamId !== '' && teamId !== null && teamId !== undefined) {
-                if (!teamMap[teamId]) teamMap[teamId] = [];
-                teamMap[teamId].push(player);
-              } else {
-                unassignedPlayers.push(player);
-              }
-            });
+            const teamId = data.team_id;
+            if (teamId && teamId !== '' && teamId !== null && teamId !== undefined) {
+              if (!teamMap[teamId]) teamMap[teamId] = [];
+              teamMap[teamId].push(player);
+            } else {
+              unassignedPlayers.push(player);
+            }
+          });
 
-            // Create team data structure
-            const teamsData: TeamData[] = teamSeasons.map(teamSeason => {
-              const teamId = teamSeason.team_id || teamSeason.id.split('_')[0];
-              const assignedPlayers = teamMap[teamId] || [];
+          // Create team data structure
+          const teamsData: TeamData[] = teamSeasons.map(teamSeason => {
+            const teamId = teamSeason.team_id || teamSeason.id.split('_')[0];
+            const assignedPlayers = teamMap[teamId] || [];
 
-              // Use dual currency system for real players
-              const originalBudget = teamSeason.initial_real_player_budget ||
-                teamSeason.real_player_budget_initial ||
-                teamSeason.real_player_starting_balance ||
-                1000;
-              const currentBudget = teamSeason.real_player_budget ?? originalBudget;
-              const currentSpent = teamSeason.real_player_spent || 0;
+            // Use dual currency system for real players
+            const originalBudget = teamSeason.initial_real_player_budget ||
+              teamSeason.real_player_budget_initial ||
+              teamSeason.real_player_starting_balance ||
+              1000;
+            const currentBudget = teamSeason.real_player_budget ?? originalBudget;
+            const currentSpent = teamSeason.real_player_spent || 0;
 
-              console.log(`Team ${teamSeason.team_name || teamSeason.team_code}: originalBudget=${originalBudget}, currentBudget=${currentBudget}, currentSpent=${currentSpent}`);
+            console.log(`Team ${teamSeason.team_name || teamSeason.team_code}: originalBudget=${originalBudget}, currentBudget=${currentBudget}, currentSpent=${currentSpent}`);
 
-              return {
-                id: teamId,
-                name: teamSeason.team_name || teamSeason.team_code || 'Unknown Team',
-                originalBudget: originalBudget,
-                currentBudget: currentBudget,
-                currentSpent: currentSpent,
-                assignedPlayers: assignedPlayers,
-                isExpanded: false,
-              };
-            }).sort((a, b) => a.name.localeCompare(b.name));
+            return {
+              id: teamId,
+              name: teamSeason.team_name || teamSeason.team_code || 'Unknown Team',
+              originalBudget: originalBudget,
+              currentBudget: currentBudget,
+              currentSpent: currentSpent,
+              assignedPlayers: assignedPlayers,
+              isExpanded: false,
+            };
+          }).sort((a, b) => a.name.localeCompare(b.name));
 
-            setTeams(teamsData);
-            setAvailablePlayers(unassignedPlayers);
-            console.log(`Loaded ${realPlayersData.length} players organized into ${teamsData.length} teams`);
-            console.log(`Available (unassigned) players:`, unassignedPlayers.map(p => p.playerName));
-            console.log(`Assigned players by team:`, Object.entries(teamMap).map(([teamId, players]) => ({
-              teamId,
-              count: players.length,
-              players: players.map(p => p.playerName)
-            })));
-          }
+          setTeams(teamsData);
+          setAvailablePlayers(unassignedPlayers);
+          console.log(`Loaded ${realPlayersData.length} players organized into ${teamsData.length} teams`);
+          console.log(`Available (unassigned) players:`, unassignedPlayers.map(p => p.playerName));
+          console.log(`Assigned players by team:`, Object.entries(teamMap).map(([teamId, players]) => ({
+            teamId,
+            count: players.length,
+            players: players.map(p => p.playerName)
+          })));
         }
       } catch (error) {
         console.error('Error loading players:', error);
@@ -274,10 +272,15 @@ export default function RealPlayersPage() {
 
     console.log(`Removing player ${removedPlayer.playerName} (ID: ${playerId}) from team ${team.name}`);
 
-    // Remove from team
+    // Remove from team and restore budget
     setTeams(prevTeams => prevTeams.map(t => {
       if (t.id === teamId) {
-        return { ...t, assignedPlayers: t.assignedPlayers.filter(p => p.id !== playerId) };
+        return { 
+          ...t, 
+          currentBudget: t.currentBudget + (removedPlayer.auctionValue || 0),
+          currentSpent: t.currentSpent - (removedPlayer.auctionValue || 0),
+          assignedPlayers: t.assignedPlayers.filter(p => p.id !== playerId) 
+        };
       }
       return t;
     }));
@@ -296,8 +299,14 @@ export default function RealPlayersPage() {
   const updatePlayerAuctionValue = (teamId: string, playerId: string, value: number) => {
     setTeams(teams.map(t => {
       if (t.id === teamId) {
+        const player = t.assignedPlayers.find(p => p.id === playerId);
+        const oldValue = player?.auctionValue || 0;
+        const difference = value - oldValue;
+
         return {
           ...t,
+          currentBudget: t.currentBudget - difference,
+          currentSpent: t.currentSpent + difference,
           assignedPlayers: t.assignedPlayers.map(p => {
             if (p.id === playerId) {
               return { ...p, auctionValue: value };
@@ -319,7 +328,9 @@ export default function RealPlayersPage() {
     }
 
     const auctionValue = parseInt(quickAssignAuction);
-    const minRequired = quickAssignPlayer.basePrice !== undefined ? quickAssignPlayer.basePrice : 250;
+    const minRequired = quickAssignPlayer.basePrice !== undefined && quickAssignPlayer.basePrice > 0 
+      ? quickAssignPlayer.basePrice 
+      : 0;
     if (isNaN(auctionValue) || auctionValue < minRequired) {
       setError(`Auction value cannot be less than the player's base price (${minRequired} coins)`);
       return;
@@ -361,6 +372,8 @@ export default function RealPlayersPage() {
           }
           return {
             ...t,
+            currentBudget: t.currentBudget - auctionValue,
+            currentSpent: t.currentSpent + auctionValue,
             assignedPlayers: [...t.assignedPlayers, {
               ...quickAssignPlayer,
               auctionValue: auctionValue,
@@ -374,7 +387,7 @@ export default function RealPlayersPage() {
       setAvailablePlayers(prev => prev.filter(p => p.id !== quickAssignPlayer.id));
 
       const teamName = teams.find(t => t.id === quickAssignTeam)?.name || 'Team';
-      setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${quickAssignPlayer.playerName} assigned to ${teamName} for <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />${auctionValue.toLocaleString()}!`);
+      setSuccess(`${quickAssignPlayer.playerName} assigned to ${teamName} for $${auctionValue.toLocaleString()}!`);
 
       // Reset form
       setQuickAssignPlayer(null);
@@ -441,7 +454,7 @@ export default function RealPlayersPage() {
         throw new Error(result.error || 'Failed to save team');
       }
 
-      setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Successfully saved ${team.name} with ${team.assignedPlayers.length} players!`);
+      setSuccess(`Successfully saved ${team.name} with ${team.assignedPlayers.length} players!`);
 
       setTimeout(() => {
         setSuccess(null);
@@ -564,7 +577,10 @@ export default function RealPlayersPage() {
         {success && (
           <div className="bg-emerald-50 border border-emerald-200/60 rounded-2xl p-4 font-mono text-xs">
             <div className="flex items-center gap-2 text-emerald-800">
-              <span className="font-extrabold"><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> SUCCESS:</span>
+              <span className="font-extrabold flex items-center gap-1">
+                <CheckCircle className="w-4 h-4 text-emerald-500" />
+                SUCCESS:
+              </span>
               <span className="font-bold uppercase tracking-wide">{success}</span>
             </div>
           </div>
@@ -598,7 +614,7 @@ export default function RealPlayersPage() {
                     const player = availablePlayers.find(p => p.id === e.target.value);
                     setQuickAssignPlayer(player || null);
                     if (player) {
-                      setQuickAssignAuction(String(player.basePrice !== undefined ? player.basePrice : 250));
+                      setQuickAssignAuction(String(player.basePrice !== undefined && player.basePrice > 0 ? player.basePrice : 0));
                     }
                   }}
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer"
@@ -608,7 +624,7 @@ export default function RealPlayersPage() {
                     .sort((a, b) => a.playerName.localeCompare(b.playerName))
                     .map(player => (
                       <option key={player.id} value={player.id}>
-                        {player.playerName} ({player.category}) - Min {player.basePrice !== undefined ? player.basePrice : 250}
+                        {player.playerName} ({player.category}) - Min {player.basePrice !== undefined && player.basePrice > 0 ? player.basePrice : 0}
                       </option>
                     ))}
                 </select>
@@ -617,7 +633,7 @@ export default function RealPlayersPage() {
                     <span className="text-[9px] font-extrabold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded uppercase">
                       {quickAssignPlayer.category}
                     </span>
-                    <span className="text-[10px] font-black text-slate-600">MIN <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />250</span>
+                    <span className="text-[10px] font-black text-slate-600">MIN <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{quickAssignPlayer.basePrice !== undefined && quickAssignPlayer.basePrice > 0 ? quickAssignPlayer.basePrice : 0}</span>
                   </div>
                 )}
               </div>

@@ -194,17 +194,20 @@ export async function POST(request: NextRequest) {
     }
 
     const promises = updates.map(async (u: { id: string; category: string }) => {
+      // Always capitalize the category
+      const capitalizedCategory = u.category.toUpperCase().trim();
+      
       if (isModern) {
         return sql`
           UPDATE player_seasons
-          SET category = ${u.category}, updated_at = NOW()
+          SET category = ${capitalizedCategory}, updated_at = NOW()
           WHERE id = ${u.id}
         `;
       } else {
         const basePrice = categoryBasePriceMap.get(u.category.toLowerCase()) ?? 0;
         return sql`
           UPDATE realplayerstats
-          SET category  = ${u.category},
+          SET category  = ${capitalizedCategory},
               base_price = ${basePrice},
               updated_at = NOW()
           WHERE id = ${u.id}

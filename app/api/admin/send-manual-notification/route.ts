@@ -26,7 +26,7 @@ const sql = neon(process.env.NEON_TOURNAMENT_DB_URL!);
 export async function POST(request: NextRequest) {
   try {
     // ✅ ZERO FIREBASE READS - Uses JWT claims only
-    const auth = await verifyAuth(['admin', 'committee', 'committee_admin'], request);
+    const auth = await verifyAuth(['admin', 'committee_admin', 'committee_admin'], request);
     if (!auth.authenticated) {
       return NextResponse.json(
         { success: false, error: auth.error || 'Unauthorized' },

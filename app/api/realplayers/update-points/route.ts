@@ -32,17 +32,19 @@ function calculateStarRating(points: number): number {
 
 // Calculate category from points and current category (to preserve Rising Star/Veteran)
 function calculateCategory(points: number, currentCategory: string): string {
-  if (currentCategory === 'Rising Star') {
-    if (points >= 145 && points <= 174) return 'Rising Star';
-  } else if (currentCategory === 'Veteran') {
-    if (points >= 175 && points <= 209) return 'Veteran';
+  const normalizedCurrent = currentCategory.toUpperCase().trim();
+  
+  if (normalizedCurrent === 'RISING STAR') {
+    if (points >= 145 && points <= 174) return 'RISING STAR';
+  } else if (normalizedCurrent === 'VETERAN') {
+    if (points >= 175 && points <= 209) return 'VETERAN';
   }
   
-  if (points >= 210) return 'Legend';
-  if (points >= 175) return 'Classic';
-  if (points >= 145) return 'Gold';
-  if (points >= 120) return 'Silver';
-  return 'Bronze';
+  if (points >= 210) return 'LEGEND';
+  if (points >= 175) return 'CLASSIC';
+  if (points >= 145) return 'GOLD';
+  if (points >= 120) return 'SILVER';
+  return 'BRONZE';
 }
 
 // Recalculate categories for ALL players in a season based on league-wide ranking
@@ -80,8 +82,8 @@ async function recalculateAllPlayerCategories(season_id: string) {
     const updatePromises = players.map(async (player, index) => {
       const isLegend = index < legendThreshold;
       const category = isLegend
-        ? { id: 'legend', name: 'Legend' }
-        : { id: 'classic', name: 'Classic' };
+        ? { id: 'legend', name: 'LEGEND' }
+        : { id: 'classic', name: 'CLASSIC' };
 
       // Update realplayer document
       const playerDoc = doc(db, 'realplayer', player.docId);
@@ -256,7 +258,7 @@ export async function POST(request: NextRequest) {
           : Math.max(100, currentPoints + homePointsChange);
         const newStarRating = usesCategoryPoints ? null : calculateStarRating(newPoints);
         const oldStarRating = homePlayerData.star_rating || 3;
-        const currentCategory = homePlayerData.category || 'Bronze';
+        const currentCategory = homePlayerData.category || 'BRONZE';
         const newCategory = usesCategoryPoints ? currentCategory : calculateCategory(newPoints, currentCategory);
 
         // Deduct CURRENT salary for this match (before star rating changes)
@@ -381,7 +383,7 @@ export async function POST(request: NextRequest) {
           : Math.max(100, currentPoints + awayPointsChange);
         const newStarRating = usesCategoryPoints ? null : calculateStarRating(newPoints);
         const oldStarRating = awayPlayerData.star_rating || 3;
-        const currentCategory = awayPlayerData.category || 'Bronze';
+        const currentCategory = awayPlayerData.category || 'BRONZE';
         const newCategory = usesCategoryPoints ? currentCategory : calculateCategory(newPoints, currentCategory);
 
         // Deduct CURRENT salary for this match (before star rating changes)

@@ -1289,13 +1289,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     // Get category as number (1=legend/best, 2=classic/mid, 3=default)
     const getCategoryValue = (player: any): number => {
       // Check category_id first (primary field)
-      if (player.category_id === 'legend') return 1;
-      if (player.category_id === 'classic') return 2;
+      if (player.category_id?.toUpperCase() === 'LEGEND') return 1;
+      if (player.category_id?.toUpperCase() === 'CLASSIC') return 2;
 
       // Fallback to category field
       if (typeof player.category === 'number') return player.category;
-      if (player.category === 'legend') return 1;
-      if (player.category === 'classic') return 2;
+      if (player.category?.toUpperCase() === 'LEGEND') return 1;
+      if (player.category?.toUpperCase() === 'CLASSIC') return 2;
 
       // Check category_name as last resort
       if (player.category_name?.toLowerCase().includes('legend')) return 1;
@@ -4030,19 +4030,19 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     let catDisplay = 'N/A';
 
                     // Check various category field formats
-                    if (player.category_id === 'legend' || player.category === 'legend') {
-                      catDisplay = 'Legend';
-                    } else if (player.category_id === 'classic' || player.category === 'classic') {
-                      catDisplay = 'Classic';
+                    if (player.category_id?.toUpperCase() === 'LEGEND' || player.category?.toUpperCase() === 'LEGEND') {
+                      catDisplay = 'LEGEND';
+                    } else if (player.category_id?.toUpperCase() === 'CLASSIC' || player.category?.toUpperCase() === 'CLASSIC') {
+                      catDisplay = 'CLASSIC';
                     } else if (player.category_name?.toLowerCase().includes('legend')) {
-                      catDisplay = 'Legend';
+                      catDisplay = 'LEGEND';
                     } else if (player.category_name?.toLowerCase().includes('classic')) {
-                      catDisplay = 'Classic';
+                      catDisplay = 'CLASSIC';
                     } else if (player.category_name) {
-                      catDisplay = player.category_name;
+                      catDisplay = player.category_name.toUpperCase();
                     } else if (typeof player.category === 'number') {
                       // Map numeric categories: 1 = Legend, 2 = Classic
-                      catDisplay = player.category === 1 ? 'Legend' : player.category === 2 ? 'Classic' : `Cat ${player.category}`;
+                      catDisplay = player.category === 1 ? 'LEGEND' : player.category === 2 ? 'CLASSIC' : `CAT ${player.category}`;
                     }
 
                     return (
