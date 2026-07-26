@@ -49,7 +49,7 @@ export default function EditCategoriesPage() {
 
   useEffect(() => {
     if (!loading && !user) router.push('/login');
-    if (!loading && user && user.role !== 'committee') router.push('/dashboard');
+    if (!loading && user && user.role !== 'committee_admin') router.push('/dashboard');
   }, [user, loading, router]);
 
   useEffect(() => {

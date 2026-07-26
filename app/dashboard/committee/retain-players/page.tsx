@@ -6,6 +6,11 @@ import { useEffect, useState } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { ArrowLeft, Users, DollarSign, Percent, CheckCircle, AlertCircle, X } from 'lucide-react';
 import Link from 'next/link';
+import { usePermissions } from '@/hooks/usePermissions';
+import { getSeasonById } from '@/lib/firebase/seasons';
+import { Season } from '@/types/season';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 
 interface Player {
   id: string;
@@ -26,8 +31,9 @@ interface TeamData {
 export default function RetainPlayersPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [userSeasonId, setUserSeasonId] = useState<string | null>(null);
-  const [currentSeason, setCurrentSeason] = useState<any>(null);
+  const { isCommitteeAdmin, userSeasonId } = usePermissions();
+  const [currentSeason, setCurrentSeason] = useState<Season | null>(null);
+  const [teamSeasons, setTeamSeasons] = useState<any[]>([]);
   const [teams, setTeams] = useState<TeamData[]>([]);
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,27 +56,40 @@ export default function RetainPlayersPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    const fetchSeasonData = async () => {
+    const fetchData = async () => {
+      if (!userSeasonId) return;
+
       try {
-        const response = await fetchWithTokenRefresh('/api/user/get-season');
-        const data = await response.json();
-        if (data.season) {
-          setCurrentSeason(data.season);
-          setUserSeasonId(data.season.id);
-        }
+        // Fetch season
+        const season = await getSeasonById(userSeasonId);
+        setCurrentSeason(season);
+
+        // Fetch team_seasons to get budget data
+        const teamSeasonsQuery = query(
+          collection(db, 'team_seasons'),
+          where('season_id', '==', userSeasonId),
+          where('status', '==', 'registered')
+        );
+        const teamSeasonsSnapshot = await getDocs(teamSeasonsQuery);
+        const teamSeasonsData = teamSeasonsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setTeamSeasons(teamSeasonsData);
       } catch (error) {
-        console.error('Error fetching season:', error);
+        console.error('Error fetching data:', error);
+        setError('Failed to load season data');
       }
     };
 
-    if (user?.role === 'committee_admin') {
-      fetchSeasonData();
+    if (isCommitteeAdmin && userSeasonId) {
+      fetchData();
     }
-  }, [user]);
+  }, [isCommitteeAdmin, userSeasonId]);
 
   useEffect(() => {
     const loadData = async () => {
-      if (!userSeasonId) return;
+      if (!userSeasonId || !currentSeason || teamSeasons.length === 0) return;
 
       setIsLoading(true);
       try {
@@ -78,17 +97,12 @@ export default function RetainPlayersPage() {
         const playersResponse = await fetchWithTokenRefresh(`/api/realplayers/season-players?seasonId=${userSeasonId}`);
         const playersResult = await playersResponse.json();
 
-        // Load teams
-        const teamsResponse = await fetchWithTokenRefresh(`/api/teams/season-teams?seasonId=${userSeasonId}`);
-        const teamsResult = await teamsResponse.json();
-
-        if (!playersResult.success || !teamsResult.success) {
-          setError('Failed to load data');
+        if (!playersResult.success) {
+          setError('Failed to load players');
           return;
         }
 
         const realPlayersData = playersResult.data || [];
-        const teamSeasons = teamsResult.data || [];
 
         // Organize players
         const teamMap: { [key: string]: Array<Player & { retentionPrice: number; retentionPercentage: number }> } = {};
@@ -150,7 +164,7 @@ export default function RetainPlayersPage() {
     };
 
     loadData();
-  }, [userSeasonId]);
+  }, [userSeasonId, currentSeason, teamSeasons]);
 
   const handleRetainPlayer = async () => {
     if (!selectedPlayer || !selectedTeam || !retentionPercentage) {

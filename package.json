@@ -23,7 +23,8 @@
     "check-all-users": "npx tsx --env-file=.env.local check-all-users.ts",
     "fix-committee-role": "npx tsx fix-committee-role.ts",
     "check-category-prices": "npx tsx --env-file=.env.local check-category-prices.ts",
-    "fix-player-base-prices": "npx tsx --env-file=.env.local fix-player-base-prices.ts"
+    "fix-player-base-prices": "npx tsx --env-file=.env.local fix-player-base-prices.ts",
+    "fix-footballplayers-team-names": "npx tsx --env-file=.env.local fix-footballplayers-team-names.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

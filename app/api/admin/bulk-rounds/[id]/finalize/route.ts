@@ -299,6 +299,7 @@ export async function POST(
           SET 
             is_sold = true,
             team_id = ${bid.team_id},
+            team_name = ${bid.team_name},
             acquisition_value = ${round.base_price},
             status = 'active',
             season_id = ${round.season_id},
