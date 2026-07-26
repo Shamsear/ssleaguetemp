@@ -111,6 +111,51 @@ export async function GET(
       ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC
     `;
 
+    // Find any seasons the team is registered for in Firestore but has no SQL stats yet
+    // (e.g. newly registered for the active season but hasn't played a match yet)
+    try {
+      const teamSeasonSnapshot = await adminDb
+        .collection('team_seasons')
+        .where('team_id', '==', teamId)
+        .where('status', '==', 'registered')
+        .get();
+
+      if (!teamSeasonSnapshot.empty) {
+        const sqlSeasonIds = new Set((seasonStats || []).map((s: any) => s.season_id));
+        const teamDoc = await adminDb.collection('teams').doc(teamId).get();
+        const fbTeamName = teamDoc.exists
+          ? (teamDoc.data()?.team_name || teamDoc.data()?.name || teamId)
+          : teamId;
+
+        teamSeasonSnapshot.docs.forEach(doc => {
+          const regData = doc.data();
+          const regSeasonId: string = regData.season_id;
+
+          // Only inject if not already in SQL results and the season has started
+          if (!sqlSeasonIds.has(regSeasonId) && activeSeasonIds.has(regSeasonId)) {
+            console.log(`[all-seasons] Injecting registered-but-unplayed season ${regSeasonId} for team ${teamId}`);
+            (seasonStats as any[]).push({
+              team_id: teamId,
+              team_name: regData.team_name || fbTeamName,
+              season_id: regSeasonId,
+              matches_played: 0,
+              wins: 0,
+              draws: 0,
+              losses: 0,
+              goals_for: 0,
+              goals_against: 0,
+              goal_difference: 0,
+              points: 0,
+              position: null,
+              _injected: true // mark so we know it came from registration, not SQL
+            });
+          }
+        });
+      }
+    } catch (regErr) {
+      console.error('[all-seasons] Error checking team_seasons registrations:', regErr);
+    }
+
     if (!seasonStats || seasonStats.length === 0) {
       // Fallback: Check if team exists in Firebase teams collection
       try {
