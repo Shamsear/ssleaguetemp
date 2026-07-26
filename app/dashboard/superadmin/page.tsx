@@ -524,6 +524,19 @@ export default function SuperAdminDashboard() {
                 <p className="text-[11px] text-slate-550 mt-1.5 font-sans leading-relaxed">Detailed player analytics view and performance statistics logs.</p>
               </div>
             </button>
+
+            <button 
+              onClick={() => router.push('/dashboard/superadmin/media')}
+              className="console-card bg-white border border-slate-200/60 hover:border-amber-400/40 p-5 shadow-sm transition-all hover:-translate-y-0.5 flex flex-col justify-between min-h-[160px] text-left"
+            >
+              <div>
+                <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600 w-fit mb-4 border border-amber-100">
+                  <Image className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-800 text-sm">ImageKit Media Manager</h3>
+                <p className="text-[11px] text-slate-550 mt-1.5 font-sans leading-relaxed">Browse, delete, rename and copy URLs for all uploaded images without opening ImageKit dashboard.</p>
+              </div>
+            </button>
           </div>
         </div>
 
