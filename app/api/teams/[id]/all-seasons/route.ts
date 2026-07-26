@@ -122,47 +122,33 @@ export async function GET(
           const fbManagerName = teamData.manager_name || teamData.managerName || null;
           const logoUrl = teamData.logo_url || teamData.logoUrl || null;
 
-          // Find the active season or use the latest started season
-          let activeSeasonId = 'SSPSLS18'; // default fallback
-          let foundActive = false;
-          
-          firebaseSeasons.docs.forEach(doc => {
-            const data = doc.data();
-            if (data.is_active === true) {
-              activeSeasonId = doc.id;
-              foundActive = true;
-            }
-          });
+          // Only show seasons the team is actually registered for
+          const registeredSeasons: string[] = teamData.seasons || [];
 
-          if (!foundActive && firebaseSeasons.docs.length > 0) {
-            // Filter to started seasons
-            const startedSeasons = firebaseSeasons.docs
-              .map(doc => ({ id: doc.id, ...doc.data() as any }))
-              .filter((s: any) => {
-                if (s.start_date) {
-                  const startDate = s.start_date.toDate ? s.start_date.toDate() : new Date(s.start_date);
-                  return startDate <= new Date();
-                }
-                return s.status === 'completed' || s.status === 'active';
-              });
-            
-            if (startedSeasons.length > 0) {
-              startedSeasons.sort((a: any, b: any) => {
-                const numA = parseInt(a.id.replace(/\D/g, '')) || 0;
-                const numB = parseInt(b.id.replace(/\D/g, '')) || 0;
-                return numB - numA;
-              });
-              activeSeasonId = startedSeasons[0].id;
-            }
+          if (registeredSeasons.length === 0) {
+            // Team exists but has never been registered for any season yet
+            return NextResponse.json({
+              success: true,
+              seasons: [],
+              team: {
+                team_id: teamId,
+                team_name: fbTeamName,
+                logo_url: logoUrl,
+                owner_name: ownerName || fbOwnerName,
+                manager_name: fbManagerName,
+              },
+              message: 'Team has not been registered for any season yet'
+            });
           }
 
-          const fallbackSeason = {
-            id: `${teamId}_${activeSeasonId}`,
+          // Build a starter entry for each registered season (with 0 stats since no SQL records exist yet)
+          const fallbackSeasons = registeredSeasons.map((seasonId: string) => ({
+            id: `${teamId}_${seasonId}`,
             team_id: teamId,
             team_name: fbTeamName,
             team_code: teamId,
-            season_id: activeSeasonId,
-            season_name: activeSeasonId,
+            season_id: seasonId,
+            season_name: seasonId,
             logo_url: logoUrl,
             owner_name: ownerName || fbOwnerName,
             manager_name: fbManagerName,
@@ -181,11 +167,18 @@ export async function GET(
             },
             players: [],
             trophies: []
-          };
+          }));
+
+          // Sort most recent season first
+          fallbackSeasons.sort((a: any, b: any) => {
+            const numA = parseInt(a.season_id.replace(/\D/g, '')) || 0;
+            const numB = parseInt(b.season_id.replace(/\D/g, '')) || 0;
+            return numB - numA;
+          });
 
           return NextResponse.json({
             success: true,
-            seasons: [fallbackSeason]
+            seasons: fallbackSeasons
           });
         }
       } catch (fbError) {

@@ -91,6 +91,7 @@ function TeamDetailContent() {
   const [awards, setAwards] = useState<any[]>([]);
   const [loadingAwards, setLoadingAwards] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [teamMeta, setTeamMeta] = useState<{ team_name: string; logo_url: string | null; owner_name: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedView, setSelectedView] = useState<'overall' | 'all-seasons' | 'season'>('overall');
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
@@ -146,8 +147,15 @@ function TeamDetailContent() {
       const response = await fetch(`/api/teams/${teamId}/all-seasons`);
       const data = await response.json();
 
-      if (!data.success || !data.seasons || data.seasons.length === 0) {
-        setError('No team data found');
+      if (!data.success) {
+        setError(data.error || 'No team data found');
+        return;
+      }
+
+      // Team exists in Firebase but hasn't registered for any season yet
+      if (!data.seasons || data.seasons.length === 0) {
+        if (data.team) setTeamMeta(data.team);
+        setError('NOT_REGISTERED');
         return;
       }
 
@@ -263,6 +271,25 @@ function TeamDetailContent() {
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
           <p className="text-slate-500 font-mono text-xs">Loading Team Profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error === 'NOT_REGISTERED') {
+    return (
+      <div className="min-h-screen console-bg flex items-center justify-center">
+        <div className="text-center max-w-md p-6 bg-white border border-slate-200 rounded-2xl shadow-sm space-y-4">
+          <Shield className="w-12 h-12 text-slate-400 mx-auto" />
+          <h2 className="text-xl font-bold text-slate-900">{teamMeta?.team_name || 'New Team'}</h2>
+          <p className="text-sm text-slate-500 font-mono">This team has not been registered for any season yet.</p>
+          <p className="text-xs text-slate-400">Season stats and player data will appear here once the team joins their first season.</p>
+          <Link
+            href={querySeasonId ? `/teams?season=${querySeasonId}` : '/teams'}
+            className="inline-flex items-center gap-1.5 border border-slate-250 bg-slate-50 hover:bg-slate-100 text-slate-700 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm font-mono"
+          >
+            {"<-"} BACK TO TEAMS
+          </Link>
         </div>
       </div>
     );
