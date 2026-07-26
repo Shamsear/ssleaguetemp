@@ -156,6 +156,7 @@ export async function POST(request: NextRequest) {
       color: ['red', 'black', 'blue', 'white'].includes(colorName) ? colorName : 'slate',
       icon: body.icon || '',
       priority: priority,
+      base_price: body.base_price !== undefined ? parseInt(body.base_price) || 0 : 0,
       points_same_category: parseInt(body.points_same_category),
       points_one_level_diff: parseInt(body.points_one_level_diff),
       points_two_level_diff: parseInt(body.points_two_level_diff),

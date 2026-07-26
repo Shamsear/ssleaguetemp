@@ -121,6 +121,7 @@ export async function PUT(
     if (body.name) updates.name = body.name.trim();
     if (body.color) updates.color = body.color;
     if (body.priority !== undefined) updates.priority = parseInt(body.priority);
+    if (body.base_price !== undefined) updates.base_price = parseInt(body.base_price) || 0;
     
     // Add point updates
     for (const field of pointFields) {

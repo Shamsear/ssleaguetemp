@@ -48,6 +48,8 @@ export async function GET(request: NextRequest) {
           team,
           points,
           0 as base_points,
+          base_price,
+          price,
           matches_played,
           goals_scored,
           goals_conceded,
@@ -56,10 +58,7 @@ export async function GET(request: NextRequest) {
           draws,
           losses,
           clean_sheets,
-          assists,
-          0 as auction_value,
-          3 as star_rating,
-          0 as salary_per_match
+          assists
         FROM realplayerstats
         WHERE season_id = ${season_id}
         ORDER BY points DESC, goal_difference DESC, goals_scored DESC
@@ -143,7 +142,7 @@ export async function PUT(request: NextRequest) {
       `;
     } else {
       currentData = await sql`
-        SELECT 0 as auction_value, 3 as star_rating, 0 as salary_per_match
+        SELECT base_price, price
         FROM realplayerstats
         WHERE id = ${player_id}
       `;
@@ -193,6 +192,7 @@ export async function PUT(request: NextRequest) {
         WHERE id = ${player_id}
       `;
     } else {
+      // S18+: update match stats only; base_price is managed via category assignment
       await sql`
         UPDATE realplayerstats
         SET
@@ -210,14 +210,7 @@ export async function PUT(request: NextRequest) {
       `;
     }
 
-    return NextResponse.json({ 
-      success: true,
-      starRatingChanged: newStarRating !== oldStarRating,
-      oldStarRating,
-      newStarRating,
-      oldSalary: oldSalary.toFixed(2),
-      newSalary: newSalary.toFixed(2)
-    });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating player stats:', error);
     return NextResponse.json(

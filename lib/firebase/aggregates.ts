@@ -66,7 +66,7 @@ export interface LeagueStatsSummary {
  */
 export async function buildTeamsSummary(seasonId?: string): Promise<TeamSummary[]> {
   try {
-    const teams: TeamSummary[] = [];
+    const teamsMap = new Map<string, TeamSummary>();
     
     // Query team_seasons collection (for current/active seasons)
     let teamSeasonsQuery = adminDb.collection('team_seasons');
@@ -77,10 +77,12 @@ export async function buildTeamsSummary(seasonId?: string): Promise<TeamSummary[
     
     teamSeasonsSnapshot.forEach((doc) => {
       const data = doc.data();
+      const baseId = doc.id.split('_')[0];
       const logoUrl = data.logo_url || data.team_logo || data.logo || null;
-      teams.push({
-        id: doc.id,
-        team_id: doc.id,
+      
+      teamsMap.set(baseId, {
+        id: baseId,
+        team_id: baseId,
         team_name: data.team_name || 'Unknown Team',
         team_code: data.team_code || data.team_name?.substring(0, 3).toUpperCase() || 'UNK',
         owner_name: data.username || data.owner_name || '',
@@ -96,83 +98,93 @@ export async function buildTeamsSummary(seasonId?: string): Promise<TeamSummary[
         },
         logo: logoUrl,
         logo_url: logoUrl,
-        season_id: data.season_id || '',
+        season_id: data.season_id || seasonId || '',
       });
     });
     
     // Also query teams collection (for historical seasons and general team data)
     let teamsQuery = adminDb.collection('teams');
-    if (seasonId) {
-      // For teams collection, we need to check if this season exists in their history
-      // We'll fetch all teams and filter client-side for now
-      // TODO: Consider adding a subcollection index for better performance
-    }
     const teamsSnapshot = await teamsQuery.get();
     
     teamsSnapshot.forEach((doc) => {
       const data = doc.data();
+      const baseId = doc.id;
       
       // If filtering by season, check if team has data for this season
       if (seasonId) {
         const seasonStats = data.performance_history?.[seasonId];
         if (!seasonStats) return; // Skip teams without data for this season
         
-        const logoUrl = data.logo_url || data.team_logo || data.logo || null;
-        teams.push({
-          id: doc.id,
-          team_id: doc.id,
-          team_name: data.team_name || 'Unknown Team',
-          team_code: data.team_code || data.team_name?.substring(0, 3).toUpperCase() || 'UNK',
-          owner_name: data.owner_name || '',
-          balance: 0, // Historical teams don't have balance
-          players_count: seasonStats.players_count || 0,
-          stats: {
-            matches_played: seasonStats.season_stats?.matches_played || 0,
-            matches_won: seasonStats.season_stats?.matches_won || 0,
-            matches_drawn: seasonStats.season_stats?.matches_drawn || 0,
-            matches_lost: seasonStats.season_stats?.matches_lost || 0,
-            points: seasonStats.season_stats?.total_points || 0,
-            goal_difference: seasonStats.season_stats?.goal_difference || (seasonStats.season_stats?.total_goals || 0) - (seasonStats.season_stats?.total_conceded || 0),
-          },
-          logo: logoUrl,
-          logo_url: logoUrl,
-          season_id: seasonId,
-        });
+        if (!teamsMap.has(baseId)) {
+          const logoUrl = data.logo_url || data.team_logo || data.logo || null;
+          teamsMap.set(baseId, {
+            id: baseId,
+            team_id: baseId,
+            team_name: data.team_name || 'Unknown Team',
+            team_code: data.team_code || data.team_name?.substring(0, 3).toUpperCase() || 'UNK',
+            owner_name: data.owner_name || '',
+            balance: 0, // Historical teams don't have balance
+            players_count: seasonStats.players_count || 0,
+            stats: {
+              matches_played: seasonStats.season_stats?.matches_played || 0,
+              matches_won: seasonStats.season_stats?.matches_won || 0,
+              matches_drawn: seasonStats.season_stats?.matches_drawn || 0,
+              matches_lost: seasonStats.season_stats?.matches_lost || 0,
+              points: seasonStats.season_stats?.total_points || 0,
+              goal_difference: seasonStats.season_stats?.goal_difference || (seasonStats.season_stats?.total_goals || 0) - (seasonStats.season_stats?.total_conceded || 0),
+            },
+            logo: logoUrl,
+            logo_url: logoUrl,
+            season_id: seasonId,
+          });
+        }
       } else {
         // If no season filter, include all teams with their latest stats
         const logoUrl = data.logo_url || data.team_logo || data.logo || null;
-        teams.push({
-          id: doc.id,
-          team_id: doc.id,
-          team_name: data.team_name || 'Unknown Team',
-          team_code: data.team_code || data.team_name?.substring(0, 3).toUpperCase() || 'UNK',
-          owner_name: data.owner_name || '',
-          balance: 0,
-          players_count: 0, // Would need to aggregate from performance_history
-          stats: {
-            matches_played: 0,
-            matches_won: 0,
-            matches_drawn: 0,
-            matches_lost: 0,
-            points: 0,
-            goal_difference: 0,
-          },
-          logo: logoUrl,
-          logo_url: logoUrl,
-          season_id: '',
-        });
+        
+        const existing = teamsMap.get(baseId);
+        if (existing) {
+          if (!existing.owner_name) existing.owner_name = data.owner_name || '';
+          if (!existing.logo_url) {
+            existing.logo = logoUrl;
+            existing.logo_url = logoUrl;
+          }
+        } else {
+          teamsMap.set(baseId, {
+            id: baseId,
+            team_id: baseId,
+            team_name: data.team_name || 'Unknown Team',
+            team_code: data.team_code || data.team_name?.substring(0, 3).toUpperCase() || 'UNK',
+            owner_name: data.owner_name || '',
+            balance: 0,
+            players_count: 0,
+            stats: {
+              matches_played: 0,
+              matches_won: 0,
+              matches_drawn: 0,
+              matches_lost: 0,
+              points: 0,
+              goal_difference: 0,
+            },
+            logo: logoUrl,
+            logo_url: logoUrl,
+            season_id: '',
+          });
+        }
       }
     });
     
+    const teamsList = Array.from(teamsMap.values());
+    
     // Sort by points descending for standings
-    teams.sort((a, b) => {
+    teamsList.sort((a, b) => {
       if (b.stats.points !== a.stats.points) {
         return b.stats.points - a.stats.points;
       }
       return b.stats.goal_difference - a.stats.goal_difference;
     });
     
-    return teams;
+    return teamsList;
   } catch (error) {
     console.error('Error building teams summary:', error);
     throw error;

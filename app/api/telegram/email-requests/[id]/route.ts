@@ -102,13 +102,13 @@ export async function POST(
           await sql`
             INSERT INTO realplayerstats (
               id, player_id, season_id, player_name,
-              category, points, star_rating,
+              category, points,
               matches_played, goals_scored, assists, wins, draws, losses, clean_sheets, motm_awards,
               created_at, updated_at
             )
             VALUES (
               ${registrationId}, ${requestData.player_id}, ${requestData.season_id}, ${playerName},
-              ${category}, 0, 3,
+              ${category}, 0,
               0, 0, 0, 0, 0, 0, 0, 0,
               NOW(), NOW()
             )

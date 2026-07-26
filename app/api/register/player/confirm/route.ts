@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
         VALUES (
           ${registrationId}, ${player_id}, ${season_id}, ${tournament_id}, ${player_data?.name || ''},
           ${player_data?.category || 'A'},
-          100,
+          0,
           0, 0, 0, 0,
           0, 0, 0, 0, 0, 0, 0,
           0, 0, 0, 0,

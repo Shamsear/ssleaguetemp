@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/auth-helper';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import { adminDb } from '@/lib/firebase/admin';
 
 // Base points by star rating
 const STAR_RATING_BASE_POINTS: { [key: number]: number } = {
@@ -42,18 +41,7 @@ export async function POST(request: NextRequest) {
     const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
     const isModern = seasonNum === 16 || seasonNum === 17;
 
-    // Fetch Firestore categories to compute category-based points if needed
-    let categoriesMap = new Map();
-    if (!isModern) {
-      const categoriesSnapshot = await adminDb.collection('categories').get();
-      categoriesSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        categoriesMap.set(doc.id.toLowerCase(), data);
-        if (data.name) {
-          categoriesMap.set(data.name.toLowerCase(), data);
-        }
-      });
-    }
+
 
     const sql = getTournamentDb();
     
@@ -81,8 +69,8 @@ export async function POST(request: NextRequest) {
             ps.player_id,
             ps.player_name,
             ps.season_id,
-            3 as star_rating,
             ps.category,
+            ps.base_price,
             ps.matches_played,
             ps.goals_scored,
             ps.goals_conceded,
@@ -99,14 +87,13 @@ export async function POST(request: NextRequest) {
 
     for (const player of players) {
       try {
-        let basePoints = 100;
+        let basePoints = 0;
         if (isModern) {
           const starRating = player.star_rating || 3;
           basePoints = STAR_RATING_BASE_POINTS[starRating] || 100;
         } else {
-          const catName = (player.category || '').toLowerCase();
-          const catData = categoriesMap.get(catName);
-          basePoints = catData ? (parseInt(catData.base_points) || 100) : 100;
+          // S18+: base_price is set on the player row when the committee assigns a category
+          basePoints = player.base_price || 0;
         }
         
         // Calculate total GD from all matches
@@ -150,7 +137,6 @@ export async function POST(request: NextRequest) {
         updates.push({
           player_id: player.player_id,
           player_name: player.player_name,
-          star_rating: starRating,
           base_points: basePoints,
           points_from_matches: totalPointsChange,
           new_points: newPoints,
@@ -175,7 +161,7 @@ export async function POST(request: NextRequest) {
       season_id,
       updates,
       errors: errors.length > 0 ? errors : undefined,
-      note: 'Points calculated as: star_rating_base_points + (goal_difference distributed across matches, capped at ±5 per match)'
+      note: 'S18+: points = base_price (from category) + goal-difference adjustment per match. S16/S17: points = star_rating base + goal-difference adjustment.'
     });
   } catch (error) {
     console.error('Error fixing player points:', error);

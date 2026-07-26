@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { adminDb } from '@/lib/firebase/admin';
 
 // Helper to map star rating to priority level (Red=1, Black=2, Blue=3, White=4)
 function getPriority(stars: number): number {
@@ -97,82 +98,55 @@ export async function GET(request: NextRequest) {
     let historicalStats: any[] = [];
     if (playerIds.length > 0) {
       historicalStats = await sql`
+        -- Subquery wraps DISTINCT ON so ORDER BY is valid inside UNION ALL.
+        -- DISTINCT ON groups by the BASE season ID (SSPSLS16% → SSPSLS16, SSPSLS17% → SSPSLS17)
+        -- so sub-seasons (SSPSLS165, SSPSLS16P, etc.) don't get summed with the main season row.
+        -- Within each (player, base-season) group, the row with the MOST matches_played wins —
+        -- this drops free-agent / registration rows (0 matches) that would otherwise inflate points.
         SELECT player_id, season_id, points, matches_played, goals_scored, clean_sheets, assists, wins, draws, losses
-        FROM player_seasons
-        WHERE player_id = ANY(${playerIds}) AND season_id != ${seasonId}
+        FROM (
+          SELECT DISTINCT ON (
+            ps.player_id,
+            CASE
+              WHEN ps.season_id LIKE 'SSPSLS16%' THEN 'SSPSLS16'
+              WHEN ps.season_id LIKE 'SSPSLS17%' THEN 'SSPSLS17'
+              ELSE ps.season_id
+            END
+          )
+            ps.player_id,
+            CASE
+              WHEN ps.season_id LIKE 'SSPSLS16%' THEN 'SSPSLS16'
+              WHEN ps.season_id LIKE 'SSPSLS17%' THEN 'SSPSLS17'
+              ELSE ps.season_id
+            END AS season_id,
+            (ps.points - COALESCE(ps.base_points, 0)) AS points,
+            ps.matches_played, ps.goals_scored, ps.clean_sheets, ps.assists, ps.wins, ps.draws, ps.losses
+          FROM player_seasons ps
+          WHERE ps.player_id = ANY(${playerIds}) AND ps.season_id != ${seasonId}
+          ORDER BY
+            ps.player_id,
+            CASE
+              WHEN ps.season_id LIKE 'SSPSLS16%' THEN 'SSPSLS16'
+              WHEN ps.season_id LIKE 'SSPSLS17%' THEN 'SSPSLS17'
+              ELSE ps.season_id
+            END,
+            ps.matches_played DESC
+        ) ps_deduped
+
         UNION ALL
-        SELECT player_id, season_id, points, matches_played, goals_scored, clean_sheets, assists, wins, draws, losses
+
+        SELECT
+          player_id, season_id, points,
+          matches_played, goals_scored, clean_sheets, assists, wins, draws, losses
         FROM realplayerstats
-        WHERE player_id = ANY(${playerIds}) AND season_id != ${seasonId}
+        WHERE player_id = ANY(${playerIds})
+          AND season_id != ${seasonId}
+          -- Exclude S16/S17: those belong only in player_seasons (no double-counting).
+          AND season_id NOT LIKE 'SSPSLS16%'
+          AND season_id NOT LIKE 'SSPSLS17%'
       `;
     }
 
-    // Recalculate S16 & S17 stats dynamically using category-based opponent strength (Method A)
-    const s16_17_seasons = ['SSPSLS16', 'SSPSLS16.0', 'SSPSLS16.5', 'SSPSLS17', 'SSPSLS17.5'];
-    const hasS16S17InHistory = historicalStats.some((s: any) => s16_17_seasons.includes(s.season_id));
-
-    if (playerIds.length > 0 && hasS16S17InHistory) {
-      const matchups = await sql`
-        SELECT 
-          m.season_id,
-          m.home_player_id,
-          m.away_player_id,
-          m.home_goals,
-          m.away_goals,
-          COALESCE(ps_home.star_rating, 3) as home_stars,
-          COALESCE(ps_away.star_rating, 3) as away_stars
-        FROM matchups m
-        LEFT JOIN player_seasons ps_home ON ps_home.player_id = m.home_player_id AND ps_home.season_id = m.season_id
-        LEFT JOIN player_seasons ps_away ON ps_away.player_id = m.away_player_id AND ps_away.season_id = m.season_id
-        WHERE m.season_id = ANY(${s16_17_seasons})
-          AND m.is_null = false 
-          AND m.home_goals IS NOT NULL
-          AND (m.home_player_id = ANY(${playerIds}) OR m.away_player_id = ANY(${playerIds}))
-      `;
-
-      // Group matchups by player_id and season_id to get points
-      const playerSeasonPoints = new Map<string, number>();
-
-      matchups.forEach((m: any) => {
-        const homeKey = `${m.home_player_id}_${m.season_id}`;
-        const awayKey = `${m.away_player_id}_${m.season_id}`;
-
-        // Calculate points for home player
-        if (playerIds.includes(m.home_player_id)) {
-          const homePts = calculateMatchupPointsForPlayer(
-            m.home_stars,
-            m.away_stars,
-            m.home_goals,
-            m.away_goals
-          );
-          playerSeasonPoints.set(homeKey, (playerSeasonPoints.get(homeKey) || 0) + homePts);
-        }
-
-        // Calculate points for away player
-        if (playerIds.includes(m.away_player_id)) {
-          const awayPts = calculateMatchupPointsForPlayer(
-            m.away_stars,
-            m.home_stars,
-            m.away_goals,
-            m.home_goals
-          );
-          playerSeasonPoints.set(awayKey, (playerSeasonPoints.get(awayKey) || 0) + awayPts);
-        }
-      });
-
-      // Update historicalStats points for S16/S17
-      historicalStats = historicalStats.map((s: any) => {
-        if (s16_17_seasons.includes(s.season_id)) {
-          const key = `${s.player_id}_${s.season_id}`;
-          const calculatedPoints = playerSeasonPoints.get(key) || 0;
-          return {
-            ...s,
-            points: calculatedPoints
-          };
-        }
-        return s;
-      });
-    }
 
     return NextResponse.json({
       success: true,
@@ -206,6 +180,19 @@ export async function POST(request: NextRequest) {
     const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
     const isModern = seasonNum === 16 || seasonNum === 17;
 
+    // For S18+: look up each category's base_price from Firestore so we can
+    // write it onto the player row when the category is assigned.
+    const categoryBasePriceMap = new Map<string, number>();
+    if (!isModern) {
+      const catsSnap = await adminDb.collection('categories').get();
+      catsSnap.docs.forEach(doc => {
+        const d = doc.data();
+        if (d.name) {
+          categoryBasePriceMap.set(d.name.toLowerCase(), d.base_price || 0);
+        }
+      });
+    }
+
     const promises = updates.map(async (u: { id: string; category: string }) => {
       if (isModern) {
         return sql`
@@ -214,9 +201,12 @@ export async function POST(request: NextRequest) {
           WHERE id = ${u.id}
         `;
       } else {
+        const basePrice = categoryBasePriceMap.get(u.category.toLowerCase()) ?? 0;
         return sql`
           UPDATE realplayerstats
-          SET category = ${u.category}, updated_at = NOW()
+          SET category  = ${u.category},
+              base_price = ${basePrice},
+              updated_at = NOW()
           WHERE id = ${u.id}
         `;
       }

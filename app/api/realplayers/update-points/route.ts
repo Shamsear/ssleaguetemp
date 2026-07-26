@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
       let homeSeasonData;
       if (usesCategoryPoints) {
         homeSeasonData = await sql`
-          SELECT id, player_id, player_name, team_id, NULL as salary_per_match, star_rating, points, category
+          SELECT id, player_id, player_name, team_id, NULL as salary_per_match, NULL::int as star_rating, points, category
           FROM realplayerstats
           WHERE id = ${homeStatsId}
           LIMIT 1
@@ -355,7 +355,7 @@ export async function POST(request: NextRequest) {
       let awaySeasonData;
       if (usesCategoryPoints) {
         awaySeasonData = await sql`
-          SELECT id, player_id, player_name, team_id, NULL as salary_per_match, star_rating, points, category
+          SELECT id, player_id, player_name, team_id, NULL as salary_per_match, NULL::int as star_rating, points, category
           FROM realplayerstats
           WHERE id = ${awayStatsId}
           LIMIT 1

@@ -15,7 +15,10 @@ interface Player {
   id: string;
   playerName: string;
   category: string;
+  /** For S18+: the price paid at auction (0 if unsold). Legacy field for S16/S17. */
   auctionValue: number;
+  /** S18+ only: base price from category */
+  basePrice?: number;
 }
 
 interface TeamData {
@@ -55,6 +58,7 @@ export default function RealPlayersPage() {
   const [quickAssignAuction, setQuickAssignAuction] = useState<string>('');
   const [isQuickAssigning, setIsQuickAssigning] = useState(false);
   const [showActualBudget, setShowActualBudget] = useState(true);
+  const [isModernSeason, setIsModernSeason] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -128,53 +132,55 @@ export default function RealPlayersPage() {
 
       try {
         const seasonNum = parseInt(userSeasonId.replace(/\D/g, '')) || 0;
-        const isModernSeason = seasonNum === 16 || seasonNum === 17;
+        const isModern = seasonNum === 16 || seasonNum === 17;
+        setIsModernSeason(isModern);
 
-        if (isModernSeason) {
-          // Fetch from Neon via API
-          const response = await fetchWithTokenRefresh(`/api/stats/players?seasonId=${userSeasonId}&limit=1000`);
+        if (isModern) {
+          // S16/S17 – use the dedicated season-players endpoint
+          const response = await fetchWithTokenRefresh(`/api/realplayers/season-players?seasonId=${userSeasonId}`);
           const result = await response.json();
 
           if (result.success && result.data && result.data.length > 0) {
             const realPlayersData = result.data.filter((p: any) => p.category && p.category.trim() !== '');
 
-            // Organize players by team
             const teamMap: { [key: string]: Player[] } = {};
             const unassignedPlayers: Player[] = [];
 
             realPlayersData.forEach((data: any) => {
-              // Get category
               const category = data.category || 'Bronze';
+              const isS18Plus = !result.isModern;
 
-              // Parse auction value from DB
-              let auctionValue = data.auction_value !== null && data.auction_value !== undefined
-                ? (typeof data.auction_value === 'number' ? data.auction_value : parseFloat(String(data.auction_value)))
-                : 0;
-
-              // If auction value is 0 or not set, use minimum based on category
-              if (auctionValue === 0 || isNaN(auctionValue)) {
-                // Simple default: 250 for all categories
-                auctionValue = 250;
-                console.log(`Player ${data.player_name}: auction_value was 0, set to ${auctionValue} (${category})`);
+              // For S18+: price = auction bid (what team paid), base_price = category base
+              // For S16/S17: auction_value = what was paid
+              let auctionValue: number;
+              let basePrice: number | undefined;
+              if (isS18Plus) {
+                auctionValue = parseInt(data.price) || 0;
+                basePrice = parseInt(data.base_price) || 0;
+                // If not sold yet, show base_price as a guide
+                if (auctionValue === 0 && basePrice > 0) {
+                  auctionValue = basePrice;
+                }
+              } else {
+                auctionValue = typeof data.auction_value === 'number'
+                  ? data.auction_value
+                  : parseFloat(String(data.auction_value || '0'));
+                if (auctionValue === 0 || isNaN(auctionValue)) auctionValue = 250;
               }
-
-              console.log(`Player ${data.player_name}: auction_value=${data.auction_value} (${typeof data.auction_value}) &rarr; parsed=${auctionValue}, team_id=${data.team_id}`);
 
               const player: Player = {
                 id: data.player_id || data.id,
                 playerName: data.player_name || '',
-                category: category,
-                auctionValue: auctionValue,
+                category,
+                auctionValue,
+                basePrice,
               };
 
-              // Check if player has a team assignment
-              // Handle both null and empty string as unassigned
               const teamId = data.team_id;
               if (teamId && teamId !== '' && teamId !== null && teamId !== undefined) {
                 if (!teamMap[teamId]) teamMap[teamId] = [];
                 teamMap[teamId].push(player);
               } else {
-                // Player is unassigned, add to available players
                 unassignedPlayers.push(player);
               }
             });
@@ -313,8 +319,9 @@ export default function RealPlayersPage() {
     }
 
     const auctionValue = parseInt(quickAssignAuction);
-    if (isNaN(auctionValue) || auctionValue <= 0) {
-      setError('Please enter a valid auction value');
+    const minRequired = quickAssignPlayer.basePrice !== undefined ? quickAssignPlayer.basePrice : 250;
+    if (isNaN(auctionValue) || auctionValue < minRequired) {
+      setError(`Auction value cannot be less than the player's base price (${minRequired} coins)`);
       return;
     }
 
@@ -591,7 +598,7 @@ export default function RealPlayersPage() {
                     const player = availablePlayers.find(p => p.id === e.target.value);
                     setQuickAssignPlayer(player || null);
                     if (player) {
-                      setQuickAssignAuction('250');
+                      setQuickAssignAuction(String(player.basePrice !== undefined ? player.basePrice : 250));
                     }
                   }}
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer"
@@ -601,7 +608,7 @@ export default function RealPlayersPage() {
                     .sort((a, b) => a.playerName.localeCompare(b.playerName))
                     .map(player => (
                       <option key={player.id} value={player.id}>
-                        {player.playerName} ({player.category}) - Min <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />250
+                        {player.playerName} ({player.category}) - Min {player.basePrice !== undefined ? player.basePrice : 250}
                       </option>
                     ))}
                 </select>
@@ -744,9 +751,19 @@ export default function RealPlayersPage() {
                     </p>
                     {availablePlayers.length === 0 && (
                       <p className="text-[10px] text-slate-500 mt-2">
-                        <Link href="/dashboard/committee/player-ratings" className="text-amber-500 underline">
-                          Set star ratings
-                        </Link> to import members
+                        {isModernSeason ? (
+                          <>
+                            <Link href="/dashboard/committee/player-ratings" className="text-amber-500 underline">
+                              Set star ratings
+                            </Link> to import members
+                          </>
+                        ) : (
+                          <>
+                            <Link href="/dashboard/committee/player-categorization" className="text-amber-500 underline">
+                              Categorize players
+                            </Link> to import members
+                          </>
+                        )}
                       </p>
                     )}
                   </div>

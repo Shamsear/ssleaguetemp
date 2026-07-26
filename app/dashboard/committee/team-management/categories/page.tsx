@@ -67,6 +67,7 @@ interface Category {
   name: string;
   icon?: string;
   priority: number;
+  base_price?: number;
   points_same_category: number;
   points_one_level_diff: number;
   points_two_level_diff: number;
@@ -265,14 +266,21 @@ function CategoriesPageContent() {
                 
                 {/* Category Header */}
                 <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className={`w-3.5 h-3.5 rounded-full ring-4 ${getColorDotStyles(category.name)} flex-shrink-0`} />
-                    <div>
-                      <h3 className="font-extrabold text-slate-900 text-sm uppercase tracking-wide truncate max-w-[140px]">{category.name}</h3>
-                      <span className="inline-flex text-[9px] font-black uppercase bg-slate-200/60 text-slate-750 border border-slate-300 px-1.5 py-0.5 rounded mt-1">
-                        Priority {category.priority}
-                      </span>
+                  <div className="flex items-center gap-3 justify-between w-full">
+                    <div className="flex items-center gap-3">
+                      <span className={`w-3.5 h-3.5 rounded-full ring-4 ${getColorDotStyles(category.name)} flex-shrink-0`} />
+                      <div>
+                        <h3 className="font-extrabold text-slate-900 text-sm uppercase tracking-wide truncate max-w-[140px]">{category.name}</h3>
+                        <span className="inline-flex text-[9px] font-black uppercase bg-slate-200/60 text-slate-750 border border-slate-300 px-1.5 py-0.5 rounded mt-1">
+                          Priority {category.priority}
+                        </span>
+                      </div>
                     </div>
+                    {category.base_price !== undefined && (
+                      <span className="text-[10px] font-extrabold font-mono text-emerald-800 bg-emerald-50 border border-emerald-250 px-2 py-1 rounded-lg">
+                        {category.base_price} COINS
+                      </span>
+                    )}
                   </div>
                 </div>
 

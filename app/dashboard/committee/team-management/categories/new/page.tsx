@@ -45,6 +45,7 @@ export default function NewCategoryPage() {
   const [formData, setFormData] = useState({
     name: '',
     icon: '',
+    base_price: '0',
     priority: '1',
     points_same_category: '8',
     points_one_level_diff: '7',
@@ -219,6 +220,32 @@ export default function NewCategoryPage() {
                 </div>
                 <p className="mt-2 text-[10px] text-slate-500 font-mono">
                   Choose a descriptive name that reflects the skill tier level.
+                </p>
+              </div>
+
+              {/* Base Price */}
+              <div>
+                <label htmlFor="base_price" className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">
+                  Base Price *
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="base_price"
+                    id="base_price"
+                    required
+                    min="0"
+                    value={formData.base_price}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2.5 pl-11 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
+                    placeholder="Enter base price for this category"
+                  />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none font-bold text-xs font-mono">
+                    COINS
+                  </div>
+                </div>
+                <p className="mt-2 text-[10px] text-slate-500 font-mono">
+                  Base price assigned to players in this category.
                 </p>
               </div>
 

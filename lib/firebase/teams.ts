@@ -76,17 +76,7 @@ const initializeTeamStats = (): TeamStats => ({
 // Get all teams
 export const getAllTeams = async (): Promise<TeamData[]> => {
   try {
-    const teams: TeamData[] = [];
-    
-    // Query team_seasons collection (current/active seasons)
-    const teamSeasonsRef = collection(db, 'team_seasons');
-    let teamSeasonsSnapshot;
-    try {
-      const q = query(teamSeasonsRef, orderBy('joined_at', 'desc'));
-      teamSeasonsSnapshot = await getDocs(q);
-    } catch (orderByError) {
-      teamSeasonsSnapshot = await getDocs(teamSeasonsRef);
-    }
+    const teamsMap = new Map<string, TeamData>();
     
     // Fetch all seasons once to avoid N+1 query overhead in loop
     const seasonsSnapshot = await getDocs(collection(db, 'seasons'));
@@ -95,62 +85,18 @@ export const getAllTeams = async (): Promise<TeamData[]> => {
       seasonsMap.set(docSnap.id, docSnap.data().name || '');
     });
     
-    for (const docSnap of teamSeasonsSnapshot.docs) {
-      const data = docSnap.data();
-      
-      let seasonName = data.season_name || '';
-      if (!seasonName && data.season_id) {
-        seasonName = seasonsMap.get(data.season_id) || '';
-      }
-      
-      const initialBudget = data.initial_budget || 15000;
-      const currentBudget = data.budget || 0;
-      const totalSpent = initialBudget - currentBudget;
-      
-      const logoUrl = data.logo_url || data.team_logo || data.logo || null;
-      teams.push({
-        id: docSnap.id,
-        team_id: docSnap.id,
-        team_name: data.team_name || 'Unknown Team',
-        team_code: data.team_code || data.team_name?.substring(0, 3).toUpperCase() || 'UNK',
-        owner_name: data.username || data.owner_name || '',
-        owner_email: data.team_email || data.owner_email || '',
-        balance: currentBudget,
-        initial_balance: initialBudget,
-        total_spent: totalSpent,
-        currency_system: data.currency_system || 'single',
-        football_budget: data.football_budget !== undefined ? data.football_budget : currentBudget,
-        football_spent: data.football_spent !== undefined ? data.football_spent : totalSpent,
-        real_player_budget: data.real_player_budget || 0,
-        real_player_spent: data.real_player_spent || 0,
-        season_id: data.season_id || '',
-        season_name: seasonName,
-        real_players: data.real_players || [],
-        football_players: data.football_players || [],
-        real_players_count: data.players_count || 0,
-        football_players_count: data.football_players_count || 0,
-        players_count: data.players_count || 0,
-        stats: data.stats || initializeTeamStats(),
-        is_active: data.status === 'registered' || data.is_active !== false,
-        logo: logoUrl,
-        logo_url: logoUrl,
-        team_color: data.team_color || null,
-        created_at: convertTimestamp(data.joined_at || data.created_at),
-        updated_at: convertTimestamp(data.updated_at || data.joined_at),
-      } as TeamData);
-    }
-    
-    // Also query teams collection (historical teams)
+    // 1. Query teams collection (base franchise documents)
     const teamsRef = collection(db, 'teams');
     const teamsSnapshot = await getDocs(teamsRef);
     
     for (const docSnap of teamsSnapshot.docs) {
       const data = docSnap.data();
-      
+      const baseId = docSnap.id;
       const logoUrl = data.logo_url || data.team_logo || data.logo || null;
-      teams.push({
-        id: docSnap.id,
-        team_id: docSnap.id,
+      
+      teamsMap.set(baseId, {
+        id: baseId,
+        team_id: baseId,
         team_name: data.team_name || 'Unknown Team',
         team_code: data.team_code || data.team_name?.substring(0, 3).toUpperCase() || 'UNK',
         owner_name: data.owner_name || '',
@@ -180,7 +126,83 @@ export const getAllTeams = async (): Promise<TeamData[]> => {
       } as TeamData);
     }
     
-    return teams;
+    // 2. Query team_seasons collection (current/active seasons)
+    const teamSeasonsRef = collection(db, 'team_seasons');
+    let teamSeasonsSnapshot;
+    try {
+      const q = query(teamSeasonsRef, orderBy('joined_at', 'desc'));
+      teamSeasonsSnapshot = await getDocs(q);
+    } catch (orderByError) {
+      teamSeasonsSnapshot = await getDocs(teamSeasonsRef);
+    }
+    
+    for (const docSnap of teamSeasonsSnapshot.docs) {
+      const data = docSnap.data();
+      const baseId = docSnap.id.split('_')[0];
+      
+      let seasonName = data.season_name || '';
+      if (!seasonName && data.season_id) {
+        seasonName = seasonsMap.get(data.season_id) || '';
+      }
+      
+      const initialBudget = data.initial_budget || 15000;
+      const currentBudget = data.budget || 0;
+      const totalSpent = initialBudget - currentBudget;
+      const logoUrl = data.logo_url || data.team_logo || data.logo || null;
+      
+      const existing = teamsMap.get(baseId);
+      if (existing) {
+        existing.balance = currentBudget;
+        existing.initial_balance = initialBudget;
+        existing.total_spent = totalSpent;
+        existing.season_id = data.season_id || '';
+        existing.season_name = seasonName;
+        existing.real_players = data.real_players || [];
+        existing.football_players = data.football_players || [];
+        existing.real_players_count = data.players_count || 0;
+        existing.football_players_count = data.football_players_count || 0;
+        existing.players_count = data.players_count || 0;
+        existing.stats = data.stats || existing.stats;
+        existing.is_active = data.status === 'registered' || existing.is_active;
+        if (logoUrl) {
+          existing.logo = logoUrl;
+          existing.logo_url = logoUrl;
+        }
+      } else {
+        teamsMap.set(baseId, {
+          id: baseId,
+          team_id: baseId,
+          team_name: data.team_name || 'Unknown Team',
+          team_code: data.team_code || data.team_name?.substring(0, 3).toUpperCase() || 'UNK',
+          owner_name: data.username || data.owner_name || '',
+          owner_email: data.team_email || data.owner_email || '',
+          balance: currentBudget,
+          initial_balance: initialBudget,
+          total_spent: totalSpent,
+          currency_system: data.currency_system || 'single',
+          football_budget: data.football_budget !== undefined ? data.football_budget : currentBudget,
+          football_spent: data.football_spent !== undefined ? data.football_spent : totalSpent,
+          real_player_budget: data.real_player_budget || 0,
+          real_player_spent: data.real_player_spent || 0,
+          season_id: data.season_id || '',
+          season_name: seasonName,
+          real_players: data.real_players || [],
+          football_players: data.football_players || [],
+          real_players_count: data.players_count || 0,
+          football_players_count: data.football_players_count || 0,
+          players_count: data.players_count || 0,
+          stats: data.stats || initializeTeamStats(),
+          is_active: data.status === 'registered' || data.is_active !== false,
+          logo: logoUrl,
+          logo_url: logoUrl,
+          team_color: data.team_color || null,
+          created_at: convertTimestamp(data.joined_at || data.created_at),
+          updated_at: convertTimestamp(data.updated_at || data.joined_at),
+        } as TeamData);
+      }
+    }
+    
+    return Array.from(teamsMap.values());
   } catch (error) {
     console.error('Error getting all teams:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to get all teams';

@@ -145,9 +145,8 @@ export async function GET(request: NextRequest) {
               ps.id,
               ps.player_name as name,
               ps.category as position,
-              0 as acquisition_value,
-              0 as salary_per_match,
-              3 as star_rating,
+              ps.base_price,
+              ps.price,
               ps.points,
               NULL as contract_start_season,
               NULL as contract_end_season,
@@ -252,8 +251,8 @@ export async function GET(request: NextRequest) {
       realPlayers.forEach(player => {
         teamSheet.getRow(currentRow).values = [
           player.name,
-          player.acquisition_value || 0,
-          player.star_rating || 0,
+          player.base_price ?? player.acquisition_value ?? 0,
+          player.price ?? 0,
           player.points || 0,
           player.status || 'active',
         ];

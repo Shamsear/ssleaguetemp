@@ -48,7 +48,8 @@ export async function GET(request: NextRequest) {
           ps.team as team_name,
           ps.season_id,
           ps.category,
-          ps.star_rating
+          ps.base_price,
+          ps.price
         FROM realplayerstats ps
         WHERE ps.season_id = ${seasonId}
         ORDER BY ps.team, ps.player_name
@@ -122,7 +123,8 @@ export async function GET(request: NextRequest) {
           team_name: player.team_name || 'Unknown Team',
           season_id: player.season_id,
           category: player.category,
-          star_rating: player.star_rating,
+          base_price: player.base_price || 0,
+          price: player.price || 0,
           matches_played: parseInt(matchStats.total_matches) || 0,
           wins: parseInt(matchStats.total_wins) || 0,
           draws: parseInt(matchStats.total_draws) || 0,

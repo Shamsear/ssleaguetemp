@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { Star, User, Users } from 'lucide-react';
+import { Tag, User, Users, DollarSign } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -17,7 +17,12 @@ interface RealPlayer {
   team: string;
   team_id: string;
   category: string;
-  star_rating: number;
+  base_price: number;
+  price: number;
+  /** legacy – only set for S16/S17 */
+  star_rating?: number;
+  /** legacy – only set for S16/S17 */
+  auction_value?: number;
   points: number;
   matches_played: number;
   goals_scored: number;
@@ -29,112 +34,94 @@ interface RealPlayer {
   motm_awards: number;
 }
 
+/** Colour style per category name */
+function categoryStyle(cat: string) {
+  const c = cat.toLowerCase();
+  if (c === 'red' || c === 'legend')
+    return 'bg-red-100 border border-red-300 text-red-800';
+  if (c === 'black' || c === 'elite')
+    return 'bg-slate-800 border border-slate-700 text-white';
+  if (c === 'blue' || c === 'professional')
+    return 'bg-blue-100 border border-blue-300 text-blue-800';
+  if (c === 'white' || c === 'amateur')
+    return 'bg-slate-100 border border-slate-300 text-slate-700';
+  return 'bg-slate-200 border border-slate-300 text-slate-700';
+}
+
 export default function RealPlayersPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+
   const [players, setPlayers] = useState<RealPlayer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [starFilter, setStarFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [teamFilter, setTeamFilter] = useState('all');
-  const [sortBy, setSortBy] = useState<'name' | 'points' | 'rating' | 'matches' | 'goals'>('points');
+  const [sortBy, setSortBy] = useState<'name' | 'points' | 'base_price' | 'price' | 'matches' | 'goals'>('points');
   const [activeSeason, setActiveSeason] = useState<any>(null);
+  const [isModern, setIsModern] = useState(false);
   const [teams, setTeams] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
+    if (!loading && !user) router.push('/login');
+    if (!loading && user && user.role !== 'team') router.push('/dashboard');
   }, [user, loading, router]);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
-
       try {
         setIsLoading(true);
 
-        // Get active season
+        // 1) Active season
         const seasonResponse = await fetchWithTokenRefresh('/api/cached/firebase/seasons?isActive=true');
-        
-        if (!seasonResponse.ok) {
-          console.error('Failed to fetch seasons:', seasonResponse.statusText);
-          return;
-        }
-        
-        const contentType = seasonResponse.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          console.error('Season API did not return JSON');
-          return;
-        }
-        
+        if (!seasonResponse.ok) return;
         const seasonData = await seasonResponse.json();
-        
-        if (seasonData.success && seasonData.data.length > 0) {
-          const season = seasonData.data[0];
-          setActiveSeason(season);
+        if (!seasonData.success || seasonData.data.length === 0) return;
 
-          // Fetch real players for this season
-          // The API automatically queries the correct table based on season number
-          const playersResponse = await fetchWithTokenRefresh(`/api/stats/players?seasonId=${season.id}&limit=1000`);
-          
-          if (!playersResponse.ok) {
-            console.error('Failed to fetch players:', playersResponse.statusText);
-            return;
-          }
-          
-          const playersContentType = playersResponse.headers.get('content-type');
-          if (!playersContentType || !playersContentType.includes('application/json')) {
-            console.error('Players API did not return JSON');
-            return;
-          }
-          
-          const playersData = await playersResponse.json();
+        const season = seasonData.data[0];
+        setActiveSeason(season);
 
-          if (playersData.success) {
-            // Filter to show only players with star ratings (real players)
-            const realPlayers = playersData.data?.filter((p: any) => p.star_rating && p.star_rating > 0) || [];
-            
-            // Fetch photo URLs from Firebase for each player
-            const playerIds = realPlayers.map((p: any) => p.player_id).filter(Boolean);
-            if (playerIds.length > 0) {
-              try {
-                const photosResponse = await fetchWithTokenRefresh('/api/real-players?' + new URLSearchParams({
-                  playerIds: playerIds.join(',')
-                }));
-                
-                if (photosResponse.ok) {
-                  const photosData = await photosResponse.json();
-                  if (photosData.success && photosData.players) {
-                    // Create a map of player_id to photo_url
-                    const photoMap = new Map(
-                      photosData.players.map((p: any) => [p.player_id, p.photo_url])
-                    );
-                    
-                    // Merge photo URLs into player data
-                    realPlayers.forEach((player: any) => {
-                      player.photo_url = photoMap.get(player.player_id) || null;
-                    });
-                  }
+        // 2) Players from the dedicated endpoint
+        const playersResponse = await fetchWithTokenRefresh(
+          `/api/realplayers/season-players?seasonId=${season.id}`
+        );
+        if (!playersResponse.ok) return;
+        const playersData = await playersResponse.json();
+
+        if (playersData.success) {
+          setIsModern(playersData.isModern);
+          const rawPlayers: RealPlayer[] = playersData.data || [];
+
+          // 3) Fetch Firebase photo URLs
+          const playerIds = rawPlayers.map((p) => p.player_id).filter(Boolean);
+          if (playerIds.length > 0) {
+            try {
+              const photosResponse = await fetchWithTokenRefresh(
+                '/api/real-players?' + new URLSearchParams({ playerIds: playerIds.join(',') })
+              );
+              if (photosResponse.ok) {
+                const photosData = await photosResponse.json();
+                if (photosData.success && photosData.players) {
+                  const photoMap = new Map(
+                    photosData.players.map((p: any) => [p.player_id, p.photo_url])
+                  );
+                  rawPlayers.forEach((player) => {
+                    (player as any).photo_url = photoMap.get(player.player_id) || null;
+                  });
                 }
-              } catch (photoError) {
-                console.warn('Could not fetch player photos:', photoError);
               }
-            }
-            
-            setPlayers(realPlayers);
-            
-            // Extract unique teams for filter
-            const uniqueTeams = Array.from(new Set(realPlayers.map((p: any) => p.team).filter(Boolean))) as string[];
-            setTeams(uniqueTeams.sort());
-            
-            console.log(`✅ Loaded ${realPlayers.length} real players for ${season.name}`);
-          } else {
-            console.error('Players API error:', playersData.error);
+            } catch (_) {}
           }
+
+          setPlayers(rawPlayers);
+
+          const uniqueTeams = Array.from(new Set(rawPlayers.map((p) => p.team).filter(Boolean))) as string[];
+          setTeams(uniqueTeams.sort());
+
+          const uniqueCats = Array.from(new Set(rawPlayers.map((p) => p.category).filter(Boolean))) as string[];
+          setCategories(uniqueCats.sort());
         }
       } catch (error) {
         console.error('Error fetching players:', error);
@@ -146,36 +133,27 @@ export default function RealPlayersPage() {
     fetchData();
   }, [user]);
 
-  // Extract unique star ratings from players for filter options
-  const uniqueStarRatings = Array.from(new Set(players.map(p => p.star_rating).filter(Boolean)))
-    .sort((a, b) => b - a); // Sort in descending order
-
   const filteredPlayers = players
-    .filter(player => {
-      const matchesSearch = player.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (player.display_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                           (player.team?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-      const matchesStar = starFilter === 'all' || (player.star_rating === parseInt(starFilter));
+    .filter((player) => {
+      const matchesSearch =
+        player.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (player.display_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (player.team?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+      const matchesCat = categoryFilter === 'all' || player.category === categoryFilter;
       const matchesTeam = teamFilter === 'all' || player.team === teamFilter;
-      return matchesSearch && matchesStar && matchesTeam;
+      return matchesSearch && matchesCat && matchesTeam;
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case 'name':
-          return a.player_name.localeCompare(b.player_name);
-        case 'points':
-          return (b.points || 0) - (a.points || 0);
-        case 'rating':
-          return (b.star_rating || 0) - (a.star_rating || 0);
-        case 'matches':
-          return (b.matches_played || 0) - (a.matches_played || 0);
-        case 'goals':
-          return (b.goals_scored || 0) - (a.goals_scored || 0);
-        default:
-          return (b.points || 0) - (a.points || 0);
+        case 'name':    return a.player_name.localeCompare(b.player_name);
+        case 'points':  return (b.points || 0) - (a.points || 0);
+        case 'base_price': return (b.base_price || 0) - (a.base_price || 0);
+        case 'price':   return (b.price || 0) - (a.price || 0);
+        case 'matches': return (b.matches_played || 0) - (a.matches_played || 0);
+        case 'goals':   return (b.goals_scored || 0) - (a.goals_scored || 0);
+        default:        return (b.points || 0) - (a.points || 0);
       }
     });
-
 
   if (loading || isLoading) {
     return (
@@ -188,14 +166,41 @@ export default function RealPlayersPage() {
     );
   }
 
-  if (!user || user.role !== 'team') {
-    return null;
-  }
+  if (!user || user.role !== 'team') return null;
+
+  const PriceTag = ({ player }: { player: RealPlayer }) => {
+    if (isModern) {
+      // S16/S17 – show auction value
+      const av = player.auction_value || 0;
+      return (
+        <span className="text-[10px] font-mono font-bold text-slate-500">
+          {av > 0 ? `${av.toLocaleString()} coins` : '—'}
+        </span>
+      );
+    }
+    const sold = (player.price || 0) > 0;
+    if (sold) {
+      return (
+        <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-mono font-bold">
+          <DollarSign className="w-3 h-3" />
+          Sold · {player.price.toLocaleString()}
+        </span>
+      );
+    }
+    if ((player.base_price || 0) > 0) {
+      return (
+        <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-mono font-bold">
+          <Tag className="w-3 h-3" />
+          Base · {player.base_price.toLocaleString()}
+        </span>
+      );
+    }
+    return <span className="text-[10px] font-mono text-slate-400">No price</span>;
+  };
 
   return (
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
-      {/* Decorative eSports glowing ambient overlay */}
-      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10 space-y-8">
         {/* Header */}
@@ -204,14 +209,16 @@ export default function RealPlayersPage() {
             href="/dashboard/team"
             className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
-            {"<-"} Back to Dashboard
+            {'<-'} Back to Dashboard
           </Link>
         </div>
 
         {/* Title */}
         <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
           <div>
-            <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">PLAYER REGISTRY</span>
+            <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">
+              PLAYER REGISTRY
+            </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5">
               SS Members (Real Players)
             </h1>
@@ -241,17 +248,17 @@ export default function RealPlayersPage() {
               />
             </div>
 
-            {/* Star Rating Filter */}
+            {/* Category Filter */}
             <div>
-              <label className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">Star Rating</label>
+              <label className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">Category</label>
               <select
-                value={starFilter}
-                onChange={(e) => setStarFilter(e.target.value)}
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold"
               >
-                <option value="all">All Stars</option>
-                {uniqueStarRatings.map(rating => (
-                  <option key={rating} value={rating}>{rating} <Star className="w-4 h-4 text-amber-400 fill-amber-400" /></option>
+                <option value="all">All Categories</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
             </div>
@@ -265,7 +272,7 @@ export default function RealPlayersPage() {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-sans font-bold"
               >
                 <option value="all">All Teams</option>
-                {teams.map(team => (
+                {teams.map((team) => (
                   <option key={team} value={team}>{team}</option>
                 ))}
               </select>
@@ -283,12 +290,12 @@ export default function RealPlayersPage() {
                 <option value="points">Points</option>
                 <option value="goals">Goals</option>
                 <option value="matches">Matches Played</option>
-                <option value="rating">Star Rating</option>
+                {!isModern && <option value="base_price">Base Price</option>}
+                {!isModern && <option value="price">Sold Price</option>}
               </select>
             </div>
           </div>
 
-          {/* Results Count */}
           <div className="mt-4 text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
             Showing {filteredPlayers.length} of {players.length} players
           </div>
@@ -298,10 +305,10 @@ export default function RealPlayersPage() {
         <div className="block lg:hidden">
           {filteredPlayers.length === 0 ? (
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-12 text-center shadow-sm max-w-md mx-auto">
-              <div className="text-4xl mb-3"><Users className="w-4 h-4 text-slate-500" /></div>
+              <Users className="w-10 h-10 text-slate-400 mx-auto mb-3" />
               <h3 className="text-lg font-extrabold text-slate-900 leading-tight">No Players Found</h3>
               <p className="text-xs text-slate-400 font-sans mt-1">
-                {searchTerm || starFilter !== 'all' || teamFilter !== 'all'
+                {searchTerm || categoryFilter !== 'all' || teamFilter !== 'all'
                   ? 'Try adjusting your filters'
                   : 'No players available'}
               </p>
@@ -340,11 +347,7 @@ export default function RealPlayersPage() {
                     {/* Category Badge */}
                     {player.category && (
                       <div className="absolute -bottom-2.5 left-1/2 transform -translate-x-1/2">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${
-                          player.category.toLowerCase() === 'legend'
-                            ? 'bg-amber-100 border border-amber-200 text-amber-800'
-                            : 'bg-slate-200 border border-slate-300 text-slate-700'
-                        }`}>
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${categoryStyle(player.category)}`}>
                           {player.category.toUpperCase()}
                         </span>
                       </div>
@@ -357,29 +360,24 @@ export default function RealPlayersPage() {
                       {player.display_name || player.player_name}
                     </h3>
                     <p className="text-xs text-slate-400 truncate mb-2">{player.team}</p>
-                    
-                    {/* Stats Pills */}
+
                     <div className="flex items-center gap-2 flex-wrap text-xs">
                       <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 border border-amber-200 rounded-lg">
                         <span className="font-bold text-amber-800">{player.points || 0}</span>
                         <span className="text-[10px] text-slate-400 uppercase font-bold">PTS</span>
                       </div>
                       <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800">
-                        <span><SoccerBallIcon className="w-4 h-4" /></span>
+                        <SoccerBallIcon className="w-4 h-4" />
                         <span className="font-bold">{player.goals_scored || 0}</span>
                       </div>
                       <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-700">
                         <span className="font-bold">{player.matches_played || 0}</span>
                         <span className="text-[9px] text-slate-400 uppercase font-bold">GMS</span>
                       </div>
-                      <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
-                        <span className="font-bold">{player.star_rating || 3}</span>
-                        <span><Star className="w-4 h-4 text-amber-400 fill-amber-400" /></span>
-                      </div>
+                      <PriceTag player={player} />
                     </div>
                   </div>
 
-                  {/* Arrow */}
                   <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -389,14 +387,14 @@ export default function RealPlayersPage() {
           )}
         </div>
 
-        {/* Desktop List */}
+        {/* Desktop Grid */}
         <div className="hidden lg:block">
           {filteredPlayers.length === 0 ? (
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-12 text-center shadow-sm max-w-md mx-auto">
-              <div className="text-4xl mb-3"><Users className="w-4 h-4 text-slate-500" /></div>
+              <Users className="w-10 h-10 text-slate-400 mx-auto mb-3" />
               <h3 className="text-lg font-extrabold text-slate-900 leading-tight">No Players Found</h3>
               <p className="text-xs text-slate-400 font-sans mt-1">
-                {searchTerm || starFilter !== 'all' || teamFilter !== 'all'
+                {searchTerm || categoryFilter !== 'all' || teamFilter !== 'all'
                   ? 'Try adjusting your filters'
                   : 'No players available'}
               </p>
@@ -442,21 +440,15 @@ export default function RealPlayersPage() {
                           {player.display_name || player.player_name}
                         </h3>
                       </div>
-                      <p className="text-xs text-slate-400 truncate mb-2">{player.team}</p>
+                      <p className="text-xs text-slate-400 truncate mb-2">{player.team || 'Unassigned'}</p>
 
                       <div className="flex items-center gap-2 flex-wrap">
                         {player.category && (
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                            player.category.toLowerCase() === 'legend'
-                              ? 'bg-amber-100 border border-amber-200 text-amber-800'
-                              : 'bg-slate-200 border border-slate-300 text-slate-700'
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono ${categoryStyle(player.category)}`}>
                             {player.category}
                           </span>
                         )}
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-50 border border-amber-200 text-amber-800">
-                          {player.star_rating || 3} <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                        </span>
+                        <PriceTag player={player} />
                       </div>
                     </div>
                   </div>
@@ -469,7 +461,7 @@ export default function RealPlayersPage() {
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-2">
                       <div className="text-[9px] text-slate-400 font-bold uppercase">Goals</div>
-                      <div className="text-sm font-black text-emerald-605">{player.goals_scored || 0}</div>
+                      <div className="text-sm font-black text-emerald-600">{player.goals_scored || 0}</div>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-2">
                       <div className="text-[9px] text-slate-400 font-bold uppercase">Matches</div>
@@ -477,7 +469,7 @@ export default function RealPlayersPage() {
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-2">
                       <div className="text-[9px] text-slate-400 font-bold uppercase">CS</div>
-                      <div className="text-sm font-black text-emerald-650">{player.clean_sheets || 0}</div>
+                      <div className="text-sm font-black text-emerald-600">{player.clean_sheets || 0}</div>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-2">
                       <div className="text-[9px] text-slate-400 font-bold uppercase">Assists</div>

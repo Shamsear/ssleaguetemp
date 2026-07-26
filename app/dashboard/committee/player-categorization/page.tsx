@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useRouter } from 'next/navigation';
@@ -59,6 +59,7 @@ interface Category {
   id: string;
   name: string;
   priority: number;
+  base_price?: number;
 }
 
 export default function PlayerCategorizationPage() {
@@ -85,6 +86,7 @@ export default function PlayerCategorizationPage() {
   // Results & overrides
   const [proposedCategories, setProposedCategories] = useState<Map<string, string>>(new Map());
   const [manualOverrides, setManualOverrides] = useState<Map<string, string>>(new Map());
+  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
 
   // AI Configuration state enhancements
   const [maxSeasons, setMaxSeasons] = useState<number | 'all'>('all');
@@ -183,6 +185,55 @@ export default function PlayerCategorizationPage() {
     }
   }, [isCommitteeAdmin, userSeasonId]);
 
+  // Load saved temp overrides from DB after the page data is ready
+  useEffect(() => {
+    if (!userSeasonId || !isCommitteeAdmin) return;
+    const loadSavedOverrides = async () => {
+      try {
+        const res = await fetchWithTokenRefresh(
+          `/api/committee/player-categorization/temp-overrides?seasonId=${userSeasonId}`
+        );
+        const data = await res.json();
+        if (data.success && data.overrides.length > 0) {
+          const map = new Map<string, string>(
+            data.overrides.map((o: { player_id: string; category: string }) => [o.player_id, o.category])
+          );
+          setManualOverrides(map);
+        }
+      } catch (err) {
+        console.error('Could not load saved overrides:', err);
+      }
+    };
+    loadSavedOverrides();
+  }, [userSeasonId, isCommitteeAdmin]);
+
+  // Auto-save overrides to DB whenever they change (debounced 800 ms)
+  const overrideSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!userSeasonId) return;
+    if (overrideSaveTimer.current) clearTimeout(overrideSaveTimer.current);
+    overrideSaveTimer.current = setTimeout(async () => {
+      try {
+        const overrideArray = Array.from(manualOverrides.entries()).map(
+          ([player_id, category]) => ({ player_id, category })
+        );
+        await fetchWithTokenRefresh(
+          '/api/committee/player-categorization/temp-overrides',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ seasonId: userSeasonId, overrides: overrideArray })
+          }
+        );
+      } catch (err) {
+        console.error('Could not auto-save overrides:', err);
+      }
+    }, 800);
+    return () => {
+      if (overrideSaveTimer.current) clearTimeout(overrideSaveTimer.current);
+    };
+  }, [manualOverrides, userSeasonId]);
+
   // Extract current season number
   const currentSeasonNum = useMemo(() => {
     if (!userSeasonId) return 0;
@@ -274,8 +325,14 @@ export default function PlayerCategorizationPage() {
           if (matches >= minMatches) {
             const ppm = points / matches;
             weightedSum += ppm * weight;
-            weightSum += weight;
           }
+
+          // Always add weight to denominator if the player has a record for this season
+          // (even if matches < minMatches). This treats "registered but didn't play"
+          // seasons as 0 PPM, preventing score inflation for players who skip seasons.
+          // Without this, a player with great S16 stats but 0 S17 matches would get
+          // their S16 PPM weighted more heavily than someone who actually played S17.
+          weightSum += weight;
           
           const ppmVal = matches > 0 ? parseFloat((points / matches).toFixed(1)) : 0;
           seasonPointsMap.set(baseId, {
@@ -286,6 +343,7 @@ export default function PlayerCategorizationPage() {
           });
         }
       });
+
 
       // Track any seasons this player has stats in, but were excluded by our settings
       const excludedSeasons: string[] = [];
@@ -365,7 +423,7 @@ export default function PlayerCategorizationPage() {
   // Run the AI partition assignment algorithm
   const handleCalculateProposals = () => {
     setError(null);
-    setManualOverrides(new Map()); // Reset overrides
+    // NOTE: We intentionally keep existing manual overrides — they persist across proposals
 
     // 1. Validate target inputs
     const totalTarget = Object.values(categoryTargets).reduce((a, b) => a + b, 0);
@@ -487,12 +545,22 @@ export default function PlayerCategorizationPage() {
       if (data.success) {
         setSuccess(`Successfully updated categories for ${updates.length} players!`);
         // Refresh original player list categories in state
-        setActivePlayers(prev => 
+        setActivePlayers(prev =>
           prev.map(p => {
             const update = updates.find(u => u.id === p.id);
             return update ? { ...p, category: update.category } : p;
           })
         );
+        // Delete temp overrides from DB — categories are now permanently saved
+        try {
+          await fetchWithTokenRefresh(
+            `/api/committee/player-categorization/temp-overrides?seasonId=${userSeasonId}`,
+            { method: 'DELETE' }
+          );
+          setManualOverrides(new Map());
+        } catch (err) {
+          console.error('Could not clear temp overrides:', err);
+        }
       } else {
         throw new Error(data.error || 'Failed to save categories');
       }
@@ -508,15 +576,40 @@ export default function PlayerCategorizationPage() {
   const handleExportExcel = () => {
     if (!hasCalculated) return;
 
-    // Map data for export sheet
-    const exportData = sortedPlayers.map(p => {
+    // Category priority order for sorting (Red = 1 = highest)
+    const catPriority = (catName: string) => {
+      const c = categories.find(c => c.name === catName);
+      return c ? c.priority : 999;
+    };
+
+    // Sort players by final category priority, then by AI score desc within category
+    const sortedForExport = [...sortedPlayers].sort((a, b) => {
+      const propA = proposedCategories.get(a.id) || '';
+      const propB = proposedCategories.get(b.id) || '';
+      const catA = getPlayerCategory(a.id, propA);
+      const catB = getPlayerCategory(b.id, propB);
+      const prioA = catPriority(catA);
+      const prioB = catPriority(catB);
+      if (prioA !== prioB) return prioA - prioB;
+      return (b.weightedScore || 0) - (a.weightedScore || 0);
+    });
+
+    // Map data for main export sheet
+    const exportData = sortedForExport.map(p => {
       const proposed = proposedCategories.get(p.id) || '';
       const finalCategory = getPlayerCategory(p.id, proposed);
+      const isOverridden = manualOverrides.has(p.id);
+
+      const finalCatObj = categories.find(c => c.name === finalCategory);
+      const basePriceVal = finalCatObj?.base_price ?? 0;
 
       const row: { [key: string]: any } = {
         'Player Name': p.player_name,
-        'Expected Category': finalCategory,
-        'AI Performance Score': p.weightedScore !== null ? p.weightedScore : 'Unrated (New Player)',
+        'Final Category': finalCategory,
+        'Base Price': basePriceVal > 0 ? `${basePriceVal} PTS` : '—',
+        'AI Proposed': proposed || 'N/A',
+        'Override?': isOverridden ? `Yes (was: ${proposed || 'N/A'})` : 'No',
+        'AI Score (PPM)': p.weightedScore !== null ? p.weightedScore : 'Unrated',
       };
 
       // Add historical seasons columns
@@ -528,9 +621,10 @@ export default function PlayerCategorizationPage() {
       return row;
     });
 
+
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'AI Proposed Categories');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Player Categories');
 
     // Auto-adjust column widths
     const maxLenMap = new Map<string, number>();
@@ -538,19 +632,15 @@ export default function PlayerCategorizationPage() {
       Object.keys(row).forEach(key => {
         const valStr = String(row[key]);
         const currentMax = maxLenMap.get(key) || key.length;
-        if (valStr.length > currentMax) {
-          maxLenMap.set(key, valStr.length);
-        }
+        if (valStr.length > currentMax) maxLenMap.set(key, valStr.length);
       });
     });
+    worksheet['!cols'] = Array.from(maxLenMap.keys()).map(key => ({ wch: (maxLenMap.get(key) || 10) + 4 }));
 
-    const wscols = Array.from(maxLenMap.keys()).map(key => ({
-      wch: (maxLenMap.get(key) || 10) + 4
-    }));
-    worksheet['!cols'] = wscols;
-
-    XLSX.writeFile(workbook, `AI-Player-Categorization-Season-${userSeasonId}.xlsx`);
+    XLSX.writeFile(workbook, `Player-Categorization-${userSeasonId}.xlsx`);
   };
+
+
 
   // Filtered player list based on search term and advanced selectors
   const filteredPlayers = useMemo(() => {
@@ -582,6 +672,27 @@ export default function PlayerCategorizationPage() {
       return matchesSearch && matchesCategory && matchesOverride && matchesPlayerStatus;
     });
   }, [sortedPlayers, searchTerm, proposedCategories, filterProposedCategory, filterOverrideStatus, filterPlayerStatus, manualOverrides, hasCalculated]);
+
+  // Display order: sorted by FINAL category (respecting manual overrides), then by AI score
+  const displayPlayers = useMemo(() => {
+    const catPriority = (catName: string) => {
+      const c = categories.find(c => c.name === catName);
+      return c ? c.priority : 999;
+    };
+    return [...filteredPlayers].sort((a, b) => {
+      const propA = proposedCategories.get(a.id) || '';
+      const propB = proposedCategories.get(b.id) || '';
+      const catA = getPlayerCategory(a.id, propA);
+      const catB = getPlayerCategory(b.id, propB);
+      const prioA = catPriority(catA);
+      const prioB = catPriority(catB);
+      if (prioA !== prioB) return prioA - prioB;
+      // Within same category: AI score desc, new players last
+      if (a.isNewPlayer && !b.isNewPlayer) return 1;
+      if (!a.isNewPlayer && b.isNewPlayer) return -1;
+      return (b.weightedScore || 0) - (a.weightedScore || 0);
+    });
+  }, [filteredPlayers, proposedCategories, manualOverrides, categories]);
 
   // Loading skeleton UI
   if (authLoading || loading) {
@@ -991,6 +1102,7 @@ export default function PlayerCategorizationPage() {
                     <th className="px-6 py-3.5">Player</th>
                     <th className="px-6 py-3.5">Current Category</th>
                     <th className="px-6 py-3.5 text-center">AI Rating Suggestion</th>
+                    <th className="px-6 py-3.5 text-center">Base Price</th>
                     <th className="px-6 py-3.5 text-center">AI Score (PPM)</th>
                     {historicalSeasonsList.filter(s => selectedHistoricalSeasons.includes(s)).map(seasonId => (
                       <th key={seasonId} className="px-4 py-3.5 text-center font-mono">{seasonId}</th>
@@ -999,14 +1111,15 @@ export default function PlayerCategorizationPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/60 text-xs text-slate-700">
-                  {filteredPlayers.map((player) => {
+                  {displayPlayers.map((player) => {
                     const proposed = proposedCategories.get(player.id) || '';
                     const finalCategory = getPlayerCategory(player.id, proposed);
                     const isOverridden = manualOverrides.has(player.id);
                     const isExpanded = expandedPlayerId === player.id;
-
                     const proposedCatObj = categories.find(c => c.name === proposed);
                     const currentCatObj = categories.find(c => c.name === player.category);
+                    const finalCatObj = categories.find(c => c.name === finalCategory);
+                    const basePrice = finalCatObj?.base_price ?? 0;
                     let categoryBadgeClass = 'bg-slate-50 text-slate-500 border border-slate-200';
                     let changeLabel = null;
 
@@ -1063,6 +1176,11 @@ export default function PlayerCategorizationPage() {
                             </div>
                           </td>
 
+                          {/* Base Price */}
+                          <td className="px-6 py-4 font-mono font-bold text-center text-slate-700">
+                            {basePrice > 0 ? `${basePrice} PTS` : '—'}
+                          </td>
+
                           {/* AI Score */}
                           <td className="px-6 py-4 font-mono font-bold text-center text-slate-700">
                             {player.weightedScore !== null ? player.weightedScore : '—'}
@@ -1106,7 +1224,7 @@ export default function PlayerCategorizationPage() {
                         {/* Calculation Breakdown expanded view */}
                         {isExpanded && (
                           <tr>
-                            <td colSpan={5 + historicalSeasonsList.filter(s => selectedHistoricalSeasons.includes(s)).length} className="px-6 py-4 bg-slate-50/50 border-t border-b border-slate-200">
+                            <td colSpan={6 + historicalSeasonsList.filter(s => selectedHistoricalSeasons.includes(s)).length} className="px-6 py-4 bg-slate-50/50 border-t border-b border-slate-200">
                               {player.isNewPlayer ? (
                                 <div className="p-4 bg-amber-50/40 border border-amber-200/80 rounded-xl space-y-2 font-mono text-slate-700">
                                   <div className="font-bold text-amber-800 text-[10px] uppercase tracking-wider">AI Calculation Breakdown</div>
@@ -1218,6 +1336,107 @@ export default function PlayerCategorizationPage() {
         )}
 
       </div>
+
+      {/* ─── Override Summary Side Panel ─── */}
+      {hasCalculated && manualOverrides.size > 0 && (
+        <div className="fixed bottom-6 right-6 z-50 w-72 bg-white border border-amber-300 rounded-2xl shadow-xl overflow-hidden transition-all">
+
+          {/* Header — always visible, acts as toggle */}
+          <button
+            onClick={() => setIsPanelExpanded(prev => !prev)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-amber-50 border-b border-amber-200 hover:bg-amber-100 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <span className="text-xs font-mono font-black uppercase tracking-wider text-amber-800">
+                Manual Overrides ({manualOverrides.size})
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {!isPanelExpanded && (
+                <span className="text-[10px] font-bold text-amber-700 bg-amber-200 rounded-full px-2 py-0.5">
+                  {manualOverrides.size}
+                </span>
+              )}
+              {isPanelExpanded ? (
+                <ChevronDown className="w-4 h-4 text-amber-600" />
+              ) : (
+                <ChevronUp className="w-4 h-4 text-amber-600" />
+              )}
+            </div>
+          </button>
+
+          {/* Collapsible body */}
+          {isPanelExpanded && (
+            <>
+              {/* Scrollable override list */}
+              <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
+                {Array.from(manualOverrides.entries()).map(([playerId, overrideCat]) => {
+                  const player = sortedPlayers.find(p => p.id === playerId);
+                  if (!player) return null;
+                  const proposed = proposedCategories.get(playerId) || 'N/A';
+
+                  const catColor = (cat: string) => {
+                    if (cat === 'Red') return 'text-rose-700 bg-rose-50 border-rose-200';
+                    if (cat === 'Black') return 'text-slate-100 bg-slate-900 border-slate-950';
+                    if (cat === 'Blue') return 'text-blue-700 bg-blue-50 border-blue-200';
+                    if (cat === 'White') return 'text-slate-700 bg-slate-100 border-slate-300';
+                    return 'text-slate-500 bg-slate-50 border-slate-200';
+                  };
+
+                  return (
+                    <div key={playerId} className="px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-slate-50">
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-bold text-slate-800 font-mono truncate">{player.player_name}</span>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${catColor(proposed)}`}>{proposed}</span>
+                          <span className="text-[9px] text-slate-400">→</span>
+                          <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${catColor(overrideCat)}`}>{overrideCat}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          setManualOverrides(prev => {
+                            const copy = new Map(prev);
+                            copy.delete(playerId);
+                            return copy;
+                          });
+                          // Immediately remove from DB
+                          try {
+                            await fetchWithTokenRefresh(
+                              `/api/committee/player-categorization/temp-overrides?seasonId=${userSeasonId}&playerId=${playerId}`,
+                              { method: 'DELETE' }
+                            );
+                          } catch (err) {
+                            console.error('Could not remove saved override:', err);
+                          }
+                        }}
+                        className="text-[10px] font-bold text-slate-400 hover:text-rose-600 transition-colors flex-shrink-0"
+                        title="Remove override"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Footer */}
+              <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                  Click "Apply" to save
+                </span>
+                <button
+                  onClick={() => setManualOverrides(new Map())}
+                  className="text-[10px] font-bold text-rose-600 hover:text-rose-800 uppercase tracking-wider transition-colors"
+                >
+                  Clear All
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
