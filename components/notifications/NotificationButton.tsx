@@ -343,7 +343,7 @@ export default function NotificationButton() {
       <div className="relative">
         <button
           onClick={() => setShowDevices(!showDevices)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-100 text-green-700 hover:bg-green-200 transition-all text-sm font-medium"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-100 text-green-700 hover:bg-green-200 transition-all text-sm font-medium z-10"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -355,83 +355,92 @@ export default function NotificationButton() {
         </button>
         
         {showDevices && (
-          <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50">
-            {devices.length > 0 ? (
-              <>
-                <h4 className="text-sm font-bold text-gray-900 mb-3">Your Devices</h4>
-                <div className="space-y-2 max-h-64 overflow-y-auto mb-3">
-                  {devices.map((device) => (
-                    <div key={device.id} className="flex items-start justify-between gap-2 p-3 bg-gray-50 rounded-lg">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-medium text-gray-900">{device.deviceName}</span>
-                          {!device.isActive && (
-                            <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] rounded">Inactive</span>
-                          )}
+          <>
+            {/* Backdrop to close dropdown when clicking outside */}
+            <div 
+              className="fixed inset-0 z-40" 
+              onClick={() => setShowDevices(false)}
+            />
+            
+            {/* Dropdown - using absolute with high z-index */}
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50">
+              {devices.length > 0 ? (
+                <>
+                  <h4 className="text-sm font-bold text-gray-900 mb-3">Your Devices</h4>
+                  <div className="space-y-2 max-h-64 overflow-y-auto mb-3">
+                    {devices.map((device) => (
+                      <div key={device.id} className="flex items-start justify-between gap-2 p-3 bg-gray-50 rounded-lg">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-medium text-gray-900">{device.deviceName}</span>
+                            {!device.isActive && (
+                              <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] rounded">Inactive</span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-gray-500">
+                            {device.browser} • {device.os}
+                          </div>
+                          <div className="text-[10px] text-gray-400 mt-0.5">
+                            Last used: {new Date(device.lastUsedAt).toLocaleDateString()}
+                          </div>
                         </div>
-                        <div className="text-[11px] text-gray-500">
-                          {device.browser} • {device.os}
-                        </div>
-                        <div className="text-[10px] text-gray-400 mt-0.5">
-                          Last used: {new Date(device.lastUsedAt).toLocaleDateString()}
-                        </div>
+                        <button
+                          onClick={() => handleRemoveDevice(device.id)}
+                          className="flex-shrink-0 p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                          title="Remove device"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleRemoveDevice(device.id)}
-                        className="flex-shrink-0 p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                        title="Remove device"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Add This Device Button */}
-                <div className="pt-3 border-t border-gray-200">
+                    ))}
+                  </div>
+                  
+                  {/* Add This Device Button */}
+                  <div className="pt-3 border-t border-gray-200">
+                    <button
+                      onClick={handleAddCurrentDevice}
+                      disabled={loading}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Adding...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                          </svg>
+                          Add This Device ({currentDevice})
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h4 className="text-sm font-bold text-gray-900 mb-2">No Devices Found</h4>
+                  <p className="text-xs text-gray-600 mb-3">
+                    Notifications are enabled but no devices are registered. This might be due to:
+                  </p>
+                  <ul className="text-xs text-gray-600 mb-3 ml-4 list-disc space-y-1">
+                    <li>Database migration not run</li>
+                    <li>Token registration failed</li>
+                    <li>Permission granted but setup incomplete</li>
+                  </ul>
                   <button
-                    onClick={handleAddCurrentDevice}
-                    disabled={loading}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleResetNotifications}
+                    className="w-full px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium rounded-lg transition-colors"
                   >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Adding...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add This Device ({currentDevice})
-                      </>
-                    )}
+                    Reset & Try Again
                   </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h4 className="text-sm font-bold text-gray-900 mb-2">No Devices Found</h4>
-                <p className="text-xs text-gray-600 mb-3">
-                  Notifications are enabled but no devices are registered. This might be due to:
-                </p>
-                <ul className="text-xs text-gray-600 mb-3 ml-4 list-disc space-y-1">
-                  <li>Database migration not run</li>
-                  <li>Token registration failed</li>
-                  <li>Permission granted but setup incomplete</li>
-                </ul>
-                <button
-                  onClick={handleResetNotifications}
-                  className="w-full px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium rounded-lg transition-colors"
-                >
-                  Reset & Try Again
-                </button>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
+          </>
         )}
       </div>
     );
