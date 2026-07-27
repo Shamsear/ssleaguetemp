@@ -414,11 +414,11 @@ export default function TeamDashboard() {
   // Show unassigned dashboard if no active season or not registered
   if (!seasonStatus?.hasActiveSeason || !seasonStatus?.isRegistered) {
     return (
-      <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 overflow-visible">
         {/* Decorative eSports glowing ambient overlay */}
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
 
-        <div className="max-w-7xl mx-auto relative z-10 space-y-8">
+        <div className="max-w-7xl mx-auto relative z-10 space-y-8 overflow-visible">{/* Unregistered team dashboard content */}
           {/* Team Header */}
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex flex-col sm:flex-row items-center gap-6 w-full md:w-auto">
