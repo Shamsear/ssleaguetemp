@@ -497,7 +497,7 @@ export default function TeamDashboard() {
           )}
 
           {/* Push Notifications Card */}
-          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm border-l-4 border-blue-500 space-y-4">
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm border-l-4 border-blue-500 space-y-4 overflow-visible">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
@@ -510,7 +510,7 @@ export default function TeamDashboard() {
                   <p className="text-xs text-slate-500 font-sans mt-0.5">Get real-time updates about auctions, matches, and results directly on your device.</p>
                 </div>
               </div>
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 relative z-10">
                 <NotificationButton />
               </div>
             </div>
