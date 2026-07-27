@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -9,11 +9,11 @@ import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import * as XLSX from 'xlsx';
 
-interface PlayerStats {
-  player_id: string;
-  player_name: string;
-  category: string;
+interface SeasonStats {
+  season_id: string;
+  season_name: string;
   team_name: string | null;
+  category: string;
   points: number;
   matches_played: number;
   goals_scored: number;
@@ -26,14 +26,20 @@ interface PlayerStats {
   price: number;
 }
 
+interface PlayerData {
+  player_id: string;
+  player_name: string;
+  seasons: Map<string, SeasonStats>;
+}
+
 export default function ExportPlayersPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { isCommitteeAdmin, userSeasonId } = usePermissions();
 
   const [seasons, setSeasons] = useState<any[]>([]);
-  const [selectedSeason, setSelectedSeason] = useState<string>('');
-  const [players, setPlayers] = useState<PlayerStats[]>([]);
+  const [selectedSeasons, setSelectedSeasons] = useState<string[]>([]);
+  const [players, setPlayers] = useState<Map<string, PlayerData>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -60,16 +66,28 @@ export default function ExportPlayersPage() {
         );
 
         const seasonsSnapshot = await getDocs(seasonsQuery);
-        const seasonsData = seasonsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        const seasonsData = seasonsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            // Use name if exists, otherwise format ID nicely (SSPSLS18 -> Season 18)
+            displayName: data.name || doc.id.replace('SSPSLS', 'Season '),
+          };
+        });
+
+        // Sort by season number (extract number from ID)
+        seasonsData.sort((a, b) => {
+          const numA = parseInt(a.id.replace(/\D/g, '')) || 0;
+          const numB = parseInt(b.id.replace(/\D/g, '')) || 0;
+          return numA - numB;
+        });
 
         setSeasons(seasonsData);
         
         // Set current season as default
         if (userSeasonId) {
-          setSelectedSeason(userSeasonId);
+          setSelectedSeasons([userSeasonId]);
         }
       } catch (error) {
         console.error('Error fetching seasons:', error);
@@ -81,9 +99,27 @@ export default function ExportPlayersPage() {
     }
   }, [isCommitteeAdmin, userSeasonId]);
 
+  const toggleSeason = (seasonId: string) => {
+    setSelectedSeasons(prev => {
+      if (prev.includes(seasonId)) {
+        return prev.filter(s => s !== seasonId);
+      } else {
+        return [...prev, seasonId];
+      }
+    });
+  };
+
+  const selectAllSeasons = () => {
+    setSelectedSeasons(seasons.map(s => s.id));
+  };
+
+  const clearAllSeasons = () => {
+    setSelectedSeasons([]);
+  };
+
   const fetchPlayers = async () => {
-    if (!selectedSeason) {
-      setError('Please select a season');
+    if (selectedSeasons.length === 0) {
+      setError('Please select at least one season');
       return;
     }
 
@@ -92,34 +128,98 @@ export default function ExportPlayersPage() {
     setSuccess(null);
 
     try {
-      const response = await fetchWithTokenRefresh(
-        `/api/realplayers/season-players?seasonId=${selectedSeason}`
+      // Step 1: Get players registered in current admin season (base season)
+      const baseSeasonResponse = await fetchWithTokenRefresh(
+        `/api/realplayers/season-players?seasonId=${userSeasonId}`
       );
-      const result = await response.json();
+      const baseSeasonResult = await baseSeasonResponse.json();
 
-      if (result.success && result.data) {
-        const playersData: PlayerStats[] = result.data.map((p: any) => ({
-          player_id: p.player_id || '',
-          player_name: p.player_name || '',
-          category: p.category || 'N/A',
-          team_name: p.team_name || 'Unassigned',
-          points: parseInt(p.points) || 0,
-          matches_played: parseInt(p.matches_played) || 0,
-          goals_scored: parseInt(p.goals_scored) || 0,
-          assists: parseInt(p.assists) || 0,
-          clean_sheets: parseInt(p.clean_sheets) || 0,
-          wins: parseInt(p.wins) || 0,
-          draws: parseInt(p.draws) || 0,
-          losses: parseInt(p.losses) || 0,
-          base_price: parseInt(p.base_price) || 0,
-          price: parseInt(p.price) || 0,
-        }));
-
-        setPlayers(playersData);
-        setSuccess(`Loaded ${playersData.length} players from ${selectedSeason}`);
-      } else {
-        setError('Failed to load players');
+      if (!baseSeasonResult.success || !baseSeasonResult.data) {
+        setError('Failed to load players from current season');
+        setIsLoading(false);
+        return;
       }
+
+      // Get unique player IDs from base season
+      const basePlayerIds = new Set<string>();
+      baseSeasonResult.data.forEach((p: any) => {
+        if (p.player_id) {
+          basePlayerIds.add(p.player_id);
+        }
+      });
+
+      console.log(`Found ${basePlayerIds.size} players registered in ${userSeasonId}`);
+
+      // Step 2: Fetch stats for these players from all selected seasons
+      const playersMap = new Map<string, PlayerData>();
+
+      // Initialize all players from base season
+      baseSeasonResult.data.forEach((p: any) => {
+        const playerId = p.player_id || '';
+        const playerName = p.player_name || '';
+
+        if (playerId && basePlayerIds.has(playerId)) {
+          playersMap.set(playerId, {
+            player_id: playerId,
+            player_name: playerName,
+            seasons: new Map(),
+          });
+        }
+      });
+
+      for (const seasonId of selectedSeasons) {
+        const response = await fetchWithTokenRefresh(
+          `/api/realplayers/season-players?seasonId=${seasonId}`
+        );
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          const seasonName = seasons.find(s => s.id === seasonId)?.displayName || seasons.find(s => s.id === seasonId)?.name || seasonId.replace('SSPSLS', 'Season ');
+
+          // Only include players that are in the base season
+          result.data.forEach((p: any) => {
+            const playerId = p.player_id || '';
+
+            if (!playerId || !basePlayerIds.has(playerId)) {
+              return; // Skip players not in base season
+            }
+
+            const playerData = playersMap.get(playerId)!;
+            
+            // Add season stats
+            playerData.seasons.set(seasonId, {
+              season_id: seasonId,
+              season_name: seasonName,
+              team_name: p.team_name || 'Unassigned',
+              category: p.category || 'N/A',
+              points: parseInt(p.points) || 0,
+              matches_played: parseInt(p.matches_played) || 0,
+              goals_scored: parseInt(p.goals_scored) || 0,
+              assists: parseInt(p.assists) || 0,
+              clean_sheets: parseInt(p.clean_sheets) || 0,
+              wins: parseInt(p.wins) || 0,
+              draws: parseInt(p.draws) || 0,
+              losses: parseInt(p.losses) || 0,
+              base_price: parseInt(p.base_price) || 0,
+              price: parseInt(p.price) || 0,
+            });
+          });
+        }
+      }
+
+      // Count players with no stats in any selected season
+      let playersWithNoStats = 0;
+      playersMap.forEach(player => {
+        if (player.seasons.size === 0) {
+          playersWithNoStats++;
+        }
+      });
+
+      setPlayers(playersMap);
+      setSuccess(
+        `Loaded ${playersMap.size} players registered in ${userSeasonId} with stats from ${selectedSeasons.length} season(s)` +
+        (playersWithNoStats > 0 ? ` (${playersWithNoStats} players with no stats in selected seasons)` : '')
+      );
     } catch (error: any) {
       console.error('Error fetching players:', error);
       setError('Failed to fetch players');
@@ -129,66 +229,145 @@ export default function ExportPlayersPage() {
   };
 
   const exportToExcel = () => {
-    if (players.length === 0) {
+    if (players.size === 0) {
       setError('No players to export. Please load data first.');
       return;
     }
 
     try {
-      // Prepare data for Excel
-      const excelData = players.map((player, index) => ({
-        '#': index + 1,
-        'Player ID': player.player_id,
-        'Player Name': player.player_name,
-        'Category': player.category,
-        'Team': player.team_name || 'Unassigned',
-        'Base Price': player.base_price,
-        'Auction Price': player.price,
-        'Points': player.points,
-        'Matches': player.matches_played,
-        'Goals': player.goals_scored,
-        'Assists': player.assists,
-        'Clean Sheets': player.clean_sheets,
-        'Wins': player.wins,
-        'Draws': player.draws,
-        'Losses': player.losses,
-      }));
+      // Sort selected seasons by number for consistent column order
+      const sortedSeasons = [...selectedSeasons].sort((a, b) => {
+        const numA = parseInt(a.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b.replace(/\D/g, '')) || 0;
+        return numA - numB;
+      });
 
-      // Create worksheet
-      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      // Create manual array data for proper header structure
+      const excelArray: any[][] = [];
+
+      // Header Row 1: Season names (merged style)
+      const headerRow1: any[] = ['#', 'Player Name'];
+      sortedSeasons.forEach(seasonId => {
+        const season = seasons.find(s => s.id === seasonId);
+        const seasonName = season?.displayName || season?.name || seasonId.replace('SSPSLS', 'Season ');
+        // Add season name only once, followed by empty cells for colspan effect (5 columns)
+        headerRow1.push(seasonName, '', '', '', '');
+      });
+      excelArray.push(headerRow1);
+
+      // Header Row 2: Stat column names
+      const headerRow2: any[] = ['', '']; // Empty for player info columns
+      sortedSeasons.forEach(() => {
+        headerRow2.push('Matches', 'Goals', 'Wins', 'Draws', 'Losses');
+      });
+      excelArray.push(headerRow2);
+
+      // Data rows
+      Array.from(players.values()).forEach((player, index) => {
+        const row: any[] = [
+          index + 1,
+          player.player_name,
+        ];
+
+        // Add stats for each season
+        sortedSeasons.forEach(seasonId => {
+          const stats = player.seasons.get(seasonId);
+
+          if (stats) {
+            row.push(
+              stats.matches_played,
+              stats.goals_scored,
+              stats.wins,
+              stats.draws,
+              stats.losses
+            );
+          } else {
+            // Player didn't play in this season
+            row.push('-', '-', '-', '-', '-');
+          }
+        });
+
+        excelArray.push(row);
+      });
+
+      // Create worksheet from array
+      const worksheet = XLSX.utils.aoa_to_sheet(excelArray);
 
       // Set column widths
       const columnWidths = [
         { wch: 5 },  // #
-        { wch: 15 }, // Player ID
         { wch: 25 }, // Player Name
-        { wch: 12 }, // Category
-        { wch: 20 }, // Team
-        { wch: 12 }, // Base Price
-        { wch: 12 }, // Auction Price
-        { wch: 10 }, // Points
-        { wch: 10 }, // Matches
-        { wch: 10 }, // Goals
-        { wch: 10 }, // Assists
-        { wch: 12 }, // Clean Sheets
-        { wch: 10 }, // Wins
-        { wch: 10 }, // Draws
-        { wch: 10 }, // Losses
       ];
+
+      // Add widths for each season's columns (5 columns per season)
+      sortedSeasons.forEach(() => {
+        columnWidths.push(
+          { wch: 10 }, // Matches
+          { wch: 10 }, // Goals
+          { wch: 8 },  // Wins
+          { wch: 8 },  // Draws
+          { wch: 8 }   // Losses
+        );
+      });
+
       worksheet['!cols'] = columnWidths;
+
+      // Merge cells for season headers
+      const merges: any[] = [];
+      let colIndex = 2; // Start after player info columns (0, 1)
+      
+      sortedSeasons.forEach(() => {
+        // Merge season name across its 5 stat columns
+        merges.push({
+          s: { r: 0, c: colIndex },     // Start: row 0, col colIndex
+          e: { r: 0, c: colIndex + 4 }  // End: row 0, col colIndex + 4
+        });
+        colIndex += 5;
+      });
+
+      worksheet['!merges'] = merges;
+
+      // Style header rows (bold)
+      const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+      
+      // Style first two rows (headers)
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const address1 = XLSX.utils.encode_cell({ r: 0, c: C });
+        const address2 = XLSX.utils.encode_cell({ r: 1, c: C });
+        
+        if (worksheet[address1]) {
+          worksheet[address1].s = {
+            font: { bold: true, sz: 12 },
+            alignment: { horizontal: 'center', vertical: 'center' },
+            fill: { fgColor: { rgb: 'FFD4AF37' } }
+          };
+        }
+        
+        if (worksheet[address2]) {
+          worksheet[address2].s = {
+            font: { bold: true, sz: 10 },
+            alignment: { horizontal: 'center', vertical: 'center' },
+            fill: { fgColor: { rgb: 'FFF3F4F6' } }
+          };
+        }
+      }
 
       // Create workbook
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Players');
 
-      // Generate filename
-      const seasonName = seasons.find(s => s.id === selectedSeason)?.name || selectedSeason;
-      const filename = `RealPlayers_${seasonName}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      // Generate filename with proper season names
+      const seasonsText = selectedSeasons.length === 1
+        ? (seasons.find(s => s.id === selectedSeasons[0])?.displayName || 
+           seasons.find(s => s.id === selectedSeasons[0])?.name || 
+           selectedSeasons[0].replace('SSPSLS', 'S'))
+        : `${selectedSeasons.length}_Seasons`;
+      const filename = `RealPlayers_${seasonsText}_${new Date().toISOString().split('T')[0]}.xlsx`;
 
       // Download
       XLSX.writeFile(workbook, filename);
 
-      setSuccess(`Excel file "${filename}" downloaded successfully!`);
+      setSuccess(`Excel file "${filename}" downloaded successfully with ${players.size} players!`);
     } catch (error: any) {
       console.error('Error exporting to Excel:', error);
       setError('Failed to export to Excel');
@@ -259,29 +438,49 @@ export default function ExportPlayersPage() {
         {/* Season Selection & Actions */}
         <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-6">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-              Select Season
-            </label>
-            <select
-              value={selectedSeason}
-              onChange={(e) => setSelectedSeason(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-sm font-bold outline-none uppercase tracking-wide cursor-pointer hover:border-slate-300 transition-all"
-            >
-              <option value="">Choose season...</option>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                Select Seasons ({selectedSeasons.length} selected)
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={selectAllSeasons}
+                  className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold uppercase transition-all"
+                >
+                  Select All
+                </button>
+                <button
+                  onClick={clearAllSeasons}
+                  className="px-3 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-lg text-[10px] font-bold uppercase transition-all"
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-64 overflow-y-auto p-3 bg-slate-50 rounded-xl border border-slate-200">
               {seasons.map(season => (
-                <option key={season.id} value={season.id}>
-                  {season.name || season.id}
-                </option>
+                <button
+                  key={season.id}
+                  onClick={() => toggleSeason(season.id)}
+                  className={`px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wide transition-all border-2 ${
+                    selectedSeasons.includes(season.id)
+                      ? 'bg-amber-500 text-white border-amber-600 shadow-md'
+                      : 'bg-white text-slate-700 border-slate-200 hover:border-amber-300'
+                  }`}
+                >
+                  {season.displayName || season.name || season.id}
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
           <div className="flex gap-3">
             <button
               onClick={fetchPlayers}
-              disabled={!selectedSeason || isLoading}
+              disabled={selectedSeasons.length === 0 || isLoading}
               className={`flex-1 py-3 px-4 font-mono font-bold text-sm uppercase tracking-wider rounded-xl transition-all shadow-sm ${
-                !selectedSeason || isLoading
+                selectedSeasons.length === 0 || isLoading
                   ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed'
                   : 'bg-slate-800 hover:bg-slate-700 text-white'
               }`}
@@ -292,15 +491,15 @@ export default function ExportPlayersPage() {
                   Loading...
                 </span>
               ) : (
-                'Load Players Data'
+                `Load Players from ${selectedSeasons.length} Season(s)`
               )}
             </button>
 
             <button
               onClick={exportToExcel}
-              disabled={players.length === 0}
+              disabled={players.size === 0}
               className={`flex-1 py-3 px-4 font-mono font-bold text-sm uppercase tracking-wider rounded-xl transition-all shadow-sm ${
-                players.length === 0
+                players.size === 0
                   ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-500/20'
               }`}
@@ -314,53 +513,91 @@ export default function ExportPlayersPage() {
         </div>
 
         {/* Players Preview */}
-        {players.length > 0 && (
+        {players.size > 0 && (
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm">
             <div className="bg-slate-800 text-white p-5 border-b border-slate-700">
               <h2 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
                 <FileSpreadsheet className="w-4 h-4 text-amber-500" />
-                Players Preview ({players.length} players)
+                Players Preview ({players.size} unique players)
               </h2>
             </div>
 
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-96 overflow-y-auto overflow-x-auto">
               <table className="w-full text-xs font-mono">
                 <thead className="bg-slate-50 sticky top-0">
                   <tr>
-                    <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">#</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Player</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Category</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Team</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">Matches</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">Goals</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">W</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">D</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">L</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-50 z-10">#</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 sticky left-12 bg-slate-50 z-10">Player</th>
+                    {[...selectedSeasons].sort((a, b) => {
+                      const numA = parseInt(a.replace(/\D/g, '')) || 0;
+                      const numB = parseInt(b.replace(/\D/g, '')) || 0;
+                      return numA - numB;
+                    }).map(seasonId => {
+                      const season = seasons.find(s => s.id === seasonId);
+                      const seasonName = season?.displayName || season?.name || seasonId.replace('SSPSLS', 'Season ');
+                      return (
+                        <th key={seasonId} colSpan={5} className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-blue-600 border-l-2 border-slate-300">
+                          {seasonName}
+                        </th>
+                      );
+                    })}
+                  </tr>
+                  <tr className="bg-slate-100">
+                    <th className="px-4 py-2 sticky left-0 bg-slate-100 z-10"></th>
+                    <th className="px-4 py-2 sticky left-12 bg-slate-100 z-10"></th>
+                    {[...selectedSeasons].sort((a, b) => {
+                      const numA = parseInt(a.replace(/\D/g, '')) || 0;
+                      const numB = parseInt(b.replace(/\D/g, '')) || 0;
+                      return numA - numB;
+                    }).map(seasonId => (
+                      <React.Fragment key={`${seasonId}-sub`}>
+                        <th className="px-2 py-2 text-center text-[9px] font-bold uppercase text-slate-500 border-l-2 border-slate-300">M</th>
+                        <th className="px-2 py-2 text-center text-[9px] font-bold uppercase text-blue-600">G</th>
+                        <th className="px-2 py-2 text-center text-[9px] font-bold uppercase text-emerald-600">W</th>
+                        <th className="px-2 py-2 text-center text-[9px] font-bold uppercase text-amber-600">D</th>
+                        <th className="px-2 py-2 text-center text-[9px] font-bold uppercase text-rose-600">L</th>
+                      </React.Fragment>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {players.slice(0, 50).map((player, index) => (
+                  {Array.from(players.values()).slice(0, 50).map((player, index) => (
                     <tr key={player.player_id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-4 py-3 text-slate-500 font-bold">{index + 1}</td>
-                      <td className="px-4 py-3 font-bold text-slate-800">{player.player_name}</td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded text-[9px] font-bold uppercase">
-                          {player.category}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-slate-600 font-semibold">{player.team_name}</td>
-                      <td className="px-4 py-3 text-right font-bold text-slate-700">{player.matches_played}</td>
-                      <td className="px-4 py-3 text-right font-bold text-blue-600">{player.goals_scored}</td>
-                      <td className="px-4 py-3 text-right font-bold text-emerald-600">{player.wins}</td>
-                      <td className="px-4 py-3 text-right font-bold text-amber-600">{player.draws}</td>
-                      <td className="px-4 py-3 text-right font-bold text-rose-600">{player.losses}</td>
+                      <td className="px-4 py-3 text-slate-500 font-bold sticky left-0 bg-white z-10">{index + 1}</td>
+                      <td className="px-4 py-3 font-bold text-slate-800 sticky left-12 bg-white z-10">{player.player_name}</td>
+                      {[...selectedSeasons].sort((a, b) => {
+                        const numA = parseInt(a.replace(/\D/g, '')) || 0;
+                        const numB = parseInt(b.replace(/\D/g, '')) || 0;
+                        return numA - numB;
+                      }).map(seasonId => {
+                        const stats = player.seasons.get(seasonId);
+                        return (
+                          <React.Fragment key={`${player.player_id}-${seasonId}`}>
+                            <td className="px-2 py-3 text-center font-bold text-slate-700 border-l-2 border-slate-200">
+                              {stats ? stats.matches_played : '-'}
+                            </td>
+                            <td className="px-2 py-3 text-center font-bold text-blue-600">
+                              {stats ? stats.goals_scored : '-'}
+                            </td>
+                            <td className="px-2 py-3 text-center font-bold text-emerald-600">
+                              {stats ? stats.wins : '-'}
+                            </td>
+                            <td className="px-2 py-3 text-center font-bold text-amber-600">
+                              {stats ? stats.draws : '-'}
+                            </td>
+                            <td className="px-2 py-3 text-center font-bold text-rose-600">
+                              {stats ? stats.losses : '-'}
+                            </td>
+                          </React.Fragment>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {players.length > 50 && (
+              {players.size > 50 && (
                 <div className="p-4 bg-slate-50 text-center text-[10px] text-slate-500 font-bold uppercase">
-                  Showing first 50 of {players.length} players. Export to see all.
+                  Showing first 50 of {players.size} players. Export to see all.
                 </div>
               )}
             </div>
@@ -369,15 +606,18 @@ export default function ExportPlayersPage() {
 
         {/* Info Card */}
         <div className="console-card bg-blue-50 border border-blue-200/60 rounded-2xl p-4 font-mono text-xs">
-          <h3 className="font-bold text-blue-800 uppercase mb-2 text-[10px]">📊 Export Includes:</h3>
+          <h3 className="font-bold text-blue-800 uppercase mb-2 text-[10px]">📊 How This Works:</h3>
           <ul className="space-y-1 text-blue-700 font-semibold">
-            <li>• Player ID, Name, Category</li>
-            <li>• Team Assignment</li>
-            <li>• Base Price & Auction Price</li>
-            <li>• Points, Matches Played</li>
-            <li>• Goals, Assists, Clean Sheets</li>
-            <li>• Wins, Draws, Losses</li>
+            <li>• Shows players registered in <strong>your current season ({userSeasonId})</strong></li>
+            <li>• Displays their stats from <strong>selected seasons</strong></li>
+            <li>• One row per player with stats columns for each season</li>
+            <li>• Shows "-" for seasons where player didn't play</li>
           </ul>
+          <div className="mt-3 p-2 bg-blue-100 border border-blue-300 rounded-lg">
+            <p className="text-[10px] font-bold text-blue-800">
+              💡 Example: If you're S18 admin and select S15, S16, S17, S18 - you'll see S18 players with their stats from all 4 seasons.
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -428,6 +428,19 @@ export default function SuperAdminDashboard() {
                 <p className="text-[11px] text-slate-550 mt-1.5 font-sans leading-relaxed">Clean up orphaned member records and resolve data schema conflicts.</p>
               </div>
             </button>
+
+            <button 
+              onClick={() => router.push('/dashboard/superadmin/player-stats-bulk-update')}
+              className="console-card bg-white border border-slate-200/60 hover:border-blue-400/40 p-5 shadow-sm transition-all hover:-translate-y-0.5 flex flex-col justify-between min-h-[160px] text-left"
+            >
+              <div>
+                <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 w-fit mb-4 border border-blue-100">
+                  <Edit className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-800 text-sm">Bulk Stats Update</h3>
+                <p className="text-[11px] text-slate-550 mt-1.5 font-sans leading-relaxed">Export player stats, update via Excel, and reimport with preview validation.</p>
+              </div>
+            </button>
           </div>
         </div>
 
