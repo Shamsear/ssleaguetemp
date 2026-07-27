@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     if (!isValidCron) {
       // If not a valid cron request, require committee authorization
-      const auth = await verifyAuth(['committee_admin']), request);
+      const auth = await verifyAuth(['committee_admin'], request);
       if (!auth.authenticated) {
         return NextResponse.json(
           { 

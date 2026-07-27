@@ -11,6 +11,10 @@ interface OptimizedImageProps {
   quality?: number;
   className?: string;
   fallback?: React.ReactNode;
+  // Photo positioning props (set by super admin)
+  photoPositionX?: number | null;
+  photoPositionY?: number | null;
+  photoScale?: number | null;
 }
 
 /**
@@ -25,6 +29,9 @@ export default function OptimizedImage({
   quality = 80,
   className = '',
   fallback,
+  photoPositionX,
+  photoPositionY,
+  photoScale,
 }: OptimizedImageProps) {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -42,15 +49,31 @@ export default function OptimizedImage({
     return <>{fallback}</>;
   }
 
+  // Calculate inline styles for positioning
+  const imageStyle: React.CSSProperties = {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  };
+  
+  if (photoPositionX !== null && photoPositionX !== undefined) {
+    imageStyle.objectPosition = `${photoPositionX}% ${photoPositionY || 50}%`;
+  }
+  
+  if (photoScale !== null && photoScale !== undefined && photoScale !== 1) {
+    imageStyle.transform = `scale(${photoScale})`;
+    imageStyle.transformOrigin = 'center';
+  }
+
   return (
-    <div className="relative">
+    <div className={`relative overflow-hidden w-full h-full ${className}`}>
       {loading && (
-        <div className={`absolute inset-0 bg-gray-200 animate-pulse rounded ${className}`} />
+        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
       )}
       <img
         src={optimizedSrc}
         alt={alt}
-        className={className}
+        style={imageStyle}
         loading="lazy"
         onLoad={() => setLoading(false)}
         onError={() => {

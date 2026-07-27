@@ -14,6 +14,9 @@ interface RealPlayer {
   player_name: string;
   display_name?: string;
   photo_url?: string;
+  photo_position_x_circle?: number | null;
+  photo_position_y_circle?: number | null;
+  photo_scale_circle?: number | null;
   team: string;
   team_id: string;
   category: string;
@@ -105,10 +108,24 @@ export default function RealPlayersPage() {
                 const photosData = await photosResponse.json();
                 if (photosData.success && photosData.players) {
                   const photoMap = new Map(
-                    photosData.players.map((p: any) => [p.player_id, p.photo_url])
+                    photosData.players.map((p: any) => [
+                      p.player_id, 
+                      {
+                        photo_url: p.photo_url,
+                        photo_position_x_circle: p.photo_position_x_circle,
+                        photo_position_y_circle: p.photo_position_y_circle,
+                        photo_scale_circle: p.photo_scale_circle,
+                      }
+                    ])
                   );
                   rawPlayers.forEach((player) => {
-                    (player as any).photo_url = photoMap.get(player.player_id) || null;
+                    const photoData = photoMap.get(player.player_id);
+                    if (photoData) {
+                      (player as any).photo_url = photoData.photo_url || null;
+                      (player as any).photo_position_x_circle = photoData.photo_position_x_circle;
+                      (player as any).photo_position_y_circle = photoData.photo_position_y_circle;
+                      (player as any).photo_scale_circle = photoData.photo_scale_circle;
+                    }
                   });
                 }
               }
@@ -131,6 +148,16 @@ export default function RealPlayersPage() {
     };
 
     fetchData();
+
+    // Set up polling to check for updates every 30 seconds
+    const pollInterval = setInterval(() => {
+      console.log('🔄 Checking for player updates...');
+      fetchData();
+    }, 30000); // 30 seconds
+
+    return () => {
+      clearInterval(pollInterval);
+    };
   }, [user]);
 
   const filteredPlayers = players
@@ -331,7 +358,10 @@ export default function RealPlayersPage() {
                           width={64}
                           height={64}
                           quality={85}
-                          className="w-full h-full object-cover rounded-2xl"
+                          className="rounded-2xl"
+                          photoPositionX={player.photo_position_x_circle}
+                          photoPositionY={player.photo_position_y_circle}
+                          photoScale={player.photo_scale_circle}
                           fallback={
                             <div className="w-full h-full flex items-center justify-center bg-amber-50 rounded-2xl">
                               <span className="text-xl font-bold text-amber-600">{player.player_name[0]}</span>
@@ -418,7 +448,10 @@ export default function RealPlayersPage() {
                             width={64}
                             height={64}
                             quality={85}
-                            className="w-full h-full object-cover rounded-2xl"
+                            className="rounded-2xl"
+                            photoPositionX={player.photo_position_x_circle}
+                            photoPositionY={player.photo_position_y_circle}
+                            photoScale={player.photo_scale_circle}
                             fallback={
                               <div className="w-full h-full flex items-center justify-center bg-amber-50 rounded-2xl">
                                 <span className="text-xl font-bold text-amber-600">{player.player_name[0]}</span>

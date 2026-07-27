@@ -12,6 +12,7 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { useDashboardWebSocket } from '@/hooks/useWebSocket';
 import ManagerRegistrationForm from '@/components/forms/ManagerRegistrationForm';
 import OwnerRegistrationForm from '@/components/forms/OwnerRegistrationForm';
+import NotificationButton from '@/components/notifications/NotificationButton';
 
 // Position constants
 const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'DMF', 'CMF', 'AMF', 'LMF', 'RMF', 'LWF', 'RWF', 'SS', 'CF'];
@@ -728,6 +729,26 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
             <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 sm:p-4 text-center font-mono">
               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Avg Rating</div>
               <div className="text-sm sm:text-lg lg:text-2xl font-black text-amber-600">{stats.avgRating.toFixed(1)}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Push Notifications Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm border-l-4 border-blue-500 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900 leading-tight">Push Notifications</h3>
+                <p className="text-xs text-slate-500 font-sans mt-0.5">Get real-time updates about auctions, matches, and results directly on your device.</p>
+              </div>
+            </div>
+            <div className="flex-shrink-0">
+              <NotificationButton />
             </div>
           </div>
         </div>

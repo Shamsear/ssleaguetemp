@@ -177,6 +177,22 @@ export default function MobileNav() {
     }
   };
 
+  // Get the appropriate profile URL based on user role
+  const getProfileUrl = () => {
+    if (!user) return '/login';
+
+    switch (user.role) {
+      case 'super_admin':
+        return '/dashboard/superadmin/profile';
+      case 'committee_admin':
+        return '/dashboard/committee/profile';
+      case 'team':
+        return '/dashboard/team/profile';
+      default:
+        return '/profile';
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -395,16 +411,16 @@ export default function MobileNav() {
               </Link>
             ) : (
               <Link
-                href={getDashboardUrl()}
+                href={getProfileUrl()}
                 className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ${
-                  isActiveLink('/profile') || isActiveLink('/dashboard/team/profile') ? 'bg-[#D4AF37]/15 text-[#D4AF37]' : 'hover:bg-[#D4AF37]/8 text-slate-700'
+                  isActiveLink(getProfileUrl()) ? 'bg-[#D4AF37]/15 text-[#D4AF37]' : 'hover:bg-[#D4AF37]/8 text-slate-700'
                 }`}
                 onClick={() => toggleMenu(false)}
                 title="Profile"
               >
                 {user.role === 'team' && teamLogo ? (
                   <div className={`w-6 h-6 rounded-full overflow-hidden bg-white ring-2 ${
-                    isActiveLink('/profile') || isActiveLink('/dashboard/team/profile') ? 'ring-[#D4AF37]' : 'ring-[#D4AF37]/30'
+                    isActiveLink(getProfileUrl()) ? 'ring-[#D4AF37]' : 'ring-[#D4AF37]/30'
                   }`}>
                     <Image
                       src={teamLogo}
@@ -416,7 +432,7 @@ export default function MobileNav() {
                   </div>
                 ) : (
                   <div className={`w-6 h-6 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center text-white font-bold text-[10px] shadow-sm ${
-                    isActiveLink('/profile') || isActiveLink('/dashboard/team/profile') ? 'ring-2 ring-[#D4AF37] ring-offset-1 ring-offset-white' : ''
+                    isActiveLink(getProfileUrl()) ? 'ring-2 ring-[#D4AF37] ring-offset-1 ring-offset-white' : ''
                   }`}>
                     {user.username.charAt(0).toUpperCase()}
                   </div>
@@ -642,7 +658,7 @@ export default function MobileNav() {
                   </span>
                   <div className="grid grid-cols-2 gap-2.5">
                     <Link
-                      href="/profile"
+                      href={getProfileUrl()}
                       className="p-2.5 bg-white hover:bg-[#FAF9F6] border border-[#D4AF37]/25 hover:border-[#D4AF37]/60 text-xs text-slate-700 hover:text-slate-950 rounded-xl font-semibold transition-all text-center"
                       onClick={() => toggleMenu(false)}
                     >

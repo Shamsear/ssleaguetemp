@@ -9,6 +9,9 @@ import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { CreateRealPlayerData } from '@/types/realPlayer';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 /**
  * GET /api/real-players
  * Get all real players or specific players by IDs
@@ -32,18 +35,33 @@ export async function GET(request: NextRequest) {
         });
       }
       
+      console.log(`[real-players API] Fetching ${playerIds.length} players in parallel batches...`);
+      const startTime = Date.now();
+      
       // Fetch players by IDs from Firebase
       const players: any[] = [];
       
       // Firebase 'in' query has a limit of 30, so we need to batch
       const batchSize = 30;
+      const batches = [];
+      
       for (let i = 0; i < playerIds.length; i += batchSize) {
-        const batch = playerIds.slice(i, i + batchSize);
-        const snapshot = await adminDb
+        batches.push(playerIds.slice(i, i + batchSize));
+      }
+      
+      console.log(`[real-players API] Created ${batches.length} batches of max ${batchSize} players each`);
+      
+      // Execute all batches in parallel for better performance
+      const batchPromises = batches.map(batch => 
+        adminDb
           .collection('realplayers')
           .where('player_id', 'in', batch)
-          .get();
-        
+          .get()
+      );
+      
+      const snapshots = await Promise.all(batchPromises);
+      
+      snapshots.forEach(snapshot => {
         snapshot.docs.forEach(doc => {
           const data = doc.data();
           players.push({
@@ -60,7 +78,10 @@ export async function GET(request: NextRequest) {
             category: data.category,
           });
         });
-      }
+      });
+      
+      const duration = Date.now() - startTime;
+      console.log(`[real-players API] Fetched ${players.length} players in ${duration}ms`);
       
       return NextResponse.json({
         success: true,
