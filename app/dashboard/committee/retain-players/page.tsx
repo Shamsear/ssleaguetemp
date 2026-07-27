@@ -173,8 +173,8 @@ export default function RetainPlayersPage() {
     }
 
     const percentage = parseInt(retentionPercentage);
-    if (isNaN(percentage) || percentage < 1 || percentage > 100) {
-      setError('Retention percentage must be between 1 and 100');
+    if (isNaN(percentage) || percentage < 1) {
+      setError('Retention percentage must be at least 1');
       return;
     }
 
@@ -410,7 +410,6 @@ export default function RetainPlayersPage() {
                 <input
                   type="number"
                   min="1"
-                  max="100"
                   value={retentionPercentage}
                   onChange={(e) => setRetentionPercentage(e.target.value)}
                   className="w-full px-4 py-2.5 pr-8 border border-slate-200 rounded-xl focus:border-slate-800 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none"
