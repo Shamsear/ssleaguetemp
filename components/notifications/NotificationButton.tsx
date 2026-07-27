@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { requestNotificationPermission, getNotificationPermission, isNotificationSupported } from '@/lib/firebase/messaging';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 
@@ -21,6 +22,48 @@ export default function NotificationButton() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [showDevices, setShowDevices] = useState(false);
   const [currentDevice, setCurrentDevice] = useState<string>('');
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
+
+  // Update dropdown position when button is clicked
+  useEffect(() => {
+    if (showDevices && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const dropdownWidth = 320; // 320px (80 * 4 = w-80)
+      
+      // Calculate right position (align right edge of dropdown with right edge of button)
+      let rightPos = viewportWidth - rect.right;
+      
+      // Check if dropdown would go off the left edge
+      const leftEdge = viewportWidth - rightPos - dropdownWidth;
+      if (leftEdge < 16) { // 16px minimum padding from left edge
+        // Adjust to keep dropdown on screen with 16px padding
+        rightPos = viewportWidth - dropdownWidth - 16;
+      }
+      
+      // Position dropdown below the button
+      setDropdownPosition({
+        top: rect.bottom + 8, // 8px gap below button
+        right: Math.max(16, rightPos), // Ensure at least 16px from right edge
+      });
+    }
+  }, [showDevices]);
+
+  // Close dropdown on scroll
+  useEffect(() => {
+    if (!showDevices) return;
+
+    const handleScroll = () => {
+      setShowDevices(false);
+    };
+
+    window.addEventListener('scroll', handleScroll, true); // Use capture phase to catch all scrolls
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [showDevices]);
 
   useEffect(() => {
     // Check if notifications are supported
@@ -340,30 +383,39 @@ export default function NotificationButton() {
   // Show different UI based on permission status
   if (permission === 'granted') {
     return (
-      <div className="relative">
-        <button
-          onClick={() => setShowDevices(!showDevices)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-100 text-green-700 hover:bg-green-200 transition-all text-sm font-medium z-10"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-          Notifications On ({devices.length})
-          <svg className={`w-4 h-4 transition-transform ${showDevices ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+      <>
+        <div className="relative">
+          <button
+            ref={buttonRef}
+            onClick={() => setShowDevices(!showDevices)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-100 text-green-700 hover:bg-green-200 transition-all text-sm font-medium z-10"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            Notifications On ({devices.length})
+            <svg className={`w-4 h-4 transition-transform ${showDevices ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
         
-        {showDevices && (
+        {showDevices && typeof window !== 'undefined' && createPortal(
           <>
             {/* Backdrop to close dropdown when clicking outside */}
             <div 
-              className="fixed inset-0 z-40" 
+              className="fixed inset-0 z-[9998]" 
               onClick={() => setShowDevices(false)}
             />
             
-            {/* Dropdown - using absolute with high z-index */}
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50">
+            {/* Dropdown - using fixed positioning with Portal */}
+            <div 
+              className="fixed w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-[9999]"
+              style={{
+                top: `${dropdownPosition.top}px`,
+                right: `${dropdownPosition.right}px`,
+              }}
+            >
               {devices.length > 0 ? (
                 <>
                   <h4 className="text-sm font-bold text-gray-900 mb-3">Your Devices</h4>
@@ -440,9 +492,10 @@ export default function NotificationButton() {
                 </>
               )}
             </div>
-          </>
+          </>,
+          document.body
         )}
-      </div>
+      </>
     );
   }
 
