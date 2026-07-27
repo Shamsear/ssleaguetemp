@@ -55,19 +55,18 @@ export async function GET(request: NextRequest) {
       }));
     }
 
-    // ── Players (Neon SQL) ─────────────────────────────────────────────────
+    // ── Players (Firebase) ─────────────────────────────────────────────────
     if (type === 'all' || type === 'players') {
-      const rows = await sql`
-        SELECT player_id, player_name, photo_url
-        FROM realplayers
-        ORDER BY player_name ASC
-      `;
-      results.players = rows.map((r: any) => ({
-        id: r.player_id,
-        label: r.player_name,
-        current_image: r.photo_url || null,
-        subtitle: r.player_id,
-      }));
+      const snapshot = await adminDb.collection('realplayers').orderBy('name').get();
+      results.players = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: data.player_id || doc.id,
+          label: data.name || data.player_name || doc.id,
+          current_image: data.photo_url || null,
+          subtitle: data.player_id || doc.id,
+        };
+      });
     }
 
     return NextResponse.json({ success: true, data: results });
@@ -161,12 +160,23 @@ export async function POST(request: NextRequest) {
 
       // ── Player Photo ─────────────────────────────────────────────────────
       case 'player': {
-        await sql`
-          UPDATE realplayers
-          SET photo_url = ${imageUrl},
-              updated_at = NOW()
-          WHERE player_id = ${entityId}
-        `;
+        // Find the player document by player_id field
+        const playersSnapshot = await adminDb.collection('realplayers')
+          .where('player_id', '==', entityId)
+          .limit(1)
+          .get();
+        
+        if (playersSnapshot.empty) {
+          return NextResponse.json({ success: false, error: 'Player not found' }, { status: 404 });
+        }
+
+        const playerDoc = playersSnapshot.docs[0];
+        await playerDoc.ref.update({
+          photo_url: imageUrl,
+          ...(fileId ? { photo_file_id: fileId } : {}),
+          updated_at: new Date().toISOString(),
+        });
+        
         return NextResponse.json({ success: true, message: `Player photo updated for ${entityId}` });
       }
 
@@ -241,11 +251,23 @@ export async function PATCH(request: NextRequest) {
       }
 
       case 'player': {
-        await sql`
-          UPDATE realplayers
-          SET photo_url = NULL, updated_at = NOW()
-          WHERE player_id = ${entityId}
-        `;
+        // Find the player document by player_id field
+        const playersSnapshot = await adminDb.collection('realplayers')
+          .where('player_id', '==', entityId)
+          .limit(1)
+          .get();
+        
+        if (playersSnapshot.empty) {
+          return NextResponse.json({ success: false, error: 'Player not found' }, { status: 404 });
+        }
+
+        const playerDoc = playersSnapshot.docs[0];
+        await playerDoc.ref.update({
+          photo_url: null,
+          photo_file_id: null,
+          updated_at: new Date().toISOString(),
+        });
+        
         return NextResponse.json({ success: true, message: `Player photo cleared for ${entityId}` });
       }
 

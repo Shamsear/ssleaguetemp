@@ -140,30 +140,65 @@ export async function POST(request: NextRequest) {
 
     for (const update of updates) {
       try {
-        // Build SET clause dynamically based on which fields are being updated
-        const setClauses: string[] = [];
-        const values: any[] = [];
-
+        // Build updates object with all fields to update
+        const fieldsToUpdate: Record<string, any> = {};
+        
         Object.keys(update.updates).forEach(field => {
           const dbColumn = fieldMapping[field] || field;
-          setClauses.push(`${dbColumn} = $${values.length + 1}`);
-          values.push(update.updates[field]);
+          fieldsToUpdate[dbColumn] = update.updates[field];
         });
 
-        // Add updated_at
-        setClauses.push(`updated_at = NOW()`);
-
-        // Build and execute query
-        const query = `
-          UPDATE realplayerstats
-          SET ${setClauses.join(', ')}
-          WHERE player_id = $${values.length + 1}
-          AND season_id = $${values.length + 2}
+        const player_id = update.player_id;
+        const season_id = update.season_id;
+        
+        // Verify the record exists
+        const existingRecord = await sql`
+          SELECT id FROM realplayerstats 
+          WHERE player_id = ${player_id} AND season_id = ${season_id}
         `;
-
-        values.push(update.player_id, update.season_id);
-
-        await sql.unsafe(query, values);
+        
+        if (existingRecord.length === 0) {
+          errorCount++;
+          errors.push(`Player ${player_id}: Record not found in database`);
+          continue;
+        }
+        
+        // Update each field individually
+        for (const [field, value] of Object.entries(fieldsToUpdate)) {
+          switch(field) {
+            case 'points':
+              await sql`UPDATE realplayerstats SET points = ${value}, updated_at = NOW() WHERE player_id = ${player_id} AND season_id = ${season_id}`;
+              break;
+            case 'matches_played':
+              await sql`UPDATE realplayerstats SET matches_played = ${value}, updated_at = NOW() WHERE player_id = ${player_id} AND season_id = ${season_id}`;
+              break;
+            case 'wins':
+              await sql`UPDATE realplayerstats SET wins = ${value}, updated_at = NOW() WHERE player_id = ${player_id} AND season_id = ${season_id}`;
+              break;
+            case 'draws':
+              await sql`UPDATE realplayerstats SET draws = ${value}, updated_at = NOW() WHERE player_id = ${player_id} AND season_id = ${season_id}`;
+              break;
+            case 'losses':
+              await sql`UPDATE realplayerstats SET losses = ${value}, updated_at = NOW() WHERE player_id = ${player_id} AND season_id = ${season_id}`;
+              break;
+            case 'goals_scored':
+              await sql`UPDATE realplayerstats SET goals_scored = ${value}, updated_at = NOW() WHERE player_id = ${player_id} AND season_id = ${season_id}`;
+              break;
+            case 'goals_conceded':
+              await sql`UPDATE realplayerstats SET goals_conceded = ${value}, updated_at = NOW() WHERE player_id = ${player_id} AND season_id = ${season_id}`;
+              break;
+            case 'assists':
+              await sql`UPDATE realplayerstats SET assists = ${value}, updated_at = NOW() WHERE player_id = ${player_id} AND season_id = ${season_id}`;
+              break;
+            case 'clean_sheets':
+              await sql`UPDATE realplayerstats SET clean_sheets = ${value}, updated_at = NOW() WHERE player_id = ${player_id} AND season_id = ${season_id}`;
+              break;
+            case 'motm_awards':
+              await sql`UPDATE realplayerstats SET motm_awards = ${value}, updated_at = NOW() WHERE player_id = ${player_id} AND season_id = ${season_id}`;
+              break;
+          }
+        }
+        
         successCount++;
 
       } catch (error: any) {
