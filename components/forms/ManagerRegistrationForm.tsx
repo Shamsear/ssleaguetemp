@@ -74,7 +74,7 @@ export default function ManagerRegistrationForm({
     const fetchPlayers = async () => {
       setLoadingPlayers(true);
       try {
-        const response = await fetch(`/api/team/${teamId}/players?seasonId=${seasonId}`);
+        const response = await fetch(`/api/team/real-players?teamId=${teamId}&seasonId=${seasonId}`);
         const result = await response.json();
         
         if (result.success && Array.isArray(result.data)) {

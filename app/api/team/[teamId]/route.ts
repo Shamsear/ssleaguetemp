@@ -118,14 +118,14 @@ export async function GET(
     let realPlayersData;
     
     if (isModernSeason(seasonId)) {
-      // Season 16+: Query player_seasons table
+      // Season 16-17 only: Query player_seasons table
       realPlayersData = await sql`
         SELECT * FROM player_seasons 
         WHERE season_id = ${seasonId}
         AND team_id = ${teamId}
       `;
     } else {
-      // Season 1-15: Query realplayerstats table
+      // Season 1-15 and S18+: Query realplayerstats table
       realPlayersData = await sql`
         SELECT * FROM realplayerstats 
         WHERE season_id = ${seasonId}
