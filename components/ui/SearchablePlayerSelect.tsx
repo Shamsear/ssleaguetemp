@@ -246,9 +246,7 @@ export default function SearchablePlayerSelect({
               ))
             )}
           </div>
-        </>
-        ,
-        document.body
+        </>, document.body
       )}
     </div>
   );
