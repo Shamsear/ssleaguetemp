@@ -47,6 +47,17 @@ interface PlayerAward {
   team_logo?: string;      // Team logo
 }
 
+const getCategoryColor = (category: string) => {
+  const cat = (category || '').trim().toUpperCase();
+  if (cat === 'RED') return 'bg-rose-50 text-rose-700 border-rose-200/50';
+  if (cat === 'BLUE') return 'bg-blue-50 text-blue-700 border-blue-200/50';
+  if (cat === 'GOLD') return 'bg-amber-50 text-amber-700 border-amber-200/50';
+  if (cat === 'SILVER') return 'bg-slate-100 text-slate-700 border-slate-200/50';
+  if (cat === 'BLACK') return 'bg-slate-900 text-slate-100 border-slate-950';
+  if (cat === 'WHITE') return 'bg-white text-slate-800 border-slate-200';
+  return 'bg-emerald-50 text-emerald-700 border-emerald-200/50';
+};
+
 export default function PlayerStatsByRoundPage() {
   const { user, loading } = useAuth();
   const { selectedTournamentId } = useTournamentContext();
@@ -700,7 +711,14 @@ export default function PlayerStatsByRoundPage() {
                               player.player_name.charAt(0).toUpperCase()
                             )}
                           </div>
-                          <span className="text-xs font-black text-slate-800">{player.player_name}</span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-black text-slate-800">{player.player_name}</span>
+                            {(player as any).category && (
+                              <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-lg border uppercase tracking-wider ${getCategoryColor((player as any).category)}`}>
+                                {(player as any).category}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-3.5 text-left whitespace-nowrap text-xs font-extrabold text-slate-500 uppercase">

@@ -448,7 +448,7 @@ export default function TeamDashboard() {
                       <img 
                         src={teamLogoUrl}
                         alt="Team logo" 
-                        className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
+                        className="absolute inset-0 w-full h-full object-cover group-hover:opacity-75 transition-opacity"
                         style={{
                           objectPosition: `${logoPositionXSquare ?? 50}% ${logoPositionYSquare ?? 50}%`,
                           transform: `scale(${logoScaleSquare ?? 1})`,

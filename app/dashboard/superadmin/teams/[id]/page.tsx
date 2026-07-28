@@ -428,7 +428,7 @@ export default function TeamDetailsPage() {
                 <img 
                   src={team.logo_url} 
                   alt={`${team.team_name} logo`}
-                  className="w-full h-full object-cover p-1"
+                  className="absolute inset-0 w-full h-full object-cover"
                   style={{
                     objectPosition: `${(team as any).logo_position_x ?? 50}% ${(team as any).logo_position_y ?? 50}%`,
                     transform: `scale(${(team as any).logo_scale ?? 1})`,

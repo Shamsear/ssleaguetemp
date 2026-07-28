@@ -279,12 +279,12 @@ export default function TeamDetailPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono">
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 flex-shrink-0 bg-white border border-slate-200/60 rounded-2xl flex items-center justify-center p-1.5 shadow-md relative overflow-hidden">
+            <div className="h-16 w-16 flex-shrink-0 bg-white border border-slate-200/60 rounded-2xl flex items-center justify-center p-0 shadow-md relative overflow-hidden">
               {team.logoUrl ? (
                 <img 
                   src={team.logoUrl} 
                   alt={team.name} 
-                  className="object-cover w-full h-full" 
+                  className="absolute inset-0 w-full h-full object-cover" 
                   style={{
                     objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
                     transform: `scale(${(team as any).logo_scale_square ?? 1})`,

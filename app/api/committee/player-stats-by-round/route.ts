@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { adminDb } from '@/lib/firebase/admin';
 
 /**
  * GET /api/committee/player-stats-by-round
@@ -204,6 +205,67 @@ export async function GET(request: NextRequest) {
       console.log(`[Player Stats By Round] Found ${matchups.length} total matchups`);
     }
 
+    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const usesCategoryPoints = seasonNum >= 18;
+
+    // Fetch Firestore categories to calculate category points dynamically
+    const categoriesSnapshot = await adminDb.collection('categories').get();
+    const categoriesMap = new Map();
+    categoriesSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      categoriesMap.set(doc.id.toLowerCase(), data);
+      if (data.name) {
+        categoriesMap.set(data.name.toLowerCase(), data);
+      }
+    });
+
+    // Fetch Firestore realplayers collection to get their assigned categories
+    const firebasePlayersSnapshot = await adminDb.collection('realplayers').get();
+    const firebasePlayersMap = new Map();
+    firebasePlayersSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      firebasePlayersMap.set(String(data.player_id), data);
+    });
+
+    const getCategoryBasedPoints = (player_id: string, opponent_id: string, gd: number) => {
+      const playerDetails = firebasePlayersMap.get(String(player_id));
+      const opponentDetails = firebasePlayersMap.get(String(opponent_id));
+
+      if (!playerDetails || !opponentDetails) {
+        return Math.max(-5, Math.min(5, gd));
+      }
+
+      const playerCat = (playerDetails.category || playerDetails.category_name || '').trim().toLowerCase();
+      const opponentCat = (opponentDetails.category || opponentDetails.category_name || '').trim().toLowerCase();
+
+      const playerCatConfig = categoriesMap.get(playerCat);
+      const opponentCatConfig = categoriesMap.get(opponentCat);
+
+      if (!playerCatConfig || !opponentCatConfig) {
+        return Math.max(-5, Math.min(5, gd));
+      }
+
+      const levelDiff = Math.abs((Number(playerCatConfig.priority) || 1) - (Number(opponentCatConfig.priority) || 1));
+      const outcome = gd > 0 ? 'win' : (gd === 0 ? 'draw' : 'loss');
+
+      if (outcome === 'win') {
+        if (levelDiff === 0) return Number(playerCatConfig.points_same_category) || 0;
+        if (levelDiff === 1) return Number(playerCatConfig.points_one_level_diff) || 0;
+        if (levelDiff === 2) return Number(playerCatConfig.points_two_level_diff) || 0;
+        return Number(playerCatConfig.points_three_level_diff) || 0;
+      } else if (outcome === 'draw') {
+        if (levelDiff === 0) return Number(playerCatConfig.draw_same_category) || 0;
+        if (levelDiff === 1) return Number(playerCatConfig.draw_one_level_diff) || 0;
+        if (levelDiff === 2) return Number(playerCatConfig.draw_two_level_diff) || 0;
+        return Number(playerCatConfig.draw_three_level_diff) || 0;
+      } else {
+        if (levelDiff === 0) return Number(playerCatConfig.loss_same_category) || 0;
+        if (levelDiff === 1) return Number(playerCatConfig.loss_one_level_diff) || 0;
+        if (levelDiff === 2) return Number(playerCatConfig.loss_two_level_diff) || 0;
+        return Number(playerCatConfig.loss_three_level_diff) || 0;
+      }
+    };
+
     // Aggregate stats for each player
     const playerStatsMap = new Map<string, any>();
 
@@ -237,8 +299,10 @@ export async function GET(request: NextRequest) {
 
         // Calculate goal difference for this match
         const matchGD = (matchup.home_goals || 0) - (matchup.away_goals || 0);
-        // Cap points at +5 or -5 per match
-        const matchPoints = Math.max(-5, Math.min(5, matchGD));
+        // Calculate points based on category diff or goal difference
+        const matchPoints = usesCategoryPoints 
+          ? getCategoryBasedPoints(matchup.home_player_id, matchup.away_player_id, matchGD)
+          : Math.max(-5, Math.min(5, matchGD));
         player.points += matchPoints;
 
         if (matchup.home_goals > matchup.away_goals) player.wins++;
@@ -278,8 +342,10 @@ export async function GET(request: NextRequest) {
 
         // Calculate goal difference for this match
         const matchGD = (matchup.away_goals || 0) - (matchup.home_goals || 0);
-        // Cap points at +5 or -5 per match
-        const matchPoints = Math.max(-5, Math.min(5, matchGD));
+        // Calculate points based on category diff or goal difference
+        const matchPoints = usesCategoryPoints 
+          ? getCategoryBasedPoints(matchup.away_player_id, matchup.home_player_id, matchGD)
+          : Math.max(-5, Math.min(5, matchGD));
         player.points += matchPoints;
 
         if (matchup.away_goals > matchup.home_goals) player.wins++;
@@ -432,6 +498,11 @@ export async function GET(request: NextRequest) {
           }
         }
         
+        const playerDetails = firebasePlayersMap.get(String(player.player_id));
+        if (playerDetails) {
+          player.category = playerDetails.category || playerDetails.category_name || null;
+        }
+
         if (teamLogo) {
           player.team_logo = teamLogo;
           logosAdded++;

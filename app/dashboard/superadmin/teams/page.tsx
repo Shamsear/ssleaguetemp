@@ -422,12 +422,12 @@ export default function TeamsManagement() {
                     <tr key={team.id} className="hover:bg-slate-50/40 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
                             {team.logo_url ? (
                               <img 
                                 src={team.logo_url} 
                                 alt=""
-                                className="w-full h-full object-cover"
+                                className="absolute inset-0 w-full h-full object-cover"
                                 style={{
                                   objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
                                   transform: `scale(${(team as any).logo_scale_square ?? 1})`,
@@ -510,12 +510,12 @@ export default function TeamsManagement() {
                 <div key={team.id} className="p-5 space-y-4 hover:bg-slate-50/40 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      <div className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
                         {team.logo_url ? (
                           <img 
                             src={team.logo_url} 
                             alt=""
-                            className="w-full h-full object-cover"
+                            className="absolute inset-0 w-full h-full object-cover"
                             style={{
                               objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
                               transform: `scale(${(team as any).logo_scale_square ?? 1})`,

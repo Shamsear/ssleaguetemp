@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,7 +34,8 @@ export async function GET(request: NextRequest) {
           assists,
           auction_value,
           star_rating,
-          salary_per_match
+          salary_per_match,
+          category
         FROM player_seasons
         WHERE season_id = ${season_id}
         ORDER BY points DESC, goal_difference DESC, goals_scored DESC
@@ -58,26 +60,44 @@ export async function GET(request: NextRequest) {
           draws,
           losses,
           clean_sheets,
-          assists
+          assists,
+          category
         FROM realplayerstats
         WHERE season_id = ${season_id}
         ORDER BY points DESC, goal_difference DESC, goals_scored DESC
       `;
     }
 
+    // Fetch Firestore realplayers collection to map the category
+    const firebasePlayersSnapshot = await adminDb.collection('realplayers').get();
+    const firebasePlayersMap = new Map();
+    firebasePlayersSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      firebasePlayersMap.set(String(data.player_id), data);
+    });
+
+    const enrichedPlayers = players.map((p: any) => {
+      const firebaseData = firebasePlayersMap.get(String(p.player_id)) || {};
+      return {
+        ...p,
+        category: firebaseData.category || firebaseData.category_name || p.category || 'BRONZE'
+      };
+    });
+
     // Debug logging
     console.log('[Committee Player Stats API] Season:', season_id);
-    console.log('[Committee Player Stats API] Total players:', players.length);
-    if (players.length > 0) {
+    console.log('[Committee Player Stats API] Total players:', enrichedPlayers.length);
+    if (enrichedPlayers.length > 0) {
       console.log('[Committee Player Stats API] First player:', {
-        player_id: players[0].player_id,
-        player_name: players[0].player_name,
-        points: players[0].points,
-        base_points: players[0].base_points
+        player_id: enrichedPlayers[0].player_id,
+        player_name: enrichedPlayers[0].player_name,
+        points: enrichedPlayers[0].points,
+        base_points: enrichedPlayers[0].base_points,
+        category: enrichedPlayers[0].category
       });
     }
 
-    return NextResponse.json({ players });
+    return NextResponse.json({ players: enrichedPlayers });
   } catch (error) {
     console.error('Error fetching player stats:', error);
     return NextResponse.json(

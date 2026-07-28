@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import { BarChart2, ArrowLeft, Pencil, Check, Search, Calendar, Users, Trophy, ClipboardList, ShieldAlert, CheckCircle, Star, Activity } from 'lucide-react';
+import { db } from '@/lib/firebase/client';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 
 interface PlayerStats {
   id: string;
@@ -48,6 +50,17 @@ interface Season {
   name: string;
 }
 
+const getCategoryColor = (category: string) => {
+  const cat = (category || '').trim().toUpperCase();
+  if (cat === 'RED') return 'bg-rose-50 text-rose-700 border-rose-200/50';
+  if (cat === 'BLUE') return 'bg-blue-50 text-blue-700 border-blue-200/50';
+  if (cat === 'GOLD') return 'bg-amber-50 text-amber-700 border-amber-200/50';
+  if (cat === 'SILVER') return 'bg-slate-100 text-slate-700 border-slate-200/50';
+  if (cat === 'BLACK') return 'bg-slate-900 text-slate-100 border-slate-950';
+  if (cat === 'WHITE') return 'bg-white text-slate-800 border-slate-200';
+  return 'bg-emerald-50 text-emerald-700 border-emerald-200/50';
+};
+
 export default function PlayerStatsPage() {
   const { user, loading: authLoading } = useAuth();
   const { userSeasonId } = usePermissions();
@@ -77,43 +90,51 @@ export default function PlayerStatsPage() {
     }
   }, [user, authLoading, router]);
 
-  // Load available seasons
+  // Load the active season
   useEffect(() => {
-    const loadSeasons = async () => {
+    const loadActiveSeason = async () => {
       try {
-        const response = await fetchWithTokenRefresh('/api/seasons');
-        if (response.ok) {
-          const data = await response.json();
-          const allSeasons = data.seasons || [];
-          
-          // Filter to show only SSPSLS16 and later (hide historical seasons)
-          const filteredSeasons = allSeasons.filter((s: Season) => {
-            // Extract season number (e.g., "SSPSLS16" &rarr; 16)
-            const match = s.id.match(/\d+$/);
-            if (match) {
-              const seasonNumber = parseInt(match[0]);
-              return seasonNumber >= 16; // Show only season 16 and onwards
+        setLoading(true);
+        let activeSeasonId = userSeasonId || '';
+        let activeSeasonName = '';
+
+        // If no userSeasonId, fallback to first active season
+        if (!activeSeasonId) {
+          const seasonsQuery = query(collection(db, 'seasons'));
+          const seasonsSnapshot = await getDocs(seasonsQuery);
+          for (const docSnap of seasonsSnapshot.docs) {
+            const data = docSnap.data();
+            if (data.status === 'active' || data.status !== 'completed') {
+              activeSeasonId = docSnap.id;
+              activeSeasonName = data.name || `Season ${data.season_number || ''}`;
+              break;
             }
-            return true; // Keep seasons without numbers
-          });
-          
-          setSeasons(filteredSeasons);
-          
-          // Set default season to SSPSLS16 or first available
-          const defaultSeason = filteredSeasons.find((s: Season) => s.id === 'SSPSLS16') || filteredSeasons[0];
-          if (defaultSeason) {
-            setSelectedSeason(defaultSeason.id);
           }
         }
+
+        if (activeSeasonId) {
+          // Fetch the season list to get the friendly name
+          const response = await fetchWithTokenRefresh('/api/seasons');
+          if (response.ok) {
+            const data = await response.json();
+            const foundSeason = (data.seasons || []).find((s: Season) => s.id === activeSeasonId);
+            activeSeasonName = foundSeason ? foundSeason.name : activeSeasonId;
+          }
+          
+          setSeasons([{ id: activeSeasonId, name: activeSeasonName || activeSeasonId }]);
+          setSelectedSeason(activeSeasonId);
+        }
       } catch (error) {
-        console.error('Error loading seasons:', error);
+        console.error('Error loading active season:', error);
+      } finally {
+        setLoading(false);
       }
     };
     
     if (user && (user.role === 'committee_admin' || user.role === 'super_admin')) {
-      loadSeasons();
+      loadActiveSeason();
     }
-  }, [user]);
+  }, [user, userSeasonId]);
 
   useEffect(() => {
     if (user && (user.role === 'committee_admin' || user.role === 'super_admin') && selectedSeason) {
@@ -469,40 +490,22 @@ export default function PlayerStatsPage() {
 
         {/* Season & Search Filter Container */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Season Filter */}
-          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono">
+          {/* Season Indicator */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono flex flex-col justify-between">
             <div className="flex items-center gap-2 mb-3">
               <Calendar className="w-4 h-4 text-amber-500" />
-              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Select Season</h3>
+              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Current Season</h3>
             </div>
             {seasons.length === 0 ? (
               <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200/40 rounded-xl w-fit">
                 <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-amber-500"></div>
-                <span className="text-[10px] text-slate-500 font-bold uppercase">Loading seasons...</span>
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Loading...</span>
               </div>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {seasons.map((season) => (
-                  <button
-                    key={season.id}
-                    onClick={() => {
-                      setSelectedSeason(season.id);
-                      setEditMode(false);
-                      setEditedPlayers(new Map());
-                      setExpandedPlayer(null);
-                      setMatchdayStats(new Map());
-                    }}
-                    className={`
-                      px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer
-                      ${selectedSeason === season.id
-                        ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
-                        : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
-                      }
-                    `}
-                  >
-                    {season.name}
-                  </button>
-                ))}
+              <div className="flex items-center">
+                <span className="bg-slate-800 text-amber-400 border border-slate-900 px-4 py-2 text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-md">
+                  {seasons.find((s) => s.id === selectedSeason)?.name || selectedSeason}
+                </span>
               </div>
             )}
           </div>
@@ -690,7 +693,14 @@ export default function PlayerStatsPage() {
                                 {player.player_name.charAt(0).toUpperCase()}
                               </div>
                               <div>
-                                <span className="text-xs font-black text-slate-800">{player.player_name}</span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-xs font-black text-slate-800">{player.player_name}</span>
+                                  {(player as any).category && (
+                                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-lg border uppercase tracking-wider ${getCategoryColor((player as any).category)}`}>
+                                      {(player as any).category}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </td>

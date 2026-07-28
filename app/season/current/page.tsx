@@ -564,11 +564,11 @@ export default function CurrentSeasonPage() {
                                     <td className="py-4 px-4 text-left font-bold text-slate-900">
                                       <Link href={`/teams/${team.team_id}`} className="flex items-center gap-3 group">
                                         {team.logo_url && (
-                                          <div className="w-8 h-8 rounded bg-white border border-slate-100 flex items-center justify-center overflow-hidden">
+                                          <div className="w-8 h-8 rounded bg-white border border-slate-100 flex items-center justify-center overflow-hidden relative">
                                             <img
                                               src={team.logo_url}
                                               alt={team.team_name}
-                                              className="w-full h-full object-cover"
+                                              className="absolute inset-0 w-full h-full object-cover"
                                               style={{
                                                 objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
                                                 transform: `scale(${(team as any).logo_scale_square ?? 1})`,
@@ -613,11 +613,11 @@ export default function CurrentSeasonPage() {
                                   {team.rank}
                                 </div>
                                 {team.logo_url && (
-                                  <div className="w-10 h-10 rounded bg-white border border-slate-100 flex items-center justify-center p-1 overflow-hidden">
+                                  <div className="w-10 h-10 rounded bg-white border border-slate-100 flex items-center justify-center p-0 overflow-hidden relative">
                                     <img
                                       src={team.logo_url}
                                       alt={team.team_name}
-                                      className="w-full h-full object-cover"
+                                      className="absolute inset-0 w-full h-full object-cover"
                                       style={{
                                         objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
                                         transform: `scale(${(team as any).logo_scale_square ?? 1})`,
@@ -698,11 +698,11 @@ export default function CurrentSeasonPage() {
                                     <td className="py-3 px-2 text-left font-bold text-slate-900">
                                       <Link href={`/teams/${team.team_id}`} className="flex items-center gap-2 group text-xs">
                                         {team.team_logo && (
-                                          <div className="w-6 h-6 rounded bg-white p-0.5 border border-slate-100 overflow-hidden flex-shrink-0">
+                                          <div className="w-6 h-6 rounded bg-white border border-slate-100 overflow-hidden flex-shrink-0 relative">
                                             <img
                                               src={team.team_logo}
                                               alt={team.team_name}
-                                              className="w-full h-full object-cover"
+                                              className="absolute inset-0 w-full h-full object-cover"
                                               style={{
                                                 objectPosition: `${team.logo_position_x_square ?? 50}% ${team.logo_position_y_square ?? 50}%`,
                                                 transform: `scale(${team.logo_scale_square ?? 1})`,
