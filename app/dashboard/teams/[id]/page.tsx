@@ -306,7 +306,12 @@ export default function TeamDetailPage() {
                     <img
                       src={team.logo_url}
                       alt={team.team_name}
-                      className="object-cover w-full h-full"
+                      className="w-full h-full object-cover"
+                      style={{
+                        objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                        transform: `scale(${(team as any).logo_scale_square ?? 1})`,
+                        transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                      }}
                     />
                   ) : (
                     <div className="bg-primary/10 w-full h-full flex items-center justify-center">

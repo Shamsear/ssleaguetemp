@@ -558,11 +558,17 @@ export default function CurrentSeasonPage() {
                                     <td className="py-4 px-4 text-left font-bold text-slate-900">
                                       <Link href={`/teams/${team.team_id}`} className="flex items-center gap-3 group">
                                         {team.logo_url && (
-                                          <div className="w-8 h-8 rounded bg-white p-1 border border-slate-100 flex items-center justify-center">
+                                          <div className="w-8 h-8 rounded bg-white p-1 border border-slate-100 flex items-center justify-center overflow-hidden">
                                             <img
                                               src={team.logo_url}
                                               alt={team.team_name}
-                                              className="object-contain max-w-full max-h-full"
+                                              className="w-full h-full object-cover"
+                                              style={{
+                                                objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                                                transform: `scale(${(team as any).logo_scale_square ?? 1})`,
+                                                transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                                              }}
+                                            />
                                             />
                                           </div>
                                         )}
@@ -602,11 +608,17 @@ export default function CurrentSeasonPage() {
                                   {team.rank}
                                 </div>
                                 {team.logo_url && (
-                                  <div className="w-10 h-10 rounded bg-white border border-slate-100 flex items-center justify-center p-1">
+                                  <div className="w-10 h-10 rounded bg-white border border-slate-100 flex items-center justify-center p-1 overflow-hidden">
                                     <img
                                       src={team.logo_url}
                                       alt={team.team_name}
-                                      className="object-contain max-w-full max-h-full"
+                                      className="w-full h-full object-cover"
+                                      style={{
+                                        objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                                        transform: `scale(${(team as any).logo_scale_square ?? 1})`,
+                                        transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                                      }}
+                                    />
                                     />
                                   </div>
                                 )}

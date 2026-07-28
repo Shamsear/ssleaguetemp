@@ -26,16 +26,36 @@ export async function PATCH(
 
     const { teamId } = await params;
     const body = await request.json();
-    const { teamName, logoUrl } = body;
+    const { 
+      teamName, 
+      logoUrl, 
+      logo_position_x_circle, 
+      logo_position_y_circle, 
+      logo_scale_circle,
+      logo_position_x_square,
+      logo_position_y_square,
+      logo_scale_square
+    } = body;
 
-    if (!teamName && !logoUrl) {
+    if (!teamName && !logoUrl && 
+        logo_position_x_circle === undefined && logo_position_y_circle === undefined && logo_scale_circle === undefined &&
+        logo_position_x_square === undefined && logo_position_y_square === undefined && logo_scale_square === undefined) {
       return NextResponse.json({
         success: false,
-        error: 'At least one field (teamName or logoUrl) must be provided',
+        error: 'At least one field must be provided',
       }, { status: 400 });
     }
 
-    console.log(`[Super Admin] Updating team ${teamId}:`, { teamName, logoUrl });
+    console.log(`[Super Admin] Updating team ${teamId}:`, { 
+      teamName, 
+      logoUrl, 
+      logo_position_x_circle, 
+      logo_position_y_circle, 
+      logo_scale_circle,
+      logo_position_x_square,
+      logo_position_y_square,
+      logo_scale_square
+    });
 
     // Update Firebase teams collection
     const teamRef = adminDb.collection('teams').doc(teamId);
@@ -52,6 +72,12 @@ export async function PATCH(
     if (teamName) updateData.name = teamName;
     if (teamName) updateData.team_name = teamName;
     if (logoUrl) updateData.logo_url = logoUrl;
+    if (logo_position_x_circle !== undefined) updateData.logo_position_x_circle = logo_position_x_circle;
+    if (logo_position_y_circle !== undefined) updateData.logo_position_y_circle = logo_position_y_circle;
+    if (logo_scale_circle !== undefined) updateData.logo_scale_circle = logo_scale_circle;
+    if (logo_position_x_square !== undefined) updateData.logo_position_x_square = logo_position_x_square;
+    if (logo_position_y_square !== undefined) updateData.logo_position_y_square = logo_position_y_square;
+    if (logo_scale_square !== undefined) updateData.logo_scale_square = logo_scale_square;
 
     await teamRef.update(updateData);
     console.log('✅ Updated teams collection');

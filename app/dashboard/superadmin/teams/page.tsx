@@ -427,7 +427,12 @@ export default function TeamsManagement() {
                               <img 
                                 src={team.logo_url} 
                                 alt=""
-                                className="max-w-full max-h-full object-contain p-1"
+                                className="w-full h-full object-cover p-1"
+                                style={{
+                                  objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                                  transform: `scale(${(team as any).logo_scale_square ?? 1})`,
+                                  transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                                }}
                                 onError={(e) => {
                                   const target = e.target as HTMLElement;
                                   target.style.display = 'none';
@@ -510,7 +515,12 @@ export default function TeamsManagement() {
                           <img 
                             src={team.logo_url} 
                             alt=""
-                            className="max-w-full max-h-full object-contain p-1"
+                            className="w-full h-full object-cover p-1"
+                            style={{
+                              objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                              transform: `scale(${(team as any).logo_scale_square ?? 1})`,
+                              transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                            }}
                             onError={(e) => {
                               const target = e.target as HTMLElement;
                               target.style.display = 'none';

@@ -80,6 +80,23 @@ fetch(`/api/team/real-players?teamId=${teamId}&seasonId=${seasonId}`)
 
 This ensures manager selection shows real cricket players from `realplayerstats` instead of football players.
 
+## Verification: All Team-Side Routes Checked ✅
+
+### Routes Already Using Correct Logic (S16-S17 → player_seasons, others → realplayerstats):
+1. ✅ `/api/team/[teamId]/route.ts` - **FIXED** (updated comments)
+2. ✅ `/api/team/[teamId]/players/route.ts` - Already correct
+3. ✅ `/api/team/[teamId]/roster/route.ts` - Already correct
+4. ✅ `/api/team/tournament-players/route.ts` - Already correct
+5. ✅ `/api/team/player-stats/route.ts` - Already correct
+6. ✅ `/api/team/dashboard/route.ts` - Already correct
+7. ✅ `/api/team/player-counts/route.ts` - Already correct
+8. ✅ `/api/team/all/route.ts` - Already correct
+9. ✅ `/api/team/player-matchday-stats/route.ts` - Already correct
+10. ✅ `/api/team/historical-stats/route.ts` - Only uses `realplayerstats` (correct for historical data)
+
+### New Route Created:
+11. ✅ `/api/team/real-players/route.ts` - **NEW** (created for manager selection)
+
 ## Season Data Flow
 
 ### Season 1-15 (Historical)
@@ -105,9 +122,10 @@ This ensures manager selection shows real cricket players from `realplayerstats`
 - [ ] Test manager selection in S1-S15 seasons - should show players from `realplayerstats`
 - [ ] Verify team dashboard displays correct player data
 - [ ] Verify `/api/team/[teamId]` endpoint returns correct real players for each season range
+- [ ] Test all other team-side routes to ensure they still work correctly
 
 ## Related Issue
 Previously, when trying to select a manager in S18+ seasons, the system was querying `player_seasons` table which didn't have the correct data, resulting in empty or incorrect player lists.
 
 ## Status
-✅ **COMPLETED** - All changes implemented and ready for testing
+✅ **COMPLETED** - All changes implemented and all team-side routes verified to use correct table logic

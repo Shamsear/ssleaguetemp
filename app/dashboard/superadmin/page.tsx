@@ -460,7 +460,7 @@ export default function SuperAdminDashboard() {
                   <Shield className="w-4 h-4" />
                 </div>
                 <h3 className="font-bold text-slate-800 text-sm">Teams Directory</h3>
-                <p className="text-[11px] text-slate-550 mt-1.5 font-sans leading-relaxed">Modify team details, edit active logos, and edit overall season standings.</p>
+                <p className="text-[11px] text-slate-550 mt-1.5 font-sans leading-relaxed">Modify team details, upload & adjust logos with positioning tools, and manage season standings.</p>
               </div>
             </button>
 

@@ -294,7 +294,12 @@ function TeamsContent() {
                       <img
                         src={team.logo_url}
                         alt={team.team_name}
-                        className="object-contain w-full h-full"
+                        className="w-full h-full object-cover"
+                        style={{
+                          objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                          transform: `scale(${(team as any).logo_scale_square ?? 1})`,
+                          transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                        }}
                       />
                     </div>
                   ) : (

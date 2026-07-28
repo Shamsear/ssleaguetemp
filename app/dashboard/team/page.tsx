@@ -1079,8 +1079,17 @@ export default function TeamDashboard() {
                           className="bg-slate-50 border border-slate-100 rounded-xl p-4 hover:bg-slate-100 transition-all text-left w-full cursor-pointer flex items-center gap-3.5 hover:shadow-sm"
                         >
                           {team.logo_url ? (
-                            <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center">
-                              <img src={team.logo_url} alt={team.team_name} className="max-w-full max-h-full object-contain p-1" />
+                            <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden">
+                              <img 
+                                src={team.logo_url} 
+                                alt={team.team_name} 
+                                className="w-full h-full object-cover p-1" 
+                                style={{
+                                  objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                                  transform: `scale(${(team as any).logo_scale_square ?? 1})`,
+                                  transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                                }}
+                              />
                             </div>
                           ) : (
                             <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">

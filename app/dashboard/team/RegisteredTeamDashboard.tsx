@@ -658,8 +658,18 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
             {/* Team Logo & Name - Mobile Optimized */}
             <div className="relative group flex-shrink-0">
               {team.logo_url ? (
-                <div className="relative w-20 h-20 bg-white rounded-3xl flex items-center justify-center border border-slate-200 shadow-sm">
-                  <img src={team.logo_url} alt={team.name} className="max-w-full max-h-full object-contain p-2" loading="lazy" />
+                <div className="relative w-20 h-20 bg-white rounded-3xl flex items-center justify-center border border-slate-200 shadow-sm overflow-hidden">
+                  <img 
+                    src={team.logo_url} 
+                    alt={team.name} 
+                    className="w-full h-full object-cover p-2" 
+                    style={{
+                      objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                      transform: `scale(${(team as any).logo_scale_square ?? 1})`,
+                      transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                    }}
+                    loading="lazy" 
+                  />
                 </div>
               ) : (
                 <div className="w-20 h-20 rounded-3xl bg-amber-50 border border-amber-100 flex items-center justify-center">

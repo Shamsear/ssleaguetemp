@@ -23,7 +23,12 @@ import {
   User,
   PlusCircle,
   Camera,
-  AlertTriangle
+  AlertTriangle,
+  Download,
+  Move,
+  Maximize2,
+  Circle,
+  Square
 } from 'lucide-react';
 
 interface Player {
@@ -60,9 +65,14 @@ export default function TeamDetailsPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'players' | 'transactions' | 'settings'>('overview');
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAdjustBalanceModal, setShowAdjustBalanceModal] = useState(false);
+  const [showLogoAdjustModal, setShowLogoAdjustModal] = useState(false);
   const [balanceAdjustment, setBalanceAdjustment] = useState({ amount: 0, reason: '' });
   const [editForm, setEditForm] = useState({ teamName: '', logoUrl: '' });
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [logoPosition, setLogoPosition] = useState({ x: 50, y: 50 });
+  const [logoScale, setLogoScale] = useState(1);
+  const [modalShape, setModalShape] = useState<'circle' | 'square'>('circle');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -140,6 +150,115 @@ export default function TeamDetailsPage() {
     alert(`Adjust balance by ${formatCurrency(balanceAdjustment.amount)} - Backend to be implemented`);
     setShowAdjustBalanceModal(false);
     setBalanceAdjustment({ amount: 0, reason: '' });
+  };
+
+  const handleDownloadLogo = async () => {
+    const logoUrl = editForm.logoUrl || team.logo_url;
+    if (!logoUrl) {
+      alert('No logo available to download');
+      return;
+    }
+
+    try {
+      // Fetch the image as a blob
+      const response = await fetch(logoUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch logo');
+      }
+      
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Extract file extension from URL or use default
+      const urlObj = new URL(logoUrl);
+      const pathname = urlObj.pathname;
+      const extension = pathname.substring(pathname.lastIndexOf('.')) || '.png';
+      
+      link.download = `${team.team_code}-logo${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading logo:', error);
+      alert('Failed to download logo. Please try again or right-click and "Save image as..."');
+    }
+  };
+
+  const openLogoAdjustModal = () => {
+    if (!team.logo_url && !editForm.logoUrl) {
+      alert('Please upload a logo first before adjusting position');
+      return;
+    }
+    
+    // Load existing circle position settings or defaults
+    const posX = (team as any).logo_position_x_circle ?? 50;
+    const posY = (team as any).logo_position_y_circle ?? 50;
+    const scale = (team as any).logo_scale_circle ?? 1;
+    
+    setLogoPosition({ x: posX, y: posY });
+    setLogoScale(scale);
+    setModalShape('circle');
+    setShowLogoAdjustModal(true);
+  };
+
+  const saveLogoPosition = async () => {
+    try {
+      const updateData: any = {};
+      
+      if (modalShape === 'circle') {
+        updateData.logo_position_x_circle = logoPosition.x;
+        updateData.logo_position_y_circle = logoPosition.y;
+        updateData.logo_scale_circle = logoScale;
+      } else {
+        updateData.logo_position_x_square = logoPosition.x;
+        updateData.logo_position_y_square = logoPosition.y;
+        updateData.logo_scale_square = logoScale;
+      }
+
+      const res = await fetch(`/api/superadmin/teams/${teamId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to save logo position');
+      }
+
+      // Update the team state directly without reloading to keep modal open
+      setTeam(prevTeam => {
+        if (!prevTeam) return prevTeam;
+        return {
+          ...prevTeam,
+          ...updateData
+        };
+      });
+
+      alert(`Logo position saved successfully for ${modalShape} containers!`);
+    } catch (error) {
+      console.error('Error saving logo position:', error);
+      alert('Failed to save logo position. Please try again.');
+    }
+  };
+
+  const getLogoStyle = () => {
+    const posX = logoPosition.x ?? 50;
+    const posY = logoPosition.y ?? 50;
+    const scale = logoScale ?? 1;
+
+    return {
+      objectPosition: `${posX}% ${posY}%`,
+      transform: `scale(${scale})`,
+      transformOrigin: `${posX}% ${posY}%`,
+    };
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -309,7 +428,12 @@ export default function TeamDetailsPage() {
                 <img 
                   src={team.logo_url} 
                   alt={`${team.team_name} logo`}
-                  className="max-w-full max-h-full object-contain p-1"
+                  className="w-full h-full object-cover p-1"
+                  style={{
+                    objectPosition: `${(team as any).logo_position_x ?? 50}% ${(team as any).logo_position_y ?? 50}%`,
+                    transform: `scale(${(team as any).logo_scale ?? 1})`,
+                    transformOrigin: `${(team as any).logo_position_x ?? 50}% ${(team as any).logo_position_y ?? 50}%`,
+                  }}
                   onError={(e) => {
                     const target = e.target as HTMLElement;
                     target.style.display = 'none';
@@ -355,6 +479,14 @@ export default function TeamDetailsPage() {
         </div>
         
         <div className="flex items-center gap-3">
+          <button
+            onClick={openLogoAdjustModal}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 rounded-xl text-sm font-semibold text-amber-700 transition-all font-mono shadow-sm"
+            title="Adjust logo position and scale"
+          >
+            <Move className="w-4 h-4" />
+            Adjust Logo
+          </button>
           <button
             onClick={() => {
               setEditForm({ teamName: team.team_name, logoUrl: team.logo_url || '' });
@@ -844,15 +976,27 @@ export default function TeamDetailsPage() {
               <form onSubmit={handleUpdateTeam} className="space-y-4 font-mono text-sm">
                 <div>
                   <label className="block text-xs text-slate-500 mb-2 uppercase tracking-wider font-semibold">Current Logo</label>
-                  <div className="w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto overflow-hidden shadow-inner">
-                    {(editForm.logoUrl || team.logo_url) ? (
-                      <img 
-                        src={editForm.logoUrl || team.logo_url} 
-                        alt="Team logo preview"
-                        className="max-w-full max-h-full object-contain p-2"
-                      />
-                    ) : (
-                      <span className="text-amber-600 font-bold text-xl">{team.team_code}</span>
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shadow-inner">
+                      {(editForm.logoUrl || team.logo_url) ? (
+                        <img 
+                          src={editForm.logoUrl || team.logo_url} 
+                          alt="Team logo preview"
+                          className="max-w-full max-h-full object-contain p-2"
+                        />
+                      ) : (
+                        <span className="text-amber-600 font-bold text-xl">{team.team_code}</span>
+                      )}
+                    </div>
+                    {(editForm.logoUrl || team.logo_url) && (
+                      <button
+                        type="button"
+                        onClick={handleDownloadLogo}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all border border-slate-200"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Download Current Logo
+                      </button>
                     )}
                   </div>
                 </div>
@@ -1002,6 +1146,242 @@ export default function TeamDetailsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Logo Adjust Modal */}
+        {showLogoAdjustModal && (team.logo_url || editForm.logoUrl) && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowLogoAdjustModal(false)}>
+            <div 
+              className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-slate-200/60 flex flex-col font-mono"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="bg-slate-900 px-6 py-5 text-white flex items-center justify-between border-b border-slate-800">
+                <div>
+                  <h2 className="text-lg font-bold">{team.team_name} - Logo Position</h2>
+                  <p className="text-[10px] text-slate-450 mt-0.5">
+                    Adjust logo focus & zoom level — {modalShape === 'circle' ? '⭕ Circular container mode' : '⬜ Square container mode'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowLogoAdjustModal(false)}
+                  className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-450 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto flex-1 space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  
+                  {/* Left: Raw Image viewport with Draggable Overlay Focus */}
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                      <Move className="w-3.5 h-3.5" />
+                      Drag & Focus Pointer
+                    </h3>
+                    <div 
+                      className="relative w-full aspect-square bg-slate-100 rounded-2xl overflow-hidden cursor-move border border-slate-200/60 shadow-inner select-none"
+                      onMouseDown={(e) => {
+                        setIsDragging(true);
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = ((e.clientX - rect.left) / rect.width) * 100;
+                        const y = ((e.clientY - rect.top) / rect.height) * 100;
+                        setLogoPosition({ x, y });
+                      }}
+                      onMouseMove={(e) => {
+                        if (!isDragging) return;
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+                        const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+                        setLogoPosition({ x, y });
+                      }}
+                      onMouseUp={() => setIsDragging(false)}
+                      onMouseLeave={() => setIsDragging(false)}
+                    >
+                      {/* Full source image */}
+                      {(editForm.logoUrl || team.logo_url) && (
+                        <img
+                          src={editForm.logoUrl || team.logo_url}
+                          alt={team.team_name}
+                          className="w-full h-full object-cover"
+                          draggable={false}
+                        />
+                      )}
+                      
+                      {/* Draggable boundary mask overlay */}
+                      <div 
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background: `radial-gradient(circle at ${logoPosition.x}% ${logoPosition.y}%, transparent 0%, transparent ${150 / logoScale}px, rgba(15,23,42,0.7) ${150 / logoScale}px)`
+                        }}
+                      >
+                        {/* Anchor marker */}
+                        <div
+                          className="absolute border-2 border-amber-500 shadow-2xl rounded-xl"
+                          style={{
+                            width: `${300 / logoScale}px`,
+                            height: `${300 / logoScale}px`,
+                            left: `calc(${logoPosition.x}% - ${150 / logoScale}px)`,
+                            top: `calc(${logoPosition.y}% - ${150 / logoScale}px)`,
+                          }}
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-0.5 h-6 bg-amber-500"></div>
+                            <div className="w-6 h-0.5 bg-amber-500 absolute"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Position details */}
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs text-slate-500 flex justify-between font-mono">
+                      <span>Active Alignment:</span>
+                      <span className="font-bold text-amber-600">
+                        X: {logoPosition.x.toFixed(1)}% / Y: {logoPosition.y.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right: Crop result preview and zoom controller */}
+                  <div className="space-y-5">
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      Container Preview
+                    </h3>
+                    
+                    {/* Aspect viewport */}
+                    <div className="p-4 border border-slate-100 bg-slate-50 rounded-2xl">
+                      <div 
+                        className={`relative w-60 h-60 mx-auto bg-white border border-slate-200 shadow-md overflow-hidden ${
+                          modalShape === 'circle' ? 'rounded-full' : 'rounded-2xl'
+                        }`}
+                      >
+                        {(editForm.logoUrl || team.logo_url) && (
+                          <img
+                            src={editForm.logoUrl || team.logo_url}
+                            alt={team.team_name}
+                            className="w-full h-full object-cover"
+                            style={getLogoStyle()}
+                            draggable={false}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Mode switcher */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-slate-550 uppercase tracking-wider">Adjustment mode shape:</label>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModalShape('circle');
+                            const posX = (team as any).logo_position_x_circle ?? 50;
+                            const posY = (team as any).logo_position_y_circle ?? 50;
+                            const scale = (team as any).logo_scale_circle ?? 1;
+                            setLogoPosition({ x: posX, y: posY });
+                            setLogoScale(scale);
+                          }}
+                          className={`py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 ${
+                            modalShape === 'circle'
+                              ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20'
+                              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          <Circle className="w-3.5 h-3.5" />
+                          Circle
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModalShape('square');
+                            const posX = (team as any).logo_position_x_square ?? 50;
+                            const posY = (team as any).logo_position_y_square ?? 50;
+                            const scale = (team as any).logo_scale_square ?? 1;
+                            setLogoPosition({ x: posX, y: posY });
+                            setLogoScale(scale);
+                          }}
+                          className={`py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 ${
+                            modalShape === 'square'
+                              ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20'
+                              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          <Square className="w-3.5 h-3.5" />
+                          Square
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Zoom slider */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-xs text-slate-500 font-mono">
+                        <span>Zoom Magnifier:</span>
+                        <span className="font-bold text-slate-805">{(logoScale * 100).toFixed(0)}%</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setLogoScale(Math.max(0.5, logoScale - 0.1))}
+                          className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-extrabold text-sm transition-all"
+                        >
+                          −
+                        </button>
+                        <input
+                          type="range"
+                          min="0.5"
+                          max="2"
+                          step="0.1"
+                          value={logoScale}
+                          onChange={(e) => setLogoScale(parseFloat(e.target.value))}
+                          className="flex-1 accent-slate-800"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setLogoScale(Math.min(2, logoScale + 0.1))}
+                          className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-extrabold text-sm transition-all"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Centering button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLogoPosition({ x: 50, y: 50 });
+                        setLogoScale(1);
+                      }}
+                      className="w-full py-2 bg-slate-100 hover:bg-slate-200/80 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all"
+                    >
+                      Reset to Center
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-slate-200/60">
+                <button
+                  type="button"
+                  onClick={() => setShowLogoAdjustModal(false)}
+                  className="px-5 py-2.5 bg-white border border-slate-200/60 hover:bg-slate-100/50 text-slate-700 text-xs font-bold rounded-xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={saveLogoPosition}
+                  className="px-5 py-2.5 bg-slate-805 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+                >
+                  Save Adjustment
+                </button>
+              </div>
             </div>
           </div>
         )}
