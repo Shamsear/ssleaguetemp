@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
             LEFT JOIN teams t ON rp.winning_team_id = t.id
             WHERE rp.round_id = ${round.round_id}
               AND rp.status = 'sold'
-            ORDER BY fp.name ASC
+            ORDER BY rp.winning_bid DESC, fp.name ASC
           `;
         } else {
           // Normal round: fetch from bids
@@ -118,6 +118,17 @@ export async function GET(request: NextRequest) {
               ...player,
               price: finalPrice
             };
+          });
+
+          // Sort normal round players by decrypted price (highest to lowest)
+          players.sort((a: any, b: any) => {
+            const priceA = Number(a.price) || 0;
+            const priceB = Number(b.price) || 0;
+            if (priceB !== priceA) {
+              return priceB - priceA; // Descending by price
+            }
+            // If prices are equal, sort alphabetically by name
+            return a.player_name.localeCompare(b.player_name);
           });
         }
 
