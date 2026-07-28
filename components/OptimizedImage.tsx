@@ -62,7 +62,7 @@ export default function OptimizedImage({
   
   if (photoScale !== null && photoScale !== undefined && photoScale !== 1) {
     imageStyle.transform = `scale(${photoScale})`;
-    imageStyle.transformOrigin = 'center';
+    imageStyle.transformOrigin = `${photoPositionX ?? 50}% ${photoPositionY ?? 50}%`;
   }
 
   return (

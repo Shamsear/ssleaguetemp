@@ -68,17 +68,15 @@ export default function PlayerPhoto({
       style={{ width: size, height: size }}
     >
       {photoUrl ? (
-        <Image
+        <img
           src={photoUrl}
           alt={playerName}
-          fill
-          className="object-cover"
+          className="absolute inset-0 w-full h-full object-cover"
           style={{
             objectPosition: `${posX}% ${posY}%`,
             transform: `scale(${scale})`,
             transformOrigin: `${posX}% ${posY}%`
           }}
-          unoptimized
         />
       ) : showFallback ? (
         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100">

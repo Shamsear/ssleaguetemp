@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { BarChart2, ArrowLeft, Pencil, Check, Search, Calendar, Users, Trophy, ClipboardList, ShieldAlert, CheckCircle, Star, Activity } from 'lucide-react';
 import { db } from '@/lib/firebase/client';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import PlayerPhoto from '@/components/PlayerPhoto';
 
 interface PlayerStats {
   id: string;
@@ -689,8 +690,17 @@ export default function PlayerStatsPage() {
                           </td>
                           <td className="px-4 py-3.5 text-left whitespace-nowrap font-bold text-slate-800">
                             <div className="flex items-center gap-3">
-                              <div className="flex-shrink-0 w-8 h-8 bg-slate-800 border border-slate-900 rounded-xl flex items-center justify-center text-amber-400 font-extrabold text-xs shadow-md">
-                                {player.player_name.charAt(0).toUpperCase()}
+                              <div className="flex-shrink-0 w-8 h-8 overflow-hidden relative">
+                                <PlayerPhoto
+                                  photoUrl={(player as any).photo_url}
+                                  playerName={player.player_name}
+                                  shape="circle"
+                                  size={32}
+                                  className="rounded-xl border border-slate-900 shadow-md"
+                                  posXCircle={(player as any).photo_position_x_circle}
+                                  posYCircle={(player as any).photo_position_y_circle}
+                                  scaleCircle={(player as any).photo_scale_circle}
+                                />
                               </div>
                               <div>
                                 <div className="flex items-center gap-1.5 flex-wrap">

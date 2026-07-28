@@ -80,7 +80,14 @@ export async function GET(request: NextRequest) {
       const firebaseData = firebasePlayersMap.get(String(p.player_id)) || {};
       return {
         ...p,
-        category: firebaseData.category || firebaseData.category_name || p.category || 'BRONZE'
+        category: firebaseData.category || firebaseData.category_name || p.category || 'BRONZE',
+        photo_url: firebaseData.photo_url || firebaseData.photoUrl || null,
+        photo_position_x_circle: firebaseData.photo_position_x_circle ?? null,
+        photo_position_y_circle: firebaseData.photo_position_y_circle ?? null,
+        photo_scale_circle: firebaseData.photo_scale_circle ?? null,
+        photo_position_x_square: firebaseData.photo_position_x_square ?? null,
+        photo_position_y_square: firebaseData.photo_position_y_square ?? null,
+        photo_scale_square: firebaseData.photo_scale_square ?? null,
       };
     });
 

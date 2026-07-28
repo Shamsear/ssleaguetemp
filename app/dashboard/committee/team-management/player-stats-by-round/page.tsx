@@ -10,6 +10,7 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import TournamentSelector from '@/components/TournamentSelector';
 import PosterStudio from '@/components/PosterStudio';
 import { ArrowLeft, Award, BarChart2, Calendar, ClipboardList, Download, FileSpreadsheet, Search, Trophy, User, Users } from 'lucide-react';
+import PlayerPhoto from '@/components/PlayerPhoto';
 
 interface PlayerStats {
   player_id: string;
@@ -704,12 +705,17 @@ export default function PlayerStatsByRoundPage() {
                       </td>
                       <td className="px-4 py-3.5 text-left whitespace-nowrap font-bold text-slate-800">
                         <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 bg-slate-800 border border-slate-900 rounded-xl flex items-center justify-center text-amber-400 font-extrabold text-xs shadow-md overflow-hidden">
-                            {player.photo_url ? (
-                              <img src={player.photo_url} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              player.player_name.charAt(0).toUpperCase()
-                            )}
+                          <div className="flex-shrink-0 w-8 h-8 overflow-hidden relative">
+                             <PlayerPhoto
+                               photoUrl={player.photo_url}
+                               playerName={player.player_name}
+                               shape="circle"
+                               size={32}
+                               className="rounded-xl border border-slate-900 shadow-md"
+                               posXCircle={(player as any).photo_position_x_circle}
+                               posYCircle={(player as any).photo_position_y_circle}
+                               scaleCircle={(player as any).photo_scale_circle}
+                             />
                           </div>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-xs font-black text-slate-800">{player.player_name}</span>

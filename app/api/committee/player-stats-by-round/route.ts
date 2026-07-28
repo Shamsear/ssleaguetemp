@@ -501,6 +501,12 @@ export async function GET(request: NextRequest) {
         const playerDetails = firebasePlayersMap.get(String(player.player_id));
         if (playerDetails) {
           player.category = playerDetails.category || playerDetails.category_name || null;
+          player.photo_position_x_circle = playerDetails.photo_position_x_circle ?? null;
+          player.photo_position_y_circle = playerDetails.photo_position_y_circle ?? null;
+          player.photo_scale_circle = playerDetails.photo_scale_circle ?? null;
+          player.photo_position_x_square = playerDetails.photo_position_x_square ?? null;
+          player.photo_position_y_square = playerDetails.photo_position_y_square ?? null;
+          player.photo_scale_square = playerDetails.photo_scale_square ?? null;
         }
 
         if (teamLogo) {

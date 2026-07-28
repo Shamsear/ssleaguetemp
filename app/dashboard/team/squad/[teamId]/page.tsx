@@ -615,7 +615,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
                               <img 
                                 src={player.photo_url} 
                                 alt={player.name} 
-                                className="object-cover w-full h-full"
+                                className="absolute inset-0 w-full h-full object-cover"
                                 style={{
                                   objectPosition: `${(player as any).photo_position_x_circle ?? 50}% ${(player as any).photo_position_y_circle ?? 50}%`,
                                   transform: `scale(${(player as any).photo_scale_circle ?? 1})`,
