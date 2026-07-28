@@ -273,7 +273,10 @@ export default function MobileNav() {
         { href: '/dashboard/superadmin/invites', label: 'Access Invites', cat: 'System Admin', roles: ['super_admin'] },
         { href: '/dashboard/superadmin/password-requests', label: 'Credentials Reset', cat: 'System Admin', roles: ['super_admin'] },
         { href: '/dashboard/superadmin/monitoring', label: 'System Logs', cat: 'System Admin', roles: ['super_admin'] },
-        { href: '/dashboard/superadmin/cash-balances', label: 'Cash Balances', cat: 'System Admin', roles: ['super_admin'] }
+        { href: '/dashboard/superadmin/cash-balances', label: 'Cash Balances', cat: 'System Admin', roles: ['super_admin'] },
+        { href: '/dashboard/superadmin/media', label: 'Media Manager', cat: 'System Admin', roles: ['super_admin'] },
+        { href: '/dashboard/superadmin/player-photos', label: 'Player Photos', cat: 'System Admin', roles: ['super_admin'] },
+        { href: '/dashboard/superadmin/award-photos', label: 'Award Photos', cat: 'System Admin', roles: ['super_admin'] }
       );
     }
 
@@ -283,13 +286,18 @@ export default function MobileNav() {
         { href: '/dashboard/committee/teams', label: 'All Teams', cat: 'Squad Management', roles: ['committee_admin'] },
         { href: '/dashboard/committee/players', label: 'All Players', cat: 'Squad Management', roles: ['committee_admin'] },
         { href: '/dashboard/committee/registration', label: 'Registration Console', cat: 'Squad Management', roles: ['committee_admin'] },
+        { href: '/dashboard/committee/requests', label: 'Team Requests', cat: 'Squad Management', roles: ['committee_admin'] },
         { href: '/dashboard/committee/team-management', label: 'Team Manager Portal', cat: 'Squad Management', roles: ['committee_admin'] },
         { href: '/dashboard/committee/team-management/team-members', label: 'Team Rosters', cat: 'Squad Management', roles: ['committee_admin'] },
         { href: '/dashboard/committee/team-management/categories', label: 'Roster Categories', cat: 'Squad Management', roles: ['committee_admin'] },
+        { href: '/dashboard/committee/team-contracts', label: 'Team Contracts', cat: 'Squad Management', roles: ['committee_admin'] },
+        { href: '/dashboard/committee/contracts', label: 'All Contracts', cat: 'Squad Management', roles: ['committee_admin'] },
         
         { href: '/dashboard/committee/rounds', label: 'Round Records', cat: 'Match Operations', roles: ['committee_admin'] },
         { href: '/dashboard/committee/bulk-rounds', label: 'Bulk Round Finalizer', cat: 'Match Operations', roles: ['committee_admin'] },
         { href: '/dashboard/committee/tiebreakers', label: 'Tiebreaker Registry', cat: 'Match Operations', roles: ['committee_admin'] },
+        { href: '/dashboard/committee/lineups', label: 'Lineups', cat: 'Match Operations', roles: ['committee_admin'] },
+        { href: '/dashboard/committee/lineup-history', label: 'Lineup History', cat: 'Match Operations', roles: ['committee_admin'] },
         { href: '/dashboard/committee/team-management/match-days', label: 'Matchday Config', cat: 'Match Operations', roles: ['committee_admin'] },
         { href: '/dashboard/committee/team-management/team-standings', label: 'League Standings', cat: 'Match Operations', roles: ['committee_admin'] },
         { href: '/dashboard/committee/team-management/player-stats', label: 'Player Standings', cat: 'Match Operations', roles: ['committee_admin'] },
@@ -299,7 +307,11 @@ export default function MobileNav() {
         { href: '/dashboard/committee/auction-settings', label: 'Auction Parameters', cat: 'Platform Settings', roles: ['committee_admin'] },
         { href: '/dashboard/committee/position-groups', label: 'Position Groups', cat: 'Platform Settings', roles: ['committee_admin'] },
         { href: '/dashboard/committee/player-selection', label: 'Market Pool', cat: 'Platform Settings', roles: ['committee_admin'] },
-        { href: '/dashboard/committee/awards', label: 'Awards System', cat: 'Platform Settings', roles: ['committee_admin'] }
+        { href: '/dashboard/committee/awards', label: 'Awards System', cat: 'Platform Settings', roles: ['committee_admin'] },
+        { href: '/dashboard/committee/polls', label: 'Polls Management', cat: 'Platform Settings', roles: ['committee_admin'] },
+        { href: '/dashboard/committee/penalties', label: 'Penalties', cat: 'Platform Settings', roles: ['committee_admin'] },
+        { href: '/dashboard/committee/all-transactions', label: 'All Transactions', cat: 'Platform Settings', roles: ['committee_admin'] },
+        { href: '/dashboard/committee/send-notification', label: 'Send Notifications', cat: 'Platform Settings', roles: ['committee_admin'] }
       );
     }
 
@@ -310,14 +322,19 @@ export default function MobileNav() {
         { href: '/dashboard/team/players', label: 'Squad Registry', cat: 'My Club', roles: ['team'], requireRegistration: true },
         { href: '/dashboard/team/budget-planner', label: 'Finances & Budget', cat: 'My Club', roles: ['team'], requireRegistration: true },
         { href: '/dashboard/team/requests', label: 'Roster Requests', cat: 'My Club', roles: ['team'], requireRegistration: true },
+        { href: '/dashboard/team/transactions', label: 'My Transactions', cat: 'My Club', roles: ['team'], requireRegistration: true },
+        { href: '/dashboard/team/contracts', label: 'Contracts', cat: 'My Club', roles: ['team'], requireRegistration: true },
         
         { href: '/dashboard/team/players-database', label: 'Players Market', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
+        { href: '/dashboard/team/auction-results', label: 'Auction Results', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
+        { href: '/dashboard/team/footballplayers', label: 'Football Players', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
         { href: '/dashboard/team/matches', label: 'Club Matchdays', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
         { href: '/dashboard/team/fixtures', label: 'Season Matchups', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
         { href: '/dashboard/team/team-leaderboard', label: 'Team Leaderboard', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
         { href: '/dashboard/team/player-leaderboard', label: 'Player Leaderboard', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
         { href: '/dashboard/team/all-teams', label: 'League Clubs', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
-        { href: '/dashboard/team/cash-balances', label: 'Cash Balances', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true }
+        { href: '/dashboard/team/cash-balances', label: 'Cash Balances', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true },
+        { href: '/dashboard/team/footballplayer-auction-history', label: 'FP Auction History', cat: 'Market & Ranks', roles: ['team'], requireRegistration: true }
       );
     }
 

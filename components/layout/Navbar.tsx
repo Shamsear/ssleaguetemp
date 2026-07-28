@@ -316,10 +316,10 @@ export default function Navbar() {
                   <div className="relative" ref={(el) => { dropdownRefs.current['management'] = el; }}>
                     <button
                       onClick={() => toggleDropdown('management')}
-                      className={getDropdownClass(['/dashboard/superadmin/users', '/dashboard/superadmin/teams', '/dashboard/superadmin/players', '/dashboard/superadmin/invites', '/dashboard/superadmin/password-requests', '/dashboard/superadmin/monitoring', '/dashboard/superadmin/cash-balances'])}
+                      className={getDropdownClass(['/dashboard/superadmin/users', '/dashboard/superadmin/teams', '/dashboard/superadmin/players', '/dashboard/superadmin/invites', '/dashboard/superadmin/password-requests', '/dashboard/superadmin/monitoring', '/dashboard/superadmin/cash-balances', '/dashboard/superadmin/media', '/dashboard/superadmin/player-photos', '/dashboard/superadmin/award-photos'])}
                     >
                       Management
-                      <span className={getDropdownSpanClass(['/dashboard/superadmin/users', '/dashboard/superadmin/teams', '/dashboard/superadmin/players', '/dashboard/superadmin/invites', '/dashboard/superadmin/password-requests', '/dashboard/superadmin/monitoring', '/dashboard/superadmin/cash-balances'])}></span>
+                      <span className={getDropdownSpanClass(['/dashboard/superadmin/users', '/dashboard/superadmin/teams', '/dashboard/superadmin/players', '/dashboard/superadmin/invites', '/dashboard/superadmin/password-requests', '/dashboard/superadmin/monitoring', '/dashboard/superadmin/cash-balances', '/dashboard/superadmin/media', '/dashboard/superadmin/player-photos', '/dashboard/superadmin/award-photos'])}></span>
                       <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openDropdown === 'management' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -431,6 +431,51 @@ export default function Navbar() {
                             Cash Balances
                           </span>
                         </Link>
+                        <Link 
+                          href="/dashboard/superadmin/media" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/superadmin/media')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/superadmin/media') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Media Manager
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/superadmin/player-photos" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/superadmin/player-photos')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/superadmin/player-photos') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Player Photos
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/superadmin/award-photos" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/superadmin/award-photos')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/superadmin/award-photos') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Award Photos
+                          </span>
+                        </Link>
                       </div>
                     )}
                   </div>
@@ -444,10 +489,10 @@ export default function Navbar() {
                   <div className="relative" ref={(el) => { dropdownRefs.current['teams'] = el; }}>
                     <button
                       onClick={() => toggleDropdown('teams')}
-                      className={getDropdownClass(['/dashboard/committee/teams', '/dashboard/committee/players', '/dashboard/committee/registration', '/dashboard/committee/database', '/dashboard/committee/cash-balances'])}
+                      className={getDropdownClass(['/dashboard/committee/teams', '/dashboard/committee/players', '/dashboard/committee/registration', '/dashboard/committee/database', '/dashboard/committee/cash-balances', '/dashboard/committee/requests', '/dashboard/committee/team-contracts', '/dashboard/committee/contracts'])}
                     >
                       Teams & Players
-                      <span className={getDropdownSpanClass(['/dashboard/committee/teams', '/dashboard/committee/players', '/dashboard/committee/registration', '/dashboard/committee/database', '/dashboard/committee/cash-balances'])}></span>
+                      <span className={getDropdownSpanClass(['/dashboard/committee/teams', '/dashboard/committee/players', '/dashboard/committee/registration', '/dashboard/committee/database', '/dashboard/committee/cash-balances', '/dashboard/committee/requests', '/dashboard/committee/team-contracts', '/dashboard/committee/contracts'])}></span>
                       <svg className={`w-4 h-4 ml-1.5 transition-transform duration-350 ${openDropdown === 'teams' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -500,6 +545,51 @@ export default function Navbar() {
                           </span>
                         </Link>
                         <Link 
+                          href="/dashboard/committee/requests" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/committee/requests')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/committee/requests') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Team Requests
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/committee/team-contracts" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/committee/team-contracts')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/committee/team-contracts') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Team Contracts
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/committee/contracts" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/committee/contracts')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/committee/contracts') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            All Contracts
+                          </span>
+                        </Link>
+                        <Link 
                           href="/dashboard/committee/cash-balances" 
                           className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
                             isActiveLink('/dashboard/committee/cash-balances')
@@ -537,10 +627,10 @@ export default function Navbar() {
                   <div className="relative" ref={(el) => { dropdownRefs.current['rounds'] = el; }}>
                     <button
                       onClick={() => toggleDropdown('rounds')}
-                      className={getDropdownClass(['/dashboard/committee/rounds', '/dashboard/committee/bulk-rounds', '/dashboard/committee/tiebreakers'])}
+                      className={getDropdownClass(['/dashboard/committee/rounds', '/dashboard/committee/bulk-rounds', '/dashboard/committee/tiebreakers', '/dashboard/committee/lineups', '/dashboard/committee/lineup-history'])}
                     >
                       Rounds & Matches
-                      <span className={getDropdownSpanClass(['/dashboard/committee/rounds', '/dashboard/committee/bulk-rounds', '/dashboard/committee/tiebreakers'])}></span>
+                      <span className={getDropdownSpanClass(['/dashboard/committee/rounds', '/dashboard/committee/bulk-rounds', '/dashboard/committee/tiebreakers', '/dashboard/committee/lineups', '/dashboard/committee/lineup-history'])}></span>
                       <svg className={`w-4 h-4 ml-1.5 transition-transform duration-350 ${openDropdown === 'rounds' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -590,6 +680,36 @@ export default function Navbar() {
                               isActiveLink('/dashboard/committee/tiebreakers') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                             }`}></span>
                             Tiebreakers
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/committee/lineups" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/committee/lineups')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/committee/lineups') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Lineups
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/committee/lineup-history" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/committee/lineup-history')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/committee/lineup-history') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Lineup History
                           </span>
                         </Link>
                       </div>
@@ -710,10 +830,10 @@ export default function Navbar() {
                   <div className="relative" ref={(el) => { dropdownRefs.current['settings'] = el; }}>
                     <button
                       onClick={() => toggleDropdown('settings')}
-                      className={getDropdownClass(['/dashboard/committee/auction-settings', '/dashboard/committee/position-groups', '/dashboard/committee/player-selection', '/dashboard/committee/awards'])}
+                      className={getDropdownClass(['/dashboard/committee/auction-settings', '/dashboard/committee/position-groups', '/dashboard/committee/player-selection', '/dashboard/committee/awards', '/dashboard/committee/polls', '/dashboard/committee/penalties', '/dashboard/committee/all-transactions', '/dashboard/committee/send-notification'])}
                     >
                       Settings
-                      <span className={getDropdownSpanClass(['/dashboard/committee/auction-settings', '/dashboard/committee/position-groups', '/dashboard/committee/player-selection', '/dashboard/committee/awards'])}></span>
+                      <span className={getDropdownSpanClass(['/dashboard/committee/auction-settings', '/dashboard/committee/position-groups', '/dashboard/committee/player-selection', '/dashboard/committee/awards', '/dashboard/committee/polls', '/dashboard/committee/penalties', '/dashboard/committee/all-transactions', '/dashboard/committee/send-notification'])}></span>
                       <svg className={`w-4 h-4 ml-1.5 transition-transform duration-350 ${openDropdown === 'settings' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -780,6 +900,66 @@ export default function Navbar() {
                             Awards Management
                           </span>
                         </Link>
+                        <Link 
+                          href="/dashboard/committee/polls" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/committee/polls')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/committee/polls') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Polls Management
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/committee/penalties" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/committee/penalties')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/committee/penalties') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Penalties
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/committee/all-transactions" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/committee/all-transactions')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/committee/all-transactions') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            All Transactions
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/committee/send-notification" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/committee/send-notification')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/committee/send-notification') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Send Notifications
+                          </span>
+                        </Link>
                       </div>
                     )}
                   </div>
@@ -793,10 +973,10 @@ export default function Navbar() {
                   <div className="relative" ref={(el) => { dropdownRefs.current['myteam'] = el; }}>
                     <button
                       onClick={() => toggleDropdown('myteam')}
-                      className={getDropdownClass(['/dashboard/team/profile', '/dashboard/team/players', '/dashboard/team/budget-planner', '/dashboard/team/players-database', '/dashboard/team/requests'])}
+                      className={getDropdownClass(['/dashboard/team/profile', '/dashboard/team/players', '/dashboard/team/budget-planner', '/dashboard/team/players-database', '/dashboard/team/requests', '/dashboard/team/transactions', '/dashboard/team/contracts'])}
                     >
                       My Team
-                      <span className={getDropdownSpanClass(['/dashboard/team/profile', '/dashboard/team/players', '/dashboard/team/budget-planner', '/dashboard/team/players-database', '/dashboard/team/requests'])}></span>
+                      <span className={getDropdownSpanClass(['/dashboard/team/profile', '/dashboard/team/players', '/dashboard/team/budget-planner', '/dashboard/team/players-database', '/dashboard/team/requests', '/dashboard/team/transactions', '/dashboard/team/contracts'])}></span>
                       <svg className={`w-4 h-4 ml-1.5 transition-transform duration-350 ${openDropdown === 'myteam' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -878,6 +1058,36 @@ export default function Navbar() {
                             Roster Requests
                           </span>
                         </Link>
+                        <Link 
+                          href="/dashboard/team/transactions" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/team/transactions')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/team/transactions') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            My Transactions
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/team/contracts" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/team/contracts')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/team/contracts') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Contracts
+                          </span>
+                        </Link>
                       </div>
                     )}
                   </div>
@@ -934,10 +1144,10 @@ export default function Navbar() {
                   <div className="relative" ref={(el) => { dropdownRefs.current['leaderboards'] = el; }}>
                     <button
                       onClick={() => toggleDropdown('leaderboards')}
-                      className={getDropdownClass(['/dashboard/team/team-leaderboard', '/dashboard/team/player-leaderboard', '/dashboard/team/all-teams', '/dashboard/team/cash-balances'])}
+                      className={getDropdownClass(['/dashboard/team/team-leaderboard', '/dashboard/team/player-leaderboard', '/dashboard/team/all-teams', '/dashboard/team/cash-balances', '/dashboard/team/footballplayer-auction-history', '/dashboard/team/auction-results', '/dashboard/team/footballplayers'])}
                     >
                       Leaderboards
-                      <span className={getDropdownSpanClass(['/dashboard/team/team-leaderboard', '/dashboard/team/player-leaderboard', '/dashboard/team/all-teams', '/dashboard/team/cash-balances'])}></span>
+                      <span className={getDropdownSpanClass(['/dashboard/team/team-leaderboard', '/dashboard/team/player-leaderboard', '/dashboard/team/all-teams', '/dashboard/team/cash-balances', '/dashboard/team/footballplayer-auction-history', '/dashboard/team/auction-results', '/dashboard/team/footballplayers'])}></span>
                       <svg className={`w-4 h-4 ml-1.5 transition-transform duration-350 ${openDropdown === 'leaderboards' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -990,6 +1200,36 @@ export default function Navbar() {
                           </span>
                         </Link>
                         <Link 
+                          href="/dashboard/team/auction-results" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/team/auction-results')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/team/auction-results') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Auction Results
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/team/footballplayers" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/team/footballplayers')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/team/footballplayers') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            Football Players
+                          </span>
+                        </Link>
+                        <Link 
                           href="/dashboard/team/cash-balances" 
                           className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
                             isActiveLink('/dashboard/team/cash-balances')
@@ -1002,6 +1242,21 @@ export default function Navbar() {
                               isActiveLink('/dashboard/team/cash-balances') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                             }`}></span>
                             Cash Balances
+                          </span>
+                        </Link>
+                        <Link 
+                          href="/dashboard/team/footballplayer-auction-history" 
+                          className={`block px-4 py-2 text-sm transition-all duration-200 rounded-xl mx-2 font-medium group ${
+                            isActiveLink('/dashboard/team/footballplayer-auction-history')
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37]'
+                              : 'text-gray-700 hover:bg-[#D4AF37]/5 hover:text-[#D4AF37]'
+                          }`}
+                        >
+                          <span className="flex items-center">
+                            <span className={`w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-3 transition-opacity ${
+                              isActiveLink('/dashboard/team/footballplayer-auction-history') ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}></span>
+                            FP Auction History
                           </span>
                         </Link>
                       </div>
