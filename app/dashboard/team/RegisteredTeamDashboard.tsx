@@ -956,6 +956,13 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 <span>🎯</span>
                 <span>Auction Results</span>
               </Link>
+              <Link
+                href="/dashboard/team/footballplayer-auction-history"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <Trophy className="w-4 h-4 text-amber-400" />
+                <span>FP Auction History</span>
+              </Link>
             </div>
           </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface Player {
   id: string;
@@ -42,8 +43,22 @@ export default function SearchablePlayerSelect({
   const [search, setSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
 
   const selectedPlayer = players.find(p => p.id === value);
+
+  // Update dropdown position when opened
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 8, // 8px gap below button
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  }, [isOpen]);
 
   // Get the value to display (auction_value for real players, acquisition_value for football players)
   const getPlayerValue = (player: Player) => {
@@ -57,33 +72,27 @@ export default function SearchablePlayerSelect({
 
   // Close dropdown when clicking outside or scrolling outside
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+          buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
 
-    const handleScroll = (event: Event) => {
-      // Only close if scrolling outside the dropdown
-      if (isOpen) {
-        const target = event.target;
-        // Check if target is an HTMLElement and has closest method
-        if (target instanceof HTMLElement) {
-          // Check if the scroll is happening inside the dropdown
-          if (!target.closest('.searchable-dropdown') && !target.closest('.dropdown-scroll-container')) {
-            setIsOpen(false);
-          }
-        } else if (target === window || target === document) {
-          // Window or document scroll - close the dropdown
-          setIsOpen(false);
-        }
-      }
+    const handleScroll = () => {
+      setIsOpen(false);
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('scroll', handleScroll, true);
+    // Small delay to prevent immediate closure
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, true);
+    }, 0);
     
     return () => {
+      clearTimeout(timer);
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('scroll', handleScroll, true);
     };
@@ -116,13 +125,14 @@ export default function SearchablePlayerSelect({
   const colors = colorClasses[color];
 
   return (
-    <div className="relative font-mono text-xs" ref={dropdownRef}>
+    <div className="relative font-mono text-xs">
       <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
         {label}
       </label>
 
       {/* Selected Player Display / Search Input */}
       <div
+        ref={buttonRef}
         className={`w-full px-4 py-3 rounded-xl border ${
           isOpen ? 'border-slate-800 ring-2 ring-amber-500/20' : 'border-slate-200/80 hover:border-slate-400'
         } bg-white cursor-pointer transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : ''} shadow-sm`}
@@ -158,14 +168,27 @@ export default function SearchablePlayerSelect({
         )}
       </div>
 
-      {/* Dropdown - Absolute positioning relative to the wrapper */}
-      {isOpen && (
-        <div 
-          className="searchable-dropdown absolute z-[9999] bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden font-mono top-full left-0 right-0 mt-2"
-          style={{
-            maxHeight: '400px'
-          }}
-        >
+      {/* Dropdown - Using Portal for proper rendering */}
+      {isOpen && typeof window !== 'undefined' && createPortal(
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 z-[9998]" 
+            onClick={() => setIsOpen(false)}
+          />
+          
+          {/* Dropdown with fixed positioning */}
+          <div 
+            ref={dropdownRef}
+            className="fixed bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden font-mono z-[9999]"
+            style={{
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`,
+              width: `${dropdownPosition.width}px`,
+              maxHeight: '400px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
           {/* Search Input */}
           <div className="p-3 border-b border-slate-100 sticky top-0 bg-white z-10">
             <input
@@ -223,7 +246,8 @@ export default function SearchablePlayerSelect({
               ))
             )}
           </div>
-        </div>
+        </>,
+        document.body
       )}
     </div>
   );

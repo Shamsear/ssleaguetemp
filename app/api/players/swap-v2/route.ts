@@ -3,6 +3,7 @@ import { executeSwapV2, SwapRequest, PlayerType } from '@/lib/player-transfers-v
 import { calculateSwapDetails } from '@/lib/player-transfers-v2-utils-categories';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { getAuctionDb } from '@/lib/neon/auction-config';
+import { sendNotification } from '@/lib/notifications/send-notification';
 
 /**
  * POST /api/players/swap-v2
@@ -299,6 +300,66 @@ export async function POST(request: NextRequest) {
         },
         { status: result.errorCode === 'PLAYER_NOT_FOUND' ? 404 : 400 }
       );
+    }
+
+    // Send FCM notifications to both teams
+    try {
+      const sqlA = player_a_type === 'real' ? getTournamentDb() : getAuctionDb();
+      const sqlB = player_b_type === 'real' ? getTournamentDb() : getAuctionDb();
+
+      // Fetch final player data after swap
+      const [playerAResult, playerBResult] = await Promise.all([
+        player_a_type === 'real' 
+          ? sqlA(`SELECT player_name, team_id FROM ${isModern ? 'player_seasons' : 'realplayerstats'} WHERE player_id = $1 AND season_id = $2`, [player_a_id, season_id])
+          : sqlA(`SELECT name as player_name, team_id FROM footballplayers WHERE player_id = $1 AND season_id = $2`, [player_a_id, season_id]),
+        player_b_type === 'real'
+          ? sqlB(`SELECT player_name, team_id FROM ${isModern ? 'player_seasons' : 'realplayerstats'} WHERE player_id = $1 AND season_id = $2`, [player_b_id, season_id])
+          : sqlB(`SELECT name as player_name, team_id FROM footballplayers WHERE player_id = $1 AND season_id = $2`, [player_b_id, season_id])
+      ]);
+
+      if (playerAResult.length > 0 && playerBResult.length > 0) {
+        const playerA = playerAResult[0];
+        const playerB = playerBResult[0];
+
+        // Send notification to Team A (now has Player B)
+        await sendNotification(
+          {
+            title: '🔄 Player Swapped!',
+            body: `${playerB.player_name} has been swapped to your team for ${playerA.player_name}`,
+            url: '/dashboard/team/squad',
+            icon: '/logo.png',
+            data: {
+              type: 'player_swap',
+              season_id: season_id,
+              player_received: playerB.player_name,
+              player_sent: playerA.player_name,
+            }
+          },
+          { teamId: playerA.team_id }
+        );
+
+        // Send notification to Team B (now has Player A)
+        await sendNotification(
+          {
+            title: '🔄 Player Swapped!',
+            body: `${playerA.player_name} has been swapped to your team for ${playerB.player_name}`,
+            url: '/dashboard/team/squad',
+            icon: '/logo.png',
+            data: {
+              type: 'player_swap',
+              season_id: season_id,
+              player_received: playerA.player_name,
+              player_sent: playerB.player_name,
+            }
+          },
+          { teamId: playerB.team_id }
+        );
+
+        console.log(`[swap-v2] FCM notifications sent to both teams`);
+      }
+    } catch (notificationError) {
+      console.error('[swap-v2] Error sending FCM notifications:', notificationError);
+      // Don't fail the request if notifications fail
     }
 
     return NextResponse.json({

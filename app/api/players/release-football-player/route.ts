@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuctionDb } from '@/lib/neon/auction-config';
 import { adminDb } from '@/lib/firebase/admin';
 import { closePlayerHistory } from '@/lib/player-history';
+import { sendNotification } from '@/lib/notifications/send-notification';
 
 /**
  * POST /api/players/release-football-player
@@ -153,6 +154,9 @@ export async function POST(request: NextRequest) {
 
         const team = teams[0];
 
+        // Store team_id for notification before releasing
+        const releasedFromTeamId = player.team_id;
+
         // Execute database updates
         // 1. Update footballplayers table - release player for current season
         const playerSeasonId = player.season_id || seasonId;
@@ -247,6 +251,32 @@ export async function POST(request: NextRequest) {
             processed_by_name: releasedByName,
             created_at: new Date()
         });
+
+        // 7. Send FCM notification to the team
+        try {
+            await sendNotification(
+                {
+                    title: '📤 Player Released',
+                    body: `${player.player_name} has been released from your team. Refund: ${refundAmount} coins (${refundPercentage}%)`,
+                    url: '/dashboard/team/squad',
+                    icon: '/logo.png',
+                    data: {
+                        type: 'player_release',
+                        season_id: seasonId,
+                        player_name: player.player_name,
+                        player_type: 'football',
+                        refund_amount: refundAmount.toString(),
+                        refund_percentage: refundPercentage.toString(),
+                    }
+                },
+                { teamId: releasedFromTeamId }
+            );
+
+            console.log(`[release-football-player] FCM notification sent to team ${releasedFromTeamId}`);
+        } catch (notificationError) {
+            console.error('[release-football-player] Error sending FCM notification:', notificationError);
+            // Don't fail the request if notification fails
+        }
 
         return NextResponse.json({
             success: true,

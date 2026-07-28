@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/auth-helper';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { adminDb } from '@/lib/firebase/admin';
+import { sendNotification } from '@/lib/notifications/send-notification';
 
 /**
  * POST /api/contracts/assign-bulk
@@ -178,6 +179,58 @@ export async function POST(request: NextRequest) {
     await batch.commit();
 
     console.log(`[assign-bulk] Successfully assigned ${players.length} players with batched operations`);
+
+    // Send FCM push notifications to all affected teams
+    try {
+      // Group players by team to send one notification per team
+      const teamPlayers = new Map<string, Array<any>>();
+      players.forEach(player => {
+        if (!teamPlayers.has(player.teamId)) {
+          teamPlayers.set(player.teamId, []);
+        }
+        teamPlayers.get(player.teamId)!.push(player);
+      });
+
+      // Send notifications in parallel
+      await Promise.all(
+        Array.from(teamPlayers.entries()).map(async ([teamId, teamPlayersList]) => {
+          const teamName = teamNameMap.get(teamId) || 'Unknown Team';
+          const playerCount = teamPlayersList.length;
+          const totalValue = teamPlayersList.reduce((sum, p) => sum + p.auctionValue, 0);
+
+          const notificationTitle = playerCount === 1
+            ? '🎉 New Player Assigned!'
+            : `🎉 ${playerCount} Players Assigned!`;
+
+          const notificationBody = playerCount === 1
+            ? `${teamPlayersList[0].playerName} has been assigned to ${teamName} for ${teamPlayersList[0].auctionValue} coins`
+            : `${playerCount} players have been assigned to ${teamName} for a total of ${totalValue} coins`;
+
+          await sendNotification(
+            {
+              title: notificationTitle,
+              body: notificationBody,
+              url: '/dashboard/team/squad',
+              icon: '/logo.png',
+              data: {
+                type: 'player_assignment',
+                season_id: seasonId,
+                team_id: teamId,
+                player_count: playerCount.toString(),
+              }
+            },
+            { teamId }
+          );
+
+          console.log(`[assign-bulk] Sent FCM notification to team ${teamId} for ${playerCount} player(s)`);
+        })
+      );
+
+      console.log(`[assign-bulk] Successfully sent FCM notifications to ${teamPlayers.size} team(s)`);
+    } catch (notificationError) {
+      console.error('[assign-bulk] Error sending FCM notifications:', notificationError);
+      // Don't fail the request if notifications fail
+    }
 
     return NextResponse.json({
       success: true,

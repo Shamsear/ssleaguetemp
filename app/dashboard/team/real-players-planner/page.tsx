@@ -4,10 +4,11 @@ import { SoccerBallIcon } from '@/components/ui/CustomIcons';
 import { AlertCircle, Tag, Users, Wallet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import OptimizedImage from '@/components/OptimizedImage';
+import { createPortal } from 'react-dom';
 
 interface RealPlayer {
   player_id: string;
@@ -75,11 +76,62 @@ export default function RealPlayersPlannerPage() {
   const [teamBudget, setTeamBudget] = useState(TOTAL_BUDGET);
   const [teamSpent, setTeamSpent] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
 
   useEffect(() => {
     if (!loading && !user) router.push('/login');
     if (!loading && user && user.role !== 'team') router.push('/dashboard');
   }, [user, loading, router]);
+
+  // Update dropdown position when opened
+  useEffect(() => {
+    if (openDropdownIndex !== null && buttonRefs.current[openDropdownIndex]) {
+      const button = buttonRefs.current[openDropdownIndex];
+      if (button) {
+        const rect = button.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom + 8, // 8px gap below button (fixed positioning uses viewport coords)
+          left: rect.left,
+          width: rect.width,
+        });
+      }
+    }
+  }, [openDropdownIndex]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (openDropdownIndex === null) return;
+
+    const handleClickOutside = () => {
+      setOpenDropdownIndex(null);
+    };
+
+    // Small delay to prevent immediate closure
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [openDropdownIndex]);
+
+  // Close dropdown on scroll
+  useEffect(() => {
+    if (openDropdownIndex === null) return;
+
+    const handleScroll = () => {
+      setOpenDropdownIndex(null);
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [openDropdownIndex]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -320,8 +372,7 @@ export default function RealPlayersPlannerPage() {
           {players.map((player, index) => (
             <div
               key={player.id}
-              className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm"
-              style={{ position: 'relative', zIndex: openDropdownIndex === index ? 100 : 1 }}
+              className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm relative"
             >
               {/* Slot header */}
               <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
@@ -351,7 +402,11 @@ export default function RealPlayersPlannerPage() {
                       Select SS Member
                     </label>
                     <button
-                      onClick={() => setOpenDropdownIndex(openDropdownIndex === index ? null : index)}
+                      ref={(el) => (buttonRefs.current[index] = el)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenDropdownIndex(openDropdownIndex === index ? null : index);
+                      }}
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 hover:border-amber-400/40 hover:bg-slate-50 transition-colors text-left flex items-center gap-3 cursor-pointer shadow-sm bg-white"
                     >
                       {player.photo_url ? (
@@ -393,88 +448,106 @@ export default function RealPlayersPlannerPage() {
                       </svg>
                     </button>
 
-                    {/* Dropdown */}
-                    {openDropdownIndex === index && (
-                      <div className="absolute w-full mt-2 bg-white rounded-xl shadow-xl border border-slate-200 max-h-96 overflow-hidden flex flex-col z-50">
-                        <div className="p-2 border-b border-slate-100">
-                          <input
-                            type="text"
-                            placeholder="Search name, team or category..."
-                            value={searchTerms[index] || ''}
-                            onChange={(e) => setSearchTerms((t) => ({ ...t, [index]: e.target.value }))}
-                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                            autoFocus
-                          />
-                        </div>
-                        <div className="overflow-y-auto max-h-72 divide-y divide-slate-100">
-                          {getFiltered(index).length === 0 ? (
-                            <div className="p-4 text-center text-slate-400 text-xs font-bold uppercase">
-                              {searchTerms[index] ? 'No matching members' : 'All members selected'}
-                            </div>
-                          ) : (
-                            getFiltered(index).map((rp) => (
-                              <button
-                                key={rp.player_id}
-                                onClick={() => selectRealPlayer(rp, index)}
-                                className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 transition-colors text-left"
-                              >
-                                <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 border border-slate-200 shadow-sm bg-slate-100">
-                                  {rp.photo_url ? (
-                                    <OptimizedImage
-                                      src={rp.photo_url}
-                                      alt={rp.player_name}
-                                      width={80}
-                                      height={80}
-                                      quality={85}
-                                      className="w-full h-full object-cover"
-                                      style={getPhotoStyle(rp.photo_position_x_circle, rp.photo_position_y_circle, rp.photo_scale_circle)}
-                                      fallback={
-                                        <div className="w-full h-full flex items-center justify-center bg-slate-800 text-amber-400 font-extrabold text-xs">
-                                          {rp.player_name[0].toUpperCase()}
-                                        </div>
-                                      }
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-slate-800 text-amber-400 font-extrabold text-xs">
-                                      {rp.player_name[0].toUpperCase()}
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-extrabold text-slate-800 text-xs truncate">
-                                    {rp.display_name || rp.player_name}
-                                  </div>
-                                  <div className="text-[9px] text-slate-400 font-bold uppercase truncate">{rp.team}</div>
-                                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                    {rp.category && (
-                                      <span className={`px-1.5 py-0.5 text-[8px] font-black uppercase rounded border ${getCategoryStyle(rp.category)}`}>
-                                        {rp.category}
-                                      </span>
+                    {/* Dropdown - using Portal to render outside container */}
+                    {openDropdownIndex === index && typeof window !== 'undefined' && createPortal(
+                      <>
+                        {/* Backdrop to close dropdown when clicking outside */}
+                        <div 
+                          className="fixed inset-0 z-[9998]" 
+                          onClick={() => setOpenDropdownIndex(null)}
+                        />
+                        
+                        {/* Dropdown with fixed positioning */}
+                        <div 
+                          className="fixed bg-white rounded-xl shadow-xl border border-slate-200 max-h-96 overflow-hidden flex flex-col z-[9999]"
+                          style={{
+                            top: `${dropdownPosition.top}px`,
+                            left: `${dropdownPosition.left}px`,
+                            width: `${dropdownPosition.width}px`,
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="p-2 border-b border-slate-100">
+                            <input
+                              type="text"
+                              placeholder="Search name, team or category..."
+                              value={searchTerms[index] || ''}
+                              onChange={(e) => setSearchTerms((t) => ({ ...t, [index]: e.target.value }))}
+                              className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                              autoFocus
+                            />
+                          </div>
+                          <div className="overflow-y-auto max-h-72 divide-y divide-slate-100">
+                            {getFiltered(index).length === 0 ? (
+                              <div className="p-4 text-center text-slate-400 text-xs font-bold uppercase">
+                                {searchTerms[index] ? 'No matching members' : 'All members selected'}
+                              </div>
+                            ) : (
+                              getFiltered(index).map((rp) => (
+                                <button
+                                  key={rp.player_id}
+                                  onClick={() => selectRealPlayer(rp, index)}
+                                  className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 transition-colors text-left"
+                                >
+                                  <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 border border-slate-200 shadow-sm bg-slate-100">
+                                    {rp.photo_url ? (
+                                      <OptimizedImage
+                                        src={rp.photo_url}
+                                        alt={rp.player_name}
+                                        width={80}
+                                        height={80}
+                                        quality={85}
+                                        className="w-full h-full object-cover"
+                                        style={getPhotoStyle(rp.photo_position_x_circle, rp.photo_position_y_circle, rp.photo_scale_circle)}
+                                        fallback={
+                                          <div className="w-full h-full flex items-center justify-center bg-slate-800 text-amber-400 font-extrabold text-xs">
+                                            {rp.player_name[0].toUpperCase()}
+                                          </div>
+                                        }
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center bg-slate-800 text-amber-400 font-extrabold text-xs">
+                                        {rp.player_name[0].toUpperCase()}
+                                      </div>
                                     )}
-                                    {(rp.base_price || rp.price) ? (
-                                      <span className="px-1.5 py-0.5 text-[8px] font-black uppercase rounded bg-slate-100 text-slate-600 border border-slate-200">
-                                        Floor: {rp.base_price || rp.price} COINS
-                                      </span>
-                                    ) : null}
                                   </div>
-                                </div>
-                                <div className="flex gap-3 text-center text-[10px] font-bold flex-shrink-0 pr-1">
-                                  <div>
-                                    <div className="font-extrabold text-slate-800">{rp.points || 0}</div>
-                                    <div className="text-[8px] text-slate-400 uppercase">Pts</div>
-                                  </div>
-                                  <div>
-                                    <div className="font-extrabold text-emerald-600 flex items-center gap-0.5">
-                                      <SoccerBallIcon className="w-3 h-3" /> {rp.goals_scored || 0}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-extrabold text-slate-800 text-xs truncate">
+                                      {rp.display_name || rp.player_name}
                                     </div>
-                                    <div className="text-[8px] text-slate-400 uppercase">Gls</div>
+                                    <div className="text-[9px] text-slate-400 font-bold uppercase truncate">{rp.team}</div>
+                                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                      {rp.category && (
+                                        <span className={`px-1.5 py-0.5 text-[8px] font-black uppercase rounded border ${getCategoryStyle(rp.category)}`}>
+                                          {rp.category}
+                                        </span>
+                                      )}
+                                      {(rp.base_price || rp.price) ? (
+                                        <span className="px-1.5 py-0.5 text-[8px] font-black uppercase rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                          Floor: {rp.base_price || rp.price} COINS
+                                        </span>
+                                      ) : null}
+                                    </div>
                                   </div>
-                                </div>
-                              </button>
-                            ))
-                          )}
+                                  <div className="flex gap-3 text-center text-[10px] font-bold flex-shrink-0 pr-1">
+                                    <div>
+                                      <div className="font-extrabold text-slate-800">{rp.points || 0}</div>
+                                      <div className="text-[8px] text-slate-400 uppercase">Pts</div>
+                                    </div>
+                                    <div>
+                                      <div className="font-extrabold text-emerald-600 flex items-center gap-0.5">
+                                        <SoccerBallIcon className="w-3 h-3" /> {rp.goals_scored || 0}
+                                      </div>
+                                      <div className="text-[8px] text-slate-400 uppercase">Gls</div>
+                                    </div>
+                                  </div>
+                                </button>
+                              ))
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      </>,
+                      document.body
                     )}
                   </div>
                 </div>

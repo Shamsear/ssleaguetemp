@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuctionDb } from '@/lib/neon/auction-config';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { sendNotification } from '@/lib/notifications/send-notification';
 
 /**
  * POST /api/players/release
@@ -84,6 +85,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Store team_id for notification before releasing
+    const releasedFromTeamId = player.team_id;
+
     // Release player - reset all team/contract related fields
     // For football players, we need to reset multiple fields to match free agent state
     const updateQuery = player_type === 'football'
@@ -123,6 +127,30 @@ export async function POST(request: NextRequest) {
     } catch (teamPlayerError) {
       // Log but don't fail if team_players deletion fails
       console.warn('Could not delete from team_players:', teamPlayerError);
+    }
+
+    // Send FCM notification to the team
+    try {
+      await sendNotification(
+        {
+          title: '📤 Player Released',
+          body: `${player.player_name} has been released from your team`,
+          url: '/dashboard/team/squad',
+          icon: '/logo.png',
+          data: {
+            type: 'player_release',
+            season_id: season_id,
+            player_name: player.player_name,
+            player_type: player_type,
+          }
+        },
+        { teamId: releasedFromTeamId }
+      );
+
+      console.log(`[release] FCM notification sent to team ${releasedFromTeamId}`);
+    } catch (notificationError) {
+      console.error('[release] Error sending FCM notification:', notificationError);
+      // Don't fail the request if notification fails
     }
 
     return NextResponse.json({

@@ -3,6 +3,7 @@ import { getAuctionDb } from '@/lib/neon/auction-config';
 import { adminDb } from '@/lib/firebase/admin';
 import admin from 'firebase-admin';
 import { closePlayerHistory, createPlayerHistory } from '@/lib/player-history';
+import { sendNotification } from '@/lib/notifications/send-notification';
 
 /**
  * POST /api/players/bulk-swap
@@ -561,6 +562,69 @@ export async function POST(request: NextRequest) {
         total_fee: teamFees.get(teamId) || 0,
         new_swap_count: teamSwapCounts.get(teamId)!
       }));
+
+      // Send FCM notifications to all affected teams
+      try {
+        // Group swaps by team
+        const teamSwaps = new Map<string, Array<{ playerReceived: string, playerSent: string }>>();
+        
+        swapDetails.forEach(detail => {
+          const { playerA, playerB } = detail;
+          
+          // Team A received Player B, sent Player A
+          if (!teamSwaps.has(playerA.team_id)) {
+            teamSwaps.set(playerA.team_id, []);
+          }
+          teamSwaps.get(playerA.team_id)!.push({
+            playerReceived: playerB.player_name,
+            playerSent: playerA.player_name
+          });
+
+          // Team B received Player A, sent Player B
+          if (!teamSwaps.has(playerB.team_id)) {
+            teamSwaps.set(playerB.team_id, []);
+          }
+          teamSwaps.get(playerB.team_id)!.push({
+            playerReceived: playerA.player_name,
+            playerSent: playerB.player_name
+          });
+        });
+
+        // Send notification to each team
+        await Promise.all(
+          Array.from(teamSwaps.entries()).map(async ([teamId, swapsList]) => {
+            const swapCount = swapsList.length;
+            const title = swapCount === 1 ? '🔄 Player Swapped!' : `🔄 ${swapCount} Players Swapped!`;
+            
+            let body: string;
+            if (swapCount === 1) {
+              body = `${swapsList[0].playerReceived} swapped in for ${swapsList[0].playerSent}`;
+            } else {
+              body = `${swapCount} players swapped: ${swapsList.map(s => s.playerReceived).join(', ')}`;
+            }
+
+            await sendNotification(
+              {
+                title,
+                body,
+                url: '/dashboard/team/squad',
+                icon: '/logo.png',
+                data: {
+                  type: 'bulk_player_swap',
+                  season_id: season_id,
+                  swap_count: swapCount.toString(),
+                }
+              },
+              { teamId }
+            );
+          })
+        );
+
+        console.log(`[bulk-swap] FCM notifications sent to ${teamSwaps.size} team(s)`);
+      } catch (notificationError) {
+        console.error('[bulk-swap] Error sending FCM notifications:', notificationError);
+        // Don't fail the request if notifications fail
+      }
 
       return NextResponse.json({
         success: true,
