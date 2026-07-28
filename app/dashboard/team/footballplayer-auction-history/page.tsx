@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, ChevronUp, Download, Trophy } from 'lucide-react';
+import { ChevronDown, ChevronUp, Download, Trophy, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -16,6 +16,7 @@ interface Player {
   team_id: string;
   team_name: string;
   price: number;
+  football_player_id?: string;
 }
 
 interface RoundData {
@@ -47,6 +48,10 @@ export default function FootballPlayerAuctionHistoryPage() {
   const [isLoadingSeasons, setIsLoadingSeasons] = useState(true);
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [dataCache, setDataCache] = useState<{ [seasonId: string]: RoundData[] }>({});
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [roundSearches, setRoundSearches] = useState<{ [roundId: string]: string }>({});
+  const [roundPages, setRoundPages] = useState<{ [roundId: string]: number }>({});
+  const PLAYERS_PER_PAGE = 10;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -71,11 +76,17 @@ export default function FootballPlayerAuctionHistoryPage() {
 
         seasonsSnapshot.forEach((doc) => {
           const seasonData = doc.data();
-          seasonsList.push({
-            id: doc.id,
-            name: seasonData.name || doc.id,
-            isActive: seasonData.isActive || false
-          });
+          const seasonName = seasonData.name || doc.id;
+          
+          // Only include S16 and onwards (extract number from SSPSLS16, SSPSLS17, etc.)
+          const seasonNumber = parseInt(seasonName.replace(/\D/g, ''));
+          if (seasonNumber >= 16) {
+            seasonsList.push({
+              id: doc.id,
+              name: seasonName,
+              isActive: seasonData.isActive || false
+            });
+          }
         });
 
         setSeasons(seasonsList);
@@ -252,6 +263,40 @@ export default function FootballPlayerAuctionHistoryPage() {
     }
   };
 
+  // Filter and paginate players
+  const getFilteredAndPaginatedPlayers = (round: RoundData) => {
+    const roundSearch = roundSearches[round.round_id] || '';
+    const searchTerm = globalSearch || roundSearch;
+    
+    // Filter players
+    let filtered = round.players;
+    if (searchTerm) {
+      filtered = filtered.filter(player => 
+        player.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        player.team_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        player.position.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Paginate
+    const currentPage = roundPages[round.round_id] || 1;
+    const startIndex = (currentPage - 1) * PLAYERS_PER_PAGE;
+    const endIndex = startIndex + PLAYERS_PER_PAGE;
+    const paginated = filtered.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(filtered.length / PLAYERS_PER_PAGE);
+
+    return { players: paginated, totalPages, totalFiltered: filtered.length };
+  };
+
+  const setRoundSearch = (roundId: string, search: string) => {
+    setRoundSearches(prev => ({ ...prev, [roundId]: search }));
+    setRoundPages(prev => ({ ...prev, [roundId]: 1 })); // Reset to page 1
+  };
+
+  const setRoundPage = (roundId: string, page: number) => {
+    setRoundPages(prev => ({ ...prev, [roundId]: page }));
+  };
+
   if (isLoadingSeasons) {
     return (
       <div className="console-bg min-h-screen flex items-center justify-center relative">
@@ -314,6 +359,26 @@ export default function FootballPlayerAuctionHistoryPage() {
               ))}
             </div>
           </div>
+
+          {/* Global Search Bar */}
+          {!isLoading && rounds.length > 0 && (
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search all players, teams, or positions..."
+                  value={globalSearch}
+                  onChange={(e) => {
+                    setGlobalSearch(e.target.value);
+                    // Reset all round pages when global search changes
+                    setRoundPages({});
+                  }}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-mono text-sm"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Loading indicator for data fetch */}
           {isLoading && (
@@ -414,11 +479,30 @@ export default function FootballPlayerAuctionHistoryPage() {
                       </button>
 
                       {/* Expanded Content - Players List */}
-                      {isExpanded && (
+                      {isExpanded && (() => {
+                        const { players: filteredPlayers, totalPages, totalFiltered } = getFilteredAndPaginatedPlayers(round);
+                        const currentPage = roundPages[round.round_id] || 1;
+                        const roundSearch = roundSearches[round.round_id] || '';
+
+                        return (
                         <div className="border-t border-slate-100 bg-slate-50/30">
-                          {/* Export Button */}
+                          {/* Search Bar and Export Button */}
                           {round.players.length > 0 && (
-                            <div className="px-4 sm:px-5 pt-4 pb-2 flex justify-end">
+                            <div className="px-4 sm:px-5 pt-4 pb-2 flex flex-col sm:flex-row gap-3 justify-between">
+                              {/* Round-specific Search */}
+                              {!globalSearch && (
+                                <div className="relative flex-1 max-w-md">
+                                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                  <input
+                                    type="text"
+                                    placeholder="Search in this round..."
+                                    value={roundSearch}
+                                    onChange={(e) => setRoundSearch(round.round_id, e.target.value)}
+                                    className="w-full pl-10 pr-4 py-1.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-mono text-xs"
+                                  />
+                                </div>
+                              )}
+                              
                               <button
                                 onClick={() => exportRoundToExcel(round)}
                                 disabled={isExporting === round.round_id}
@@ -439,13 +523,24 @@ export default function FootballPlayerAuctionHistoryPage() {
                             </div>
                           )}
 
+                          {/* Filtered Count */}
+                          {(globalSearch || roundSearch) && (
+                            <div className="px-4 sm:px-5 pb-2">
+                              <p className="text-xs text-slate-500 font-mono">
+                                Showing {totalFiltered} of {round.total_players} players
+                              </p>
+                            </div>
+                          )}
+
                           {/* Players Table */}
                           <div className="px-4 sm:px-5 pb-4">
-                            {round.players.length === 0 ? (
-                              <p className="text-center text-sm text-slate-400 py-8 font-mono">No players sold in this round</p>
+                            {filteredPlayers.length === 0 ? (
+                              <p className="text-center text-sm text-slate-400 py-8 font-mono">
+                                {round.players.length === 0 ? 'No players sold in this round' : 'No players match your search'}
+                              </p>
                             ) : (
                               <div className="space-y-2">
-                                {round.players.map((player, idx) => (
+                                {filteredPlayers.map((player) => (
                                   <div
                                     key={player.player_id}
                                     className="bg-white border border-slate-200/60 rounded-xl p-3 sm:p-4 hover:shadow-sm transition-shadow"
@@ -453,16 +548,37 @@ export default function FootballPlayerAuctionHistoryPage() {
                                     <div className="flex items-center justify-between gap-3 flex-wrap font-mono">
                                       {/* Player Info */}
                                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        {/* Position Badge */}
-                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center border font-bold text-[10px] uppercase tracking-wider shrink-0 ${getPositionColor(player.position)}`}>
+                                        {/* Player Photo */}
+                                        {player.football_player_id ? (
+                                          <img
+                                            src={`/images/players/${player.football_player_id}.webp`}
+                                            alt={player.player_name}
+                                            onError={(e) => {
+                                              const img = e.currentTarget;
+                                              img.style.display = 'none';
+                                              const badge = img.nextElementSibling as HTMLElement;
+                                              if (badge) badge.style.display = 'flex';
+                                            }}
+                                            className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0"
+                                          />
+                                        ) : null}
+                                        <div 
+                                          className={`w-10 h-10 rounded-lg flex items-center justify-center border font-bold text-[10px] uppercase tracking-wider shrink-0 ${getPositionColor(player.position)}`}
+                                          style={{ display: player.football_player_id ? 'none' : 'flex' }}
+                                        >
                                           {player.position}
                                         </div>
 
                                         {/* Name and Team */}
                                         <div className="flex-1 min-w-0">
-                                          <h4 className="font-extrabold text-slate-800 text-sm uppercase tracking-wide truncate">
-                                            {player.player_name}
-                                          </h4>
+                                          <div className="flex items-center gap-2">
+                                            <h4 className="font-extrabold text-slate-800 text-sm uppercase tracking-wide truncate">
+                                              {player.player_name}
+                                            </h4>
+                                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${getPositionColor(player.position)}`}>
+                                              {player.position}
+                                            </span>
+                                          </div>
                                           <p className="text-xs text-slate-500 uppercase font-bold mt-0.5 truncate">
                                             {player.team_name}
                                           </p>
@@ -480,9 +596,35 @@ export default function FootballPlayerAuctionHistoryPage() {
                                 ))}
                               </div>
                             )}
+
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                              <div className="mt-4 flex items-center justify-center gap-2">
+                                <button
+                                  onClick={() => setRoundPage(round.round_id, currentPage - 1)}
+                                  disabled={currentPage === 1}
+                                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 font-mono text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                                >
+                                  Previous
+                                </button>
+                                
+                                <span className="text-xs font-mono text-slate-600 font-bold">
+                                  Page {currentPage} of {totalPages}
+                                </span>
+                                
+                                <button
+                                  onClick={() => setRoundPage(round.round_id, currentPage + 1)}
+                                  disabled={currentPage === totalPages}
+                                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 font-mono text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                                >
+                                  Next
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   );
                 })}

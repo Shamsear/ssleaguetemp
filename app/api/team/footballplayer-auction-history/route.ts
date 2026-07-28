@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
               rp.player_id,
               fp.name as player_name,
               fp.position,
+              fp.player_id as football_player_id,
               rp.winning_team_id as team_id,
               t.name as team_name,
               rp.winning_bid as price,
@@ -83,6 +84,7 @@ export async function GET(request: NextRequest) {
               b.player_id,
               fp.name as player_name,
               fp.position,
+              fp.player_id as football_player_id,
               b.team_id,
               t.name as team_name,
               b.amount as price,
@@ -108,6 +110,7 @@ export async function GET(request: NextRequest) {
             player_id: p.player_id,
             player_name: p.player_name,
             position: p.position,
+            football_player_id: p.football_player_id,
             team_id: p.team_id,
             team_name: p.team_name || 'Unknown Team',
             price: Number(p.price) || 0
