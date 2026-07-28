@@ -158,8 +158,13 @@ export async function GET(request: NextRequest) {
       points: Number(r.points),
     }));
 
-    // Fetch team logo from Firebase if supported_team_id exists
     let teamLogo = null;
+    let logo_position_x_circle = null;
+    let logo_position_y_circle = null;
+    let logo_scale_circle = null;
+    let logo_position_x_square = null;
+    let logo_position_y_square = null;
+    let logo_scale_square = null;
     if (teamData.supported_team_id) {
       const baseTeamId = teamData.supported_team_id.split('_')[0];
       try {
@@ -167,6 +172,12 @@ export async function GET(request: NextRequest) {
         if (teamDoc.exists) {
           const firebaseTeamData = teamDoc.data();
           teamLogo = firebaseTeamData?.logo_url || null;
+          logo_position_x_circle = firebaseTeamData?.logo_position_x_circle || null;
+          logo_position_y_circle = firebaseTeamData?.logo_position_y_circle || null;
+          logo_scale_circle = firebaseTeamData?.logo_scale_circle || null;
+          logo_position_x_square = firebaseTeamData?.logo_position_x_square || null;
+          logo_position_y_square = firebaseTeamData?.logo_position_y_square || null;
+          logo_scale_square = firebaseTeamData?.logo_scale_square || null;
         }
       } catch (error) {
         console.error('Error fetching team logo:', error);
@@ -185,6 +196,12 @@ export async function GET(request: NextRequest) {
         supported_team_id: teamData.supported_team_id || null,
         supported_team_name: teamData.supported_team_name || null,
         supported_team_logo: teamLogo,
+        logo_position_x_circle,
+        logo_position_y_circle,
+        logo_scale_circle,
+        logo_position_x_square,
+        logo_position_y_square,
+        logo_scale_square,
         passive_points: Number(teamData.passive_points) || 0,
         draft_submitted: teamData.draft_submitted || false,
         budget_remaining: Number(teamData.budget_remaining) || 0,

@@ -320,6 +320,11 @@ export default function MyFantasyTeamPage() {
                   src={fantasyTeam.supported_team_logo}
                   alt={`${fantasyTeam.team_name} logo`}
                   className="w-16 h-16 rounded-2xl object-cover shadow-xl"
+                  style={{
+                    objectPosition: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
+                    transform: `scale(${(fantasyTeam as any).logo_scale_circle ?? 1})`,
+                    transformOrigin: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
+                  }}
                 />
               ) : (
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">

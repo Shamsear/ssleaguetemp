@@ -225,6 +225,11 @@ export default function FantasyStandingsPage() {
                                   src={entry.team_logo} 
                                   alt={`${entry.team_name} logo`}
                                   className="w-10 h-10 rounded-full object-cover"
+                                  style={{
+                                    objectPosition: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
+                                    transform: `scale(${(entry as any).logo_scale_circle ?? 1})`,
+                                    transformOrigin: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
+                                  }}
                                 />
                               ) : (
                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold">

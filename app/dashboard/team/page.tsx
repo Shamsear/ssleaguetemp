@@ -37,6 +37,9 @@ export default function TeamDashboard() {
   const [checkingRegistration, setCheckingRegistration] = useState(true);
   const [teamDocId, setTeamDocId] = useState<string>('');
   const [loadingTeamDoc, setLoadingTeamDoc] = useState(true);
+  const [logoPositionXSquare, setLogoPositionXSquare] = useState<number | undefined>(undefined);
+  const [logoPositionYSquare, setLogoPositionYSquare] = useState<number | undefined>(undefined);
+  const [logoScaleSquare, setLogoScaleSquare] = useState<number | undefined>(undefined);
 
   // [INFO] Enable WebSocket for real-time dashboard updates (wallet, notifications)
   // Note: seasonId will be available after seasonStatus is loaded
@@ -117,10 +120,13 @@ export default function TeamDashboard() {
             console.log('[SUCCESS] Owner name set to:', ownerNameValue);
           }
           
-          // Set logo URL from team document or user data
+          // Set logo URL and adjustments from team document or user data
           const logoUrl = teamData.team_logo || teamData.teamLogo || teamData.logo_url || teamData.logoUrl;
           if (logoUrl) {
             setTeamLogoUrl(logoUrl);
+            setLogoPositionXSquare(teamData.logo_position_x_square);
+            setLogoPositionYSquare(teamData.logo_position_y_square);
+            setLogoScaleSquare(teamData.logo_scale_square);
             console.log('[SUCCESS] Team logo set from team document');
           } else if (user.teamLogoUrl) {
             setTeamLogoUrl(user.teamLogoUrl);
@@ -438,11 +444,16 @@ export default function TeamDashboard() {
                   title="Click to change logo"
                 >
                   {teamLogoUrl && teamLogoUrl !== 'skip' ? (
-                    <div className="relative w-20 h-20 bg-white rounded-3xl flex items-center justify-center border border-slate-200 shadow-sm">
+                    <div className="relative w-20 h-20 bg-white rounded-3xl flex items-center justify-center border border-slate-200 shadow-sm overflow-hidden">
                       <img 
                         src={teamLogoUrl}
                         alt="Team logo" 
-                        className="max-w-full max-h-full object-contain p-2 group-hover:opacity-75 transition-opacity"
+                        className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
+                        style={{
+                          objectPosition: `${logoPositionXSquare ?? 50}% ${logoPositionYSquare ?? 50}%`,
+                          transform: `scale(${logoScaleSquare ?? 1})`,
+                          transformOrigin: `${logoPositionXSquare ?? 50}% ${logoPositionYSquare ?? 50}%`,
+                        }}
                         loading="lazy"
                       />
                       <div className="absolute inset-0 rounded-3xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

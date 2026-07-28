@@ -47,8 +47,9 @@ export function useCachedFirebase<T>(
             }
           });
         }
+        url.searchParams.append('_t', Date.now().toString());
 
-        const response = await fetch(url.toString());
+        const response = await fetch(url.toString(), { cache: 'no-store' });
         const result: CachedResponse<T> = await response.json();
 
         if (!response.ok) {

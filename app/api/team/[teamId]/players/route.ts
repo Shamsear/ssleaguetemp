@@ -53,8 +53,14 @@ export async function GET(
           player_name,
           team,
           category,
-          star_rating,
+          NULL as star_rating,
           points,
+          matches_played,
+          wins,
+          draws,
+          losses,
+          goals_scored,
+          assists,
           'active' as registration_status
         FROM realplayerstats
         WHERE team_id = ${teamId} 
@@ -66,38 +72,47 @@ export async function GET(
     // Fetch full realplayer details from Firebase if any exist
     let enrichedRealPlayers: any[] = [];
     if (playerSeasons.length > 0) {
-      const playerIds = playerSeasons.map(ps => ps.player_id);
+      const playerIds = playerSeasons.map(ps => String(ps.player_id));
       const playerDocs = await adminDb.collection('realplayers')
         .where('player_id', 'in', playerIds)
         .get();
       
-      // Create a map of player details by player_id
+      // Create a map of player details by player_id (as string)
       const playerDetailsMap = new Map();
       playerDocs.docs.forEach(doc => {
         const data = doc.data();
-        playerDetailsMap.set(data.player_id, data);
+        playerDetailsMap.set(String(data.player_id), data);
       });
 
       // Combine player_seasons data with Firebase player details
       enrichedRealPlayers = playerSeasons.map(ps => {
-        const details = playerDetailsMap.get(ps.player_id) || {};
+        const details = playerDetailsMap.get(String(ps.player_id)) || {};
         return {
           id: ps.player_id,
           player_id: ps.player_id,
           name: ps.player_name,
           type: 'realplayer',
-          photo_url: details.photoUrl || details.photo_url,
-          email: details.email,
-          phone: details.phone,
-          date_of_birth: details.dateOfBirth || details.date_of_birth,
-          place: details.place,
-          nationality: details.nationality,
+          photo_url: details.photoUrl || details.photo_url || null,
+          photo_position_x_circle: details.photo_position_x_circle ?? null,
+          photo_position_y_circle: details.photo_position_y_circle ?? null,
+          photo_scale_circle: details.photo_scale_circle ?? null,
+          email: details.email || null,
+          phone: details.phone || null,
+          date_of_birth: details.dateOfBirth || details.date_of_birth || null,
+          place: details.place || null,
+          nationality: details.nationality || null,
           is_active: details.is_active !== false,
           is_available: details.is_available !== false,
           category: ps.category,
           star_rating: ps.star_rating,
           points: ps.points,
           status: ps.registration_status,
+          matches_played: ps.matches_played || 0,
+          wins: ps.wins || 0,
+          draws: ps.draws || 0,
+          losses: ps.losses || 0,
+          goals_scored: ps.goals_scored || 0,
+          assists: ps.assists || 0,
         };
       });
     }

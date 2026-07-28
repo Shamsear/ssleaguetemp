@@ -473,11 +473,11 @@ export default function TeamRegistrationPage() {
                       <tr key={team.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-4 py-3">
                           {team.logo_url || team.teamLogo ? (
-                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200/40 overflow-hidden flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200/40 overflow-hidden flex items-center justify-center relative">
                               <img
                                 src={team.logo_url || team.teamLogo}
                                 alt={team.team_name || team.name}
-                                className="w-full h-full object-cover"
+                                className="absolute inset-0 w-full h-full object-cover"
                                 style={{
                                   objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
                                   transform: `scale(${(team as any).logo_scale_square ?? 1})`,

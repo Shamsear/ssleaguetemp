@@ -346,12 +346,12 @@ export default function AllTeamsPage() {
                 <div>
                   {/* Team Header */}
                   <div className="flex items-center mb-4 gap-3">
-                    <div className="h-14 w-14 flex-shrink-0 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-center p-1.5 relative overflow-hidden shadow-inner">
+                    <div className="h-14 w-14 flex-shrink-0 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-center p-0 relative overflow-hidden shadow-inner">
                       {teamData.team.logoUrl ? (
                         <img
                           src={teamData.team.logoUrl}
                           alt={teamData.team.name}
-                          className="object-cover w-full h-full"
+                          className="absolute inset-0 w-full h-full object-cover"
                           style={{
                             objectPosition: `${(teamData.team as any).logo_position_x_square ?? 50}% ${(teamData.team as any).logo_position_y_square ?? 50}%`,
                             transform: `scale(${(teamData.team as any).logo_scale_square ?? 1})`,

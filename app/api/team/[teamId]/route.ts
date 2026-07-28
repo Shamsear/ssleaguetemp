@@ -178,6 +178,12 @@ export async function GET(
           name: teamInfo?.team_name || teamSeasonData?.team_name || 'Unknown Team',
           logoUrl: logoUrl,
           balance: teamInfo?.balance || 0,
+          logo_position_x_circle: teamInfo?.logo_position_x_circle,
+          logo_position_y_circle: teamInfo?.logo_position_y_circle,
+          logo_scale_circle: teamInfo?.logo_scale_circle,
+          logo_position_x_square: teamInfo?.logo_position_x_square,
+          logo_position_y_square: teamInfo?.logo_position_y_square,
+          logo_scale_square: teamInfo?.logo_scale_square,
           // Dual currency (Season 16+)
           dollar_balance: teamSeasonData?.real_player_budget,
           euro_balance: teamSeasonData?.football_budget,

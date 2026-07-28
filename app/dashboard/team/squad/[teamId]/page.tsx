@@ -29,6 +29,13 @@ interface TeamProfile {
   realPlayerBudget?: number;
   footballSpent?: number;
   realPlayerSpent?: number;
+  // Positioning adjustments
+  logo_position_x_circle?: number;
+  logo_position_y_circle?: number;
+  logo_scale_circle?: number;
+  logo_position_x_square?: number;
+  logo_position_y_square?: number;
+  logo_scale_square?: number;
 }
 
 interface PlayerData {
@@ -38,6 +45,7 @@ interface PlayerData {
   rating: number;
   purchasePrice: number;
   imageUrl?: string;
+  [key: string]: any;
 }
 
 interface FixtureData {
@@ -64,6 +72,51 @@ interface StandingsData {
   goalDifference: number;
   points: number;
 }
+
+const getCategoryBorderColor = (category?: string) => {
+  if (!category) return 'border-l-slate-300';
+  const cat = category.toLowerCase();
+  switch (cat) {
+    case 'red': return 'border-l-red-500';
+    case 'black': return 'border-l-slate-900';
+    case 'blue': return 'border-l-blue-500';
+    case 'orange': return 'border-l-orange-500';
+    case 'white': return 'border-l-slate-200';
+    case 'yellow': return 'border-l-yellow-400';
+    case 'gold': return 'border-l-amber-500';
+    case 'silver': return 'border-l-slate-400';
+    case 'green': return 'border-l-emerald-500';
+    default: return 'border-l-slate-300';
+  }
+};
+
+const getCategoryColor = (category: string) => {
+  const cat = category.toLowerCase();
+  switch (cat) {
+    case 'red':
+      return 'bg-red-50 text-red-700 border-red-200/60';
+    case 'black':
+      return 'bg-slate-900 text-white border-slate-800';
+    case 'blue':
+      return 'bg-blue-50 text-blue-700 border-blue-200/60';
+    case 'orange':
+      return 'bg-orange-50 text-orange-700 border-orange-200/60';
+    case 'white':
+      return 'bg-white text-slate-700 border-slate-200';
+    case 'yellow':
+      return 'bg-amber-50 text-amber-700 border-amber-200/60';
+    case 'gold':
+      return 'bg-yellow-50 text-yellow-800 border-yellow-200/60';
+    case 'silver':
+      return 'bg-slate-50 text-slate-600 border-slate-200/60';
+    case 'green':
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200/60';
+    case 'legend':
+      return 'bg-amber-500 text-white border-amber-600';
+    default:
+      return 'bg-slate-50 text-slate-600 border-slate-200/60';
+  }
+};
 
 export default function TeamSquadPage({ params }: { params: Promise<{ teamId: string }> }) {
   const { user, loading } = useAuth();
@@ -162,10 +215,22 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
 
         const teamSeasonData = teamSeasonDoc.data();
 
+        // Fetch base team data as the source of truth for logo positioning
+        let baseTeamData: any = {};
+        try {
+          const teamRef = doc(db, 'teams', teamId);
+          const teamDoc = await getDoc(teamRef);
+          if (teamDoc.exists()) {
+            baseTeamData = teamDoc.data();
+          }
+        } catch (err) {
+          console.error('Error fetching base team:', err);
+        }
+
         setTeamProfile({
           id: teamId,
           name: teamSeasonData.team_name || 'Unknown Team',
-          logoUrl: teamSeasonData.team_logo,
+          logoUrl: baseTeamData.logo_url || baseTeamData.logoUrl || baseTeamData.teamLogo || teamSeasonData.team_logo || teamSeasonData.logo_url || null,
           budget: teamSeasonData.budget || 0,
           totalSpent: teamSeasonData.total_spent || 0,
           playersCount: teamSeasonData.players_count || 0,
@@ -177,13 +242,20 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
           realPlayerBudget: teamSeasonData.real_player_budget || 0,
           footballSpent: teamSeasonData.football_spent || 0,
           realPlayerSpent: teamSeasonData.real_player_spent || 0,
+          logo_position_x_circle: baseTeamData.logo_position_x_circle ?? teamSeasonData.logo_position_x_circle,
+          logo_position_y_circle: baseTeamData.logo_position_y_circle ?? teamSeasonData.logo_position_y_circle,
+          logo_scale_circle: baseTeamData.logo_scale_circle ?? teamSeasonData.logo_scale_circle,
+          logo_position_x_square: baseTeamData.logo_position_x_square ?? teamSeasonData.logo_position_x_square,
+          logo_position_y_square: baseTeamData.logo_position_y_square ?? teamSeasonData.logo_position_y_square,
+          logo_scale_square: baseTeamData.logo_scale_square ?? teamSeasonData.logo_scale_square,
         });
 
         // Fetch players, fixtures, and standings from API
+        const tBuster = Date.now();
         const [playersRes, fixturesRes, standingsRes] = await Promise.all([
-          fetch(`/api/team/${teamId}/players?seasonId=${seasonId}`),
-          fetch(`/api/team/${teamId}/fixtures?season_id=${seasonId}&limit=50`),
-          fetch(`/api/team/${teamId}/standings?season_id=${seasonId}`)
+          fetch(`/api/team/${teamId}/players?seasonId=${seasonId}&_t=${tBuster}`),
+          fetch(`/api/team/${teamId}/fixtures?season_id=${seasonId}&limit=50&_t=${tBuster}`),
+          fetch(`/api/team/${teamId}/standings?season_id=${seasonId}&_t=${tBuster}`)
         ]);
 
         if (playersRes.ok) {
@@ -220,6 +292,8 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
           if (standingsData.success && standingsData.standings) {
             setStandings(standingsData.standings);
           }
+        } else if (standingsRes.status === 404) {
+          setStandings(null);
         } else {
           console.error('Failed to fetch standings:', standingsRes.status);
         }
@@ -318,14 +392,17 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
 
           {/* Team Header */}
           <div className="flex flex-col md:flex-row md:items-center gap-4">
-            <div className="h-20 w-20 flex-shrink-0 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-center p-2 relative overflow-hidden shadow-inner mx-auto md:mx-0">
+            <div className="h-20 w-20 flex-shrink-0 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-center p-0 relative overflow-hidden shadow-inner mx-auto md:mx-0">
               {teamProfile.logoUrl ? (
-                <Image 
+                <img 
                   src={teamProfile.logoUrl} 
                   alt={teamProfile.name} 
-                  width={80}
-                  height={80}
-                  className="object-contain w-full h-full"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{
+                    objectPosition: `${(teamProfile as any).logo_position_x_square ?? 50}% ${(teamProfile as any).logo_position_y_square ?? 50}%`,
+                    transform: `scale(${(teamProfile as any).logo_scale_square ?? 1})`,
+                    transformOrigin: `${(teamProfile as any).logo_position_x_square ?? 50}% ${(teamProfile as any).logo_position_y_square ?? 50}%`,
+                  }}
                 />
               ) : (
                 <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -349,8 +426,8 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
                 
                 <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl flex flex-col justify-between">
                   <span className="text-slate-400 text-[8px] mb-1">Squad Players</span>
-                  <span className="text-slate-700 font-extrabold text-xs">
-                    <SoccerBallIcon className="w-4 h-4" /> {players.filter((p: any) => p.type === 'footballplayer').length} + <User className="w-4 h-4 text-slate-500" /> {players.filter((p: any) => p.type === 'realplayer').length}
+                  <span className="text-slate-700 font-extrabold text-xs flex items-center gap-1">
+                    <SoccerBallIcon className="w-4 h-4 inline-block align-text-bottom" /> <span>{players.filter((p: any) => p.type === 'footballplayer').length}</span> <span className="text-slate-400 mx-0.5">+</span> <User className="w-4 h-4 text-slate-500 inline-block align-text-bottom" /> <span>{players.filter((p: any) => p.type === 'realplayer').length}</span>
                   </span>
                 </div>
 
@@ -473,7 +550,10 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
                                 </span>
                               )}
                               {player.overall_rating && (
-                                <span className="text-xs font-black text-amber-500"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.overall_rating}</span>
+                                <span className="text-xs font-black text-amber-500 flex items-center gap-1">
+                                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline-block align-text-bottom" />
+                                  <span>{player.overall_rating}</span>
+                                </span>
                               )}
                             </div>
                           </div>
@@ -525,61 +605,99 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
                     .filter((p: any) => p.type === 'realplayer')
                     .sort((a: any, b: any) => (b.points || 0) - (a.points || 0))
                     .map((player) => (
-                    <div key={player.id} className="bg-slate-50/40 border border-slate-200/60 rounded-2xl p-4 hover:border-amber-400/40 hover:bg-white hover:shadow-sm transition-all duration-200 border-l-4 border-l-emerald-500 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="h-12 w-12 bg-slate-100 border border-slate-200/60 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center p-0.5">
+                    <Link href={`/players/${player.player_id}`} key={player.id} className={`bg-white border border-slate-200/80 rounded-2xl p-5 hover:border-amber-400/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 border-l-4 ${getCategoryBorderColor(player.category)} flex flex-col justify-between cursor-pointer relative overflow-hidden group`}>
+                      {/* Card Content Wrapper */}
+                      <div className="w-full">
+                        {/* Header info */}
+                        <div className="flex items-start gap-4 mb-4">
+                          <div className="h-16 w-16 bg-slate-50 border border-slate-200/80 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center p-0 relative shadow-sm transition-transform duration-300 group-hover:scale-105">
                             {player.photo_url ? (
-                              <Image 
+                              <img 
                                 src={player.photo_url} 
                                 alt={player.name} 
-                                width={48}
-                                height={48}
-                                className="object-cover rounded-lg w-full h-full"
+                                className="object-cover w-full h-full"
+                                style={{
+                                  objectPosition: `${(player as any).photo_position_x_circle ?? 50}% ${(player as any).photo_position_y_circle ?? 50}%`,
+                                  transform: `scale(${(player as any).photo_scale_circle ?? 1})`,
+                                  transformOrigin: `${(player as any).photo_position_x_circle ?? 50}% ${(player as any).photo_position_y_circle ?? 50}%`,
+                                }}
                               />
                             ) : (
-                              <div className="h-full w-full flex items-center justify-center bg-slate-200 text-slate-500 font-bold rounded-lg text-sm">
+                              <div className="h-full w-full flex items-center justify-center bg-slate-200 text-slate-500 font-bold rounded-2xl text-sm font-mono">
                                 {player.name.substring(0, 2).toUpperCase()}
                               </div>
                             )}
                           </div>
+                          
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-extrabold text-slate-800 truncate text-sm uppercase tracking-wide">{player.name}</h3>
-                            <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                              {player.star_rating && (
-                                <span className="text-xs font-black text-amber-500"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.star_rating}</span>
-                              )}
+                            <h3 className="font-extrabold text-slate-800 truncate text-base uppercase tracking-wider font-mono group-hover:text-amber-500 transition-colors">{player.name}</h3>
+                            <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
                               {player.category && (
-                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-150 uppercase tracking-wider">
+                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg border uppercase tracking-wider ${getCategoryColor(player.category)}`}>
                                   {player.category}
+                                </span>
+                              )}
+                              {player.points !== undefined && (
+                                <span className="text-[10px] font-extrabold bg-slate-50 text-slate-600 border border-slate-200/60 px-2 py-0.5 rounded-lg font-mono">
+                                  {player.points} PTS
                                 </span>
                               )}
                             </div>
                           </div>
                         </div>
-                        
-                        <div className="text-[11px] text-slate-500 space-y-1 border-t border-slate-100 pt-2.5 uppercase font-bold tracking-wider">
-                          {player.nationality && (
-                            <div className="flex justify-between">
-                              <span className="text-slate-400">Nationality:</span> 
-                              <span className="text-slate-700 truncate max-w-[150px]">{player.nationality}</span>
+
+                        {/* Player Details & Statistics Grid */}
+                        <div className="space-y-3 font-mono">
+                          <div className="text-[10px] text-slate-500 space-y-1.5 border-t border-slate-155 pt-3 uppercase font-extrabold tracking-wider">
+                            {player.nationality && (
+                              <div className="flex justify-between">
+                                <span className="text-slate-400">Nationality:</span> 
+                                <span className="text-slate-700 truncate max-w-[160px]">{player.nationality}</span>
+                              </div>
+                            )}
+                            {player.place && (
+                              <div className="flex justify-between">
+                                <span className="text-slate-400">Place:</span> 
+                                <span className="text-slate-700 truncate max-w-[160px]">{player.place}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Player Statistics Grid */}
+                          <div className="border-t border-slate-100 pt-3 mt-1">
+                            <div className="grid grid-cols-3 gap-1.5 text-[9px] text-center font-extrabold uppercase">
+                              <div className="bg-slate-50 border border-slate-150 p-2 rounded-xl flex flex-col justify-center">
+                                <span className="text-[7px] text-slate-400 mb-0.5">Played</span>
+                                <span className="text-slate-700 text-xs font-mono">{player.matches_played || 0}</span>
+                              </div>
+                              <div className="bg-emerald-50/50 border border-emerald-100 p-2 rounded-xl flex flex-col justify-center text-emerald-700">
+                                <span className="text-[7px] text-emerald-500 mb-0.5">Wins</span>
+                                <span className="text-xs font-mono">{player.wins || 0}</span>
+                              </div>
+                              <div className="bg-rose-50/50 border border-rose-100 p-2 rounded-xl flex flex-col justify-center text-rose-700">
+                                <span className="text-[7px] text-rose-500 mb-0.5">Losses</span>
+                                <span className="text-xs font-mono">{player.losses || 0}</span>
+                              </div>
                             </div>
-                          )}
-                          {player.place && (
-                            <div className="flex justify-between">
-                              <span className="text-slate-400">Place:</span> 
-                              <span className="text-slate-700 truncate max-w-[150px]">{player.place}</span>
+                            
+                            <div className="grid grid-cols-3 gap-1.5 text-[9px] text-center font-extrabold uppercase mt-1.5">
+                              <div className="bg-slate-50 border border-slate-150 p-2 rounded-xl flex flex-col justify-center text-slate-600">
+                                <span className="text-[7px] text-slate-400 mb-0.5">Draws</span>
+                                <span className="text-xs font-mono">{player.draws || 0}</span>
+                              </div>
+                              <div className="bg-blue-50/50 border border-blue-100 p-2 rounded-xl flex flex-col justify-center text-blue-700">
+                                <span className="text-[7px] text-blue-500 mb-0.5">Goals</span>
+                                <span className="text-xs font-mono">{player.goals_scored || 0}</span>
+                              </div>
+                              <div className="bg-amber-50/50 border border-amber-100 p-2 rounded-xl flex flex-col justify-center text-amber-700">
+                                <span className="text-[7px] text-amber-500 mb-0.5">Assists</span>
+                                <span className="text-xs font-mono">{player.assists || 0}</span>
+                              </div>
                             </div>
-                          )}
-                          {player.points !== undefined && (
-                            <div className="flex justify-between">
-                              <span className="text-slate-400">Points:</span> 
-                              <span className="text-slate-700 font-mono font-black text-xs">{player.points}</span>
-                            </div>
-                          )}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               ) : (

@@ -75,7 +75,7 @@ export async function GET(
     
     console.log('[Leaderboard API] Fetching logos for fantasy team IDs:', fantasyTeamIds);
     
-    let teamLogos: Record<string, string> = {};
+    let teamLogos: Record<string, any> = {};
     if (fantasyTeamIds.length > 0) {
       // Fetch fantasy teams by document ID (fantasy team_id)
       const teamPromises = fantasyTeamIds.map(teamId => 
@@ -92,7 +92,15 @@ export async function GET(
           const logoUrl = teamData?.logo_url || null;
           
           if (logoUrl) {
-            teamLogos[fantasyTeamId] = logoUrl;
+            teamLogos[fantasyTeamId] = {
+              logo_url: logoUrl,
+              logo_position_x_circle: teamData?.logo_position_x_circle,
+              logo_position_y_circle: teamData?.logo_position_y_circle,
+              logo_scale_circle: teamData?.logo_scale_circle,
+              logo_position_x_square: teamData?.logo_position_x_square,
+              logo_position_y_square: teamData?.logo_position_y_square,
+              logo_scale_square: teamData?.logo_scale_square,
+            };
             console.log(`[Leaderboard API] Found logo for fantasy team ${fantasyTeamId}:`, logoUrl);
           } else {
             console.log(`[Leaderboard API] No logo found for fantasy team ${fantasyTeamId}`);
@@ -129,7 +137,13 @@ export async function GET(
         total_points: Number(entry.total_points) || 0,
         player_count: Number(entry.player_count) || 0,
         last_round_points: Number(entry.last_round_points) || 0,
-        team_logo: teamLogos[entry.fantasy_team_id] || null,
+        team_logo: teamLogos[entry.fantasy_team_id]?.logo_url || null,
+        logo_position_x_circle: teamLogos[entry.fantasy_team_id]?.logo_position_x_circle,
+        logo_position_y_circle: teamLogos[entry.fantasy_team_id]?.logo_position_y_circle,
+        logo_scale_circle: teamLogos[entry.fantasy_team_id]?.logo_scale_circle,
+        logo_position_x_square: teamLogos[entry.fantasy_team_id]?.logo_position_x_square,
+        logo_position_y_square: teamLogos[entry.fantasy_team_id]?.logo_position_y_square,
+        logo_scale_square: teamLogos[entry.fantasy_team_id]?.logo_scale_square,
         supported_team_id: entry.supported_team_id, // Include for debugging
       })),
       total_teams: leaderboard.length,

@@ -76,10 +76,26 @@ export async function GET(request: NextRequest) {
     console.log('📋 Team IDs to fetch:', teamIds);
     
     // Step 2: Batch fetch team details from teams collection
-    const teamsInfoMap = await batchGetFirebaseFields<{ team_name: string; logoUrl: string; logoURL: string; logo_url: string; balance: number }>(
+    const teamsInfoMap = await batchGetFirebaseFields<{ 
+      team_name: string; 
+      logoUrl: string; 
+      logoURL: string; 
+      logo_url: string; 
+      balance: number;
+      logo_position_x_circle?: number;
+      logo_position_y_circle?: number;
+      logo_scale_circle?: number;
+      logo_position_x_square?: number;
+      logo_position_y_square?: number;
+      logo_scale_square?: number;
+    }>(
       'teams',
       teamIds,
-      ['team_name', 'logoUrl', 'logoURL', 'logo_url', 'balance']
+      [
+        'team_name', 'logoUrl', 'logoURL', 'logo_url', 'balance',
+        'logo_position_x_circle', 'logo_position_y_circle', 'logo_scale_circle',
+        'logo_position_x_square', 'logo_position_y_square', 'logo_scale_square'
+      ]
     );
     
     console.log('📋 Teams info fetched:', teamsInfoMap.size, 'teams');
@@ -275,6 +291,12 @@ export async function GET(request: NextRequest) {
           name: teamInfo?.team_name || 'Unknown Team',
           logoUrl: logoUrl,
           balance: teamInfo?.balance || 0,
+          logo_position_x_circle: teamInfo?.logo_position_x_circle,
+          logo_position_y_circle: teamInfo?.logo_position_y_circle,
+          logo_scale_circle: teamInfo?.logo_scale_circle,
+          logo_position_x_square: teamInfo?.logo_position_x_square,
+          logo_position_y_square: teamInfo?.logo_position_y_square,
+          logo_scale_square: teamInfo?.logo_scale_square,
           // Note: Multi-season fields removed for single-season UI compatibility
           // Historical data still available in database if needed
         },

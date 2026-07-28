@@ -152,11 +152,43 @@ export async function GET(request: NextRequest) {
     const budgets = getTeamBudgets(teamSeasonData);
     const slots = getTeamSlots(teamSeasonData);
     
+    // Fetch base team details for adjustments
+    let logo_position_x_circle = null;
+    let logo_position_y_circle = null;
+    let logo_scale_circle = null;
+    let logo_position_x_square = null;
+    let logo_position_y_square = null;
+    let logo_scale_square = null;
+    
+    const targetBaseTeamId = dbTeamId || teamSeasonData?.team_id;
+    if (targetBaseTeamId) {
+      try {
+        const teamDoc = await adminDb.collection('teams').doc(targetBaseTeamId).get();
+        if (teamDoc.exists) {
+          const baseTeamData = teamDoc.data();
+          logo_position_x_circle = baseTeamData?.logo_position_x_circle ?? null;
+          logo_position_y_circle = baseTeamData?.logo_position_y_circle ?? null;
+          logo_scale_circle = baseTeamData?.logo_scale_circle ?? null;
+          logo_position_x_square = baseTeamData?.logo_position_x_square ?? null;
+          logo_position_y_square = baseTeamData?.logo_position_y_square ?? null;
+          logo_scale_square = baseTeamData?.logo_scale_square ?? null;
+        }
+      } catch (error) {
+        console.error('Error fetching base team adjustments:', error);
+      }
+    }
+
     // Create teamData with CORRECT team ID from database
     const teamData: any = {
       id: dbTeamId || teamSeasonData?.team_id || userId, // Use database team ID if exists, fallback to team_id then userId
       name: teamSeasonData?.team_name || userData?.teamName || 'Team',
       logo_url: teamSeasonData?.team_logo || userData?.logoUrl || null,
+      logo_position_x_circle,
+      logo_position_y_circle,
+      logo_scale_circle,
+      logo_position_x_square,
+      logo_position_y_square,
+      logo_scale_square,
       currency_system: budgets.system, // 'dual' or 'single'
     };
     
