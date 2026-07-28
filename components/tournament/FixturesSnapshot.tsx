@@ -130,7 +130,19 @@ export function FixturesSnapshot({
                   </span>
                   <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', overflow: 'hidden' }}>
                     {match.homeTeam.team.logoUrl ? (
-                      <img src={match.homeTeam.team.logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} crossOrigin="anonymous" />
+                      <img 
+                        src={match.homeTeam.team.logoUrl} 
+                        alt="" 
+                        style={{ 
+                          width: '100%', 
+                          height: '100%', 
+                          objectFit: 'cover',
+                          objectPosition: `${(match.homeTeam.team as any).logo_position_x_square ?? 50}% ${(match.homeTeam.team as any).logo_position_y_square ?? 50}%`,
+                          transform: `scale(${(match.homeTeam.team as any).logo_scale_square ?? 1})`,
+                          transformOrigin: `${(match.homeTeam.team as any).logo_position_x_square ?? 50}% ${(match.homeTeam.team as any).logo_position_y_square ?? 50}%`,
+                        }} 
+                        crossOrigin="anonymous" 
+                      />
                     ) : (
                       <span style={{ fontSize: '24px' }}>⚽</span>
                     )}
@@ -158,7 +170,19 @@ export function FixturesSnapshot({
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '16px', opacity: homeWin ? 0.6 : 1 }}>
                   <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', overflow: 'hidden' }}>
                     {match.awayTeam.team.logoUrl ? (
-                      <img src={match.awayTeam.team.logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} crossOrigin="anonymous" />
+                      <img 
+                        src={match.awayTeam.team.logoUrl} 
+                        alt="" 
+                        style={{ 
+                          width: '100%', 
+                          height: '100%', 
+                          objectFit: 'cover',
+                          objectPosition: `${(match.awayTeam.team as any).logo_position_x_square ?? 50}% ${(match.awayTeam.team as any).logo_position_y_square ?? 50}%`,
+                          transform: `scale(${(match.awayTeam.team as any).logo_scale_square ?? 1})`,
+                          transformOrigin: `${(match.awayTeam.team as any).logo_position_x_square ?? 50}% ${(match.awayTeam.team as any).logo_position_y_square ?? 50}%`,
+                        }} 
+                        crossOrigin="anonymous" 
+                      />
                     ) : (
                       <span style={{ fontSize: '24px' }}>⚽</span>
                     )}

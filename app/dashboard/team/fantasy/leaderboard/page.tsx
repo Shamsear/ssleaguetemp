@@ -223,6 +223,11 @@ export default function FantasyLeaderboardPage() {
                         src={entry.team_logo} 
                         alt={`${entry.team_name} logo`}
                         className="w-12 h-12 rounded-full object-cover"
+                        style={{
+                          objectPosition: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
+                          transform: `scale(${(entry as any).logo_scale_circle ?? 1})`,
+                          transformOrigin: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
+                        }}
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">

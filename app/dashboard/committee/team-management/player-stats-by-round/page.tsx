@@ -706,7 +706,18 @@ export default function PlayerStatsByRoundPage() {
                       <td className="px-4 py-3.5 text-left whitespace-nowrap text-xs font-extrabold text-slate-500 uppercase">
                         <div className="flex items-center gap-2">
                           {player.team_logo && (
-                            <img src={player.team_logo} alt="" className="w-5 h-5 object-contain" />
+                            <div className="w-5 h-5 overflow-hidden rounded">
+                              <img 
+                                src={player.team_logo} 
+                                alt="" 
+                                className="w-full h-full object-cover"
+                                style={{
+                                  objectPosition: `${(player as any).logo_position_x_square ?? 50}% ${(player as any).logo_position_y_square ?? 50}%`,
+                                  transform: `scale(${(player as any).logo_scale_square ?? 1})`,
+                                  transformOrigin: `${(player as any).logo_position_x_square ?? 50}% ${(player as any).logo_position_y_square ?? 50}%`,
+                                }}
+                              />
+                            </div>
                           )}
                           <span>{player.team_name}</span>
                         </div>
@@ -817,7 +828,18 @@ export default function PlayerStatsByRoundPage() {
                         <h3 className="text-xs font-black text-slate-800">{player.player_name}</h3>
                         <div className="flex items-center gap-1 mt-0.5">
                           {player.team_logo && (
-                            <img src={player.team_logo} alt="" className="w-3.5 h-3.5 object-contain" />
+                            <div className="w-3.5 h-3.5 overflow-hidden rounded">
+                              <img 
+                                src={player.team_logo} 
+                                alt="" 
+                                className="w-full h-full object-cover"
+                                style={{
+                                  objectPosition: `${(player as any).logo_position_x_square ?? 50}% ${(player as any).logo_position_y_square ?? 50}%`,
+                                  transform: `scale(${(player as any).logo_scale_square ?? 1})`,
+                                  transformOrigin: `${(player as any).logo_position_x_square ?? 50}% ${(player as any).logo_position_y_square ?? 50}%`,
+                                }}
+                              />
+                            </div>
                           )}
                           <span className="block text-[9px] text-slate-400 font-bold uppercase">{player.team_name}</span>
                         </div>

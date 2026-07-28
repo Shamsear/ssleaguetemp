@@ -771,11 +771,16 @@ export default function SeasonDetailPage() {
                                       <td className="py-3 px-2 text-left font-bold text-slate-900">
                                         <Link href={`/teams/${team.team_id}?season=${seasonId}`} className="flex items-center gap-2 group text-xs">
                                           {team.team_logo && (
-                                            <div className="w-6 h-6 rounded bg-white p-0.5 border border-slate-100 flex items-center justify-center flex-shrink-0">
+                                            <div className="w-6 h-6 rounded bg-white p-0.5 border border-slate-100 overflow-hidden flex-shrink-0">
                                               <img
                                                 src={team.team_logo}
                                                 alt={resolvedName}
-                                                className="object-contain max-w-full max-h-full"
+                                                className="w-full h-full object-cover"
+                                                style={{
+                                                  objectPosition: `${team.logo_position_x_square ?? 50}% ${team.logo_position_y_square ?? 50}%`,
+                                                  transform: `scale(${team.logo_scale_square ?? 1})`,
+                                                  transformOrigin: `${team.logo_position_x_square ?? 50}% ${team.logo_position_y_square ?? 50}%`,
+                                                }}
                                               />
                                             </div>
                                           )}

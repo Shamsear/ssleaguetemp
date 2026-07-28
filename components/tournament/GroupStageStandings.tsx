@@ -152,6 +152,11 @@ export default function GroupStageStandings({ groupStandings, currentUserId }: G
                             src={team.team_logo} 
                             alt={`${team.team_name} logo`}
                             className="w-8 h-8 rounded-full object-cover border border-slate-200 flex-shrink-0"
+                            style={{
+                              objectPosition: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
+                              transform: `scale(${(team as any).logo_scale_circle ?? 1})`,
+                              transformOrigin: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
+                            }}
                           />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-black text-[10px] flex-shrink-0 shadow-sm shadow-amber-500/10">

@@ -218,6 +218,11 @@ export default function ShareableFantasyLeaderboard({
                               alt={`${team.team_name} logo`}
                               className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                               crossOrigin="anonymous"
+                              style={{
+                                objectPosition: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
+                                transform: `scale(${(team as any).logo_scale_circle ?? 1})`,
+                                transformOrigin: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
+                              }}
                             />
                           ) : (
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
