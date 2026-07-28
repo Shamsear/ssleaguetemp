@@ -377,12 +377,15 @@ export default function CommitteeTeamsPage() {
                       <div className="flex items-center gap-3">
                         <div className="h-14 w-14 flex-shrink-0 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-center p-1.5 relative overflow-hidden shadow-inner">
                           {teamData.team.logoUrl ? (
-                            <Image 
+                            <img 
                               src={teamData.team.logoUrl} 
                               alt={teamData.team.name} 
-                              width={56}
-                              height={56}
-                              className="object-contain w-full h-full"
+                              className="object-cover w-full h-full"
+                              style={{
+                                objectPosition: `${(teamData.team as any).logo_position_x_square ?? 50}% ${(teamData.team as any).logo_position_y_square ?? 50}%`,
+                                transform: `scale(${(teamData.team as any).logo_scale_square ?? 1})`,
+                                transformOrigin: `${(teamData.team as any).logo_position_x_square ?? 50}% ${(teamData.team as any).logo_position_y_square ?? 50}%`,
+                              }}
                             />
                           ) : (
                             <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -290,7 +290,7 @@ function TeamsContent() {
                 <div className="flex items-center gap-4 mb-4">
                   {/* Team Logo */}
                   {team.logo_url ? (
-                    <div className="w-16 h-16 rounded-xl bg-white border border-slate-200/60 shadow-inner flex-shrink-0 flex items-center justify-center p-2 relative overflow-hidden">
+                    <div className="w-16 h-16 rounded-xl bg-white border border-slate-200/60 shadow-inner flex-shrink-0 flex items-center justify-center relative overflow-hidden">
                       <img
                         src={team.logo_url}
                         alt={team.team_name}

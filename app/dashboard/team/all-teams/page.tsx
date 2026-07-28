@@ -200,6 +200,12 @@ export default function AllTeamsPage() {
               id: teamId,
               name: teamSeasonData.team_name || 'Unknown Team',
               logoUrl: teamSeasonData.team_logo || undefined,
+              logo_position_x_circle: teamSeasonData.logo_position_x_circle,
+              logo_position_y_circle: teamSeasonData.logo_position_y_circle,
+              logo_scale_circle: teamSeasonData.logo_scale_circle,
+              logo_position_x_square: teamSeasonData.logo_position_x_square,
+              logo_position_y_square: teamSeasonData.logo_position_y_square,
+              logo_scale_square: teamSeasonData.logo_scale_square,
               balance: teamSeasonData.budget || 0,
               // Dual currency fields
               currencySystem: teamSeasonData.currency_system || 'dual',
@@ -342,12 +348,15 @@ export default function AllTeamsPage() {
                   <div className="flex items-center mb-4 gap-3">
                     <div className="h-14 w-14 flex-shrink-0 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-center p-1.5 relative overflow-hidden shadow-inner">
                       {teamData.team.logoUrl ? (
-                        <Image 
-                          src={teamData.team.logoUrl} 
-                          alt={teamData.team.name} 
-                          width={56}
-                          height={56}
-                          className="object-contain w-full h-full"
+                        <img
+                          src={teamData.team.logoUrl}
+                          alt={teamData.team.name}
+                          className="object-cover w-full h-full"
+                          style={{
+                            objectPosition: `${(teamData.team as any).logo_position_x_square ?? 50}% ${(teamData.team as any).logo_position_y_square ?? 50}%`,
+                            transform: `scale(${(teamData.team as any).logo_scale_square ?? 1})`,
+                            transformOrigin: `${(teamData.team as any).logo_position_x_square ?? 50}% ${(teamData.team as any).logo_position_y_square ?? 50}%`,
+                          }}
                         />
                       ) : (
                         <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

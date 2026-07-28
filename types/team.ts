@@ -68,7 +68,18 @@ export interface TeamData {
   
   // Metadata
   logo?: string; // Base64 or URL
+  logo_url?: string;
   team_color?: string;
+  
+  // Circle positioning
+  logo_position_x_circle?: number;
+  logo_position_y_circle?: number;
+  logo_scale_circle?: number;
+  
+  // Square positioning
+  logo_position_x_square?: number;
+  logo_position_y_square?: number;
+  logo_scale_square?: number;
   
   // Historical Performance (for teams with history across multiple seasons)
   performance_history?: {

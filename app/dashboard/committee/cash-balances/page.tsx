@@ -807,12 +807,15 @@ export default function CommitteeCashBalances() {
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-155 p-1 flex items-center justify-center relative overflow-hidden flex-shrink-0">
                               {team.team_logo ? (
-                                <Image 
+                                <img 
                                   src={team.team_logo} 
                                   alt={team.team_name} 
-                                  width={32}
-                                  height={32}
-                                  className="object-contain w-full h-full"
+                                  className="object-cover w-full h-full"
+                                  style={{
+                                    objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                                    transform: `scale(${(team as any).logo_scale_square ?? 1})`,
+                                    transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                                  }}
                                 />
                               ) : (
                                 <User className="w-4 h-4 text-slate-400" />

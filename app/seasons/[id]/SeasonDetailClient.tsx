@@ -246,7 +246,13 @@ export default function SeasonDetailPage() {
             losses: team.losses || 0,
             goals_scored: team.goals_for || 0,
             goals_conceded: team.goals_against || 0,
-            logo_url: team.team_logo || null
+            logo_url: team.team_logo || null,
+            logo_position_x_circle: team.logo_position_x_circle,
+            logo_position_y_circle: team.logo_position_y_circle,
+            logo_scale_circle: team.logo_scale_circle,
+            logo_position_x_square: team.logo_position_x_square,
+            logo_position_y_square: team.logo_position_y_square,
+            logo_scale_square: team.logo_scale_square,
           }));
           setTeams(mappedTeams);
           setGroupStandings(null);

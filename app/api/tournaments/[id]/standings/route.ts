@@ -274,12 +274,12 @@ async function calculateLeagueStandings(fixtures: any[], sql: any, tournamentId:
     }
   });
 
-  // Fetch team logos from Firebase
+  // Fetch team logos and positioning adjustments from Firebase
   const teamIds = Object.keys(teamStats);
   if (teamIds.length > 0) {
     try {
       const { db } = await import('@/lib/firebase/config');
-      const { collection, query, where, getDocs } = await import('firebase/firestore');
+      const { collection, getDocs } = await import('firebase/firestore');
       
       const teamsRef = collection(db, 'teams');
       const teamsSnapshot = await getDocs(teamsRef);
@@ -290,6 +290,12 @@ async function calculateLeagueStandings(fixtures: any[], sql: any, tournamentId:
         
         if (teamStats[teamId]) {
           teamStats[teamId].team_logo = teamData.logo_url || teamData.team_logo || teamData.logoUrl || null;
+          teamStats[teamId].logo_position_x_circle = teamData.logo_position_x_circle ?? undefined;
+          teamStats[teamId].logo_position_y_circle = teamData.logo_position_y_circle ?? undefined;
+          teamStats[teamId].logo_scale_circle = teamData.logo_scale_circle ?? undefined;
+          teamStats[teamId].logo_position_x_square = teamData.logo_position_x_square ?? undefined;
+          teamStats[teamId].logo_position_y_square = teamData.logo_position_y_square ?? undefined;
+          teamStats[teamId].logo_scale_square = teamData.logo_scale_square ?? undefined;
         }
       });
     } catch (error) {
@@ -423,7 +429,7 @@ async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, 
     }
   });
 
-  // Fetch team logos from Firebase
+  // Fetch team logos and positioning adjustments from Firebase
   const allTeamIds = new Set<string>();
   Object.values(groups).forEach((group: any) => {
     Object.keys(group).forEach(teamId => allTeamIds.add(teamId));
@@ -441,10 +447,16 @@ async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, 
         const teamData = doc.data();
         const teamId = doc.id;
         
-        // Update team logo in all groups where this team appears
+        // Update team logo and positioning in all groups where this team appears
         Object.values(groups).forEach((group: any) => {
           if (group[teamId]) {
             group[teamId].team_logo = teamData.logo_url || teamData.team_logo || teamData.logoUrl || null;
+            group[teamId].logo_position_x_circle = teamData.logo_position_x_circle ?? undefined;
+            group[teamId].logo_position_y_circle = teamData.logo_position_y_circle ?? undefined;
+            group[teamId].logo_scale_circle = teamData.logo_scale_circle ?? undefined;
+            group[teamId].logo_position_x_square = teamData.logo_position_x_square ?? undefined;
+            group[teamId].logo_position_y_square = teamData.logo_position_y_square ?? undefined;
+            group[teamId].logo_scale_square = teamData.logo_scale_square ?? undefined;
           }
         });
       });

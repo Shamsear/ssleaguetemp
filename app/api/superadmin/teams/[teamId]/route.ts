@@ -107,7 +107,9 @@ export async function PATCH(
     }
 
     // Update all team_seasons records for this team
-    if (teamName || logoUrl) {
+    if (teamName || logoUrl || 
+        logo_position_x_circle !== undefined || logo_position_y_circle !== undefined || logo_scale_circle !== undefined ||
+        logo_position_x_square !== undefined || logo_position_y_square !== undefined || logo_scale_square !== undefined) {
       try {
         const teamSeasonsSnapshot = await adminDb
           .collection('team_seasons')
@@ -118,6 +120,13 @@ export async function PATCH(
           const seasonUpdateData: any = { updated_at: new Date() };
           if (teamName) seasonUpdateData.team_name = teamName;
           if (logoUrl) seasonUpdateData.team_logo = logoUrl;
+          if (logoUrl) seasonUpdateData.logo_url = logoUrl;
+          if (logo_position_x_circle !== undefined) seasonUpdateData.logo_position_x_circle = logo_position_x_circle;
+          if (logo_position_y_circle !== undefined) seasonUpdateData.logo_position_y_circle = logo_position_y_circle;
+          if (logo_scale_circle !== undefined) seasonUpdateData.logo_scale_circle = logo_scale_circle;
+          if (logo_position_x_square !== undefined) seasonUpdateData.logo_position_x_square = logo_position_x_square;
+          if (logo_position_y_square !== undefined) seasonUpdateData.logo_position_y_square = logo_position_y_square;
+          if (logo_scale_square !== undefined) seasonUpdateData.logo_scale_square = logo_scale_square;
           
           return doc.ref.update(seasonUpdateData);
         });

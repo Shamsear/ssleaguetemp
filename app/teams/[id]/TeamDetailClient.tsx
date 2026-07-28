@@ -446,7 +446,7 @@ function TeamDetailContent() {
             <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm text-center space-y-4">
               
               {/* Logo Frame */}
-              <div className="relative w-40 h-40 mx-auto rounded-xl shadow-sm border border-slate-200 bg-white flex items-center justify-center p-3 overflow-hidden">
+              <div className="relative w-40 h-40 mx-auto rounded-xl shadow-sm border border-slate-200 bg-white flex items-center justify-center overflow-hidden">
                 {team.logo_url ? (
                   <img
                     src={team.logo_url}

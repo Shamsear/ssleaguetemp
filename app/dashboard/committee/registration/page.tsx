@@ -473,14 +473,21 @@ export default function TeamRegistrationPage() {
                       <tr key={team.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-4 py-3">
                           {team.logo_url || team.teamLogo ? (
-                            <img
-                              src={team.logo_url || team.teamLogo}
-                              alt={team.team_name || team.name}
-                              className="w-8 h-8 rounded-lg object-contain bg-slate-50 p-0.5 border border-slate-200/40"
-                              onError={(e) => {
-                                e.currentTarget.src = "/placeholder-logo.png";
-                              }}
-                            />
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200/40 overflow-hidden flex items-center justify-center">
+                              <img
+                                src={team.logo_url || team.teamLogo}
+                                alt={team.team_name || team.name}
+                                className="w-full h-full object-cover"
+                                style={{
+                                  objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                                  transform: `scale(${(team as any).logo_scale_square ?? 1})`,
+                                  transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
+                                }}
+                                onError={(e) => {
+                                  e.currentTarget.src = "/placeholder-logo.png";
+                                }}
+                              />
+                            </div>
                           ) : (
                             <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/40 flex items-center justify-center text-xs font-black text-slate-400 uppercase">
                               {(team.team_name || team.name || "T").substring(0, 2)}

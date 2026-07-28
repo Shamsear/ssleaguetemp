@@ -29,10 +29,31 @@ export async function GET(request: Request) {
     
     const snapshot = await query.get();
     
-    const teamSeasons = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    // Fetch base teams data to get logo positioning adjustments
+    const teamsSnapshot = await adminDb.collection('teams').get();
+    const teamsMap = new Map();
+    teamsSnapshot.forEach(doc => {
+      const data = doc.data();
+      teamsMap.set(doc.id, {
+        logo_position_x_circle: data.logo_position_x_circle,
+        logo_position_y_circle: data.logo_position_y_circle,
+        logo_scale_circle: data.logo_scale_circle,
+        logo_position_x_square: data.logo_position_x_square,
+        logo_position_y_square: data.logo_position_y_square,
+        logo_scale_square: data.logo_scale_square,
+      });
+    });
+    
+    const teamSeasons = snapshot.docs.map(doc => {
+      const data = doc.data() as any;
+      const tId = data.team_id || doc.id.split('_')[0];
+      const positioning = teamsMap.get(tId) || {};
+      return {
+        id: doc.id,
+        ...data,
+        ...positioning,
+      };
+    });
     
     console.log('[API team-seasons] Query results:', {
       seasonIdFilter: seasonId,

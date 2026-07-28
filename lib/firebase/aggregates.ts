@@ -25,6 +25,12 @@ export interface TeamSummary {
   logo: string | null;
   logo_url: string | null;
   season_id: string;
+  logo_position_x_circle?: number;
+  logo_position_y_circle?: number;
+  logo_scale_circle?: number;
+  logo_position_x_square?: number;
+  logo_position_y_square?: number;
+  logo_scale_square?: number;
 }
 
 export interface PlayerSummary {
@@ -99,6 +105,12 @@ export async function buildTeamsSummary(seasonId?: string): Promise<TeamSummary[
         logo: logoUrl,
         logo_url: logoUrl,
         season_id: data.season_id || seasonId || '',
+        logo_position_x_circle: data.logo_position_x_circle,
+        logo_position_y_circle: data.logo_position_y_circle,
+        logo_scale_circle: data.logo_scale_circle,
+        logo_position_x_square: data.logo_position_x_square,
+        logo_position_y_square: data.logo_position_y_square,
+        logo_scale_square: data.logo_scale_square,
       });
     });
     
@@ -136,7 +148,25 @@ export async function buildTeamsSummary(seasonId?: string): Promise<TeamSummary[
             logo: logoUrl,
             logo_url: logoUrl,
             season_id: seasonId,
+            logo_position_x_circle: data.logo_position_x_circle,
+            logo_position_y_circle: data.logo_position_y_circle,
+            logo_scale_circle: data.logo_scale_circle,
+            logo_position_x_square: data.logo_position_x_square,
+            logo_position_y_square: data.logo_position_y_square,
+            logo_scale_square: data.logo_scale_square,
           });
+        } else {
+          // If the team season was already populated from teamSeasonsSnapshot,
+          // merge the logo positioning adjustments from the base team document.
+          const existing = teamsMap.get(baseId);
+          if (existing) {
+            existing.logo_position_x_circle = data.logo_position_x_circle;
+            existing.logo_position_y_circle = data.logo_position_y_circle;
+            existing.logo_scale_circle = data.logo_scale_circle;
+            existing.logo_position_x_square = data.logo_position_x_square;
+            existing.logo_position_y_square = data.logo_position_y_square;
+            existing.logo_scale_square = data.logo_scale_square;
+          }
         }
       } else {
         // If no season filter, include all teams with their latest stats
@@ -149,6 +179,12 @@ export async function buildTeamsSummary(seasonId?: string): Promise<TeamSummary[
             existing.logo = logoUrl;
             existing.logo_url = logoUrl;
           }
+          existing.logo_position_x_circle = data.logo_position_x_circle;
+          existing.logo_position_y_circle = data.logo_position_y_circle;
+          existing.logo_scale_circle = data.logo_scale_circle;
+          existing.logo_position_x_square = data.logo_position_x_square;
+          existing.logo_position_y_square = data.logo_position_y_square;
+          existing.logo_scale_square = data.logo_scale_square;
         } else {
           teamsMap.set(baseId, {
             id: baseId,
@@ -169,6 +205,12 @@ export async function buildTeamsSummary(seasonId?: string): Promise<TeamSummary[
             logo: logoUrl,
             logo_url: logoUrl,
             season_id: '',
+            logo_position_x_circle: data.logo_position_x_circle,
+            logo_position_y_circle: data.logo_position_y_circle,
+            logo_scale_circle: data.logo_scale_circle,
+            logo_position_x_square: data.logo_position_x_square,
+            logo_position_y_square: data.logo_position_y_square,
+            logo_scale_square: data.logo_scale_square,
           });
         }
       }

@@ -190,7 +190,13 @@ export default function CurrentSeasonPage() {
             losses: team.losses || 0,
             goals_scored: team.goals_for || 0,
             goals_conceded: team.goals_against || 0,
-            logo_url: team.team_logo || null
+            logo_url: team.team_logo || null,
+            logo_position_x_circle: team.logo_position_x_circle,
+            logo_position_y_circle: team.logo_position_y_circle,
+            logo_scale_circle: team.logo_scale_circle,
+            logo_position_x_square: team.logo_position_x_square,
+            logo_position_y_square: team.logo_position_y_square,
+            logo_scale_square: team.logo_scale_square,
           }));
           setTeams(mappedTeams);
           setGroupStandings(null);
@@ -558,7 +564,7 @@ export default function CurrentSeasonPage() {
                                     <td className="py-4 px-4 text-left font-bold text-slate-900">
                                       <Link href={`/teams/${team.team_id}`} className="flex items-center gap-3 group">
                                         {team.logo_url && (
-                                          <div className="w-8 h-8 rounded bg-white p-1 border border-slate-100 flex items-center justify-center overflow-hidden">
+                                          <div className="w-8 h-8 rounded bg-white border border-slate-100 flex items-center justify-center overflow-hidden">
                                             <img
                                               src={team.logo_url}
                                               alt={team.team_name}
@@ -568,7 +574,6 @@ export default function CurrentSeasonPage() {
                                                 transform: `scale(${(team as any).logo_scale_square ?? 1})`,
                                                 transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
                                               }}
-                                            />
                                             />
                                           </div>
                                         )}
@@ -618,7 +623,6 @@ export default function CurrentSeasonPage() {
                                         transform: `scale(${(team as any).logo_scale_square ?? 1})`,
                                         transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
                                       }}
-                                    />
                                     />
                                   </div>
                                 )}
