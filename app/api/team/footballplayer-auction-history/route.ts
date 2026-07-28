@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 import { verifyAuth } from '@/lib/auth-helper';
+import { decryptBidData } from '@/lib/encryption';
 
 const auctionSql = neon(process.env.NEON_AUCTION_DB_URL!);
 
@@ -88,6 +89,7 @@ export async function GET(request: NextRequest) {
               b.team_id,
               t.name as team_name,
               b.amount as price,
+              b.encrypted_bid_data,
               'won' as status
             FROM bids b
             JOIN footballplayers fp ON b.player_id = fp.id
@@ -96,6 +98,27 @@ export async function GET(request: NextRequest) {
               AND b.status = 'won'
             ORDER BY b.player_id, b.amount DESC, b.created_at ASC
           `;
+
+          // Decrypt bid amounts if they're NULL
+          players = players.map((player: any) => {
+            let finalPrice = player.price;
+            
+            // If amount is NULL, decrypt from encrypted_bid_data
+            if (player.price === null && player.encrypted_bid_data) {
+              try {
+                const decrypted = decryptBidData(player.encrypted_bid_data);
+                finalPrice = decrypted.amount;
+              } catch (error) {
+                console.error(`Failed to decrypt bid for player ${player.player_id}:`, error);
+                finalPrice = 0; // Fallback to 0 if decryption fails
+              }
+            }
+
+            return {
+              ...player,
+              price: finalPrice
+            };
+          });
         }
 
         return {
