@@ -13,24 +13,24 @@ export async function GET(request: NextRequest) {
     
     if (status) {
       seasons = await sql`
-        SELECT DISTINCT 
+        SELECT 
           season_id,
           MAX(created_at) as created_at,
           MAX(status) as status
         FROM tournaments
         WHERE status = ${status}
         GROUP BY season_id
-        ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC
+        ORDER BY season_id DESC
       `;
     } else {
       seasons = await sql`
-        SELECT DISTINCT 
+        SELECT 
           season_id,
           MAX(created_at) as created_at,
           MAX(status) as status
         FROM tournaments
         GROUP BY season_id
-        ORDER BY COALESCE(NULLIF(REGEXP_REPLACE(season_id, '[^0-9]', '', 'g'), ''), '0')::integer DESC
+        ORDER BY season_id DESC
       `;
     }
 

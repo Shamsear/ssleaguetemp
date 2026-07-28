@@ -178,21 +178,33 @@ export async function sendNotificationToSeason(
   seasonId: string
 ): Promise<{ success: boolean; sentCount: number; failedCount: number }> {
   try {
-    // Get all teams registered for this season
-    // Note: team_seasons table is in Firebase, need to query from main Neon DB
-    const mainSql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
-    const teamsResult = await mainSql`
-      SELECT DISTINCT firebase_uid as team_id
-      FROM teams
-      WHERE season_id = ${seasonId}
-    `;
+    // Get all teams registered for this season from Firebase
+    const { adminDb } = await import('@/lib/firebase/admin');
+    const teamSeasonsSnapshot = await adminDb
+      .collection('team_seasons')
+      .where('season_id', '==', seasonId)
+      .get();
 
-    console.log(`🔍 Found ${teamsResult.length} teams for season ${seasonId}`);
+    console.log(`🔍 Found ${teamSeasonsSnapshot.size} teams in Firebase for season ${seasonId}`);
 
-    const teamIds = teamsResult.map(t => t.team_id).filter(id => id);
+    if (teamSeasonsSnapshot.empty) {
+      console.log('⚠️ No teams found for season in Firebase');
+      return { success: false, sentCount: 0, failedCount: 0 };
+    }
+
+    // Extract user_ids from team_seasons documents
+    const teamIds: string[] = [];
+    teamSeasonsSnapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.user_id) {
+        teamIds.push(data.user_id);
+      }
+    });
+
+    console.log(`📋 Extracted ${teamIds.length} user IDs from team_seasons`);
 
     if (teamIds.length === 0) {
-      console.log('⚠️ No team IDs found for season');
+      console.log('⚠️ No user IDs found in team_seasons documents');
       return { success: false, sentCount: 0, failedCount: 0 };
     }
 

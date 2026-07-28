@@ -948,21 +948,6 @@ export default function CommitteeDashboard() {
                   <p className="text-[10px] text-slate-500 font-bold uppercase">View AI-generated news</p>
                 </Link>
 
-                <Link href="/dashboard/committee/send-notification" className="group bg-slate-50 border border-slate-200/60 rounded-xl p-4 hover:border-amber-400 hover:shadow-md hover:bg-white transition-all">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2 rounded-lg bg-slate-850 text-amber-400 border border-slate-905 flex-shrink-0">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                      </svg>
-                    </div>
-                    <svg className="w-4 h-4 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider group-hover:text-amber-600 transition-colors mb-1">Send Notification</h4>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase">Broadcast to all team users</p>
-                </Link>
-
                 <Link href="/admin/notifications" className="group bg-slate-50 border border-slate-200/60 rounded-xl p-4 hover:border-amber-400 hover:shadow-md hover:bg-white transition-all">
                   <div className="flex items-center justify-between mb-3">
                     <div className="p-2 rounded-lg bg-slate-850 text-amber-400 border border-slate-905 flex-shrink-0">

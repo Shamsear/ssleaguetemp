@@ -5,7 +5,12 @@ import { adminAuth } from '@/lib/firebase/admin';
 export interface AuthResult {
   authenticated: boolean;
   userId?: string;
+  uid?: string;
   role?: string;
+  claims?: {
+    role?: string;
+    seasonId?: string;
+  };
   error?: string;
 }
 
@@ -13,6 +18,7 @@ export interface AuthResult {
 interface CachedToken {
   userId: string;
   role?: string;
+  seasonId?: string;
   expiresAt: number;
 }
 
@@ -40,10 +46,11 @@ function getCachedToken(token: string): CachedToken | null {
   return null;
 }
 
-function setCachedToken(token: string, userId: string, role?: string) {
+function setCachedToken(token: string, userId: string, role?: string, seasonId?: string) {
   tokenCache.set(token, {
     userId,
     role,
+    seasonId,
     expiresAt: Date.now() + CACHE_TTL
   });
 }
@@ -87,6 +94,7 @@ export async function verifyAuth(
 
     let userId: string;
     let role: string | undefined;
+    let seasonId: string | undefined;
 
     if (lightweight) {
       // Lightweight mode: Just decode JWT locally without Firebase verification
@@ -103,6 +111,7 @@ export async function verifyAuth(
       
       userId = decoded.uid;
       role = decoded.role;
+      seasonId = decoded.seasonId;
     } else {
       // Full verification mode: Check cache then Firebase
       const cached = getCachedToken(token);
@@ -111,6 +120,7 @@ export async function verifyAuth(
         // Cache hit - no Firebase call needed!
         userId = cached.userId;
         role = cached.role;
+        seasonId = cached.seasonId;
       } else {
         // Cache miss - verify token with Firebase
         // ✅ Verify Firebase token (validates signature, expiry, etc.)
@@ -128,13 +138,14 @@ export async function verifyAuth(
 
         userId = decodedToken.uid;
         
-        // ✅ Get role from custom claims (already in the JWT token - zero DB reads!)
+        // ✅ Get role and seasonId from custom claims (already in the JWT token - zero DB reads!)
         // Note: Custom claims must be set when user is created/updated
-        // See: adminAuth.setCustomUserClaims(uid, { role: 'committee_admin' })
+        // See: adminAuth.setCustomUserClaims(uid, { role: 'committee_admin', seasonId: 'SSPSLS18' })
         role = decodedToken.role as string | undefined;
+        seasonId = decodedToken.seasonId as string | undefined;
         
         // Cache the result for future requests
-        setCachedToken(token, userId, role);
+        setCachedToken(token, userId, role, seasonId);
       }
     }
 
@@ -144,7 +155,9 @@ export async function verifyAuth(
         return {
           authenticated: false,
           userId,
+          uid: userId,
           role,
+          claims: { role, seasonId },
           error: `Access denied. Required roles: ${requiredRoles.join(', ')}`,
         };
       }
@@ -153,7 +166,9 @@ export async function verifyAuth(
     return {
       authenticated: true,
       userId,
+      uid: userId,
       role,
+      claims: { role, seasonId },
     };
   } catch (error: any) {
     console.error('Auth verification error:', error);

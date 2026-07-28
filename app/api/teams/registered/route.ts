@@ -49,8 +49,10 @@ export async function GET(request: NextRequest) {
     
     const teams = teamsSnapshot.docs.map(doc => {
       const data = doc.data();
+      console.log(`[Team ${doc.id}] user_id:`, data.user_id, 'team_name:', data.team_name);
       return {
         team_id: doc.id,
+        user_id: data.user_id || null, // Firebase Auth UID
         team_name: data.team_name || 'Unknown Team',
         team_code: data.team_code || '',
         owner_name: data.owner_name || data.username || '',
@@ -66,6 +68,7 @@ export async function GET(request: NextRequest) {
       success: true,
       teams: teams.map((team: any) => ({
         team_id: team.team_id,
+        user_id: team.user_id,
         team_name: team.team_name,
         team_code: team.team_code,
         owner_name: team.owner_name,

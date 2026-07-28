@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         // Send to all teams in the season
         if (round.season_id) {
           return NextResponse.json(
-            await sendNotificationToSeason(round.season_id, notificationPayload)
+            await sendNotificationToSeason(notificationPayload, round.season_id)
           );
         }
         break;
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
           notificationOptions = { allUsers: true };
         } else if (targetType === 'season' && seasonId) {
           return NextResponse.json(
-            await sendNotificationToSeason(seasonId, notificationPayload)
+            await sendNotificationToSeason(notificationPayload, seasonId)
           );
         } else if (targetType === 'specific' && userIds && userIds.length > 0) {
           notificationOptions = { userIds };
