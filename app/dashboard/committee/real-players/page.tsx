@@ -433,15 +433,21 @@ export default function RealPlayersPage() {
       return;
     }
 
-    // Category quota validation for S18+
+    // Category quota and balance reserve validation for S18+
     if (!isModernSeason) {
       const targetTeam = teams.find(t => t.id === quickAssignTeam);
       if (targetTeam) {
         const category = quickAssignPlayer.category;
-        const currentCount = targetTeam.assignedPlayers.filter(p => p.category === category).length;
+        const currentCount = targetTeam.assignedPlayers.filter(p => (p.category || '').toLowerCase() === category.toLowerCase()).length;
         const limit = getCategoryLimit(category);
         if (currentCount >= limit) {
           setError(`Cannot assign ${quickAssignPlayer.playerName}. Team ${targetTeam.name} already has the maximum allowed players for category "${category}" (${limit}).`);
+          return;
+        }
+
+        const maxBid = calculateMaxBidForTeam(targetTeam, quickAssignPlayer);
+        if (auctionValue > maxBid) {
+          setError(`Cannot assign player. Maximum allowed bid for ${targetTeam.name} is $${maxBid.toLocaleString()} (must reserve budget for remaining roster slots).`);
           return;
         }
       }
@@ -764,6 +770,47 @@ export default function RealPlayersPage() {
     }
 
     return { valid: true, error: '' };
+  };
+
+  const calculateMaxBidForTeam = (team: TeamData, selectedPlayer: Player | null) => {
+    if (!selectedPlayer || categories.length === 0) {
+      return team.currentBudget;
+    }
+
+    const getCategoryBasePrice = (catName: string) => {
+      const name = catName.toLowerCase();
+      if (name.includes('red')) return 25;
+      if (name.includes('black')) return 20;
+      if (name.includes('blue')) return 15;
+      if (name.includes('white')) return 10;
+      return 0;
+    };
+
+    const selectedCat = (selectedPlayer.category || '').toLowerCase();
+    
+    // Create copy of counts to simulate assignment
+    const simulatedCounts = new Map<string, number>();
+    categories.forEach(c => {
+      const catName = c.name.toLowerCase();
+      const count = team.assignedPlayers.filter(p => (p.category || '').toLowerCase() === catName).length;
+      simulatedCounts.set(catName, count);
+    });
+
+    // Add selected player's category to simulated counts
+    simulatedCounts.set(selectedCat, (simulatedCounts.get(selectedCat) || 0) + 1);
+
+    let totalReserve = 0;
+    categories.forEach((c, idx) => {
+      const catName = c.name.toLowerCase();
+      const target = c.max_players !== undefined ? c.max_players : (idx === 0 ? 2 : 1);
+      const current = simulatedCounts.get(catName) || 0;
+      const needed = Math.max(0, target - current);
+      
+      const basePrice = getCategoryBasePrice(catName);
+      totalReserve += needed * basePrice;
+    });
+
+    return Math.max(0, team.currentBudget - totalReserve);
   };
 
   const filteredAvailablePlayers = availablePlayers.filter(p =>
@@ -1091,8 +1138,14 @@ export default function RealPlayersPage() {
                                 className={`w-full text-left px-4 py-2.5 font-mono text-xs font-bold uppercase transition-all flex items-center justify-between disabled:opacity-40 disabled:cursor-not-allowed ${
                                   isHighlighted ? 'bg-amber-50 text-amber-900 font-extrabold' : isSelected ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-700'
                                 }`}
-                              >
-                                <span className="truncate">{team.name}</span>
+                                                           <div className="flex flex-col text-left">
+                                  <span className="truncate">{team.name}</span>
+                                  {quickAssignPlayer && (
+                                    <span className="text-[9px] text-emerald-600 font-extrabold uppercase mt-0.5">
+                                      MAX BID: ${calculateMaxBidForTeam(team, quickAssignPlayer).toLocaleString()}
+                                    </span>
+                                  )}
+                                </div>
                                 <span className="text-[9px] text-slate-400 ml-2">
                                   ({team.assignedPlayers.length}/{minPlayers}) {slots <= 0 ? 'FULL' : isCategoryFull ? `${quickAssignPlayer?.category} FULL` : `${slots} slots`}
                                 </span>
@@ -1106,20 +1159,32 @@ export default function RealPlayersPage() {
                 </div>
 
                 {quickAssignTeam && (
-                  <div className="mt-2 px-3 py-2 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
+                  <div className="mt-2 px-3 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl space-y-1.5 font-mono text-[10px]">
                     {(() => {
                       const team = teams.find(t => t.id === quickAssignTeam);
                       if (!team) return null;
                       const remaining = showActualBudget
                         ? team.currentBudget
                         : (team.originalBudget - team.assignedPlayers.reduce((sum, p) => sum + p.auctionValue, 0));
+                      const maxBid = calculateMaxBidForTeam(team, quickAssignPlayer);
                       return (
                         <>
-                          <span className="text-[10px] text-slate-500 font-bold uppercase">Budget:</span>
-                          <span className={`text-[10px] font-black ${remaining < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                            <DollarSign className="w-3 h-3 inline-block text-emerald-500 align-text-bottom" />
-                            {remaining.toLocaleString()}
-                          </span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500 font-bold uppercase">Budget Left:</span>
+                            <span className={`font-black ${remaining < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                              <DollarSign className="w-3 h-3 inline-block text-emerald-500 align-text-bottom mr-0.5" />
+                              {remaining.toLocaleString()}
+                            </span>
+                          </div>
+                          {quickAssignPlayer && (
+                            <div className="flex items-center justify-between border-t border-slate-200/60 pt-1.5">
+                              <span className="text-purple-700 font-extrabold uppercase">Max Allowed Bid:</span>
+                              <span className="font-black text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded">
+                                <DollarSign className="w-3 h-3 inline-block text-purple-700 align-text-bottom mr-0.5" />
+                                {maxBid.toLocaleString()}
+                              </span>
+                            </div>
+                          )}
                         </>
                       );
                     })()}
@@ -1151,40 +1216,62 @@ export default function RealPlayersPage() {
                     className="w-full pl-8 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-sm font-bold outline-none tracking-wide text-right hover:border-slate-300 transition-all"
                   />
                 </div>
-                {quickAssignPlayer && quickAssignAuction && (
-                  <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200/60 rounded-xl flex items-center justify-between">
-                    <span className="text-[10px] text-blue-600 font-bold uppercase">Final:</span>
-                    <span className="text-[10px] font-black text-blue-700">
-                      <DollarSign className="w-3 h-3 inline-block text-blue-600 align-text-bottom" />
-                      {(parseInt(quickAssignAuction) || 0).toLocaleString()}
-                    </span>
-                  </div>
-                )}
+                {quickAssignPlayer && quickAssignAuction && quickAssignTeam && (() => {
+                  const team = teams.find(t => t.id === quickAssignTeam);
+                  if (!team) return null;
+                  const maxBid = calculateMaxBidForTeam(team, quickAssignPlayer);
+                  const bidValue = parseInt(quickAssignAuction) || 0;
+                  const isExceeded = bidValue > maxBid;
+                  return (
+                    <div className={`mt-2 px-3 py-2 rounded-xl flex items-center justify-between border ${
+                      isExceeded 
+                        ? 'bg-rose-50 border-rose-250 text-rose-700 font-extrabold animate-pulse' 
+                        : 'bg-blue-50 border-blue-200/60 text-blue-700 font-bold'
+                    }`}>
+                      <span className="text-[10px] uppercase tracking-wide">
+                        {isExceeded ? '⚠️ EXCEEDS MAX BID:' : 'Final Bid:'}
+                      </span>
+                      <span className="text-[10px] font-black">
+                        <DollarSign className="w-3.5 h-3.5 inline-block align-text-bottom mr-0.5" />
+                        {bidValue.toLocaleString()} {isExceeded && `(Max: $${maxBid})`}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Assign Button */}
               <div className="flex items-end">
-                <button
-                  onClick={handleQuickAssign}
-                  disabled={!quickAssignPlayer || !quickAssignTeam || !quickAssignAuction || isQuickAssigning}
-                  className={`w-full py-3.5 font-mono font-bold text-sm uppercase tracking-wider rounded-xl transition-all shadow-sm ${
-                    !quickAssignPlayer || !quickAssignTeam || !quickAssignAuction || isQuickAssigning
-                      ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-500/20 hover:shadow-lg'
-                  }`}
-                >
-                  {isQuickAssigning ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Assigning...
-                    </span>
-                  ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      ⚡ Assign Now
-                      <span className="text-[9px] opacity-70">(Enter)</span>
-                    </span>
-                  )}
-                </button>
+                {(() => {
+                  const selectedTeamData = teams.find(t => t.id === quickAssignTeam);
+                  const isBidExceeded = selectedTeamData && quickAssignPlayer && quickAssignAuction
+                    ? (parseInt(quickAssignAuction) || 0) > calculateMaxBidForTeam(selectedTeamData, quickAssignPlayer)
+                    : false;
+                  const isBtnDisabled = !quickAssignPlayer || !quickAssignTeam || !quickAssignAuction || isQuickAssigning || isBidExceeded;
+                  return (
+                    <button
+                      onClick={handleQuickAssign}
+                      disabled={isBtnDisabled}
+                      className={`w-full py-3.5 font-mono font-bold text-sm uppercase tracking-wider rounded-xl transition-all shadow-sm ${
+                        isBtnDisabled
+                          ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-500/20 hover:shadow-lg'
+                      }`}
+                    >
+                      {isQuickAssigning ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Assigning...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center gap-2">
+                          ⚡ Assign Now
+                          <span className="text-[9px] opacity-70">(Enter)</span>
+                        </span>
+                      )}
+                    </button>
+                  );
+                })()}
               </div>
             </div>
 
