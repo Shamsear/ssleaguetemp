@@ -4096,6 +4096,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         {player.name || player.player_name} ({catDisplay})
                       </option>
                     );
+                  })}
               </select>
               {subNewPlayerId && (
                 <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-xl font-mono text-xs">

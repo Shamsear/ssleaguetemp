@@ -400,6 +400,28 @@ export default function RealPlayersPage() {
       return;
     }
 
+    // Category quota validation for S18+
+    if (!isModernSeason) {
+      const targetTeam = teams.find(t => t.id === quickAssignTeam);
+      if (targetTeam) {
+        const category = quickAssignPlayer.category;
+        const currentCount = targetTeam.assignedPlayers.filter(p => p.category === category).length;
+        
+        const quotas: { [key: string]: number } = {
+          '1st': 2,
+          '2nd': 1,
+          '3rd': 1,
+          '4th': 1
+        };
+
+        const limit = quotas[category];
+        if (limit !== undefined && currentCount >= limit) {
+          setError(`Cannot assign ${quickAssignPlayer.playerName}. Team ${targetTeam.name} already has the maximum allowed players for category "${category}" (${limit}).`);
+          return;
+        }
+      }
+    }
+
     try {
       setIsQuickAssigning(true);
       setError(null);
@@ -493,6 +515,19 @@ export default function RealPlayersPage() {
     if (team.assignedPlayers.length !== requiredPlayers) {
       setError(`${team.name} must have exactly ${requiredPlayers} players (currently ${team.assignedPlayers.length})`);
       return;
+    }
+
+    // Validate category quotas for S18+
+    if (!isModernSeason) {
+      const c1 = team.assignedPlayers.filter(p => p.category === '1st').length;
+      const c2 = team.assignedPlayers.filter(p => p.category === '2nd').length;
+      const c3 = team.assignedPlayers.filter(p => p.category === '3rd').length;
+      const c4 = team.assignedPlayers.filter(p => p.category === '4th').length;
+
+      if (c1 !== 2 || c2 !== 1 || c3 !== 1 || c4 !== 1) {
+        setError(`Cannot save ${team.name}. Quota mismatch: must have exactly 2 1st, 1 2nd, 1 3rd, and 1 4th category players. (Current: 1st: ${c1}/2, 2nd: ${c2}/1, 3rd: ${c3}/1, 4th: ${c4}/1)`);
+        return;
+      }
     }
 
     try {
@@ -1002,7 +1037,7 @@ export default function RealPlayersPage() {
                         </div>
                         <div>
                           <h3 className="font-extrabold text-slate-800 uppercase tracking-wider">{team.name}</h3>
-                          <div className="flex items-center gap-2 mt-1 text-[10px]">
+                          <div className="flex items-center gap-2 mt-1 text-[10px] flex-wrap">
                             <span className={`font-bold uppercase tracking-wider ${playerCount !== maxPlayers ? 'text-rose-600' : 'text-slate-500'}`}>
                               {playerCount}/{maxPlayers} Players
                             </span>
@@ -1010,6 +1045,17 @@ export default function RealPlayersPage() {
                             <span className={`font-bold uppercase tracking-wider ${isOverBudget ? 'text-rose-600 font-extrabold' : 'text-emerald-600'}`}>
                               <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{displayBudget.toLocaleString()} LEFT
                             </span>
+                            {!isModernSeason && (
+                              <>
+                                <span className="text-slate-400 font-bold">•</span>
+                                <span className="text-slate-600 font-extrabold uppercase tracking-wider bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                                  1st: {team.assignedPlayers.filter(p => p.category === '1st').length}/2 | 
+                                  2nd: {team.assignedPlayers.filter(p => p.category === '2nd').length}/1 | 
+                                  3rd: {team.assignedPlayers.filter(p => p.category === '3rd').length}/1 | 
+                                  4th: {team.assignedPlayers.filter(p => p.category === '4th').length}/1
+                                </span>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1051,6 +1097,33 @@ export default function RealPlayersPage() {
                           />
                         </div>
                       </div>
+
+                      {/* Quota checklist for S18+ */}
+                      {!isModernSeason && (
+                        <div className="px-5 py-3 bg-indigo-50/20 border-b border-slate-100 font-mono text-[10px]">
+                          <span className="text-slate-500 font-bold uppercase block mb-2">Category Quota Checklist</span>
+                          <div className="flex flex-wrap gap-2.5">
+                            {['1st', '2nd', '3rd', '4th'].map(cat => {
+                              const current = team.assignedPlayers.filter(p => p.category === cat).length;
+                              const target = cat === '1st' ? 2 : 1;
+                              const isFilled = current === target;
+                              const isOver = current > target;
+                              return (
+                                <div key={cat} className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-all ${
+                                  isFilled 
+                                    ? 'bg-emerald-50 border-emerald-250 text-emerald-700 font-black' 
+                                    : isOver 
+                                      ? 'bg-rose-50 border-rose-250 text-rose-700 font-black'
+                                      : 'bg-slate-50 border-slate-200 text-slate-500 font-bold'
+                                }`}>
+                                  <span>{cat} Category: {current}/{target}</span>
+                                  <span>{isFilled ? '✓' : '⚠️'}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Assigned Players */}
                       <div className="p-5 space-y-4">

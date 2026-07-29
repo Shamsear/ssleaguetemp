@@ -41,6 +41,86 @@ export async function POST(request: NextRequest) {
 
     const sql = getTournamentDb();
 
+    // Validate category quotas for S18+
+    if (!isModern && players.length > 0) {
+      try {
+        const incomingByTeam = new Map<string, Array<{ id: string; name: string }>>();
+        for (const p of players) {
+          if (!incomingByTeam.has(p.teamId)) {
+            incomingByTeam.set(p.teamId, []);
+          }
+          incomingByTeam.get(p.teamId)!.push({ id: p.id, name: p.playerName });
+        }
+
+        const incomingIds = players.map(p => p.id);
+        const incomingPlayerDetails = await sql`
+          SELECT id, category, player_name
+          FROM realplayerstats
+          WHERE id IN (${incomingIds}) AND season_id = ${seasonId}
+        `;
+
+        const categoryMap = new Map<string, string>();
+        incomingPlayerDetails.forEach((row: any) => {
+          categoryMap.set(row.id, row.category || 'classic');
+        });
+
+        for (const [teamId, incomingPlayers] of incomingByTeam.entries()) {
+          const currentAssigned = await sql`
+            SELECT id, category, player_name
+            FROM realplayerstats
+            WHERE team_id = ${teamId} AND season_id = ${seasonId}
+          `;
+
+          const projectedPlayers = currentAssigned.filter((p: any) => !incomingIds.includes(p.id));
+
+          for (const inc of incomingPlayers) {
+            projectedPlayers.push({
+              id: inc.id,
+              player_name: inc.name,
+              category: categoryMap.get(inc.id) || 'classic'
+            });
+          }
+
+          const c1 = projectedPlayers.filter((p: any) => p.category === '1st').length;
+          const c2 = projectedPlayers.filter((p: any) => p.category === '2nd').length;
+          const c3 = projectedPlayers.filter((p: any) => p.category === '3rd').length;
+          const c4 = projectedPlayers.filter((p: any) => p.category === '4th').length;
+
+          const max1 = 2;
+          const max2 = 1;
+          const max3 = 1;
+          const max4 = 1;
+
+          if (c1 > max1) {
+            return NextResponse.json(
+              { error: `Assignment failed. Team would exceed category limit. (1st category: ${c1}/${max1})` },
+              { status: 400 }
+            );
+          }
+          if (c2 > max2) {
+            return NextResponse.json(
+              { error: `Assignment failed. Team would exceed category limit. (2nd category: ${c2}/${max2})` },
+              { status: 400 }
+            );
+          }
+          if (c3 > max3) {
+            return NextResponse.json(
+              { error: `Assignment failed. Team would exceed category limit. (3rd category: ${c3}/${max3})` },
+              { status: 400 }
+            );
+          }
+          if (c4 > max4) {
+            return NextResponse.json(
+              { error: `Assignment failed. Team would exceed category limit. (4th category: ${c4}/${max4})` },
+              { status: 400 }
+            );
+          }
+        }
+      } catch (err) {
+        console.error('Error during backend quota validation:', err);
+      }
+    }
+
     // Fetch team name mapping from Firestore team_seasons (parallel with SQL updates)
     const teamNameMapPromise = (async () => {
       const teamNameMap = new Map<string, string>();
