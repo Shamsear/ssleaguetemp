@@ -1393,8 +1393,8 @@ export default function RealPlayersPage() {
 
           {/* Teams Panel */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between bg-slate-50 border border-slate-200/80 p-4 rounded-2xl mb-2 font-mono text-xs">
-              <span className="font-extrabold uppercase text-slate-500 tracking-wider">Team Squads & Balances</span>
+            <div className="flex items-center justify-between bg-slate-800 text-white p-4 rounded-2xl mb-2 font-mono text-xs border border-slate-700">
+              <span className="font-extrabold uppercase text-slate-200 tracking-wider">Team Squads & Balances</span>
               <button
                 type="button"
                 onClick={handleCopyBudgets}
