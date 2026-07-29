@@ -232,6 +232,8 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
   const [searchTerm, setSearchTerm] = useState('');
   const [bidSearchTerm, setBidSearchTerm] = useState('');
   const [resultFilter, setResultFilter] = useState<'all' | 'won' | 'lost'>('all');
+  const [updateCounter, setUpdateCounter] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Modal system
   const {
@@ -255,6 +257,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
   const fetchDashboard = useCallback(async (showLoader = true, bustCache = false) => {
     if (!seasonStatus?.seasonId) return;
     if (showLoader) setIsLoading(true);
+    setIsRefreshing(true);
 
     try {
       const params = new URLSearchParams({
@@ -296,6 +299,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
       setError('Unable to connect to the server');
     } finally {
       if (showLoader) setIsLoading(false);
+      setIsRefreshing(false);
     }
   }, [seasonStatus?.seasonId]);
 
@@ -311,17 +315,17 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
     dashboardData?.team?.id || null
   );
 
-  // Initial fetch only (no polling)
+  // Initial fetch with updateCounter dependency
   useEffect(() => {
     // Small delay to allow AuthContext to refresh token on page load
     const initialTimeout = setTimeout(() => {
-      fetchDashboard(true);
+      fetchDashboard(true, true); // Bust cache on manual reload
     }, 500);
 
     return () => {
       clearTimeout(initialTimeout);
     };
-  }, [seasonStatus?.seasonId]);
+  }, [seasonStatus?.seasonId, fetchDashboard, updateCounter]);
 
   // ⚡ Comprehensive Firebase Realtime Database listeners
   useEffect(() => {
@@ -1922,6 +1926,28 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
           cancelText={confirmState.cancelText}
           type={confirmState.type}
         />
+        {/* Floating Refresh Action Button */}
+        <button
+          type="button"
+          onClick={() => setUpdateCounter(prev => prev + 1)}
+          disabled={isRefreshing}
+          className="fixed right-6 bottom-24 z-[1002] p-3.5 bg-slate-800 text-white rounded-full shadow-lg border border-slate-700 hover:bg-slate-700 active:scale-95 transition-all disabled:opacity-80"
+          title="Refresh Data"
+        >
+          <svg 
+            className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 24v-5h-.581m-15.356-2a8.001 8.001 0 11-1.628 3.89" 
+            />
+          </svg>
+        </button>
       </div>
     </div>
   );

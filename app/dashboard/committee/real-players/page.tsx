@@ -63,6 +63,7 @@ export default function RealPlayersPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [lastUsedTeam, setLastUsedTeam] = useState<string>('');
   const [copiedBudgets, setCopiedBudgets] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Quick assign searchable dropdown states and refs
   const [playerSearchOpen, setPlayerSearchOpen] = useState(false);
@@ -194,10 +195,10 @@ export default function RealPlayersPage() {
     }
   }, [isCommitteeAdmin, userSeasonId]);
 
-  // Load existing players and organize by team
   useEffect(() => {
     const loadPlayers = async () => {
       if (!userSeasonId || !currentSeason || teamSeasons.length === 0) return;
+      setIsRefreshing(true);
 
       try {
         const seasonNum = parseInt(userSeasonId.replace(/\D/g, '')) || 0;
@@ -292,11 +293,13 @@ export default function RealPlayersPage() {
       } catch (error) {
         console.error('Error loading players:', error);
         setError('Failed to load players');
+      } finally {
+        setIsRefreshing(false);
       }
     };
 
     loadPlayers();
-  }, [userSeasonId, currentSeason, teamSeasons]);
+  }, [userSeasonId, currentSeason, teamSeasons, updateCounter]);
 
   const toggleTeam = (teamId: string) => {
     setTeams(teams.map(t =>
@@ -1724,6 +1727,29 @@ export default function RealPlayersPage() {
           </div>
         </div>
       </div>
+
+      {/* Floating Refresh Action Button */}
+      <button
+        type="button"
+        onClick={() => setUpdateCounter(prev => prev + 1)}
+        disabled={isRefreshing}
+        className="fixed right-6 bottom-24 z-[1002] p-3.5 bg-slate-800 text-white rounded-full shadow-lg border border-slate-700 hover:bg-slate-700 active:scale-95 transition-all disabled:opacity-80"
+        title="Refresh Data"
+      >
+        <svg 
+          className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 24v-5h-.581m-15.356-2a8.001 8.001 0 11-1.628 3.89" 
+          />
+        </svg>
+      </button>
     </div>
   );
 }

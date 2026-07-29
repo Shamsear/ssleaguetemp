@@ -50,6 +50,8 @@ export default function AllTeamsPage() {
   const [seasonType, setSeasonType] = useState<'single' | 'multi'>('single');
   const [error, setError] = useState('');
   const [playerCounts, setPlayerCounts] = useState<{ [key: string]: { footballPlayersCount: number; realPlayersCount: number } }>({});
+  const [updateCounter, setUpdateCounter] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Fetch all team seasons for the season (cached, only after we have seasonId)
   const { data: allTeamSeasons, loading: allTeamsLoading } = useCachedTeamSeasons(
@@ -141,10 +143,10 @@ export default function AllTeamsPage() {
     fetchActiveSeason();
   }, [user]);
 
-  // Fetch player counts from Neon databases
   useEffect(() => {
     const fetchPlayerCounts = async () => {
       if (!seasonId) return;
+      setIsRefreshing(true);
 
       try {
         const response = await fetch(`/api/team/player-counts?seasonId=${seasonId}`);
@@ -155,11 +157,13 @@ export default function AllTeamsPage() {
         }
       } catch (error) {
         console.error('Error fetching player counts:', error);
+      } finally {
+        setIsRefreshing(false);
       }
     };
 
     fetchPlayerCounts();
-  }, [seasonId]);
+  }, [seasonId, updateCounter]);
 
   // Process all team seasons into TeamStats
   useEffect(() => {
@@ -489,6 +493,28 @@ export default function AllTeamsPage() {
           </div>
         )}
       </div>
+      {/* Floating Refresh Action Button */}
+      <button
+        type="button"
+        onClick={() => setUpdateCounter(prev => prev + 1)}
+        disabled={isRefreshing}
+        className="fixed right-6 bottom-24 z-[1002] p-3.5 bg-slate-800 text-white rounded-full shadow-lg border border-slate-700 hover:bg-slate-700 active:scale-95 transition-all disabled:opacity-80"
+        title="Refresh Data"
+      >
+        <svg 
+          className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 24v-5h-.581m-15.356-2a8.001 8.001 0 11-1.628 3.89" 
+          />
+        </svg>
+      </button>
     </div>
   );
 }

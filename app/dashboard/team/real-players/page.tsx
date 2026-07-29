@@ -65,6 +65,8 @@ export default function RealPlayersPage() {
   const [isModern, setIsModern] = useState(false);
   const [teams, setTeams] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [updateCounter, setUpdateCounter] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) router.push('/login');
@@ -174,21 +176,13 @@ export default function RealPlayersPage() {
         console.error('Error fetching players:', error);
       } finally {
         setIsLoading(false);
+        setIsRefreshing(false);
       }
     };
 
+    setIsRefreshing(true);
     fetchData();
-
-    // Set up polling to check for updates every 30 seconds
-    const pollInterval = setInterval(() => {
-      console.log('🔄 Checking for player updates...');
-      fetchData();
-    }, 30000); // 30 seconds
-
-    return () => {
-      clearInterval(pollInterval);
-    };
-  }, [user]);
+  }, [user, updateCounter]);
 
   const filteredPlayers = players
     .filter((player) => {
@@ -197,7 +191,11 @@ export default function RealPlayersPage() {
         (player.display_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (player.team?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
       const matchesCat = categoryFilter === 'all' || player.category === categoryFilter;
-      const matchesTeam = teamFilter === 'all' || player.team === teamFilter;
+      const matchesTeam = teamFilter === 'all' 
+        ? true 
+        : teamFilter === 'free_agents' 
+          ? (!player.team_id || player.team_id === '') 
+          : player.team === teamFilter;
       return matchesSearch && matchesCat && matchesTeam;
     })
     .sort((a, b) => {
@@ -329,6 +327,7 @@ export default function RealPlayersPage() {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-sans font-bold"
               >
                 <option value="all">All Teams</option>
+                <option value="free_agents">Free Agents</option>
                 {teams.map((team) => (
                   <option key={team} value={team}>{team}</option>
                 ))}
@@ -419,7 +418,9 @@ export default function RealPlayersPage() {
                     <h3 className="font-bold text-slate-800 text-base truncate">
                       {player.display_name || player.player_name}
                     </h3>
-                    <p className="text-xs text-slate-400 truncate mb-2">{player.team}</p>
+                    <p className={`text-xs truncate mb-2 font-bold uppercase ${player.team ? 'text-slate-500' : 'text-slate-400 italic'}`}>
+                      {player.team || 'FREE AGENT'}
+                    </p>
 
                     <div className="flex items-center gap-2 flex-wrap text-xs">
                       <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 border border-amber-200 rounded-lg">
@@ -503,7 +504,9 @@ export default function RealPlayersPage() {
                           {player.display_name || player.player_name}
                         </h3>
                       </div>
-                      <p className="text-xs text-slate-400 truncate mb-2">{player.team || 'Unassigned'}</p>
+                      <p className={`text-xs truncate mb-2 font-bold uppercase ${player.team ? 'text-slate-500' : 'text-slate-400 italic'}`}>
+                        {player.team || 'FREE AGENT'}
+                      </p>
 
                       <div className="flex items-center gap-2 flex-wrap">
                         {player.category && (
@@ -549,6 +552,28 @@ export default function RealPlayersPage() {
           )}
         </div>
       </div>
+      {/* Floating Refresh Action Button */}
+      <button
+        type="button"
+        onClick={() => setUpdateCounter(prev => prev + 1)}
+        disabled={isRefreshing}
+        className="fixed right-6 bottom-24 z-[1002] p-3.5 bg-slate-800 text-white rounded-full shadow-lg border border-slate-700 hover:bg-slate-700 active:scale-95 transition-all disabled:opacity-80"
+        title="Refresh Data"
+      >
+        <svg 
+          className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 24v-5h-.581m-15.356-2a8.001 8.001 0 11-1.628 3.89" 
+          />
+        </svg>
+      </button>
     </div>
   );
 }
