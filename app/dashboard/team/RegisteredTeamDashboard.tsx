@@ -1931,7 +1931,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
           type="button"
           onClick={() => setUpdateCounter(prev => prev + 1)}
           disabled={isRefreshing}
-          className="fixed right-6 bottom-24 z-[1002] p-3.5 bg-slate-800 text-white rounded-full shadow-lg border border-slate-700 hover:bg-slate-700 active:scale-95 transition-all disabled:opacity-80"
+          className="fixed right-6 bottom-24 z-[1002] w-12 h-12 flex items-center justify-center bg-slate-800 text-white rounded-full shadow-lg border border-slate-700 hover:bg-slate-700 active:scale-95 transition-all disabled:opacity-80 cursor-pointer"
           title="Refresh Data"
         >
           <svg 
