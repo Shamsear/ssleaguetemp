@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
             team = NULL,
             auction_value = NULL,
             updated_at = NOW()
-        WHERE player_id = ${playerId} AND season_id = ${seasonId}
+        WHERE id = ${playerId} AND season_id = ${seasonId}
       `;
     } else {
       await sql`
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
             team = NULL,
             price = 0,
             updated_at = NOW()
-        WHERE player_id = ${playerId} AND season_id = ${seasonId}
+        WHERE id = ${playerId} AND season_id = ${seasonId}
       `;
     }
 
