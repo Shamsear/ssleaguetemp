@@ -917,86 +917,88 @@ export default function RealPlayersPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Player Selection */}
-              <div ref={playerDropdownRef} className="relative">
+              <div>
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                   1. Select Player <span className="text-rose-500">*</span>
                 </label>
-                <button
-                  type="button"
-                  ref={playerSelectRef}
-                  id="quick-assign-player-btn"
-                  onClick={() => {
-                    setPlayerSearchOpen(prev => !prev);
-                    if (!playerSearchOpen) {
-                      setHighlightedPlayerIndex(0);
-                      setTimeout(() => playerSearchInputRef.current?.focus(), 50);
-                    }
-                  }}
-                  onKeyDown={handlePlayerKeyDown}
-                  className="w-full text-left px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer hover:border-slate-300 transition-all flex items-center justify-between"
-                >
-                  <span className="truncate">
-                    {quickAssignPlayer 
-                      ? `${quickAssignPlayer.playerName} (${quickAssignPlayer.category})` 
-                      : 'Choose player...'}
-                  </span>
-                  <svg className="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                <div ref={playerDropdownRef} className="relative">
+                  <button
+                    type="button"
+                    ref={playerSelectRef}
+                    id="quick-assign-player-btn"
+                    onClick={() => {
+                      setPlayerSearchOpen(prev => !prev);
+                      if (!playerSearchOpen) {
+                        setHighlightedPlayerIndex(0);
+                        setTimeout(() => playerSearchInputRef.current?.focus(), 50);
+                      }
+                    }}
+                    onKeyDown={handlePlayerKeyDown}
+                    className="w-full text-left px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer hover:border-slate-300 transition-all flex items-center justify-between"
+                  >
+                    <span className="truncate">
+                      {quickAssignPlayer 
+                        ? `${quickAssignPlayer.playerName} (${quickAssignPlayer.category})` 
+                        : 'Choose player...'}
+                    </span>
+                    <svg className="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
 
-                {playerSearchOpen && (
-                  <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-slate-200 rounded-xl shadow-xl max-h-72 overflow-y-auto flex flex-col">
-                    <div className="p-2 border-b border-slate-100 bg-slate-50 sticky top-0">
-                      <input
-                        type="text"
-                        ref={playerSearchInputRef}
-                        placeholder="Search player..."
-                        value={playerSearchQuery}
-                        onChange={(e) => {
-                          setPlayerSearchQuery(e.target.value);
-                          setHighlightedPlayerIndex(0);
-                        }}
-                        onKeyDown={handlePlayerKeyDown}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none font-mono text-xs focus:border-amber-500"
-                      />
+                  {playerSearchOpen && (
+                    <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-slate-200 rounded-xl shadow-xl max-h-72 overflow-y-auto flex flex-col">
+                      <div className="p-2 border-b border-slate-100 bg-slate-50 sticky top-0">
+                        <input
+                          type="text"
+                          ref={playerSearchInputRef}
+                          placeholder="Search player..."
+                          value={playerSearchQuery}
+                          onChange={(e) => {
+                            setPlayerSearchQuery(e.target.value);
+                            setHighlightedPlayerIndex(0);
+                          }}
+                          onKeyDown={handlePlayerKeyDown}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none font-mono text-xs focus:border-amber-500"
+                        />
+                      </div>
+                      <div className="overflow-y-auto max-h-56 divide-y divide-slate-50">
+                        {filteredPlayersForDropdown.length === 0 ? (
+                          <div className="p-3 text-slate-400 text-center font-mono text-[10px] uppercase font-bold">No players found</div>
+                        ) : (
+                          filteredPlayersForDropdown.map((player, idx) => {
+                            const isHighlighted = idx === highlightedPlayerIndex;
+                            const isSelected = quickAssignPlayer?.id === player.id;
+                            return (
+                              <button
+                                key={player.id}
+                                type="button"
+                                onClick={() => {
+                                  setQuickAssignPlayer(player);
+                                  setQuickAssignAuction(String(player.basePrice !== undefined && player.basePrice > 0 ? player.basePrice : 0));
+                                  setPlayerSearchOpen(false);
+                                  setPlayerSearchQuery('');
+                                  setTimeout(() => {
+                                    document.getElementById('quick-assign-team-btn')?.focus();
+                                    setTeamSearchOpen(true);
+                                    setHighlightedTeamIndex(0);
+                                    setTimeout(() => teamSearchInputRef.current?.focus(), 50);
+                                  }, 50);
+                                }}
+                                className={`w-full text-left px-4 py-2.5 font-mono text-xs font-bold uppercase transition-all flex items-center justify-between ${
+                                  isHighlighted ? 'bg-amber-50 text-amber-900 font-extrabold' : isSelected ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-700'
+                                }`}
+                              >
+                                <span className="truncate">{player.playerName} ({player.category})</span>
+                                <span className="text-[9px] text-slate-400 ml-2">Min ${player.basePrice || 0}</span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
-                    <div className="overflow-y-auto max-h-56 divide-y divide-slate-50">
-                      {filteredPlayersForDropdown.length === 0 ? (
-                        <div className="p-3 text-slate-400 text-center font-mono text-[10px] uppercase font-bold">No players found</div>
-                      ) : (
-                        filteredPlayersForDropdown.map((player, idx) => {
-                          const isHighlighted = idx === highlightedPlayerIndex;
-                          const isSelected = quickAssignPlayer?.id === player.id;
-                          return (
-                            <button
-                              key={player.id}
-                              type="button"
-                              onClick={() => {
-                                setQuickAssignPlayer(player);
-                                setQuickAssignAuction(String(player.basePrice !== undefined && player.basePrice > 0 ? player.basePrice : 0));
-                                setPlayerSearchOpen(false);
-                                setPlayerSearchQuery('');
-                                setTimeout(() => {
-                                  document.getElementById('quick-assign-team-btn')?.focus();
-                                  setTeamSearchOpen(true);
-                                  setHighlightedTeamIndex(0);
-                                  setTimeout(() => teamSearchInputRef.current?.focus(), 50);
-                                }, 50);
-                              }}
-                              className={`w-full text-left px-4 py-2.5 font-mono text-xs font-bold uppercase transition-all flex items-center justify-between ${
-                                isHighlighted ? 'bg-amber-50 text-amber-900 font-extrabold' : isSelected ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-700'
-                              }`}
-                            >
-                              <span className="truncate">{player.playerName} ({player.category})</span>
-                              <span className="text-[9px] text-slate-400 ml-2">Min ${player.basePrice || 0}</span>
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {quickAssignPlayer && (
                   <div className="mt-2 px-3 py-2 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
@@ -1012,83 +1014,85 @@ export default function RealPlayersPage() {
               </div>
 
               {/* Team Selection */}
-              <div ref={teamDropdownRef} className="relative">
+              <div>
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                   2. Select Team <span className="text-rose-500">*</span>
                 </label>
-                <button
-                  type="button"
-                  ref={teamSelectRef}
-                  id="quick-assign-team-btn"
-                  onClick={() => {
-                    setTeamSearchOpen(prev => !prev);
-                    if (!teamSearchOpen) {
-                      setHighlightedTeamIndex(0);
-                      setTimeout(() => teamSearchInputRef.current?.focus(), 50);
-                    }
-                  }}
-                  onKeyDown={handleTeamKeyDown}
-                  className="w-full text-left px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer hover:border-slate-300 transition-all flex items-center justify-between"
-                >
-                  <span className="truncate">
-                    {quickAssignTeam 
-                      ? teams.find(t => t.id === quickAssignTeam)?.name 
-                      : 'Choose team...'}
-                  </span>
-                  <svg className="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                <div ref={teamDropdownRef} className="relative">
+                  <button
+                    type="button"
+                    ref={teamSelectRef}
+                    id="quick-assign-team-btn"
+                    onClick={() => {
+                      setTeamSearchOpen(prev => !prev);
+                      if (!teamSearchOpen) {
+                        setHighlightedTeamIndex(0);
+                        setTimeout(() => teamSearchInputRef.current?.focus(), 50);
+                      }
+                    }}
+                    onKeyDown={handleTeamKeyDown}
+                    className="w-full text-left px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer hover:border-slate-300 transition-all flex items-center justify-between"
+                  >
+                    <span className="truncate">
+                      {quickAssignTeam 
+                        ? teams.find(t => t.id === quickAssignTeam)?.name 
+                        : 'Choose team...'}
+                    </span>
+                    <svg className="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
 
-                {teamSearchOpen && (
-                  <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-slate-200 rounded-xl shadow-xl max-h-72 overflow-y-auto flex flex-col">
-                    <div className="p-2 border-b border-slate-100 bg-slate-50 sticky top-0">
-                      <input
-                        type="text"
-                        ref={teamSearchInputRef}
-                        placeholder="Search team..."
-                        value={teamSearchQuery}
-                        onChange={(e) => {
-                          setTeamSearchQuery(e.target.value);
-                          setHighlightedTeamIndex(0);
-                        }}
-                        onKeyDown={handleTeamKeyDown}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none font-mono text-xs focus:border-amber-500"
-                      />
+                  {teamSearchOpen && (
+                    <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-slate-200 rounded-xl shadow-xl max-h-72 overflow-y-auto flex flex-col">
+                      <div className="p-2 border-b border-slate-100 bg-slate-50 sticky top-0">
+                        <input
+                          type="text"
+                          ref={teamSearchInputRef}
+                          placeholder="Search team..."
+                          value={teamSearchQuery}
+                          onChange={(e) => {
+                            setTeamSearchQuery(e.target.value);
+                            setHighlightedTeamIndex(0);
+                          }}
+                          onKeyDown={handleTeamKeyDown}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none font-mono text-xs focus:border-amber-500"
+                        />
+                      </div>
+                      <div className="overflow-y-auto max-h-56 divide-y divide-slate-50">
+                        {filteredTeamsForDropdown.length === 0 ? (
+                          <div className="p-3 text-slate-400 text-center font-mono text-[10px] uppercase font-bold">No teams found</div>
+                        ) : (
+                          filteredTeamsForDropdown.map((team, idx) => {
+                            const slots = minPlayers - team.assignedPlayers.length; // maxPlayers is minPlayers
+                            const isHighlighted = idx === highlightedTeamIndex;
+                            const isSelected = quickAssignTeam === team.id;
+                            return (
+                              <button
+                                key={team.id}
+                                type="button"
+                                disabled={slots <= 0}
+                                onClick={() => {
+                                  setQuickAssignTeam(team.id);
+                                  setTeamSearchOpen(false);
+                                  setTeamSearchQuery('');
+                                  setTimeout(() => auctionInputRef.current?.focus(), 50);
+                                }}
+                                className={`w-full text-left px-4 py-2.5 font-mono text-xs font-bold uppercase transition-all flex items-center justify-between disabled:opacity-40 disabled:cursor-not-allowed ${
+                                  isHighlighted ? 'bg-amber-50 text-amber-900 font-extrabold' : isSelected ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-700'
+                                }`}
+                              >
+                                <span className="truncate">{team.name}</span>
+                                <span className="text-[9px] text-slate-400 ml-2">({team.assignedPlayers.length}/{minPlayers}) {slots > 0 ? `${slots} slots` : 'FULL'}</span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
-                    <div className="overflow-y-auto max-h-56 divide-y divide-slate-50">
-                      {filteredTeamsForDropdown.length === 0 ? (
-                        <div className="p-3 text-slate-400 text-center font-mono text-[10px] uppercase font-bold">No teams found</div>
-                      ) : (
-                        filteredTeamsForDropdown.map((team, idx) => {
-                          const slots = minPlayers - team.assignedPlayers.length; // maxPlayers is minPlayers
-                          const isHighlighted = idx === highlightedTeamIndex;
-                          const isSelected = quickAssignTeam === team.id;
-                          return (
-                            <button
-                              key={team.id}
-                              type="button"
-                              disabled={slots <= 0}
-                              onClick={() => {
-                                setQuickAssignTeam(team.id);
-                                setTeamSearchOpen(false);
-                                setTeamSearchQuery('');
-                                setTimeout(() => auctionInputRef.current?.focus(), 50);
-                              }}
-                              className={`w-full text-left px-4 py-2.5 font-mono text-xs font-bold uppercase transition-all flex items-center justify-between disabled:opacity-40 disabled:cursor-not-allowed ${
-                                isHighlighted ? 'bg-amber-50 text-amber-900 font-extrabold' : isSelected ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-700'
-                              }`}
-                            >
-                              <span className="truncate">{team.name}</span>
-                              <span className="text-[9px] text-slate-400 ml-2">({team.assignedPlayers.length}/{minPlayers}) {slots > 0 ? `${slots} slots` : 'FULL'}</span>
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+
                 {quickAssignTeam && (
                   <div className="mt-2 px-3 py-2 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
                     {(() => {
