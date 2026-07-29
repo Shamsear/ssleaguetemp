@@ -36,6 +36,7 @@ export default function RealPlayersPage() {
   const router = useRouter();
   const { isCommitteeAdmin, userSeasonId } = usePermissions();
   const [currentSeason, setCurrentSeason] = useState<Season | null>(null);
+  const [categories, setCategories] = useState<any[]>([]);
 
   const { data: cachedTeams, isLoading: teamsLoading } = useCachedTeams();
   const [teamSeasons, setTeamSeasons] = useState<any[]>([]);
@@ -62,9 +63,23 @@ export default function RealPlayersPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [lastUsedTeam, setLastUsedTeam] = useState<string>('');
   
+  // Quick assign searchable dropdown states and refs
+  const [playerSearchOpen, setPlayerSearchOpen] = useState(false);
+  const [playerSearchQuery, setPlayerSearchQuery] = useState('');
+  const [highlightedPlayerIndex, setHighlightedPlayerIndex] = useState(0);
+
+  const [teamSearchOpen, setTeamSearchOpen] = useState(false);
+  const [teamSearchQuery, setTeamSearchQuery] = useState('');
+  const [highlightedTeamIndex, setHighlightedTeamIndex] = useState(0);
+
+  const playerSearchInputRef = useRef<HTMLInputElement>(null);
+  const teamSearchInputRef = useRef<HTMLInputElement>(null);
+  const playerDropdownRef = useRef<HTMLDivElement>(null);
+  const teamDropdownRef = useRef<HTMLDivElement>(null);
+
   // Refs for auto-focus
-  const playerSelectRef = useRef<HTMLSelectElement>(null);
-  const teamSelectRef = useRef<HTMLSelectElement>(null);
+  const playerSelectRef = useRef<HTMLButtonElement>(null);
+  const teamSelectRef = useRef<HTMLButtonElement>(null);
   const auctionInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -84,6 +99,14 @@ export default function RealPlayersPage() {
         if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
           setDropdownOpen(null);
         }
+      }
+
+      // Close quick assign dropdowns if click is outside
+      if (playerDropdownRef.current && !playerDropdownRef.current.contains(event.target as Node)) {
+        setPlayerSearchOpen(false);
+      }
+      if (teamDropdownRef.current && !teamDropdownRef.current.contains(event.target as Node)) {
+        setTeamSearchOpen(false);
       }
     };
 
@@ -124,8 +147,18 @@ export default function RealPlayersPage() {
   useEffect(() => {
     const fetchData = async () => {
       if (!userSeasonId) return;
+      setLoadingTeamSeasons(true);
 
       try {
+        // Fetch categories
+        const catRes = await fetchWithTokenRefresh('/api/categories');
+        const catData = await catRes.json();
+        if (catData.success) {
+          const sortedCats = (catData.data || []).sort((a: any, b: any) => a.priority - b.priority);
+          setCategories(sortedCats);
+          console.log('Loaded categories:', sortedCats.map((c: any) => c.name));
+        }
+
         // Fetch season
         const season = await getSeasonById(userSeasonId);
         setCurrentSeason(season);
@@ -406,16 +439,8 @@ export default function RealPlayersPage() {
       if (targetTeam) {
         const category = quickAssignPlayer.category;
         const currentCount = targetTeam.assignedPlayers.filter(p => p.category === category).length;
-        
-        const quotas: { [key: string]: number } = {
-          '1st': 2,
-          '2nd': 1,
-          '3rd': 1,
-          '4th': 1
-        };
-
-        const limit = quotas[category];
-        if (limit !== undefined && currentCount >= limit) {
+        const limit = getCategoryLimit(category);
+        if (currentCount >= limit) {
           setError(`Cannot assign ${quickAssignPlayer.playerName}. Team ${targetTeam.name} already has the maximum allowed players for category "${category}" (${limit}).`);
           return;
         }
@@ -519,13 +544,9 @@ export default function RealPlayersPage() {
 
     // Validate category quotas for S18+
     if (!isModernSeason) {
-      const c1 = team.assignedPlayers.filter(p => p.category === '1st').length;
-      const c2 = team.assignedPlayers.filter(p => p.category === '2nd').length;
-      const c3 = team.assignedPlayers.filter(p => p.category === '3rd').length;
-      const c4 = team.assignedPlayers.filter(p => p.category === '4th').length;
-
-      if (c1 !== 2 || c2 !== 1 || c3 !== 1 || c4 !== 1) {
-        setError(`Cannot save ${team.name}. Quota mismatch: must have exactly 2 1st, 1 2nd, 1 3rd, and 1 4th category players. (Current: 1st: ${c1}/2, 2nd: ${c2}/1, 3rd: ${c3}/1, 4th: ${c4}/1)`);
+      const validation = validateTeamCategories(team.assignedPlayers);
+      if (!validation.valid) {
+        setError(`Cannot save ${team.name}. ${validation.error}`);
         return;
       }
     }
@@ -594,6 +615,149 @@ export default function RealPlayersPage() {
   if (!user || !isCommitteeAdmin) {
     return null;
   }
+
+  // Helper calculations for searchable dropdowns
+  const filteredPlayersForDropdown = availablePlayers
+    .filter(p => categoryFilter === 'all' || p.category === categoryFilter)
+    .filter(p => {
+      const q = playerSearchQuery.toLowerCase();
+      return p.playerName.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+    })
+    .sort((a, b) => a.playerName.localeCompare(b.playerName));
+
+  const filteredTeamsForDropdown = teams
+    .filter(t => {
+      const q = teamSearchQuery.toLowerCase();
+      return t.name.toLowerCase().includes(q);
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const handlePlayerKeyDown = (e: React.KeyboardEvent) => {
+    if (!playerSearchOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        setPlayerSearchOpen(true);
+        setHighlightedPlayerIndex(0);
+        setTimeout(() => playerSearchInputRef.current?.focus(), 50);
+        e.preventDefault();
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      setHighlightedPlayerIndex(prev => 
+        prev < filteredPlayersForDropdown.length - 1 ? prev + 1 : 0
+      );
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      setHighlightedPlayerIndex(prev => 
+        prev > 0 ? prev - 1 : filteredPlayersForDropdown.length - 1
+      );
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      const selected = filteredPlayersForDropdown[highlightedPlayerIndex];
+      if (selected) {
+        setQuickAssignPlayer(selected);
+        setQuickAssignAuction(String(selected.basePrice !== undefined && selected.basePrice > 0 ? selected.basePrice : 0));
+        setPlayerSearchOpen(false);
+        setPlayerSearchQuery('');
+        // Focus team select trigger button
+        setTimeout(() => {
+          const btn = document.getElementById('quick-assign-team-btn');
+          btn?.focus();
+          setTeamSearchOpen(true);
+          setHighlightedTeamIndex(0);
+          setTimeout(() => teamSearchInputRef.current?.focus(), 50);
+        }, 50);
+      }
+      e.preventDefault();
+    } else if (e.key === 'Escape') {
+      setPlayerSearchOpen(false);
+      const trigger = document.getElementById('quick-assign-player-btn');
+      trigger?.focus();
+      e.preventDefault();
+    }
+  };
+
+  const handleTeamKeyDown = (e: React.KeyboardEvent) => {
+    if (!teamSearchOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        setTeamSearchOpen(true);
+        setHighlightedTeamIndex(0);
+        setTimeout(() => teamSearchInputRef.current?.focus(), 50);
+        e.preventDefault();
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      setHighlightedTeamIndex(prev => 
+        prev < filteredTeamsForDropdown.length - 1 ? prev + 1 : 0
+      );
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      setHighlightedTeamIndex(prev => 
+        prev > 0 ? prev - 1 : filteredTeamsForDropdown.length - 1
+      );
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      const selected = filteredTeamsForDropdown[highlightedTeamIndex];
+      const slots = minPlayers - selected.assignedPlayers.length; // maxPlayers is minPlayers
+      if (selected && slots > 0) {
+        setQuickAssignTeam(selected.id);
+        setTeamSearchOpen(false);
+        setTeamSearchQuery('');
+        // Focus auction value input
+        setTimeout(() => auctionInputRef.current?.focus(), 50);
+      }
+      e.preventDefault();
+    } else if (e.key === 'Escape') {
+      setTeamSearchOpen(false);
+      const trigger = document.getElementById('quick-assign-team-btn');
+      trigger?.focus();
+      e.preventDefault();
+    }
+  };
+
+  const getCategoryLimit = (catName: string) => {
+    if (categories.length === 0) return 1;
+    const idx = categories.findIndex(c => c.name.toLowerCase() === catName.toLowerCase());
+    if (idx === 0) return 2;
+    return 1;
+  };
+
+  const validateTeamCategories = (assignedPlayers: Player[]) => {
+    if (categories.length === 0) return { valid: true, error: '' };
+    
+    const counts = new Map<string, number>();
+    assignedPlayers.forEach(p => {
+      const cat = p.category;
+      counts.set(cat, (counts.get(cat) || 0) + 1);
+    });
+
+    for (let i = 0; i < categories.length; i++) {
+      const catName = categories[i].name;
+      const current = counts.get(catName) || 0;
+      const target = i === 0 ? 2 : 1;
+      if (current !== target) {
+        return { 
+          valid: false, 
+          error: `Quota mismatch for category "${catName}": must have exactly ${target} player(s) (currently ${current}).` 
+        };
+      }
+    }
+
+    const activeCatNames = categories.map(c => c.name.toLowerCase());
+    for (const p of assignedPlayers) {
+      if (!activeCatNames.includes((p.category || '').toLowerCase())) {
+        return {
+          valid: false,
+          error: `Player "${p.playerName}" has an invalid category "${p.category}" which is not configured for this season.`
+        };
+      }
+    }
+
+    return { valid: true, error: '' };
+  };
 
   const filteredAvailablePlayers = availablePlayers.filter(p =>
     p.playerName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -753,34 +917,87 @@ export default function RealPlayersPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Player Selection */}
-              <div>
+              <div ref={playerDropdownRef} className="relative">
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                   1. Select Player <span className="text-rose-500">*</span>
                 </label>
-                <select
+                <button
+                  type="button"
                   ref={playerSelectRef}
-                  value={quickAssignPlayer?.id || ''}
-                  onChange={(e) => {
-                    const player = availablePlayers.find(p => p.id === e.target.value);
-                    setQuickAssignPlayer(player || null);
-                    if (player) {
-                      setQuickAssignAuction(String(player.basePrice !== undefined && player.basePrice > 0 ? player.basePrice : 0));
-                      // Auto-focus team select
-                      setTimeout(() => teamSelectRef.current?.focus(), 50);
+                  id="quick-assign-player-btn"
+                  onClick={() => {
+                    setPlayerSearchOpen(prev => !prev);
+                    if (!playerSearchOpen) {
+                      setHighlightedPlayerIndex(0);
+                      setTimeout(() => playerSearchInputRef.current?.focus(), 50);
                     }
                   }}
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer hover:border-slate-300 transition-all"
+                  onKeyDown={handlePlayerKeyDown}
+                  className="w-full text-left px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer hover:border-slate-300 transition-all flex items-center justify-between"
                 >
-                  <option value="">Choose player...</option>
-                  {availablePlayers
-                    .filter(p => categoryFilter === 'all' || p.category === categoryFilter)
-                    .sort((a, b) => a.playerName.localeCompare(b.playerName))
-                    .map(player => (
-                      <option key={player.id} value={player.id}>
-                        {player.playerName} ({player.category}) - Min ${player.basePrice !== undefined && player.basePrice > 0 ? player.basePrice : 0}
-                      </option>
-                    ))}
-                </select>
+                  <span className="truncate">
+                    {quickAssignPlayer 
+                      ? `${quickAssignPlayer.playerName} (${quickAssignPlayer.category})` 
+                      : 'Choose player...'}
+                  </span>
+                  <svg className="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {playerSearchOpen && (
+                  <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-slate-200 rounded-xl shadow-xl max-h-72 overflow-y-auto flex flex-col">
+                    <div className="p-2 border-b border-slate-100 bg-slate-50 sticky top-0">
+                      <input
+                        type="text"
+                        ref={playerSearchInputRef}
+                        placeholder="Search player..."
+                        value={playerSearchQuery}
+                        onChange={(e) => {
+                          setPlayerSearchQuery(e.target.value);
+                          setHighlightedPlayerIndex(0);
+                        }}
+                        onKeyDown={handlePlayerKeyDown}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none font-mono text-xs focus:border-amber-500"
+                      />
+                    </div>
+                    <div className="overflow-y-auto max-h-56 divide-y divide-slate-50">
+                      {filteredPlayersForDropdown.length === 0 ? (
+                        <div className="p-3 text-slate-400 text-center font-mono text-[10px] uppercase font-bold">No players found</div>
+                      ) : (
+                        filteredPlayersForDropdown.map((player, idx) => {
+                          const isHighlighted = idx === highlightedPlayerIndex;
+                          const isSelected = quickAssignPlayer?.id === player.id;
+                          return (
+                            <button
+                              key={player.id}
+                              type="button"
+                              onClick={() => {
+                                setQuickAssignPlayer(player);
+                                setQuickAssignAuction(String(player.basePrice !== undefined && player.basePrice > 0 ? player.basePrice : 0));
+                                setPlayerSearchOpen(false);
+                                setPlayerSearchQuery('');
+                                setTimeout(() => {
+                                  document.getElementById('quick-assign-team-btn')?.focus();
+                                  setTeamSearchOpen(true);
+                                  setHighlightedTeamIndex(0);
+                                  setTimeout(() => teamSearchInputRef.current?.focus(), 50);
+                                }, 50);
+                              }}
+                              className={`w-full text-left px-4 py-2.5 font-mono text-xs font-bold uppercase transition-all flex items-center justify-between ${
+                                isHighlighted ? 'bg-amber-50 text-amber-900 font-extrabold' : isSelected ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-700'
+                              }`}
+                            >
+                              <span className="truncate">{player.playerName} ({player.category})</span>
+                              <span className="text-[9px] text-slate-400 ml-2">Min ${player.basePrice || 0}</span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {quickAssignPlayer && (
                   <div className="mt-2 px-3 py-2 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
                     <span className="text-[9px] font-extrabold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-1 rounded uppercase">
@@ -795,36 +1012,83 @@ export default function RealPlayersPage() {
               </div>
 
               {/* Team Selection */}
-              <div>
+              <div ref={teamDropdownRef} className="relative">
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                   2. Select Team <span className="text-rose-500">*</span>
                 </label>
-                <select
+                <button
+                  type="button"
                   ref={teamSelectRef}
-                  value={quickAssignTeam}
-                  onChange={(e) => {
-                    setQuickAssignTeam(e.target.value);
-                    // Auto-focus auction input
-                    setTimeout(() => auctionInputRef.current?.focus(), 50);
+                  id="quick-assign-team-btn"
+                  onClick={() => {
+                    setTeamSearchOpen(prev => !prev);
+                    if (!teamSearchOpen) {
+                      setHighlightedTeamIndex(0);
+                      setTimeout(() => teamSearchInputRef.current?.focus(), 50);
+                    }
                   }}
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer hover:border-slate-300 transition-all"
+                  onKeyDown={handleTeamKeyDown}
+                  className="w-full text-left px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-mono text-xs font-bold outline-none uppercase tracking-wide cursor-pointer hover:border-slate-300 transition-all flex items-center justify-between"
                 >
-                  <option value="">Choose team...</option>
-                  {teams
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map(team => {
-                      const slots = maxPlayers - team.assignedPlayers.length;
-                      return (
-                        <option
-                          key={team.id}
-                          value={team.id}
-                          disabled={slots <= 0}
-                        >
-                          {team.name} ({team.assignedPlayers.length}/{maxPlayers}) {slots > 0 ? `- ${slots} slots` : '- FULL'}
-                        </option>
-                      );
-                    })}
-                </select>
+                  <span className="truncate">
+                    {quickAssignTeam 
+                      ? teams.find(t => t.id === quickAssignTeam)?.name 
+                      : 'Choose team...'}
+                  </span>
+                  <svg className="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {teamSearchOpen && (
+                  <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-slate-200 rounded-xl shadow-xl max-h-72 overflow-y-auto flex flex-col">
+                    <div className="p-2 border-b border-slate-100 bg-slate-50 sticky top-0">
+                      <input
+                        type="text"
+                        ref={teamSearchInputRef}
+                        placeholder="Search team..."
+                        value={teamSearchQuery}
+                        onChange={(e) => {
+                          setTeamSearchQuery(e.target.value);
+                          setHighlightedTeamIndex(0);
+                        }}
+                        onKeyDown={handleTeamKeyDown}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none font-mono text-xs focus:border-amber-500"
+                      />
+                    </div>
+                    <div className="overflow-y-auto max-h-56 divide-y divide-slate-50">
+                      {filteredTeamsForDropdown.length === 0 ? (
+                        <div className="p-3 text-slate-400 text-center font-mono text-[10px] uppercase font-bold">No teams found</div>
+                      ) : (
+                        filteredTeamsForDropdown.map((team, idx) => {
+                          const slots = minPlayers - team.assignedPlayers.length; // maxPlayers is minPlayers
+                          const isHighlighted = idx === highlightedTeamIndex;
+                          const isSelected = quickAssignTeam === team.id;
+                          return (
+                            <button
+                              key={team.id}
+                              type="button"
+                              disabled={slots <= 0}
+                              onClick={() => {
+                                setQuickAssignTeam(team.id);
+                                setTeamSearchOpen(false);
+                                setTeamSearchQuery('');
+                                setTimeout(() => auctionInputRef.current?.focus(), 50);
+                              }}
+                              className={`w-full text-left px-4 py-2.5 font-mono text-xs font-bold uppercase transition-all flex items-center justify-between disabled:opacity-40 disabled:cursor-not-allowed ${
+                                isHighlighted ? 'bg-amber-50 text-amber-900 font-extrabold' : isSelected ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-700'
+                              }`}
+                            >
+                              <span className="truncate">{team.name}</span>
+                              <span className="text-[9px] text-slate-400 ml-2">({team.assignedPlayers.length}/{minPlayers}) {slots > 0 ? `${slots} slots` : 'FULL'}</span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
                 {quickAssignTeam && (
                   <div className="mt-2 px-3 py-2 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-between">
                     {(() => {
@@ -1045,14 +1309,15 @@ export default function RealPlayersPage() {
                             <span className={`font-bold uppercase tracking-wider ${isOverBudget ? 'text-rose-600 font-extrabold' : 'text-emerald-600'}`}>
                               <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />{displayBudget.toLocaleString()} LEFT
                             </span>
-                            {!isModernSeason && (
+                            {!isModernSeason && categories.length > 0 && (
                               <>
                                 <span className="text-slate-400 font-bold">•</span>
                                 <span className="text-slate-600 font-extrabold uppercase tracking-wider bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                                  1st: {team.assignedPlayers.filter(p => p.category === '1st').length}/2 | 
-                                  2nd: {team.assignedPlayers.filter(p => p.category === '2nd').length}/1 | 
-                                  3rd: {team.assignedPlayers.filter(p => p.category === '3rd').length}/1 | 
-                                  4th: {team.assignedPlayers.filter(p => p.category === '4th').length}/1
+                                  {categories.map((c, idx) => {
+                                    const count = team.assignedPlayers.filter(p => p.category === c.name).length;
+                                    const limit = idx === 0 ? 2 : 1;
+                                    return `${c.name}: ${count}/${limit}`;
+                                  }).join(' | ')}
                                 </span>
                               </>
                             )}
@@ -1099,24 +1364,24 @@ export default function RealPlayersPage() {
                       </div>
 
                       {/* Quota checklist for S18+ */}
-                      {!isModernSeason && (
+                      {!isModernSeason && categories.length > 0 && (
                         <div className="px-5 py-3 bg-indigo-50/20 border-b border-slate-100 font-mono text-[10px]">
                           <span className="text-slate-500 font-bold uppercase block mb-2">Category Quota Checklist</span>
                           <div className="flex flex-wrap gap-2.5">
-                            {['1st', '2nd', '3rd', '4th'].map(cat => {
-                              const current = team.assignedPlayers.filter(p => p.category === cat).length;
-                              const target = cat === '1st' ? 2 : 1;
+                            {categories.map((c, idx) => {
+                              const current = team.assignedPlayers.filter(p => p.category === c.name).length;
+                              const target = idx === 0 ? 2 : 1;
                               const isFilled = current === target;
                               const isOver = current > target;
                               return (
-                                <div key={cat} className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-all ${
+                                <div key={c.id || c.name} className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-all ${
                                   isFilled 
                                     ? 'bg-emerald-50 border-emerald-250 text-emerald-700 font-black' 
                                     : isOver 
                                       ? 'bg-rose-50 border-rose-250 text-rose-700 font-black'
                                       : 'bg-slate-50 border-slate-200 text-slate-500 font-bold'
                                 }`}>
-                                  <span>{cat} Category: {current}/{target}</span>
+                                  <span>{c.name}: {current}/{target}</span>
                                   <span>{isFilled ? '✓' : '⚠️'}</span>
                                 </div>
                               );
