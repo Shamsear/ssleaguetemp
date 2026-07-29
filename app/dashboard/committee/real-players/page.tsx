@@ -702,7 +702,10 @@ export default function RealPlayersPage() {
     } else if (e.key === 'Enter') {
       const selected = filteredTeamsForDropdown[highlightedTeamIndex];
       const slots = minPlayers - selected.assignedPlayers.length; // maxPlayers is minPlayers
-      if (selected && slots > 0) {
+      const isCategoryFull = quickAssignPlayer 
+        ? selected.assignedPlayers.filter(p => (p.category || '').toLowerCase() === quickAssignPlayer.category.toLowerCase()).length >= getCategoryLimit(quickAssignPlayer.category)
+        : false;
+      if (selected && slots > 0 && !isCategoryFull) {
         setQuickAssignTeam(selected.id);
         setTeamSearchOpen(false);
         setTeamSearchQuery('');
@@ -1071,11 +1074,14 @@ export default function RealPlayersPage() {
                             const slots = minPlayers - team.assignedPlayers.length; // maxPlayers is minPlayers
                             const isHighlighted = idx === highlightedTeamIndex;
                             const isSelected = quickAssignTeam === team.id;
+                            const isCategoryFull = quickAssignPlayer 
+                              ? team.assignedPlayers.filter(p => (p.category || '').toLowerCase() === quickAssignPlayer.category.toLowerCase()).length >= getCategoryLimit(quickAssignPlayer.category)
+                              : false;
                             return (
                               <button
                                 key={team.id}
                                 type="button"
-                                disabled={slots <= 0}
+                                disabled={slots <= 0 || isCategoryFull}
                                 onClick={() => {
                                   setQuickAssignTeam(team.id);
                                   setTeamSearchOpen(false);
@@ -1087,7 +1093,9 @@ export default function RealPlayersPage() {
                                 }`}
                               >
                                 <span className="truncate">{team.name}</span>
-                                <span className="text-[9px] text-slate-400 ml-2">({team.assignedPlayers.length}/{minPlayers}) {slots > 0 ? `${slots} slots` : 'FULL'}</span>
+                                <span className="text-[9px] text-slate-400 ml-2">
+                                  ({team.assignedPlayers.length}/{minPlayers}) {slots <= 0 ? 'FULL' : isCategoryFull ? `${quickAssignPlayer?.category} FULL` : `${slots} slots`}
+                                </span>
                               </button>
                             );
                           })
