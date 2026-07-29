@@ -1138,7 +1138,8 @@ export default function RealPlayersPage() {
                                 className={`w-full text-left px-4 py-2.5 font-mono text-xs font-bold uppercase transition-all flex items-center justify-between disabled:opacity-40 disabled:cursor-not-allowed ${
                                   isHighlighted ? 'bg-amber-50 text-amber-900 font-extrabold' : isSelected ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-700'
                                 }`}
-                                                           <div className="flex flex-col text-left">
+                              >
+                                <div className="flex flex-col text-left">
                                   <span className="truncate">{team.name}</span>
                                   {quickAssignPlayer && (
                                     <span className="text-[9px] text-emerald-600 font-extrabold uppercase mt-0.5">
