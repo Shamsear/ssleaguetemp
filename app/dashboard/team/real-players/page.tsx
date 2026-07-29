@@ -97,6 +97,36 @@ export default function RealPlayersPage() {
           setIsModern(playersData.isModern);
           const rawPlayers: RealPlayer[] = playersData.data || [];
 
+          // 2.5) Fetch team_seasons to build a map of team_id -> team_name
+          const teamNameMap = new Map<string, string>();
+          try {
+            const { collection, query, where, getDocs } = await import('firebase/firestore');
+            const { db } = await import('@/lib/firebase/config');
+            
+            const teamSeasonsQuery = query(
+              collection(db, 'team_seasons'),
+              where('season_id', '==', season.id)
+            );
+            const teamSeasonsSnapshot = await getDocs(teamSeasonsQuery);
+            teamSeasonsSnapshot.forEach(doc => {
+              const data = doc.data();
+              const teamId = doc.id.split('_')[0];
+              const name = data.team_name || data.team_code || 'Unknown Team';
+              teamNameMap.set(teamId, name);
+            });
+            
+            // Apply team names to rawPlayers
+            rawPlayers.forEach(p => {
+              if (p.team_id && teamNameMap.has(p.team_id)) {
+                p.team = teamNameMap.get(p.team_id)!;
+              } else {
+                p.team = '';
+              }
+            });
+          } catch (teamError) {
+            console.error('Error fetching team names:', teamError);
+          }
+
           // 3) Fetch Firebase photo URLs
           const playerIds = rawPlayers.map((p) => p.player_id).filter(Boolean);
           if (playerIds.length > 0) {
