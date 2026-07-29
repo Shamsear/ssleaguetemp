@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { AlertCircle, ArrowRightLeft, BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Flame, Info, Settings, Star, TrendingUp, Trophy, User, UserMinus, Users, Coins } from 'lucide-react';
+import { AlertCircle, ArrowRightLeft, BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Flame, Info, Settings, Star, TrendingUp, Trophy, User, UserMinus, Users, Coins, RefreshCw } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
@@ -257,6 +257,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
   const fetchDashboard = useCallback(async (showLoader = true, bustCache = false) => {
     if (!seasonStatus?.seasonId) return;
     if (showLoader) setIsLoading(true);
+    const startTime = Date.now();
     setIsRefreshing(true);
 
     try {
@@ -298,6 +299,10 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
       console.error('Error fetching dashboard:', err);
       setError('Unable to connect to the server');
     } finally {
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 800) {
+        await new Promise(resolve => setTimeout(resolve, 800 - elapsed));
+      }
       if (showLoader) setIsLoading(false);
       setIsRefreshing(false);
     }
@@ -1926,27 +1931,14 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
           cancelText={confirmState.cancelText}
           type={confirmState.type}
         />
-        {/* Floating Refresh Action Button */}
         <button
           type="button"
           onClick={() => setUpdateCounter(prev => prev + 1)}
           disabled={isRefreshing}
-          className="fixed right-6 bottom-24 z-[1002] w-12 h-12 flex items-center justify-center bg-slate-800 text-white rounded-full shadow-lg border border-slate-700 hover:bg-slate-700 active:scale-95 transition-all disabled:opacity-80 cursor-pointer"
+          className="fixed right-6 bottom-24 z-[1002] w-12 h-12 flex items-center justify-center bg-amber-600 text-white rounded-full shadow-lg hover:bg-amber-500 active:scale-95 transition-all disabled:opacity-80 cursor-pointer border border-amber-500/20 shadow-amber-600/20"
           title="Refresh Data"
         >
-          <svg 
-            className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 24v-5h-.581m-15.356-2a8.001 8.001 0 11-1.628 3.89" 
-            />
-          </svg>
+          <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
     </div>
