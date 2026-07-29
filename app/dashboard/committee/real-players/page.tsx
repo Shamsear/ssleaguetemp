@@ -1141,7 +1141,7 @@ export default function RealPlayersPage() {
                               >
                                 <div className="flex flex-col text-left">
                                   <span className="truncate">{team.name}</span>
-                                  {quickAssignPlayer && (
+                                  {quickAssignPlayer && !isCategoryFull && slots > 0 && (
                                     <span className="text-[9px] text-emerald-600 font-extrabold uppercase mt-0.5">
                                       MAX BID: ${calculateMaxBidForTeam(team, quickAssignPlayer).toLocaleString()}
                                     </span>
