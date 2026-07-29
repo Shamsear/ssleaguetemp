@@ -291,7 +291,7 @@ export default function RealPlayersPage() {
     }));
   };
 
-  const removePlayerFromTeam = (teamId: string, playerId: string) => {
+  const removePlayerFromTeam = async (teamId: string, playerId: string) => {
     // Find the player to remove first
     const team = teams.find(t => t.id === teamId);
     if (!team) {
@@ -305,27 +305,56 @@ export default function RealPlayersPage() {
       return;
     }
 
-    console.log(`Removing player ${removedPlayer.playerName} (ID: ${playerId}) from team ${team.name}`);
+    const confirmMsg = `Are you sure you want to release ${removedPlayer.playerName}? This will refund 100% of the assignment cost ($${removedPlayer.auctionValue}) back to the team.`;
+    if (!confirm(confirmMsg)) return;
 
-    // Remove from team and restore budget
-    setTeams(prevTeams => prevTeams.map(t => {
-      if (t.id === teamId) {
-        return { 
-          ...t, 
-          currentBudget: t.currentBudget + (removedPlayer.auctionValue || 0),
-          currentSpent: t.currentSpent - (removedPlayer.auctionValue || 0),
-          assignedPlayers: t.assignedPlayers.filter(p => p.id !== playerId) 
-        };
+    try {
+      setError(null);
+      setSuccess(null);
+
+      const response = await fetchWithTokenRefresh('/api/contracts/release-assigned-player', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          seasonId: userSeasonId,
+          playerId: removedPlayer.id,
+          teamId,
+          refundAmount: removedPlayer.auctionValue || 0,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to release player');
       }
-      return t;
-    }));
 
-    // Add back to available players list
-    setAvailablePlayers(prev => {
-      const updated = [...prev, removedPlayer];
-      console.log(`Player ${removedPlayer.playerName} added back to available. Total available: ${updated.length}`);
-      return updated;
-    });
+      console.log(`Removing player ${removedPlayer.playerName} (ID: ${playerId}) from team ${team.name}`);
+
+      // Remove from team and restore budget
+      setTeams(prevTeams => prevTeams.map(t => {
+        if (t.id === teamId) {
+          return { 
+            ...t, 
+            currentBudget: t.currentBudget + (removedPlayer.auctionValue || 0),
+            currentSpent: t.currentSpent - (removedPlayer.auctionValue || 0),
+            assignedPlayers: t.assignedPlayers.filter(p => p.id !== playerId) 
+          };
+        }
+        return t;
+      }));
+
+      // Add back to available players list
+      setAvailablePlayers(prev => {
+        const updated = [...prev, removedPlayer];
+        console.log(`Player ${removedPlayer.playerName} added back to available. Total available: ${updated.length}`);
+        return updated;
+      });
+
+      setSuccess(`Successfully released ${removedPlayer.playerName} and refunded ${removedPlayer.auctionValue} coins.`);
+    } catch (err: any) {
+      console.error('Error releasing player:', err);
+      setError(err.message || 'Failed to release player');
+    }
 
     // Force re-render of dropdowns
     setUpdateCounter(prev => prev + 1);

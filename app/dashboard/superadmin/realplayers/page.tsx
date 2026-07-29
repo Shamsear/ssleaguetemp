@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import Link from 'next/link';
+import PlayerPhoto from '@/components/PlayerPhoto';
 
 interface RealPlayer {
   player_id: string;
@@ -427,10 +428,15 @@ export default function RealPlayersPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         {player.photo_url && (
-                          <img 
-                            src={player.photo_url} 
-                            alt={player.name}
-                            className="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm"
+                          <PlayerPhoto
+                            photoUrl={player.photo_url}
+                            playerName={player.name}
+                            shape="circle"
+                            size={32}
+                            className="border border-slate-200 shadow-sm"
+                            posXCircle={player.photo_position_x_circle}
+                            posYCircle={player.photo_position_y_circle}
+                            scaleCircle={player.photo_scale_circle}
                           />
                         )}
                         <div>
@@ -489,10 +495,15 @@ export default function RealPlayersPage() {
               <div key={player.player_id} className="p-4 bg-slate-50 border border-slate-200/60 rounded-xl space-y-3 shadow-sm">
                 <div className="flex items-start gap-3">
                   {player.photo_url && (
-                    <img 
-                      src={player.photo_url} 
-                      alt={player.name}
-                      className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm"
+                    <PlayerPhoto
+                      photoUrl={player.photo_url}
+                      playerName={player.name}
+                      shape="circle"
+                      size={40}
+                      className="border border-slate-200 shadow-sm"
+                      posXCircle={player.photo_position_x_circle}
+                      posYCircle={player.photo_position_y_circle}
+                      scaleCircle={player.photo_scale_circle}
                     />
                   )}
                   <div className="flex-grow min-w-0">

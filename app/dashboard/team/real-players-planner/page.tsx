@@ -418,7 +418,9 @@ export default function RealPlayersPlannerPage() {
                             height={80}
                             quality={85}
                             className="w-full h-full object-cover"
-                            style={getPhotoStyle(player.photo_position_x_circle, player.photo_position_y_circle, player.photo_scale_circle)}
+                            photoPositionX={player.photo_position_x_circle}
+                            photoPositionY={player.photo_position_y_circle}
+                            photoScale={player.photo_scale_circle}
                             fallback={
                               <div className="w-full h-full flex items-center justify-center bg-slate-800 text-amber-400 font-extrabold text-xs">
                                 {player.name[0].toUpperCase()}
@@ -498,7 +500,9 @@ export default function RealPlayersPlannerPage() {
                                         height={80}
                                         quality={85}
                                         className="w-full h-full object-cover"
-                                        style={getPhotoStyle(rp.photo_position_x_circle, rp.photo_position_y_circle, rp.photo_scale_circle)}
+                                        photoPositionX={rp.photo_position_x_circle}
+                                        photoPositionY={rp.photo_position_y_circle}
+                                        photoScale={rp.photo_scale_circle}
                                         fallback={
                                           <div className="w-full h-full flex items-center justify-center bg-slate-800 text-amber-400 font-extrabold text-xs">
                                             {rp.player_name[0].toUpperCase()}

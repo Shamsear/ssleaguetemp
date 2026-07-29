@@ -246,31 +246,60 @@ export default function RetainPlayersPage() {
     }
   };
 
-  const removePlayerFromTeam = (teamId: string, playerId: string) => {
+  const removePlayerFromTeam = async (teamId: string, playerId: string) => {
     const team = teams.find(t => t.id === teamId);
     if (!team) return;
 
     const removedPlayer = team.retainedPlayers.find(p => p.id === playerId);
     if (!removedPlayer) return;
 
-    setTeams(prevTeams => prevTeams.map(t => {
-      if (t.id === teamId) {
-        return {
-          ...t,
-          currentBudget: t.currentBudget + removedPlayer.retentionPrice,
-          currentSpent: t.currentSpent - removedPlayer.retentionPrice,
-          retainedPlayers: t.retainedPlayers.filter(p => p.id !== playerId)
-        };
-      }
-      return t;
-    }));
+    const confirmMsg = `Are you sure you want to release ${removedPlayer.playerName}? This will refund 100% of the retention cost ($${removedPlayer.retentionPrice}) back to the team.`;
+    if (!confirm(confirmMsg)) return;
 
-    setAvailablePlayers(prev => [...prev, {
-      id: removedPlayer.id,
-      playerName: removedPlayer.playerName,
-      category: removedPlayer.category,
-      basePrice: removedPlayer.basePrice,
-    }]);
+    try {
+      setError(null);
+      setSuccess(null);
+      
+      const response = await fetchWithTokenRefresh('/api/contracts/release-assigned-player', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          seasonId: userSeasonId,
+          playerId: removedPlayer.id,
+          teamId,
+          refundAmount: removedPlayer.retentionPrice,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to release player');
+      }
+
+      setTeams(prevTeams => prevTeams.map(t => {
+        if (t.id === teamId) {
+          return {
+            ...t,
+            currentBudget: t.currentBudget + removedPlayer.retentionPrice,
+            currentSpent: t.currentSpent - removedPlayer.retentionPrice,
+            retainedPlayers: t.retainedPlayers.filter(p => p.id !== playerId)
+          };
+        }
+        return t;
+      }));
+
+      setAvailablePlayers(prev => [...prev, {
+        id: removedPlayer.id,
+        playerName: removedPlayer.playerName,
+        category: removedPlayer.category,
+        basePrice: removedPlayer.basePrice,
+      }]);
+
+      setSuccess(`Successfully released ${removedPlayer.playerName} and refunded ${removedPlayer.retentionPrice} coins.`);
+    } catch (err: any) {
+      console.error('Error releasing player:', err);
+      setError(err.message || 'Failed to release player');
+    }
   };
 
   const calculatedRetentionPrice = selectedPlayer && retentionPercentage

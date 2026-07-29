@@ -206,7 +206,7 @@ export default function PlayerProfilePage() {
                 <img
                   src={player.photo_url}
                   alt={player.name}
-                  className="w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover"
                   style={getPhotoStyle(
                     player.photo_position_x_circle,
                     player.photo_position_y_circle,
