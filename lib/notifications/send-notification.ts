@@ -55,8 +55,24 @@ export async function sendNotification(
     } else if (options.userIds) {
       targetUserIds = options.userIds;
     } else if (options.teamId) {
-      // Team ID is same as user ID in Firebase Auth
-      targetUserIds = [options.teamId];
+      // Resolve teamId to actual Firebase Auth user_id from Firestore team_seasons
+      const { adminDb } = await import('@/lib/firebase/admin');
+      const teamSeasonsSnapshot = await adminDb
+        .collection('team_seasons')
+        .where('team_id', '==', options.teamId)
+        .get();
+      
+      const uids = new Set<string>();
+      teamSeasonsSnapshot.forEach(doc => {
+        const uid = doc.data().user_id;
+        if (uid) uids.add(uid);
+      });
+      
+      if (uids.size > 0) {
+        targetUserIds = Array.from(uids);
+      } else {
+        targetUserIds = [options.teamId];
+      }
     } else if (options.teamIds) {
       targetUserIds = options.teamIds;
     } else if (options.allUsers) {
