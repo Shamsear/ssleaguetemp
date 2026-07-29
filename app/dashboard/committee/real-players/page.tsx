@@ -869,8 +869,8 @@ export default function RealPlayersPage() {
         )}
 
         {/* Quick Assign - Live Auction Mode */}
-        <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm font-mono text-xs">
-          <div className="bg-slate-800 text-white p-5 border-b border-slate-700 flex items-center justify-between">
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-sm font-mono text-xs relative !overflow-visible">
+          <div className="bg-slate-800 text-white p-5 border-b border-slate-700 flex items-center justify-between rounded-t-[22px]">
             <div>
               <h2 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                 <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1281,8 +1281,8 @@ export default function RealPlayersPage() {
               const displayTotal = showActualBudget ? (team.currentBudget + team.currentSpent) : team.originalBudget;
 
               const isOverBudget = displayBudget < 0;
-              const playerCount = team.assignedPlayers.length;
-              const isValidCount = playerCount === maxPlayers;
+              const categoriesValid = isModernSeason ? true : validateTeamCategories(team.assignedPlayers).valid;
+              const isValidCount = playerCount === maxPlayers && categoriesValid;
 
               return (
                 <div
