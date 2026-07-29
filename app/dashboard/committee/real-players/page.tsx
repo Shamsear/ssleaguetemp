@@ -869,7 +869,7 @@ export default function RealPlayersPage() {
         )}
 
         {/* Quick Assign - Live Auction Mode */}
-        <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-sm font-mono text-xs relative !overflow-visible">
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-sm font-mono text-xs relative !overflow-visible z-50">
           <div className="bg-slate-800 text-white p-5 border-b border-slate-700 flex items-center justify-between rounded-t-[22px]">
             <div>
               <h2 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
@@ -951,7 +951,7 @@ export default function RealPlayersPage() {
                   </button>
 
                   {playerSearchOpen && (
-                    <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-slate-200 rounded-xl shadow-xl max-h-72 overflow-y-auto flex flex-col">
+                    <div className="absolute z-[99999] w-full mt-1.5 bg-white border-2 border-slate-200 rounded-xl shadow-xl max-h-72 overflow-y-auto flex flex-col">
                       <div className="p-2 border-b border-slate-100 bg-slate-50 sticky top-0">
                         <input
                           type="text"
@@ -1048,7 +1048,7 @@ export default function RealPlayersPage() {
                   </button>
 
                   {teamSearchOpen && (
-                    <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-slate-200 rounded-xl shadow-xl max-h-72 overflow-y-auto flex flex-col">
+                    <div className="absolute z-[99999] w-full mt-1.5 bg-white border-2 border-slate-200 rounded-xl shadow-xl max-h-72 overflow-y-auto flex flex-col">
                       <div className="p-2 border-b border-slate-100 bg-slate-50 sticky top-0">
                         <input
                           type="text"
