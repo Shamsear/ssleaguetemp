@@ -68,7 +68,7 @@ export default function AuctionSettingsPage() {
     max_rounds: 25,
     min_balance_per_round: 30,
     max_squad_size: 25,
-    contract_duration: 2,
+    contract_duration: 1,
     phase_1_end_round: 18,
     phase_1_min_balance: 30,
     phase_2_end_round: 20,
@@ -97,9 +97,16 @@ export default function AuctionSettingsPage() {
     setHasUnsavedChanges(true);
   };
 
-  const fetchSettings = async () => {
+  const fetchSettings = async (targetSeasonId?: string) => {
+    const activeSeasonId = targetSeasonId || currentSeasonId;
+    if (!activeSeasonId) return;
+
     try {
-      const response = await fetchWithTokenRefresh('/api/auction-settings');
+      const params = new URLSearchParams({
+        season_id: activeSeasonId,
+        auction_window: formData.auction_window
+      });
+      const response = await fetchWithTokenRefresh(`/api/auction-settings?${params}`);
       const { data, success } = await response.json();
 
       if (success) {
@@ -116,7 +123,7 @@ export default function AuctionSettingsPage() {
             max_rounds: data.settings.max_rounds,
             min_balance_per_round: data.settings.min_balance_per_round,
             max_squad_size: data.settings.max_squad_size || 25,
-            contract_duration: data.settings.contract_duration || 2,
+            contract_duration: data.settings.contract_duration || 1,
             phase_1_end_round: data.settings.phase_1_end_round || 18,
             phase_1_min_balance: data.settings.phase_1_min_balance || 30,
             phase_2_end_round: data.settings.phase_2_end_round || 20,
@@ -144,7 +151,7 @@ export default function AuctionSettingsPage() {
         const seasonDoc = seasonsSnapshot.docs[0];
         const seasonId = seasonDoc.id;
         setCurrentSeasonId(seasonId);
-        fetchSettings();
+        fetchSettings(seasonId);
       } else {
         console.error('No active season found');
         setLoading(false);
@@ -169,16 +176,6 @@ export default function AuctionSettingsPage() {
       fetchActiveSeason();
     }
   }, [user]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (autoRefresh && user?.role === 'committee_admin' && currentSeasonId) {
-      interval = setInterval(fetchSettings, 15000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [autoRefresh, user, hasUnsavedChanges, currentSeasonId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -440,7 +437,7 @@ export default function AuctionSettingsPage() {
               </div>
 
               {/* Max squad size */}
-              <div>
+              <div className="md:col-span-2">
                 <label htmlFor="max_squad_size" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
                   Maximum Squad Size
                 </label>
@@ -460,29 +457,6 @@ export default function AuctionSettingsPage() {
                   />
                 </div>
                 <p className="mt-1.5 text-[10px] text-slate-400 font-mono">Maximum number of players each team can have (default: 25)</p>
-              </div>
-
-              {/* Contract Duration */}
-              <div>
-                <label htmlFor="contract_duration" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Contract Duration (years)
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                    <Clock className="w-4 h-4" />
-                  </span>
-                  <input
-                    type="number"
-                    id="contract_duration"
-                    value={formData.contract_duration}
-                    onChange={(e) => handleFormChange({ contract_duration: parseInt(e.target.value) || 1 })}
-                    min="1"
-                    max="5"
-                    required
-                    className="pl-10 w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold"
-                  />
-                </div>
-                <p className="mt-1.5 text-[10px] text-slate-400 font-mono">Default contract duration for players (default: 2 years)</p>
               </div>
             </div>
 

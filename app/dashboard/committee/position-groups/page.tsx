@@ -216,6 +216,111 @@ export default function PositionGroupsPage() {
     }
   };
 
+  const handleResetGroups = async () => {
+    if (!selectedPosition) return;
+
+    setDividing(true);
+    try {
+      const posPlayers = allPlayers.filter(p => 
+        p.position?.toUpperCase() === selectedPosition && p.position_group
+      );
+
+      const updates: Promise<any>[] = [];
+      posPlayers.forEach((player) => {
+        updates.push(
+          fetchWithTokenRefresh(`/api/players/${player.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ position_group: null })
+          })
+        );
+      });
+
+      await Promise.all(updates);
+      
+      showAlert({
+        type: 'success',
+        title: 'Groups Cleared',
+        message: `Successfully cleared groups for all ${selectedPosition} players.`
+      });
+
+      await fetchPlayers();
+      
+      // Update local view
+      const freshPosPlayers = allPlayers.filter(p => p.position?.toUpperCase() === selectedPosition);
+      setGroupedPlayers({
+        group1: [],
+        group2: [],
+        ungrouped: freshPosPlayers
+      });
+    } catch (err) {
+      console.error('Error resetting groups:', err);
+      showAlert({
+        type: 'error',
+        title: 'Action Failed',
+        message: 'An error occurred while clearing the position groups.'
+      });
+    } finally {
+      setDividing(false);
+    }
+  };
+  const handleResetAllGroups = async () => {
+    const confirm = window.confirm("Are you sure you want to clear position groups for ALL players across ALL positions? This will make everyone ungrouped.");
+    if (!confirm) return;
+
+    setDividing(true);
+    try {
+      const groupedPlayersList = allPlayers.filter(p => p.position_group);
+
+      if (groupedPlayersList.length === 0) {
+        showAlert({
+          type: 'info',
+          title: 'No Groups Found',
+          message: 'All players are already ungrouped.'
+        });
+        setDividing(false);
+        return;
+      }
+
+      const updates: Promise<any>[] = [];
+      groupedPlayersList.forEach((player) => {
+        updates.push(
+          fetchWithTokenRefresh(`/api/players/${player.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ position_group: null })
+          })
+        );
+      });
+
+      await Promise.all(updates);
+      
+      showAlert({
+        type: 'success',
+        title: 'All Groups Cleared',
+        message: `Successfully cleared position groups for all ${groupedPlayersList.length} players across the registry.`
+      });
+
+      await fetchPlayers();
+      setSelectedPosition(null);
+      setGroupedPlayers({
+        group1: [],
+        group2: [],
+        ungrouped: []
+      });
+    } catch (err) {
+      console.error('Error resetting all groups:', err);
+      showAlert({
+        type: 'error',
+        title: 'Action Failed',
+        message: 'An error occurred while resetting the position groups.'
+      });
+    } finally {
+      setDividing(false);
+    }
+  };
+
+
   const handleSwapGroup = async (player: Player) => {
     if (!selectedPosition || !player.position_group) return;
 
@@ -312,10 +417,19 @@ export default function PositionGroupsPage() {
 
         {/* Position Selection */}
         <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
-          <h2 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-            <Activity className="w-4 h-4 text-amber-500" />
-            Select Position to Manage
-          </h2>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <h2 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Activity className="w-4 h-4 text-amber-500" />
+              Select Position to Manage
+            </h2>
+            <button
+              onClick={handleResetAllGroups}
+              disabled={dividing}
+              className="px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-550 text-white font-mono font-bold text-[10px] uppercase tracking-wider shadow-sm hover:shadow-md disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              Reset All Groups
+            </button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {POSITION_GROUP_POSITIONS.map((position) => {
               const stat = stats[position] || { total: 0, group1: 0, group2: 0, ungrouped: 0 };
@@ -360,23 +474,33 @@ export default function PositionGroupsPage() {
                   {POSITION_LABELS[selectedPosition as keyof typeof POSITION_LABELS]} ({selectedPosition}) Groups
                 </h3>
               </div>
-              <button
-                onClick={handleDividePlayers}
-                disabled={dividing}
-                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg disabled:opacity-50 transition-all flex items-center gap-2 cursor-pointer"
-              >
-                {dividing ? (
-                  <>
-                    <RefreshCw className="animate-spin h-3.5 w-3.5 text-amber-400" />
-                    Dividing...
-                  </>
-                ) : (
-                  <>
-                    <Shuffle className="w-3.5 h-3.5 text-amber-400" />
-                    Divide Players
-                  </>
-                )}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDividePlayers}
+                  disabled={dividing}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg disabled:opacity-50 transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  {dividing ? (
+                    <>
+                      <RefreshCw className="animate-spin h-3.5 w-3.5 text-amber-400" />
+                      Dividing...
+                    </>
+                  ) : (
+                    <>
+                      <Shuffle className="w-3.5 h-3.5 text-amber-400" />
+                      Divide Players
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={handleResetGroups}
+                  disabled={dividing || (groupedPlayers.group1.length === 0 && groupedPlayers.group2.length === 0)}
+                  className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg disabled:opacity-50 transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  Clear Groups
+                </button>
+              </div>
             </div>
 
             {/* Help Text */}
