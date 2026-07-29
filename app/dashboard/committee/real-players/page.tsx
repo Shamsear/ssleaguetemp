@@ -734,13 +734,13 @@ export default function RealPlayersPage() {
     
     const counts = new Map<string, number>();
     assignedPlayers.forEach(p => {
-      const cat = p.category;
+      const cat = (p.category || '').toLowerCase();
       counts.set(cat, (counts.get(cat) || 0) + 1);
     });
 
     for (let i = 0; i < categories.length; i++) {
       const cat = categories[i];
-      const current = counts.get(cat.name) || 0;
+      const current = counts.get(cat.name.toLowerCase()) || 0;
       const target = cat.max_players !== undefined ? cat.max_players : (i === 0 ? 2 : 1);
       if (current !== target) {
         return { 
@@ -1281,6 +1281,7 @@ export default function RealPlayersPage() {
               const displayTotal = showActualBudget ? (team.currentBudget + team.currentSpent) : team.originalBudget;
 
               const isOverBudget = displayBudget < 0;
+              const playerCount = team.assignedPlayers.length;
               const categoriesValid = isModernSeason ? true : validateTeamCategories(team.assignedPlayers).valid;
               const isValidCount = playerCount === maxPlayers && categoriesValid;
 
@@ -1322,8 +1323,8 @@ export default function RealPlayersPage() {
                                 <span className="text-slate-400 font-bold">•</span>
                                 <span className="text-slate-600 font-extrabold uppercase tracking-wider bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                                   {categories.map((c, idx) => {
-                                    const count = team.assignedPlayers.filter(p => p.category === c.name).length;
-                                    const limit = idx === 0 ? 2 : 1;
+                                    const count = team.assignedPlayers.filter(p => (p.category || '').toLowerCase() === c.name.toLowerCase()).length;
+                                    const limit = c.max_players !== undefined ? c.max_players : (idx === 0 ? 2 : 1);
                                     return `${c.name}: ${count}/${limit}`;
                                   }).join(' | ')}
                                 </span>
@@ -1377,7 +1378,7 @@ export default function RealPlayersPage() {
                           <span className="text-slate-500 font-bold uppercase block mb-2">Category Quota Checklist</span>
                           <div className="flex flex-wrap gap-2.5">
                             {categories.map((c, idx) => {
-                              const current = team.assignedPlayers.filter(p => p.category === c.name).length;
+                              const current = team.assignedPlayers.filter(p => (p.category || '').toLowerCase() === c.name.toLowerCase()).length;
                               const target = c.max_players !== undefined ? c.max_players : (idx === 0 ? 2 : 1);
                               const isFilled = current === target;
                               const isOver = current > target;
