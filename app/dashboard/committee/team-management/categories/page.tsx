@@ -271,9 +271,14 @@ function CategoriesPageContent() {
                       <span className={`w-3.5 h-3.5 rounded-full ring-4 ${getColorDotStyles(category.name)} flex-shrink-0`} />
                       <div>
                         <h3 className="font-extrabold text-slate-900 text-sm uppercase tracking-wide truncate max-w-[140px]">{category.name}</h3>
-                        <span className="inline-flex text-[9px] font-black uppercase bg-slate-200/60 text-slate-750 border border-slate-300 px-1.5 py-0.5 rounded mt-1">
-                          Priority {category.priority}
-                        </span>
+                        <div className="flex gap-1.5 flex-wrap">
+                          <span className="inline-flex text-[9px] font-black uppercase bg-slate-200/60 text-slate-750 border border-slate-300 px-1.5 py-0.5 rounded mt-1">
+                            Priority {category.priority}
+                          </span>
+                          <span className="inline-flex text-[9px] font-black uppercase bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded mt-1">
+                            Max {category.max_players !== undefined ? category.max_players : (category.priority === 1 ? 2 : 1)} Per Team
+                          </span>
+                        </div>
                       </div>
                     </div>
                     {category.base_price !== undefined && (

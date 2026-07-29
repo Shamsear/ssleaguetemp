@@ -157,6 +157,7 @@ export async function POST(request: NextRequest) {
       icon: body.icon || '',
       priority: priority,
       base_price: body.base_price !== undefined ? parseInt(body.base_price) || 0 : 0,
+      max_players: body.max_players !== undefined ? parseInt(body.max_players) || 1 : (priority === 1 ? 2 : 1),
       points_same_category: parseInt(body.points_same_category),
       points_one_level_diff: parseInt(body.points_one_level_diff),
       points_two_level_diff: parseInt(body.points_two_level_diff),

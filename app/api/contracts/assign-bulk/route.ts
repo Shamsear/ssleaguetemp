@@ -59,6 +59,15 @@ export async function POST(request: NextRequest) {
           WHERE id IN (${incomingIds}) AND season_id = ${seasonId}
         `;
 
+        const categoriesSnapshot = await adminDb.collection('categories').orderBy('priority', 'asc').get();
+        const categories = categoriesSnapshot.docs.map((doc, idx) => {
+          const data = doc.data();
+          return {
+            name: data.name,
+            max_players: data.max_players !== undefined ? Number(data.max_players) : (idx === 0 ? 2 : 1)
+          };
+        });
+
         const categoryMap = new Map<string, string>();
         incomingPlayerDetails.forEach((row: any) => {
           categoryMap.set(row.id, row.category || 'classic');
@@ -81,39 +90,22 @@ export async function POST(request: NextRequest) {
             });
           }
 
-          const c1 = projectedPlayers.filter((p: any) => p.category === '1st').length;
-          const c2 = projectedPlayers.filter((p: any) => p.category === '2nd').length;
-          const c3 = projectedPlayers.filter((p: any) => p.category === '3rd').length;
-          const c4 = projectedPlayers.filter((p: any) => p.category === '4th').length;
+          // Count players in each category
+          const counts = new Map<string, number>();
+          projectedPlayers.forEach((p: any) => {
+            const cat = p.category || '';
+            counts.set(cat.toLowerCase(), (counts.get(cat.toLowerCase()) || 0) + 1);
+          });
 
-          const max1 = 2;
-          const max2 = 1;
-          const max3 = 1;
-          const max4 = 1;
-
-          if (c1 > max1) {
-            return NextResponse.json(
-              { error: `Assignment failed. Team would exceed category limit. (1st category: ${c1}/${max1})` },
-              { status: 400 }
-            );
-          }
-          if (c2 > max2) {
-            return NextResponse.json(
-              { error: `Assignment failed. Team would exceed category limit. (2nd category: ${c2}/${max2})` },
-              { status: 400 }
-            );
-          }
-          if (c3 > max3) {
-            return NextResponse.json(
-              { error: `Assignment failed. Team would exceed category limit. (3rd category: ${c3}/${max3})` },
-              { status: 400 }
-            );
-          }
-          if (c4 > max4) {
-            return NextResponse.json(
-              { error: `Assignment failed. Team would exceed category limit. (4th category: ${c4}/${max4})` },
-              { status: 400 }
-            );
+          // Check limits dynamically
+          for (const cat of categories) {
+            const current = counts.get(cat.name.toLowerCase()) || 0;
+            if (current > cat.max_players) {
+              return NextResponse.json(
+                { error: `Assignment failed. Team would exceed category limit. (Category "${cat.name}": ${current}/${cat.max_players})` },
+                { status: 400 }
+              );
+            }
           }
         }
       } catch (err) {

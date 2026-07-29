@@ -47,6 +47,7 @@ export default function NewCategoryPage() {
     icon: '',
     base_price: '0',
     priority: '1',
+    max_players: '1',
     points_same_category: '8',
     points_one_level_diff: '7',
     points_two_level_diff: '6',
@@ -246,6 +247,32 @@ export default function NewCategoryPage() {
                 </div>
                 <p className="mt-2 text-[10px] text-slate-500 font-mono">
                   Base price assigned to players in this category.
+                </p>
+              </div>
+
+              {/* Max Players Per Team Quota */}
+              <div>
+                <label htmlFor="max_players" className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">
+                  Max Players Per Team *
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="max_players"
+                    id="max_players"
+                    required
+                    min="1"
+                    value={formData.max_players}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2.5 pl-11 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
+                    placeholder="Enter quota limit (e.g. 2 for 1st tier, 1 for others)"
+                  />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none font-bold text-xs font-mono">
+                    SLOTS
+                  </div>
+                </div>
+                <p className="mt-2 text-[10px] text-slate-500 font-mono">
+                  Maximum number of players from this category allowed per team roster.
                 </p>
               </div>
 
