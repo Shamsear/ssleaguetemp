@@ -232,43 +232,72 @@ export default function LineupSubstitution({
       </div>
 
       {/* Substitution Summary */}
-      {selectedOut && selectedIn && (
-        <div className="glass rounded-xl p-4 border border-blue-300 bg-blue-50">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="text-center">
-              <div className="font-bold text-gray-900">{getPlayerById(selectedOut)?.name}</div>
-              <div className="text-xs text-gray-600">Coming OFF</div>
-            </div>
-            <div className="text-2xl">🔄</div>
-            <div className="text-center">
-              <div className="font-bold text-gray-900">{getPlayerById(selectedIn)?.name}</div>
-              <div className="text-xs text-gray-600">Coming ON</div>
-            </div>
-          </div>
+      {selectedOut && selectedIn && (() => {
+        const playerOut = getPlayerById(selectedOut);
+        const playerIn = getPlayerById(selectedIn);
+        const outCat = playerOut?.category || 'classic';
+        const inCat = playerIn?.category || 'classic';
 
-          {/* Optional Notes */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notes (optional)
-            </label>
-            <input
-              type="text"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g., Tactical change, Injury, etc."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+        const priorities: { [key: string]: number } = {
+          '1st': 1,
+          '2nd': 2,
+          '3rd': 3,
+          '4th': 4
+        };
 
-          <button
-            onClick={handleSubstitute}
-            disabled={submitting}
-            className="w-full px-6 py-3 rounded-lg font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
-          >
-            {submitting ? 'Processing...' : 'Confirm Substitution'}
-          </button>
-        </div>
-      )}
+        const pOut = priorities[outCat] || 0;
+        const pIn = priorities[inCat] || 0;
+        let penalty = 2;
+
+        if (pOut && pIn && pIn < pOut) {
+          penalty = 2 + (pOut - pIn);
+        }
+
+        return (
+          <div className="glass rounded-xl p-4 border border-blue-300 bg-blue-50">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="text-center flex-1">
+                <div className="font-bold text-gray-900">{playerOut?.name}</div>
+                <div className="text-[10px] font-extrabold text-red-650 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded font-mono mt-1 inline-block uppercase">Category: {outCat}</div>
+                <div className="text-xs text-gray-500 mt-1">Coming OFF</div>
+              </div>
+              
+              <div className="text-center font-mono flex-shrink-0">
+                <div className="text-2xl">🔄</div>
+                <div className="text-[10px] font-black text-orange-700 bg-orange-100 border border-orange-200 px-2 py-0.5 rounded-lg mt-1">+{penalty} Goals Penalty</div>
+              </div>
+
+              <div className="text-center flex-1">
+                <div className="font-bold text-gray-900">{playerIn?.name}</div>
+                <div className="text-[10px] font-extrabold text-green-650 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded font-mono mt-1 inline-block uppercase">Category: {inCat}</div>
+                <div className="text-xs text-gray-500 mt-1">Coming ON</div>
+              </div>
+            </div>
+
+            {/* Optional Notes */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Notes (optional)
+              </label>
+              <input
+                type="text"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="e.g., Tactical change, Injury, etc."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <button
+              onClick={handleSubstitute}
+              disabled={submitting}
+              className="w-full px-6 py-3 rounded-lg font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg font-mono text-xs uppercase tracking-wider"
+            >
+              {submitting ? 'Processing...' : 'Confirm Substitution'}
+            </button>
+          </div>
+        );
+      })()}
 
       {/* Substitution History */}
       {substitutionHistory.length > 0 && (

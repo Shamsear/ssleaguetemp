@@ -148,6 +148,43 @@ export default function FixturePage() {
   const [substitutionDeadline, setSubstitutionDeadline] = useState<Date | null>(null);
   const [canMakeSubstitution, setCanMakeSubstitution] = useState(false);
 
+  // Auto-calculate substitution penalty
+  useEffect(() => {
+    if (subMatchupIndex === null || !subSide || !subNewPlayerId) {
+      return;
+    }
+
+    const matchup = matchups[subMatchupIndex];
+    const isHome = subSide === 'home';
+    const currentPlayerId = isHome ? matchup.home_player_id : matchup.away_player_id;
+    
+    const playersList = isHome ? homePlayers : awayPlayers;
+    const currentPlayer = playersList.find(p => p.player_id === currentPlayerId);
+    const newPlayer = playersList.find(p => p.player_id === subNewPlayerId);
+
+    if (currentPlayer && newPlayer) {
+      const outCategory = currentPlayer.category || 'classic';
+      const inCategory = newPlayer.category || 'classic';
+
+      const priorities: { [key: string]: number } = {
+        '1st': 1,
+        '2nd': 2,
+        '3rd': 3,
+        '4th': 4
+      };
+
+      const pOut = priorities[outCategory] || 0;
+      const pIn = priorities[inCategory] || 0;
+      let penalty = 2;
+
+      if (pOut && pIn && pIn < pOut) {
+        penalty = 2 + (pOut - pIn);
+      }
+
+      setSubPenaltyAmount(penalty);
+    }
+  }, [subNewPlayerId, subMatchupIndex, subSide, matchups, homePlayers, awayPlayers]);
+
   // Null matchups state
   const [nullMatchups, setNullMatchups] = useState<Set<number>>(new Set());
   const [isMarkingNull, setIsMarkingNull] = useState(false);
@@ -684,52 +721,58 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         // During fixture entry phase (after home deadline, before away deadline, no matchups),
         // each team's lineup changes should be private until matchups are created
         const matchupsExist = matchupsList.length > 0;
+        const isBlind = fixtureData.matchup_mode === 'blind_lineup';
 
-        if (homeLineupResponse.ok) {
-          const homeLineupData = await homeLineupResponse.json();
-          if (homeLineupData.success && homeLineupData.lineups && homeLineupData.lineups.starting_xi && homeLineupData.lineups.starting_xi.length > 0) {
-            // Track actual submission status (for matchup creation logic)
+        if (!isBlind) {
+          actualHomeLineupSubmitted = true;
+          actualAwayLineupSubmitted = true;
+          setHomeStartingXI(homePlayersList);
+          setAwayStartingXI(awayPlayersList);
+          setHomeLineupSubmitted(true);
+          setAwayLineupSubmitted(true);
+        } else {
+          if (homeLineupResponse.ok) {
+            const homeLineupData = await homeLineupResponse.json();
+            if (homeLineupData.success && homeLineupData.lineups && homeLineupData.lineups.starting_xi && homeLineupData.lineups.starting_xi.length > 0) {
+              actualHomeLineupSubmitted = true;
+              const homeStartingPlayers = homeLineupData.lineups.starting_xi
+                .map((playerId: string) => homePlayersList.find((p: any) => p.player_id === playerId))
+                .filter(Boolean);
+              setHomeStartingXI(homeStartingPlayers);
+              if (isHome || matchupsExist) {
+                setHomeLineupSubmitted(true);
+              }
+            } else if (homePlayersList.length === 5) {
+              actualHomeLineupSubmitted = true;
+              setHomeStartingXI(homePlayersList);
+              setHomeLineupSubmitted(true);
+            }
+          } else if (homePlayersList.length === 5) {
             actualHomeLineupSubmitted = true;
-
-            // Always load the starting XI data (needed for matchup creation)
-            const homeStartingPlayers = homeLineupData.lineups.starting_xi
-              .map((playerId: string) => homePlayersList.find((p: any) => p.player_id === playerId))
-              .filter(Boolean);
-            setHomeStartingXI(homeStartingPlayers);
-
-            // Only show submission status if it's own team OR matchups exist
-            if (isHome) {
-              setHomeLineupSubmitted(true);
-            } else if (matchupsExist) {
-              setHomeLineupSubmitted(true);
-            } else {
-              // Don't show submission status (but data is loaded for matchup creation)
-              console.log('🔒 Hiding home lineup status from away team (no matchups yet)');
-            }
+            setHomeStartingXI(homePlayersList);
+            setHomeLineupSubmitted(true);
           }
-        }
 
-        if (awayLineupResponse.ok) {
-          const awayLineupData = await awayLineupResponse.json();
-          if (awayLineupData.success && awayLineupData.lineups && awayLineupData.lineups.starting_xi && awayLineupData.lineups.starting_xi.length > 0) {
-            // Track actual submission status (for matchup creation logic)
-            actualAwayLineupSubmitted = true;
-
-            // Always load the starting XI data (needed for matchup creation)
-            const awayStartingPlayers = awayLineupData.lineups.starting_xi
-              .map((playerId: string) => awayPlayersList.find((p: any) => p.player_id === playerId))
-              .filter(Boolean);
-            setAwayStartingXI(awayStartingPlayers);
-
-            // Only show submission status if it's own team OR matchups exist
-            if (!isHome) {
+          if (awayLineupResponse.ok) {
+            const awayLineupData = await awayLineupResponse.json();
+            if (awayLineupData.success && awayLineupData.lineups && awayLineupData.lineups.starting_xi && awayLineupData.lineups.starting_xi.length > 0) {
+              actualAwayLineupSubmitted = true;
+              const awayStartingPlayers = awayLineupData.lineups.starting_xi
+                .map((playerId: string) => awayPlayersList.find((p: any) => p.player_id === playerId))
+                .filter(Boolean);
+              setAwayStartingXI(awayStartingPlayers);
+              if (!isHome || matchupsExist) {
+                setAwayLineupSubmitted(true);
+              }
+            } else if (awayPlayersList.length === 5) {
+              actualAwayLineupSubmitted = true;
+              setAwayStartingXI(awayPlayersList);
               setAwayLineupSubmitted(true);
-            } else if (matchupsExist) {
-              setAwayLineupSubmitted(true);
-            } else {
-              // Don't show submission status (but data is loaded for matchup creation)
-              console.log('🔒 Hiding away lineup status from home team (no matchups yet)');
             }
+          } else if (awayPlayersList.length === 5) {
+            actualAwayLineupSubmitted = true;
+            setAwayStartingXI(awayPlayersList);
+            setAwayLineupSubmitted(true);
           }
         }
 
@@ -1710,51 +1753,53 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                   );
                 })()}
 
-                {/* Lineup Status Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  {/* Home Team Lineup Status */}
-                  <div className={`p-4 rounded-xl border transition-all font-mono ${homeLineupSubmitted
-                    ? 'bg-emerald-50/20 border-emerald-200'
-                    : 'bg-slate-50 border-slate-200'
-                    }`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">🏠 {fixture.home_team_name}</span>
+                {/* Lineup Status Grid - Only show for blind lineup */}
+                {matchupMode === 'blind_lineup' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    {/* Home Team Lineup Status */}
+                    <div className={`p-4 rounded-xl border transition-all font-mono ${homeLineupSubmitted
+                      ? 'bg-emerald-50/20 border-emerald-200'
+                      : 'bg-slate-50 border-slate-200'
+                      }`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">🏠 {fixture.home_team_name}</span>
+                        </div>
+                        {homeLineupSubmitted && (
+                          <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">SUBMITTED</span>
+                        )}
                       </div>
-                      {homeLineupSubmitted && (
-                        <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">SUBMITTED</span>
-                      )}
+                      <p className={`text-[10px] font-bold uppercase tracking-wider ${homeLineupSubmitted ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {homeLineupSubmitted
+                          ? '✓ Lineup Submitted'
+                          : '⏰ Waiting for lineup'}
+                      </p>
                     </div>
-                    <p className={`text-[10px] font-bold uppercase tracking-wider ${homeLineupSubmitted ? 'text-emerald-700' : 'text-slate-400'}`}>
-                      {homeLineupSubmitted
-                        ? '<Check className="w-4 h-4 text-emerald-500" /> Lineup Submitted'
-                        : '<Clock className="w-4 h-4 text-slate-500" /> Waiting for lineup'}
-                    </p>
-                  </div>
 
-                  {/* Away Team Lineup Status */}
-                  <div className={`p-4 rounded-xl border transition-all font-mono ${awayLineupSubmitted
-                    ? 'bg-emerald-50/20 border-emerald-200'
-                    : 'bg-slate-50 border-slate-200'
-                    }`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">✈️ {fixture.away_team_name}</span>
+                    {/* Away Team Lineup Status */}
+                    <div className={`p-4 rounded-xl border transition-all font-mono ${awayLineupSubmitted
+                      ? 'bg-emerald-50/20 border-emerald-200'
+                      : 'bg-slate-50 border-slate-200'
+                      }`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">✈️ {fixture.away_team_name}</span>
+                        </div>
+                        {awayLineupSubmitted && (
+                          <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">SUBMITTED</span>
+                        )}
                       </div>
-                      {awayLineupSubmitted && (
-                        <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">SUBMITTED</span>
-                      )}
+                      <p className={`text-[10px] font-bold uppercase tracking-wider ${awayLineupSubmitted ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {awayLineupSubmitted
+                          ? '✓ Lineup Submitted'
+                          : '⏰ Waiting for lineup'}
+                      </p>
                     </div>
-                    <p className={`text-[10px] font-bold uppercase tracking-wider ${awayLineupSubmitted ? 'text-emerald-700' : 'text-slate-400'}`}>
-                      {awayLineupSubmitted
-                        ? '<Check className="w-4 h-4 text-emerald-500" /> Lineup Submitted'
-                        : '<Clock className="w-4 h-4 text-slate-500" /> Waiting for lineup'}
-                    </p>
                   </div>
-                </div>
+                )}
 
-                {/* Submit/Edit Lineup Button - Only show for manual mode */}
-                {matchupMode !== 'blind_lineup' && (() => {
+                {/* Submit/Edit Lineup Button - Only show for blind lineup */}
+                {matchupMode === 'blind_lineup' && (() => {
                   // Check if home team can edit (before home deadline)
                   const now = new Date();
                   const homeDeadline = roundDeadlines && roundDeadlines.scheduled_date
@@ -3980,29 +4025,30 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             </div>
 
             <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">
-                <strong>Current Player:</strong> {subSide === 'home'
-                  ? matchups[subMatchupIndex].home_player_name
-                  : matchups[subMatchupIndex].away_player_name}
-              </p>
+              {(() => {
+                const matchup = matchups[subMatchupIndex];
+                const isHome = subSide === 'home';
+                const currentPlayerId = isHome ? matchup.home_player_id : matchup.away_player_id;
+                const currentPlayerName = isHome ? matchup.home_player_name : matchup.away_player_name;
+                const playersList = isHome ? homePlayers : awayPlayers;
+                const currentPlayer = playersList.find(p => p.player_id === currentPlayerId);
+                const currentCategory = currentPlayer?.category || 'classic';
 
-              {/* Manual penalty input */}
-              <div className="mt-3 p-3 bg-orange-50/20 border border-orange-200 rounded-xl">
-                <label className="block text-xs font-bold text-orange-900 mb-2">
-                  ⚠️ Penalty Goals (awarded to opponent)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={subPenaltyAmount}
-                  onChange={(e) => setSubPenaltyAmount(parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 text-center text-base font-bold border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none font-mono"
-                  placeholder="Enter penalty amount"
-                />
-                <p className="text-xs text-orange-600 mt-2">
-                  Enter the number of penalty goals to award to the opponent for this substitution
-                </p>
-              </div>
+                return (
+                  <div className="space-y-3 font-mono text-xs">
+                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400 uppercase tracking-wider text-[10px]">Current Player:</span>
+                        <span className="font-extrabold text-slate-800 uppercase">{currentPlayerName}</span>
+                      </div>
+                      <div className="flex justify-between mt-1">
+                        <span className="text-slate-400 uppercase tracking-wider text-[10px]">Category:</span>
+                        <span className="font-extrabold text-indigo-600 uppercase bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded">{currentCategory}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="mb-6">
@@ -4050,8 +4096,18 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         {player.name || player.player_name} ({catDisplay})
                       </option>
                     );
-                  })}
               </select>
+              {subNewPlayerId && (
+                <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-xl font-mono text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-orange-900 uppercase tracking-wider text-[10px]">⚠️ Sub Penalty</span>
+                    <span className="text-sm font-black text-orange-600 bg-white border border-orange-200 px-2 py-0.5 rounded-lg">+{subPenaltyAmount} Goals</span>
+                  </div>
+                  <p className="text-[9px] text-orange-500 mt-1.5 font-bold uppercase tracking-wider leading-relaxed">
+                    Penalty: +2 goals base +1 for each level up if subbing a lower priority player for an upper priority player.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3">
