@@ -120,12 +120,17 @@ export async function GET(request: NextRequest) {
           allBids.forEach((b: any) => {
             let finalPrice = b.amount;
             if (finalPrice === null && b.encrypted_bid_data) {
-              try {
-                const decrypted = decryptBidData(b.encrypted_bid_data);
-                finalPrice = decrypted.amount;
-              } catch (error) {
-                console.error(`Failed to decrypt bid ${b.id}:`, error);
-                finalPrice = 0;
+              if (b.encrypted_bid_data.includes(':')) {
+                try {
+                  const decrypted = decryptBidData(b.encrypted_bid_data);
+                  finalPrice = decrypted.amount;
+                } catch (error) {
+                  console.error(`Failed to decrypt bid ${b.id}:`, error);
+                  finalPrice = 0;
+                }
+              } else {
+                const parsed = Number(b.encrypted_bid_data);
+                finalPrice = !isNaN(parsed) ? parsed : 0;
               }
             }
             if (!bidsByPlayer[b.player_id]) {
@@ -158,12 +163,17 @@ export async function GET(request: NextRequest) {
             
             // If amount is NULL, decrypt from encrypted_bid_data
             if (player.price === null && player.encrypted_bid_data) {
-              try {
-                const decrypted = decryptBidData(player.encrypted_bid_data);
-                finalPrice = decrypted.amount;
-              } catch (error) {
-                console.error(`Failed to decrypt bid for player ${player.player_id}:`, error);
-                finalPrice = 0; // Fallback to 0 if decryption fails
+              if (player.encrypted_bid_data.includes(':')) {
+                try {
+                  const decrypted = decryptBidData(player.encrypted_bid_data);
+                  finalPrice = decrypted.amount;
+                } catch (error) {
+                  console.error(`Failed to decrypt bid for player ${player.player_id}:`, error);
+                  finalPrice = 0; // Fallback to 0 if decryption fails
+                }
+              } else {
+                const parsed = Number(player.encrypted_bid_data);
+                finalPrice = !isNaN(parsed) ? parsed : 0;
               }
             }
 
