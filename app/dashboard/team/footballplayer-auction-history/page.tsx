@@ -629,99 +629,97 @@ export default function FootballPlayerAuctionHistoryPage() {
                               </p>
                             ) : (
                               <div className="space-y-2">
-                                {filteredPlayers.map((player) => (
-                                  {(() => {
-                                    const isPlayerExpanded = expandedPlayers.has(`${round.round_id}_${player.player_id}`);
-                                    const hasBids = round.round_type !== 'bulk' && player.bids && player.bids.length > 0;
-                                    
-                                    return (
-                                      <div
-                                        key={player.player_id}
-                                        className="bg-white border border-slate-200/60 rounded-xl p-3 sm:p-4 hover:shadow-sm transition-shadow"
+                                {filteredPlayers.map((player) => {
+                                  const isPlayerExpanded = expandedPlayers.has(`${round.round_id}_${player.player_id}`);
+                                  const hasBids = round.round_type !== 'bulk' && player.bids && player.bids.length > 0;
+                                  
+                                  return (
+                                    <div
+                                      key={player.player_id}
+                                      className="bg-white border border-slate-200/60 rounded-xl p-3 sm:p-4 hover:shadow-sm transition-shadow"
+                                    >
+                                      <div 
+                                        className={`flex items-center justify-between gap-3 flex-wrap font-mono ${hasBids ? 'cursor-pointer select-none' : ''}`}
+                                        onClick={() => hasBids && togglePlayerExpand(round.round_id, player.player_id)}
                                       >
-                                        <div 
-                                          className={`flex items-center justify-between gap-3 flex-wrap font-mono ${hasBids ? 'cursor-pointer select-none' : ''}`}
-                                          onClick={() => hasBids && togglePlayerExpand(round.round_id, player.player_id)}
-                                        >
-                                          {/* Player Info */}
-                                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            {/* Player Photo */}
-                                            {player.football_player_id ? (
-                                              <img
-                                                src={`/images/players/${player.football_player_id}.webp`}
-                                                alt={player.player_name}
-                                                onError={(e) => {
-                                                  const img = e.currentTarget;
-                                                  img.style.display = 'none';
-                                                  const badge = img.nextElementSibling as HTMLElement;
-                                                  if (badge) badge.style.display = 'flex';
-                                                }}
-                                                className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0"
-                                              />
-                                            ) : null}
-                                            <div 
-                                              className={`w-10 h-10 rounded-lg flex items-center justify-center border font-bold text-[10px] uppercase tracking-wider shrink-0 ${getPositionColor(player.position)}`}
-                                              style={{ display: player.football_player_id ? 'none' : 'flex' }}
-                                            >
-                                              {player.position}
-                                            </div>
-
-                                            {/* Name and Team */}
-                                            <div className="flex-1 min-w-0">
-                                              <div className="flex items-center gap-2">
-                                                <h4 className="font-extrabold text-slate-800 text-sm uppercase tracking-wide truncate">
-                                                  {player.player_name}
-                                                </h4>
-                                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${getPositionColor(player.position)}`}>
-                                                  {player.position}
-                                                </span>
-                                              </div>
-                                              <p className="text-xs text-slate-500 uppercase font-bold mt-0.5 truncate">
-                                                {player.team_name}
-                                              </p>
-                                            </div>
+                                        {/* Player Info */}
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                          {/* Player Photo */}
+                                          {player.football_player_id ? (
+                                            <img
+                                              src={`/images/players/${player.football_player_id}.webp`}
+                                              alt={player.player_name}
+                                              onError={(e) => {
+                                                const img = e.currentTarget;
+                                                img.style.display = 'none';
+                                                const badge = img.nextElementSibling as HTMLElement;
+                                                if (badge) badge.style.display = 'flex';
+                                              }}
+                                              className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0"
+                                            />
+                                          ) : null}
+                                          <div 
+                                            className={`w-10 h-10 rounded-lg flex items-center justify-center border font-bold text-[10px] uppercase tracking-wider shrink-0 ${getPositionColor(player.position)}`}
+                                            style={{ display: player.football_player_id ? 'none' : 'flex' }}
+                                          >
+                                            {player.position}
                                           </div>
 
-                                          {/* Price & Chevron */}
-                                          <div className="flex items-center gap-2 shrink-0">
-                                            <span className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-black text-sm">
-                                              £{player.price.toLocaleString()}
-                                            </span>
-                                            {hasBids && (
-                                              <div className="text-slate-400">
-                                                {isPlayerExpanded ? (
-                                                  <ChevronUp className="w-4 h-4" />
-                                                ) : (
-                                                  <ChevronDown className="w-4 h-4" />
-                                                )}
-                                              </div>
-                                            )}
+                                          {/* Name and Team */}
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                              <h4 className="font-extrabold text-slate-800 text-sm uppercase tracking-wide truncate">
+                                                {player.player_name}
+                                              </h4>
+                                              <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${getPositionColor(player.position)}`}>
+                                                {player.position}
+                                              </span>
+                                            </div>
+                                            <p className="text-xs text-slate-500 uppercase font-bold mt-0.5 truncate">
+                                              {player.team_name}
+                                            </p>
                                           </div>
                                         </div>
 
-                                        {/* Bids List for Normal Rounds (Expanded state) */}
-                                        {hasBids && isPlayerExpanded && (
-                                          <div className="mt-3 pt-3 border-t border-slate-100 font-mono text-xs">
-                                            <div className="text-slate-400 font-bold uppercase tracking-wider mb-2">Bids History</div>
-                                            <div className="space-y-1.5">
-                                              {player.bids!.map((bid, idx) => (
-                                                <div key={idx} className="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-slate-50 hover:bg-slate-100/80 transition-colors">
-                                                  <span className="text-slate-600 font-medium">{bid.team_name}</span>
-                                                  <div className="flex items-center gap-2">
-                                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${bid.status === 'won' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
-                                                      {bid.status === 'won' ? 'Won' : 'Lost'}
-                                                    </span>
-                                                    <span className="font-bold text-slate-700">£{bid.amount.toLocaleString()}</span>
-                                                  </div>
-                                                </div>
-                                              ))}
+                                        {/* Price & Chevron */}
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <span className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-black text-sm">
+                                            £{player.price.toLocaleString()}
+                                          </span>
+                                          {hasBids && (
+                                            <div className="text-slate-400">
+                                              {isPlayerExpanded ? (
+                                                <ChevronUp className="w-4 h-4" />
+                                              ) : (
+                                                <ChevronDown className="w-4 h-4" />
+                                              )}
                                             </div>
-                                          </div>
-                                        )}
+                                          )}
+                                        </div>
                                       </div>
-                                    );
-                                  })()}
-                                ))}
+
+                                      {/* Bids List for Normal Rounds (Expanded state) */}
+                                      {hasBids && isPlayerExpanded && (
+                                        <div className="mt-3 pt-3 border-t border-slate-100 font-mono text-xs">
+                                          <div className="text-slate-400 font-bold uppercase tracking-wider mb-2">Bids History</div>
+                                          <div className="space-y-1.5">
+                                            {player.bids!.map((bid, idx) => (
+                                              <div key={idx} className="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-slate-50 hover:bg-slate-100/80 transition-colors">
+                                                <span className="text-slate-600 font-medium">{bid.team_name}</span>
+                                                <div className="flex items-center gap-2">
+                                                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${bid.status === 'won' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                                                    {bid.status === 'won' ? 'Won' : 'Lost'}
+                                                  </span>
+                                                  <span className="font-bold text-slate-700">£{bid.amount.toLocaleString()}</span>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
 
