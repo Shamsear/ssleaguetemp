@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
           chunkParams.push(p.position || null);
 
           rowPlaceholders.push(`$${chunkParamIndex++}`);
-          chunkParams.push(p.team_name || null);
+          chunkParams.push(null); // team_name (fantasy team, initially null)
 
           rowPlaceholders.push(`$${chunkParamIndex++}`);
           chunkParams.push(p.nationality || null);
@@ -179,7 +179,6 @@ export async function POST(request: NextRequest) {
             position = EXCLUDED.position,
             overall_rating = EXCLUDED.overall_rating,
             playing_style = EXCLUDED.playing_style,
-            team_name = EXCLUDED.team_name,
             club = EXCLUDED.club,
             age = EXCLUDED.age,
             nationality = EXCLUDED.nationality,
@@ -219,12 +218,15 @@ export async function POST(request: NextRequest) {
       await pool.end();
     }
 
+    // Commented out: Auto truncate the temp table. We now keep the temp data.
+    /*
     try {
       await tempSql.query('TRUNCATE TABLE temp_players_import');
       console.log('✅ Temporary import table successfully cleared.');
     } catch (e: any) {
       console.error('Failed to clear temp players table:', e);
     }
+    */
 
     return NextResponse.json({
       success: true,

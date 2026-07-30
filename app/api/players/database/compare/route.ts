@@ -41,6 +41,30 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Pre-build index for active players by name + nationality for O(1) duplicate checks
+    const activeDupMap = new Map<string, any[]>();
+    activePlayers.forEach(p => {
+      if (p.name && p.nationality) {
+        const key = `${p.name.trim().toLowerCase()}_${p.nationality.trim().toLowerCase()}`;
+        if (!activeDupMap.has(key)) {
+          activeDupMap.set(key, []);
+        }
+        activeDupMap.get(key)!.push(p);
+      }
+    });
+
+    // Pre-build index for temp players by name + nationality for O(1) duplicate checks
+    const tempDupMap = new Map<string, any[]>();
+    tempPlayers.forEach(p => {
+      if (p.name && p.nationality) {
+        const key = `${p.name.trim().toLowerCase()}_${p.nationality.trim().toLowerCase()}`;
+        if (!tempDupMap.has(key)) {
+          tempDupMap.set(key, []);
+        }
+        tempDupMap.get(key)!.push(p);
+      }
+    });
+
     // 5. Compare player data
     const toUpdate: any[] = [];
     const toCreate: any[] = [];
@@ -78,7 +102,9 @@ export async function GET(request: NextRequest) {
           position: normalizeVal(activePlayer.position),
           overall_rating: normalizeNumber(activePlayer.overall_rating),
           playing_style: normalizeVal(activePlayer.playing_style),
-          team_name: normalizeVal(activePlayer.team_name || activePlayer.club),
+          team_name: normalizeVal(activePlayer.team_name), // fantasy team
+          club: normalizeVal(activePlayer.club), // real club
+          age: normalizeNumber(activePlayer.age), // age
           pace: normalizeNumber(activePlayer.speed),
           shooting: normalizeNumber(activePlayer.finishing),
           passing: normalizeNumber(activePlayer.low_pass),
@@ -101,7 +127,9 @@ export async function GET(request: NextRequest) {
           position: normalizeVal(tempPlayer.position),
           overall_rating: normalizeNumber(tempPlayer.overall_rating),
           playing_style: normalizeVal(tempPlayer.playing_style),
-          team_name: normalizeVal(tempPlayer.team_name || tempPlayer.club),
+          team_name: normalizeVal(activePlayer.team_name), // preserve the active fantasy team name so we don't overwrite it or flag it as a change!
+          club: normalizeVal(tempPlayer.team_name), // real club from temp database
+          age: normalizeNumber(tempPlayer.age), // age from temp database
           pace: normalizeNumber(tempPlayer.speed),
           shooting: normalizeNumber(tempPlayer.finishing),
           passing: normalizeNumber(tempPlayer.low_pass),
@@ -137,7 +165,8 @@ export async function GET(request: NextRequest) {
           oldValues.position !== newValues.position ||
           oldValues.overall_rating !== newValues.overall_rating ||
           oldValues.playing_style !== newValues.playing_style ||
-          oldValues.team_name !== newValues.team_name ||
+          oldValues.club !== newValues.club ||
+          oldValues.age !== newValues.age ||
           oldValues.pace !== newValues.pace ||
           oldValues.shooting !== newValues.shooting ||
           oldValues.passing !== newValues.passing ||
@@ -163,6 +192,40 @@ export async function GET(request: NextRequest) {
         }
       } else {
         // Player in scraped temp database but not active database -> will be created
+        // Cross check with active players using name and nationality (O(1) Map Lookup)
+        const dupKey = tempPlayer.name && tempPlayer.nationality
+          ? `${tempPlayer.name.trim().toLowerCase()}_${tempPlayer.nationality.trim().toLowerCase()}`
+          : '';
+
+        const activeDuplicates = dupKey ? (activeDupMap.get(dupKey) || []) : [];
+        const tempDuplicates = dupKey 
+          ? (tempDupMap.get(dupKey) || []).filter(tempP => tempP.player_id?.toString() !== playerId)
+          : [];
+
+        const allDuplicates = [
+          ...activeDuplicates.map(d => ({
+            id: d.id,
+            player_id: d.player_id,
+            name: d.name,
+            overall_rating: d.overall_rating,
+            position: d.position,
+            club: d.club,
+            team_name: d.team_name,
+            nationality: d.nationality,
+            source: 'active'
+          })),
+          ...tempDuplicates.map(d => ({
+            player_id: d.player_id,
+            name: d.name,
+            overall_rating: d.overall_rating,
+            position: d.position,
+            club: d.team_name,
+            team_name: d.team_name,
+            nationality: d.nationality,
+            source: 'temp'
+          }))
+        ];
+
         toCreate.push({
           player_id: playerId,
           name: tempPlayer.name,
@@ -178,6 +241,8 @@ export async function GET(request: NextRequest) {
           dribbling: tempPlayer.dribbling,
           defending: tempPlayer.defensive_awareness,
           physical: tempPlayer.physical_contact,
+          hasDuplicates: allDuplicates.length > 0,
+          duplicates: allDuplicates
         });
       }
     });

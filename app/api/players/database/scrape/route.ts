@@ -36,7 +36,11 @@ export async function GET(request: NextRequest) {
     // IMPORTANT: The Cookie header value must be plain text — browsers never URL-encode
     // cookie values, so pesdb.net expects `columns=pos,name,...` not `columns=pos%2Cname,...`
     const targetUrl = `https://pesdb.net/efootball/?pos=${posCode}&page=${page}&all=0`;
-    const scraperApiKey = "12e89d3469aa5f5bb80cbba557ceec9b";
+    const scraperKeys = [
+      process.env.SCRAPER_API_KEY || "12e89d3469aa5f5bb80cbba557ceec9b",
+      process.env.BACKUP_SCRAPER_API_KEY || "c042d3b9be6af433b58e0ace8b98d66b"
+    ].filter(Boolean);
+    console.log(`🔑 Loaded Scraper keys count: ${scraperKeys.length} (${scraperKeys.map(k => k.substring(0, 4) + '...').join(', ')})`);
     const randomUserAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 
     // Cookie with plain-text (decoded) values — this is how browsers send cookies
@@ -77,24 +81,36 @@ export async function GET(request: NextRequest) {
 
     // --- Attempt 2: ScraperAPI fallback (rotates IPs when the server is blocked) ---
     if (!html) {
-      try {
-        usedProxy = true;
-        // keep_headers=true tells ScraperAPI to forward our headers (including Cookie) to the target
-        const proxyUrl = `http://api.scraperapi.com?api_key=${scraperApiKey}&keep_headers=true&url=${encodeURIComponent(targetUrl)}`;
-        console.log(`🔀 ScraperAPI fetch: ${targetUrl}`);
-        const proxyRes = await fetch(proxyUrl, {
-          headers: sharedHeaders,
-          cache: 'no-store',
-        });
+      usedProxy = true;
+      let lastError = '';
 
-        if (proxyRes.status !== 200) {
-          return NextResponse.json({ success: false, error: `ScraperAPI returned HTTP ${proxyRes.status}` }, { status: 500 });
+      for (let i = 0; i < scraperKeys.length; i++) {
+        const currentKey = scraperKeys[i];
+        try {
+          // keep_headers=true tells ScraperAPI to forward our headers (including Cookie) to the target
+          const proxyUrl = `http://api.scraperapi.com?api_key=${currentKey}&keep_headers=true&url=${encodeURIComponent(targetUrl)}`;
+          console.log(`🔀 ScraperAPI fetch (key index ${i}): ${targetUrl}`);
+          const proxyRes = await fetch(proxyUrl, {
+            headers: sharedHeaders,
+            cache: 'no-store',
+          });
+
+          if (proxyRes.status === 200) {
+            html = await proxyRes.text();
+            console.log(`✅ ScraperAPI fetch succeeded (key index ${i}) (${html.length} bytes)`);
+            break; // Succeeded! Break the retry loop
+          } else {
+            console.warn(`⚠️ ScraperAPI key index ${i} failed with status ${proxyRes.status}`);
+            lastError = `ScraperAPI returned HTTP ${proxyRes.status}`;
+          }
+        } catch (e: any) {
+          console.error(`❌ ScraperAPI key index ${i} fetch error:`, e);
+          lastError = e.message;
         }
-        html = await proxyRes.text();
-        console.log(`✅ ScraperAPI fetch succeeded (${html.length} bytes)`);
-      } catch (e: any) {
-        console.error('❌ ScraperAPI fetch error:', e);
-        return NextResponse.json({ success: false, error: `All fetch attempts failed: ${e.message}` }, { status: 500 });
+      }
+
+      if (!html) {
+        return NextResponse.json({ success: false, error: `All fetch attempts failed: ${lastError}` }, { status: 500 });
       }
     }
 

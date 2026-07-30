@@ -99,6 +99,59 @@ export async function GET(request: NextRequest) {
             ORDER BY b.player_id, b.amount DESC, b.created_at ASC
           `;
 
+          // Fetch all bids for the round to list them per player
+          const allBids = await auctionSql`
+            SELECT 
+              b.id,
+              b.player_id,
+              b.team_id,
+              t.name as team_name,
+              b.amount,
+              b.encrypted_bid_data,
+              b.created_at,
+              b.status
+            FROM bids b
+            LEFT JOIN teams t ON b.team_id = t.id
+            WHERE b.round_id = ${round.round_id}
+          `;
+
+          // Group decrypted bids by player_id
+          const bidsByPlayer: Record<string, any[]> = {};
+          allBids.forEach((b: any) => {
+            let finalPrice = b.amount;
+            if (finalPrice === null && b.encrypted_bid_data) {
+              try {
+                const decrypted = decryptBidData(b.encrypted_bid_data);
+                finalPrice = decrypted.amount;
+              } catch (error) {
+                console.error(`Failed to decrypt bid ${b.id}:`, error);
+                finalPrice = 0;
+              }
+            }
+            if (!bidsByPlayer[b.player_id]) {
+              bidsByPlayer[b.player_id] = [];
+            }
+            bidsByPlayer[b.player_id].push({
+              team_id: b.team_id,
+              team_name: b.team_name || 'Unknown Team',
+              amount: Number(finalPrice) || 0,
+              status: b.status,
+              created_at: b.created_at
+            });
+          });
+
+          // Sort each player's bids by amount descending
+          Object.keys(bidsByPlayer).forEach(pid => {
+            bidsByPlayer[pid].sort((a, b) => {
+              const amountB = Number(b.amount) || 0;
+              const amountA = Number(a.amount) || 0;
+              if (amountB !== amountA) {
+                return amountB - amountA;
+              }
+              return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+            });
+          });
+
           // Decrypt bid amounts if they're NULL
           players = players.map((player: any) => {
             let finalPrice = player.price;
@@ -116,7 +169,8 @@ export async function GET(request: NextRequest) {
 
             return {
               ...player,
-              price: finalPrice
+              price: finalPrice,
+              bids: bidsByPlayer[player.player_id] || []
             };
           });
 
@@ -147,7 +201,8 @@ export async function GET(request: NextRequest) {
             football_player_id: p.football_player_id,
             team_id: p.team_id,
             team_name: p.team_name || 'Unknown Team',
-            price: Number(p.price) || 0
+            price: Number(p.price) || 0,
+            bids: p.bids || []
           })),
           total_players: players.length
         };

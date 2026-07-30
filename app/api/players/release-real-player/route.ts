@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { adminDb } from '@/lib/firebase/admin';
 import { sendNotification } from '@/lib/notifications/send-notification';
+import { neon } from '@neondatabase/serverless';
 
 /**
  * POST /api/players/release-real-player
@@ -273,6 +274,29 @@ export async function POST(request: NextRequest) {
             updated_at = NOW()
           WHERE player_id = ${playerId} AND season_id = ${seasonId}
         `;
+        }
+
+        // 3.5. Close active contract history in Auction DB if connection string exists
+        const auctionConnectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+        if (auctionConnectionString) {
+            try {
+                const auctionSql = neon(auctionConnectionString);
+                await auctionSql`
+                    UPDATE player_history 
+                    SET 
+                      status = 'released',
+                      end_date = NOW(),
+                      end_reason = 'release',
+                      contract_end_season = ${releaseSeasonId},
+                      updated_at = NOW()
+                    WHERE player_id = ${playerId}
+                    AND team_id = ${player.team_id}
+                    AND status = 'active'
+                `;
+                console.log(`✅ Closed player_history in Auction DB for ${player.player_name}`);
+            } catch (historyErr: any) {
+                console.error('Error updating player_history in Auction DB:', historyErr.message);
+            }
         }
 
         // 4. Update team balance in Firebase team_seasons

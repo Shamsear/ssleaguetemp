@@ -17,6 +17,13 @@ interface Player {
   team_name: string;
   price: number;
   football_player_id?: string;
+  bids?: {
+    team_id: string;
+    team_name: string;
+    amount: number;
+    status: string;
+    created_at: string;
+  }[];
 }
 
 interface RoundData {
@@ -222,6 +229,74 @@ export default function FootballPlayerAuctionHistoryPage() {
           }
         });
       });
+
+      // Create separate sheets for each player with all their bids (normal rounds only)
+      if (round.round_type !== 'bulk') {
+        const seenNames = new Set<string>();
+        
+        round.players.forEach(player => {
+          let sheetName = player.player_name.replace(/[\\/?*:[\]]/g, '').slice(0, 31);
+          if (!sheetName) sheetName = `Player ${player.player_id.slice(0, 6)}`;
+          if (seenNames.has(sheetName.toLowerCase())) {
+            sheetName = sheetName.slice(0, 27) + ` (${seenNames.size})`;
+          }
+          seenNames.add(sheetName.toLowerCase());
+          
+          const playerSheet = workbook.addWorksheet(sheetName);
+          
+          // Set columns for player bids
+          playerSheet.columns = [
+            { header: 'Team Name', key: 'teamName', width: 25 },
+            { header: 'Bid Amount (£)', key: 'amount', width: 18 },
+            { header: 'Status', key: 'status', width: 12 },
+            { header: 'Bid Time', key: 'bidTime', width: 20 }
+          ];
+          
+          // Add rows for bids
+          if (player.bids && player.bids.length > 0) {
+            player.bids.forEach((bid: any) => {
+              playerSheet.addRow({
+                teamName: bid.team_name,
+                amount: bid.amount,
+                status: bid.status === 'won' ? 'WON' : 'LOST',
+                bidTime: bid.created_at ? new Date(bid.created_at).toLocaleString() : 'N/A'
+              });
+            });
+          } else {
+            // Fallback to the winning bid if no bids list populated
+            playerSheet.addRow({
+              teamName: player.team_name,
+              amount: player.price,
+              status: 'WON',
+              bidTime: 'N/A'
+            });
+          }
+          
+          // Style player sheet header
+          playerSheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+          playerSheet.getRow(1).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF1E293B' } // slate-800
+          };
+          playerSheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+          
+          // Style rows
+          playerSheet.eachRow((row, rowNumber) => {
+            row.eachCell((cell) => {
+              cell.border = {
+                top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+              };
+              if (rowNumber > 1) {
+                cell.alignment = { vertical: 'middle' };
+              }
+            });
+          });
+        });
+      }
       
       // Generate Excel file
       const buffer = await workbook.xlsx.writeBuffer();
@@ -592,6 +667,26 @@ export default function FootballPlayerAuctionHistoryPage() {
                                         </span>
                                       </div>
                                     </div>
+
+                                    {/* Bids List for Normal Rounds */}
+                                    {round.round_type !== 'bulk' && player.bids && player.bids.length > 0 && (
+                                      <div className="mt-3 pt-3 border-t border-slate-100 font-mono text-xs">
+                                        <div className="text-slate-400 font-bold uppercase tracking-wider mb-2">Bids History</div>
+                                        <div className="space-y-1.5">
+                                          {player.bids.map((bid, idx) => (
+                                            <div key={idx} className="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-slate-50 hover:bg-slate-100/80 transition-colors">
+                                              <span className="text-slate-600 font-medium">{bid.team_name}</span>
+                                              <div className="flex items-center gap-2">
+                                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${bid.status === 'won' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                                                  {bid.status === 'won' ? 'Won' : 'Lost'}
+                                                </span>
+                                                <span className="font-bold text-slate-700">£{bid.amount.toLocaleString()}</span>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 ))}
                               </div>

@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
           chunkParams.push(p.position || null);
 
           rowPlaceholders.push(`$${chunkParamIndex++}`);
-          chunkParams.push(p.team_name || null);
+          chunkParams.push(null); // team_name (fantasy team, initially null)
 
           rowPlaceholders.push(`$${chunkParamIndex++}`);
           chunkParams.push(p.nationality || null);
@@ -132,13 +132,16 @@ export async function POST(request: NextRequest) {
       await pool.end();
     }
 
-    // 4. Delete the added players from temp table so they no longer show up as new
+    // 4. Commented out: Delete the added players from temp table so they no longer show up as new
+    // We now preserve temp data until the user explicitly clears it.
+    /*
     const deleteQuery = `DELETE FROM temp_players_import WHERE player_id IN (${placeholders})`;
     try {
       await tempSql.query(deleteQuery, playerIds);
     } catch (e) {
       console.error('Failed to clean up added players from temp table:', e);
     }
+    */
 
     return NextResponse.json({
       success: true,

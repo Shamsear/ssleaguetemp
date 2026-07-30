@@ -4,7 +4,7 @@ import { adminDb } from '@/lib/firebase/admin';
 import { decryptBidData } from '@/lib/encryption';
 
 // Fetch player history including transactions and contract timeline
-const sql = neon(process.env.NEON_DATABASE_URL!);
+const sql = neon(process.env.NEON_AUCTION_DB_URL || process.env.NEON_DATABASE_URL || process.env.DATABASE_URL!);
 
 export async function GET(
   request: NextRequest,
@@ -16,13 +16,15 @@ export async function GET(
     console.log('=== CONTRACT HISTORY DEBUG ===');
     console.log('Requested player ID:', id);
     
-    // First, get the player's player_id from the database
+    // First, get the player's player_id and id from the database to handle both formats
     const playerData = await sql`
-      SELECT player_id FROM footballplayers WHERE id = ${id}
+      SELECT id, player_id FROM footballplayers WHERE id = ${id} OR player_id = ${id}
     `;
     
-    const playerIdForTransactions = playerData[0]?.player_id || id;
-    console.log('Player ID for transactions:', playerIdForTransactions);
+    const dbId = playerData[0]?.id || id;
+    const stringPlayerId = playerData[0]?.player_id;
+    const playerIdForTransactions = stringPlayerId || dbId;
+    console.log('Player database ID:', dbId, 'String player ID:', stringPlayerId);
     
     // Fetch transactions from Firebase for cross-reference only
     const transactionsSnapshot = await adminDb
@@ -60,7 +62,8 @@ export async function GET(
         ph.contract_start_season,
         ph.contract_end_season
       FROM player_history ph
-      WHERE ph.player_id = ${playerIdForTransactions.toString()}
+      WHERE LOWER(ph.player_id) = LOWER(${dbId.toString()})
+        ${stringPlayerId ? sql`OR LOWER(ph.player_id) = LOWER(${stringPlayerId.toString()})` : sql``}
       ORDER BY ph.acquisition_date ASC
     `;
     

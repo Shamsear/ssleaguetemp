@@ -144,16 +144,16 @@ export default function DatabaseManagementPage() {
 
               const result = await res.json()
 
-              // Cookie was stripped by proxy — retry the same page with a longer delay
-              if (!result.success && result.cookieError) {
+              if (!result.success) {
                 retries++
+                const errorMsg = result.error || 'Unknown error'
                 if (retries > MAX_RETRIES) {
-                  logMessage(`[Worker ${workerId}] ⚠️ Page ${currentPage} (${position}) failed ${MAX_RETRIES} times due to missing stat columns. Skipping page.`)
-                  page++ // skip this page rather than looping forever
+                  logMessage(`[Worker ${workerId}] ⚠️ Page ${currentPage} (${position}) failed ${MAX_RETRIES} times: ${errorMsg}. Skipping page.`)
+                  page++ // skip this page rather than looping forever and aborting position
                   break
                 }
-                logMessage(`[Worker ${workerId}] ⚠️ Cookie error on ${position} page ${currentPage} — retrying (${retries}/${MAX_RETRIES})...`)
-                await new Promise(r => setTimeout(r, 3000 + retries * 1000))
+                logMessage(`[Worker ${workerId}] ⚠️ Error on ${position} page ${currentPage}: ${errorMsg} — retrying (${retries}/${MAX_RETRIES})...`)
+                await new Promise(r => setTimeout(r, 4000 + retries * 2000))
                 continue // retry same page
               }
 
@@ -180,15 +180,17 @@ export default function DatabaseManagementPage() {
                     await new Promise(r => setTimeout(r, delay))
                   }
                 }
-              } else {
-                logMessage(`[Worker ${workerId}] ❌ Error on ${position} page ${currentPage}: ${result.error || 'Unknown error'}`)
-                hasMore = false
               }
-              break // success or non-retryable error — exit retry loop
+              break // success — exit retry loop
             } catch (err: any) {
-              logMessage(`[Worker ${workerId}] ❌ Network error on ${position} page ${currentPage}: ${err.message}`)
-              hasMore = false
-              break
+              retries++
+              if (retries > MAX_RETRIES) {
+                logMessage(`[Worker ${workerId}] ❌ Network error on ${position} page ${currentPage} failed ${MAX_RETRIES} times: ${err.message}. Skipping page.`)
+                page++
+                break
+              }
+              logMessage(`[Worker ${workerId}] ⚠️ Network error on ${position} page ${currentPage}: ${err.message} — retrying (${retries}/${MAX_RETRIES})...`)
+              await new Promise(r => setTimeout(r, 4000 + retries * 2000))
             }
           }
         }

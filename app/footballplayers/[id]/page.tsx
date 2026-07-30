@@ -1,12 +1,12 @@
 import { Metadata } from 'next';
-import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { getAuctionDb } from '@/lib/neon/auction-config';
 import PublicPlayerDetailPage from './FootballPlayerDetailClient';
 
 export const dynamic = 'force-dynamic';
 
 async function getFootballPlayerData(id: string) {
   try {
-    const sql = getTournamentDb();
+    const sql = getAuctionDb();
     const players = await sql`
       SELECT * FROM footballplayers 
       WHERE player_id = ${id} 

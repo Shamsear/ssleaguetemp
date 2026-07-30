@@ -165,7 +165,7 @@ export default function ScrapedPlayersViewPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-screen-2xl">
+    <div className="container mx-auto px-4 pt-5 lg:pt-24 pb-8 max-w-screen-2xl">
       {/* Top Banner Header */}
       <div className="glass rounded-3xl p-6 mb-8 shadow-lg bg-white border border-slate-200/60">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
