@@ -64,7 +64,7 @@ export async function PATCH(
           : await sql`SELECT * FROM realplayerstats WHERE id = ${req.player_id + '_' + req.season_id} LIMIT 1`;
         playerData = result[0];
       } else {
-        const result = await sql`SELECT * FROM footballplayers WHERE player_id = ${req.player_id} AND season_id = ${req.season_id} LIMIT 1`;
+        const result = await sql`SELECT * FROM footballplayers WHERE player_id = ${req.player_id} AND season_id = ${req.season_id} AND (retired IS NOT TRUE) LIMIT 1`;
         playerData = result[0];
       }
       

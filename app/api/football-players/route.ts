@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
           overall_rating as star_rating,
           created_at, updated_at
         FROM footballplayers
-        WHERE player_id = ${playerId} AND season_id = ${seasonId}
+        WHERE player_id = ${playerId} AND season_id = ${seasonId} AND (retired IS NOT TRUE)
         LIMIT 1
       `;
       return NextResponse.json({
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
           overall_rating as star_rating,
           created_at, updated_at
         FROM footballplayers
-        WHERE team_id = ${teamId} AND season_id = ${seasonId}
+        WHERE team_id = ${teamId} AND season_id = ${seasonId} AND (retired IS NOT TRUE)
         ORDER BY name ASC
         LIMIT ${limit}
       `;
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
           overall_rating as star_rating,
           created_at, updated_at
         FROM footballplayers
-        WHERE season_id = ${seasonId}
+        WHERE season_id = ${seasonId} AND (retired IS NOT TRUE)
         ORDER BY name ASC
         LIMIT ${limit}
       `;
@@ -85,6 +85,7 @@ export async function GET(request: NextRequest) {
           overall_rating as star_rating,
           created_at, updated_at
         FROM footballplayers
+        WHERE (retired IS NOT TRUE)
         ORDER BY name ASC
         LIMIT ${limit}
       `;

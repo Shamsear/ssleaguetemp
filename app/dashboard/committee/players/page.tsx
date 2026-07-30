@@ -86,7 +86,13 @@ export default function CommitteePlayersPage() {
       })
 
       if (positionFilter) params.append('position', positionFilter)
-      if (eligibilityFilter === 'eligible') params.append('is_auction_eligible', 'true')
+      if (eligibilityFilter === 'eligible') {
+        params.append('is_auction_eligible', 'true')
+      } else if (eligibilityFilter === 'retired') {
+        params.append('retired', 'true')
+      } else if (eligibilityFilter === 'all_with_retired') {
+        params.append('includeRetired', 'true')
+      }
       if (searchTerm.trim()) params.append('search', searchTerm.trim())
 
       // Fetch teams from Firestore (keep) and players from Neon (new)
@@ -193,11 +199,32 @@ export default function CommitteePlayersPage() {
       alert('Player deleted successfully')
     } catch (err) {
       console.error('Error deleting player:', err)
-      showAlert({
-        type: 'error',
-        title: 'Delete Failed',
-        message: 'Failed to delete player'
+      alert('Failed to delete player')
+    }
+  }
+
+  const handleToggleRetired = async (playerId: string, name: string, isRetired: boolean) => {
+    const actionText = isRetired ? 'reactivate' : 'retire';
+    if (!confirm(`Are you sure you want to ${actionText} player "${name}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetchWithTokenRefresh(`/api/players/${playerId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ retired: !isRetired })
       })
+
+      const result = await response.json()
+      if (result.success) {
+        alert(`Successfully ${isRetired ? 'activated' : 'retired'} ${name}.`)
+        fetchPlayers()
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (e: any) {
+      alert(`Failed to update player status: ${e.message}`)
     }
   }
 
@@ -703,8 +730,10 @@ export default function CommitteePlayersPage() {
                   onChange={(e) => setEligibilityFilter(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 text-xs font-bold uppercase tracking-wider appearance-none"
                 >
-                  <option value="eligible">Eligible Players</option>
-                  <option value="all">All Players</option>
+                  <option value="all">All Active Players</option>
+                  <option value="eligible">Eligible Active Players</option>
+                  <option value="retired">Retired Players</option>
+                  <option value="all_with_retired">All (Inc. Retired)</option>
                 </select>
                 <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-slate-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -761,10 +790,16 @@ export default function CommitteePlayersPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5">
                         <h3 className="font-extrabold text-slate-800 text-sm truncate uppercase tracking-wide">{player.name}</h3>
-                        {player.is_auction_eligible && (
-                          <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-green-50 text-green-700 border border-green-200/30 uppercase tracking-wider">
-                            ELG
+                        {player.retired ? (
+                          <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-slate-700 text-white border border-slate-650 uppercase tracking-wider">
+                            RET
                           </span>
+                        ) : (
+                          player.is_auction_eligible && (
+                            <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-green-50 text-green-700 border border-green-200/30 uppercase tracking-wider">
+                              ELG
+                            </span>
+                          )
                         )}
                       </div>
                       
@@ -804,6 +839,18 @@ export default function CommitteePlayersPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                       </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleRetired(player.id, player.name, player.retired)}
+                        className={`p-2 rounded-xl border transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-sm ${
+                          player.retired
+                            ? 'bg-emerald-50 border-emerald-250 text-emerald-600 hover:bg-emerald-500 hover:text-white'
+                            : 'bg-orange-50 border-orange-250 text-orange-600 hover:bg-orange-500 hover:text-white'
+                        }`}
+                        title={player.retired ? 'Activate Player' : 'Retire Player'}
+                      >
+                        {player.retired ? '♻️' : '💤'}
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(player.id)}
@@ -855,10 +902,16 @@ export default function CommitteePlayersPage() {
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wide">{player.name}</span>
-                        {player.is_auction_eligible && (
-                          <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-extrabold bg-green-50 text-green-700 border border-green-200/30 uppercase tracking-wider">
-                            Eligible
+                        {player.retired ? (
+                          <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-extrabold bg-slate-700 text-white border border-slate-650 uppercase tracking-wider">
+                            Retired
                           </span>
+                        ) : (
+                          player.is_auction_eligible && (
+                            <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-extrabold bg-green-50 text-green-700 border border-green-200/30 uppercase tracking-wider">
+                              Eligible
+                            </span>
+                          )
                         )}
                       </div>
                     </td>
@@ -897,6 +950,18 @@ export default function CommitteePlayersPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
                         </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleRetired(player.id, player.name, player.retired)}
+                          className={`p-1.5 rounded-lg border transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-sm ${
+                            player.retired
+                              ? 'bg-emerald-50 border-emerald-250 text-emerald-600 hover:bg-emerald-500 hover:text-white'
+                              : 'bg-orange-50 border-orange-250 text-orange-600 hover:bg-orange-500 hover:text-white'
+                          }`}
+                          title={player.retired ? 'Activate Player' : 'Retire Player'}
+                        >
+                          {player.retired ? '♻️' : '💤'}
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(player.id)}

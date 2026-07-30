@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
           ) ORDER BY overall_rating DESC, created_at ASC
         ) as players
       FROM footballplayers
-      WHERE name IS NOT NULL
+      WHERE name IS NOT NULL AND (retired IS NOT TRUE)
       GROUP BY name, position, nationality
       HAVING COUNT(*) > 1
       ORDER BY COUNT(*) DESC, name ASC

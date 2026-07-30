@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     } else {
       const result = await sql`
         SELECT * FROM footballplayers
-        WHERE player_id = ${player_id} AND season_id = ${season_id}
+        WHERE player_id = ${player_id} AND season_id = ${season_id} AND (retired IS NOT TRUE)
         LIMIT 1
       `;
       

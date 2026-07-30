@@ -108,6 +108,7 @@ export async function GET(request: NextRequest) {
         WHERE fp.team_id = ${team.id}
         AND fp.season_id = ${seasonId}
         AND fp.is_sold = true
+        AND (fp.retired IS NOT TRUE)
         ORDER BY fp.position, fp.name
       `;
 

@@ -28,7 +28,7 @@ export default function AddScrapedPlayersPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState('')
   const [positionFilter, setPositionFilter] = useState('ALL')
-  const [duplicateFilter, setDuplicateFilter] = useState<'all' | 'any_dup' | 'active_dup' | 'temp_dup' | 'no_dup'>('all')
+  const [duplicateFilter, setDuplicateFilter] = useState<'all' | 'any_dup' | 'active_dup' | 'temp_dup' | 'no_dup' | 'diff_pos_dup'>('all')
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
@@ -220,6 +220,8 @@ export default function AddScrapedPlayersPage() {
       matchesDuplicates = !!p.hasDuplicates && p.duplicates?.some((d: any) => d.source === 'temp')
     } else if (duplicateFilter === 'no_dup') {
       matchesDuplicates = !p.hasDuplicates
+    } else if (duplicateFilter === 'diff_pos_dup') {
+      matchesDuplicates = !!p.hasDuplicates && p.duplicates?.some((d: any) => d.position !== p.position)
     }
 
     return matchesSearch && matchesPosition && matchesDuplicates
@@ -260,6 +262,7 @@ export default function AddScrapedPlayersPage() {
   const anyDupCount = newPlayers.filter(p => p.hasDuplicates).length
   const activeDupCount = newPlayers.filter(p => p.hasDuplicates && p.duplicates?.some((d: any) => d.source === 'active')).length
   const tempDupCount = newPlayers.filter(p => p.hasDuplicates && p.duplicates?.some((d: any) => d.source === 'temp')).length
+  const diffPosDupCount = newPlayers.filter(p => p.hasDuplicates && p.duplicates?.some((d: any) => d.position !== p.position)).length
 
   if (authLoading || loading || !user) {
     return (
@@ -273,7 +276,11 @@ export default function AddScrapedPlayersPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-screen-2xl">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none" />
+      
+      <div className="max-w-screen-2xl mx-auto relative z-10">
       {/* Header card */}
       <div className="glass rounded-3xl p-6 mb-8 shadow-lg bg-white border border-slate-200/60">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -398,6 +405,7 @@ export default function AddScrapedPlayersPage() {
                     <option value="any_dup">ALL POTENTIAL DUPLICATES ({anyDupCount})</option>
                     <option value="active_dup">ACTIVE DB DUPLICATES ONLY ({activeDupCount})</option>
                     <option value="temp_dup">TEMP DB DUPLICATES ONLY ({tempDupCount})</option>
+                    <option value="diff_pos_dup">SAME NAME & NATION, DIFF POSITION ({diffPosDupCount})</option>
                   </select>
                 </div>
               )}
@@ -632,6 +640,7 @@ export default function AddScrapedPlayersPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
               fp.points,
               fp.salary_per_match
             FROM footballplayers fp
-            WHERE fp.player_id = $1 AND fp.season_id = $2
+            WHERE fp.player_id = $1 AND fp.season_id = $2 AND (fp.retired IS NOT TRUE)
           `;
           resultA = await sqlA(queryA, [player_a_id, season_id]);
         }
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
               fp.points,
               fp.salary_per_match
             FROM footballplayers fp
-            WHERE fp.player_id = $1 AND fp.season_id = $2
+            WHERE fp.player_id = $1 AND fp.season_id = $2 AND (fp.retired IS NOT TRUE)
           `;
           resultB = await sqlB(queryB, [player_b_id, season_id]);
         }

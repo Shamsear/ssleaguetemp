@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
       WHERE (season_id = ${season_id} OR season_id IS NULL)
       AND is_auction_eligible = true
       AND is_sold = false
+      AND (retired IS NOT TRUE)
       ORDER BY overall_rating DESC, name ASC
     `;
     console.timeEnd('⚡ Fetch eligible players');

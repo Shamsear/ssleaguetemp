@@ -77,13 +77,16 @@ export async function getAllPlayers(filters?: {
   search?: string;
   limit?: number;
   offset?: number;
+  includeRetired?: boolean;
+  retired?: boolean;
 }): Promise<FootballPlayer[]> {
   try {
     console.log('🔍 getAllPlayers called with filters:', filters);
 
-    // If no filters, return all players
-    if (!filters || Object.keys(filters).filter(k => filters[k as keyof typeof filters] !== undefined).length === 0) {
-      const result = await sql`SELECT * FROM footballplayers ORDER BY name ASC`;
+    // If no filters and we don't include retired, default fetch has retired filter
+    const hasActiveFilters = filters && Object.keys(filters).filter(k => filters[k as keyof typeof filters] !== undefined).length > 0;
+    if (!hasActiveFilters) {
+      const result = await sql`SELECT * FROM footballplayers WHERE (retired IS NOT TRUE) ORDER BY name ASC`;
       console.log(`✅ Fetched ${result.length} players from Neon`);
       return result as FootballPlayer[];
     }
@@ -93,8 +96,11 @@ export async function getAllPlayers(filters?: {
     const pool = new Pool({ connectionString: process.env.NEON_AUCTION_DB_URL || process.env.NEON_DATABASE_URL });
 
     try {
-      // Build WHERE conditions dynamically
+      // Build WHERE conditions dynamically (exclude retired unless includeRetired or retired is true)
       let query = 'SELECT * FROM footballplayers WHERE 1=1';
+      if (!filters?.includeRetired && filters?.retired === undefined) {
+        query += ' AND (retired IS NOT TRUE)';
+      }
       const params: any[] = [];
       let paramIndex = 1;
 
@@ -117,6 +123,10 @@ export async function getAllPlayers(filters?: {
       if (filters?.is_sold !== undefined) {
         query += ` AND is_sold = $${paramIndex++}`;
         params.push(filters.is_sold);
+      }
+      if (filters?.retired !== undefined) {
+        query += ` AND retired = $${paramIndex++}`;
+        params.push(filters.retired);
       }
       if (filters?.search) {
         query += ` AND (name ILIKE $${paramIndex++} OR player_id ILIKE $${paramIndex++} OR position ILIKE $${paramIndex++})`;
@@ -314,11 +324,25 @@ export async function bulkUpdateEligibility(playerIds: string[], isEligible: boo
   }
 }
 
-/**
- * Delete a player
- */
 export async function deletePlayer(id: string): Promise<boolean> {
-  const result = await sql`DELETE FROM footballplayers WHERE id = ${id}`;
+  // Get scraped player_id first for player_history
+  const player = await sql`SELECT player_id FROM footballplayers WHERE id = ${id}`;
+  if (player.length > 0) {
+    const scrapedId = player[0].player_id;
+    if (scrapedId) {
+      await sql`DELETE FROM player_history WHERE player_id = ${scrapedId.toString()}`;
+    }
+  }
+
+  // Delete from other referencing tables
+  await sql`DELETE FROM starred_players WHERE player_id = ${id}`;
+  await sql`DELETE FROM team_players WHERE player_id = ${id}`;
+  await sql`DELETE FROM round_players WHERE player_id = ${id}`;
+  await sql`DELETE FROM bids WHERE player_id = ${id}`;
+  await sql`DELETE FROM round_bids WHERE player_id = ${id}`;
+
+  // Finally delete from footballplayers
+  const result = await sql`DELETE FROM footballplayers WHERE id = ${id} RETURNING id`;
   return result.length > 0;
 }
 
@@ -370,11 +394,14 @@ export async function getTotalPlayerCountWithFilters(filters?: {
   is_auction_eligible?: boolean;
   is_sold?: boolean;
   search?: string;
+  includeRetired?: boolean;
+  retired?: boolean;
 }): Promise<number> {
   try {
-    // If no filters, return all players count
-    if (!filters || Object.keys(filters).filter(k => filters[k as keyof typeof filters] !== undefined).length === 0) {
-      const result = await sql`SELECT COUNT(*) as count FROM footballplayers`;
+    // If no filters and we don't include retired, default fetch has retired filter
+    const hasActiveFilters = filters && Object.keys(filters).filter(k => filters[k as keyof typeof filters] !== undefined).length > 0;
+    if (!hasActiveFilters) {
+      const result = await sql`SELECT COUNT(*) as count FROM footballplayers WHERE (retired IS NOT TRUE)`;
       return parseInt(result[0].count);
     }
 
@@ -385,6 +412,9 @@ export async function getTotalPlayerCountWithFilters(filters?: {
     try {
       // Build WHERE conditions dynamically
       let query = 'SELECT COUNT(*) as count FROM footballplayers WHERE 1=1';
+      if (!filters?.includeRetired && filters?.retired === undefined) {
+        query += ' AND (retired IS NOT TRUE)';
+      }
       const params: any[] = [];
       let paramIndex = 1;
 
@@ -407,6 +437,10 @@ export async function getTotalPlayerCountWithFilters(filters?: {
       if (filters?.is_sold !== undefined) {
         query += ` AND is_sold = $${paramIndex++}`;
         params.push(filters.is_sold);
+      }
+      if (filters?.retired !== undefined) {
+        query += ` AND retired = $${paramIndex++}`;
+        params.push(filters.retired);
       }
       if (filters?.search) {
         query += ` AND (name ILIKE $${paramIndex++} OR player_id ILIKE $${paramIndex++} OR position ILIKE $${paramIndex++})`;

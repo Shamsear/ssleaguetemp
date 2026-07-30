@@ -24,7 +24,7 @@ export async function GET(request: Request) {
           ARRAY_AGG(DISTINCT position_group ORDER BY position_group) FILTER (WHERE position_group IS NOT NULL) as position_groups,
           ARRAY_AGG(DISTINCT playing_style ORDER BY playing_style) FILTER (WHERE playing_style IS NOT NULL) as playing_styles
         FROM footballplayers
-        WHERE 1=1
+        WHERE (retired IS NOT TRUE)
       `;
       
       const params: any[] = [];
@@ -91,6 +91,7 @@ export async function GET(request: Request) {
         ARRAY_AGG(DISTINCT position_group ORDER BY position_group) FILTER (WHERE position_group IS NOT NULL) as position_groups,
         ARRAY_AGG(DISTINCT playing_style ORDER BY playing_style) FILTER (WHERE playing_style IS NOT NULL) as playing_styles
       FROM footballplayers
+      WHERE (retired IS NOT TRUE)
     `;
     
     const data = {

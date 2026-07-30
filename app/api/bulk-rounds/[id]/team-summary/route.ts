@@ -99,7 +99,7 @@ export async function GET(
           team_id,
           COUNT(*) as squad_size
         FROM footballplayers
-        WHERE team_id = ANY(${teamIds})
+        WHERE team_id = ANY(${teamIds}) AND (retired IS NOT TRUE)
         GROUP BY team_id
       `;
       

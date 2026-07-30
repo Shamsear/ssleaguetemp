@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
         is_sold,
         team_id
       FROM footballplayers 
-      WHERE id = ${player_id}
+      WHERE id = ${player_id} AND (retired IS NOT TRUE)
     `;
 
     if (playerResult.length === 0) {

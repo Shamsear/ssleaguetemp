@@ -68,7 +68,7 @@ export async function GET(
         team_name as player_team,
         overall_rating
       FROM footballplayers
-      WHERE id = ${tiebreaker.player_id}
+      WHERE id = ${tiebreaker.player_id} AND (retired IS NOT TRUE)
     `;
     
     const player = playerDetails[0] || {

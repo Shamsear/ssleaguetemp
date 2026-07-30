@@ -14,7 +14,7 @@ const CARD_URL_TEMPLATE = "https://pesdb.net/assets/img/card/f{player_id}max.png
 export async function GET(request: NextRequest) {
   try {
     // 1. Fetch all active player IDs
-    const activePlayers = await sql.query(`SELECT player_id, name FROM footballplayers WHERE player_id IS NOT NULL AND player_id != ''`);
+    const activePlayers = await sql.query(`SELECT player_id, name FROM footballplayers WHERE player_id IS NOT NULL AND player_id != '' AND (retired IS NOT TRUE)`);
     
     // 2. Fetch existing photos from local directory or GitHub API
     const existingPhotoIds = new Set<string>();

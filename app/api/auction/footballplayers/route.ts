@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const positionGroup = searchParams.get('positionGroup');
     
     // Build query dynamically
-    let query = 'SELECT * FROM footballplayers WHERE 1=1';
+    let query = 'SELECT * FROM footballplayers WHERE (retired IS NOT TRUE)';
     const params: any[] = [];
     let paramIndex = 1;
     

@@ -19,6 +19,9 @@ export async function GET(request: NextRequest) {
       search: searchParams.get('search') || undefined,
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 1000, // Default limit
       offset: searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0,
+      includeRetired: searchParams.get('includeRetired') === 'true' ? true : undefined,
+      retired: searchParams.get('retired') === 'true' ? true : 
+               searchParams.get('retired') === 'false' ? false : undefined,
     };
 
     console.log('[Players API] Fetching with filters:', filters);
@@ -30,7 +33,9 @@ export async function GET(request: NextRequest) {
       season_id: filters.season_id,
       is_auction_eligible: filters.is_auction_eligible,
       is_sold: filters.is_sold,
-      search: filters.search
+      search: filters.search,
+      includeRetired: filters.includeRetired,
+      retired: filters.retired,
     };
 
     // Fetch both players and total count

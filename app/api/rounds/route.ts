@@ -163,6 +163,7 @@ export async function POST(request: NextRequest) {
           FROM footballplayers
           WHERE is_auction_eligible = true
           AND is_sold = false
+          AND (retired IS NOT TRUE)
           ORDER BY position, name
         `;
 
@@ -276,7 +277,7 @@ export async function POST(request: NextRequest) {
       const players = await sql`
         SELECT id, name, position, position_group
         FROM footballplayers
-        WHERE id = ANY(${player_ids});
+        WHERE id = ANY(${player_ids}) AND (retired IS NOT TRUE);
       `;
 
       // Insert players into round_players with season_id

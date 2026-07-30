@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
         form,
         injury_resistance
       FROM footballplayers
-      WHERE player_id IN ($1, $2)
+      WHERE player_id IN ($1, $2) AND (retired IS NOT TRUE)
     `;
     
     const players = await sql.query(playersQuery, [player_a_id, player_b_id]);

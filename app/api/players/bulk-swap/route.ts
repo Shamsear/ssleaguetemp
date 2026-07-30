@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
         status,
         is_sold
       FROM footballplayers
-      WHERE player_id IN (${placeholders})
+      WHERE player_id IN (${placeholders}) AND (retired IS NOT TRUE)
     `;
     
     const players = await sql.query(playersQuery, playerIdArray);

@@ -93,8 +93,8 @@ export async function POST(request: NextRequest) {
       playerBData = resultB[0];
     } else {
       const [resultA, resultB] = await Promise.all([
-        sql`SELECT * FROM footballplayers WHERE player_id = ${player_a_id} AND season_id = ${season_id} LIMIT 1`,
-        sql`SELECT * FROM footballplayers WHERE player_id = ${player_b_id} AND season_id = ${season_id} LIMIT 1`
+        sql`SELECT * FROM footballplayers WHERE player_id = ${player_a_id} AND season_id = ${season_id} AND (retired IS NOT TRUE) LIMIT 1`,
+        sql`SELECT * FROM footballplayers WHERE player_id = ${player_b_id} AND season_id = ${season_id} AND (retired IS NOT TRUE) LIMIT 1`
       ]);
       
       if (resultA.length === 0 || resultB.length === 0) {

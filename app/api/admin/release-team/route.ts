@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
       FROM footballplayers
       WHERE season_id = ${seasonId}
         AND team_id = ${teamId}
+        AND (retired IS NOT TRUE)
       ORDER BY name
     `;
 

@@ -87,8 +87,8 @@ export async function PATCH(
         p2Data = result2[0];
       } else {
         const [result1, result2] = await Promise.all([
-          sql`SELECT * FROM footballplayers WHERE player_id = ${p1.player_id} AND season_id = ${req.season_id} LIMIT 1`,
-          sql`SELECT * FROM footballplayers WHERE player_id = ${p2.player_id} AND season_id = ${req.season_id} LIMIT 1`
+          sql`SELECT * FROM footballplayers WHERE player_id = ${p1.player_id} AND season_id = ${req.season_id} AND (retired IS NOT TRUE) LIMIT 1`,
+          sql`SELECT * FROM footballplayers WHERE player_id = ${p2.player_id} AND season_id = ${req.season_id} AND (retired IS NOT TRUE) LIMIT 1`
         ]);
         p1Data = result1[0];
         p2Data = result2[0];

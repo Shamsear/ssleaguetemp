@@ -72,7 +72,7 @@ export async function GET(request: Request) {
     let players, countResult;
 
     // Build WHERE conditions dynamically
-    const whereParts: string[] = [];
+    const whereParts: string[] = ['(fp.retired IS NOT TRUE)'];
     const queryParams: any[] = [];
     let paramIndex = 1;
 

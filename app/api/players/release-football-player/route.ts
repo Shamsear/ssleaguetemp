@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
         acquisition_value,
         season_id
       FROM footballplayers
-      WHERE player_id = ${playerId} AND season_id = ${seasonId}
+      WHERE player_id = ${playerId} AND season_id = ${seasonId} AND (retired IS NOT TRUE)
     `;
 
         // If not found with season_id, try without season_id (for current active players)
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
           acquisition_value,
           season_id
         FROM footballplayers
-        WHERE player_id = ${playerId} AND team_id IS NOT NULL
+        WHERE player_id = ${playerId} AND team_id IS NOT NULL AND (retired IS NOT TRUE)
         ORDER BY updated_at DESC
         LIMIT 1
       `;

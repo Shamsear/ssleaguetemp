@@ -19,8 +19,8 @@ export async function GET(request: NextRequest) {
     // 3. Fetch all active players
     let activePlayers: any[] = [];
     try {
-      // Fetch stats columns as well as basic info
-      activePlayers = await sql.query('SELECT * FROM footballplayers ORDER BY name ASC');
+      // Fetch stats columns as well as basic info (excluding retired players)
+      activePlayers = await sql.query('SELECT * FROM footballplayers WHERE (retired IS NOT TRUE) ORDER BY name ASC');
     } catch (e: any) {
       console.error('Error fetching active players:', e);
       return NextResponse.json({ success: false, error: 'Failed to query active database players.' }, { status: 500 });
@@ -247,19 +247,54 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Fetch counts from bids, round_bids, and player_history grouped by player_id
+    const bidsCountsResult = await sql.query('SELECT player_id, COUNT(*) as count FROM bids GROUP BY player_id');
+    const roundBidsCountsResult = await sql.query('SELECT player_id, COUNT(*) as count FROM round_bids GROUP BY player_id');
+    const historyCountsResult = await sql.query('SELECT player_id, COUNT(*) as count FROM player_history GROUP BY player_id');
+    const teamPlayersCountsResult = await sql.query('SELECT player_id, COUNT(*) as count FROM team_players GROUP BY player_id');
+
+    // Create maps for quick O(1) count lookup
+    const bidsCountsMap = new Map<string, number>();
+    bidsCountsResult.forEach((row: any) => bidsCountsMap.set(String(row.player_id), Number(row.count)));
+
+    const roundBidsCountsMap = new Map<string, number>();
+    roundBidsCountsResult.forEach((row: any) => roundBidsCountsMap.set(String(row.player_id), Number(row.count)));
+
+    const historyCountsMap = new Map<string, number>();
+    historyCountsResult.forEach((row: any) => historyCountsMap.set(String(row.player_id), Number(row.count)));
+
+    const teamPlayersCountsMap = new Map<string, number>();
+    teamPlayersCountsResult.forEach((row: any) => teamPlayersCountsMap.set(String(row.player_id), Number(row.count)));
+
     // Check active players not found in new temp upload
     activePlayers.forEach(activePlayer => {
       const playerId = activePlayer.player_id?.toString();
       if (!playerId) return;
 
       if (!tempMap.has(playerId)) {
+        const uuid = activePlayer.id;
+        const scrapedId = activePlayer.player_id?.toString();
+
+        const bidsCount = bidsCountsMap.get(uuid) || 0;
+        const roundBidsCount = roundBidsCountsMap.get(uuid) || 0;
+        const historyCount = scrapedId ? (historyCountsMap.get(scrapedId) || 0) : 0;
+        const teamPlayersCount = teamPlayersCountsMap.get(uuid) || 0;
+
         notFoundInNew.push({
+          id: uuid,
           player_id: playerId,
           name: activePlayer.name,
           position: activePlayer.position,
           overall_rating: activePlayer.overall_rating,
           team_name: activePlayer.team_name,
-          is_sold: activePlayer.is_sold
+          is_sold: activePlayer.is_sold,
+          nationality: activePlayer.nationality,
+          club: activePlayer.club,
+          age: activePlayer.age,
+          bidsCount,
+          roundBidsCount,
+          historyCount,
+          teamPlayersCount
         });
       }
     });

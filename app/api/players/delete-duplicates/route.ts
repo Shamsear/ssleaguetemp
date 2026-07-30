@@ -20,6 +20,27 @@ export async function POST(request: NextRequest) {
 
     console.log(`🗑️ Deleting ${playerIds.length} duplicate players...`);
 
+    // Fetch scraped player_ids first for player_history deletion
+    const players = await sql`
+      SELECT player_id FROM footballplayers 
+      WHERE id = ANY(${playerIds})
+    `;
+    const scrapedIds = players.map((p: any) => p.player_id).filter(Boolean);
+
+    if (scrapedIds.length > 0) {
+      await sql`
+        DELETE FROM player_history 
+        WHERE player_id = ANY(${scrapedIds})
+      `;
+    }
+
+    // Delete from other referencing tables
+    await sql`DELETE FROM starred_players WHERE player_id = ANY(${playerIds})`;
+    await sql`DELETE FROM team_players WHERE player_id = ANY(${playerIds})`;
+    await sql`DELETE FROM round_players WHERE player_id = ANY(${playerIds})`;
+    await sql`DELETE FROM bids WHERE player_id = ANY(${playerIds})`;
+    await sql`DELETE FROM round_bids WHERE player_id = ANY(${playerIds})`;
+
     // Delete players by their database IDs
     const result = await sql`
       DELETE FROM footballplayers

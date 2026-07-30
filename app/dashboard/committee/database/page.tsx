@@ -40,6 +40,8 @@ export default function DatabaseManagementPage() {
   const [missingPhotosCount, setMissingPhotosCount] = useState<number | null>(null)
   const [missingPlayersList, setMissingPlayersList] = useState<{ player_id: string; name: string }[]>([])
   const [showMissingList, setShowMissingList] = useState(false)
+  const [missingListPage, setMissingListPage] = useState(1)
+  const missingListPageSize = 10
 
   const scrapingActiveRef = useRef(false)
   const photosActiveRef = useRef(false)
@@ -1038,6 +1040,20 @@ export default function DatabaseManagementPage() {
                 Add New Players
               </Link>
 
+              <Link
+                href="/dashboard/committee/database/retired"
+                className="px-4 py-2 bg-purple-650 hover:bg-purple-600 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md text-center"
+              >
+                Retired Players
+              </Link>
+
+              <Link
+                href="/dashboard/committee/database/not-in-temp"
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md text-center"
+              >
+                Missing in Temp DB
+              </Link>
+
               <button
                 onClick={handleClearTempDb}
                 disabled={scraping || scrapedCount === 0}
@@ -1114,24 +1130,53 @@ export default function DatabaseManagementPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-sky-50 bg-white">
-                        {missingPlayersList.map((p, i) => (
-                          <tr key={p.player_id} className="hover:bg-sky-50/40 transition-colors">
-                            <td className="py-1.5 px-3 text-slate-400">{i + 1}</td>
-                            <td className="py-1.5 px-3 font-bold text-slate-500">{p.player_id}</td>
-                            <td className="py-1.5 px-3 font-extrabold text-slate-800">{p.name}</td>
-                            <td className="py-1.5 px-3">
-                              <img
-                                src={`https://pesdb.net/assets/img/card/f${p.player_id}max.png`}
-                                alt={p.name}
-                                onError={(e) => { e.currentTarget.style.display = 'none' }}
-                                className="w-7 h-10 object-contain rounded shadow-sm border border-slate-100"
-                              />
-                            </td>
-                          </tr>
-                        ))}
+                        {missingPlayersList
+                          .slice((missingListPage - 1) * missingListPageSize, missingListPage * missingListPageSize)
+                          .map((p, i) => (
+                            <tr key={p.player_id} className="hover:bg-sky-50/40 transition-colors">
+                              <td className="py-1.5 px-3 text-slate-400">
+                                {((missingListPage - 1) * missingListPageSize) + i + 1}
+                              </td>
+                              <td className="py-1.5 px-3 font-bold text-slate-500">{p.player_id}</td>
+                              <td className="py-1.5 px-3 font-extrabold text-slate-800">{p.name}</td>
+                              <td className="py-1.5 px-3">
+                                <img
+                                  src={`https://pesdb.net/assets/img/card/f${p.player_id}max.png`}
+                                  alt={p.name}
+                                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                                  className="w-7 h-10 object-contain rounded shadow-sm border border-slate-100"
+                                />
+                              </td>
+                            </tr>
+                          ))}
                       </tbody>
                     </table>
                   </div>
+                  {missingPlayersList.length > missingListPageSize && (
+                    <div className="bg-sky-50 border-t border-sky-100 p-2 flex items-center justify-between font-mono text-[9px] uppercase font-bold text-sky-600">
+                      <span>
+                        Showing {((missingListPage - 1) * missingListPageSize) + 1} - {Math.min(missingListPage * missingListPageSize, missingPlayersList.length)} of {missingPlayersList.length}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          disabled={missingListPage === 1}
+                          onClick={() => setMissingListPage(prev => Math.max(1, prev - 1))}
+                          className="px-2 py-0.5 bg-white hover:bg-sky-100 border border-sky-200 rounded disabled:opacity-40 cursor-pointer"
+                        >
+                          Prev
+                        </button>
+                        <button
+                          type="button"
+                          disabled={missingListPage >= Math.ceil(missingPlayersList.length / missingListPageSize)}
+                          onClick={() => setMissingListPage(prev => Math.min(Math.ceil(missingPlayersList.length / missingListPageSize), prev + 1))}
+                          className="px-2 py-0.5 bg-white hover:bg-sky-100 border border-sky-200 rounded disabled:opacity-40 cursor-pointer"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

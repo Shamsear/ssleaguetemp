@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
         position,
         is_auction_eligible
       FROM footballplayers
+      WHERE (retired IS NOT TRUE)
       ORDER BY name
     `;
 
