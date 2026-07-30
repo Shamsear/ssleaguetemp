@@ -7,9 +7,18 @@ import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { usePlayerStats, usePlayerAwards, useTeamTrophies, useTeamSeasonStats, type PlayerAward, type TeamTrophy, type TeamStats } from '@/hooks';
+import PlayerPhoto from '@/components/PlayerPhoto';
 
 interface PlayerData {
   id: string;
+  photo_position_circle?: string;
+  photo_scale_circle?: number;
+  photo_position_x_circle?: number;
+  photo_position_y_circle?: number;
+  photo_position_square?: string;
+  photo_scale_square?: number;
+  photo_position_x_square?: number;
+  photo_position_y_square?: number;
   player_id?: string;
   name: string;
   category?: string;
@@ -222,6 +231,14 @@ export default function PlayerDetailPage() {
         name: firebasePlayer.name || 'Unknown Player',
         display_name: firebasePlayer.display_name,
         photo_url: firebasePlayer.photo_url,
+        photo_position_circle: firebasePlayer.photo_position_circle,
+        photo_scale_circle: firebasePlayer.photo_scale_circle,
+        photo_position_x_circle: firebasePlayer.photo_position_x_circle,
+        photo_position_y_circle: firebasePlayer.photo_position_y_circle,
+        photo_position_square: firebasePlayer.photo_position_square,
+        photo_scale_square: firebasePlayer.photo_scale_square,
+        photo_position_x_square: firebasePlayer.photo_position_x_square,
+        photo_position_y_square: firebasePlayer.photo_position_y_square,
         team: firebasePlayer.team,
         category: firebasePlayer.category,
       } as any);
@@ -277,6 +294,14 @@ export default function PlayerDetailPage() {
         name: statsData.player_name || firebasePlayer?.name || 'Unknown Player',
         display_name: firebasePlayer?.display_name || statsData.player_name,
         photo_url: firebasePlayer?.photo_url,
+        photo_position_circle: firebasePlayer?.photo_position_circle,
+        photo_scale_circle: firebasePlayer?.photo_scale_circle,
+        photo_position_x_circle: firebasePlayer?.photo_position_x_circle,
+        photo_position_y_circle: firebasePlayer?.photo_position_y_circle,
+        photo_position_square: firebasePlayer?.photo_position_square,
+        photo_scale_square: firebasePlayer?.photo_scale_square,
+        photo_position_x_square: firebasePlayer?.photo_position_x_square,
+        photo_position_y_square: firebasePlayer?.photo_position_y_square,
         player_id: statsData.player_id,
         season_name: seasonName,
         team: statsData.team,
@@ -610,25 +635,22 @@ export default function PlayerDetailPage() {
             {/* Player Card */}
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
               {/* Player Image */}
-              <div className="relative w-40 h-40 mx-auto mb-4 rounded-full overflow-hidden border-2 border-slate-200 bg-slate-50 shadow-md">
-                {player.photo_url ? (
-                  <img
-                    src={player.photo_url}
-                    alt={player.name}
-                    className="object-cover w-full h-full"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                    }}
-                  />
-                ) : null}
-                <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-400 to-slate-600 ${player.photo_url ? 'hidden' : ''}`}>
-                  <span className="text-5xl font-bold text-white">{player.name?.[0] || 'P'}</span>
-                </div>
+              <div className="relative w-40 h-40 mx-auto mb-4">
+                <PlayerPhoto
+                  photoUrl={player.photo_url}
+                  playerName={player.name}
+                  shape="square"
+                  size={160}
+                  className="border-2 border-slate-200 shadow-md rounded-2xl"
+                  positionSquare={player.photo_position_square}
+                  scaleSquare={player.photo_scale_square}
+                  posXSquare={player.photo_position_x_square}
+                  posYSquare={player.photo_position_y_square}
+                />
                 
                 {/* POTM Badge */}
                 {player.is_potm && (
-                  <div className="absolute top-0 left-0 bg-amber-500 text-white text-[9px] font-mono font-bold py-0.5 px-2 rounded-br-xl uppercase tracking-wider shadow-sm">
+                  <div className="absolute top-0 left-0 bg-amber-500 text-white text-[9px] font-mono font-bold py-0.5 px-2 rounded-br-xl uppercase tracking-wider shadow-sm z-10">
                     POTM
                   </div>
                 )}

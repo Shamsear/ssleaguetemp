@@ -61,6 +61,10 @@ function PlayersContent() {
   const [teams, setTeams] = useState<string[]>([]);
   const [seasonName, setSeasonName] = useState<string>('');
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   // Helper function to get category color styles
   const getCategoryStyles = (category?: string) => {
     if (!category) return null;
@@ -97,6 +101,7 @@ function PlayersContent() {
 
   useEffect(() => {
     applyFilters();
+    setCurrentPage(1); // Reset page on any search or filter change
   }, [searchTerm, categoryFilter, teamFilter, sortBy, players]);
 
   const fetchPlayers = async () => {
@@ -128,7 +133,7 @@ function PlayersContent() {
           // Fetch player photos from the overall players API which includes photo_url
           let photoMap = new Map<string, any>();
           try {
-            const allPlayersRes = await fetch('/api/players/with-stats');
+            const allPlayersRes = await fetch('/api/players/with-stats', { cache: 'no-store' });
             const allPlayersData = await allPlayersRes.json();
             if (allPlayersData.success && allPlayersData.players) {
               allPlayersData.players.forEach((p: any) => {
@@ -170,7 +175,7 @@ function PlayersContent() {
         }
       } else {
         // Fetch all players with overall stats
-        const response = await fetch('/api/players/with-stats');
+        const response = await fetch('/api/players/with-stats', { cache: 'no-store' });
         const data = await response.json();
         
         if (data.success && data.players) {
@@ -255,6 +260,10 @@ function PlayersContent() {
     
     setFilteredPlayers(filtered);
   };
+
+  const totalPages = Math.ceil(filteredPlayers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedPlayers = filteredPlayers.slice(startIndex, startIndex + itemsPerPage);
 
   if (loading) {
     return (
@@ -407,7 +416,7 @@ function PlayersContent() {
               </p>
             </div>
           ) : (
-            filteredPlayers.map((player, index) => (
+            paginatedPlayers.map((player, index) => (
               <Link
                 key={player.id}
                 href={`/players/${player.player_id}`}
@@ -415,7 +424,7 @@ function PlayersContent() {
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold font-mono text-xs">
-                    {index + 1}
+                    {startIndex + index + 1}
                   </div>
                   
                   {/* Photo circle overlay matching modern season page cards */}
@@ -493,14 +502,14 @@ function PlayersContent() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {filteredPlayers.map((player, index) => (
+                   {paginatedPlayers.map((player, index) => (
                     <tr
                       key={player.id}
                       className="hover:bg-slate-50/50 transition-colors text-center"
                     >
                       <td className="py-4 px-4 text-left">
                         <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold font-mono text-xs">
-                          {index + 1}
+                          {startIndex + index + 1}
                         </div>
                       </td>
                       <td className="py-4 px-4 text-left font-bold text-slate-900 text-sm">
@@ -548,6 +557,50 @@ function PlayersContent() {
             </div>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm font-mono text-xs">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-50 transition-all font-bold cursor-pointer"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(page => {
+                  return page === 1 || page === totalPages || Math.abs(page - currentPage) <= 2;
+                })
+                .map((page, idx, arr) => {
+                  const showDots = idx > 0 && page - arr[idx - 1] > 1;
+                  return (
+                    <div key={page} className="flex items-center gap-1.5">
+                      {showDots && <span className="text-slate-400">...</span>}
+                      <button
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-8 h-8 rounded-xl font-bold transition-all cursor-pointer ${
+                          currentPage === page
+                            ? 'bg-slate-800 text-white shadow-sm'
+                            : 'border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    </div>
+                  );
+                })}
+            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-50 transition-all font-bold cursor-pointer"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

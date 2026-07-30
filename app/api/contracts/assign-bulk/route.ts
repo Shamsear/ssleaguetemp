@@ -113,33 +113,32 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Fetch team name mapping from Firestore team_seasons (parallel with SQL updates)
-    const teamNameMapPromise = (async () => {
-      const teamNameMap = new Map<string, string>();
-      try {
-        const teamSeasonsSnap = await adminDb.collection('team_seasons')
-          .where('season_id', '==', seasonId)
-          .get();
-        teamSeasonsSnap.docs.forEach(doc => {
-          const data = doc.data();
-          const tId = data.team_id || doc.id.split('_')[0];
-          const tName = data.team_name || data.team_code || 'Unknown Team';
-          teamNameMap.set(tId, tName);
-        });
-      } catch (e) {
-        console.error('Error fetching team names from Firestore:', e);
-      }
-      return teamNameMap;
-    })();
+    // Fetch team name mapping from Firestore team_seasons first
+    const teamNameMap = new Map<string, string>();
+    try {
+      const teamSeasonsSnap = await adminDb.collection('team_seasons')
+        .where('season_id', '==', seasonId)
+        .get();
+      teamSeasonsSnap.docs.forEach(doc => {
+        const data = doc.data();
+        const tId = data.team_id || doc.id.split('_')[0];
+        const tName = data.team_name || data.team_code || 'Unknown Team';
+        teamNameMap.set(tId, tName.toUpperCase());
+      });
+    } catch (e) {
+      console.error('Error fetching team names from Firestore:', e);
+    }
 
-    // Update all players in parallel (SQL operations)
-    const sqlUpdatesPromise = Promise.all(
+    // Update all players in parallel (SQL operations) with capitalized team names
+    await Promise.all(
       players.map(async (player) => {
+        const teamName = teamNameMap.get(player.teamId) || null;
         if (isModern) {
           // S16 / S17: update player_seasons table
           return sql`
             UPDATE player_seasons
             SET team_id = ${player.teamId},
+                team = ${teamName},
                 auction_value = ${player.auctionValue},
                 updated_at = NOW()
             WHERE id = ${player.id}
@@ -149,6 +148,7 @@ export async function POST(request: NextRequest) {
           return sql`
             UPDATE realplayerstats
             SET team_id = ${player.teamId},
+                team = ${teamName},
                 price = ${player.auctionValue},
                 updated_at = NOW()
             WHERE id = ${player.id}
@@ -156,12 +156,6 @@ export async function POST(request: NextRequest) {
         }
       })
     );
-
-    // Wait for both team names and SQL updates to complete
-    const [teamNameMap] = await Promise.all([
-      teamNameMapPromise,
-      sqlUpdatesPromise
-    ]);
 
     // Track budget changes per team
     const teamBudgetChanges = new Map<string, number>();

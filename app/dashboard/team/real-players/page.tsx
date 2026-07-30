@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { Tag, User, Users, DollarSign } from 'lucide-react';
+import { Tag, User, Users, DollarSign, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -67,6 +67,10 @@ export default function RealPlayersPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [updateCounter, setUpdateCounter] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     if (!loading && !user) router.push('/login');
@@ -189,6 +193,10 @@ export default function RealPlayersPage() {
     fetchData();
   }, [user, updateCounter]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, categoryFilter, teamFilter, sortBy]);
+
   const filteredPlayers = players
     .filter((player) => {
       const matchesSearch =
@@ -214,6 +222,10 @@ export default function RealPlayersPage() {
         default:        return (b.points || 0) - (a.points || 0);
       }
     });
+
+  const totalPages = Math.ceil(filteredPlayers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedPlayers = filteredPlayers.slice(startIndex, startIndex + itemsPerPage);
 
   if (loading || isLoading) {
     return (
@@ -376,7 +388,7 @@ export default function RealPlayersPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredPlayers.map((player) => (
+              {paginatedPlayers.map((player) => (
                 <Link
                   key={player.player_id}
                   href={`/dashboard/players/${player.player_id}`}
@@ -453,109 +465,156 @@ export default function RealPlayersPage() {
           )}
         </div>
 
-        {/* Desktop Grid */}
-        <div className="hidden lg:block">
+        {/* Desktop Table View */}
+        <div className="hidden lg:block bg-white border border-slate-200/60 rounded-2xl overflow-hidden shadow-sm">
           {filteredPlayers.length === 0 ? (
-            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-12 text-center shadow-sm max-w-md mx-auto">
-              <Users className="w-10 h-10 text-slate-400 mx-auto mb-3" />
-              <h3 className="text-lg font-extrabold text-slate-900 leading-tight">No Players Found</h3>
-              <p className="text-xs text-slate-400 font-sans mt-1">
-                {searchTerm || categoryFilter !== 'all' || teamFilter !== 'all'
-                  ? 'Try adjusting your filters'
-                  : 'No players available'}
-              </p>
+            <div className="p-12 text-center text-slate-400 font-mono text-sm">
+              <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              No players found matching your criteria.
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredPlayers.map((player) => (
-                <Link
-                  key={player.player_id}
-                  href={`/dashboard/players/${player.player_id}`}
-                  className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:border-amber-400/40 transition-all duration-250 flex flex-col justify-between"
-                >
-                  <div className="flex items-start gap-4">
-                    {/* Photo */}
-                    <div className="relative shrink-0">
-                      <div className="w-16 h-16 rounded-2xl overflow-hidden border border-slate-200 bg-white p-0.5">
-                        {player.photo_url ? (
-                          <OptimizedImage
-                            src={player.photo_url}
-                            alt={player.player_name}
-                            width={64}
-                            height={64}
-                            quality={85}
-                            className="rounded-2xl"
-                            photoPositionX={player.photo_position_x_circle}
-                            photoPositionY={player.photo_position_y_circle}
-                            photoScale={player.photo_scale_circle}
-                            fallback={
-                              <div className="w-full h-full flex items-center justify-center bg-amber-50 rounded-2xl">
-                                <span className="text-xl font-bold text-amber-600">{player.player_name[0]}</span>
+            <div className="overflow-x-auto">
+              <table className="w-full text-slate-700 border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 font-mono text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">
+                    <th className="text-left py-4 px-4 w-16">Rank</th>
+                    <th className="text-left py-4 px-4">Player</th>
+                    <th className="text-left py-4 px-4">Squad</th>
+                    <th className="py-4 px-2">MP</th>
+                    <th className="py-4 px-2 text-purple-600">Goals</th>
+                    <th className="py-4 px-2 text-indigo-600">Assists</th>
+                    <th className="py-4 px-2 text-emerald-600 font-bold">CS</th>
+                    <th className="py-4 px-2 text-blue-600">Wins</th>
+                    <th className="py-4 px-2 text-slate-500">MOTM</th>
+                    <th className="py-4 px-4 text-amber-600">Pts</th>
+                    <th className="py-4 px-4 text-right">Value/Price</th>
+                    <th className="w-12"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {paginatedPlayers.map((player, index) => (
+                    <tr
+                      key={player.player_id}
+                      className="hover:bg-slate-50/50 transition-colors text-center"
+                    >
+                      <td className="py-4 px-4 text-left">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold font-mono text-xs">
+                          {startIndex + index + 1}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-left font-bold text-slate-900 text-sm">
+                        <Link href={`/dashboard/players/${player.player_id}`} className="flex items-center gap-3 group">
+                          <div className="w-10 h-10 rounded-full overflow-hidden shadow-sm border border-slate-200 bg-white flex-shrink-0">
+                            {player.photo_url ? (
+                              <OptimizedImage
+                                src={player.photo_url}
+                                alt={player.player_name}
+                                width={40}
+                                height={40}
+                                quality={85}
+                                className="rounded-full animate-fade-in"
+                                photoPositionX={player.photo_position_x_circle}
+                                photoPositionY={player.photo_position_y_circle}
+                                photoScale={player.photo_scale_circle}
+                                fallback={
+                                  <div className="w-full h-full flex items-center justify-center bg-amber-50">
+                                    <span className="text-sm font-bold text-amber-600">{player.player_name[0]}</span>
+                                  </div>
+                                }
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-amber-50">
+                                <span className="text-sm font-bold text-amber-600">{player.player_name[0]}</span>
                               </div>
-                            }
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-amber-50 rounded-2xl">
-                            <span className="text-xl font-bold text-amber-600">{player.player_name[0]}</span>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Player Info */}
-                    <div className="flex-1 min-w-0 font-mono">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-extrabold text-slate-900 text-base truncate">
-                          {player.display_name || player.player_name}
-                        </h3>
-                      </div>
-                      <p className={`text-xs truncate mb-2 font-bold uppercase ${player.team ? 'text-slate-500' : 'text-slate-400 italic'}`}>
-                        {player.team || 'FREE AGENT'}
-                      </p>
-
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {player.category && (
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono ${categoryStyle(player.category)}`}>
-                            {player.category}
-                          </span>
-                        )}
-                        <PriceTag player={player} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-100 font-mono text-center">
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-2">
-                      <div className="text-[9px] text-slate-400 font-bold uppercase">Points</div>
-                      <div className="text-sm font-black text-amber-600">{player.points || 0}</div>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-2">
-                      <div className="text-[9px] text-slate-400 font-bold uppercase">Goals</div>
-                      <div className="text-sm font-black text-emerald-600">{player.goals_scored || 0}</div>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-2">
-                      <div className="text-[9px] text-slate-400 font-bold uppercase">Matches</div>
-                      <div className="text-sm font-black text-slate-800">{player.matches_played || 0}</div>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-2">
-                      <div className="text-[9px] text-slate-400 font-bold uppercase">CS</div>
-                      <div className="text-sm font-black text-emerald-600">{player.clean_sheets || 0}</div>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-2">
-                      <div className="text-[9px] text-slate-400 font-bold uppercase">Assists</div>
-                      <div className="text-sm font-black text-slate-800">{player.assists || 0}</div>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-2">
-                      <div className="text-[9px] text-slate-400 font-bold uppercase">MOTM</div>
-                      <div className="text-sm font-black text-amber-600">{player.motm_awards || 0}</div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                          <div className="flex flex-col min-w-0">
+                            <span className="group-hover:text-amber-600 transition-colors text-sm truncate">
+                              {player.display_name || player.player_name}
+                            </span>
+                            {player.category && (
+                              <span className="mt-0.5">
+                                <span className={`px-2 py-0.5 rounded text-[8px] font-mono font-bold uppercase ${categoryStyle(player.category)}`}>
+                                  {player.category.toUpperCase()}
+                                </span>
+                              </span>
+                            )}
+                          </div>
+                        </Link>
+                      </td>
+                      <td className="py-4 px-4 text-left text-slate-600 text-xs font-semibold">
+                        {player.team || <span className="text-slate-400 font-mono italic">FREE AGENT</span>}
+                      </td>
+                      <td className="py-4 px-2 font-mono text-xs text-slate-500">{player.matches_played || 0}</td>
+                      <td className="py-4 px-2 font-mono text-xs text-purple-600 font-bold">{player.goals_scored || 0}</td>
+                      <td className="py-4 px-2 font-mono text-xs text-indigo-600 font-bold">{player.assists || 0}</td>
+                      <td className="py-4 px-2 font-mono text-xs text-emerald-600 font-bold">{player.clean_sheets || 0}</td>
+                      <td className="py-4 px-2 font-mono text-xs text-blue-600 font-bold">{player.wins || 0}</td>
+                      <td className="py-4 px-2 font-mono text-xs text-slate-500">{player.motm_awards || 0}</td>
+                      <td className="py-4 px-4 font-mono font-black text-amber-600 text-sm">{player.points || 0}</td>
+                      <td className="py-4 px-4 font-mono text-xs text-right">
+                        <div className="inline-block">
+                          <PriceTag player={player} />
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        <Link href={`/dashboard/players/${player.player_id}`}>
+                          <svg className="w-5 h-5 text-slate-400 hover:text-amber-600 transition-colors cursor-pointer inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm font-mono text-xs">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-50 transition-all font-bold cursor-pointer"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(page => {
+                  return page === 1 || page === totalPages || Math.abs(page - currentPage) <= 2;
+                })
+                .map((page, idx, arr) => {
+                  const showDots = idx > 0 && page - arr[idx - 1] > 1;
+                  return (
+                    <div key={page} className="flex items-center gap-1.5">
+                      {showDots && <span className="text-slate-400">...</span>}
+                      <button
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-8 h-8 rounded-xl font-bold transition-all cursor-pointer ${
+                          currentPage === page
+                            ? 'bg-slate-800 text-white shadow-sm'
+                            : 'border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    </div>
+                  );
+                })}
+            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-50 transition-all font-bold cursor-pointer"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
       <button
         type="button"

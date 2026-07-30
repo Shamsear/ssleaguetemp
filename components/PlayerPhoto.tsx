@@ -65,7 +65,7 @@ export default function PlayerPhoto({
   return (
     <div 
       className={`relative overflow-hidden bg-gray-100 ${wrapperClass} ${className}`}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, transform: 'translateZ(0)', isolation: 'isolate' }}
     >
       {photoUrl ? (
         <img

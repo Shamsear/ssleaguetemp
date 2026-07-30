@@ -3,6 +3,7 @@ import { adminDb as firebaseDb } from '@/lib/firebase/admin';
 import { tournamentSql as sql } from '@/lib/neon/tournament-config';
 
 export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
@@ -216,7 +217,7 @@ export async function GET(request: NextRequest) {
               player_id,
               category,
               team_id,
-              star_rating,
+              NULL as star_rating,
               season_id
             FROM realplayerstats
             WHERE season_id = ${activeSeasonId}
@@ -242,7 +243,7 @@ export async function GET(request: NextRequest) {
             player_id,
             category,
             team_id,
-            star_rating,
+            NULL as star_rating,
             season_id
           FROM realplayerstats
           ORDER BY player_id, season_id DESC, created_at DESC
@@ -269,27 +270,22 @@ export async function GET(request: NextRequest) {
       seasonInfo = [];
     }
 
-    // Fetch team names from Firebase for players with team_id (with Firestore IN query chunking)
-    const teamIds = [...new Set(seasonInfo.map(s => s.team_id).filter(Boolean))];
+    // Fetch team names from Firestore team_seasons collection
     const teamsMap = new Map();
-    if (teamIds.length > 0) {
-      console.log(`[Players API] Fetching ${teamIds.length} teams from Firebase...`);
-      try {
-        const chunkSize = 30;
-        for (let i = 0; i < teamIds.length; i += chunkSize) {
-          const chunk = teamIds.slice(i, i + chunkSize);
-          const teamsSnapshot = await firebaseDb
-            .collection('teams')
-            .where('__name__', 'in', chunk)
-            .get();
-          teamsSnapshot.docs.forEach(doc => {
-            teamsMap.set(doc.id, doc.data().name);
-          });
-        }
-        console.log(`[Players API] Resolved ${teamsMap.size} team names`);
-      } catch (teamsError: any) {
-        console.error('[Players API] Error fetching team names:', teamsError.message);
-      }
+    try {
+      const teamSeasonsSnapshot = await firebaseDb
+        .collection('team_seasons')
+        .get();
+      
+      teamSeasonsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const teamId = data.team_id || doc.id.split('_')[0];
+        const name = data.team_name || data.team_code || 'Unknown Team';
+        teamsMap.set(teamId, name);
+      });
+      console.log(`[Players API] Resolved ${teamsMap.size} team names from team_seasons`);
+    } catch (teamsError: any) {
+      console.error('[Players API] Error fetching team names from team_seasons:', teamsError.message);
     }
 
     // Create season info lookup map
