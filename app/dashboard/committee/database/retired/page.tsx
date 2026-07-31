@@ -13,7 +13,9 @@ import {
   CheckCircle,
   AlertTriangle,
   UserMinus,
-  UserPlus
+  UserPlus,
+  HelpCircle,
+  ExternalLink
 } from 'lucide-react'
 
 const PLAYERS_PER_PAGE = 50
@@ -31,6 +33,11 @@ export default function RetiredPlayersPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isBulkProcessing, setIsBulkProcessing] = useState(false)
   const [processingId, setProcessingId] = useState<string | null>(null)
+  
+  // Real-world retirement verification state
+  const [verifiedStatus, setVerifiedStatus] = useState<{
+    [key: string]: { loading: boolean; retired: boolean | null; summary?: string; url?: string }
+  }>({})
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
@@ -89,6 +96,51 @@ export default function RetiredPlayersPage() {
       fetchPlayers()
     }
   }, [user, fetchPlayers])
+
+  const checkRealWorldStatus = useCallback(async (id: string, name: string, nation: string) => {
+    setVerifiedStatus(prev => {
+      // Don't overwrite if already loading or fetched
+      if (prev[id]) return prev;
+      return {
+        ...prev,
+        [id]: { loading: true, retired: null }
+      };
+    })
+    
+    try {
+      const res = await fetch(`/api/players/check-real-world-retirement?name=${encodeURIComponent(name)}&nationality=${encodeURIComponent(nation)}`)
+      const result = await res.json()
+      if (result.success) {
+        setVerifiedStatus(prev => ({
+          ...prev,
+          [id]: { 
+            loading: false, 
+            retired: result.retired, 
+            summary: result.summary, 
+            url: result.url 
+          }
+        }))
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (e: any) {
+      setVerifiedStatus(prev => ({
+        ...prev,
+        [id]: { loading: false, retired: null, summary: e.message || 'Error loading verification.' }
+      }))
+    }
+  }, [])
+
+  // Auto-run status verification for all visible players in current viewport slice
+  useEffect(() => {
+    if (players.length > 0) {
+      players.forEach(player => {
+        if (!verifiedStatus[player.id]) {
+          checkRealWorldStatus(player.id, player.name, player.nationality)
+        }
+      })
+    }
+  }, [players, verifiedStatus, checkRealWorldStatus])
 
   const handleToggleStatus = async (id: string, name: string, makeRetired: boolean) => {
     const actionText = makeRetired ? 'retire' : 'reactivate'
@@ -400,8 +452,47 @@ export default function RetiredPlayersPage() {
                         />
                       </td>
                       <td className="p-4 text-slate-500 font-semibold">{player.player_id || '--'}</td>
-                      <td className="p-4 font-extrabold text-slate-800 uppercase tracking-wide">
-                        {player.name}
+                      <td className="p-4 font-bold text-slate-800">
+                        <div>
+                          <div className="font-extrabold uppercase text-slate-900 tracking-wide">{player.name}</div>
+                          <div className="mt-1 flex items-center gap-1.5 font-sans">
+                            {verifiedStatus[player.id] ? (
+                              verifiedStatus[player.id].loading ? (
+                                <span className="text-[9px] text-slate-400 font-bold animate-pulse font-mono uppercase">
+                                  Checking real-world status...
+                                </span>
+                              ) : verifiedStatus[player.id].retired === true ? (
+                                <a 
+                                  href={verifiedStatus[player.id].url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="inline-flex items-center gap-0.5 text-[9px] font-extrabold bg-rose-50 text-rose-700 border border-rose-100 rounded px-1.5 py-0.5 hover:bg-rose-100 transition-colors"
+                                  title={verifiedStatus[player.id].summary}
+                                >
+                                  🔴 Retired in Real World <ExternalLink className="w-2.5 h-2.5" />
+                                </a>
+                              ) : verifiedStatus[player.id].retired === false ? (
+                                <a 
+                                  href={verifiedStatus[player.id].url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="inline-flex items-center gap-0.5 text-[9px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-100 rounded px-1.5 py-0.5 hover:bg-emerald-100 transition-colors"
+                                  title={verifiedStatus[player.id].summary}
+                                >
+                                  🟢 Active in Real World <ExternalLink className="w-2.5 h-2.5" />
+                                </a>
+                              ) : (
+                                <span className="text-[9px] text-slate-450 font-bold font-mono" title={verifiedStatus[player.id].summary}>
+                                  No article found
+                                </span>
+                              )
+                            ) : (
+                              <span className="text-[9px] text-slate-400 font-bold animate-pulse font-mono uppercase">
+                                Queueing check...
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </td>
                       <td className="p-4 text-slate-500 font-semibold uppercase">{player.nationality || '--'}</td>
                       <td className="p-4 text-center">
