@@ -23,7 +23,23 @@ export async function GET(request: NextRequest) {
     });
     
     const searchData = await searchRes.json();
-    const searchResults = searchData?.query?.search || [];
+    let searchResults = searchData?.query?.search || [];
+
+    if (searchResults.length === 0 && nationality) {
+      console.log(`[Real World Checker] No match with nationality. Retrying with name only: ${name} footballer`);
+      const fallbackQuery = `${name} footballer`.trim();
+      const fallbackUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch=${encodeURIComponent(fallbackQuery)}&utf8=1`;
+      
+      try {
+        const fallbackRes = await fetch(fallbackUrl, {
+          headers: { 'User-Agent': 'eSportsLeagueManager/1.0 (contact@example.com)' }
+        });
+        const fallbackData = await fallbackRes.json();
+        searchResults = fallbackData?.query?.search || [];
+      } catch (err) {
+        console.error('Fallback search failed:', err);
+      }
+    }
 
     if (searchResults.length === 0) {
       return NextResponse.json({ 

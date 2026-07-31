@@ -131,15 +131,27 @@ export default function RetiredPlayersPage() {
     }
   }, [])
 
-  // Auto-run status verification for all visible players in current viewport slice
+  // Auto-run status verification for all visible players in current viewport slice (staggered to prevent connection pooling limits)
   useEffect(() => {
+    const timers: NodeJS.Timeout[] = [];
+    
     if (players.length > 0) {
-      players.forEach(player => {
+      players.forEach((player, index) => {
+        // Only queue if we haven't checked or queued this player yet
         if (!verifiedStatus[player.id]) {
-          checkRealWorldStatus(player.id, player.name, player.nationality)
+          const timer = setTimeout(() => {
+            checkRealWorldStatus(player.id, player.name, player.nationality);
+          }, index * 80); // Stagger by 80ms per row to stay well within browser connection limits
+          
+          timers.push(timer);
         }
-      })
+      });
     }
+
+    return () => {
+      // Clear any pending timers when page changes or component updates
+      timers.forEach(t => clearTimeout(t));
+    };
   }, [players, verifiedStatus, checkRealWorldStatus])
 
   const handleToggleStatus = async (id: string, name: string, makeRetired: boolean) => {
