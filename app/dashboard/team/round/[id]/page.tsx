@@ -59,9 +59,11 @@ export default function TeamRoundPage() {
   // WebSocket for live updates
   const { isConnected } = useAuctionWebSocket(roundId, !!roundId);
 
-  // Mutations with optimistic updates
-  const placeBidMutation = usePlaceBid(roundId || '');
-  const cancelBidMutation = useCancelBid(roundId || '');
+  // Local state for batch saving
+  const [localBids, setLocalBids] = useState<any[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Modal system
   const {
@@ -86,9 +88,29 @@ export default function TeamRoundPage() {
   const round = roundData?.round;
   const players = roundData?.players || [];
   const rawMyBids = roundData?.myBids || [];
-  // Sort bids by amount (highest first)
-  const myBids = [...rawMyBids].sort((a: Bid, b: Bid) => (b.amount || 0) - (a.amount || 0));
-  const teamBalance = roundData?.teamBalance || 0;
+  
+  // Sync local bids with query data
+  useEffect(() => {
+    if (roundData && rawMyBids) {
+      if (!isInitialized || !hasUnsavedChanges) {
+        setLocalBids(rawMyBids.map((b: Bid) => ({
+          id: b.id || `${b.team_id || ''}_${roundId}_${b.player_id}`,
+          player_id: b.player_id,
+          amount: b.amount,
+          round_id: roundId,
+          player: b.player
+        })));
+        setIsInitialized(true);
+      }
+    }
+  }, [roundData, rawMyBids, isInitialized, hasUnsavedChanges, roundId]);
+
+  // Sort bids by amount (highest first) for display
+  const myBids = [...localBids].sort((a: any, b: any) => (b.amount || 0) - (a.amount || 0));
+  const initialBalance = roundData?.teamBalance || 0;
+  const bidsTotalAmount = localBids.reduce((sum, b) => sum + b.amount, 0);
+  const teamBalance = initialBalance - bidsTotalAmount;
+
   const teamName = roundData?.teamName || user?.displayName || 'Team';
   const completedRounds = roundData?.completedRounds || 0;
   const totalRounds = roundData?.totalRounds || 0;
@@ -199,25 +221,127 @@ export default function TeamRoundPage() {
     }
   }, [statusData, router]);
 
-  // Place bid using React Query mutation
-  const handlePlaceBid = async (playerId: string, amount: number) => {
-    if (!roundId) return;
-
-    try {
-      await placeBidMutation.mutateAsync({ playerId, amount });
-    } catch (error: any) {
-      // Show error to user
-      console.error('Bid placement failed:', error.message);
+  // Save/Batch Bids to database
+  const handleSaveBids = async (bidsToSave = localBids) => {
+    // 1. Check bids limit
+    if (bidsToSave.length > (round?.max_bids_per_team || 0)) {
       showAlert({
         type: 'error',
-        title: 'Bid Failed',
-        message: error.message || 'Failed to place bid'
+        title: 'Validation Failed',
+        message: `Maximum number of bids (${round.max_bids_per_team}) exceeded.`
       });
-      throw error; // Re-throw to be handled by caller if needed
+      return;
+    }
+
+    // 2. Check duplicate bid amounts & min bid amount
+    const amountsSet = new Set<number>();
+    for (const bid of bidsToSave) {
+      if (bid.amount < 10) {
+        showAlert({
+          type: 'error',
+          title: 'Validation Failed',
+          message: `Bid for ${bid.player?.name || 'player'} must be at least £10.`
+        });
+        return;
+      }
+      if (amountsSet.has(bid.amount)) {
+        showAlert({
+          type: 'error',
+          title: 'Validation Failed',
+          message: `Duplicate bid amount detected: £${bid.amount}. Each bid must have a unique amount.`
+        });
+        return;
+      }
+      amountsSet.add(bid.amount);
+    }
+
+    // 3. Check total budget
+    const bidsTotal = bidsToSave.reduce((sum, b) => sum + b.amount, 0);
+    if (bidsTotal > initialBalance) {
+      showAlert({
+        type: 'error',
+        title: 'Validation Failed',
+        message: `Insufficient balance. Total bids amount £${bidsTotal} exceeds your budget £${initialBalance}.`
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/team/round/${roundId}/save-bids`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bids: bidsToSave.map(b => ({ player_id: b.player_id, amount: b.amount })) })
+      });
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save bids');
+      }
+      setHasUnsavedChanges(false);
+      refetchRoundData();
+    } catch (err: any) {
+      console.error('Failed to save bids:', err);
+      showAlert({
+        type: 'error',
+        title: 'Save Failed',
+        message: err.message || 'Failed to save bids'
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  // Cancel bid using React Query mutation
+  // Warn user about unsaved changes when trying to close/leave page
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved bids. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Place bid locally
+  const handlePlaceBid = async (playerId: string, amount: number) => {
+    if (!roundId) return;
+
+    const player = players.find((p: any) => p.id === playerId);
+    if (!player) return;
+
+    const existingBidIndex = localBids.findIndex(b => b.player_id === playerId);
+    const newLocalBids = [...localBids];
+
+    const newBid = {
+      id: existingBidIndex >= 0 ? localBids[existingBidIndex].id : 'temp-' + Date.now(),
+      player_id: playerId,
+      amount: amount,
+      round_id: roundId,
+      created_at: new Date().toISOString(),
+      player: {
+        id: player.id,
+        name: player.name,
+        position: player.position,
+        team_name: player.team_name,
+        overall_rating: player.overall_rating,
+        playing_style: player.playing_style,
+        is_starred: player.is_starred || false
+      }
+    };
+
+    if (existingBidIndex >= 0) {
+      newLocalBids[existingBidIndex] = newBid;
+    } else {
+      newLocalBids.push(newBid);
+    }
+
+    setLocalBids(newLocalBids);
+    setHasUnsavedChanges(true);
+  };
+
+  // Cancel bid locally
   const handleCancelBid = async (bidId: string) => {
     const confirmed = await showConfirm({
       type: 'warning',
@@ -229,24 +353,14 @@ export default function TeamRoundPage() {
     
     if (!confirmed) return;
 
-    try {
-      await cancelBidMutation.mutateAsync(bidId);
-    } catch (error: any) {
-      showAlert({
-        type: 'error',
-        title: 'Cancel Failed',
-        message: error.message || 'Failed to cancel bid'
-      });
-    }
+    setLocalBids(localBids.filter(b => b.id !== bidId));
+    setHasUnsavedChanges(true);
   };
 
-  // Silent delete for editing (no confirmation)
+  // Silent delete locally
   const handleSilentDelete = async (bidId: string) => {
-    try {
-      await cancelBidMutation.mutateAsync(bidId);
-    } catch (error: any) {
-      throw error; // Re-throw to be handled by caller
-    }
+    setLocalBids(localBids.filter(b => b.id !== bidId));
+    setHasUnsavedChanges(true);
   };
 
   // Handle table edit
@@ -273,8 +387,10 @@ export default function TeamRoundPage() {
       return; // No change
     }
 
-    // Calculate available balance (add back old bid amount)
-    const availableBalance = teamBalance + bid.amount;
+    // Calculate dynamic available balance (add back old bid amount)
+    const initialBalance = roundData?.teamBalance || 0;
+    const currentBidsTotal = localBids.filter(b => b.id !== bid.id).reduce((sum, b) => sum + b.amount, 0);
+    const availableBalance = initialBalance - currentBidsTotal;
     
     if (amount > availableBalance) {
       showAlert({
@@ -285,10 +401,10 @@ export default function TeamRoundPage() {
       return;
     }
 
-    // Check for duplicate bid amounts (excluding current bid)
-    const otherBidAmounts = myBids
-      .filter((b: Bid) => b.id !== bid.id)
-      .map((b: Bid) => b.amount);
+    // Check for duplicate bid amounts
+    const otherBidAmounts = localBids
+      .filter((b: any) => b.id !== bid.id)
+      .map((b: any) => b.amount);
     
     if (otherBidAmounts.includes(amount)) {
       showAlert({
@@ -299,18 +415,11 @@ export default function TeamRoundPage() {
       return;
     }
 
-    try {
-      await handleSilentDelete(bid.id);
-      await handlePlaceBid(bid.player_id, amount);
-      setEditingBidId(null);
-      setEditAmount('');
-    } catch (error: any) {
-      showAlert({
-        type: 'error',
-        title: 'Edit Failed',
-        message: error.message || 'Failed to update bid'
-      });
-    }
+    // Edit locally
+    setLocalBids(localBids.map(b => b.id === bid.id ? { ...b, amount } : b));
+    setHasUnsavedChanges(true);
+    setEditingBidId(null);
+    setEditAmount('');
   };
 
   // Cancel table edit
@@ -600,6 +709,19 @@ export default function TeamRoundPage() {
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse">
                   Live
                 </span>
+                {isSaving ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-blue-50 text-blue-700 border-blue-200">
+                    Saving...
+                  </span>
+                ) : hasUnsavedChanges ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-amber-50 text-amber-700 border-amber-200 animate-pulse">
+                    Unsaved Changes
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-slate-50 text-slate-700 border-slate-200">
+                    Saved
+                  </span>
+                )}
                 <h3 className="text-base font-extrabold uppercase tracking-wider text-slate-800">{round.position.includes(',') ? round.position.split(',').join(' + ') : round.position} Round</h3>
               </div>
               <p className="text-xs text-slate-400 uppercase font-bold mt-1.5">
@@ -1122,8 +1244,37 @@ export default function TeamRoundPage() {
               </div>
             )}
           </div>
-        </div>
       </div>
+
+      {/* Floating Save Bar */}
+      {hasUnsavedChanges && !isLocked && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-md bg-slate-900 text-white rounded-2xl p-4 shadow-2xl flex items-center justify-between border border-amber-400/30 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+            <div>
+              <p className="text-xs font-mono uppercase font-black tracking-wider text-amber-400">Unsaved Changes</p>
+              <p className="text-[10px] text-slate-300 font-mono mt-0.5">Please save your bidding changes</p>
+            </div>
+          </div>
+          <button
+            onClick={() => handleSaveBids(localBids)}
+            disabled={isSaving}
+            className="px-4 py-2 bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-mono font-bold uppercase rounded-lg transition-colors flex items-center gap-1.5 shadow-lg disabled:opacity-50"
+          >
+            {isSaving ? (
+              <span className="flex items-center gap-1.5">
+                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+              </span>
+            ) : (
+              'Save Bids'
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Modal Components */}
       <AlertModal

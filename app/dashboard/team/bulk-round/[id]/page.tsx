@@ -41,6 +41,8 @@ export default function TeamBulkRoundPage() {
   const [bulkRound, setBulkRound] = useState<BulkRound | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [biddedPlayers, setBiddedPlayers] = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Modal system
   const {
@@ -195,7 +197,7 @@ export default function TeamBulkRoundPage() {
       }
 
       // Handle bid updates
-      if (message.type === 'bid_added' || message.type === 'bid_removed') {
+      if (message.type === 'bid_added' || message.type === 'bid_removed' || message.type === 'bulk_bids_updated') {
         console.log('[INFO] Bid update via WebSocket:', message.type);
         // Refetch bids to stay in sync
         fetchWithTokenRetry(`/api/team/bulk-rounds/${roundId}/bids`)
@@ -213,6 +215,70 @@ export default function TeamBulkRoundPage() {
       console.error('Error parsing WebSocket message:', err);
     }
   }, [lastMessage, roundId]);
+
+  // Save/Batch Bids for bulk round
+  const handleSaveBulkBids = async (selectedPlayerIds: Set<string>) => {
+    const playerIdsArray = Array.from(selectedPlayerIds);
+    const requestedBidsCount = playerIdsArray.length;
+    
+    // 1. Check squad slots constraint
+    const availableSlots = squadInfo.max - squadInfo.current;
+    if (requestedBidsCount > availableSlots) {
+      showAlert({
+        type: 'error',
+        title: 'Validation Failed',
+        message: `Insufficient squad slots. You are trying to place ${requestedBidsCount} bids, but you only have ${availableSlots} slots available.`
+      });
+      return;
+    }
+
+    // 2. Check total budget constraint
+    const totalCost = requestedBidsCount * (bulkRound?.base_price || 10);
+    if (teamBalance < totalCost) {
+      showAlert({
+        type: 'error',
+        title: 'Validation Failed',
+        message: `Insufficient balance. Required: £${totalCost}, Available: £${teamBalance}.`
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetchWithTokenRetry(`/api/team/bulk-rounds/${roundId}/bids/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player_ids: playerIdsArray })
+      });
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save bulk bids');
+      }
+      setHasUnsavedChanges(false);
+    } catch (err: any) {
+      console.error('Failed to save bulk bids:', err);
+      showAlert({
+        type: 'error',
+        title: 'Save Failed',
+        message: err.message || 'Failed to save bulk bids'
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Warn user about unsaved changes when trying to close/leave page
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved bulk bids. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // Timer countdown
   useEffect(() => {
@@ -241,88 +307,41 @@ export default function TeamBulkRoundPage() {
   const handleTogglePlayer = async (playerId: string) => {
     const isBidded = biddedPlayers.has(playerId);
     
-    try {
-      if (isBidded) {
-        // [INFO] OPTIMISTIC UPDATE: Remove immediately for instant feedback
-        const newBidded = new Set(biddedPlayers);
-        newBidded.delete(playerId);
-        setBiddedPlayers(newBidded);
-        setBidsCount(prev => prev - 1);
-        
-        // Then send to server
-        const response = await fetchWithTokenRetry(`/api/team/bulk-rounds/${roundId}/bids`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ player_id: playerId }),
+    // Check constraints if adding a bid
+    if (!isBidded) {
+      // Check if slots available
+      const availableSlots = squadInfo.max - squadInfo.current - bidsCount;
+      if (availableSlots <= 0) {
+        showAlert({
+          type: 'error',
+          title: 'No Slots Available',
+          message: `No squad slots available. Current: ${squadInfo.current}/${squadInfo.max}, Bids: ${bidsCount}`
         });
-        
-        const result = await response.json();
-        
-        if (!result.success) {
-          // Revert optimistic update on error
-          const revertBidded = new Set(biddedPlayers);
-          revertBidded.add(playerId);
-          setBiddedPlayers(revertBidded);
-          setBidsCount(prev => prev + 1);
-          throw new Error(result.error || 'Failed to remove bid');
-        }
-        // Success - no alert needed, optimistic update already applied
-      } else {
-        // Check if slots available
-        const availableSlots = squadInfo.max - squadInfo.current - bidsCount;
-        if (availableSlots <= 0) {
-          showAlert({
-            type: 'error',
-            title: 'No Slots Available',
-            message: `No squad slots available. Current: ${squadInfo.current}/${squadInfo.max}, Bids: ${bidsCount}`
-          });
-          return;
-        }
-        
-        // Check balance
-        const totalReserved = (bidsCount + 1) * (bulkRound?.base_price || 10);
-        if (teamBalance < totalReserved) {
-          showAlert({
-            type: 'error',
-            title: 'Insufficient Balance',
-            message: `Insufficient balance! Required: £${totalReserved}, Available: £${teamBalance}`
-          });
-          return;
-        }
-        
-        // [INFO] OPTIMISTIC UPDATE: Add immediately for instant feedback
-        const newBidded = new Set(biddedPlayers);
-        newBidded.add(playerId);
-        setBiddedPlayers(newBidded);
-        setBidsCount(prev => prev + 1);
-        
-        // Then send to server
-        const response = await fetchWithTokenRetry(`/api/team/bulk-rounds/${roundId}/bids`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ player_id: playerId }),
-        });
-        
-        const result = await response.json();
-        
-        if (!result.success) {
-          // Revert optimistic update on error
-          const revertBidded = new Set(biddedPlayers);
-          revertBidded.delete(playerId);
-          setBiddedPlayers(revertBidded);
-          setBidsCount(prev => prev - 1);
-          throw new Error(result.error || 'Failed to place bid');
-        }
-        // Success - no alert needed, optimistic update already applied
+        return;
       }
-    } catch (err: any) {
-      console.error('Error toggling bid:', err);
-      showAlert({
-        type: 'error',
-        title: 'Error',
-        message: err.message || 'Failed to process bid'
-      });
+      
+      // Check balance
+      const totalReserved = (bidsCount + 1) * (bulkRound?.base_price || 10);
+      if (teamBalance < totalReserved) {
+        showAlert({
+          type: 'error',
+          title: 'Insufficient Balance',
+          message: `Insufficient balance! Required: £${totalReserved}, Available: £${teamBalance}`
+        });
+        return;
+      }
     }
+
+    const newBidded = new Set(biddedPlayers);
+    if (isBidded) {
+      newBidded.delete(playerId);
+      setBidsCount(prev => prev - 1);
+    } else {
+      newBidded.add(playerId);
+      setBidsCount(prev => prev + 1);
+    }
+    setBiddedPlayers(newBidded);
+    setHasUnsavedChanges(true);
   };
 
   const handlePurchaseSlot = async () => {
@@ -488,6 +507,19 @@ export default function TeamBulkRoundPage() {
                   }`}></span>
                   {isConnected ? 'Live' : 'Offline'}
                 </span>
+                {isSaving ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-blue-50 text-blue-700 border-blue-200">
+                    Saving...
+                  </span>
+                ) : hasUnsavedChanges ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-amber-50 text-amber-700 border-amber-200 animate-pulse">
+                    Unsaved Changes
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-slate-50 text-slate-700 border-slate-200">
+                    Saved
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-500 uppercase font-semibold mt-1 sm:mt-2">
                 Click players to bid £{bulkRound.base_price} each
@@ -903,6 +935,36 @@ export default function TeamBulkRoundPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Save Bar */}
+      {hasUnsavedChanges && !isLoading && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-md bg-slate-900 text-white rounded-2xl p-4 shadow-2xl flex items-center justify-between border border-amber-400/30 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+            <div>
+              <p className="text-xs font-mono uppercase font-black tracking-wider text-amber-400">Unsaved Changes</p>
+              <p className="text-[10px] text-slate-300 font-mono mt-0.5">Please save your bidding changes</p>
+            </div>
+          </div>
+          <button
+            onClick={() => handleSaveBulkBids(biddedPlayers)}
+            disabled={isSaving}
+            className="px-4 py-2 bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-mono font-bold uppercase rounded-lg transition-colors flex items-center gap-1.5 shadow-lg disabled:opacity-50"
+          >
+            {isSaving ? (
+              <span className="flex items-center gap-1.5">
+                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+              </span>
+            ) : (
+              'Save Bids'
+            )}
+          </button>
         </div>
       )}
 

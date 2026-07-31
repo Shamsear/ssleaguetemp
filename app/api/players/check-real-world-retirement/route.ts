@@ -49,8 +49,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Take the best matching title
-    const bestTitle = searchResults[0].title;
+    // Find the best matching title. First, check if there is a result that matches the exact player name
+    const exactMatch = searchResults.find((res: any) => res.title.toLowerCase() === name.toLowerCase());
+    const bestTitle = exactMatch ? exactMatch.title : searchResults[0].title;
     
     // Step 2: Fetch summary extract for this title
     const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(bestTitle.replace(/ /g, '_'))}`;
