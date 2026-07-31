@@ -97,10 +97,10 @@ export default function RetiredPlayersPage() {
     }
   }, [user, fetchPlayers])
 
-  const checkRealWorldStatus = useCallback(async (id: string, name: string, nation: string) => {
+  const checkRealWorldStatus = useCallback(async (id: string, name: string, nation: string, force = false) => {
     setVerifiedStatus(prev => {
-      // Don't overwrite if already loading or fetched
-      if (prev[id]) return prev;
+      // Don't overwrite if already loading or fetched (unless forced)
+      if (prev[id] && !force) return prev;
       return {
         ...prev,
         [id]: { loading: true, retired: null }
@@ -117,7 +117,8 @@ export default function RetiredPlayersPage() {
             loading: false, 
             retired: result.retired, 
             summary: result.summary, 
-            url: result.url 
+            url: result.url,
+            thumbnail: result.thumbnail
           }
         }))
       } else {
@@ -474,29 +475,58 @@ export default function RetiredPlayersPage() {
                                   Checking real-world status...
                                 </span>
                               ) : verifiedStatus[player.id].retired === true ? (
-                                <a 
-                                  href={verifiedStatus[player.id].url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="inline-flex items-center gap-0.5 text-[9px] font-extrabold bg-rose-50 text-rose-700 border border-rose-100 rounded px-1.5 py-0.5 hover:bg-rose-100 transition-colors"
-                                  title={verifiedStatus[player.id].summary}
-                                >
-                                  🔴 Retired in Real World <ExternalLink className="w-2.5 h-2.5" />
-                                </a>
+                                <div className="flex items-center gap-2">
+                                  {verifiedStatus[player.id].thumbnail && (
+                                    <img 
+                                      src={verifiedStatus[player.id].thumbnail} 
+                                      alt="" 
+                                      className="w-7 h-7 rounded-full object-cover border border-rose-100 shadow-sm"
+                                      title="Wikipedia Profile Photo"
+                                    />
+                                  )}
+                                  <a 
+                                    href={verifiedStatus[player.id].url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="inline-flex items-center gap-0.5 text-[9px] font-extrabold bg-rose-50 text-rose-700 border border-rose-100 rounded px-1.5 py-0.5 hover:bg-rose-100 transition-colors"
+                                    title={verifiedStatus[player.id].summary}
+                                  >
+                                    🔴 Retired in Real World <ExternalLink className="w-2.5 h-2.5" />
+                                  </a>
+                                </div>
                               ) : verifiedStatus[player.id].retired === false ? (
-                                <a 
-                                  href={verifiedStatus[player.id].url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="inline-flex items-center gap-0.5 text-[9px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-100 rounded px-1.5 py-0.5 hover:bg-emerald-100 transition-colors"
-                                  title={verifiedStatus[player.id].summary}
-                                >
-                                  🟢 Active in Real World <ExternalLink className="w-2.5 h-2.5" />
-                                </a>
+                                <div className="flex items-center gap-2">
+                                  {verifiedStatus[player.id].thumbnail && (
+                                    <img 
+                                      src={verifiedStatus[player.id].thumbnail} 
+                                      alt="" 
+                                      className="w-7 h-7 rounded-full object-cover border border-emerald-100 shadow-sm"
+                                      title="Wikipedia Profile Photo"
+                                    />
+                                  )}
+                                  <a 
+                                    href={verifiedStatus[player.id].url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="inline-flex items-center gap-0.5 text-[9px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-100 rounded px-1.5 py-0.5 hover:bg-emerald-100 transition-colors"
+                                    title={verifiedStatus[player.id].summary}
+                                  >
+                                    🟢 Active in Real World <ExternalLink className="w-2.5 h-2.5" />
+                                  </a>
+                                </div>
                               ) : (
-                                <span className="text-[9px] text-slate-450 font-bold font-mono" title={verifiedStatus[player.id].summary}>
-                                  No article found
-                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[9px] text-slate-450 font-bold font-mono" title={verifiedStatus[player.id].summary}>
+                                    No article found
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => checkRealWorldStatus(player.id, player.name, player.nationality, true)}
+                                    className="text-[9px] text-purple-650 hover:text-purple-800 hover:underline font-bold font-mono uppercase cursor-pointer"
+                                  >
+                                    (Retry)
+                                  </button>
+                                </div>
                               )
                             ) : (
                               <span className="text-[9px] text-slate-400 font-bold animate-pulse font-mono uppercase">

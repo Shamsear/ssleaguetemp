@@ -139,7 +139,8 @@ export async function GET(request: NextRequest) {
       confidence,
       title: bestTitle,
       summary: extract,
-      url: summaryData.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${bestTitle.replace(/ /g, '_')}`
+      url: summaryData.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${bestTitle.replace(/ /g, '_')}`,
+      thumbnail: summaryData.thumbnail?.source || null
     });
 
   } catch (error: any) {
