@@ -132,17 +132,20 @@ export default function RetiredPlayersPage() {
     }
   }, [])
 
-  // Auto-run status verification for all visible players in current viewport slice (staggered to prevent connection pooling limits)
+  // Auto-run status verification for all visible players in current viewport slice (staggered in 5-worker parallel lanes for maximum speed)
   useEffect(() => {
     const timers: NodeJS.Timeout[] = [];
+    const CONCURRENT_WORKERS = 5;
+    const BATCH_STAGGER_MS = 120;
     
     if (players.length > 0) {
       players.forEach((player, index) => {
         // Only queue if we haven't checked or queued this player yet
         if (!verifiedStatus[player.id]) {
+          const batchIndex = Math.floor(index / CONCURRENT_WORKERS);
           const timer = setTimeout(() => {
             checkRealWorldStatus(player.id, player.name, player.nationality);
-          }, index * 80); // Stagger by 80ms per row to stay well within browser connection limits
+          }, batchIndex * BATCH_STAGGER_MS); // Fire 5 requests in parallel, then wait 120ms before firing next 5
           
           timers.push(timer);
         }
