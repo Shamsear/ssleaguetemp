@@ -42,6 +42,20 @@ export default function RetiredPlayersPage() {
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
 
+  // Sorting State
+  const [sortField, setSortField] = useState<string>('overall_rating')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDirection(field === 'overall_rating' || field === 'player_id' ? 'desc' : 'asc')
+    }
+    setCurrentPage(1)
+  }
+
   // Clear selections when switching tabs or filters
   useEffect(() => {
     setSelectedIds(new Set())
@@ -60,6 +74,13 @@ export default function RetiredPlayersPage() {
         limit: PLAYERS_PER_PAGE.toString(),
         offset: ((currentPage - 1) * PLAYERS_PER_PAGE).toString(),
       })
+
+      if (sortField) {
+        params.append('sortBy', sortField)
+      }
+      if (sortDirection) {
+        params.append('sortOrder', sortDirection)
+      }
 
       if (activeTab === 'retired') {
         params.append('retired', 'true')
@@ -89,7 +110,7 @@ export default function RetiredPlayersPage() {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, activeTab, positionFilter, searchTerm])
+  }, [currentPage, activeTab, positionFilter, searchTerm, sortField, sortDirection])
 
   useEffect(() => {
     if (user && user.role === 'committee_admin') {
@@ -438,11 +459,17 @@ export default function RetiredPlayersPage() {
                       />
                     </th>
                     <th className="p-4 w-16">Photo</th>
-                    <th className="p-4">ID</th>
-                    <th className="p-4">Name</th>
+                    <th className="p-4 cursor-pointer hover:text-slate-800 transition-colors" onClick={() => handleSort('player_id')}>
+                      ID {sortField === 'player_id' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                    </th>
+                    <th className="p-4 cursor-pointer hover:text-slate-800 transition-colors" onClick={() => handleSort('name')}>
+                      Name {sortField === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                    </th>
                     <th className="p-4">Nation</th>
                     <th className="p-4 text-center">Position</th>
-                    <th className="p-4 text-center">Ovr</th>
+                    <th className="p-4 cursor-pointer hover:text-slate-800 text-center transition-colors" onClick={() => handleSort('overall_rating')}>
+                      Ovr {sortField === 'overall_rating' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                    </th>
                     <th className="p-4 text-right">Actions</th>
                   </tr>
                 </thead>

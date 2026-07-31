@@ -22,6 +22,8 @@ export async function GET(request: NextRequest) {
       includeRetired: searchParams.get('includeRetired') === 'true' ? true : undefined,
       retired: searchParams.get('retired') === 'true' ? true : 
                searchParams.get('retired') === 'false' ? false : undefined,
+      sortBy: searchParams.get('sortBy') || undefined,
+      sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || undefined,
     };
 
     console.log('[Players API] Fetching with filters:', filters);

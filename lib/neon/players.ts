@@ -79,6 +79,8 @@ export async function getAllPlayers(filters?: {
   offset?: number;
   includeRetired?: boolean;
   retired?: boolean;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }): Promise<FootballPlayer[]> {
   try {
     console.log('🔍 getAllPlayers called with filters:', filters);
@@ -134,7 +136,15 @@ export async function getAllPlayers(filters?: {
         params.push(searchPattern, searchPattern, searchPattern);
       }
 
-      query += ' ORDER BY name ASC';
+      let sortField = 'name';
+      if (filters?.sortBy === 'overall_rating') {
+        sortField = 'overall_rating';
+      } else if (filters?.sortBy === 'player_id') {
+        sortField = 'player_id';
+      }
+
+      const sortDir = filters?.sortOrder === 'desc' ? 'DESC' : 'ASC';
+      query += ` ORDER BY ${sortField} ${sortDir}, name ASC`;
 
       if (filters?.limit) {
         query += ` LIMIT $${paramIndex++}`;
