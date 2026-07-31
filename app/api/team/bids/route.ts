@@ -376,9 +376,15 @@ export async function POST(request: NextRequest) {
       await sql`
         INSERT INTO teams (id, name, firebase_uid, season_id, football_budget, football_spent, created_at, updated_at)
         VALUES (${teamId}, ${teamName}, ${userId}, ${round.season_id}, ${footballBudget}, ${footballSpent}, NOW(), NOW())
-        ON CONFLICT (firebase_uid) DO NOTHING
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          firebase_uid = EXCLUDED.firebase_uid,
+          season_id = EXCLUDED.season_id,
+          football_budget = EXCLUDED.football_budget,
+          football_spent = EXCLUDED.football_spent,
+          updated_at = NOW()
       `;
-      console.log(`✅ Created team: ${teamId} (${teamName}) with budget £${footballBudget}`);
+      console.log(`✅ Synced/Created team: ${teamId} (${teamName}) with budget £${footballBudget}`);
     }
     
     // Generate unique bid ID: team_id + round_id + player_id

@@ -129,17 +129,17 @@ export async function GET(request: NextRequest) {
           await sql`
             INSERT INTO teams (id, name, firebase_uid, season_id, football_budget, football_spent, created_at, updated_at)
             VALUES (${dbTeamId}, ${teamName}, ${userId}, ${seasonId}, ${footballBudget}, ${footballSpent}, NOW(), NOW())
+            ON CONFLICT (id) DO UPDATE SET
+              name = EXCLUDED.name,
+              firebase_uid = EXCLUDED.firebase_uid,
+              season_id = EXCLUDED.season_id,
+              football_budget = EXCLUDED.football_budget,
+              football_spent = EXCLUDED.football_spent,
+              updated_at = NOW()
           `;
-          console.log(`✅ Created team: ${dbTeamId} (${teamName})`);
+          console.log(`✅ Synced/Created team: ${dbTeamId} (${teamName})`);
         } catch (insertError: any) {
-          if (insertError.code === '23505') {
-            // Duplicate - someone else created it, fetch it
-            console.log(`⚠️ Duplicate team (race condition), fetching...`);
-            teamIdResult = await sql`SELECT id FROM teams WHERE firebase_uid = ${userId} LIMIT 1`;
-            dbTeamId = teamIdResult[0]?.id || dbTeamId;
-          } else {
-            console.error('Error creating team:', insertError);
-          }
+          console.error('Error creating team:', insertError);
         }
       } else {
         console.warn(`⚠️ No team_id found in Firebase for user ${userId}`);

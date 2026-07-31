@@ -214,25 +214,18 @@ export async function GET(
                 NOW(), 
                 NOW()
               )
+              ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                firebase_uid = EXCLUDED.firebase_uid,
+                season_id = EXCLUDED.season_id,
+                football_budget = EXCLUDED.football_budget,
+                football_spent = EXCLUDED.football_spent,
+                football_players_count = EXCLUDED.football_players_count,
+                updated_at = NOW()
             `;
-            console.log(`✅ Created team in Neon: ${teamId} (${teamName})`);
+            console.log(`✅ Synced/Created team in Neon: ${teamId} (${teamName})`);
           } catch (insertError: any) {
-            if (insertError.code === '23505') {
-              // Duplicate - fetch it
-              const retryData = await sql`
-                SELECT football_budget, football_players_count
-                FROM teams
-                WHERE firebase_uid = ${userId}
-                AND season_id = ${round.season_id}
-                LIMIT 1
-              `;
-              if (retryData.length > 0) {
-                balance = parseInt(retryData[0].football_budget) || 1000;
-                currentSquadSize = parseInt(retryData[0].football_players_count) || 0;
-              }
-            } else {
-              console.error('Error creating team:', insertError);
-            }
+            console.error('Error creating/syncing team:', insertError);
           }
         } else {
           console.warn(`⚠️ No team_seasons document found for ${teamSeasonId}`);

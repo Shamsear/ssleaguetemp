@@ -212,20 +212,8 @@ export async function POST(request: NextRequest) {
     const auctionSettings = settingsResult[0];
     const seasonId = auctionSettings.season_id;
 
-    // Check if there's already an active round for this season
-    const activeRound = await sql`
-      SELECT id FROM rounds
-      WHERE season_id = ${seasonId}
-      AND status = 'active'
-      LIMIT 1
-    `;
-
-    if (activeRound.length > 0) {
-      return NextResponse.json(
-        { success: false, error: 'There is already an active round. Please complete it first.' },
-        { status: 400 }
-      );
-    }
+    // Multiple active rounds are allowed concurrently.
+    console.log(`ℹ️ Creating round for season ${seasonId}. Concurrent rounds are permitted.`);
 
     // Generate readable round ID with retry logic
     let roundId: string;

@@ -136,17 +136,17 @@ export async function GET(
         await sql`
           INSERT INTO teams (id, name, firebase_uid, season_id, football_budget, football_spent, created_at, updated_at)
           VALUES (${teamId}, ${teamName}, ${userId}, ${round.season_id}, ${footballBudget}, ${footballSpent}, NOW(), NOW())
+          ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name,
+            firebase_uid = EXCLUDED.firebase_uid,
+            season_id = EXCLUDED.season_id,
+            football_budget = EXCLUDED.football_budget,
+            football_spent = EXCLUDED.football_spent,
+            updated_at = NOW()
         `;
-        console.log(`✅ Created team: ${teamId} (${teamName}) with budget £${footballBudget}`);
+        console.log(`✅ Synced/Created team: ${teamId} (${teamName}) with budget £${footballBudget}`);
       } catch (insertError: any) {
-        if (insertError.code === '23505') {
-          // Duplicate - someone else created it, fetch it
-          console.log(`⚠️ Duplicate team (race condition), fetching...`);
-          teamIdResult = await sql`SELECT id FROM teams WHERE firebase_uid = ${userId} LIMIT 1`;
-          teamId = teamIdResult[0]?.id || teamId;
-        } else {
-          throw insertError;
-        }
+        throw insertError;
       }
     } else {
       teamId = teamIdResult[0].id;
