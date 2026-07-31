@@ -304,6 +304,8 @@ export default function TeamRoundPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
+
+
   // Place bid locally
   const handlePlaceBid = async (playerId: string, amount: number) => {
     if (!roundId) return;
@@ -1270,7 +1272,7 @@ export default function TeamRoundPage() {
                 Saving...
               </span>
             ) : (
-              'Save Bids'
+              'Save Draft'
             )}
           </button>
         </div>
@@ -1295,6 +1297,7 @@ export default function TeamRoundPage() {
         cancelText={confirmState.cancelText}
         type={confirmState.type}
       />
+      </div>
     </>
   );
 }

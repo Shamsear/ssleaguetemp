@@ -280,6 +280,8 @@ export default function TeamBulkRoundPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
+
+
   // Timer countdown
   useEffect(() => {
     if (bulkRound?.status === 'active' && bulkRound.end_time) {
@@ -962,7 +964,7 @@ export default function TeamBulkRoundPage() {
                 Saving...
               </span>
             ) : (
-              'Save Bids'
+              'Save Draft'
             )}
           </button>
         </div>
