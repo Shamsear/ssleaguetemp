@@ -534,7 +534,7 @@ export default function CommitteePlayersPage() {
       showAlert({
         type: 'success',
         title: 'Export Successful',
-        message: `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Exported complete footballplayer database to Excel!\n\n<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> ORGANIZED INTO ${totalSheets} WORKSHEETS:\n\n🏃 POSITION SHEETS (${Object.keys(playersByPosition).length}):\n${positionSheetNames}\n\n📋 POSITION GROUP SHEETS (${Object.keys(playersByPositionGroup).length}):\n${groupSheetNames}\n\n📈 OVERVIEW SHEETS:\n• All Players (${totalPlayers})\n• Summary & Statistics\n\n💫 FEATURES:\n• All player attributes (40+ data fields)\n• Color-coded auction eligibility\n• Professional formatting\n• Easy navigation between positions\n\nPerfect for analyzing 2000+ players by position!`
+        message: `✅ Exported complete footballplayer database to Excel!\n\n📊 ORGANIZED INTO ${totalSheets} WORKSHEETS:\n\n🏃 POSITION SHEETS (${Object.keys(playersByPosition).length}):\n${positionSheetNames}\n\n📋 POSITION GROUP SHEETS (${Object.keys(playersByPositionGroup).length}):\n${groupSheetNames}\n\n📈 OVERVIEW SHEETS:\n• All Players (${totalPlayers})\n• Summary & Statistics\n\n💫 FEATURES:\n• All player attributes (40+ data fields)\n• Color-coded auction eligibility\n• Professional formatting\n• Easy navigation between positions\n\nPerfect for analyzing 2000+ players by position!`
       })
     } catch (err) {
       console.error('Error exporting:', err)
