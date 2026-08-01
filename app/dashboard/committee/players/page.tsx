@@ -47,6 +47,7 @@ export default function CommitteePlayersPage() {
   const [isExporting, setIsExporting] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportSoldFilter, setExportSoldFilter] = useState<'all' | 'sold' | 'unsold'>('all')
+  const [exportMode, setExportMode] = useState<'combined' | 'individual'>('combined')
 
   const EXPORT_COLUMN_CATEGORIES = [
     {
@@ -382,7 +383,7 @@ export default function CommitteePlayersPage() {
         { header: 'GK Parrying', key: 'gk_parrying', width: 12 },
         { header: 'GK Reflexes', key: 'gk_reflexes', width: 12 },
         { header: 'GK Reach', key: 'gk_reach', width: 12 },
-      ]
+      ].filter(col => selectedExportColumns.includes(col.key))
 
       // Function to get player row data
       const getPlayerRowData = (player: any) => ({
@@ -464,22 +465,24 @@ export default function CommitteePlayersPage() {
             }
           }
 
-          // Style auction eligible column
-          const eligibleCell = row.getCell('is_auction_eligible')
-          if (player.is_auction_eligible) {
-            eligibleCell.fill = {
-              type: 'pattern',
-              pattern: 'solid',
-              fgColor: { argb: 'FFD4EDDA' }
+          // Style auction eligible column if it exists in the output definition
+          if (selectedExportColumns.includes('is_auction_eligible')) {
+            const eligibleCell = row.getCell('is_auction_eligible')
+            if (player.is_auction_eligible) {
+              eligibleCell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD4EDDA' }
+              }
+              eligibleCell.font = { color: { argb: 'FF155724' } }
+            } else {
+              eligibleCell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFF8D7DA' }
+              }
+              eligibleCell.font = { color: { argb: 'FF721C24' } }
             }
-            eligibleCell.font = { color: { argb: 'FF155724' } }
-          } else {
-            eligibleCell.fill = {
-              type: 'pattern',
-              pattern: 'solid',
-              fgColor: { argb: 'FFF8D7DA' }
-            }
-            eligibleCell.font = { color: { argb: 'FF721C24' } }
           }
         })
       }
@@ -490,26 +493,90 @@ export default function CommitteePlayersPage() {
         { type: 'position', name: 'LB', label: 'LB' },
         { type: 'position', name: 'RB', label: 'RB' },
         { type: 'position', name: 'CB', label: 'CB' },
-        { type: 'group', name: 'CB-1 Group', label: 'CB-1' },
-        { type: 'group', name: 'CB-2 Group', label: 'CB-2' },
+        { type: 'group', name: 'CB-1', label: 'CB-1' },
+        { type: 'group', name: 'CB-2', label: 'CB-2' },
         { type: 'position', name: 'DMF', label: 'DMF' },
-        { type: 'group', name: 'DMF-1 Group', label: 'DMF-1' },
-        { type: 'group', name: 'DMF-2 Group', label: 'DMF-2' },
+        { type: 'group', name: 'DMF-1', label: 'DMF-1' },
+        { type: 'group', name: 'DMF-2', label: 'DMF-2' },
         { type: 'position', name: 'CMF', label: 'CMF' },
-        { type: 'group', name: 'CMF-1 Group', label: 'CMF-1' },
-        { type: 'group', name: 'CMF-2 Group', label: 'CMF-2' },
+        { type: 'group', name: 'CMF-1', label: 'CMF-1' },
+        { type: 'group', name: 'CMF-2', label: 'CMF-2' },
         { type: 'position', name: 'AMF', label: 'AMF' },
-        { type: 'group', name: 'AMF-1 Group', label: 'AMF-1' },
-        { type: 'group', name: 'AMF-2 Group', label: 'AMF-2' },
+        { type: 'group', name: 'AMF-1', label: 'AMF-1' },
+        { type: 'group', name: 'AMF-2', label: 'AMF-2' },
         { type: 'position', name: 'LMF', label: 'LMF' },
         { type: 'position', name: 'RMF', label: 'RMF' },
         { type: 'position', name: 'LWF', label: 'LWF' },
         { type: 'position', name: 'RWF', label: 'RWF' },
         { type: 'position', name: 'SS', label: 'SS' },
         { type: 'position', name: 'CF', label: 'CF' },
-        { type: 'group', name: 'CF-1 Group', label: 'CF-1' },
-        { type: 'group', name: 'CF-2 Group', label: 'CF-2' }
+        { type: 'group', name: 'CF-1', label: 'CF-1' },
+        { type: 'group', name: 'CF-2', label: 'CF-2' }
       ]
+
+      // If individual mode is selected, generate and package separate single-sheet workbooks into a ZIP
+      if (exportMode === 'individual') {
+        const initJSZip = async () => {
+          const script = document.createElement('script')
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
+          document.head.appendChild(script)
+          
+          return new Promise<any>((resolve) => {
+            script.onload = () => {
+              // @ts-expect-error - External library type issue
+              resolve(window.JSZip)
+            }
+          })
+        }
+
+        // @ts-expect-error - External library type issue
+        let JSZipLib = window.JSZip
+        if (!JSZipLib) {
+          JSZipLib = await initJSZip()
+        }
+        const zip = new JSZipLib()
+
+        let individualCount = 0
+        for (let i = 0; i < targets.length; i++) {
+          const target = targets[i]
+          const matchingPlayers = allPlayers.filter((p: any) => {
+            if (target.type === 'position') {
+              return p.position === target.name
+            } else {
+              return p.position_group === target.name
+            }
+          })
+
+          if (matchingPlayers.length > 0) {
+            const singleWorkbook = new ExcelJS.Workbook()
+            const singleSheetName = `${target.label}`
+            const worksheet = singleWorkbook.addWorksheet(singleSheetName)
+            styleWorksheet(worksheet, matchingPlayers)
+
+            const singleBuffer = await singleWorkbook.xlsx.writeBuffer()
+            // Add file to ZIP
+            zip.file(`Players-${target.label}-${new Date().toISOString().split('T')[0]}.xlsx`, singleBuffer)
+            individualCount++
+          }
+        }
+
+        if (individualCount > 0) {
+          const zipContent = await zip.generateAsync({ type: 'blob' })
+          const fileUrl = window.URL.createObjectURL(zipContent)
+          const a = document.createElement('a')
+          a.href = fileUrl
+          a.download = `Football-Players-Individual-Excels-${new Date().toISOString().split('T')[0]}.zip`
+          a.click()
+          window.URL.revokeObjectURL(fileUrl)
+        }
+
+        showAlert({
+          type: 'success',
+          title: 'Export Successful',
+          message: `✅ Packaged ${individualCount} positions into a single ZIP file successfully!`
+        })
+        return
+      }
 
       let createdSheetsCount = 0
       const sheetNameDetails: string[] = []
@@ -1166,7 +1233,7 @@ export default function CommitteePlayersPage() {
       {/* Export Filter Modal */}
       {showExportModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="console-card bg-white rounded-2xl p-6 md:p-8 max-w-3xl w-full shadow-2xl border border-slate-200/60 font-mono flex flex-col">
+          <div className="console-card bg-white rounded-2xl p-6 md:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200/60 font-mono flex flex-col">
             <h3 className="text-lg font-extrabold text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-2">
               <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -1227,6 +1294,47 @@ export default function CommitteePlayersPage() {
                       className="w-4 h-4 text-amber-500 focus:ring-amber-500 border-slate-300"
                     />
                     <span className="ml-2.5 font-extrabold text-slate-700 uppercase">Unsold Players Only</span>
+                  </label>
+                </div>
+
+                <div className="text-xs font-bold text-slate-600 uppercase tracking-wider pt-2">
+                  3. Export Format
+                </div>
+                <div className="space-y-2">
+                  <label 
+                    className="flex items-center p-2.5 border rounded-xl cursor-pointer hover:bg-slate-50/50 transition-all text-xs"
+                    style={{ borderColor: exportMode === 'combined' ? '#F59E0B' : '#E2E8F0', borderWidth: exportMode === 'combined' ? '2px' : '1px' }}
+                  >
+                    <input
+                      type="radio"
+                      name="exportMode"
+                      value="combined"
+                      checked={exportMode === 'combined'}
+                      onChange={() => setExportMode('combined')}
+                      className="w-4 h-4 text-amber-500 focus:ring-amber-500 border-slate-300"
+                    />
+                    <div className="ml-2.5">
+                      <span className="font-extrabold text-slate-700 uppercase block">Combined Excel</span>
+                      <span className="text-[9px] text-slate-400 font-mono">Single file with multiple sheets</span>
+                    </div>
+                  </label>
+
+                  <label 
+                    className="flex items-center p-2.5 border rounded-xl cursor-pointer hover:bg-slate-50/50 transition-all text-xs"
+                    style={{ borderColor: exportMode === 'individual' ? '#F59E0B' : '#E2E8F0', borderWidth: exportMode === 'individual' ? '2px' : '1px' }}
+                  >
+                    <input
+                      type="radio"
+                      name="exportMode"
+                      value="individual"
+                      checked={exportMode === 'individual'}
+                      onChange={() => setExportMode('individual')}
+                      className="w-4 h-4 text-amber-500 focus:ring-amber-500 border-slate-300"
+                    />
+                    <div className="ml-2.5">
+                      <span className="font-extrabold text-slate-700 uppercase block">Individual Excels</span>
+                      <span className="text-[9px] text-slate-400 font-mono">One file per position (batch download)</span>
+                    </div>
                   </label>
                 </div>
 
