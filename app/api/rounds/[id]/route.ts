@@ -253,6 +253,8 @@ export async function PATCH(
       duration_seconds,
       position,
       position_group,
+      max_bids_per_team,
+      finalization_mode,
     } = body;
 
     // Build dynamic update query
@@ -336,6 +338,12 @@ export async function PATCH(
       }
       if (position_group !== undefined) {
         await sql`UPDATE rounds SET position_group = ${position_group} WHERE id = ${roundId}`;
+      }
+      if (max_bids_per_team !== undefined) {
+        await sql`UPDATE rounds SET max_bids_per_team = ${max_bids_per_team} WHERE id = ${roundId}`;
+      }
+      if (finalization_mode !== undefined) {
+        await sql`UPDATE rounds SET finalization_mode = ${finalization_mode} WHERE id = ${roundId}`;
       }
       
       await sql`UPDATE rounds SET updated_at = NOW() WHERE id = ${roundId}`;

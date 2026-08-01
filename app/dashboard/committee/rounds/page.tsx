@@ -72,15 +72,16 @@ interface Tiebreaker {
   teams: any[];
 }
 // ─── Scheduled Round Row ─────────────────────────────────────────────────────
-function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete }: {
+function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete, onUpdated }: {
   round: Round;
   isActivatingRound: string | null;
   onActivate: (id: string) => void;
   onDelete: (id: string) => void;
+  onUpdated: () => void;
 }) {
   const countdown = useCountdown(round.start_time);
   const startTimeDate = new Date(round.start_time!);
-  const isDue = !countdown; // null means time has passed
+  const isDue = !countdown;
 
   const pad = (n: number) => String(n).padStart(2, '0');
   const countdownLabel = countdown
@@ -89,89 +90,247 @@ function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete }: {
       : `${pad(countdown.hrs)}:${pad(countdown.mins)}:${pad(countdown.secs)}`
     : null;
 
+  // ── edit modal state ──
+  const [showEdit, setShowEdit] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editForm, setEditForm] = useState({
+    position: round.position || '',
+    max_bids_per_team: round.max_bids_per_team ?? 3,
+    finalization_mode: round.finalization_mode ?? 'auto',
+    start_mode: round.start_time ? 'scheduled' : 'immediate',
+    start_time: round.start_time
+      ? new Date(round.start_time).toISOString().slice(0, 16)
+      : '',
+  });
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const payload: any = {
+        position: editForm.position,
+        max_bids_per_team: Number(editForm.max_bids_per_team),
+        finalization_mode: editForm.finalization_mode,
+        start_time: editForm.start_mode === 'scheduled' && editForm.start_time
+          ? new Date(editForm.start_time).toISOString()
+          : null,
+      };
+      const res = await fetchWithTokenRefresh(`/api/rounds/${round.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowEdit(false);
+        onUpdated();
+      } else {
+        alert(data.error || 'Failed to update round');
+      }
+    } catch (e) {
+      alert('Network error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <div className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div className="space-y-1.5">
-        <div className="flex items-center flex-wrap gap-2">
-          {round.position.split(',').map((pos: string) => (
-            <span key={pos} className="px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200 text-[10px] font-bold font-mono text-slate-700">
-              {pos}
+    <>
+      <div className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center flex-wrap gap-2">
+            {round.position.split(',').map((pos: string) => (
+              <span key={pos} className="px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200 text-[10px] font-bold font-mono text-slate-700">
+                {pos}
+              </span>
+            ))}
+            <span className="text-[10px] text-slate-400 font-mono">
+              #{round.round_number} ({round.id})
             </span>
-          ))}
-          <span className="text-[10px] text-slate-400 font-mono">
-            #{round.round_number} ({round.id})
-          </span>
-        </div>
-
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-550 font-mono">
-          <span className="flex items-center gap-1">
-            <Users className="w-3.5 h-3.5 text-slate-400" />
-            Bids: <strong className="text-slate-700">{round.max_bids_per_team}</strong>
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
-            Duration: <strong className="text-slate-700">{((round.duration_seconds || 0) / 3600).toFixed(1)} hrs</strong>
-          </span>
-          <span className="flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
-            Mode: <strong className="text-slate-700">{round.finalization_mode === 'auto' ? 'Auto-Finalize' : 'Manual'}</strong>
-          </span>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="text-left sm:text-right font-mono">
-          <div className="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Scheduled Start</div>
-          <div className={`text-xs font-bold ${isDue ? 'text-rose-500 animate-pulse' : 'text-slate-700'}`}>
-            {startTimeDate.toLocaleString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            })}
-            {isDue && ' (Due Now)'}
           </div>
-          {/* Live countdown */}
-          {countdownLabel ? (
-            <div className="mt-1 flex items-center justify-end gap-1">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 font-mono font-bold text-[11px]">
-                <Clock className="w-3 h-3 text-amber-500" />
-                {countdownLabel}
-              </span>
-            </div>
-          ) : (
-            <div className="mt-1 flex items-center justify-end gap-1">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 font-mono font-bold text-[10px] animate-pulse">
-                ● Start overdue
-              </span>
-            </div>
-          )}
+
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-550 font-mono">
+            <span className="flex items-center gap-1">
+              <Users className="w-3.5 h-3.5 text-slate-400" />
+              Bids: <strong className="text-slate-700">{round.max_bids_per_team}</strong>
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              Duration: <strong className="text-slate-700">{((round.duration_seconds || 0) / 3600).toFixed(1)} hrs</strong>
+            </span>
+            <span className="flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
+              Mode: <strong className="text-slate-700">{round.finalization_mode === 'auto' ? 'Auto-Finalize' : 'Manual'}</strong>
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onActivate(round.id)}
-            disabled={isActivatingRound !== null}
-            className="p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700 rounded-xl border border-emerald-100 hover:border-emerald-250 transition-all shadow-sm flex items-center justify-center cursor-pointer disabled:opacity-55"
-            title="Start Round Now"
-          >
-            {isActivatingRound === round.id ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-600 border-t-transparent" />
+        <div className="flex items-center gap-4">
+          <div className="text-left sm:text-right font-mono">
+            <div className="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Scheduled Start</div>
+            <div className={`text-xs font-bold ${isDue ? 'text-rose-500 animate-pulse' : 'text-slate-700'}`}>
+              {startTimeDate.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              })}
+              {isDue && ' (Due Now)'}
+            </div>
+            {countdownLabel ? (
+              <div className="mt-1 flex items-center justify-end gap-1">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 font-mono font-bold text-[11px]">
+                  <Clock className="w-3 h-3 text-amber-500" />
+                  {countdownLabel}
+                </span>
+              </div>
             ) : (
-              <Play className="w-4 h-4 fill-emerald-600/10" />
+              <div className="mt-1 flex items-center justify-end gap-1">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 font-mono font-bold text-[10px] animate-pulse">
+                  ● Start overdue
+                </span>
+              </div>
             )}
-          </button>
-          <button
-            onClick={() => onDelete(round.id)}
-            className="p-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 rounded-xl border border-rose-100 hover:border-rose-250 transition-all shadow-sm flex items-center justify-center cursor-pointer"
-            title="Delete Scheduled Round"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Edit button */}
+            <button
+              onClick={() => setShowEdit(true)}
+              className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 rounded-xl border border-slate-200 hover:border-slate-300 transition-all shadow-sm flex items-center justify-center cursor-pointer"
+              title="Edit Round Settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onActivate(round.id)}
+              disabled={isActivatingRound !== null}
+              className="p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700 rounded-xl border border-emerald-100 hover:border-emerald-250 transition-all shadow-sm flex items-center justify-center cursor-pointer disabled:opacity-55"
+              title="Start Round Now"
+            >
+              {isActivatingRound === round.id ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-600 border-t-transparent" />
+              ) : (
+                <Play className="w-4 h-4 fill-emerald-600/10" />
+              )}
+            </button>
+            <button
+              onClick={() => onDelete(round.id)}
+              className="p-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 rounded-xl border border-rose-100 hover:border-rose-250 transition-all shadow-sm flex items-center justify-center cursor-pointer"
+              title="Delete Scheduled Round"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* ── Edit Modal ── */}
+      {showEdit && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200/60 font-mono max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <Settings className="w-4 h-4 text-amber-500" />
+                Edit Round Settings
+              </h3>
+              <button onClick={() => setShowEdit(false)} className="text-slate-400 hover:text-slate-600">
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Position */}
+              <div>
+                <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Position(s)</label>
+                <input
+                  type="text"
+                  value={editForm.position}
+                  onChange={e => setEditForm(f => ({ ...f, position: e.target.value }))}
+                  placeholder="e.g. CB, DMF,CMF"
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Comma-separated for multiple positions</p>
+              </div>
+
+              {/* Max Bids */}
+              <div>
+                <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Required Bids Per Team</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={editForm.max_bids_per_team}
+                  onChange={e => setEditForm(f => ({ ...f, max_bids_per_team: Number(e.target.value) }))}
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                />
+              </div>
+
+              {/* Start Mode */}
+              <div>
+                <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Start Mode</label>
+                <select
+                  value={editForm.start_mode}
+                  onChange={e => setEditForm(f => ({ ...f, start_mode: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                >
+                  <option value="immediate">Start Immediately on Activation</option>
+                  <option value="scheduled">Keep Scheduled Start Time</option>
+                </select>
+              </div>
+
+              {/* Scheduled Start Time (conditional) */}
+              {editForm.start_mode === 'scheduled' && (
+                <div>
+                  <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Scheduled Start Time</label>
+                  <input
+                    type="datetime-local"
+                    value={editForm.start_time}
+                    onChange={e => setEditForm(f => ({ ...f, start_time: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">Your local time (browser timezone)</p>
+                </div>
+              )}
+
+              {/* Finalization Mode */}
+              <div>
+                <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Finalization Mode</label>
+                <select
+                  value={editForm.finalization_mode}
+                  onChange={e => setEditForm(f => ({ ...f, finalization_mode: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                >
+                  <option value="auto">Auto-Finalize (when timer ends)</option>
+                  <option value="manual">Manual Finalization (preview first)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowEdit(false)}
+                className="flex-1 px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex-1 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+              >
+                {isSaving ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                ) : (
+                  <CheckCircle className="w-4 h-4" />
+                )}
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1686,6 +1845,7 @@ export default function RoundsManagementPage() {
                   isActivatingRound={isActivatingRound}
                   onActivate={handleActivateStandbyRound}
                   onDelete={handleDeleteRound}
+                  onUpdated={fetchAllData}
                 />
               ))}
             </div>
