@@ -35,6 +35,7 @@ export default function ScrapedPlayersViewPage() {
   const [positionFilter, setPositionFilter] = useState('ALL')
   const [minRatingFilter, setMinRatingFilter] = useState('')
   const [clearing, setClearing] = useState(false)
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([])
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -100,6 +101,52 @@ export default function ScrapedPlayersViewPage() {
     }
   }
 
+  const handleDeletePlayer = async (playerId: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete ${name} from the scraped registry?`)) {
+      return
+    }
+    try {
+      const res = await fetchWithTokenRefresh('/api/players/database/temp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', playerId })
+      })
+      const result = await res.json()
+      if (result.success) {
+        setPlayers(prev => prev.filter(p => p.player_id !== playerId))
+        setSelectedPlayerIds(prev => prev.filter(id => id !== playerId))
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (e: any) {
+      alert(`Error deleting player: ${e.message}`)
+    }
+  }
+
+  const handleDeleteSelected = async () => {
+    if (selectedPlayerIds.length === 0) return
+    if (!confirm(`Are you sure you want to delete the ${selectedPlayerIds.length} selected player(s)?`)) {
+      return
+    }
+    try {
+      const res = await fetchWithTokenRefresh('/api/players/database/temp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete_multiple', playerIds: selectedPlayerIds })
+      })
+      const result = await res.json()
+      if (result.success) {
+        setPlayers(prev => prev.filter(p => !selectedPlayerIds.includes(p.player_id)))
+        setSelectedPlayerIds([])
+        alert('Selected players deleted successfully.')
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (e: any) {
+      alert(`Error deleting selected players: ${e.message}`)
+    }
+  }
+
   // Filter logic — reset to page 1 on any filter change
   const filteredPlayers = useMemo(() => {
     setCurrentPage(1)
@@ -124,6 +171,16 @@ export default function ScrapedPlayersViewPage() {
   const pageStart = (safePage - 1) * pageSize
   const pageEnd = pageStart + pageSize
   const pagePlayers = filteredPlayers.slice(pageStart, pageEnd)
+
+  // Checkbox helpers
+  const isAllPageSelected = pagePlayers.length > 0 && pagePlayers.every(p => selectedPlayerIds.includes(p.player_id))
+  const handleToggleAllPage = () => {
+    if (isAllPageSelected) {
+      setSelectedPlayerIds(prev => prev.filter(id => !pagePlayers.map(p => p.player_id).includes(id)))
+    } else {
+      setSelectedPlayerIds(prev => [...new Set([...prev, ...pagePlayers.map(p => p.player_id)])])
+    }
+  }
 
   // Quick stats
   const totalCount = players.length
@@ -341,6 +398,17 @@ export default function ScrapedPlayersViewPage() {
                 </select>
               </div>
 
+              {/* Delete Selected Button */}
+              {selectedPlayerIds.length > 0 && (
+                <button
+                  onClick={handleDeleteSelected}
+                  className="px-4 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                  Delete Selected ({selectedPlayerIds.length})
+                </button>
+              )}
+
               {/* Result counter */}
               <div className="ml-auto text-[11px] font-mono font-bold text-slate-400">
                 Showing {pageStart + 1}–{Math.min(pageEnd, filteredCount)} of {filteredCount} players
@@ -352,6 +420,14 @@ export default function ScrapedPlayersViewPage() {
               <table className="w-full text-left font-mono text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200/50 text-[10px] text-slate-500 uppercase font-bold tracking-wider">
+                    <th className="py-3 px-4 w-10 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isAllPageSelected}
+                        onChange={handleToggleAllPage}
+                        className="w-4 h-4 rounded text-rose-500 focus:ring-rose-500 border-slate-300 cursor-pointer"
+                      />
+                    </th>
                     <th className="py-3 px-4">Thumbnail</th>
                     <th className="py-3 px-4">Player ID</th>
                     <th className="py-3 px-4">Name</th>
@@ -361,11 +437,26 @@ export default function ScrapedPlayersViewPage() {
                     <th className="py-3 px-4">Nationality</th>
                     <th className="py-3 px-4 text-center">Age</th>
                     <th className="py-3 px-4">Playing Style</th>
+                    <th className="py-3 px-4 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {pagePlayers.map((player) => (
                     <tr key={player.player_id} className="hover:bg-slate-50/50 transition-colors text-slate-700">
+                      <td className="py-2.5 px-4 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedPlayerIds.includes(player.player_id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedPlayerIds(prev => [...prev, player.player_id])
+                            } else {
+                              setSelectedPlayerIds(prev => prev.filter(id => id !== player.player_id))
+                            }
+                          }}
+                          className="w-4 h-4 rounded text-rose-500 focus:ring-rose-500 border-slate-300 cursor-pointer"
+                        />
+                      </td>
                       <td className="py-2.5 px-4">
                         <img 
                           src={`https://pesdb.net/assets/img/card/f${player.player_id}max.png`} 
@@ -392,6 +483,15 @@ export default function ScrapedPlayersViewPage() {
                       <td className="py-2.5 px-4 text-slate-500">{player.nationality}</td>
                       <td className="py-2.5 px-4 text-center text-slate-500">{player.age || '-'}</td>
                       <td className="py-2.5 px-4 text-slate-500 text-[11px]">{player.playing_style || '-'}</td>
+                      <td className="py-2.5 px-4 text-center">
+                        <button
+                          onClick={() => handleDeletePlayer(player.player_id, player.name)}
+                          className="p-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 rounded-lg transition-colors cursor-pointer"
+                          title="Delete from temp DB"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))}
 

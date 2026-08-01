@@ -46,6 +46,12 @@ export default function DatabaseManagementPage() {
   const scrapingActiveRef = useRef(false)
   const photosActiveRef = useRef(false)
 
+  // eFHub Bulk Scraper States
+  const [efhubUrls, setEfhubUrls] = useState('')
+  const [efhubScraping, setEfhubScraping] = useState(false)
+  const [efhubResults, setEfhubResults] = useState<any[]>([])
+  const [efhubStatus, setEfhubStatus] = useState('')
+
   const fetchMissingPhotosCount = async () => {
     try {
       const res = await fetch('/api/players/photos/download-missing')
@@ -227,6 +233,48 @@ export default function DatabaseManagementPage() {
     scrapingActiveRef.current = false
     setScraping(false)
     setScrapeLog(prev => [...prev, '⏳ Stopping scraper, waiting for active request to finish...'].slice(-100))
+  }
+
+  const handleEFHubScrape = async () => {
+    if (efhubScraping) return
+    const parsedUrls = efhubUrls
+      .split('\n')
+      .map(u => u.trim())
+      .filter(u => u.length > 0 && u.includes('/players/'))
+
+    if (parsedUrls.length === 0) {
+      setEfhubStatus('⚠️ Please enter at least one valid eFHUB player URL.')
+      return
+    }
+
+    setEfhubScraping(true)
+    setEfhubStatus(`🚀 Scraping ${parsedUrls.length} player(s) from eFHUB...`)
+    setEfhubResults([])
+
+    try {
+      const res = await fetch('/api/players/database/scrape-single', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls: parsedUrls })
+      })
+      const result = await res.json()
+      if (result.success) {
+        setEfhubResults(result.results || [])
+        const successCount = (result.results || []).filter((r: any) => r.success).length
+        const failCount = (result.results || []).filter((r: any) => !r.success).length
+        setEfhubStatus(`✅ Completed! ${successCount} imported successfully, ${failCount} failed.`)
+        
+        // Refresh counts
+        await fetchScrapedCount()
+        await fetchPlayerCount()
+      } else {
+        setEfhubStatus(`❌ Scraper failed: ${result.error || 'Unknown error'}`)
+      }
+    } catch (err: any) {
+      setEfhubStatus(`❌ Network error: ${err.message}`)
+    } finally {
+      setEfhubScraping(false)
+    }
   }
 
   const handleStartPhotoSync = async () => {
@@ -915,6 +963,80 @@ export default function DatabaseManagementPage() {
               <span>{uploadStatus}</span>
             </div>
           )}
+        </div>
+
+        {/* eFootball Hub Bulk Scraper Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+          <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            Import eFHUB Players (Single or Bulk)
+          </h3>
+          <p className="text-[11px] text-slate-400 font-mono mb-4">
+            Paste one or multiple eFootball Hub player links (e.g., <code className="bg-slate-100 px-1 py-0.5 rounded text-amber-600 font-bold">https://efhub.com/players/110578</code>) below, one per line. The system will extract their stats, auto-resolve any player ID conflicts, and crop their face card photo using optimized dimensions.
+          </p>
+
+          <div className="space-y-4 font-mono">
+            <textarea
+              value={efhubUrls}
+              onChange={(e) => setEfhubUrls(e.target.value)}
+              placeholder="https://efhub.com/players/110578&#10;https://efhub.com/players/123456"
+              rows={4}
+              disabled={efhubScraping}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-mono leading-relaxed"
+            />
+
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] text-slate-500 uppercase font-bold">
+                {efhubUrls.split('\n').filter(u => u.trim().includes('/players/')).length} link(s) detected
+              </span>
+              <button
+                onClick={handleEFHubScrape}
+                disabled={efhubScraping || !efhubUrls.trim()}
+                className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {efhubScraping ? (
+                  <>
+                    <RefreshCw className="animate-spin h-3.5 w-3.5 text-white" />
+                    Scraping...
+                  </>
+                ) : (
+                  <>
+                    <PlusCircle className="w-3.5 h-3.5 text-white" />
+                    Import Players
+                  </>
+                )}
+              </button>
+            </div>
+
+            {efhubStatus && (
+              <div className="bg-slate-50 border border-slate-200/50 rounded-xl p-3.5 text-xs text-slate-700 flex items-start gap-2">
+                <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1 flex-1">
+                  <div className="font-bold">{efhubStatus}</div>
+                  {efhubResults.length > 0 && (
+                    <div className="mt-2.5 space-y-1 max-h-[160px] overflow-y-auto pr-1">
+                      {efhubResults.map((res, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-[10px] border-b border-slate-100 pb-1 last:border-0">
+                          <span className="truncate max-w-[200px] text-slate-600">
+                            {res.name || res.url}
+                          </span>
+                          <span className="font-bold">
+                            {res.success ? (
+                              <span className="text-emerald-600">
+                                ✓ Imported (ID: {res.player_id}) {res.photoSaved ? '[📷 Photo OK]' : '[⚠️ No Photo]'}
+                              </span>
+                            ) : (
+                              <span className="text-red-500">✗ Failed: {res.error}</span>
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* eFootball Web Scraper Console */}
