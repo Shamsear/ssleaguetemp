@@ -242,6 +242,15 @@ export async function POST(request: NextRequest) {
       });
 
     } else {
+      // If running on Vercel/serverless production without GitHub config, fail gracefully
+      const isServerless = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
+      if (isServerless) {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'GitHub credentials (GITHUB_TOKEN and GITHUB_REPO) are not configured. Cannot save player photo to read-only serverless production filesystem.' 
+        }, { status: 400 });
+      }
+
       // Local dev mode: save to public folder directly
       const dirPath = path.join(process.cwd(), 'public', 'images', 'players');
       await fs.mkdir(dirPath, { recursive: true });
