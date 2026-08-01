@@ -125,35 +125,39 @@ export async function GET(request: NextRequest) {
         };
 
         const newValues: any = {
-          position: normalizeVal(tempPlayer.position),
-          overall_rating: normalizeNumber(tempPlayer.overall_rating),
-          playing_style: normalizeVal(tempPlayer.playing_style),
+          position: normalizeVal(tempPlayer.position) || normalizeVal(activePlayer.position),
+          overall_rating: normalizeNumber(tempPlayer.overall_rating) || normalizeNumber(activePlayer.overall_rating),
+          playing_style: normalizeVal(tempPlayer.playing_style) || normalizeVal(activePlayer.playing_style),
           team_name: normalizeVal(activePlayer.team_name), // preserve the active fantasy team name so we don't overwrite it or flag it as a change!
-          club: normalizeVal(tempPlayer.team_name), // real club from temp database
-          age: normalizeNumber(tempPlayer.age), // age from temp database
-          pace: normalizeNumber(tempPlayer.speed),
-          shooting: normalizeNumber(tempPlayer.finishing),
-          passing: normalizeNumber(tempPlayer.low_pass),
-          dribbling: normalizeNumber(tempPlayer.dribbling),
-          defending: normalizeNumber(tempPlayer.defensive_awareness),
-          physical: normalizeNumber(tempPlayer.physical_contact),
-          acceleration: normalizeNumber(tempPlayer.acceleration),
-          ball_control: normalizeNumber(tempPlayer.ball_control),
-          tight_possession: normalizeNumber(tempPlayer.tight_possession),
-          lofted_pass: normalizeNumber(tempPlayer.lofted_pass),
-          heading: normalizeNumber(tempPlayer.heading),
-          kicking_power: normalizeNumber(tempPlayer.kicking_power),
-          jumping: normalizeNumber(tempPlayer.jumping),
-          stamina: normalizeNumber(tempPlayer.stamina),
-          tackling: normalizeNumber(tempPlayer.tackling),
-          aggression: normalizeNumber(tempPlayer.aggression),
+          club: normalizeVal(tempPlayer.team_name) || normalizeVal(activePlayer.club), // real club from temp database
+          age: normalizeNumber(tempPlayer.age) || normalizeNumber(activePlayer.age), // age from temp database
+          pace: normalizeNumber(tempPlayer.speed) || normalizeNumber(activePlayer.speed),
+          shooting: normalizeNumber(tempPlayer.finishing) || normalizeNumber(activePlayer.finishing),
+          passing: normalizeNumber(tempPlayer.low_pass) || normalizeNumber(activePlayer.low_pass),
+          dribbling: normalizeNumber(tempPlayer.dribbling) || normalizeNumber(activePlayer.dribbling),
+          defending: normalizeNumber(tempPlayer.defensive_awareness) || normalizeNumber(activePlayer.defensive_awareness),
+          physical: normalizeNumber(tempPlayer.physical_contact) || normalizeNumber(activePlayer.physical_contact),
+          acceleration: normalizeNumber(tempPlayer.acceleration) || normalizeNumber(activePlayer.acceleration),
+          ball_control: normalizeNumber(tempPlayer.ball_control) || normalizeNumber(activePlayer.ball_control),
+          tight_possession: normalizeNumber(tempPlayer.tight_possession) || normalizeNumber(activePlayer.tight_possession),
+          lofted_pass: normalizeNumber(tempPlayer.lofted_pass) || normalizeNumber(activePlayer.lofted_pass),
+          heading: normalizeNumber(tempPlayer.heading) || normalizeNumber(activePlayer.heading),
+          kicking_power: normalizeNumber(tempPlayer.kicking_power) || normalizeNumber(activePlayer.kicking_power),
+          jumping: normalizeNumber(tempPlayer.jumping) || normalizeNumber(activePlayer.jumping),
+          stamina: normalizeNumber(tempPlayer.stamina) || normalizeNumber(activePlayer.stamina),
+          tackling: normalizeNumber(tempPlayer.tackling) || normalizeNumber(activePlayer.tackling),
+          aggression: normalizeNumber(tempPlayer.aggression) || normalizeNumber(activePlayer.aggression),
         };
 
         // Add all stats comparison
         let hasStatChange = false;
         statsFields.forEach(stat => {
           const oldStat = normalizeNumber(activePlayer[stat]);
-          const newStat = normalizeNumber(tempPlayer[stat]);
+          let newStat = normalizeNumber(tempPlayer[stat]);
+          // Fall back to oldStat if newStat is 0 (missing in import) but oldStat is > 0
+          if (newStat === 0 && oldStat > 0) {
+            newStat = oldStat;
+          }
           oldValues[stat] = oldStat;
           newValues[stat] = newStat;
           if (oldStat !== newStat) {
