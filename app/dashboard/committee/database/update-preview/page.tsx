@@ -283,9 +283,14 @@ Continue?`;
                       .map((player, idx) => (
                     <div key={idx} className="glass rounded-lg p-3 border border-orange-200 hover:shadow-md transition-shadow">
                       {/* Player Name Header */}
-                      <div className="font-bold text-lg mb-2 text-gray-900 flex items-center gap-2">
+                      <div className="font-bold text-lg mb-2 text-gray-900 flex flex-wrap items-center gap-2">
                         <span className="text-orange-600"><RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /></span>
                         {player.name}
+                        {player.isCrosscheckedMatch && (
+                          <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full font-semibold border border-amber-300 uppercase tracking-wider">
+                            Crosschecked Match (ID mismatch resolved: {player.oldPlayerId} &rarr; {player.player_id})
+                          </span>
+                        )}
                       </div>
                       
                       {/* Compact Side-by-side comparison */}

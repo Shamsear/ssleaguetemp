@@ -14,9 +14,56 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'No players found in temporary table to apply.' }, { status: 400 });
     }
 
-    // 2. Fetch existing active player IDs to determine what can be updated
-    const activeRows = await sql.query('SELECT player_id FROM footballplayers');
+    // 2. Fetch existing active players with basic info to check for crosscheck matches
+    const activeRows = await sql.query('SELECT id, player_id, name, nationality FROM footballplayers');
+    
+    // Create maps and sets for quick lookup
     const activeIds = new Set(activeRows.map((r: any) => r.player_id?.toString()).filter(Boolean));
+    const tempIds = new Set(tempPlayers.map((r: any) => r.player_id?.toString()).filter(Boolean));
+    
+    // Build active duplicate map for name + nationality matching
+    const activeDupMap = new Map<string, any[]>();
+    activeRows.forEach((p: any) => {
+      if (p.name && p.nationality) {
+        const key = `${p.name.trim().toLowerCase()}_${p.nationality.trim().toLowerCase()}`;
+        if (!activeDupMap.has(key)) {
+          activeDupMap.set(key, []);
+        }
+        activeDupMap.get(key)!.push(p);
+      }
+    });
+
+    // Find and apply crosscheck updates for mismatched player_ids
+    let crosscheckedCount = 0;
+    for (const tempPlayer of tempPlayers) {
+      const tempPlayerId = tempPlayer.player_id?.toString();
+      if (!tempPlayerId) continue;
+
+      // If temp player ID does not exist in active database
+      if (!activeIds.has(tempPlayerId)) {
+        const dupKey = tempPlayer.name && tempPlayer.nationality
+          ? `${tempPlayer.name.trim().toLowerCase()}_${tempPlayer.nationality.trim().toLowerCase()}`
+          : '';
+        
+        if (dupKey) {
+          const matches = activeDupMap.get(dupKey) || [];
+          // Find an active player with this name+nationality whose player_id is NOT in tempIds
+          const unmatchedActive = matches.find((m: any) => !tempIds.has(m.player_id?.toString()));
+          if (unmatchedActive) {
+            // Found a crosscheck match! Update active player's player_id in active database to match temp player's ID
+            console.log(`Crosscheck Match found for ${tempPlayer.name}: Updating player_id in active DB from ${unmatchedActive.player_id} to ${tempPlayerId}`);
+            await sql.query('UPDATE footballplayers SET player_id = $1, updated_at = NOW() WHERE id = $2', [tempPlayerId, unmatchedActive.id]);
+            
+            // Also update player_history table if it exists and uses this player_id
+            await sql.query('UPDATE player_history SET player_id = $1 WHERE player_id = $2', [tempPlayerId, unmatchedActive.player_id]);
+            
+            // Update our local activeIds set to include the new player_id
+            activeIds.add(tempPlayerId);
+            crosscheckedCount++;
+          }
+        }
+      }
+    }
 
     // 3. Filter players based on apply settings
     const playersToApply = tempPlayers.filter(p => {
