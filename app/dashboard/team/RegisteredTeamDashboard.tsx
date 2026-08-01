@@ -950,13 +950,46 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
               )}
 
               {scheduledRounds && scheduledRounds.length > 0 && activeRounds.length === 0 && activeBids.length === 0 && (
-                <button
-                  onClick={() => setActiveTab('auctions')}
-                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
-                >
-                  <span>📅</span>
-                  <span>{scheduledRounds.length} Upcoming Round{scheduledRounds.length > 1 ? 's' : ''}</span>
-                </button>
+                <div className="space-y-2 mt-2">
+                  <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider font-mono">Next Scheduled Round</div>
+                  {scheduledRounds.slice(0, 1).map(round => {
+                    const startDate = new Date(round.start_time);
+                    const msLeft = startDate.getTime() - Date.now();
+                    const isDue = msLeft <= 0;
+                    const totalSecs = Math.floor(msLeft / 1000);
+                    const days = Math.floor(totalSecs / 86400);
+                    const hrs = Math.floor((totalSecs % 86400) / 3600);
+                    const mins = Math.floor((totalSecs % 3600) / 60);
+                    const secs = totalSecs % 60;
+                    const pad = (n: number) => String(n).padStart(2, '0');
+                    const countdownStr = isDue ? null : days > 0
+                      ? `${days}d ${pad(hrs)}:${pad(mins)}:${pad(secs)}`
+                      : `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+
+                    return (
+                      <div key={round.id} className="p-3 bg-amber-50/60 border border-amber-200/60 rounded-2xl space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-extrabold text-slate-800">
+                            Round #{round.round_number} ({round.position})
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded bg-amber-100 border border-amber-200 text-amber-800 text-[9px] font-mono font-bold uppercase">
+                            Upcoming
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-mono space-y-1">
+                          <div>Starts: {startDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}</div>
+                          <div>Max Bids: {round.max_bids_per_team} • Duration: {((round.duration_seconds || 0) / 3600).toFixed(1)} hrs</div>
+                        </div>
+                        <button
+                          onClick={() => setActiveTab('auctions')}
+                          className="w-full mt-1 py-1.5 px-3 bg-amber-500 hover:bg-amber-600 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5"
+                        >
+                          <span>⏱ {countdownStr || 'Starting soon...'}</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
 
               {roundResults.length > 0 && (
