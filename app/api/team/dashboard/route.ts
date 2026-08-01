@@ -815,6 +815,27 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    // Fetch scheduled (standby) rounds so teams can see what's coming
+    const scheduledRoundsResult = await sql`
+      SELECT 
+        r.id,
+        r.season_id,
+        r.round_number,
+        r.position,
+        r.status,
+        r.start_time,
+        r.end_time,
+        r.duration_seconds,
+        r.max_bids_per_team,
+        r.finalization_mode,
+        r.round_type
+      FROM rounds r
+      WHERE r.season_id = ${seasonId}
+      AND r.status = 'scheduled'
+      ORDER BY r.start_time ASC
+    `;
+    console.log('✅ Found scheduled rounds:', scheduledRoundsResult.length);
+
     // Calculate average rating from players (only stat we need to calculate)
     const avgRating = players.length > 0 
       ? players.reduce((sum, p) => sum + (p.overall_rating || 0), 0) / players.length 
@@ -828,6 +849,7 @@ export async function GET(request: NextRequest) {
         manager: managerData,
         activeRounds,
         pendingRounds,
+        scheduledRounds: scheduledRoundsResult,
         activeBids,
         players, // Football players for auction
         realPlayers, // Real players assigned to team (for manager selection)

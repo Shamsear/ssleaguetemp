@@ -192,6 +192,7 @@ interface DashboardData {
   manager?: Manager | null;
   activeRounds: Round[];
   pendingRounds: Round[];
+  scheduledRounds: Round[];
   activeBids: Bid[];
   players: Player[];
   tiebreakers: Tiebreaker[];
@@ -633,7 +634,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
     );
   }
 
-  const { team, activeRounds, pendingRounds, players, tiebreakers, bulkTiebreakers, activeBulkRounds, stats, activeBids, roundResults, seasonParticipation } = dashboardData;
+  const { team, activeRounds, pendingRounds, scheduledRounds, players, tiebreakers, bulkTiebreakers, activeBulkRounds, stats, activeBids, roundResults, seasonParticipation } = dashboardData;
 
   // Filter players
   const filteredPlayers = players.filter(player => {
@@ -942,10 +943,20 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 </button>
               )}
 
-              {activeRounds.length === 0 && activeBulkRounds.length === 0 && tiebreakers.length === 0 && activeBids.length === 0 && (!pendingRounds || pendingRounds.length === 0) && (
+              {activeRounds.length === 0 && activeBulkRounds.length === 0 && tiebreakers.length === 0 && activeBids.length === 0 && (!pendingRounds || pendingRounds.length === 0) && (!scheduledRounds || scheduledRounds.length === 0) && (
                 <div className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-150 text-slate-400 text-xs font-mono font-bold uppercase tracking-wider">
                   <span>No active auctions</span>
                 </div>
+              )}
+
+              {scheduledRounds && scheduledRounds.length > 0 && activeRounds.length === 0 && activeBids.length === 0 && (
+                <button
+                  onClick={() => setActiveTab('auctions')}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+                >
+                  <span>📅</span>
+                  <span>{scheduledRounds.length} Upcoming Round{scheduledRounds.length > 1 ? 's' : ''}</span>
+                </button>
               )}
 
               {roundResults.length > 0 && (
@@ -1219,7 +1230,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
             }`}
           >
             <Flame className="w-4 h-4 text-orange-500" /> 
-            <span>Auctions {(activeRounds.length > 0 || activeBids.length > 0 || (pendingRounds && pendingRounds.length > 0)) && `(${activeRounds.length + activeBids.length + (pendingRounds?.length || 0)})`}</span>
+            <span>Auctions {(activeRounds.length > 0 || activeBids.length > 0 || (pendingRounds && pendingRounds.length > 0) || (scheduledRounds && scheduledRounds.length > 0)) && `(${activeRounds.length + activeBids.length + (pendingRounds?.length || 0) + (scheduledRounds?.length || 0)})`}</span>
           </button>
           <button
             onClick={() => setActiveTab('squad')}
@@ -1275,7 +1286,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
           {/* Auctions Tab */}
           {activeTab === 'auctions' && (
             <div className="space-y-6">
-              {activeRounds.length === 0 && activeBids.length === 0 && (!pendingRounds || pendingRounds.length === 0) ? (
+              {activeRounds.length === 0 && activeBids.length === 0 && (!pendingRounds || pendingRounds.length === 0) && (!scheduledRounds || scheduledRounds.length === 0) ? (
                 <div className="text-center py-12">
                   <div className="inline-flex items-center justify-center p-4 bg-slate-50 border border-slate-100 rounded-full mb-4">
                     <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1287,6 +1298,64 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 </div>
               ) : (
                 <>
+                  {/* Scheduled (Upcoming) Rounds */}
+                  {scheduledRounds && scheduledRounds.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-tight">Upcoming Rounds</h3>
+                        <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-mono font-bold">{scheduledRounds.length}</span>
+                      </div>
+                      {scheduledRounds.map(round => {
+                        const startDate = new Date(round.start_time);
+                        const msLeft = startDate.getTime() - Date.now();
+                        const isDue = msLeft <= 0;
+                        const totalSecs = Math.floor(msLeft / 1000);
+                        const days = Math.floor(totalSecs / 86400);
+                        const hrs = Math.floor((totalSecs % 86400) / 3600);
+                        const mins = Math.floor((totalSecs % 3600) / 60);
+                        const secs = totalSecs % 60;
+                        const pad = (n: number) => String(n).padStart(2, '0');
+                        const countdownStr = isDue ? null : days > 0
+                          ? `${days}d ${pad(hrs)}:${pad(mins)}:${pad(secs)}`
+                          : `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+                        return (
+                          <div key={round.id} className="bg-amber-50/40 border border-amber-200/60 rounded-2xl p-4 border-l-4 border-l-amber-400">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="text-sm font-extrabold text-slate-900">
+                                    Round #{round.round_number}{round.position ? ` — ${round.position.includes(',') ? round.position.split(',').join(' + ') : round.position}` : ''}
+                                  </h4>
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 border border-amber-200 text-amber-800 text-[10px] font-mono font-bold uppercase">
+                                    📅 Scheduled
+                                  </span>
+                                </div>
+                                <p className="text-xs text-slate-500 font-mono mt-1">
+                                  {round.max_bids_per_team} bids per team • {((round.duration_seconds || 0) / 3600).toFixed(1)} hrs
+                                </p>
+                              </div>
+                              <div className="text-right font-mono">
+                                <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Starts</div>
+                                <div className="text-xs font-bold text-slate-700">
+                                  {startDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                                </div>
+                                {countdownStr ? (
+                                  <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 font-mono font-bold text-[11px]">
+                                    ⏱ {countdownStr}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 font-mono font-bold text-[10px] animate-pulse">
+                                    Starting soon…
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   {/* Active Rounds */}
                   {activeRounds.map(round => (
                     <div key={round.id} className="bg-slate-50 border border-slate-100 rounded-2xl p-6 border-l-4 border-amber-500 space-y-4">
