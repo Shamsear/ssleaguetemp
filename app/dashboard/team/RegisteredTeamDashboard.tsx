@@ -992,6 +992,14 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 </div>
               )}
 
+              <button
+                onClick={() => setActiveTab('auctions')}
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-105 transition-all text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                <span>🔥</span>
+                <span>View All Rounds</span>
+              </button>
+
               {roundResults.length > 0 && (
                 <button
                   onClick={() => setActiveTab('results')}
