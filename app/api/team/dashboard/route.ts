@@ -4,6 +4,7 @@ import { adminDb } from '@/lib/firebase/admin';
 import { verifyAuth } from '@/lib/auth-helper';
 import { getCached, setCached } from '@/lib/firebase/cache';
 import { checkAndFinalizeExpiredRound } from '@/lib/lazy-finalize-round';
+import { checkAndStartScheduledRounds } from '@/lib/lazy-start-round';
 import { batchGetFirebaseFields } from '@/lib/firebase/batch';
 import { decryptBidData } from '@/lib/encryption';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
@@ -212,6 +213,9 @@ export async function GET(request: NextRequest) {
 
     // Fetch active rounds for this season from Neon
     console.log('🔍 Fetching active rounds for season:', seasonId);
+    
+    // Auto-start any scheduled rounds whose time has arrived
+    await checkAndStartScheduledRounds(seasonId);
     
     // First, get all active rounds to check for expiration
     const activeRoundsResult = await sql`

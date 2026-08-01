@@ -185,6 +185,8 @@ export async function POST(request: NextRequest) {
       max_bids_per_team,
       duration_hours,
       finalization_mode,
+      status: reqStatus,
+      scheduled_start_time,
     } = body;
 
     // Validate required fields
@@ -244,9 +246,28 @@ export async function POST(request: NextRequest) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-    // Calculate end time (always use UTC)
+    // Calculate timing parameters (UTC)
     const now = new Date();
-    const endTime = new Date(now.getTime() + (parseFloat(duration_hours) * 3600 * 1000));
+    const durationHoursVal = parseFloat(duration_hours);
+    const durationSeconds = Math.round(durationHoursVal * 3600);
+    
+    const roundStatus = reqStatus === 'scheduled' ? 'scheduled' : 'active';
+    let startTime: Date | null = null;
+    let endTime: Date;
+
+    if (roundStatus === 'scheduled') {
+      if (!scheduled_start_time) {
+        return NextResponse.json(
+          { success: false, error: 'scheduled_start_time is required when scheduling a round' },
+          { status: 400 }
+        );
+      }
+      startTime = new Date(scheduled_start_time);
+      endTime = new Date(startTime.getTime() + (durationSeconds * 1000));
+    } else {
+      startTime = now;
+      endTime = new Date(now.getTime() + (durationSeconds * 1000));
+    }
     
     // Calculate round_number (count existing rounds + 1)
     const roundCountResult = await sql`
@@ -263,7 +284,9 @@ export async function POST(request: NextRequest) {
         position,
         max_bids_per_team,
         round_number,
+        start_time,
         end_time,
+        duration_seconds,
         status,
         finalization_mode,
         created_at,
@@ -275,8 +298,10 @@ export async function POST(request: NextRequest) {
         ${position},
         ${max_bids_per_team},
         ${roundNumber},
+        ${startTime ? startTime.toISOString() : null},
         ${endTime.toISOString()},
-        'active',
+        ${durationSeconds},
+        ${roundStatus},
         ${finalization_mode || 'auto'},
         ${now.toISOString()},
         ${now.toISOString()}
@@ -284,60 +309,60 @@ export async function POST(request: NextRequest) {
       RETURNING *
     `;
 
-    // Send FCM notification to all teams in season (before Firebase to avoid timeout)
-    try {
-      console.log(`📣 Sending round start notification for season ${seasonId}, round ${roundId}`);
-      
-      // Format duration nicely
-      const durationHours = parseFloat(duration_hours);
-      let durationText: string;
-      if (durationHours >= 1) {
-        durationText = `${durationHours} hour${durationHours !== 1 ? 's' : ''}`;
-      } else {
-        const durationMinutes = Math.round(durationHours * 60);
-        durationText = `${durationMinutes} minute${durationMinutes !== 1 ? 's' : ''}`;
+    // Only send notifications/broadcasts if starting immediately (active)
+    if (roundStatus === 'active') {
+      // Send FCM notification to all teams in season (before Firebase to avoid timeout)
+      try {
+        console.log(`📣 Sending round start notification for season ${seasonId}, round ${roundId}`);
+        
+        // Format duration nicely
+        let durationText: string;
+        if (durationHoursVal >= 1) {
+          durationText = `${durationHoursVal} hour${durationHoursVal !== 1 ? 's' : ''}`;
+        } else {
+          const durationMinutes = Math.round(durationHoursVal * 60);
+          durationText = `${durationMinutes} minute${durationMinutes !== 1 ? 's' : ''}`;
+        }
+        
+        const notifResult = await sendNotificationToSeason(
+          {
+            title: `🎯 New ${auctionSettings.auction_window.replace('_', ' ').toUpperCase()} Round!`,
+            body: `${position} bidding is now open. Duration: ${durationText}. Place your bids now!`,
+            url: `/dashboard/team`,
+            icon: '/logo.png',
+            data: {
+              type: 'round_started',
+              roundId: roundId!,
+              position: position,
+              endTime: endTime.toISOString()
+            }
+          },
+          seasonId
+        );
+        console.log(`✅ Round start notification result:`, notifResult);
+      } catch (notifError) {
+        console.error('Failed to send round start notification:', notifError);
       }
-      
-      const notifResult = await sendNotificationToSeason(
-        {
-          title: `🎯 New ${auctionSettings.auction_window.replace('_', ' ').toUpperCase()} Round!`,
-          body: `${position} bidding is now open. Duration: ${durationText}. Place your bids now!`,
-          url: `/dashboard/team`,
-          icon: '/logo.png',
-          data: {
-            type: 'round_started',
-            roundId: roundId!,
-            position: position,
-            endTime: endTime.toISOString()
-          }
-        },
-        seasonId
-      );
-      console.log(`✅ Round start notification result:`, notifResult);
-    } catch (notifError) {
-      console.error('Failed to send round start notification:', notifError);
-      // Don't fail the request if notification fails
-    }
 
-    // Broadcast round started via Firebase Realtime DB (blocking to ensure it completes)
-    try {
-      await broadcastRoundUpdate(seasonId, roundId!, {
-        type: 'round_started',
-        status: 'active',
-        round_id: roundId!,
-        position,
-        end_time: endTime.toISOString(),
-      });
-      console.log(`✅ Round started broadcast sent for round ${roundId}`);
-    } catch (broadcastError) {
-      console.error('❌ Firebase broadcast failed:', broadcastError);
-      // Don't fail the request if broadcast fails
+      // Broadcast round started via Firebase Realtime DB (blocking to ensure it completes)
+      try {
+        await broadcastRoundUpdate(seasonId, roundId!, {
+          type: 'round_started',
+          status: 'active',
+          round_id: roundId!,
+          position,
+          end_time: endTime.toISOString(),
+        });
+        console.log(`✅ Round started broadcast sent for round ${roundId}`);
+      } catch (broadcastError) {
+        console.error('❌ Firebase broadcast failed:', broadcastError);
+      }
     }
 
     return NextResponse.json({
       success: true,
       data: newRound[0],
-      message: 'Round created successfully',
+      message: roundStatus === 'scheduled' ? 'Round scheduled successfully' : 'Round created successfully',
     }, { status: 201 });
 
   } catch (error: any) {

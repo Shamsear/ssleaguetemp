@@ -88,6 +88,19 @@ export default function RoundsManagementPage() {
     finalization_mode: 'auto',
   });
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
+  const [startMode, setStartMode] = useState<'immediate' | 'scheduled'>('immediate');
+  const [scheduledStartTime, setScheduledStartTime] = useState<string>('');
+  const [isActivatingRound, setIsActivatingRound] = useState<string | null>(null);
+
+  // Initialize scheduledStartTime default value
+  useEffect(() => {
+    const date = new Date();
+    date.setHours(date.getHours() + 1);
+    date.setMinutes(0);
+    date.setSeconds(0);
+    const localIso = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+    setScheduledStartTime(localIso);
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -659,6 +672,8 @@ export default function RoundsManagementPage() {
           max_bids_per_team: parseInt(formData.max_bids_per_team),
           duration_hours: (parseFloat(formData.duration_hours) + (parseFloat(formData.duration_minutes) / 60)).toString(),
           finalization_mode: formData.finalization_mode,
+          status: startMode === 'scheduled' ? 'scheduled' : 'active',
+          scheduled_start_time: startMode === 'scheduled' ? new Date(scheduledStartTime).toISOString() : null,
         }),
       });
 
@@ -667,8 +682,10 @@ export default function RoundsManagementPage() {
       if (success) {
         showAlert({
           type: 'success',
-          title: 'Round Started',
-          message: `Round for ${selectedPositions.join(' + ')} started successfully!`
+          title: startMode === 'scheduled' ? 'Round Scheduled' : 'Round Started',
+          message: startMode === 'scheduled'
+            ? `Round for ${selectedPositions.join(' + ')} scheduled successfully for ${new Date(scheduledStartTime).toLocaleString()}!`
+            : `Round for ${selectedPositions.join(' + ')} started successfully!`
         });
         setFormData({
           position: '',
@@ -678,9 +695,18 @@ export default function RoundsManagementPage() {
           finalization_mode: 'auto',
         });
         setSelectedPositions([]);
+        setStartMode('immediate');
+        
+        // Reset default scheduled time
+        const date = new Date();
+        date.setHours(date.getHours() + 1);
+        date.setMinutes(0);
+        date.setSeconds(0);
+        const localIso = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        setScheduledStartTime(localIso);
         
         // Refresh rounds
-        const params = new URLSearchParams({ season_id: currentSeasonId });
+        const params = new URLSearchParams({ season_id: currentSeasonId! });
         const refreshResponse = await fetchWithTokenRefresh(`/api/admin/rounds?${params}`);
         const refreshData = await refreshResponse.json();
         if (refreshData.success) {
@@ -1109,6 +1135,47 @@ export default function RoundsManagementPage() {
     }
   };
 
+  const handleActivateStandbyRound = async (roundId: string) => {
+    const confirmed = await showConfirm({
+      type: 'info',
+      title: 'Start Round Early',
+      message: 'Are you sure you want to start this standby round immediately? This will activate the round and notify all teams.',
+      confirmText: 'Yes, Start Now',
+      cancelText: 'Cancel'
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsActivatingRound(roundId);
+    try {
+      const response = await fetchWithTokenRefresh(`/api/admin/rounds/${roundId}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+      if (result.success) {
+        showAlert({
+          type: 'success',
+          title: 'Round Started',
+          message: 'The standby round is now active!'
+        });
+        fetchAllData();
+      } else {
+        throw new Error(result.error || 'Failed to start round');
+      }
+    } catch (err: any) {
+      showAlert({
+        type: 'error',
+        title: 'Activation Failed',
+        message: err.message || 'Failed to start round'
+      });
+    } finally {
+      setIsActivatingRound(null);
+    }
+  };
+
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -1117,6 +1184,7 @@ export default function RoundsManagementPage() {
   };
 
   const activeRounds = rounds.filter(r => r.status === 'active');
+  const scheduledRounds = rounds.filter(r => r.status === 'scheduled');
   const finalizingRounds = rounds.filter(r => r.status === 'tiebreaker_pending');
   const expiredRounds = rounds.filter(r => r.status === 'expired' || r.status === 'expired_pending_finalization' || r.status === 'pending_finalization');
   const completedRounds = rounds.filter(r => r.status === 'completed');
@@ -1329,8 +1397,8 @@ export default function RoundsManagementPage() {
                     const hours = parseFloat(formData.duration_hours) || 0;
                     const minutes = parseFloat(formData.duration_minutes) || 0;
                     if (hours > 0 || minutes > 0) {
-                      const now = new Date();
-                      const endTime = new Date(now.getTime() + (hours * 60 + minutes) * 60 * 1000);
+                      const baseDate = startMode === 'scheduled' && scheduledStartTime ? new Date(scheduledStartTime) : new Date();
+                      const endTime = new Date(baseDate.getTime() + (hours * 60 + minutes) * 60 * 1000);
                       return (
                         <div className="p-3 bg-amber-50/50 border border-amber-200/60 rounded-xl text-xs">
                           <p className="font-bold text-amber-900 font-mono">
@@ -1376,6 +1444,54 @@ export default function RoundsManagementPage() {
               </div>
             </div>
 
+            {/* Start Mode & Scheduling Options */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+              <div>
+                <label htmlFor="start_mode" className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mb-1.5 block">Start Mode</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                    <Calendar className="w-4 h-4" />
+                  </span>
+                  <select
+                    id="start_mode"
+                    value={startMode}
+                    onChange={(e) => setStartMode(e.target.value as 'immediate' | 'scheduled')}
+                    className="pl-10 w-full py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all duration-200 text-sm font-bold font-mono shadow-sm text-slate-700"
+                  >
+                    <option value="immediate">Start Immediately (Live)</option>
+                    <option value="scheduled">Schedule for Later (Standby)</option>
+                  </select>
+                </div>
+                <p className="mt-1 text-[10px] text-slate-400 font-mono">
+                  {startMode === 'immediate' 
+                    ? 'Round starts immediately upon creation' 
+                    : 'Round stays in standby until scheduled start time or manual activation'}
+                </p>
+              </div>
+
+              {startMode === 'scheduled' && (
+                <div>
+                  <label htmlFor="scheduled_start_time" className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mb-1.5 block">Scheduled Start Time</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                      <Clock className="w-4 h-4" />
+                    </span>
+                    <input
+                      type="datetime-local"
+                      id="scheduled_start_time"
+                      value={scheduledStartTime}
+                      onChange={(e) => setScheduledStartTime(e.target.value)}
+                      required
+                      className="pl-10 w-full py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all duration-200 text-sm font-bold font-mono shadow-sm text-slate-800"
+                    />
+                  </div>
+                  <p className="mt-1 text-[10px] text-slate-400 font-mono">
+                    Local Time: {new Date(scheduledStartTime).toLocaleString()}
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Finalization Mode Selector */}
             <div className="mt-4">
               <label htmlFor="finalization_mode" className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mb-1.5 block">
@@ -1407,11 +1523,109 @@ export default function RoundsManagementPage() {
                 type="submit"
                 className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-2 cursor-pointer"
               >
-                <Play className="w-4 h-4 text-amber-400" /> Start Round
+                {startMode === 'scheduled' ? (
+                  <>
+                    <Calendar className="w-4 h-4 text-amber-400" /> Schedule Round
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 text-amber-400" /> Start Round
+                  </>
+                )}
               </button>
             </div>
           </form>
         </div>
+
+        {/* Standby / Scheduled Rounds Section */}
+        {scheduledRounds.length > 0 && (
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+            <h2 className="text-sm sm:text-base font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-amber-500" />
+              Standby / Scheduled Rounds
+              <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-805 text-[10px] font-extrabold font-mono shadow-sm">
+                {scheduledRounds.length}
+              </span>
+            </h2>
+            
+            <div className="divide-y divide-slate-100">
+              {scheduledRounds.map((round) => {
+                const startTimeDate = new Date(round.start_time);
+                const isDue = startTimeDate <= new Date();
+
+                return (
+                  <div key={round.id} className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center flex-wrap gap-2">
+                        {round.position.split(',').map((pos: string) => (
+                          <span key={pos} className="px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200 text-[10px] font-bold font-mono text-slate-700">
+                            {pos}
+                          </span>
+                        ))}
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          #{round.round_number} ({round.id})
+                        </span>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-550 font-mono">
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5 text-slate-400" />
+                          Bids: <strong className="text-slate-700">{round.max_bids_per_team}</strong>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          Duration: <strong className="text-slate-700">{((round.duration_seconds || 0) / 3600).toFixed(1)} hrs</strong>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
+                          Mode: <strong className="text-slate-700">{round.finalization_mode === 'auto' ? 'Auto-Finalize' : 'Manual'}</strong>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="text-left sm:text-right font-mono">
+                        <div className="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Scheduled Start</div>
+                        <div className={`text-xs font-bold ${isDue ? 'text-rose-500 animate-pulse' : 'text-slate-700'}`}>
+                          {startTimeDate.toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                          })}
+                          {isDue && ' (Due Now)'}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleActivateStandbyRound(round.id)}
+                          disabled={isActivatingRound !== null}
+                          className="p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700 rounded-xl border border-emerald-100 hover:border-emerald-250 transition-all shadow-sm flex items-center justify-center cursor-pointer disabled:opacity-55"
+                          title="Start Round Now"
+                        >
+                          {isActivatingRound === round.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-600 border-t-transparent" />
+                          ) : (
+                            <Play className="w-4 h-4 fill-emerald-600/10" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteRound(round.id)}
+                          className="p-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 rounded-xl border border-rose-100 hover:border-rose-250 transition-all shadow-sm flex items-center justify-center cursor-pointer"
+                          title="Delete Scheduled Round"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Active Rounds Section */}
         <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
