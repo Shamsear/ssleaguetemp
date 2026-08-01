@@ -63,6 +63,47 @@ export default function PublicPlayerDatabasePage() {
   const [sharePositionGroups, setSharePositionGroups] = useState<string[]>([]);
   const [playingStyles, setPlayingStyles] = useState<string[]>([]);
   const [isLoadingShareFilters, setIsLoadingShareFilters] = useState(false);
+  const [shareCount, setShareCount] = useState<number | null>(null);
+  const [isLoadingShareCount, setIsLoadingShareCount] = useState(false);
+
+  useEffect(() => {
+    if (!showShareModal) return;
+    
+    let active = true;
+    const fetchCount = async () => {
+      setIsLoadingShareCount(true);
+      try {
+        const params = new URLSearchParams({ limit: '10000' });
+        if (shareFilters.positionFilter) {
+          const allPositions = ['GK', 'CB', 'LB', 'RB', 'DMF', 'CMF', 'LMF', 'RMF', 'AMF', 'LWF', 'RWF', 'CF', 'SS'];
+          if (allPositions.includes(shareFilters.positionFilter)) {
+            params.append('position', shareFilters.positionFilter);
+          } else {
+            params.append('position_group', shareFilters.positionFilter);
+          }
+        }
+        if (shareFilters.playingStyleFilter) params.append('playing_style', shareFilters.playingStyleFilter);
+        if (shareFilters.teamFilter) params.append('team_id', shareFilters.teamFilter);
+        
+        const response = await fetch(`/api/players/database?${params.toString()}`);
+        const { success, data } = await response.json();
+        
+        if (success && data && data.players && active) {
+          setShareCount(data.players.length);
+        }
+      } catch (err) {
+        console.error('Error fetching share count:', err);
+      } finally {
+        if (active) setIsLoadingShareCount(false);
+      }
+    };
+
+    fetchCount();
+    return () => {
+      active = false;
+    };
+  }, [shareFilters, showShareModal]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalPlayers, setTotalPlayers] = useState(0);
@@ -532,12 +573,29 @@ export default function PublicPlayerDatabasePage() {
               </div>
             </div>
 
-            {/* Share/Download Buttons */}
+            {/* Share/Download Info & Buttons */}
+            <div className="mb-4 text-xs font-mono text-slate-500 bg-slate-50 border border-slate-150 rounded-xl p-3.5 flex justify-between items-center">
+              <span className="font-bold text-slate-600">PLAYERS TO EXPORT:</span>
+              {isLoadingShareCount ? (
+                <span className="flex items-center gap-1.5 font-bold text-slate-500">
+                  <svg className="animate-spin h-3.5 w-3.5 text-slate-500" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Calculating...
+                </span>
+              ) : shareCount !== null ? (
+                <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-250 px-3 py-0.5 rounded-full">{shareCount} player{shareCount !== 1 ? 's' : ''}</span>
+              ) : (
+                <span className="font-bold text-slate-400">-</span>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
                 onClick={async () => {
                   try {
-                    const params = new URLSearchParams({ limit: '1000' });
+                    const params = new URLSearchParams({ limit: '10000' });
                     if (shareFilters.positionFilter) {
                       const allPositions = ['GK', 'CB', 'LB', 'RB', 'DMF', 'CMF', 'LMF', 'RMF', 'AMF', 'LWF', 'RWF', 'CF', 'SS'];
                       if (allPositions.includes(shareFilters.positionFilter)) {
@@ -632,12 +690,12 @@ export default function PublicPlayerDatabasePage() {
                 className="w-full py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl transition-all duration-200 font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm hover:scale-[1.01]"
               >
                 <Share2 className="w-4 h-4" />
-                Share to WhatsApp
+                Share to WhatsApp {shareCount !== null ? `(${shareCount})` : ''}
               </button>
               <button
                 onClick={async () => {
                   try {
-                    const params = new URLSearchParams({ limit: '1000' });
+                    const params = new URLSearchParams({ limit: '10000' });
                     if (shareFilters.positionFilter) {
                       const allPositions = ['GK', 'CB', 'LB', 'RB', 'DMF', 'CMF', 'LMF', 'RMF', 'AMF', 'LWF', 'RWF', 'CF', 'SS'];
                       if (allPositions.includes(shareFilters.positionFilter)) {
@@ -737,7 +795,7 @@ export default function PublicPlayerDatabasePage() {
                 className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all duration-200 font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm hover:scale-[1.01]"
               >
                 <Download className="w-4 h-4" />
-                Download Excel
+                Download Excel {shareCount !== null ? `(${shareCount})` : ''}
               </button>
             </div>
           </div>

@@ -90,35 +90,14 @@ export async function GET(request: NextRequest) {
       'gk_catching', 'gk_parrying', 'gk_reflexes', 'gk_reach'
     ];
 
-    // Track matched active player IDs (direct or crosschecked) to exclude from not-found list
-    const matchedActivePlayerIds = new Set<string>();
 
     // Check temp players to update or create
     tempPlayers.forEach(tempPlayer => {
       const playerId = tempPlayer.player_id?.toString();
       if (!playerId) return;
 
-      let activePlayer = activeMap.get(playerId);
-      let isCrosscheckedMatch = false;
-      let oldPlayerId = null;
-
-      if (!activePlayer) {
-        const dupKey = tempPlayer.name && tempPlayer.nationality
-          ? `${tempPlayer.name.trim().toLowerCase()}_${tempPlayer.nationality.trim().toLowerCase()}`
-          : '';
-        if (dupKey) {
-          const activeDuplicates = activeDupMap.get(dupKey) || [];
-          const unmatchedActive = activeDuplicates.find(p => !tempMap.has(p.player_id?.toString()));
-          if (unmatchedActive) {
-            activePlayer = unmatchedActive;
-            isCrosscheckedMatch = true;
-            oldPlayerId = unmatchedActive.player_id?.toString();
-          }
-        }
-      }
-
+      const activePlayer = activeMap.get(playerId);
       if (activePlayer) {
-        matchedActivePlayerIds.add(activePlayer.player_id?.toString());
         // Build comparative records mapping aggregate attributes for UI
         const oldValues: any = {
           position: normalizeVal(activePlayer.position),
@@ -196,14 +175,12 @@ export async function GET(request: NextRequest) {
           oldValues.defending !== newValues.defending ||
           oldValues.physical !== newValues.physical;
 
-        if (hasBaseChange || hasStatChange || isCrosscheckedMatch) {
+        if (hasBaseChange || hasStatChange) {
           toUpdate.push({
             player_id: playerId,
             name: tempPlayer.name,
             old: oldValues,
-            new: newValues,
-            isCrosscheckedMatch,
-            oldPlayerId
+            new: newValues
           });
         } else {
           unchanged.push({
@@ -295,7 +272,7 @@ export async function GET(request: NextRequest) {
       const playerId = activePlayer.player_id?.toString();
       if (!playerId) return;
 
-      if (!matchedActivePlayerIds.has(playerId)) {
+      if (!tempMap.has(playerId)) {
         const uuid = activePlayer.id;
         const scrapedId = activePlayer.player_id?.toString();
 
