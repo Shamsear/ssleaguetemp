@@ -142,6 +142,7 @@ export async function GET(
       FROM team_players tp
       INNER JOIN footballplayers fp ON tp.player_id = fp.id
       WHERE tp.team_id = ${teamId}
+        AND fp.team_id = ${teamId}
         AND (
           tp.season_id = ${seasonId}
           OR (

@@ -513,6 +513,7 @@ export async function GET(request: NextRequest) {
       FROM team_players tp
       INNER JOIN footballplayers fp ON tp.player_id = fp.id
       WHERE tp.team_id = ${dbTeamId}
+        AND fp.team_id = ${dbTeamId}
         AND (
           tp.season_id = ${seasonId}
           OR (
