@@ -8,6 +8,7 @@ import { NewsGenerationInput } from './types';
  */
 export async function generateSeasonCreatedNews(seasonId: string, seasonName: string): Promise<string | null> {
   try {
+    return null; // News creation disabled
     console.log(`📰 Generating news for season creation: ${seasonName}`);
     
     const input: NewsGenerationInput = {
@@ -79,6 +80,7 @@ export async function generateSeasonCreatedNews(seasonId: string, seasonName: st
  */
 export async function generateSeasonActiveNews(seasonId: string, seasonName: string): Promise<string | null> {
   try {
+    return null; // News creation disabled
     console.log(`📰 Generating news for season activation: ${seasonName}`);
     
     const sql = getTournamentDb();
@@ -164,6 +166,7 @@ export async function generateSeasonActiveNews(seasonId: string, seasonName: str
  */
 export async function generateSeasonCompleteNews(seasonId: string, seasonName: string): Promise<string | null> {
   try {
+    return null; // News creation disabled
     console.log(`📰 Generating news for season completion: ${seasonName}`);
     
     const sql = getTournamentDb();

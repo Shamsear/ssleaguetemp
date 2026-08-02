@@ -94,6 +94,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    return NextResponse.json({ success: true, message: 'News creation is disabled.', newsId: 'mock' });
     const body = await request.json();
     const {
       id,

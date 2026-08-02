@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
           tp.purchase_price as final_amount
         FROM bids b
         INNER JOIN footballplayers p ON b.player_id = p.id
-        LEFT JOIN team_players tp ON b.player_id = tp.player_id AND tp.team_id = b.team_id
+        LEFT JOIN team_players tp ON b.player_id = tp.player_id AND tp.team_id = b.team_id AND tp.round_id = b.round_id
         WHERE b.round_id = ${round.id}
         ORDER BY b.player_id, b.amount DESC
       `;

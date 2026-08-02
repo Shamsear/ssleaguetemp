@@ -118,6 +118,7 @@ async function createNewsEntry(
   category: 'player_movement' | 'contract' | 'announcement'
 ) {
   try {
+    return; // News creation disabled
     const newsId = `news_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     await setDoc(doc(db, 'news', newsId), {
       title,

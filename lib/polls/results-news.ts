@@ -7,6 +7,7 @@ import { NewsGenerationInput } from '@/lib/news/types';
  */
 export async function generatePollResultsNews(pollId: string): Promise<string | null> {
   try {
+    return null; // News creation disabled
     const sql = getTournamentDb();
     
     // Fetch poll details
