@@ -352,6 +352,7 @@ export default function RoundsManagementPage() {
   const [roundDetails, setRoundDetails] = useState<{[key: string]: any}>({});
   const [roundSubmissions, setRoundSubmissions] = useState<{[key: string]: any}>({});
   const [loadingSubmissions, setLoadingSubmissions] = useState<{[key: string]: boolean}>({});
+  const [copiedRoundId, setCopiedRoundId] = useState<string | null>(null);
   const [auctionSettings, setAuctionSettings] = useState<any[]>([]);
   const [selectedAuctionSettingsId, setSelectedAuctionSettingsId] = useState<string>('');
   const timerRefs = useRef<{[key: string]: NodeJS.Timeout}>({});
@@ -1959,13 +1960,58 @@ export default function RoundsManagementPage() {
                             <Users className="w-4 h-4 text-slate-500" />
                             Team Submissions
                           </div>
-                          <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-extrabold uppercase font-mono shadow-sm">
-                            {roundSubmissions[round.id].submitted} submitted
-                            {roundSubmissions[round.id].drafted > 0 && (
-                              <span className="ml-1 text-indigo-600">· {roundSubmissions[round.id].drafted} draft</span>
-                            )}
-                            {' '}/ {roundSubmissions[round.id].total_teams} teams
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-extrabold uppercase font-mono shadow-sm">
+                              {roundSubmissions[round.id].submitted} submitted
+                              {roundSubmissions[round.id].drafted > 0 && (
+                                <span className="ml-1 text-indigo-600">· {roundSubmissions[round.id].drafted} draft</span>
+                              )}
+                              {' '}/ {roundSubmissions[round.id].total_teams} teams
+                            </span>
+                            <button
+                              onClick={() => {
+                                const subs = roundSubmissions[round.id];
+                                const sid = currentSeasonId || round.season_id || '';
+                                const num = sid.match(/\d+$/)?.[0] || '';
+                                const seasonTitle = `SOUTHSOCCERS SUPER LEAGUE S${num}`;
+                                const roundIdx = rounds.findIndex((r: any) => r.id === round.id);
+                                const roundNum = roundIdx >= 0 ? roundIdx + 1 : (round.round_number || '?');
+                                const deadline = round.end_time
+                                  ? new Date(round.end_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()
+                                  : 'TBD';
+                                const position = (round.position || '').toUpperCase();
+                                const teamLines = (subs.teams || [])
+                                  .map((team: any, idx: number) => {
+                                    const tick = team.has_submitted ? ' ✅' : '';
+                                    return `${idx + 1}. ${team.team_name}${tick}`;
+                                  })
+                                  .join('\n');
+                                const msg = `*${seasonTitle}*\n\n🏆 *BID SUBMITTED TEAMS*\n\n*ROUND ${roundNum}*\n*POSITION: ${position}*\n*DEADLINE: ${deadline}*\n\n${teamLines}`;
+                                navigator.clipboard.writeText(msg).then(() => {
+                                  setCopiedRoundId(round.id);
+                                  setTimeout(() => setCopiedRoundId(null), 2000);
+                                });
+                              }}
+                              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition-all ${copiedRoundId === round.id ? 'bg-emerald-600 text-white' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}
+                              title="Copy submissions list"
+                            >
+                              {copiedRoundId === round.id ? (
+                                <>
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  Copied!
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                  Copy
+                                </>
+                              )}
+                            </button>
+                          </div>
                         </div>
 
                         {/* Mobile view */}

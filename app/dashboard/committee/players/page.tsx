@@ -1233,7 +1233,7 @@ export default function CommitteePlayersPage() {
       {/* Export Filter Modal */}
       {showExportModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="console-card bg-white rounded-2xl p-6 md:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200/60 font-mono flex flex-col">
+          <div className="console-card bg-white rounded-2xl p-6 md:p-8 max-w-3xl w-full max-h-[90vh] shadow-2xl border border-slate-200/60 font-mono flex flex-col">
             <h3 className="text-lg font-extrabold text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-2">
               <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -1244,6 +1244,7 @@ export default function CommitteePlayersPage() {
               Customize sheets, player selection, and column configuration:
             </p>
 
+            <div className="flex-1 overflow-y-auto min-h-0">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
               {/* Left Column: Radio Filters & Summary */}
               <div className="md:col-span-2 space-y-4">
@@ -1421,8 +1422,9 @@ export default function CommitteePlayersPage() {
                 </div>
               </div>
             </div>
+            </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-shrink-0 pt-4 border-t border-slate-100">
               <button
                 onClick={() => setShowExportModal(false)}
                 className="flex-1 px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors font-bold uppercase tracking-wider text-xs text-center"
