@@ -277,6 +277,16 @@ export default function TeamRoundPage() {
       if (!result.success) {
         throw new Error(result.error || 'Failed to save bids');
       }
+      // Sync local state immediately on success so we don't depend on asynchronous query response timing
+      if (result.bids) {
+        setLocalBids(result.bids.map((b: any) => ({
+          id: b.id || `${b.team_id || ''}_${roundId}_${b.player_id}`,
+          player_id: b.player_id,
+          amount: b.amount,
+          round_id: roundId,
+          player: b.player || players.find((p: any) => p.id === b.player_id)
+        })));
+      }
       setHasUnsavedChanges(false);
       refetchRoundData();
     } catch (err: any) {
@@ -635,7 +645,7 @@ export default function TeamRoundPage() {
     return 'text-primary';
   };
 
-  if (loading || isLoading) {
+  if (loading || (isLoading && !isInitialized)) {
     return (
       <div className="console-bg min-h-screen flex items-center justify-center relative">
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -990,25 +1000,13 @@ export default function TeamRoundPage() {
                                       <div className="flex gap-2">
                                         <button
                                           onClick={() => handleTableEditSubmit(bid)}
-                                          disabled={cancelBidMutation.isPending || placeBidMutation.isPending}
-                                          className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                          className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 shadow-sm transition-colors"
                                         >
-                                          {cancelBidMutation.isPending || placeBidMutation.isPending ? (
-                                            <span className="flex items-center gap-1.5">
-                                              <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                              </svg>
-                                              Saving...
-                                            </span>
-                                          ) : (
-                                            'Save'
-                                          )}
+                                          Save
                                         </button>
                                         <button
                                           onClick={handleTableEditCancel}
-                                          disabled={cancelBidMutation.isPending || placeBidMutation.isPending}
-                                          className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-300 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                          className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-300 shadow-sm transition-colors"
                                         >
                                           Cancel
                                         </button>
@@ -1108,25 +1106,13 @@ export default function TeamRoundPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleTableEditSubmit(bid)}
-                                disabled={cancelBidMutation.isPending || placeBidMutation.isPending}
-                                className="flex-1 px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="flex-1 px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 shadow-sm transition-colors"
                               >
-                                {cancelBidMutation.isPending || placeBidMutation.isPending ? (
-                                  <span className="flex items-center justify-center gap-1.5">
-                                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Saving...
-                                  </span>
-                                ) : (
-                                  'Save'
-                                )}
+                                Save
                               </button>
                               <button
                                 onClick={handleTableEditCancel}
-                                disabled={cancelBidMutation.isPending || placeBidMutation.isPending}
-                                className="flex-1 px-4 py-2.5 rounded-lg bg-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-300 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="flex-1 px-4 py-2.5 rounded-lg bg-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-300 shadow-sm transition-colors"
                               >
                                 Cancel
                               </button>
@@ -1141,6 +1127,39 @@ export default function TeamRoundPage() {
             ) : (
               <div className="glass-card p-4 rounded-xl backdrop-blur-sm bg-white/30 border border-white/10 text-center">
                 <span className="text-sm text-gray-500">You haven't placed any bids in this round yet</span>
+              </div>
+            )}
+
+            {/* Unsaved Changes Inline Action Card */}
+            {hasUnsavedChanges && !isLocked && (
+              <div className="mt-4 p-4 bg-amber-50/60 border border-amber-200/60 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 font-mono">
+                <div className="flex items-center gap-3">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse flex-shrink-0"></span>
+                  <div className="text-left">
+                    <p className="text-xs uppercase font-black tracking-wider text-amber-800">Unsaved Changes</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Please save your draft bids before leaving</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleSaveBids(localBids)}
+                  disabled={isSaving}
+                  className="w-full sm:w-auto px-5 py-2.5 bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-bold uppercase rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <span className="flex items-center gap-1.5">
+                      <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  ) : (
+                    <>
+                      <span>💾</span>
+                      <span>Save Draft</span>
+                    </>
+                  )}
+                </button>
               </div>
             )}
 
@@ -1248,35 +1267,7 @@ export default function TeamRoundPage() {
           </div>
       </div>
 
-      {/* Floating Save Bar */}
-      {hasUnsavedChanges && !isLocked && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-md bg-slate-900 text-white rounded-2xl p-4 shadow-2xl flex items-center justify-between border border-amber-400/30 backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-            <div>
-              <p className="text-xs font-mono uppercase font-black tracking-wider text-amber-400">Unsaved Changes</p>
-              <p className="text-[10px] text-slate-300 font-mono mt-0.5">Please save your bidding changes</p>
-            </div>
-          </div>
-          <button
-            onClick={() => handleSaveBids(localBids)}
-            disabled={isSaving}
-            className="px-4 py-2 bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-mono font-bold uppercase rounded-lg transition-colors flex items-center gap-1.5 shadow-lg disabled:opacity-50"
-          >
-            {isSaving ? (
-              <span className="flex items-center gap-1.5">
-                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Saving...
-              </span>
-            ) : (
-              'Save Draft'
-            )}
-          </button>
-        </div>
-      )}
+      {/* Saved status indicators handled inline in card above */}
 
       {/* Modal Components */}
       <AlertModal

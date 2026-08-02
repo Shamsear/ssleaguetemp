@@ -229,6 +229,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
   const [timeRemaining, setTimeRemaining] = useState<{ [key: string]: number }>({});
   const [bulkTimeRemaining, setBulkTimeRemaining] = useState<{ [key: number]: number }>({});
   const [activeTab, setActiveTab] = useState<'auctions' | 'squad' | 'results' | 'overview' | 'fantasy'>('auctions');
+  const [scheduledTimeRemaining, setScheduledTimeRemaining] = useState<{ [key: string]: number }>({});
 
   const handleTabChange = (tabName: 'auctions' | 'squad' | 'results' | 'overview' | 'fantasy') => {
     setActiveTab(tabName);
@@ -415,9 +416,11 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
     };
   }, [seasonStatus?.seasonId, dashboardData?.team?.id, fetchDashboard, showAlert]);
 
-  // Timer effect for active rounds - optimized with requestAnimationFrame
+  // Timer effect for active & scheduled rounds - optimized with requestAnimationFrame
   useEffect(() => {
-    if (!dashboardData?.activeRounds || dashboardData.activeRounds.length === 0) return;
+    const hasActive = dashboardData?.activeRounds && dashboardData.activeRounds.length > 0;
+    const hasScheduled = dashboardData?.scheduledRounds && dashboardData.scheduledRounds.length > 0;
+    if (!hasActive && !hasScheduled) return;
 
     let animationFrameId: number;
     let lastUpdate = Date.now();
@@ -429,21 +432,37 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
       if (now - lastUpdate >= 1000) {
         lastUpdate = now;
 
-        const newTimeRemaining: { [key: string]: number } = {};
         let hasActiveTimers = false;
 
-        dashboardData.activeRounds.forEach(round => {
-          if (round.end_time) {
-            const end = new Date(round.end_time).getTime();
-            const remaining = Math.max(0, Math.floor((end - now) / 1000));
-            newTimeRemaining[round.id] = remaining;
-            if (remaining > 0) hasActiveTimers = true;
-          }
-        });
+        // Active rounds
+        if (hasActive) {
+          const newTimeRemaining: { [key: string]: number } = {};
+          dashboardData!.activeRounds.forEach(round => {
+            if (round.end_time) {
+              const end = new Date(round.end_time).getTime();
+              const remaining = Math.max(0, Math.floor((end - now) / 1000));
+              newTimeRemaining[round.id] = remaining;
+              if (remaining > 0) hasActiveTimers = true;
+            }
+          });
+          setTimeRemaining(newTimeRemaining);
+        }
 
-        setTimeRemaining(newTimeRemaining);
+        // Scheduled rounds
+        if (hasScheduled) {
+          const newScheduledRemaining: { [key: string]: number } = {};
+          dashboardData!.scheduledRounds.forEach(round => {
+            if (round.start_time) {
+              const start = new Date(round.start_time).getTime();
+              const remaining = Math.max(0, Math.floor((start - now) / 1000));
+              newScheduledRemaining[round.id] = remaining;
+              if (remaining > 0) hasActiveTimers = true;
+            }
+          });
+          setScheduledTimeRemaining(newScheduledRemaining);
+        }
 
-        // Continue animation loop only if there are active timers
+        // Continue animation loop only if there are active countdowns
         if (hasActiveTimers) {
           animationFrameId = requestAnimationFrame(updateTimers);
         }
@@ -460,7 +479,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [dashboardData?.activeRounds]);
+  }, [dashboardData?.activeRounds, dashboardData?.scheduledRounds]);
 
   // Timer effect for bulk rounds - optimized with requestAnimationFrame
   useEffect(() => {
@@ -961,13 +980,15 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider font-mono">Next Scheduled Round</div>
                   {scheduledRounds.slice(0, 1).map(round => {
                     const startDate = new Date(round.start_time);
-                    const msLeft = startDate.getTime() - Date.now();
-                    const isDue = msLeft <= 0;
-                    const totalSecs = Math.floor(msLeft / 1000);
-                    const days = Math.floor(totalSecs / 86400);
-                    const hrs = Math.floor((totalSecs % 86400) / 3600);
-                    const mins = Math.floor((totalSecs % 3600) / 60);
-                    const secs = totalSecs % 60;
+                    const remainingSeconds = scheduledTimeRemaining[round.id] !== undefined 
+                      ? scheduledTimeRemaining[round.id] 
+                      : Math.max(0, Math.floor((startDate.getTime() - Date.now()) / 1000));
+                    const isDue = remainingSeconds <= 0;
+                    
+                    const days = Math.floor(remainingSeconds / 86400);
+                    const hrs = Math.floor((remainingSeconds % 86400) / 3600);
+                    const mins = Math.floor((remainingSeconds % 3600) / 60);
+                    const secs = remainingSeconds % 60;
                     const pad = (n: number) => String(n).padStart(2, '0');
                     const countdownStr = isDue ? null : days > 0
                       ? `${days}d ${pad(hrs)}:${pad(mins)}:${pad(secs)}`
@@ -1355,13 +1376,15 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                       </div>
                       {scheduledRounds.map(round => {
                         const startDate = new Date(round.start_time);
-                        const msLeft = startDate.getTime() - Date.now();
-                        const isDue = msLeft <= 0;
-                        const totalSecs = Math.floor(msLeft / 1000);
-                        const days = Math.floor(totalSecs / 86400);
-                        const hrs = Math.floor((totalSecs % 86400) / 3600);
-                        const mins = Math.floor((totalSecs % 3600) / 60);
-                        const secs = totalSecs % 60;
+                        const remainingSeconds = scheduledTimeRemaining[round.id] !== undefined
+                          ? scheduledTimeRemaining[round.id]
+                          : Math.max(0, Math.floor((startDate.getTime() - Date.now()) / 1000));
+                        const isDue = remainingSeconds <= 0;
+
+                        const days = Math.floor(remainingSeconds / 86400);
+                        const hrs = Math.floor((remainingSeconds % 86400) / 3600);
+                        const mins = Math.floor((remainingSeconds % 3600) / 60);
+                        const secs = remainingSeconds % 60;
                         const pad = (n: number) => String(n).padStart(2, '0');
                         const countdownStr = isDue ? null : days > 0
                           ? `${days}d ${pad(hrs)}:${pad(mins)}:${pad(secs)}`
