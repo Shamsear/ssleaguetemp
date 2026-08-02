@@ -558,16 +558,14 @@ export default function TeamRoundPage() {
       return; // No change
     }
 
-    // Calculate dynamic available balance (add back old bid amount)
-    const initialBalance = roundData?.teamBalance || 0;
-    const currentBidsTotal = localBids.filter(b => b.id !== bid.id).reduce((sum, b) => sum + b.amount, 0);
-    const availableBalance = initialBalance - currentBidsTotal;
+    // Calculate dynamic available balance (add back old bid amount, taking reserve pool limits into account)
+    const currentMaxAllowed = maxBidThisRound + bid.amount;
     
-    if (amount > availableBalance) {
+    if (amount > currentMaxAllowed) {
       showAlert({
         type: 'error',
-        title: 'Insufficient Balance',
-        message: 'Bid amount exceeds your available balance'
+        title: 'Reserve Pool Restriction',
+        message: `Bid of £${amount} exceeds the allowed limit. You must maintain minimum budget reserves for future rounds. Max bid allowed: £${currentMaxAllowed.toLocaleString()}`
       });
       return;
     }
@@ -1521,6 +1519,7 @@ export default function TeamRoundPage() {
                       bidCount={bidCount}
                       maxBids={round.max_bids_per_team}
                       teamBalance={teamBalance}
+                      maxBidAllowed={maxBidThisRound}
                       existingBidAmounts={myBids.map((b: Bid) => b.amount)}
                       onPlaceBid={handlePlaceBid}
                       onCancelBid={handleCancelBid}
@@ -1572,6 +1571,7 @@ interface PlayerCardProps {
   bidCount: number;
   maxBids: number;
   teamBalance: number;
+  maxBidAllowed: number;
   existingBidAmounts: number[]; // Add this to check for duplicates
   onPlaceBid: (playerId: string, amount: number) => void;
   onCancelBid: (bidId: string) => void;
@@ -1586,6 +1586,7 @@ function PlayerCard({
   bidCount,
   maxBids,
   teamBalance,
+  maxBidAllowed,
   existingBidAmounts,
   onPlaceBid,
   onCancelBid,
@@ -1636,14 +1637,14 @@ function PlayerCard({
       return; // No change
     }
 
-    // Calculate balance if editing (add back old bid amount)
-    const availableBalance = bid ? teamBalance + bid.amount : teamBalance;
+    // Calculate dynamic max allowed for editing (add back old bid amount)
+    const currentMaxAllowed = maxBidAllowed + (bid ? bid.amount : 0);
     
-    if (amount > availableBalance) {
+    if (amount > currentMaxAllowed) {
       showAlert({
         type: 'error',
-        title: 'Insufficient Balance',
-        message: 'Bid amount exceeds your available balance'
+        title: 'Reserve Pool Restriction',
+        message: `Bid of £${amount} exceeds the allowed limit. You must maintain minimum budget reserves for future rounds. Max bid allowed: £${currentMaxAllowed.toLocaleString()}`
       });
       return;
     }
@@ -1692,11 +1693,11 @@ function PlayerCard({
       return;
     }
 
-    if (amount > teamBalance) {
+    if (amount > maxBidAllowed) {
       showAlert({
         type: 'error',
-        title: 'Insufficient Balance',
-        message: 'Bid amount exceeds your team balance'
+        title: 'Reserve Pool Restriction',
+        message: `Bid of £${amount} exceeds the allowed limit. You must maintain minimum budget reserves for future rounds. Max bid allowed: £${maxBidAllowed.toLocaleString()}`
       });
       return;
     }
