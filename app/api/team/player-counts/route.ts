@@ -48,15 +48,15 @@ export async function GET(request: NextRequest) {
     // Use contract-based filtering: show players whose contract is active during this season
     const footballPlayerCounts = await auctionDb`
       SELECT 
-        tp.team_id,
+        team_id,
         COUNT(*) as count
-      FROM team_players tp
-      INNER JOIN footballplayers fp ON tp.player_id = fp.id
+      FROM footballplayers
       WHERE (
-        fp.contract_start_season <= ${seasonId}
-        AND fp.contract_end_season >= ${seasonId}
+        contract_start_season <= ${seasonId}
+        AND contract_end_season >= ${seasonId}
       )
-      GROUP BY tp.team_id
+      AND team_id IS NOT NULL
+      GROUP BY team_id
     `;
 
     const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;

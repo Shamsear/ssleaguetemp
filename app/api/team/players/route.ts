@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
           FROM team_players tp
           INNER JOIN footballplayers fp ON tp.player_id = fp.id
           WHERE tp.team_id = ${teamId}
+            AND fp.team_id = ${teamId}
             AND tp.season_id = ${seasonId}
           ORDER BY tp.acquired_at DESC
         `
@@ -69,6 +70,7 @@ export async function GET(request: NextRequest) {
           FROM team_players tp
           INNER JOIN footballplayers fp ON tp.player_id = fp.id
           WHERE tp.team_id = ${teamId}
+            AND fp.team_id = ${teamId}
           ORDER BY tp.acquired_at DESC
         `;
 

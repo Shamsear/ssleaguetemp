@@ -85,8 +85,8 @@ export async function GET(
         fp.name as player_name,
         fp.position as player_position
       FROM team_players tp
-      LEFT JOIN footballplayers fp ON tp.player_id = fp.player_id
-      WHERE fp.season_id = ${seasonId}
+      LEFT JOIN footballplayers fp ON tp.player_id = fp.id
+      WHERE tp.season_id = ${seasonId}
       ORDER BY tp.acquired_at DESC
     `;
 
