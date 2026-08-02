@@ -83,6 +83,7 @@ export default function TeamRoundPage() {
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [editingBidId, setEditingBidId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState('');
+  const [showMaxBidDetails, setShowMaxBidDetails] = useState(false);
 
   // Extract data from React Query result
   const round = roundData?.round;
@@ -786,12 +787,19 @@ export default function TeamRoundPage() {
                   <div>
                     <span className="text-slate-400">Rounds remaining:</span>
                     <p className="text-xs text-slate-700 font-mono font-black mt-0.5">{totalRounds - completedRounds}</p>
-                  </div>
-                  <div>
+                    <div>
                     <span className="text-slate-400">Max bid this round:</span>
-                    <p className="text-xs text-slate-700 font-mono font-black mt-0.5">
-                      £{maxBidThisRound.toLocaleString()}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <p className="text-xs text-slate-700 font-mono font-black">
+                        £{maxBidThisRound.toLocaleString()}
+                      </p>
+                      <button
+                        onClick={() => setShowMaxBidDetails(!showMaxBidDetails)}
+                        className="text-[9px] px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 rounded font-black uppercase transition-colors"
+                      >
+                        {showMaxBidDetails ? 'Hide' : 'Info'}
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <span className="text-slate-400">Your balance:</span>
@@ -803,6 +811,33 @@ export default function TeamRoundPage() {
                     </p>
                   </div>
                 </div>
+
+                {showMaxBidDetails && (
+                  <div className="mt-4 p-3 bg-amber-50/50 border border-amber-200/60 rounded-xl space-y-2 text-[10px] text-amber-900 font-mono animate-fadeIn">
+                    <div className="font-extrabold uppercase text-amber-800 border-b border-amber-200/60 pb-1.5">Max Bid Calculation Breakdown</div>
+                    <div className="grid grid-cols-2 gap-y-1">
+                      <span>Available Balance:</span>
+                      <span className="font-bold text-right">£{teamBalance.toLocaleString()}</span>
+                      
+                      <span>Remaining Rounds (excl. active):</span>
+                      <span className="font-bold text-right">{remainingRoundsCount} round(s)</span>
+                      
+                      <span>Min Reserve per Round:</span>
+                      <span className="font-bold text-right">£{minBalancePerRound.toLocaleString()}</span>
+                      
+                      <span className="border-t border-amber-200/60 pt-1 mt-1 font-extrabold">Required Reserve Pool:</span>
+                      <span className="border-t border-amber-200/60 pt-1 mt-1 font-bold text-right text-amber-850">
+                        ({remainingRoundsCount} × £{minBalancePerRound}) = £{(remainingRoundsCount * minBalancePerRound).toLocaleString()}
+                      </span>
+                      
+                      <span className="border-t border-amber-300 pt-1.5 mt-1 text-xs font-black">Max Bid Allowed:</span>
+                      <span className="border-t border-amber-300 pt-1.5 mt-1 text-xs font-black text-right text-slate-900">
+                        £{maxBidThisRound.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="mt-3 pt-3 border-t border-slate-200/60">
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                     Budget Reserve System: The system enforces phase-based minimum reserves to ensure you have enough balance for future rounds. Bids that would leave you below the required reserve will be rejected.
