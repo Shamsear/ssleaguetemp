@@ -229,6 +229,13 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
   const [timeRemaining, setTimeRemaining] = useState<{ [key: string]: number }>({});
   const [bulkTimeRemaining, setBulkTimeRemaining] = useState<{ [key: number]: number }>({});
   const [activeTab, setActiveTab] = useState<'auctions' | 'squad' | 'results' | 'overview' | 'fantasy'>('auctions');
+
+  const handleTabChange = (tabName: 'auctions' | 'squad' | 'results' | 'overview' | 'fantasy') => {
+    setActiveTab(tabName);
+    setTimeout(() => {
+      document.getElementById('dashboard-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
   const [selectedPosition, setSelectedPosition] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [bidSearchTerm, setBidSearchTerm] = useState('');
@@ -981,7 +988,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                           <div>Max Bids: {round.max_bids_per_team} • Duration: {((round.duration_seconds || 0) / 3600).toFixed(1)} hrs</div>
                         </div>
                         <button
-                          onClick={() => setActiveTab('auctions')}
+                          onClick={() => handleTabChange('auctions')}
                           className="w-full mt-1 py-1.5 px-3 bg-amber-500 hover:bg-amber-600 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5"
                         >
                           <span>⏱ {countdownStr || 'Starting soon...'}</span>
@@ -993,7 +1000,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
               )}
 
               <button
-                onClick={() => setActiveTab('auctions')}
+                onClick={() => handleTabChange('auctions')}
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-105 transition-all text-xs font-mono font-bold uppercase tracking-wider"
               >
                 <span>🔥</span>
@@ -1002,7 +1009,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
 
               {roundResults.length > 0 && (
                 <button
-                  onClick={() => setActiveTab('results')}
+                  onClick={() => handleTabChange('results')}
                   className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-105 transition-all text-xs font-mono font-bold uppercase tracking-wider"
                 >
                   <BarChart2 className="w-4 h-4 text-slate-500" />
@@ -1261,7 +1268,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
         )}
 
         {/* Tab Navigation - Fully Responsive */}
-        <div className="bg-white border border-slate-200/60 rounded-t-3xl p-2 shadow-sm flex flex-wrap gap-1">
+        <div id="dashboard-tabs" className="bg-white border border-slate-200/60 rounded-t-3xl p-2 shadow-sm flex flex-wrap gap-1">
           <button
             onClick={() => setActiveTab('auctions')}
             className={`flex items-center justify-center gap-2 flex-1 px-6 py-3 rounded-2xl font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
