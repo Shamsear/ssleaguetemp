@@ -131,8 +131,9 @@ export default function TeamRoundPage() {
   const totalRounds = roundData?.totalRounds || 0;
   const minBalancePerRound = roundData?.minBalancePerRound || 10;
   const submission = roundData?.submission || null;
-  const hasSubmitted = !!submission;
-  const isLocked = submission?.is_locked || false;
+  // Visually treat any saved draft state (where database is synced and hasUnsavedChanges is false) as submitted and locked.
+  const hasSubmitted = !!submission || (!hasUnsavedChanges && localBids.length > 0);
+  const isLocked = submission?.is_locked || (!hasUnsavedChanges && localBids.length > 0);
 
   // Extract phase settings and squad sizing details from roundData
   const settingsConfig = roundData?.settingsConfig || {
@@ -475,6 +476,13 @@ export default function TeamRoundPage() {
 
 
 
+  // Helper to dynamically check if the local draft bids state differs from the database state (rawMyBids)
+  const checkHasChanges = (updatedBids: any[]) => {
+    const dbIds = [...rawMyBids].map(b => `${b.player_id}_${b.amount}`).sort().join(',');
+    const localIds = [...updatedBids].map(b => `${b.player_id}_${b.amount}`).sort().join(',');
+    return dbIds !== localIds;
+  };
+
   // Place bid locally
   const handlePlaceBid = async (playerId: string, amount: number) => {
     if (!roundId) return;
@@ -509,7 +517,7 @@ export default function TeamRoundPage() {
     }
 
     setLocalBids(newLocalBids);
-    setHasUnsavedChanges(true);
+    setHasUnsavedChanges(checkHasChanges(newLocalBids));
   };
 
   // Cancel bid locally
@@ -524,14 +532,16 @@ export default function TeamRoundPage() {
     
     if (!confirmed) return;
 
-    setLocalBids(localBids.filter(b => b.id !== bidId));
-    setHasUnsavedChanges(true);
+    const updatedBids = localBids.filter(b => b.id !== bidId);
+    setLocalBids(updatedBids);
+    setHasUnsavedChanges(checkHasChanges(updatedBids));
   };
 
   // Silent delete locally
   const handleSilentDelete = async (bidId: string) => {
-    setLocalBids(localBids.filter(b => b.id !== bidId));
-    setHasUnsavedChanges(true);
+    const updatedBids = localBids.filter(b => b.id !== bidId);
+    setLocalBids(updatedBids);
+    setHasUnsavedChanges(checkHasChanges(updatedBids));
   };
 
   // Handle table edit
@@ -585,8 +595,9 @@ export default function TeamRoundPage() {
     }
 
     // Edit locally
-    setLocalBids(localBids.map(b => b.id === bid.id ? { ...b, amount } : b));
-    setHasUnsavedChanges(true);
+    const updatedBids = localBids.map(b => b.id === bid.id ? { ...b, amount } : b);
+    setLocalBids(updatedBids);
+    setHasUnsavedChanges(checkHasChanges(updatedBids));
     setEditingBidId(null);
     setEditAmount('');
   };
@@ -769,7 +780,8 @@ export default function TeamRoundPage() {
 
       const result = await response.json();
 
-      if (!result.success) {
+      // If database has no lock submission record, just catch/fallback and unlock local state
+      if (!result.success && result.error !== 'Submission not found') {
         throw new Error(result.error || 'Failed to unlock bids');
       }
 
@@ -779,7 +791,8 @@ export default function TeamRoundPage() {
         message: 'You can now modify your bids. Remember to submit again!'
       });
 
-      // Refetch round data to update submission status
+      // Unlock local modifications
+      setHasUnsavedChanges(true);
       refetchRoundData();
     } catch (error: any) {
       showAlert({
@@ -1075,29 +1088,33 @@ export default function TeamRoundPage() {
 
           {/* Submission Status Banner */}
           {hasSubmitted && isLocked && (
-            <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl font-mono">
+            <div className={`mb-4 p-4 rounded-2xl font-mono border ${!!submission ? 'bg-emerald-50 border-emerald-200' : 'bg-blue-50 border-blue-200'}`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="bg-emerald-100 border border-emerald-200 p-2 rounded-xl">
-                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className={`p-2 rounded-xl border ${!!submission ? 'bg-emerald-100 border-emerald-200' : 'bg-blue-100 border-blue-200'}`}>
+                    <svg className={`w-5 h-5 ${!!submission ? 'text-emerald-600' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="font-extrabold text-emerald-800 uppercase tracking-wide text-sm">Bids Submitted</p>
-                    <p className="text-[10px] text-emerald-600 uppercase font-bold mt-0.5">Your bids are locked and submitted</p>
+                    <p className={`font-extrabold uppercase tracking-wide text-sm ${!!submission ? 'text-emerald-800' : 'text-blue-800'}`}>
+                      {!!submission ? 'Bids Submitted' : 'Draft Saved'}
+                    </p>
+                    <p className={`text-[10px] uppercase font-bold mt-0.5 ${!!submission ? 'text-emerald-600' : 'text-blue-600'}`}>
+                      {!!submission ? 'Your bids are locked and submitted' : 'Your draft bids are saved to the database'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={handleShareToWhatsApp}
-                    className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all"
+                    className={`px-3 py-1.5 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all border ${!!submission ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200/60' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200/60'}`}
                   >
                     Share
                   </button>
                   <button
                     onClick={handleCopyToClipboard}
-                    className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all"
+                    className={`px-3 py-1.5 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all border ${!!submission ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-755 border-emerald-200/60' : 'bg-blue-50 hover:bg-blue-100 text-blue-755 border-blue-200/60'}`}
                   >
                     Copy
                   </button>
@@ -1118,13 +1135,13 @@ export default function TeamRoundPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-medium text-dark flex items-center">
-                <svg className="w-4 h-4 mr-1.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-4 h-4 mr-1.5 ${!!submission ? 'text-green-500' : 'text-blue-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Your Selected Players
                 {hasSubmitted && (
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full font-medium">
-                    Submitted
+                  <span className={`ml-2 px-2 py-0.5 text-xs rounded-full font-medium ${!!submission ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                    {!!submission ? 'Submitted' : 'Draft Saved'}
                   </span>
                 )}
               </h4>
@@ -1204,7 +1221,7 @@ export default function TeamRoundPage() {
                                 </span>
                               </td>
                               <td className="px-5 py-3.5 whitespace-nowrap text-right text-xs font-black text-slate-900">
-                                £{bid.amount.toLocaleString()}
+                                £{(bid.amount || 0).toLocaleString()}
                               </td>
                               <td className="px-5 py-3.5 whitespace-nowrap text-center">
                                 {!isLocked ? (
@@ -1313,7 +1330,7 @@ export default function TeamRoundPage() {
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0 ml-2">
-                            <p className="text-lg font-bold text-primary">£{bid.amount.toLocaleString()}</p>
+                            <p className="text-lg font-bold text-primary">£{(bid.amount || 0).toLocaleString()}</p>
                           </div>
                         </div>
                         
@@ -1797,7 +1814,7 @@ function PlayerCard({
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-150">
                 <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider">Current Bid</span>
-                <span className="text-xs font-black text-slate-900 font-mono">£{bid.amount.toLocaleString()}</span>
+                <span className="text-xs font-black text-slate-900 font-mono">£{(bid.amount || 0).toLocaleString()}</span>
               </div>
               
               {!isLocked ? (
@@ -1833,7 +1850,9 @@ function PlayerCard({
                 </div>
               ) : (
                 <div className="mt-1 flex items-center justify-end gap-1.5 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-150 uppercase tracking-wider w-fit self-end">
-                  <Check className="w-3 h-3" /> Submitted
+                  <svg className="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                  </svg> Submitted
                 </div>
               )}
             </div>
