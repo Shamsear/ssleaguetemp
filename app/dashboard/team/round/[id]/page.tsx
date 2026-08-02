@@ -92,7 +92,7 @@ export default function TeamRoundPage() {
   // Sync local bids with query data
   useEffect(() => {
     if (roundData && rawMyBids) {
-      if (!isInitialized || !hasUnsavedChanges) {
+      if (!isInitialized) {
         setLocalBids(rawMyBids.map((b: Bid) => ({
           id: b.id || `${b.team_id || ''}_${roundId}_${b.player_id}`,
           player_id: b.player_id,
@@ -101,6 +101,20 @@ export default function TeamRoundPage() {
           player: b.player
         })));
         setIsInitialized(true);
+      } else if (!hasUnsavedChanges) {
+        // Only update local state with query data if there are no unsaved changes
+        // and the incoming data has actually changed (e.g. updated via websocket)
+        const currentIds = localBids.map(b => `${b.player_id}_${b.amount}`).sort().join(',');
+        const incomingIds = rawMyBids.map((b: Bid) => `${b.player_id}_${b.amount}`).sort().join(',');
+        if (currentIds !== incomingIds) {
+          setLocalBids(rawMyBids.map((b: Bid) => ({
+            id: b.id || `${b.team_id || ''}_${roundId}_${b.player_id}`,
+            player_id: b.player_id,
+            amount: b.amount,
+            round_id: roundId,
+            player: b.player
+          })));
+        }
       }
     }
   }, [roundData, rawMyBids, isInitialized, hasUnsavedChanges, roundId]);
@@ -1451,60 +1465,91 @@ function PlayerCard({
     }
   };
 
-  const getRatingColor = (rating: number) => {
-    if (rating >= 90) return 'bg-gradient-to-r from-green-500 to-emerald-600';
-    if (rating >= 80) return 'bg-gradient-to-r from-blue-500 to-blue-600';
-    if (rating >= 70) return 'bg-gradient-to-r from-yellow-500 to-amber-600';
-    return 'bg-gradient-to-r from-gray-500 to-gray-600';
+  const getRatingBg = (rating: number) => {
+    if (rating >= 90) return 'bg-emerald-500 text-white';
+    if (rating >= 80) return 'bg-blue-600 text-white';
+    if (rating >= 70) return 'bg-amber-500 text-slate-900';
+    return 'bg-slate-500 text-white';
   };
+
+  const cardBorderClass = hasBid
+    ? 'border-2 border-slate-900 shadow-md scale-[1.01]'
+    : player.is_starred
+      ? 'border border-amber-300 hover:border-amber-400/80 shadow-sm'
+      : 'border border-slate-200/60 hover:border-slate-350 shadow-sm';
 
   return (
     <div
-      className={`bg-white border border-slate-200/60 rounded-2xl p-4 hover:border-amber-400/40 hover:shadow-md transition-all duration-200 font-mono border-l-4 ${
-        player.is_starred ? 'border-l-amber-500' : 'border-l-slate-300'
-      } ${hasBid ? 'ring-2 ring-slate-800' : ''}`}
+      className={`bg-white rounded-3xl p-5 hover:shadow-lg transition-all duration-300 flex flex-col justify-between relative overflow-hidden ${cardBorderClass} ${isLocked ? 'opacity-90' : ''}`}
     >
-      <div className="flex justify-between items-start">
-        <div className="flex items-start gap-3">
-          <div className="bg-slate-50 border border-slate-200/60 rounded-xl flex-shrink-0 h-10 w-10 flex items-center justify-center">
-            <span className="text-sm font-extrabold text-slate-600">{player.position}</span>
-          </div>
-          <div>
-            <div className="font-extrabold text-slate-800 flex items-center gap-1 uppercase tracking-wide text-sm">
-              {player.name}
-              {player.is_starred && (
-                <span className="px-1.5 py-0.5 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200/60 rounded-lg">
-                  STARRED
-                </span>
-              )}
-            </div>
-            <div className="text-[10px] text-slate-400 uppercase font-bold mt-1">
-              {player.position} • {player.team_name}
-            </div>
+      {/* Background Subtle Watermark/Pattern */}
+      {player.is_starred && (
+        <div className="absolute -top-10 -right-10 w-28 h-28 bg-amber-400/5 rounded-full blur-2xl pointer-events-none" />
+      )}
 
-            {player.overall_rating && (
-              <div className="flex items-center mt-1.5 gap-1.5">
-                <span className="text-xs font-black text-amber-500"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.overall_rating}</span>
-                {player.playing_style && <span className="text-[9px] text-slate-400 uppercase font-bold">{player.playing_style}</span>}
+      {/* Submitted Watermark Overlay when locked or active list submitted */}
+      {isLocked && hasBid && (
+        <div className="absolute inset-0 bg-emerald-500/5 pointer-events-none" />
+      )}
+
+      <div className="space-y-4">
+        {/* Card Header Profile row */}
+        <div className="flex justify-between items-start gap-2">
+          <div className="flex gap-3">
+            {/* Position Block Badge */}
+            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-extrabold text-xs shadow-sm flex-shrink-0">
+              {player.position}
+            </div>
+            
+            {/* Text details */}
+            <div className="space-y-0.5">
+              <div className="font-extrabold text-slate-900 text-sm tracking-tight flex items-center gap-1.5 uppercase flex-wrap">
+                <span>{player.name}</span>
+                {player.is_starred && (
+                  <span className="px-1.5 py-0.5 text-[8px] font-black bg-amber-400 text-slate-950 rounded-md tracking-wider">
+                    STARRED
+                  </span>
+                )}
               </div>
-            )}
+              <div className="text-[10px] text-slate-400 uppercase font-black tracking-wider flex items-center gap-1.5">
+                <span>{player.team_name}</span>
+              </div>
+            </div>
           </div>
+
+          {/* Rating Badge */}
+          {player.overall_rating && (
+            <div className={`px-2.5 py-1 rounded-xl font-mono font-black text-xs shadow-sm flex-shrink-0 flex items-center justify-center ${getRatingBg(player.overall_rating)}`}>
+              {player.overall_rating}
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-col items-end gap-2">
-          {hasBid && bid && (
-            <>
-              <div className="inline-flex items-center px-2.5 py-0.5 rounded-lg bg-slate-800 text-white text-[10px] font-black border border-slate-900 uppercase tracking-wider">
-                £{bid.amount.toLocaleString()}
+        {/* Tactical Info Row */}
+        <div className="flex items-center justify-between border-t border-slate-50 pt-3">
+          <span className="text-[10px] text-slate-400 uppercase font-black tracking-wider">Style</span>
+          <span className="text-[11px] text-slate-700 font-bold uppercase tracking-wide">
+            {player.playing_style || 'General Player'}
+          </span>
+        </div>
+
+        {/* Bid details and forms */}
+        <div className="border-t border-slate-100 pt-3">
+          {hasBid && bid ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-150">
+                <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider">Current Bid</span>
+                <span className="text-xs font-black text-slate-900 font-mono">£{bid.amount.toLocaleString()}</span>
               </div>
-              {!isLocked && (
-                <div className="flex gap-1">
+              
+              {!isLocked ? (
+                <div className="flex items-center justify-end gap-3 mt-1 text-[10px]">
                   <button
                     onClick={handleEdit}
                     disabled={isSubmitting || isCanceling}
-                    className="text-xs text-blue-500 hover:text-blue-700 flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                    className="text-blue-600 hover:text-blue-800 font-extrabold uppercase tracking-wider flex items-center gap-1 transition-colors"
                   >
-                    <svg className="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                     Edit
@@ -1516,19 +1561,11 @@ function PlayerCard({
                       setIsCanceling(false);
                     }}
                     disabled={isCanceling || isSubmitting}
-                    className="text-xs text-red-500 hover:text-red-700 flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                    className="text-red-500 hover:text-red-700 font-extrabold uppercase tracking-wider flex items-center gap-1 transition-colors"
                   >
-                    {isCanceling ? (
+                    {isCanceling ? '...' : (
                       <>
-                        <svg className="animate-spin w-3 h-3 mr-0.5" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        ...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                         Delete
@@ -1536,27 +1573,66 @@ function PlayerCard({
                     )}
                   </button>
                 </div>
+              ) : (
+                <div className="mt-1 flex items-center justify-end gap-1.5 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-150 uppercase tracking-wider w-fit self-end">
+                  <Check className="w-3 h-3" /> Submitted
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {bidCount < maxBids && !isLocked ? (
+                <form onSubmit={handleSubmit} className="flex gap-2">
+                  <div className="relative flex-grow">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">
+                      £
+                    </span>
+                    <input
+                      type="number"
+                      value={bidAmount}
+                      onChange={(e) => setBidAmount(e.target.value)}
+                      className="block w-full pl-7 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
+                      placeholder="Bid amount"
+                      required
+                      min="10"
+                      max={teamBalance}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50"
+                  >
+                    Bid
+                  </button>
+                </form>
+              ) : (
+                <div className="py-2 text-[10px] text-center text-slate-400 font-black uppercase tracking-wider bg-slate-50 border border-slate-100 rounded-xl">
+                  {isLocked ? 'Locked' : 'Slot Reached'}
+                </div>
               )}
             </>
           )}
         </div>
       </div>
 
-      {/* Edit Mode Form */}
+      {/* Edit Mode Inline Form overlay */}
       {hasBid && bid && isEditing && !isLocked && (
-        <div className="mt-4 pt-3 border-t border-gray-200 bg-blue-50/30 p-3 rounded-lg">
-          <form onSubmit={handleEditSubmit}>
+        <div className="absolute inset-x-0 bottom-0 p-4 bg-slate-900 text-white rounded-t-2xl border-t border-amber-400/20 backdrop-blur-sm z-10 animate-slide-up">
+          <form onSubmit={handleEditSubmit} className="space-y-3">
+            <p className="text-[10px] font-black uppercase tracking-wider text-amber-400">Edit Bid Amount</p>
             <div className="flex items-center gap-2">
-              <div className="relative rounded-lg flex-grow">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+              <div className="relative flex-grow">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold">
                   £
                 </span>
                 <input
                   type="number"
                   value={editAmount}
                   onChange={(e) => setEditAmount(e.target.value)}
-                  className="block w-full pl-7 pr-12 py-2.5 text-sm rounded-lg border-blue-200 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                  placeholder="New bid amount"
+                  className="block w-full pl-7 pr-3 py-2 text-xs text-slate-900 rounded-xl focus:outline-none"
+                  placeholder="New bid"
                   required
                   min="10"
                   max={teamBalance + bid.amount}
@@ -1567,58 +1643,20 @@ function PlayerCard({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 shadow-sm disabled:opacity-50"
+                className="px-3.5 py-2 bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-bold uppercase rounded-xl transition-colors disabled:opacity-50"
               >
-                {isSubmitting ? 'Saving...' : 'Save'}
+                Save
               </button>
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
                 disabled={isSubmitting}
-                className="px-4 py-2.5 rounded-lg bg-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-300 shadow-sm disabled:opacity-50"
+                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold uppercase rounded-xl transition-colors disabled:opacity-50"
               >
-                Cancel
+                Close
               </button>
             </div>
           </form>
-        </div>
-      )}
-
-      {!hasBid && bidCount < maxBids && !isLocked && (
-        <div className="mt-4 pt-3 border-t border-gray-200">
-          <form onSubmit={handleSubmit}>
-            <div className="flex items-center gap-2">
-              <div className="relative rounded-lg flex-grow">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-                  £
-                </span>
-                <input
-                  type="number"
-                  value={bidAmount}
-                  onChange={(e) => setBidAmount(e.target.value)}
-                  className="block w-full pl-7 pr-12 py-2.5 text-sm rounded-lg border-gray-200 focus:ring-primary focus:border-primary shadow-sm"
-                  placeholder="Bid amount"
-                  required
-                  min="10"
-                  max={teamBalance}
-                  disabled={isSubmitting}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-4 py-2.5 rounded-lg bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-medium hover:from-primary-dark hover:to-primary shadow-sm disabled:opacity-50"
-              >
-                {isSubmitting ? 'Bidding...' : 'Bid'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {bidCount >= maxBids && !hasBid && (
-        <div className="mt-3 py-2 text-xs text-center text-gray-500 bg-gray-50 rounded-lg">
-          Required number of bids reached for this round
         </div>
       )}
 
