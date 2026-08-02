@@ -134,10 +134,148 @@ export default function TeamRoundPage() {
   const hasSubmitted = !!submission;
   const isLocked = submission?.is_locked || false;
 
-  // Calculate the maximum possible single bid this round
-  // Standard rule: must keep at least (minBalancePerRound) for each remaining round
-  const remainingRoundsCount = Math.max(0, totalRounds - completedRounds - 1);
-  const maxBidThisRound = Math.max(0, teamBalance - (remainingRoundsCount * minBalancePerRound));
+  // Extract phase settings and squad sizing details from roundData
+  const settingsConfig = roundData?.settingsConfig || {
+    phase_1_end_round: 18,
+    phase_1_min_balance: 21,
+    phase_2_end_round: 20,
+    phase_2_min_balance: 22,
+    phase_3_min_balance: 10,
+    max_squad_size: 25
+  };
+  const squadSize = roundData?.squadSize || 0;
+
+  // Determine current round number safely (default to completed + 1)
+  const currentRoundNumber = round?.round_number || (completedRounds + 1);
+
+  // Implement the calculateReserveCore logic directly on frontend for maximum stability
+  const getReserveInfo = () => {
+    let phase: 'phase_1' | 'phase_2' | 'phase_3';
+    if (currentRoundNumber <= settingsConfig.phase_1_end_round) {
+      phase = 'phase_1';
+    } else if (currentRoundNumber <= settingsConfig.phase_2_end_round) {
+      phase = 'phase_2';
+    } else {
+      phase = 'phase_3';
+    }
+
+    const emptySlots = settingsConfig.max_squad_size - squadSize;
+
+    if (phase === 'phase_1') {
+      const phase1Remaining = Math.max(0, settingsConfig.phase_1_end_round - currentRoundNumber);
+      const phase2Full = Math.max(0, settingsConfig.phase_2_end_round - settingsConfig.phase_1_end_round);
+      const playersAfterPhase2 = squadSize + 1 + phase1Remaining + phase2Full;
+      const slotsAfterPhase2 = Math.max(0, settingsConfig.max_squad_size - playersAfterPhase2);
+      
+      const phase1Reserve = phase1Remaining * settingsConfig.phase_1_min_balance;
+      const phase2Reserve = phase2Full * settingsConfig.phase_2_min_balance;
+      const phase3Reserve = slotsAfterPhase2 * settingsConfig.phase_3_min_balance;
+      const totalReserve = phase1Reserve + phase2Reserve + phase3Reserve;
+
+      // Scenarios detail calculations
+      const scenarios = [];
+      for (let skippedPhase2 = 0; skippedPhase2 <= phase2Full; skippedPhase2++) {
+        const actualPhase2Count = phase2Full - skippedPhase2;
+        const simulatedPlayersAfterPhase2 = squadSize + 1 + phase1Remaining + actualPhase2Count;
+        const simulatedSlotsAfterPhase2 = Math.max(0, settingsConfig.max_squad_size - simulatedPlayersAfterPhase2);
+        
+        const simPhase1Reserve = phase1Remaining * settingsConfig.phase_1_min_balance;
+        const simPhase2Reserve = actualPhase2Count * settingsConfig.phase_2_min_balance;
+        const simPhase3Reserve = simulatedSlotsAfterPhase2 * settingsConfig.phase_3_min_balance;
+        const simTotalReserve = simPhase1Reserve + simPhase2Reserve + simPhase3Reserve;
+        
+        scenarios.push({
+          skippedCount: skippedPhase2,
+          participatedCount: actualPhase2Count,
+          slotsPhase3: simulatedSlotsAfterPhase2,
+          phase2Reserve: simPhase2Reserve,
+          phase3Reserve: simPhase3Reserve,
+          totalEnforced: simTotalReserve,
+          maxBidSimulated: Math.max(0, teamBalance - simTotalReserve)
+        });
+      }
+
+      return {
+        reserve: totalReserve,
+        floorReserve: totalReserve,
+        maxBid: Math.max(0, teamBalance - totalReserve),
+        phase: 'phase_1',
+        explanation: `Phase 1 Strict: ${phase1Remaining}×£${settingsConfig.phase_1_min_balance} (Phase 1) + ${phase2Full}×£${settingsConfig.phase_2_min_balance} (Phase 2) + ${slotsAfterPhase2}×£${settingsConfig.phase_3_min_balance} (Phase 3) = £${totalReserve} Reserve Pool`,
+        phase1Reserve,
+        phase2Reserve,
+        phase3Reserve,
+        phase1Remaining,
+        phase2Full,
+        slotsAfterPhase2,
+        scenarios
+      };
+    } else if (phase === 'phase_2') {
+      const phase2Remaining = Math.max(0, settingsConfig.phase_2_end_round - currentRoundNumber);
+      const playersAfterThisRound = squadSize + 1;
+      const slotsAfterThisRound = Math.max(0, settingsConfig.max_squad_size - playersAfterThisRound);
+      const phase3Floor = slotsAfterThisRound * settingsConfig.phase_3_min_balance;
+
+      const playersAfterPhase2 = squadSize + phase2Remaining + 1;
+      const slotsAfterPhase2 = Math.max(0, settingsConfig.max_squad_size - playersAfterPhase2);
+      const phase2Reserve = phase2Remaining * settingsConfig.phase_2_min_balance;
+      const recommendedPhase3Reserve = slotsAfterPhase2 * settingsConfig.phase_3_min_balance;
+      const recommendedReserve = phase2Reserve + recommendedPhase3Reserve;
+
+      // Scenarios detail calculations for Phase 2 (skippable rounds)
+      const scenarios = [];
+      for (let skippedPhase2 = 0; skippedPhase2 <= phase2Remaining; skippedPhase2++) {
+        const actualPhase2Count = phase2Remaining - skippedPhase2;
+        const simulatedPlayersAfterPhase2 = squadSize + 1 + actualPhase2Count;
+        const simulatedSlotsAfterPhase2 = Math.max(0, settingsConfig.max_squad_size - simulatedPlayersAfterPhase2);
+        
+        const simPhase2Reserve = actualPhase2Count * settingsConfig.phase_2_min_balance;
+        const simPhase3Reserve = simulatedSlotsAfterPhase2 * settingsConfig.phase_3_min_balance;
+        const simTotalReserve = simPhase2Reserve + simPhase3Reserve;
+        
+        scenarios.push({
+          skippedCount: skippedPhase2,
+          participatedCount: actualPhase2Count,
+          slotsPhase3: simulatedSlotsAfterPhase2,
+          phase2Reserve: simPhase2Reserve,
+          phase3Reserve: simPhase3Reserve,
+          totalEnforced: simTotalReserve,
+          maxBidSimulated: Math.max(0, teamBalance - simTotalReserve)
+        });
+      }
+
+      return {
+        reserve: recommendedReserve,
+        floorReserve: phase3Floor,
+        maxBid: Math.max(0, teamBalance - phase3Floor),
+        phase: 'phase_2',
+        explanation: `Phase 2 (Skippable): Min required is £${settingsConfig.phase_2_min_balance} to participate. Enforces a worst-case floor reserve of £${phase3Floor} (${slotsAfterThisRound} slots × £${settingsConfig.phase_3_min_balance}) assuming you skip remaining Phase 2 rounds.`,
+        phase1Reserve: 0,
+        phase2Reserve,
+        phase3Reserve: recommendedPhase3Reserve,
+        phase1Remaining: 0,
+        phase2Full: phase2Remaining,
+        slotsAfterPhase2,
+        scenarios
+      };
+    } else {
+      return {
+        reserve: 0,
+        floorReserve: 0,
+        maxBid: teamBalance,
+        phase: 'phase_3',
+        explanation: `Phase 3: No reserve required (final phase), minimum £${settingsConfig.phase_3_min_balance} per slot.`,
+        phase1Reserve: 0,
+        phase2Reserve: 0,
+        phase3Reserve: 0,
+        phase1Remaining: 0,
+        phase2Full: 0,
+        slotsAfterPhase2: 0
+      };
+    }
+  };
+
+  const reserveInfo = getReserveInfo();
+  const maxBidThisRound = reserveInfo.maxBid;
 
   // Auth guard
   useEffect(() => {
@@ -466,7 +604,7 @@ export default function TeamRoundPage() {
     const confirmed = await showConfirm({
       type: 'warning',
       title: 'Submit Bids',
-      message: `Are you sure you want to submit your ${myBids.length} bid(s)? After submission, you won't be able to modify them unless you unlock.`,
+      message: `Are you sure you want to submit your ${localBids.length} bid(s)? After submission, you won't be able to modify them unless you unlock.`,
       confirmText: 'Yes, Submit',
       cancelText: 'Cancel'
     });
@@ -475,6 +613,34 @@ export default function TeamRoundPage() {
 
     setIsSubmitting(true);
     try {
+      // 1. Unconditionally sync localBids state to database to replace any previous database state
+      // Validate amounts and reserves like in handleSaveBids
+      const amountsSet = new Set<number>();
+      for (const bid of localBids) {
+        if (amountsSet.has(bid.amount)) {
+          throw new Error(`Duplicate bid amount detected: £${bid.amount}. Each bid must have a unique amount.`);
+        }
+        amountsSet.add(bid.amount);
+      }
+
+      const bidsTotal = localBids.reduce((sum, b) => sum + b.amount, 0);
+      if (bidsTotal > initialBalance) {
+        throw new Error(`Insufficient balance. Total bids amount £${bidsTotal} exceeds your budget £${initialBalance}.`);
+      }
+
+      // Overwrite/Sync database bids with currently visible localBids
+      const saveResponse = await fetch(`/api/team/round/${roundId}/save-bids`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bids: localBids.map(b => ({ player_id: b.player_id, amount: b.amount })) })
+      });
+      const saveResult = await saveResponse.json();
+      if (!saveResult.success) {
+        throw new Error(saveResult.error || 'Failed to sync bids to database before submitting');
+      }
+      setHasUnsavedChanges(false);
+
+      // 2. Perform the actual submit / lock action
       const response = await fetch(`/api/team/round/${roundId}/submit`, {
         method: 'POST',
       });
@@ -787,7 +953,8 @@ export default function TeamRoundPage() {
                   <div>
                     <span className="text-slate-400">Rounds remaining:</span>
                     <p className="text-xs text-slate-700 font-mono font-black mt-0.5">{totalRounds - completedRounds}</p>
-                    <div>
+                  </div>
+                  <div>
                     <span className="text-slate-400">Max bid this round:</span>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <p className="text-xs text-slate-700 font-mono font-black">
@@ -800,6 +967,9 @@ export default function TeamRoundPage() {
                         {showMaxBidDetails ? 'Hide' : 'Info'}
                       </button>
                     </div>
+                    <span className="text-[8px] text-slate-400 block mt-0.5 leading-none uppercase font-extrabold">
+                      (Phase 1 Strict • Phase 2 Skippable • Phase 3 Flex)
+                    </span>
                   </div>
                   <div>
                     <span className="text-slate-400">Your balance:</span>
@@ -819,21 +989,63 @@ export default function TeamRoundPage() {
                       <span>Available Balance:</span>
                       <span className="font-bold text-right">£{teamBalance.toLocaleString()}</span>
                       
-                      <span>Remaining Rounds (excl. active):</span>
-                      <span className="font-bold text-right">{remainingRoundsCount} round(s)</span>
+                      <span>Current Round:</span>
+                      <span className="font-bold text-right">Round {currentRoundNumber}</span>
+
+                      <span>Current Phase:</span>
+                      <span className="font-bold text-right capitalize">{reserveInfo.phase.replace('_', ' ')}</span>
                       
-                      <span>Min Reserve per Round:</span>
-                      <span className="font-bold text-right">£{minBalancePerRound.toLocaleString()}</span>
+                      <span>Current Squad Size:</span>
+                      <span className="font-bold text-right">{squadSize} / {settingsConfig.max_squad_size} players</span>
                       
-                      <span className="border-t border-amber-200/60 pt-1 mt-1 font-extrabold">Required Reserve Pool:</span>
+                      <span className="border-t border-amber-200/60 pt-1 mt-1 font-extrabold col-span-2">Reserve Pool Targets:</span>
+                      
+                      {settingsConfig.phase_1_end_round >= currentRoundNumber && (
+                        <>
+                          <span className="pl-2">- Phase 1 ({reserveInfo.phase1Remaining} round(s) @ £{settingsConfig.phase_1_min_balance}):</span>
+                          <span className="font-bold text-right">£{reserveInfo.phase1Reserve?.toLocaleString()}</span>
+                        </>
+                      )}
+
+                      {settingsConfig.phase_2_end_round > currentRoundNumber && (
+                        <>
+                          <span className="pl-2">- Phase 2 ({reserveInfo.phase2Full} round(s) @ £{settingsConfig.phase_2_min_balance}):</span>
+                          <span className="font-bold text-right">£{reserveInfo.phase2Reserve?.toLocaleString()}</span>
+                        </>
+                      )}
+
+                      <span className="pl-2">- Phase 3 ({reserveInfo.slotsAfterPhase2} slot(s) @ £{settingsConfig.phase_3_min_balance}):</span>
+                      <span className="font-bold text-right">£{reserveInfo.phase3Reserve?.toLocaleString()}</span>
+                      
+                      <span className="border-t border-amber-200/60 pt-1 mt-1 font-extrabold">Total Reserve Enforced:</span>
                       <span className="border-t border-amber-200/60 pt-1 mt-1 font-bold text-right text-amber-850">
-                        ({remainingRoundsCount} × £{minBalancePerRound}) = £{(remainingRoundsCount * minBalancePerRound).toLocaleString()}
+                        £{reserveInfo.floorReserve.toLocaleString()}
                       </span>
                       
                       <span className="border-t border-amber-300 pt-1.5 mt-1 text-xs font-black">Max Bid Allowed:</span>
                       <span className="border-t border-amber-300 pt-1.5 mt-1 text-xs font-black text-right text-slate-900">
                         £{maxBidThisRound.toLocaleString()}
                       </span>
+                    </div>
+                    {reserveInfo.scenarios && reserveInfo.scenarios.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-amber-250/60 text-[9px] space-y-1.5 leading-normal">
+                        <span className="font-extrabold uppercase text-amber-800 tracking-wider">Simulated Skippable Scenarios:</span>
+                        <div className="space-y-1 bg-amber-100/30 p-2 rounded-lg border border-amber-200/40">
+                          {reserveInfo.scenarios.map((sc: any, sIdx: number) => (
+                            <div key={sIdx} className="flex justify-between items-center text-amber-950 font-medium">
+                              <span>
+                                Skip {sc.skippedCount} Phase 2 round(s) → Need {sc.slotsPhase3} slot(s) in Phase 3
+                              </span>
+                              <span className="font-bold text-slate-800">
+                                Reserve: £{sc.totalEnforced} | Max Bid: £{sc.maxBidSimulated.toLocaleString()}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div className="mt-2 pt-2 border-t border-amber-200/60 text-[9px] text-amber-800 leading-normal">
+                      <span className="font-bold">Formula detail: </span> {reserveInfo.explanation}
                     </div>
                   </div>
                 )}
@@ -947,83 +1159,84 @@ export default function TeamRoundPage() {
             {myBids.length > 0 ? (
               <>
                 {/* Desktop Table View */}
-                <div className="hidden md:block glass-card rounded-xl overflow-hidden backdrop-blur-sm shadow-sm border border-white/10">
+                <div className="hidden md:block bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm font-mono">
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50/70">
+                    <table className="min-w-full divide-y divide-slate-100">
+                      <thead className="bg-slate-50/70 border-b border-slate-200/60">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-5 py-3.5 text-left text-[10px] font-black text-slate-400 uppercase tracking-wider">
                             Player
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-5 py-3.5 text-left text-[10px] font-black text-slate-400 uppercase tracking-wider">
                             Position
                           </th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-5 py-3.5 text-right text-[10px] font-black text-slate-400 uppercase tracking-wider">
                             Bid Amount
                           </th>
-                          <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-5 py-3.5 text-center text-[10px] font-black text-slate-400 uppercase tracking-wider">
                             Actions
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white/50">
+                      <tbody className="divide-y divide-slate-100 bg-white">
                         {myBids.map((bid: Bid) => (
                           <React.Fragment key={bid.id}>
-                            <tr className={`hover:bg-white/80 ${editingBidId === bid.id ? 'bg-blue-50/50' : ''}`}>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                                  {bid.player.position[0]}
-                                </div>
-                                <div className="ml-3">
-                                  <div className="text-sm font-medium text-gray-800 flex items-center">
-                                    {bid.player.name}
-                                    {bid.player.is_starred && (
-                                      <svg className="w-4 h-4 ml-1 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                      </svg>
-                                    )}
+                            <tr className={`hover:bg-slate-50/60 transition-colors ${editingBidId === bid.id ? 'bg-amber-50/40' : bid.player.is_starred ? 'bg-amber-50/20' : ''}`}>
+                              <td className="px-5 py-3.5 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  <div className={`flex-shrink-0 h-7 w-7 rounded-lg flex items-center justify-center font-bold text-xs uppercase ${bid.player.is_starred ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                                    {bid.player.position}
+                                  </div>
+                                  <div className="ml-3">
+                                    <div className="text-xs font-bold text-slate-800 flex items-center gap-1">
+                                      {bid.player.name}
+                                      {bid.player.is_starred && (
+                                        <svg className="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                    <span className="text-[9px] text-slate-400 uppercase font-semibold">{bid.player.club || 'Free Agent'}</span>
                                   </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">
-                                {bid.player.position}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-primary">
-                              £{bid.amount.toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-center">
-                              {!isLocked ? (
-                                <div className="flex items-center justify-center gap-2">
-                                  <button
-                                    onClick={() => handleTableEdit(bid)}
-                                    disabled={editingBidId !== null}
-                                    className="text-xs text-blue-500 hover:text-blue-700 p-1.5 hover:bg-blue-50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    title="Edit Bid"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                  </button>
-                                  <button
-                                    onClick={() => handleCancelBid(bid.id)}
-                                    disabled={editingBidId !== null}
-                                    className="text-xs text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    title="Delete Bid"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-gray-400 italic">Locked</span>
-                              )}
-                            </td>
-                          </tr>
+                              </td>
+                              <td className="px-5 py-3.5 whitespace-nowrap">
+                                <span className="inline-block px-2.5 py-0.5 text-[9px] font-black uppercase rounded bg-slate-100 text-slate-650 border border-slate-200/60">
+                                  {bid.player.position}
+                                </span>
+                              </td>
+                              <td className="px-5 py-3.5 whitespace-nowrap text-right text-xs font-black text-slate-900">
+                                £{bid.amount.toLocaleString()}
+                              </td>
+                              <td className="px-5 py-3.5 whitespace-nowrap text-center">
+                                {!isLocked ? (
+                                  <div className="flex items-center justify-center gap-1">
+                                    <button
+                                      onClick={() => handleTableEdit(bid)}
+                                      disabled={editingBidId !== null}
+                                      className="text-slate-400 hover:text-slate-800 p-1.5 hover:bg-slate-100 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                      title="Edit Bid"
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                      </svg>
+                                    </button>
+                                    <button
+                                      onClick={() => handleCancelBid(bid.id)}
+                                      disabled={editingBidId !== null}
+                                      className="text-rose-400 hover:text-rose-600 p-1.5 hover:bg-rose-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                      title="Delete Bid"
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span className="text-[10px] text-slate-400 uppercase font-black tracking-wider flex items-center justify-center gap-1"><span className="text-[8px]">🔒</span> Locked</span>
+                                )}
+                              </td>
+                            </tr>
                             {/* Inline Edit Form */}
                             {editingBidId === bid.id && (
                               <tr className="bg-blue-50/50 border-t-0">
@@ -1220,34 +1433,37 @@ export default function TeamRoundPage() {
 
             {/* Submit Bids Button */}
             {!hasSubmitted && bidCount === round.max_bids_per_team && (
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 p-2 rounded-full">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <div className="mt-4 p-4 sm:p-5 bg-gradient-to-br from-emerald-50 to-teal-50/30 border border-emerald-200/80 rounded-2xl shadow-sm font-mono animate-fadeIn">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl flex items-center justify-center animate-bounce">
+                      <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <div>
-                      <p className="font-semibold text-blue-800">Ready to Submit</p>
-                      <p className="text-sm text-blue-600">You've placed all {round.max_bids_per_team} required bids</p>
+                    <div className="text-left">
+                      <p className="text-sm font-black text-emerald-800 uppercase tracking-wider">Ready to Submit</p>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">You've successfully placed all {round.max_bids_per_team} required bids</p>
                     </div>
                   </div>
                   <button
                     onClick={handleSubmitBids}
                     disabled={isSubmitting}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-lg"
+                    className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl font-bold uppercase text-xs tracking-wider transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg flex items-center justify-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center gap-2">
-                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                         Submitting...
                       </span>
                     ) : (
-                      'Submit Bids'
+                      <>
+                        <span>🚀</span>
+                        <span>Submit Bids</span>
+                      </>
                     )}
                   </button>
                 </div>

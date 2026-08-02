@@ -281,23 +281,44 @@ export async function GET(
       };
     });
 
-    // Get auction progress (completed rounds and total rounds config)
+    // Get auction progress and settings config (completed rounds and total rounds config)
     const roundsProgressResult = await sql`
       SELECT 
         COUNT(r.id) FILTER (WHERE r.status = 'completed') as completed_rounds,
-        COALESCE(s.max_rounds, 5) as total_rounds,
-        COALESCE(s.min_balance_per_round, 10) as min_balance_per_round
+        COALESCE(s.max_rounds, 25) as total_rounds,
+        COALESCE(s.min_balance_per_round, 10) as min_balance_per_round,
+        COALESCE(s.phase_1_end_round, 18) as phase_1_end_round,
+        COALESCE(s.phase_1_min_balance, 21) as phase_1_min_balance,
+        COALESCE(s.phase_2_end_round, 20) as phase_2_end_round,
+        COALESCE(s.phase_2_min_balance, 22) as phase_2_min_balance,
+        COALESCE(s.phase_3_min_balance, 10) as phase_3_min_balance,
+        COALESCE(s.max_squad_size, 25) as max_squad_size
       FROM rounds r
       LEFT JOIN auction_settings s ON r.auction_settings_id = s.id
       WHERE r.season_id = ${round.season_id}
-      GROUP BY s.max_rounds, s.min_balance_per_round
+      GROUP BY s.max_rounds, s.min_balance_per_round, s.phase_1_end_round, s.phase_1_min_balance, s.phase_2_end_round, s.phase_2_min_balance, s.phase_3_min_balance, s.max_squad_size
       LIMIT 1
     `;
 
     // Fallback if the group returns empty
     const completedRounds = parseInt(roundsProgressResult[0]?.completed_rounds || '0');
-    const totalRounds = parseInt(roundsProgressResult[0]?.total_rounds || '5');
-    const minBalancePerRound = parseInt(roundsProgressResult[0]?.min_balance_per_round || '10');
+    const totalRounds = parseInt(roundsProgressResult[0]?.total_rounds || '25');
+    const minBalancePerRound = parseInt(roundsProgressResult[0]?.min_balance_per_round || '21');
+    
+    const settingsConfig = {
+      phase_1_end_round: parseInt(roundsProgressResult[0]?.phase_1_end_round || '18'),
+      phase_1_min_balance: parseInt(roundsProgressResult[0]?.phase_1_min_balance || '21'),
+      phase_2_end_round: parseInt(roundsProgressResult[0]?.phase_2_end_round || '20'),
+      phase_2_min_balance: parseInt(roundsProgressResult[0]?.phase_2_min_balance || '22'),
+      phase_3_min_balance: parseInt(roundsProgressResult[0]?.phase_3_min_balance || '10'),
+      max_squad_size: parseInt(roundsProgressResult[0]?.max_squad_size || '25')
+    };
+
+    // Get current squad size for reserve calculator
+    const squadSizeResult = await sql`
+      SELECT COUNT(*) as size FROM footballplayers WHERE team_id = ${teamId} AND season_id = ${round.season_id}
+    `;
+    const squadSize = parseInt(squadSizeResult[0]?.size || '0');
 
     // Check if team has submitted bids for this round
     const submissionResult = await sql`
@@ -328,6 +349,8 @@ export async function GET(
       completedRounds,
       totalRounds,
       minBalancePerRound,
+      settingsConfig,
+      squadSize,
       submission: submissionData ? {
         submitted_at: submissionData.submitted_at,
         is_locked: submissionData.is_locked,
