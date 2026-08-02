@@ -95,12 +95,14 @@ export async function POST(
     try {
       console.log(`📣 Sending start notification for manually activated round: ${roundId}`);
       
-      const durationHours = durationSeconds / 3600;
+      const actualDurationSeconds = Math.round((newEndTime.getTime() - actualStart) / 1000);
+      const durationHours = actualDurationSeconds / 3600;
       let durationText: string;
       if (durationHours >= 1) {
-        durationText = `${durationHours.toFixed(1)} hour${durationHours !== 1 ? 's' : ''}`;
+        durationText = `${durationHours.toFixed(1)} hour${durationHours.toFixed(1) !== '1.0' ? 's' : ''}`;
+        durationText = durationText.replace('.0', ''); // Clean up trailing .0 for whole hours
       } else {
-        const durationMinutes = Math.round(durationSeconds / 60);
+        const durationMinutes = Math.round(actualDurationSeconds / 60);
         durationText = `${durationMinutes} minute${durationMinutes !== 1 ? 's' : ''}`;
       }
 
