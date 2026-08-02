@@ -67,6 +67,19 @@ export async function GET(
     console.log('🔍 [Submissions API] Submissions found:', submissionsResult.length);
     console.log('🔍 [Submissions API] Submissions:', submissionsResult);
 
+    // Get draft bids (saved but not locked) for this round
+    const draftBidsResult = await sql`
+      SELECT team_id, COUNT(*) as draft_count
+      FROM bids
+      WHERE round_id = ${roundId} AND status = 'active'
+      GROUP BY team_id
+    `;
+
+    const draftBidsMap = new Map<string, number>();
+    draftBidsResult.forEach((row: any) => {
+      draftBidsMap.set(row.team_id, Number(row.draft_count));
+    });
+
     // Create a map of submissions by team_id
     const submissionsMap = new Map();
     submissionsResult.forEach(sub => {
@@ -74,8 +87,9 @@ export async function GET(
     });
 
     // Combine team data with submission data
-    const teamSubmissions = teamsResult.map(team => {
+    const teamSubmissions = teamsResult.map((team: any) => {
       const submission = submissionsMap.get(team.team_id);
+      const draftCount = draftBidsMap.get(team.team_id) || 0;
       return {
         team_id: team.team_id,
         team_name: team.team_name,
@@ -83,15 +97,18 @@ export async function GET(
         submitted_at: submission?.submitted_at || null,
         bid_count: submission?.bid_count || 0,
         is_locked: submission?.is_locked || false,
+        has_draft: !submission && draftCount > 0,
+        draft_bid_count: !submission ? draftCount : 0,
       };
     });
 
     // Calculate statistics
     const totalTeams = teamsResult.length;
-    const submittedTeams = teamSubmissions.filter(t => t.has_submitted).length;
-    const pendingTeams = totalTeams - submittedTeams;
+    const submittedTeams = teamSubmissions.filter((t: any) => t.has_submitted).length;
+    const draftedTeams = teamSubmissions.filter((t: any) => t.has_draft).length;
+    const pendingTeams = totalTeams - submittedTeams - draftedTeams;
 
-    console.log('📊 [Submissions API] Stats:', { totalTeams, submittedTeams, pendingTeams });
+    console.log('📊 [Submissions API] Stats:', { totalTeams, submittedTeams, draftedTeams, pendingTeams });
     console.log('📊 [Submissions API] Team submissions:', teamSubmissions);
 
     return NextResponse.json({
@@ -105,6 +122,7 @@ export async function GET(
       stats: {
         total_teams: totalTeams,
         submitted: submittedTeams,
+        drafted: draftedTeams,
         pending: pendingTeams,
         submission_rate: totalTeams > 0 ? Math.round((submittedTeams / totalTeams) * 100) : 0,
       },

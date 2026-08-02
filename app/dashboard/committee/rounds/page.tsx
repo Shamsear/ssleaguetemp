@@ -693,82 +693,65 @@ export default function RoundsManagementPage() {
     fetchAllData();
   }, [fetchAllData]);
 
-  // Realtime listener for submission updates
+  // Realtime listener for submission updates (per active round)
   useEffect(() => {
     if (!currentSeasonId || rounds.length === 0) return;
 
     const activeRounds = rounds.filter(r => r.status === 'active');
-    if (activeRounds.length === 0) {
-      console.log('🔌 [Realtime] No active rounds found');
-      return;
-    }
+    if (activeRounds.length === 0) return;
 
-    console.log('🔌 [Realtime] Setting up listeners for', activeRounds.length, 'active rounds:', activeRounds.map(r => r.id));
-    console.log('🔌 [Realtime] Season ID:', currentSeasonId);
-
-    // Import Firebase Realtime DB
     const { ref, onValue } = require('firebase/database');
     const { realtimeDb } = require('@/lib/firebase/config');
-
-    if (!realtimeDb) {
-      console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [Realtime] Firebase Realtime Database not initialized!');
-      return;
-    }
+    if (!realtimeDb) return;
 
     const unsubscribers: (() => void)[] = [];
 
-    // Listen to each active round for submission updates
     activeRounds.forEach(round => {
-      const path = `updates/${currentSeasonId}/rounds/${round.id}`;
-      console.log('🔌 [Realtime] Listening to path:', path);
-      
-      const roundRef = ref(realtimeDb, path);
-      
+      const roundRef = ref(realtimeDb, `updates/${currentSeasonId}/rounds/${round.id}`);
+
       const unsubscribe = onValue(
         roundRef,
         (snapshot: any) => {
           const data = snapshot.val();
-          console.log('📡 [Realtime] Data received for round', round.id, ':', data);
-          
-          if (data && data.type === 'submission') {
-            console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Realtime] <CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Submission update detected!', {
-              round: round.id,
-              action: data.action,
-              team: data.team_id,
-              timestamp: data.timestamp
+          if (!data) return;
+
+          // broadcastRoundUpdate uses push() so data is keyed by push IDs
+          // Find the latest child event and check its type
+          let latestEvent: any = null;
+          let latestTs = 0;
+
+          if (typeof data.timestamp === 'number') {
+            // broadcastRoundStatusUpdate uses set() — direct object
+            latestEvent = data;
+          } else {
+            // push() children
+            Object.values(data).forEach((child: any) => {
+              if (child && typeof child.timestamp === 'number' && child.timestamp > latestTs) {
+                latestTs = child.timestamp;
+                latestEvent = child;
+              }
             });
-            
-            // Refetch submissions for this round
-            console.log('<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Realtime] Refetching submissions for round:', round.id);
+          }
+
+          if (!latestEvent) return;
+
+          if (latestEvent.type === 'bids_updated' || latestEvent.type === 'bid_submitted' || latestEvent.type === 'submission') {
+            console.log(`📡 [Realtime] ${latestEvent.type} for round ${round.id} — refreshing submissions`);
             fetchWithTokenRefresh(`/api/admin/rounds/${round.id}/submissions`)
               .then(res => res.json())
               .then(subData => {
                 if (subData.success) {
-                  console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> [Realtime] Updated submissions for round:', round.id, subData.stats);
-                  setRoundSubmissions(prev => {
-                    const updated = {
-                      ...prev,
-                      [round.id]: {
-                        ...subData.stats,
-                        teams: subData.teams
-                      }
-                    };
-                    console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Realtime] New submission state:', updated);
-                    return updated;
-                  });
-                } else {
-                  console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [Realtime] API returned error:', subData.error);
+                  setRoundSubmissions(prev => ({
+                    ...prev,
+                    [round.id]: { ...subData.stats, teams: subData.teams }
+                  }));
                 }
               })
-              .catch(err => console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [Realtime] Failed to fetch submissions:', err));
-          } else if (data) {
-            console.log('ℹ️ [Realtime] Received data but type is not "submission":', data.type);
-          } else {
-            console.log('ℹ️ [Realtime] Received null/empty data for round:', round.id);
+              .catch(err => console.error('[Realtime] Failed to fetch submissions:', err));
           }
         },
         (error: any) => {
-          console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [Realtime] Error listening to round', round.id, ':', error);
+          console.error('[Realtime] Error listening to round', round.id, ':', error);
         }
       );
 
@@ -776,7 +759,6 @@ export default function RoundsManagementPage() {
     });
 
     return () => {
-      console.log('🔌 [Realtime] Disconnecting', unsubscribers.length, 'submission listeners');
       unsubscribers.forEach(unsub => unsub());
     };
   }, [currentSeasonId, rounds]);
@@ -794,36 +776,35 @@ export default function RoundsManagementPage() {
     
     console.log('🔴 [Committee Rounds] Setting up Firebase listeners for season:', currentSeasonId);
     
-    // Listen to round updates (started, finalized, status changes, bids submitted)
+    const refreshSubmissionsForRound = (roundId: string) => {
+      setLoadingSubmissions(prev => ({ ...prev, [roundId]: true }));
+      fetchWithTokenRefresh(`/api/admin/rounds/${roundId}/submissions`)
+        .then(res => res.json())
+        .then(subData => {
+          if (subData.success) {
+            setRoundSubmissions(prev => ({
+              ...prev,
+              [roundId]: { ...subData.stats, teams: subData.teams }
+            }));
+          }
+          setLoadingSubmissions(prev => ({ ...prev, [roundId]: false }));
+        })
+        .catch(err => {
+          console.error('[Firebase] Error fetching submissions:', err);
+          setLoadingSubmissions(prev => ({ ...prev, [roundId]: false }));
+        });
+    };
+
+    // Listen to round updates (started, finalized, status changes, bids submitted, bids saved as draft)
     const unsubRounds = listenToSeasonRoundUpdates(currentSeasonId, (message: any) => {
       console.log('🔴 [Committee Rounds] Round update:', message.type, message);
-      
-      if (message.type === 'bid_submitted') {
-        // When a team submits bids, refetch submissions for that specific round immediately
-        console.log('🔍 [Firebase] Bid submitted for round:', message.data?.round_id);
-        if (message.data?.round_id) {
-          const roundId = message.data.round_id;
-          setLoadingSubmissions(prev => ({ ...prev, [roundId]: true }));
-          
-          fetchWithTokenRefresh(`/api/admin/rounds/${roundId}/submissions`)
-            .then(res => res.json())
-            .then(subData => {
-              if (subData.success) {
-                console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> [Firebase] Updated submissions for round:', roundId);
-                setRoundSubmissions(prev => ({
-                  ...prev,
-                  [roundId]: {
-                    ...subData.stats,
-                    teams: subData.teams
-                  }
-                }));
-              }
-              setLoadingSubmissions(prev => ({ ...prev, [roundId]: false }));
-            })
-            .catch(err => {
-              console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [Firebase] Error fetching submissions:', err);
-              setLoadingSubmissions(prev => ({ ...prev, [roundId]: false }));
-            });
+
+      if (message.type === 'bid_submitted' || message.type === 'bids_updated') {
+        // Both locked submissions and draft saves should live-update the submissions panel
+        const roundId = message.round_id || message.data?.round_id;
+        if (roundId) {
+          console.log(`📡 [Firebase] ${message.type} — refreshing submissions for round:`, roundId);
+          refreshSubmissionsForRound(roundId);
         }
       } else if (
         message.type === 'round_finalized' ||
@@ -831,8 +812,7 @@ export default function RoundsManagementPage() {
         message.type === 'round_updated' ||
         message.type === 'round_status_changed'
       ) {
-        // For round status changes, refetch all rounds data immediately
-        console.log('<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Firebase] Refetching all rounds due to:', message.type);
+        console.log('[Firebase] Refetching all rounds due to:', message.type);
         fetchRounds(false);
       }
     });
@@ -1980,7 +1960,11 @@ export default function RoundsManagementPage() {
                             Team Submissions
                           </div>
                           <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-extrabold uppercase font-mono shadow-sm">
-                            {roundSubmissions[round.id].submitted} of {roundSubmissions[round.id].total_teams} teams ({roundSubmissions[round.id].submission_rate}%)
+                            {roundSubmissions[round.id].submitted} submitted
+                            {roundSubmissions[round.id].drafted > 0 && (
+                              <span className="ml-1 text-indigo-600">· {roundSubmissions[round.id].drafted} draft</span>
+                            )}
+                            {' '}/ {roundSubmissions[round.id].total_teams} teams
                           </span>
                         </div>
 
@@ -1992,6 +1976,8 @@ export default function RoundsManagementPage() {
                               className={`flex items-center justify-between p-3 rounded-xl border ${
                                 team.has_submitted
                                   ? 'bg-emerald-50/50 border-emerald-200/60 text-emerald-800'
+                                  : team.has_draft
+                                  ? 'bg-blue-50/50 border-blue-200/60 text-blue-800'
                                   : 'bg-orange-50/50 border-orange-200/60 text-orange-800'
                               }`}
                             >
@@ -1999,9 +1985,11 @@ export default function RoundsManagementPage() {
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
                                 team.has_submitted
                                   ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                                  : team.has_draft
+                                  ? 'bg-blue-100 text-blue-800 border-blue-200'
                                   : 'bg-orange-100 text-orange-850 border-orange-200'
                               }`}>
-                                {team.has_submitted ? 'Yes Submitted' : 'Pending'}
+                                {team.has_submitted ? 'Submitted' : team.has_draft ? `Draft (${team.draft_bid_count})` : 'Pending'}
                               </span>
                             </div>
                           ))}
@@ -2020,10 +2008,10 @@ export default function RoundsManagementPage() {
                             </thead>
                             <tbody className="divide-y divide-slate-100 font-mono text-xs">
                               {roundSubmissions[round.id].teams?.map((team: any, idx: number) => (
-                                <tr
+                              <tr
                                   key={team.team_id || idx}
                                   className={`hover:bg-slate-50/50 transition-colors ${
-                                    team.has_submitted ? 'bg-emerald-50/10' : 'bg-orange-50/10'
+                                    team.has_submitted ? 'bg-emerald-50/10' : team.has_draft ? 'bg-blue-50/10' : 'bg-orange-50/10'
                                   }`}
                                 >
                                   <td className="px-4 py-2.5 whitespace-nowrap font-bold text-slate-800">
@@ -2033,13 +2021,19 @@ export default function RoundsManagementPage() {
                                     <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase border ${
                                       team.has_submitted
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                        : team.has_draft
+                                        ? 'bg-blue-50 text-blue-700 border-blue-200'
                                         : 'bg-orange-50 text-orange-700 border-orange-200'
                                     }`}>
-                                      {team.has_submitted ? 'Yes Submitted' : 'Pending'}
+                                      {team.has_submitted ? 'Submitted' : team.has_draft ? 'Draft Saved' : 'Pending'}
                                     </span>
                                   </td>
                                   <td className="px-4 py-2.5 whitespace-nowrap text-center text-slate-700 font-bold">
-                                    {team.has_submitted ? team.bid_count : '-'}
+                                    {team.has_submitted
+                                      ? team.bid_count
+                                      : team.has_draft
+                                      ? <span className="text-blue-600">{team.draft_bid_count}</span>
+                                      : '-'}
                                   </td>
                                   <td className="px-4 py-2.5 whitespace-nowrap text-center text-slate-400">
                                     {team.has_submitted && team.submitted_at
@@ -2049,6 +2043,8 @@ export default function RoundsManagementPage() {
                                           hour: '2-digit',
                                           minute: '2-digit',
                                         })
+                                      : team.has_draft
+                                      ? <span className="text-blue-500 text-[9px] italic">Draft only</span>
                                       : '-'
                                     }
                                   </td>

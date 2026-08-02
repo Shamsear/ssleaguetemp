@@ -202,38 +202,46 @@ export function listenToFantasyLeagueUpdates(
 
 /**
  * Listen to all round updates for a season (any round)
- * This listens to the rounds parent path to catch all child updates
+ * Works with both broadcastRoundUpdate (push) and broadcastRoundStatusUpdate (set)
  */
 export function listenToSeasonRoundUpdates(
   seasonId: string,
   callback: (data: Record<string, any>) => void
 ): Unsubscribe {
   const updateRef = ref(realtimeDb, `updates/${seasonId}/rounds`);
-  
+
   const unsubscribe = onValue(updateRef, (snapshot) => {
     const data = snapshot.val();
-    if (data) {
-      // Get the most recent update from any round
-      const roundIds = Object.keys(data);
-      if (roundIds.length > 0) {
-        // Get latest update from the most recently updated round
-        let latestUpdate = null;
-        let latestTimestamp = 0;
-        
-        roundIds.forEach(roundId => {
-          const roundData = data[roundId];
-          if (roundData.timestamp > latestTimestamp) {
-            latestTimestamp = roundData.timestamp;
-            latestUpdate = { ...roundData, round_id: roundId };
+    if (!data) return;
+
+    let latestUpdate: Record<string, any> | null = null;
+    let latestTimestamp = 0;
+
+    Object.keys(data).forEach(roundId => {
+      const roundData = data[roundId];
+      if (!roundData || typeof roundData !== 'object') return;
+
+      // broadcastRoundStatusUpdate uses set() — direct object with timestamp
+      if (typeof roundData.timestamp === 'number') {
+        if (roundData.timestamp > latestTimestamp) {
+          latestTimestamp = roundData.timestamp;
+          latestUpdate = { ...roundData, round_id: roundId, data: roundData };
+        }
+      } else {
+        // broadcastRoundUpdate uses push() — children are keyed by push ID
+        Object.values(roundData).forEach((child: any) => {
+          if (child && typeof child.timestamp === 'number' && child.timestamp > latestTimestamp) {
+            latestTimestamp = child.timestamp;
+            latestUpdate = { ...child, round_id: roundId, data: child };
           }
         });
-        
-        if (latestUpdate) {
-          callback(latestUpdate);
-        }
       }
+    });
+
+    if (latestUpdate) {
+      callback(latestUpdate);
     }
   });
-  
+
   return unsubscribe;
 }

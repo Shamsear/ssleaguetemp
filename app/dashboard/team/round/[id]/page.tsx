@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useRoundData, usePlaceBid, useCancelBid, useRoundStatus } from '@/hooks/useTeamDashboard';
+import { useQueryClient } from '@tanstack/react-query';
 import { useModal } from '@/hooks/useModal';
 import { useAuctionWebSocket } from '@/hooks/useWebSocket';
 import AlertModal from '@/components/modals/AlertModal';
@@ -45,6 +46,7 @@ export default function TeamRoundPage() {
   const roundId = params?.id as string;
 
   // Use React Query for data fetching with auto-refresh
+  const queryClient = useQueryClient();
   const { 
     data: roundData, 
     isLoading, 
@@ -123,8 +125,9 @@ export default function TeamRoundPage() {
   // Sort bids by amount (highest first) for display
   const myBids = [...localBids].sort((a: any, b: any) => (b.amount || 0) - (a.amount || 0));
   const initialBalance = roundData?.teamBalance || 0;
-  const bidsTotalAmount = localBids.reduce((sum, b) => sum + b.amount, 0);
-  const teamBalance = initialBalance - bidsTotalAmount;
+  // Balance displayed is always the real server balance — it only changes when a player is sold/bought in the DB.
+  // Draft bids do NOT deduct from the displayed balance.
+  const teamBalance = initialBalance;
 
   const teamName = roundData?.teamName || user?.displayName || 'Team';
   const completedRounds = roundData?.completedRounds || 0;
@@ -192,14 +195,14 @@ export default function TeamRoundPage() {
           phase2Reserve: simPhase2Reserve,
           phase3Reserve: simPhase3Reserve,
           totalEnforced: simTotalReserve,
-          maxBidSimulated: Math.max(0, teamBalance - simTotalReserve)
+          maxBidSimulated: Math.max(0, initialBalance - simTotalReserve)
         });
       }
 
       return {
         reserve: totalReserve,
         floorReserve: totalReserve,
-        maxBid: Math.max(0, teamBalance - totalReserve),
+        maxBid: Math.max(0, initialBalance - totalReserve),
         phase: 'phase_1',
         explanation: `Phase 1 Strict: ${phase1Remaining}×£${settingsConfig.phase_1_min_balance} (Phase 1) + ${phase2Full}×£${settingsConfig.phase_2_min_balance} (Phase 2) + ${slotsAfterPhase2}×£${settingsConfig.phase_3_min_balance} (Phase 3) = £${totalReserve} Reserve Pool`,
         phase1Reserve,
@@ -240,14 +243,14 @@ export default function TeamRoundPage() {
           phase2Reserve: simPhase2Reserve,
           phase3Reserve: simPhase3Reserve,
           totalEnforced: simTotalReserve,
-          maxBidSimulated: Math.max(0, teamBalance - simTotalReserve)
+          maxBidSimulated: Math.max(0, initialBalance - simTotalReserve)
         });
       }
 
       return {
         reserve: recommendedReserve,
         floorReserve: phase3Floor,
-        maxBid: Math.max(0, teamBalance - phase3Floor),
+        maxBid: Math.max(0, initialBalance - phase3Floor),
         phase: 'phase_2',
         explanation: `Phase 2 (Skippable): Min required is £${settingsConfig.phase_2_min_balance} to participate. Enforces a worst-case floor reserve of £${phase3Floor} (${slotsAfterThisRound} slots × £${settingsConfig.phase_3_min_balance}) assuming you skip remaining Phase 2 rounds.`,
         phase1Reserve: 0,
@@ -262,7 +265,7 @@ export default function TeamRoundPage() {
       return {
         reserve: 0,
         floorReserve: 0,
-        maxBid: teamBalance,
+        maxBid: initialBalance,
         phase: 'phase_3',
         explanation: `Phase 3: No reserve required (final phase), minimum £${settingsConfig.phase_3_min_balance} per slot.`,
         phase1Reserve: 0,
@@ -437,16 +440,12 @@ export default function TeamRoundPage() {
       if (!result.success) {
         throw new Error(result.error || 'Failed to save bids');
       }
-      // Sync local state immediately on success so we don't depend on asynchronous query response timing
-      if (result.bids) {
-        setLocalBids(result.bids.map((b: any) => ({
-          id: b.id || `${b.team_id || ''}_${roundId}_${b.player_id}`,
-          player_id: b.player_id,
-          amount: b.amount,
-          round_id: roundId,
-          player: b.player || players.find((p: any) => p.id === b.player_id)
-        })));
-      }
+      // Draft saved OK — keep localBids intact (amounts are not returned by the server)
+      // Immediately clear any stale submission from cache so banner shows "Draft Saved" not "Bids Submitted"
+      queryClient.setQueryData(['round', roundId], (old: any) => {
+        if (!old) return old;
+        return { ...old, submission: null };
+      });
       setHasUnsavedChanges(false);
       refetchRoundData();
     } catch (err: any) {
@@ -1542,6 +1541,7 @@ export default function TeamRoundPage() {
                       onCancelBid={handleCancelBid}
                       onSilentDelete={handleSilentDelete}
                       isLocked={isLocked}
+                      submission={submission}
                     />
                   );
                 })}
@@ -1594,6 +1594,7 @@ interface PlayerCardProps {
   onCancelBid: (bidId: string) => void;
   onSilentDelete: (bidId: string) => Promise<void>;
   isLocked: boolean;
+  submission: any;
 }
 
 function PlayerCard({
@@ -1609,6 +1610,7 @@ function PlayerCard({
   onCancelBid,
   onSilentDelete,
   isLocked,
+  submission,
 }: PlayerCardProps) {
   const [bidAmount, setBidAmount] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -1849,10 +1851,10 @@ function PlayerCard({
                   </button>
                 </div>
               ) : (
-                <div className="mt-1 flex items-center justify-end gap-1.5 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-150 uppercase tracking-wider w-fit self-end">
-                  <svg className="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className={`mt-1 flex items-center justify-end gap-1.5 text-[9px] font-black px-2 py-1 rounded-lg border uppercase tracking-wider w-fit self-end ${!!submission ? 'text-emerald-600 bg-emerald-50 border-emerald-150' : 'text-blue-600 bg-blue-50 border-blue-150'}`}>
+                  <svg className={`w-3 h-3 ${!!submission ? 'text-emerald-600' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                  </svg> Submitted
+                  </svg> {!!submission ? 'Submitted' : 'Draft'}
                 </div>
               )}
             </div>
@@ -1886,7 +1888,7 @@ function PlayerCard({
                 </form>
               ) : (
                 <div className="py-2 text-[10px] text-center text-slate-400 font-black uppercase tracking-wider bg-slate-50 border border-slate-100 rounded-xl">
-                  {isLocked ? 'Locked' : 'Slot Reached'}
+                  {isLocked ? (!!submission ? 'Locked' : 'Draft') : 'Slot Reached'}
                 </div>
               )}
             </>

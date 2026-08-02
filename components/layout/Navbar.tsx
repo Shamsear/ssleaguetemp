@@ -11,7 +11,12 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { user, loading } = useAuth();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -1357,13 +1362,13 @@ export default function Navbar() {
               <Link
                 href="/login"
                 className={`relative z-10 px-5 py-1.5 overflow-hidden font-semibold text-sm border rounded-xl transition-all duration-300 group shadow-md ${
-                  pathname === '/login'
+                  mounted && pathname === '/login'
                     ? 'border-[#D4AF37] text-white shadow-[#D4AF37]/20'
                     : 'text-[#D4AF37] border-[#D4AF37]/30 hover:border-[#D4AF37] hover:text-white shadow-[#D4AF37]/5 hover:shadow-[#D4AF37]/20'
                 }`}
               >
                 <span className={`absolute inset-0 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] transition-transform duration-300 -z-10 ${
-                  pathname === '/login' ? 'translate-y-0' : 'translate-y-full group-hover:translate-y-0'
+                  mounted && pathname === '/login' ? 'translate-y-0' : 'translate-y-full group-hover:translate-y-0'
                 }`}></span>
                 Login
               </Link>
