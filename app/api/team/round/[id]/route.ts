@@ -281,17 +281,23 @@ export async function GET(
       };
     });
 
-    // Get auction progress (completed rounds and total rounds)
+    // Get auction progress (completed rounds and total rounds config)
     const roundsProgressResult = await sql`
       SELECT 
-        COUNT(*) FILTER (WHERE status = 'completed') as completed_rounds,
-        COUNT(*) as total_rounds
-      FROM rounds
-      WHERE season_id = ${round.season_id}
+        COUNT(r.id) FILTER (WHERE r.status = 'completed') as completed_rounds,
+        COALESCE(s.max_rounds, 5) as total_rounds,
+        COALESCE(s.min_balance_per_round, 10) as min_balance_per_round
+      FROM rounds r
+      LEFT JOIN auction_settings s ON r.auction_settings_id = s.id
+      WHERE r.season_id = ${round.season_id}
+      GROUP BY s.max_rounds, s.min_balance_per_round
+      LIMIT 1
     `;
 
+    // Fallback if the group returns empty
     const completedRounds = parseInt(roundsProgressResult[0]?.completed_rounds || '0');
-    const totalRounds = parseInt(roundsProgressResult[0]?.total_rounds || '0');
+    const totalRounds = parseInt(roundsProgressResult[0]?.total_rounds || '5');
+    const minBalancePerRound = parseInt(roundsProgressResult[0]?.min_balance_per_round || '10');
 
     // Check if team has submitted bids for this round
     const submissionResult = await sql`
@@ -321,6 +327,7 @@ export async function GET(
       teamName,
       completedRounds,
       totalRounds,
+      minBalancePerRound,
       submission: submissionData ? {
         submitted_at: submissionData.submitted_at,
         is_locked: submissionData.is_locked,

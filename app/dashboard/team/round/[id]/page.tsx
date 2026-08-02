@@ -128,9 +128,15 @@ export default function TeamRoundPage() {
   const teamName = roundData?.teamName || user?.displayName || 'Team';
   const completedRounds = roundData?.completedRounds || 0;
   const totalRounds = roundData?.totalRounds || 0;
+  const minBalancePerRound = roundData?.minBalancePerRound || 10;
   const submission = roundData?.submission || null;
   const hasSubmitted = !!submission;
   const isLocked = submission?.is_locked || false;
+
+  // Calculate the maximum possible single bid this round
+  // Standard rule: must keep at least (minBalancePerRound) for each remaining round
+  const remainingRoundsCount = Math.max(0, totalRounds - completedRounds - 1);
+  const maxBidThisRound = Math.max(0, teamBalance - (remainingRoundsCount * minBalancePerRound));
 
   // Auth guard
   useEffect(() => {
@@ -784,15 +790,15 @@ export default function TeamRoundPage() {
                   <div>
                     <span className="text-slate-400">Max bid this round:</span>
                     <p className="text-xs text-slate-700 font-mono font-black mt-0.5">
-                      £{Math.max(0, teamBalance - ((totalRounds - completedRounds - 1) * 1000)).toLocaleString()}
+                      £{maxBidThisRound.toLocaleString()}
                     </p>
                   </div>
                   <div>
                     <span className="text-slate-400">Your balance:</span>
-                    <p className={`text-xs font-mono font-black mt-0.5 ${teamBalance >= 1000 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    <p className={`text-xs font-mono font-black mt-0.5 ${teamBalance >= minBalancePerRound ? 'text-emerald-600' : 'text-rose-600'}`}>
                       £{teamBalance.toLocaleString()}
-                      <span className={`text-[10px] ml-1 block sm:inline ${teamBalance >= 1000 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                        ({teamBalance >= 1000 ? 'sufficient' : 'insufficient'})
+                      <span className={`text-[10px] ml-1 block sm:inline ${teamBalance >= minBalancePerRound ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        ({teamBalance >= minBalancePerRound ? 'sufficient' : 'insufficient'})
                       </span>
                     </p>
                   </div>
