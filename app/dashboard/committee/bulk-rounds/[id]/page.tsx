@@ -558,12 +558,12 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
     if (!round) return;
 
     const minutes = parseInt(minutesToAdd);
-    if (!minutes || minutes <= 0) {
-      alert('Please enter a valid number of minutes');
+    if (isNaN(minutes) || minutes === 0) {
+      alert('Please enter a valid number of minutes (positive to add, negative to subtract)');
       return;
     }
 
-    if (!confirm(`Add ${minutes} minute(s) to the round?`)) {
+    if (!confirm(`${minutes > 0 ? 'Add' : 'Remove'} ${Math.abs(minutes)} minute(s) ${minutes > 0 ? 'to' : 'from'} the round?`)) {
       return;
     }
 
@@ -577,7 +577,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
       const { success, data, error } = await response.json();
 
       if (success) {
-        alert(`Successfully added ${minutes} minute(s) to the round!`);
+        alert(`Successfully ${minutes > 0 ? 'added' : 'removed'} ${Math.abs(minutes)} minute(s) ${minutes > 0 ? 'to' : 'from'} the round!`);
         setShowAddTime(false);
         setMinutesToAdd('5');
         // WebSocket will update automatically
@@ -812,18 +812,17 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
               <div className="mt-6 p-5 bg-blue-50 border border-blue-200 rounded-2xl animate-in fade-in slide-in-from-top-4 duration-200">
                 <h3 className="font-bold text-slate-905 mb-4 flex items-center gap-2 text-sm">
                   <Clock className="w-5 h-5 text-blue-600" />
-                  Add Time to Round
+                  Add/Subtract Time to Round
                 </h3>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="flex-1">
-                    <label className="block text-xs font-bold text-slate-700 uppercase font-mono mb-2">Minutes to Add</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase font-mono mb-2">Minutes to Adjust</label>
                     <input
                       type="number"
                       value={minutesToAdd}
                       onChange={(e) => setMinutesToAdd(e.target.value)}
                       className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono text-sm"
-                      min="1"
-                      max="120"
+                      placeholder="e.g. 5 or -5"
                     />
                   </div>
                   <div className="flex items-end gap-2">

@@ -27,9 +27,9 @@ export async function POST(
     const { id } = await params;
     const { minutes } = await request.json();
 
-    if (!minutes || minutes <= 0) {
+    if (isNaN(minutes) || minutes === 0) {
       return NextResponse.json(
-        { success: false, error: 'Valid minutes value is required' },
+        { success: false, error: 'Valid minutes value (positive or negative) is required' },
         { status: 400 }
       );
     }
@@ -83,7 +83,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       data: updatedTiebreaker[0],
-      message: `Added ${minutes} minute(s) to tiebreaker`,
+      message: `Successfully ${minutes > 0 ? 'added' : 'removed'} ${Math.abs(minutes)} minute(s)`,
     });
 
   } catch (error: any) {

@@ -148,20 +148,20 @@ export default function CommitteeTiebreakerPage() {
 
   const handleAddTime = async (tiebreakerId: string) => {
     const minutes = parseInt(minutesToAdd[tiebreakerId] || '5');
-    if (!minutes || minutes <= 0) {
+    if (isNaN(minutes) || minutes === 0) {
       showAlert({
         type: 'error',
         title: 'Invalid Input',
-        message: 'Please enter a valid number of minutes'
+        message: 'Please enter a valid number of minutes (positive to add, negative to subtract)'
       });
       return;
     }
 
     const confirmed = await showConfirm({
       type: 'info',
-      title: 'Add Time',
-      message: `Add ${minutes} minute(s) to this tiebreaker?`,
-      confirmText: 'Add Time',
+      title: minutes > 0 ? 'Add Time' : 'Remove Time',
+      message: `${minutes > 0 ? 'Add' : 'Remove'} ${Math.abs(minutes)} minute(s) ${minutes > 0 ? 'to' : 'from'} this tiebreaker?`,
+      confirmText: minutes > 0 ? 'Add Time' : 'Remove Time',
       cancelText: 'Cancel'
     });
 
@@ -180,7 +180,7 @@ export default function CommitteeTiebreakerPage() {
         showAlert({
           type: 'success',
           title: 'Success',
-          message: `Successfully added ${minutes} minute(s) to tiebreaker!`
+          message: `Successfully ${minutes > 0 ? 'added' : 'removed'} ${Math.abs(minutes)} minute(s)`
         });
         setAddingTime(null);
         setMinutesToAdd({ ...minutesToAdd, [tiebreakerId]: '5' });
@@ -383,9 +383,7 @@ export default function CommitteeTiebreakerPage() {
                           value={minutesToAdd[tiebreaker.id] || '5'}
                           onChange={(e) => setMinutesToAdd({ ...minutesToAdd, [tiebreaker.id]: e.target.value })}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          min="1"
-                          max="120"
-                          placeholder="Enter minutes"
+                          placeholder="e.g. 5 or -5"
                         />
                       </div>
                       <div className="flex items-end gap-2">
@@ -393,7 +391,7 @@ export default function CommitteeTiebreakerPage() {
                           onClick={() => handleAddTime(tiebreaker.id)}
                           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
                         >
-                          Add Time
+                          Adjust Time
                         </button>
                         <button
                           onClick={() => setAddingTime(null)}

@@ -1002,11 +1002,11 @@ export default function RoundsManagementPage() {
   const handleAddTime = async (roundId: string) => {
     const minutes = parseInt(addTimeInputs[roundId] || '10');
     
-    if (minutes < 5) {
+    if (isNaN(minutes) || minutes === 0) {
       showAlert({
         type: 'warning',
         title: 'Invalid Duration',
-        message: 'Duration must be at least 5 minutes'
+        message: 'Please enter a valid number of minutes to add or subtract'
       });
       return;
     }
@@ -1031,8 +1031,8 @@ export default function RoundsManagementPage() {
       if (success) {
         showAlert({
           type: 'success',
-          title: 'Time Added',
-          message: `Added ${minutes} minute${minutes !== 1 ? 's' : ''} to the timer`
+          title: minutes > 0 ? 'Time Added' : 'Time Removed',
+          message: `${minutes > 0 ? 'Added' : 'Removed'} ${Math.abs(minutes)} minute${Math.abs(minutes) !== 1 ? 's' : ''} ${minutes > 0 ? 'to' : 'from'} the timer`
         });
         
         // Refresh rounds
@@ -1902,30 +1902,37 @@ export default function RoundsManagementPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 text-white shadow-sm font-mono text-xs font-bold shrink-0">
-                        <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                        <span>{formatTime(timeRemaining[round.id] || 0)}</span>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 text-white shadow-sm font-mono text-xs font-bold">
+                          <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                          <span>{formatTime(timeRemaining[round.id] || 0)}</span>
+                        </div>
+                        {round.end_time && (
+                          <div className="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-wider pr-1">
+                            Ends: {new Date(round.end_time).toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST
+                          </div>
+                        )}
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                       <div className="flex items-center gap-3">
                         <div className="relative flex-1 max-w-[120px]">
-                          <input
-                            type="number"
-                            value={addTimeInputs[round.id] || '10'}
-                            onChange={(e) => setAddTimeInputs({ ...addTimeInputs, [round.id]: e.target.value })}
-                            min="5"
-                            className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none text-xs font-bold font-mono shadow-sm text-slate-800"
-                          />
-                          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[10px] text-slate-400 font-bold uppercase">min</span>
-                        </div>
-                        <button
-                          onClick={() => handleAddTime(round.id)}
-                          className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1"
-                        >
-                          <Plus className="w-3 h-3 text-amber-400" /> Add Time
-                        </button>
+                            <input
+                              type="number"
+                              value={addTimeInputs[round.id] || '10'}
+                              onChange={(e) => setAddTimeInputs({ ...addTimeInputs, [round.id]: e.target.value })}
+                              className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none text-xs font-bold font-mono shadow-sm text-slate-800"
+                              placeholder="e.g. 10 or -10"
+                            />
+                            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[10px] text-slate-400 font-bold uppercase">min</span>
+                          </div>
+                          <button
+                            onClick={() => handleAddTime(round.id)}
+                            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                          >
+                            <Clock className="w-3 h-3 text-amber-400" /> Adjust Time
+                          </button>
                       </div>
                       
                       <div className="flex justify-end items-center gap-2">
@@ -1974,10 +1981,9 @@ export default function RoundsManagementPage() {
                                 const sid = currentSeasonId || round.season_id || '';
                                 const num = sid.match(/\d+$/)?.[0] || '';
                                 const seasonTitle = `SOUTHSOCCERS SUPER LEAGUE S${num}`;
-                                const roundIdx = rounds.findIndex((r: any) => r.id === round.id);
-                                const roundNum = roundIdx >= 0 ? roundIdx + 1 : (round.round_number || '?');
+                                const roundNum = round.round_number || extractIdNumberAsInt(round.id) || '?';
                                 const deadline = round.end_time
-                                  ? new Date(round.end_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()
+                                  ? new Date(round.end_time).toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }).toUpperCase() + ' IST'
                                   : 'TBD';
                                 const position = (round.position || '').toUpperCase();
                                 const teamLines = (subs.teams || [])
@@ -2418,7 +2424,7 @@ export default function RoundsManagementPage() {
                       </div>
                       <div>
                         <h3 className="text-base font-extrabold text-slate-800">
-                          {round.position} Round #{extractIdNumberAsInt(round.id)}
+                          {round.position} Round #{round.round_number || extractIdNumberAsInt(round.id)}
                         </h3>
                         <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 flex items-center gap-1 font-mono">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
@@ -2473,6 +2479,11 @@ export default function RoundsManagementPage() {
             <h2 className="text-sm sm:text-base font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
               <HelpCircle className="w-4 h-4 text-violet-500" />
               Round Finalization Details
+              {completedRounds.length > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-violet-50 border border-violet-200 text-violet-800 text-[10px] font-extrabold font-mono shadow-sm">
+                  {completedRounds.length}
+                </span>
+              )}
             </h2>
             
             <div className="space-y-3 font-mono">
@@ -2495,7 +2506,7 @@ export default function RoundsManagementPage() {
                           }`}
                         />
                         <span className="font-extrabold text-slate-805 text-sm">
-                          {round.position} Round #{extractIdNumberAsInt(round.id)}
+                          {round.position} Round #{round.round_number || extractIdNumberAsInt(round.id)}
                         </span>
                         {details && (
                           <span className="text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded uppercase">

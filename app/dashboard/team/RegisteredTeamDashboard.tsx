@@ -1459,11 +1459,16 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                           </p>
                         </div>
                         {round.end_time && (
-                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-100 font-mono">
-                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
-                            <span className="text-xs font-bold text-rose-700">
-                              {formatTime(timeRemaining[round.id] || 0)}
-                            </span>
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-100 font-mono">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                              <span className="text-xs font-bold text-rose-700">
+                                {formatTime(timeRemaining[round.id] || 0)}
+                              </span>
+                            </div>
+                            <div className="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-wider pr-1">
+                              Ends: {new Date(round.end_time).toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST
+                            </div>
                           </div>
                         )}
                       </div>
