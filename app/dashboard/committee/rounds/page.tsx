@@ -2083,6 +2083,7 @@ export default function RoundsManagementPage() {
                                     }`}>
                                       {team.has_submitted ? 'Submitted' : team.has_draft ? 'Draft Saved' : 'Pending'}
                                     </span>
+                                  </td>
                                   <td className="px-4 py-2.5 whitespace-nowrap text-center text-slate-700 font-bold">
                                     {team.has_submitted
                                       ? team.bid_count
