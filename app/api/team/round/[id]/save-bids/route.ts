@@ -199,9 +199,9 @@ export async function POST(
     
     for (const bid of bids) {
       const playerResult = await sql`
-        SELECT id, name, position, position_group, is_auction_eligible, is_sold, team_id
+        SELECT id, name, position, position_group, is_auction_eligible, is_sold, team_id, retired
         FROM footballplayers 
-        WHERE id = ${bid.player_id} AND (retired IS NOT TRUE)
+        WHERE id = ${bid.player_id}
       `;
 
       if (playerResult.length === 0) {
@@ -212,6 +212,13 @@ export async function POST(
       }
 
       const player = playerResult[0];
+
+      if (player.retired) {
+        return NextResponse.json(
+          { success: false, error: `Player ${player.name} is retired. Please delete their bid to continue.` },
+          { status: 400 }
+        );
+      }
 
       if (!player.is_auction_eligible) {
         return NextResponse.json(

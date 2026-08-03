@@ -240,6 +240,7 @@ export async function GET(
         p.team_name as "player.team_name",
         p.overall_rating as "player.overall_rating",
         p.playing_style as "player.playing_style",
+        p.retired as "player.retired",
         CASE WHEN sp.player_id IS NOT NULL THEN true ELSE false END as "player.is_starred"
       FROM bids b
       JOIN footballplayers p ON b.player_id = p.id
