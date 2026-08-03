@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { Star, User, RefreshCw } from 'lucide-react';
+import { Star, User, RefreshCw, Copy, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -40,6 +40,55 @@ interface TeamStats {
 
 const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'DMF', 'CMF', 'AMF', 'LMF', 'RMF', 'LWF', 'RWF', 'SS', 'CF'];
 
+function CopyBalanceToggle({ teamId, eCoin, ssCoin }: { teamId: string; eCoin: number; ssCoin: number }) {
+  const [selected, setSelected] = useState<'ecoin' | 'sscoin'>('ecoin');
+  const [copied, setCopied] = useState(false);
+
+  const value = selected === 'ecoin' ? eCoin : ssCoin;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(String(value)).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="flex items-center gap-1.5">
+      {/* Toggle */}
+      <div className="flex rounded-lg border border-slate-200 overflow-hidden text-[10px] font-mono font-bold uppercase tracking-wider shrink-0">
+        <button
+          onClick={() => { setSelected('ecoin'); setCopied(false); }}
+          className={`px-2.5 py-1.5 transition-all ${selected === 'ecoin' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+        >
+          eCoin
+        </button>
+        <button
+          onClick={() => { setSelected('sscoin'); setCopied(false); }}
+          className={`px-2.5 py-1.5 transition-all border-l border-slate-200 ${selected === 'sscoin' ? 'bg-purple-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+        >
+          SSCoin
+        </button>
+      </div>
+
+      {/* Value + Copy */}
+      <button
+        onClick={handleCopy}
+        className={`flex-1 inline-flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-lg font-mono font-bold text-[10px] uppercase tracking-wider transition-all border ${
+          copied
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+            : selected === 'ecoin'
+              ? 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
+              : 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100'
+        }`}
+      >
+        <span className="tabular-nums">{value.toLocaleString()}</span>
+        {copied ? <Check className="w-3 h-3 shrink-0" /> : <Copy className="w-3 h-3 shrink-0" />}
+      </button>
+    </div>
+  );
+}
+
 export default function AllTeamsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -52,6 +101,14 @@ export default function AllTeamsPage() {
   const [playerCounts, setPlayerCounts] = useState<{ [key: string]: { footballPlayersCount: number; realPlayersCount: number } }>({});
   const [updateCounter, setUpdateCounter] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [copiedTeam, setCopiedTeam] = useState<string | null>(null);
+
+  const handleCopyBalance = (teamId: string, label: string, value: number) => {
+    navigator.clipboard.writeText(String(value)).then(() => {
+      setCopiedTeam(`${teamId}_${label}`);
+      setTimeout(() => setCopiedTeam(null), 2000);
+    });
+  };
 
   // Fetch all team seasons for the season (cached, only after we have seasonId)
   const { data: allTeamSeasons, loading: allTeamsLoading } = useCachedTeamSeasons(
@@ -475,8 +532,33 @@ export default function AllTeamsPage() {
                   </div>
                 </div>
 
-                {/* View Squad Button */}
-                <div className="mt-auto pt-3 border-t border-slate-100">
+                {/* View Squad + Copy Balance */}
+                <div className="mt-auto pt-3 border-t border-slate-100 space-y-2">
+                  {/* Copy Balance */}
+                  {(seasonType === 'multi' || teamData.team.currencySystem === 'dual') ? (
+                    <CopyBalanceToggle
+                      teamId={teamData.team.id}
+                      eCoin={teamData.team.footballBudget || 0}
+                      ssCoin={teamData.team.realPlayerBudget || 0}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => handleCopyBalance(teamData.team.id, 'balance', teamData.team.balance || 0)}
+                      className={`w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl font-mono font-bold text-[10px] uppercase tracking-wider transition-all border ${
+                        copiedTeam === `${teamData.team.id}_balance`
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                          : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
+                      }`}
+                      title="Copy balance"
+                    >
+                      {copiedTeam === `${teamData.team.id}_balance` ? (
+                        <><Check className="w-3 h-3" /> Copied!</>
+                      ) : (
+                        <><Copy className="w-3 h-3" /> Copy Balance</>
+                      )}
+                    </button>
+                  )}
+
                   <Link
                     href={`/dashboard/team/squad/${teamData.team.id}`}
                     className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all shadow-sm"
