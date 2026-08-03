@@ -219,6 +219,7 @@ export async function GET(
       LEFT JOIN starred_players sp ON p.id = sp.player_id AND sp.team_id = ${teamId}
       WHERE (p.position = ANY(${positions}) OR p.position_group = ANY(${positions}))
       AND p.is_auction_eligible = true
+      AND (p.retired IS NOT TRUE)
       AND (p.is_sold = false OR p.is_sold IS NULL)
       AND (p.team_id IS NULL OR p.team_id = '')
       ORDER BY is_starred DESC, p.overall_rating DESC

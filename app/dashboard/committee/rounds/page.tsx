@@ -1554,28 +1554,26 @@ export default function RoundsManagementPage() {
                 <label htmlFor="position" className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mb-1.5 block">
                   Position(s) <span className="text-slate-400/70 lowercase font-normal">(Select multiple for combined rounds)</span>
                 </label>
-                <div className="relative">
-                  <span className="absolute top-3.5 left-3 flex items-center pointer-events-none text-slate-405">
+                <div className="relative min-h-[48px] w-full bg-white border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500 transition-all duration-200 shadow-sm flex flex-col justify-center py-1.5 pl-10 pr-2">
+                  <span className="absolute top-1/2 -translate-y-1/2 left-3 flex items-center pointer-events-none text-slate-400">
                     <Layers className="w-4 h-4" />
                   </span>
-                  <div className="pl-10 min-h-[48px] w-full py-2 bg-white border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500 transition-all duration-200 shadow-sm">
+                  
+                  <div className="flex flex-wrap items-center gap-1.5">
                     {/* Selected positions */}
-                    {selectedPositions.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 px-2 mb-2">
-                        {selectedPositions.map(pos => (
-                          <span key={pos} className="inline-flex items-center px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold font-mono">
-                            {pos}
-                            <button
-                              type="button"
-                              onClick={() => setSelectedPositions(prev => prev.filter(p => p !== pos))}
-                              className="ml-1 text-amber-600 hover:text-amber-850 font-bold"
-                            >
-                              ✕
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {selectedPositions.map(pos => (
+                      <span key={pos} className="inline-flex items-center px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold font-mono">
+                        {pos}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPositions(prev => prev.filter(p => p !== pos))}
+                          className="ml-1.5 text-amber-600 hover:text-amber-800 font-bold focus:outline-none"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                    
                     {/* Dropdown */}
                     <select
                       id="position"
@@ -1585,9 +1583,11 @@ export default function RoundsManagementPage() {
                           setSelectedPositions(prev => [...prev, e.target.value]);
                         }
                       }}
-                      className="w-full px-2 py-1 bg-transparent border-none focus:ring-0 outline-none text-sm font-bold font-mono text-slate-700 pl-10"
+                      className="flex-1 bg-transparent border-none focus:ring-0 outline-none text-sm font-bold font-mono text-slate-700 min-w-[140px] py-1 cursor-pointer"
                     >
-                      <option value="">+ Add position</option>
+                      <option value="" disabled hidden>
+                        {selectedPositions.length === 0 ? 'Select position...' : '+ Add position'}
+                      </option>
                       {availablePositions
                         .filter(pos => !selectedPositions.includes(pos))
                         .map(position => (
