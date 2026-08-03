@@ -84,7 +84,6 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
   const [round, setRound] = useState<Round | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
-  const [expandedPlayers, setExpandedPlayers] = useState<Set<string>>(new Set());
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
   const [teamBidCounts, setTeamBidCounts] = useState<TeamBidCount[]>([]);
 
@@ -307,23 +306,17 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
 
   const toggleTeam = (teamId: string) => {
     setExpandedTeams((prev) => {
-      const next = new Set(prev);
-      if (next.has(teamId)) next.delete(teamId);
-      else next.add(teamId);
-      return next;
+      const newSet = new Set(prev);
+      if (newSet.has(teamId)) {
+        newSet.delete(teamId);
+      } else {
+        newSet.add(teamId);
+      }
+      return newSet;
     });
   };
 
-  const togglePlayer = (playerId: string) => {
-    setExpandedPlayers((prev) => {
-      const next = new Set(prev);
-      if (next.has(playerId)) next.delete(playerId);
-      else next.add(playerId);
-      return next;
-    });
-  };
-
-  const getPositionColor = (pos: string) => {
+  const getPositionColor = (position: string) => {
     const positionMap: { [key: string]: string } = {
       GK: 'bg-blue-100 text-blue-800',
       CB: 'bg-green-100 text-green-800',
@@ -733,33 +726,13 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
                             </span>
                           </div>
                         </div>
-                        <div className="bg-white p-2 rounded-lg border border-slate-200 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => togglePlayer(playerData.player.id)}>
-                          <div>
-                            <div className="text-slate-400 font-bold uppercase">Status</div>
-                            <span className="px-2 py-0.5 inline-flex text-[9px] leading-5 font-extrabold rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">
-                              Won
-                            </span>
-                          </div>
-                          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expandedPlayers.has(playerData.player.id) ? 'rotate-180' : ''}`} />
+                        <div className="bg-white p-2 rounded-lg border border-slate-200">
+                          <div className="text-slate-400 font-bold uppercase">Status</div>
+                          <span className="px-2 py-0.5 inline-flex text-[9px] leading-5 font-extrabold rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">
+                            Won
+                          </span>
                         </div>
                       </div>
-                      
-                      {expandedPlayers.has(playerData.player.id) && playerData.bids.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-slate-200/60">
-                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">All Bids ({playerData.bids.length})</div>
-                          <div className="space-y-1.5">
-                            {playerData.bids.sort((a, b) => b.amount - a.amount).map((b, i) => (
-                              <div key={b.id} className={`flex items-center justify-between p-2 rounded-lg text-xs ${b.status === 'won' ? 'bg-emerald-50 border border-emerald-200/60' : 'bg-slate-50 border border-slate-200/60'}`}>
-                                <span className="font-bold text-slate-700 truncate mr-2">{b.team_name}</span>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <span className={`font-bold ${b.status === 'won' ? 'text-emerald-700' : 'text-slate-600'}`}>£{b.amount.toLocaleString()}</span>
-                                  {b.status === 'won' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -827,45 +800,13 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
                             </span>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-center">
-                            <div className="flex items-center justify-end gap-2 cursor-pointer" onClick={() => togglePlayer(playerData.player.id)}>
-                              <span className="px-2 py-0.5 inline-flex text-[9px] font-extrabold uppercase rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">
-                                Won
-                              </span>
-                              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expandedPlayers.has(playerData.player.id) ? 'rotate-180' : ''}`} />
-                            </div>
+                            <span className="px-2 py-0.5 inline-flex text-[9px] font-extrabold uppercase rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">
+                              Won
+                            </span>
                           </td>
                         </tr>
-                        
-                        {expandedPlayers.has(playerData.player.id) && (
-                          <tr className="bg-slate-50/50">
-                            <td colSpan={6} className="px-4 py-4">
-                              <div className="max-w-3xl mx-auto border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-                                <div className="px-4 py-2 bg-slate-100/50 border-b border-slate-200 flex justify-between items-center">
-                                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">All Bids for {playerData.player.name}</span>
-                                  <span className="text-[10px] font-bold text-slate-400">{playerData.bids.length} Total Bids</span>
-                                </div>
-                                <div className="divide-y divide-slate-100">
-                                  {playerData.bids.sort((a, b) => b.amount - a.amount).map((b) => (
-                                    <div key={b.id} className={`flex items-center justify-between px-4 py-2.5 text-xs ${b.status === 'won' ? 'bg-emerald-50/30' : ''}`}>
-                                      <div className="font-bold text-slate-700">{b.team_name}</div>
-                                      <div className="flex items-center gap-3">
-                                        <span className={`font-bold ${b.status === 'won' ? 'text-emerald-700' : 'text-slate-600'}`}>£{b.amount.toLocaleString()}</span>
-                                        {b.status === 'won' ? (
-                                          <span className="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-emerald-100 text-emerald-700">Winning Bid</span>
-                                        ) : (
-                                          <span className="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-slate-100 text-slate-500">Lost</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </>
-                    );
-                  })}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
