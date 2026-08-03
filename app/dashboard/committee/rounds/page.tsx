@@ -93,9 +93,21 @@ function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete, onU
   // ── edit modal state ──
   const [showEdit, setShowEdit] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const formatLocalISO = (date: Date) => {
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  const formatISTforInput = (date: Date) => {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    const parts = formatter.formatToParts(date);
+    const getPart = (type: string) => parts.find(p => p.type === type)?.value || '00';
+    let hour = getPart('hour');
+    if (hour === '24') hour = '00';
+    return `${getPart('year')}-${getPart('month')}-${getPart('day')}T${hour}:${getPart('minute')}`;
   };
 
   const [editForm, setEditForm] = useState({
@@ -104,7 +116,7 @@ function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete, onU
     finalization_mode: round.finalization_mode ?? 'auto',
     start_mode: round.start_time ? 'scheduled' : 'immediate',
     start_time: round.start_time
-      ? formatLocalISO(new Date(round.start_time))
+      ? formatISTforInput(new Date(round.start_time))
       : '',
   });
 
@@ -116,7 +128,7 @@ function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete, onU
         max_bids_per_team: Number(editForm.max_bids_per_team),
         finalization_mode: editForm.finalization_mode,
         start_time: editForm.start_mode === 'scheduled' && editForm.start_time
-          ? new Date(editForm.start_time).toISOString()
+          ? new Date(`${editForm.start_time.length === 16 ? editForm.start_time + ':00' : editForm.start_time}+05:30`).toISOString()
           : null,
       };
       const res = await fetchWithTokenRefresh(`/api/rounds/${round.id}`, {
@@ -295,7 +307,7 @@ function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete, onU
                     onChange={e => setEditForm(f => ({ ...f, start_time: e.target.value }))}
                     className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">Your local time (browser timezone)</p>
+                  <p className="text-[10px] text-slate-400 mt-1">IST Time</p>
                 </div>
               )}
 
