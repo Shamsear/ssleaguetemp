@@ -89,6 +89,75 @@ function CopyBalanceToggle({ teamId, eCoin, ssCoin }: { teamId: string; eCoin: n
   );
 }
 
+function CopyAllBalances({ teams, isDual }: { teams: TeamStats[]; isDual: boolean }) {
+  const [selected, setSelected] = useState<'ecoin' | 'sscoin' | 'balance'>(isDual ? 'ecoin' : 'balance');
+  const [copied, setCopied] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const getVal = (t: TeamStats) => {
+    if (selected === 'ecoin') return t.team.footballBudget || 0;
+    if (selected === 'sscoin') return t.team.realPlayerBudget || 0;
+    return t.team.balance || 0;
+  };
+
+  const handleCopyAll = () => {
+    const text = teams.map(t => `${t.team.name}: ${getVal(t).toLocaleString()}`).join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const label = selected === 'ecoin' ? 'eCoin' : selected === 'sscoin' ? 'SSCoin' : 'Balance';
+  const accentClass = selected === 'ecoin' ? 'text-indigo-600' : selected === 'sscoin' ? 'text-purple-600' : 'text-amber-600';
+
+  return (
+    <div className="console-card bg-white border border-slate-200/60 rounded-2xl overflow-hidden shadow-sm font-mono">
+      {/* Header row */}
+      <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <Copy className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Copy All Balances</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Currency toggle */}
+          {isDual && (
+            <div className="flex rounded-lg border border-slate-200 overflow-hidden text-[10px] font-bold uppercase tracking-wider">
+              <button onClick={() => { setSelected('ecoin'); setCopied(false); }} className={`px-2.5 py-1 transition-all ${selected === 'ecoin' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>eCoin</button>
+              <button onClick={() => { setSelected('sscoin'); setCopied(false); }} className={`px-2.5 py-1 transition-all border-l border-slate-200 ${selected === 'sscoin' ? 'bg-purple-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>SSCoin</button>
+            </div>
+          )}
+          {/* Expand toggle */}
+          <button onClick={() => setExpanded(p => !p)} className="px-2.5 py-1 rounded-lg border border-slate-200 text-[10px] font-bold uppercase text-slate-500 hover:bg-slate-50 transition-all">
+            {expanded ? 'Hide' : 'Preview'}
+          </button>
+          {/* Copy All */}
+          <button
+            onClick={handleCopyAll}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all ${
+              copied ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-800 border-slate-900 text-white hover:bg-slate-700'
+            }`}
+          >
+            {copied ? <><Check className="w-3 h-3" /> Copied!</> : <><Copy className="w-3 h-3" /> Copy All</>}
+          </button>
+        </div>
+      </div>
+
+      {/* Preview list */}
+      {expanded && (
+        <div className="divide-y divide-slate-50 max-h-60 overflow-y-auto">
+          {teams.map(t => (
+            <div key={t.team.id} className="flex items-center justify-between px-4 py-2 text-xs hover:bg-slate-50/50">
+              <span className="font-bold text-slate-700 truncate mr-4">{t.team.name}</span>
+              <span className={`font-extrabold tabular-nums shrink-0 ${accentClass}`}>{getVal(t).toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AllTeamsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -401,6 +470,11 @@ export default function AllTeamsPage() {
             <span>{teams.length} Team{teams.length !== 1 ? 's' : ''} Registered</span>
           </div>
         </div>
+
+        {/* Copy All Balances Panel */}
+        {teams.length > 0 && (
+          <CopyAllBalances teams={teams} isDual={seasonType === 'multi' || teams.some(t => t.team.currencySystem === 'dual')} />
+        )}
 
         {teams.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
