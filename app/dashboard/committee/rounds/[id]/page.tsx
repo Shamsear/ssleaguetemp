@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, use } from 'react';
+import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { useAuctionWebSocket } from '@/hooks/useWebSocket';
 import { useAutoFinalize } from '@/hooks/useAutoFinalize';
@@ -339,7 +339,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
       SS: 'bg-orange-100 text-orange-800',
       CF: 'bg-red-100 text-red-800',
     };
-    return positionMap[position] || 'bg-gray-100 text-gray-800';
+    return positionMap[pos] || 'bg-gray-100 text-gray-800';
   };
 
   const getRatingColor = (rating: number) => {
@@ -519,7 +519,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
 
   const bidsByPlayer = organizeBidsByPlayer();
   const teamBids = organizeBidsByTeam(bidsByPlayer);
-  const winningBids = Object.values(bidsByPlayer).filter((p) => p.winningBid);
+  const winningBids = Object.values(bidsByPlayer).filter((p) => p.winningBid).sort((a, b) => (b.winningBid?.amount ?? 0) - (a.winningBid?.amount ?? 0));
   const isCompleted = round.status === 'completed';
 
   return (
@@ -784,9 +784,10 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
                       const isIncomplete = bid.phase === 'incomplete';
                       const teamInfo = teamBidCounts.find(t => t.team_id === bid.team_id);
                       return (
+                        <React.Fragment key={playerData.player.id}>
                         <tr
-                          key={playerData.player.id}
-                          className={`hover:bg-slate-50/50 transition-colors ${isIncomplete ? 'bg-orange-50/10' : ''}`}
+                          onClick={() => togglePlayer(playerData.player.id)}
+                          className={`cursor-pointer hover:bg-amber-50/30 transition-colors ${isIncomplete ? 'bg-orange-50/10' : ''} ${expandedPlayers.has(playerData.player.id) ? 'bg-amber-50/20' : ''}`}
                         >
                           <td className="px-4 py-3 whitespace-nowrap">
                             <div className="flex flex-col">
@@ -827,7 +828,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
                             </span>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-center">
-                            <div className="flex items-center justify-end gap-2 cursor-pointer" onClick={() => togglePlayer(playerData.player.id)}>
+                            <div className="flex items-center justify-center gap-2">
                               <span className="px-2 py-0.5 inline-flex text-[9px] font-extrabold uppercase rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">
                                 Won
                               </span>
@@ -838,8 +839,8 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
                         
                         {expandedPlayers.has(playerData.player.id) && (
                           <tr className="bg-slate-50/50">
-                            <td colSpan={6} className="px-4 py-4">
-                              <div className="max-w-3xl mx-auto border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                            <td colSpan={6} className="px-4 py-3">
+                              <div className="w-full border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
                                 <div className="px-4 py-2 bg-slate-100/50 border-b border-slate-200 flex justify-between items-center">
                                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">All Bids for {playerData.player.name}</span>
                                   <span className="text-[10px] font-bold text-slate-400">{playerData.bids.length} Total Bids</span>
@@ -863,9 +864,9 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
                             </td>
                           </tr>
                         )}
-                      </>
-                    );
-                  })}
+                        </React.Fragment>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
