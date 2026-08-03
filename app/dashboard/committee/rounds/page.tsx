@@ -93,13 +93,18 @@ function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete, onU
   // ── edit modal state ──
   const [showEdit, setShowEdit] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const formatLocalISO = (date: Date) => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
   const [editForm, setEditForm] = useState({
     position: round.position || '',
     max_bids_per_team: round.max_bids_per_team ?? 3,
     finalization_mode: round.finalization_mode ?? 'auto',
     start_mode: round.start_time ? 'scheduled' : 'immediate',
     start_time: round.start_time
-      ? new Date(round.start_time).toISOString().slice(0, 16)
+      ? formatLocalISO(new Date(round.start_time))
       : '',
   });
 
@@ -169,12 +174,13 @@ function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete, onU
             <div className="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Scheduled Start</div>
             <div className={`text-xs font-bold ${isDue ? 'text-rose-500 animate-pulse' : 'text-slate-700'}`}>
               {startTimeDate.toLocaleString('en-US', {
+                timeZone: 'Asia/Kolkata',
                 month: 'short',
                 day: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: true
-              })}
+              })} IST
               {isDue && ' (Due Now)'}
             </div>
             {countdownLabel ? (
@@ -225,10 +231,10 @@ function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete, onU
         </div>
       </div>
 
-      {/* ── Edit Modal ── */}
+      {/* ── Edit Inline ── */}
       {showEdit && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200/60 font-mono max-h-[90vh] overflow-y-auto">
+        <div className="mt-4 bg-slate-50 rounded-2xl p-5 sm:p-6 border border-slate-200 font-mono">
+          <div className="max-w-2xl mx-auto">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                 <Settings className="w-4 h-4 text-amber-500" />
@@ -954,7 +960,7 @@ export default function RoundsManagementPage() {
           type: 'success',
           title: startMode === 'scheduled' ? 'Round Scheduled' : 'Round Started',
           message: startMode === 'scheduled'
-            ? `Round for ${selectedPositions.join(' + ')} scheduled successfully for ${new Date(scheduledStartTime).toLocaleString()}!`
+            ? `Round for ${selectedPositions.join(' + ')} scheduled successfully for ${new Date(scheduledStartTime).toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })} IST!`
             : `Round for ${selectedPositions.join(' + ')} started successfully!`
         });
         setFormData({
@@ -1673,6 +1679,7 @@ export default function RoundsManagementPage() {
                         <div className="p-3 bg-amber-50/50 border border-amber-200/60 rounded-xl text-xs">
                           <p className="font-bold text-amber-900 font-mono">
                             Round will end at: <span className="text-amber-700">{endTime.toLocaleString('en-US', { 
+                              timeZone: 'Asia/Kolkata',
                               weekday: 'short',
                               month: 'short', 
                               day: 'numeric',
@@ -1680,10 +1687,7 @@ export default function RoundsManagementPage() {
                               hour: '2-digit', 
                               minute: '2-digit',
                               hour12: true 
-                            })}</span>
-                          </p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">
-                            ({endTime.toLocaleString('en-US', { timeZoneName: 'short' })})
+                            })} IST</span>
                           </p>
                         </div>
                       );
@@ -1756,7 +1760,7 @@ export default function RoundsManagementPage() {
                     />
                   </div>
                   <p className="mt-1 text-[10px] text-slate-400 font-mono">
-                    Local Time: {new Date(scheduledStartTime).toLocaleString()}
+                    IST Time: {new Date(scheduledStartTime).toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })}
                   </p>
                 </div>
               )}
@@ -2079,7 +2083,6 @@ export default function RoundsManagementPage() {
                                     }`}>
                                       {team.has_submitted ? 'Submitted' : team.has_draft ? 'Draft Saved' : 'Pending'}
                                     </span>
-                                  </td>
                                   <td className="px-4 py-2.5 whitespace-nowrap text-center text-slate-700 font-bold">
                                     {team.has_submitted
                                       ? team.bid_count
@@ -2090,11 +2093,12 @@ export default function RoundsManagementPage() {
                                   <td className="px-4 py-2.5 whitespace-nowrap text-center text-slate-400">
                                     {team.has_submitted && team.submitted_at
                                       ? new Date(team.submitted_at).toLocaleString('en-US', {
+                                          timeZone: 'Asia/Kolkata',
                                           month: 'short',
                                           day: 'numeric',
                                           hour: '2-digit',
                                           minute: '2-digit',
-                                        })
+                                        }) + ' IST'
                                       : team.has_draft
                                       ? <span className="text-blue-500 text-[9px] italic">Draft only</span>
                                       : '-'
@@ -2429,12 +2433,13 @@ export default function RoundsManagementPage() {
                         <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 flex items-center gap-1 font-mono">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
                           {round.created_at && new Date(round.created_at).toLocaleString('en-US', { 
+                            timeZone: 'Asia/Kolkata',
                             year: 'numeric', 
                             month: '2-digit', 
                             day: '2-digit', 
                             hour: '2-digit', 
                             minute: '2-digit'
-                          })}
+                          })} IST
                         </p>
                       </div>
                     </div>
@@ -2588,7 +2593,7 @@ export default function RoundsManagementPage() {
                                               <div className="min-w-0">
                                                 <div className="font-bold truncate">{bid.team_name}</div>
                                                 <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">
-                                                  {new Date(bid.created_at).toLocaleString()}
+                                                  {new Date(bid.created_at).toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })} IST
                                                 </div>
                                               </div>
                                             </div>
