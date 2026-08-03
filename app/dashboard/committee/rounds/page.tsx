@@ -457,11 +457,15 @@ export default function RoundsManagementPage() {
 
       // Fetch rounds, positions, and tiebreakers in parallel
       const roundsParams = new URLSearchParams({ season_id: seasonId });
-      const [roundsResponse, playersResponse, tbResponse] = await Promise.all([
+      const [roundsResponse, playersResponse, tbResponse, teamsResponse] = await Promise.all([
         fetchWithTokenRefresh(`/api/admin/rounds?${roundsParams}`),
         fetchWithTokenRefresh('/api/players?is_auction_eligible=true'),
         fetchWithTokenRefresh(`/api/admin/tiebreakers?seasonId=${seasonId}&status=active,pending`).catch(err => {
           console.error('Error fetching tiebreakers:', err);
+          return null;
+        }),
+        fetchWithTokenRefresh(`/api/admin/teams?seasonId=${seasonId}`).catch(err => {
+          console.error('Error fetching teams:', err);
           return null;
         })
       ]);
@@ -591,6 +595,23 @@ export default function RoundsManagementPage() {
           });
         }
       }
+      // Process teams
+      if (teamsResponse) {
+        const teamsData = await teamsResponse.json();
+        if (teamsData.success && teamsData.data) {
+          const numTeams = teamsData.data.length;
+          if (numTeams > 0) {
+            setFormData(prev => {
+              // Only update if it's still the default '5'
+              if (prev.max_bids_per_team === '5') {
+                return { ...prev, max_bids_per_team: String(numTeams) };
+              }
+              return prev;
+            });
+          }
+        }
+      }
+
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
@@ -1915,6 +1936,9 @@ export default function RoundsManagementPage() {
                                 <Settings className="w-3 h-3 text-amber-500" /> Manual Finalization
                               </span>
                             )}
+                            <span className="px-2 py-0.5 rounded-md uppercase bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1">
+                              <Users className="w-3 h-3 text-slate-500" /> Required Bids: {round.max_bids_per_team}
+                            </span>
                           </div>
                         </div>
                       </div>
