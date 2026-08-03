@@ -158,17 +158,14 @@ export async function POST(
     const isDualCurrency = currencySystem === 'dual';
     const teamBalance = isDualCurrency ? (teamSeasonData?.football_budget || 0) : (teamSeasonData?.budget || 0);
 
-    // Validate total budget
-    let totalBidsAmount = 0;
+    // Validate each bid against budget individually
     for (const bid of bids) {
-      totalBidsAmount += bid.amount;
-    }
-
-    if (totalBidsAmount > teamBalance) {
-      return NextResponse.json(
-        { success: false, error: `Insufficient balance. Total bids amount £${totalBidsAmount} exceeds your budget £${teamBalance}` },
-        { status: 400 }
-      );
+      if (bid.amount > teamBalance) {
+        return NextResponse.json(
+          { success: false, error: `Bid of £${bid.amount} exceeds your available budget of £${teamBalance}` },
+          { status: 400 }
+        );
+      }
     }
 
     // Check reserve requirement
