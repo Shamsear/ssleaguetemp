@@ -418,15 +418,16 @@ export default function TeamRoundPage() {
       amountsSet.add(bid.amount);
     }
 
-    // 3. Check total budget
-    const bidsTotal = bidsToSave.reduce((sum, b) => sum + b.amount, 0);
-    if (bidsTotal > initialBalance) {
-      showAlert({
-        type: 'error',
-        title: 'Validation Failed',
-        message: `Insufficient balance. Total bids amount £${bidsTotal} exceeds your budget £${initialBalance}.`
-      });
-      return;
+    // 3. Check individual bid budgets
+    for (const bid of bidsToSave) {
+      if (bid.amount > maxBidThisRound) {
+        showAlert({
+          type: 'error',
+          title: 'Validation Failed',
+          message: `Bid of £${bid.amount} for ${bid.player?.name || 'player'} exceeds the allowed limit. Max bid allowed: £${maxBidThisRound.toLocaleString()}.`
+        });
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -631,9 +632,10 @@ export default function TeamRoundPage() {
         amountsSet.add(bid.amount);
       }
 
-      const bidsTotal = localBids.reduce((sum, b) => sum + b.amount, 0);
-      if (bidsTotal > initialBalance) {
-        throw new Error(`Insufficient balance. Total bids amount £${bidsTotal} exceeds your budget £${initialBalance}.`);
+      for (const bid of localBids) {
+        if (bid.amount > maxBidThisRound) {
+          throw new Error(`Bid of £${bid.amount} for ${bid.player?.name || 'player'} exceeds the allowed limit. Max bid allowed: £${maxBidThisRound.toLocaleString()}.`);
+        }
       }
 
       // Overwrite/Sync database bids with currently visible localBids
