@@ -89,7 +89,7 @@ function CopyBalanceToggle({ teamId, eCoin, ssCoin }: { teamId: string; eCoin: n
   );
 }
 
-function CopyAllBalances({ teams, isDual }: { teams: TeamStats[]; isDual: boolean }) {
+function CopyAllBalances({ teams, isDual, seasonName }: { teams: TeamStats[]; isDual: boolean; seasonName: string }) {
   const [selected, setSelected] = useState<'ecoin' | 'sscoin' | 'balance'>(isDual ? 'ecoin' : 'balance');
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -100,56 +100,87 @@ function CopyAllBalances({ teams, isDual }: { teams: TeamStats[]; isDual: boolea
     return t.team.balance || 0;
   };
 
+  const sortedTeams = [...teams].sort((a, b) => getVal(b) - getVal(a));
+
+  const currencyLabel = selected === 'ecoin' ? 'eCoin Balance' : selected === 'sscoin' ? 'SSCoin Balance' : 'Balance';
+  const accentClass = selected === 'ecoin' ? 'text-indigo-600' : selected === 'sscoin' ? 'text-purple-600' : 'text-amber-600';
+  const accentBg = selected === 'ecoin' ? 'bg-indigo-600' : selected === 'sscoin' ? 'bg-purple-600' : 'bg-amber-600';
+
+
   const handleCopyAll = () => {
-    const text = teams.map(t => `${t.team.name}: ${getVal(t).toLocaleString()}`).join('\n');
+    const header = `SS Super League — ${seasonName}\n${'='.repeat(36)}\n${currencyLabel} Sheet\n${'-'.repeat(36)}`;
+    const rows = sortedTeams.map((t, i) => `${String(i + 1).padStart(2, ' ')}. ${t.team.name}: ${getVal(t).toLocaleString()}`);
+    const text = [header, ...rows].join('\n');
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 2500);
     });
   };
 
-  const label = selected === 'ecoin' ? 'eCoin' : selected === 'sscoin' ? 'SSCoin' : 'Balance';
-  const accentClass = selected === 'ecoin' ? 'text-indigo-600' : selected === 'sscoin' ? 'text-purple-600' : 'text-amber-600';
-
   return (
     <div className="console-card bg-white border border-slate-200/60 rounded-2xl overflow-hidden shadow-sm font-mono">
-      {/* Header row */}
-      <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <Copy className="w-3.5 h-3.5 text-slate-400" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Copy All Balances</span>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Currency toggle */}
-          {isDual && (
-            <div className="flex rounded-lg border border-slate-200 overflow-hidden text-[10px] font-bold uppercase tracking-wider">
-              <button onClick={() => { setSelected('ecoin'); setCopied(false); }} className={`px-2.5 py-1 transition-all ${selected === 'ecoin' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>eCoin</button>
-              <button onClick={() => { setSelected('sscoin'); setCopied(false); }} className={`px-2.5 py-1 transition-all border-l border-slate-200 ${selected === 'sscoin' ? 'bg-purple-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>SSCoin</button>
-            </div>
-          )}
-          {/* Expand toggle */}
-          <button onClick={() => setExpanded(p => !p)} className="px-2.5 py-1 rounded-lg border border-slate-200 text-[10px] font-bold uppercase text-slate-500 hover:bg-slate-50 transition-all">
-            {expanded ? 'Hide' : 'Preview'}
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3 bg-gradient-to-r from-slate-800 to-slate-700">
+        <p className="text-[9px] uppercase tracking-widest text-slate-400 font-bold mb-0.5">SS Super League — {seasonName}</p>
+        <h3 className="text-sm font-extrabold text-white uppercase tracking-wide">{currencyLabel} Sheet</h3>
+      </div>
+
+      {/* Controls */}
+      <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center gap-2">
+        {/* Currency toggle */}
+        {isDual && (
+          <div className="flex rounded-lg border border-slate-200 overflow-hidden text-[10px] font-bold uppercase tracking-wider shrink-0">
+            <button
+              onClick={() => { setSelected('ecoin'); setCopied(false); }}
+              className={`px-2.5 py-1.5 transition-all ${selected === 'ecoin' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+            >eCoin</button>
+            <button
+              onClick={() => { setSelected('sscoin'); setCopied(false); }}
+              className={`px-2.5 py-1.5 transition-all border-l border-slate-200 ${selected === 'sscoin' ? 'bg-purple-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+            >SSCoin</button>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 ml-auto">
+          {/* Preview toggle */}
+          <button
+            onClick={() => setExpanded(p => !p)}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:bg-slate-100 transition-all"
+          >
+            {expanded ? 'Hide List' : 'Preview'}
           </button>
           {/* Copy All */}
           <button
             onClick={handleCopyAll}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all ${
-              copied ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-800 border-slate-900 text-white hover:bg-slate-700'
+            className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all ${
+              copied
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                : 'bg-slate-800 border-slate-900 text-white hover:bg-slate-700 active:scale-95'
             }`}
           >
-            {copied ? <><Check className="w-3 h-3" /> Copied!</> : <><Copy className="w-3 h-3" /> Copy All</>}
+            {copied
+              ? <><Check className="w-3 h-3" /> Copied!</>
+              : <><Copy className="w-3 h-3" /> Copy All</>}
           </button>
         </div>
       </div>
 
       {/* Preview list */}
       {expanded && (
-        <div className="divide-y divide-slate-50 max-h-60 overflow-y-auto">
-          {teams.map(t => (
-            <div key={t.team.id} className="flex items-center justify-between px-4 py-2 text-xs hover:bg-slate-50/50">
-              <span className="font-bold text-slate-700 truncate mr-4">{t.team.name}</span>
-              <span className={`font-extrabold tabular-nums shrink-0 ${accentClass}`}>{getVal(t).toLocaleString()}</span>
+        <div className="max-h-72 overflow-y-auto">
+          {/* Sticky subheader */}
+          <div className="sticky top-0 flex items-center justify-between px-4 py-1.5 bg-slate-100/80 backdrop-blur border-b border-slate-200 text-[9px] font-bold uppercase tracking-widest text-slate-400">
+            <span>#  Team</span>
+            <span>{currencyLabel}</span>
+          </div>
+          {sortedTeams.map((t, i) => (
+            <div
+              key={t.team.id}
+              className="flex items-center gap-3 px-4 py-2.5 border-b border-slate-50 hover:bg-slate-50/60 transition-colors"
+            >
+              <span className="text-[10px] font-extrabold text-slate-300 tabular-nums w-5 shrink-0 text-right">{i + 1}</span>
+              <span className="text-xs font-bold text-slate-700 flex-1 truncate">{t.team.name}</span>
+              <span className={`text-xs font-extrabold tabular-nums shrink-0 ${accentClass}`}>{getVal(t).toLocaleString()}</span>
             </div>
           ))}
         </div>
@@ -473,7 +504,7 @@ export default function AllTeamsPage() {
 
         {/* Copy All Balances Panel */}
         {teams.length > 0 && (
-          <CopyAllBalances teams={teams} isDual={seasonType === 'multi' || teams.some(t => t.team.currencySystem === 'dual')} />
+          <CopyAllBalances teams={teams} isDual={seasonType === 'multi' || teams.some(t => t.team.currencySystem === 'dual')} seasonName={seasonName} />
         )}
 
         {teams.length > 0 ? (
