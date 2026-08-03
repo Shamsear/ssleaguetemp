@@ -1442,9 +1442,15 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                               </span>
                             )}
                             {round.submission_status?.submitted ? (
-                              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 uppercase tracking-wide">
-                                Submitted ({round.submission_status.bid_count} bids)
-                              </div>
+                              round.submission_status.is_locked ? (
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 uppercase tracking-wide">
+                                  Submitted ({round.submission_status.bid_count} bids)
+                                </div>
+                              ) : (
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-50 border border-blue-200 text-blue-800 uppercase tracking-wide">
+                                  Draft ({round.submission_status.bid_count} bids)
+                                </div>
+                              )
                             ) : (
                               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-50 border border-amber-200 text-amber-800 uppercase tracking-wide animate-pulse">
                                 Not Submitted
