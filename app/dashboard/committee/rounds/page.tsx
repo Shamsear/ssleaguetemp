@@ -464,7 +464,7 @@ export default function RoundsManagementPage() {
           console.error('Error fetching tiebreakers:', err);
           return null;
         }),
-        fetchWithTokenRefresh(`/api/admin/team-seasons-neon?season_id=${seasonId}`).catch(err => {
+        fetchWithTokenRefresh(`/api/admin/teams?seasonId=${seasonId}`).catch(err => {
           console.error('Error fetching teams:', err);
           return null;
         })
@@ -598,8 +598,8 @@ export default function RoundsManagementPage() {
       // Process teams
       if (teamsResponse) {
         const teamsData = await teamsResponse.json();
-        if (teamsData.teams && Array.isArray(teamsData.teams)) {
-          const numTeams = teamsData.teams.length;
+        if (teamsData.success && teamsData.data) {
+          const numTeams = teamsData.data.length;
           if (numTeams > 0) {
             setFormData(prev => {
               // Only update if it's still the default '5'
