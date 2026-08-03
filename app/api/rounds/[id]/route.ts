@@ -290,6 +290,14 @@ export async function PATCH(
       updates.push(`position_group = $${paramCount++}`);
       values.push(position_group);
     }
+    if (max_bids_per_team !== undefined) {
+      updates.push(`max_bids_per_team = $${paramCount++}`);
+      values.push(max_bids_per_team);
+    }
+    if (finalization_mode !== undefined) {
+      updates.push(`finalization_mode = $${paramCount++}`);
+      values.push(finalization_mode);
+    }
 
     if (updates.length === 0) {
       return NextResponse.json(
