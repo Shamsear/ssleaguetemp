@@ -11,6 +11,7 @@ import { useModal } from '@/hooks/useModal';
 import { useAuctionWebSocket } from '@/hooks/useWebSocket';
 import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
+import { PlayerAvatar } from '@/components/PlayerImage';
 
 interface Player {
   id: string;
@@ -20,6 +21,7 @@ interface Player {
   overall_rating: number;
   playing_style?: string;
   is_starred?: boolean;
+  player_id?: string;
 }
 
 interface Bid {
@@ -1785,13 +1787,20 @@ function PlayerCard({
         {/* Card Header Profile row */}
         <div className="flex justify-between items-start gap-2">
           <div className="flex gap-3">
-            {/* Position Block Badge */}
-            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-extrabold text-xs shadow-sm flex-shrink-0">
-              {player.position}
+            {/* Player Avatar */}
+            <div className="relative flex-shrink-0 mt-1">
+              <PlayerAvatar
+                playerId={player.player_id || player.id}
+                playerName={player.name}
+                size={42}
+              />
+              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-md bg-slate-900 text-white flex items-center justify-center font-extrabold text-[9px] shadow-sm ring-2 ring-white">
+                {player.position}
+              </div>
             </div>
             
             {/* Text details */}
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 flex flex-col justify-center py-1">
               <div className="font-extrabold text-slate-900 text-sm tracking-tight flex items-center gap-1.5 uppercase flex-wrap">
                 <span>{player.name}</span>
                 {player.is_starred && (
