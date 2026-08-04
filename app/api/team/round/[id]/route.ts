@@ -235,6 +235,7 @@ export async function GET(
         b.round_id,
         b.created_at,
         p.id as "player.id",
+        p.player_id as "player.player_id",
         p.name as "player.name",
         p.position as "player.position",
         p.team_name as "player.team_name",
@@ -273,6 +274,7 @@ export async function GET(
         created_at: bid.created_at,
         player: {
           id: bid['player.id'],
+          player_id: bid['player.player_id'],
           name: bid['player.name'],
           position: bid['player.position'],
           team_name: bid['player.team_name'],
