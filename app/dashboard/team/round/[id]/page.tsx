@@ -1109,7 +1109,7 @@ export default function TeamRoundPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto mt-3 sm:mt-0 justify-end">
                   <button
                     onClick={handleShareToWhatsApp}
                     className={`px-3 py-1.5 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all border ${!!submission ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200/60' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200/60'}`}
@@ -1548,6 +1548,7 @@ export default function TeamRoundPage() {
                       onSilentDelete={handleSilentDelete}
                       isLocked={isLocked}
                       submission={submission}
+                      showAlert={showAlert}
                     />
                   );
                 })}
@@ -1612,6 +1613,7 @@ interface PlayerCardProps {
   onSilentDelete: (bidId: string) => Promise<void>;
   isLocked: boolean;
   submission: any;
+  showAlert: (options: any) => void;
 }
 
 function PlayerCard({
@@ -1628,21 +1630,12 @@ function PlayerCard({
   onSilentDelete,
   isLocked,
   submission,
+  showAlert,
 }: PlayerCardProps) {
   const [bidAmount, setBidAmount] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editAmount, setEditAmount] = useState('');
 
-  // Modal system
-  const {
-    alertState,
-    showAlert,
-    closeAlert,
-    confirmState,
-    showConfirm,
-    closeConfirm,
-    handleConfirm,
-  } = useModal();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
 
@@ -1964,25 +1957,6 @@ function PlayerCard({
         </div>
       )}
 
-      {/* Modal Components */}
-      <AlertModal
-        isOpen={alertState.isOpen}
-        onClose={closeAlert}
-        title={alertState.title}
-        message={alertState.message}
-        type={alertState.type}
-      />
-
-      <ConfirmModal
-        isOpen={confirmState.isOpen}
-        onConfirm={handleConfirm}
-        onCancel={closeConfirm}
-        title={confirmState.title}
-        message={confirmState.message}
-        confirmText={confirmState.confirmText}
-        cancelText={confirmState.cancelText}
-        type={confirmState.type}
-      />
     </div>
   );
 }
