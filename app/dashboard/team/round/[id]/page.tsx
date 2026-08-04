@@ -18,6 +18,7 @@ interface Player {
   name: string;
   position: string;
   team_name: string;
+  club?: string;
   overall_rating: number;
   playing_style?: string;
   is_starred?: boolean;
@@ -1513,43 +1514,58 @@ export default function TeamRoundPage() {
             )}
           </div>
 
-          {/* Available Players */}
+          {/* ── Available Players Section ── */}
           <div className="mb-6">
-            <h4 className="font-medium text-dark mb-3 flex items-center">
-              <svg className="w-4 h-4 mr-1.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              Available Players
-            </h4>
 
-            {/* Player Search */}
-            <div className="mb-4">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            {/* Section header row */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border-gray-200 focus:ring-primary focus:border-primary shadow-sm"
-                  placeholder="Search players by name..."
-                />
+                <div>
+                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider">Available Players</h4>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{sortedPlayers.length} player{sortedPlayers.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              {/* Starred legend */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200">
+                <span className="text-amber-500 text-xs">★</span>
+                <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider">Starred first</span>
               </div>
             </div>
 
-            <div className="flex items-center mb-3 bg-gray-100/50 p-2 rounded-lg text-xs text-gray-600">
-              <svg className="w-4 h-4 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-              <span>Starred players are shown first with yellow highlight.</span>
+            {/* Search bar */}
+            <div className="relative mb-4">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-10 pr-4 py-2.5 text-sm font-medium text-slate-800 placeholder:text-slate-400 placeholder:font-normal bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-900 transition-all shadow-sm"
+                placeholder="Search by player name…"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-700 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
 
             {/* Players Grid */}
             {sortedPlayers.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {sortedPlayers.map((player) => {
                   const playerHasBid = hasBid(player.id);
                   const playerBid = getPlayerBid(player.id);
@@ -1575,8 +1591,18 @@ export default function TeamRoundPage() {
                 })}
               </div>
             ) : (
-              <div className="glass-card p-4 rounded-xl backdrop-blur-sm bg-white/30 border border-white/10 text-center">
-                <span className="text-sm text-gray-500">No players found</span>
+              <div className="flex flex-col items-center justify-center py-14 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
+                  <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <p className="text-sm font-black text-slate-600 uppercase tracking-wider">No players found</p>
+                {searchTerm && (
+                  <button onClick={() => setSearchTerm('')} className="mt-2 text-xs text-slate-400 hover:text-slate-700 font-bold uppercase tracking-wider underline underline-offset-2">
+                    Clear search
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -1839,7 +1865,7 @@ function PlayerCard({
             {player.name}
           </div>
           <div className="text-[9px] text-white/60 font-bold uppercase tracking-widest truncate mt-0.5">
-            {player.team_name || 'Free Agent'}
+            {player.club || player.team_name || '—'}
           </div>
         </div>
       </div>
