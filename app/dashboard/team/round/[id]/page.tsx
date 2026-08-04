@@ -1130,7 +1130,11 @@ export default function TeamRoundPage() {
                     {isUnlocking ? 'Unlocking...' : 'Unlock to Modify'}
                   </button>
                 </div>
-                 {/* ── Your Selected Players ── */}
+              </div>
+            </div>
+          )}
+
+          {/* ── Your Selected Players ── */}
           <div className="mb-6">
 
             {/* Section header */}
