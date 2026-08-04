@@ -1592,6 +1592,7 @@ export default function TeamRoundPage() {
         type={confirmState.type}
       />
       </div>
+      </div>
     </>
   );
 }
