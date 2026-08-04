@@ -421,10 +421,10 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/30 border-t-primary mx-auto mb-4"></div>
-          <p className="text-gray-700 font-medium">Loading pending results...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center font-mono">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-2 border-amber-400/40 border-t-amber-400 rounded-full animate-spin" />
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Loading pending results…</p>
         </div>
       </div>
     );
@@ -432,21 +432,24 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
 
   if (error) {
     return (
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <div className="glass rounded-3xl p-6 shadow-lg border border-red-200">
-          <div className="text-center">
-            <svg className="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="console-bg min-h-screen flex items-center justify-center font-mono px-4">
+        <div className="console-card bg-white border border-rose-200 rounded-3xl p-8 max-w-md w-full text-center shadow-sm">
+          <div className="w-12 h-12 bg-rose-50 border border-rose-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Data</h3>
-            <p className="text-red-600 mb-4">{error}</p>
-            <Link
-              href="/dashboard/committee/rounds"
-              className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Back to Rounds
-            </Link>
           </div>
+          <h3 className="text-sm font-extrabold uppercase tracking-wide text-slate-900 mb-2">Error Loading Data</h3>
+          <p className="text-xs text-slate-500 mb-6">{error}</p>
+          <Link
+            href="/dashboard/committee/rounds"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Rounds
+          </Link>
         </div>
       </div>
     );
@@ -473,133 +476,129 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
 
   return (
     <>
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <div className="glass rounded-3xl p-4 sm:p-6 shadow-lg border border-gray-100/30">
-          {/* Header & Navigation */}
-          <div className="flex flex-col gap-4 mb-5">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-center flex-wrap gap-2">
-                <h2 className="text-2xl font-bold text-dark gradient-text flex items-center">
-                  Pending Results
-                  <span className="ml-2 inline-flex items-center justify-center bg-primary/10 text-primary px-2.5 py-1 rounded-full text-sm font-medium">
-                    #{round.id.substring(0, 8)}
-                  </span>
-                </h2>
-                <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                  <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+        {/* Ambient glow */}
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto relative z-10 space-y-6">
+
+          {/* ── Navigation ── */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Link
+              href="/dashboard/committee/rounds"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Rounds
+            </Link>
+
+            <button
+              onClick={handleExport}
+              disabled={isExporting}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isExporting ? (
+                <>
+                  <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Pending Finalization
-                </span>
-                {round.finalization_mode === 'manual' && (
-                  <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Manual Mode
-                  </span>
-                )}
+                  Exporting…
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export to Excel
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* ── Header Card ── */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+                <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
-              <div className="text-sm text-gray-600 italic">
-                {round.created_at && new Date(round.created_at).toLocaleString()}
+              <div>
+                <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">Committee Console</span>
+                <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+                  Pending Results
+                </h1>
+                <p className="text-xs text-slate-400 mt-1">
+                  Round #{round.id.substring(0, 8)} · {round.position} · Round {round.round_number}
+                </p>
               </div>
             </div>
-
-            {/* Navigation Links */}
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/dashboard/committee/rounds"
-                className="inline-flex items-center px-4 py-2.5 rounded-xl bg-white/60 text-gray-700 hover:bg-white/80 transition-all duration-200 backdrop-blur-sm border border-gray-200/50 shadow-sm"
-              >
-                <svg className="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Rounds
-              </Link>
-
-              <button
-                onClick={handleExport}
-                disabled={isExporting}
-                className="inline-flex items-center px-4 py-2.5 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-sm transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isExporting ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Exporting...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Export to Excel
-                  </>
-                )}
-              </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-amber-200 bg-amber-50 text-amber-800 text-[10px] font-bold uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Pending Finalization
+              </span>
+              {round.finalization_mode === 'manual' && (
+                <span className="inline-flex px-3 py-1.5 rounded-full border border-blue-200 bg-blue-50 text-blue-800 text-[10px] font-bold uppercase tracking-wider">
+                  Manual Mode
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Round Summary */}
-          <div className="glass rounded-2xl p-4 sm:p-5 mb-5 border border-gray-100/20 bg-white/10 backdrop-blur-sm shadow-sm">
-            <h3 className="text-lg font-semibold mb-4 text-dark flex items-center">
-              <svg className="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* ── Stats Row ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm">
+              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Players</div>
+              <div className="text-3xl font-extrabold text-slate-900">{pendingData.summary.total_players}</div>
+              <div className="text-[10px] text-slate-400 mt-1">Pending allocation</div>
+            </div>
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm">
+              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Spent</div>
+              <div className="text-3xl font-extrabold text-emerald-700">{formatCurrency(pendingData.summary.total_spent)}</div>
+              <div className="text-[10px] text-slate-400 mt-1">Across all teams</div>
+            </div>
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm">
+              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Average Bid</div>
+              <div className="text-3xl font-extrabold text-violet-700">{formatCurrency(Math.round(pendingData.summary.average_bid))}</div>
+              <div className="text-[10px] text-slate-400 mt-1">Per player</div>
+            </div>
+          </div>
+
+          {/* ── Round Info ── */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
+            <h3 className="text-sm font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2 mb-5">
+              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Round Summary
+              Round Information
             </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-              <div className="glass rounded-xl p-4 backdrop-blur-sm bg-white/30">
-                <h4 className="font-medium mb-1.5 text-gray-600 text-sm">Position</h4>
-                <p className="text-lg font-semibold">{round.position}</p>
-              </div>
-
-              <div className="glass rounded-xl p-4 backdrop-blur-sm bg-white/30">
-                <h4 className="font-medium mb-1.5 text-gray-600 text-sm">Round Number</h4>
-                <p className="text-lg font-semibold">Round {round.round_number}</p>
-              </div>
-
-              <div className="glass rounded-xl p-4 backdrop-blur-sm bg-white/30">
-                <h4 className="font-medium mb-1.5 text-gray-600 text-sm">Max Bids Per Team</h4>
-                <p className="text-lg font-semibold">{round.max_bids_per_team}</p>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'Position', value: round.position },
+                { label: 'Round Number', value: `Round ${round.round_number}` },
+                { label: 'Max Bids / Team', value: round.max_bids_per_team },
+                { label: 'Finalization', value: round.finalization_mode || 'auto' },
+              ].map(({ label, value }) => (
+                <div key={label} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase">{label}</div>
+                  <div className="text-sm font-extrabold text-slate-800 mt-1">{value}</div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Summary Statistics */}
-          <div className="glass rounded-2xl p-4 sm:p-5 mb-5 border border-gray-100/20 bg-white/10 backdrop-blur-sm shadow-sm">
-            <h3 className="text-lg font-semibold mb-4 text-dark flex items-center">
-              <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              Allocation Statistics
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-              <div className="glass rounded-xl p-4 backdrop-blur-sm bg-gradient-to-br from-blue-50 to-blue-100">
-                <h4 className="font-medium mb-1.5 text-blue-600 text-sm">Total Players</h4>
-                <p className="text-3xl font-bold text-blue-900">{pendingData.summary.total_players}</p>
-              </div>
-
-              <div className="glass rounded-xl p-4 backdrop-blur-sm bg-gradient-to-br from-green-50 to-green-100">
-                <h4 className="font-medium mb-1.5 text-green-600 text-sm">Total Spent</h4>
-                <p className="text-3xl font-bold text-green-900">{formatCurrency(pendingData.summary.total_spent)}</p>
-              </div>
-
-              <div className="glass rounded-xl p-4 backdrop-blur-sm bg-gradient-to-br from-purple-50 to-purple-100">
-                <h4 className="font-medium mb-1.5 text-purple-600 text-sm">Average Bid</h4>
-                <p className="text-3xl font-bold text-purple-900">{formatCurrency(Math.round(pendingData.summary.average_bid))}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* All Allocations - Sorted by Amount */}
-          <div className="glass rounded-2xl p-4 sm:p-5 mb-5 border border-gray-100/20 bg-white/10 backdrop-blur-sm shadow-sm">
-            <h3 className="text-lg font-semibold mb-4 text-dark flex items-center">
-              <svg className="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* ── All Allocations ── */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
+            <h3 className="text-sm font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2 mb-5">
+              <svg className="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              All Pending Allocations (Sorted by Bid Amount)
+              All Pending Allocations
+              <span className="ml-auto text-[10px] text-slate-400 font-bold">sorted by bid amount</span>
             </h3>
 
             {/* Mobile Cards */}
@@ -607,38 +606,33 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
               {sortedAllocations.map((allocation, index) => (
                 <div
                   key={allocation.id}
-                  className={`glass rounded-xl p-4 backdrop-blur-sm border-l-4 transition-all duration-200 animate-fade-in ${
-                    allocation.phase === 'incomplete' 
-                      ? 'border-orange-400/40 bg-orange-50/30' 
-                      : 'border-green-400/40 bg-white/30'
+                  className={`rounded-2xl p-4 border-l-4 ${
+                    allocation.phase === 'incomplete'
+                      ? 'border-l-orange-400 bg-orange-50 border border-orange-100'
+                      : 'border-l-emerald-400 bg-slate-50 border border-slate-100'
                   }`}
-                  style={{ animationDelay: `${index * 30}ms` }}
+                  style={{ animationDelay: `${index * 20}ms` }}
                 >
-                  <div className="flex flex-col space-y-3">
-                    <div className="flex justify-between items-start">
-                      <div className="font-medium text-base">{allocation.player_name}</div>
-                      {allocation.phase === 'incomplete' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                          <svg className="mr-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                          </svg>
-                          Incomplete
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Regular
-                        </span>
-                      )}
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="font-extrabold text-slate-900 text-sm">{allocation.player_name}</div>
+                    {allocation.phase === 'incomplete' ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-orange-100 text-orange-700 border border-orange-200">
+                        Incomplete
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-200">
+                        Regular
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-white rounded-xl p-2.5 border border-slate-100">
+                      <div className="text-[9px] text-slate-400 font-bold uppercase">Team</div>
+                      <div className="font-bold text-slate-800 text-xs truncate mt-0.5">{allocation.team_name}</div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="glass rounded-lg p-2.5 bg-white/40">
-                        <div className="text-xs text-gray-600 mb-0.5">Team</div>
-                        <div className="font-medium truncate">{allocation.team_name}</div>
-                      </div>
-                      <div className="glass rounded-lg p-2.5 bg-white/40">
-                        <div className="text-xs text-gray-600 mb-0.5">Amount</div>
-                        <div className="font-semibold text-primary">{formatCurrency(allocation.amount)}</div>
-                      </div>
+                    <div className="bg-white rounded-xl p-2.5 border border-slate-100">
+                      <div className="text-[9px] text-slate-400 font-bold uppercase">Amount</div>
+                      <div className="font-extrabold text-slate-900 text-sm font-mono mt-0.5">{formatCurrency(allocation.amount)}</div>
                     </div>
                   </div>
                 </div>
@@ -646,57 +640,48 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
             </div>
 
             {/* Desktop Table */}
-            <div className="hidden md:block overflow-x-auto rounded-xl shadow-sm border border-gray-100/20">
-              <table className="min-w-full divide-y divide-gray-200/50">
-                <thead className="bg-white/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Player Name
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Team Name
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Bid Amount
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
+            <div className="hidden md:block overflow-hidden rounded-2xl border border-slate-100">
+              <table className="min-w-full divide-y divide-slate-100">
+                <thead>
+                  <tr className="bg-slate-50">
+                    {['#', 'Player', 'Team', 'Bid Amount', 'Type'].map((h) => (
+                      <th key={h} className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="bg-white/30 divide-y divide-gray-200/50">
+                <tbody className="divide-y divide-slate-100 bg-white">
                   {sortedAllocations.map((allocation, index) => (
                     <tr
                       key={allocation.id}
-                      className={`hover:bg-white/50 transition-colors animate-fade-in ${
-                        allocation.phase === 'incomplete' ? 'bg-orange-50/30' : ''
-                      }`}
-                      style={{ animationDelay: `${index * 30}ms` }}
+                      className={`hover:bg-slate-50 transition-colors ${allocation.phase === 'incomplete' ? 'bg-orange-50/40' : ''}`}
                     >
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-8 w-8 flex-shrink-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mr-2">
-                            <span className="text-xs font-medium text-gray-700">
-                              {allocation.player_name.substring(0, 2)}
+                      <td className="px-4 py-3 text-[10px] text-slate-400 font-bold w-10">{index + 1}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 flex-shrink-0 bg-slate-800 rounded-xl flex items-center justify-center">
+                            <span className="text-[10px] font-bold text-slate-100">
+                              {allocation.player_name.substring(0, 2).toUpperCase()}
                             </span>
                           </div>
-                          <div className="font-medium">{allocation.player_name}</div>
+                          <span className="font-bold text-slate-900 text-xs">{allocation.player_name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">{allocation.team_name}</td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="font-semibold text-primary">{formatCurrency(allocation.amount)}</div>
+                      <td className="px-4 py-3 text-xs text-slate-600 font-medium">{allocation.team_name}</td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-extrabold text-slate-900 font-mono">{formatCurrency(allocation.amount)}</span>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-center">
+                      <td className="px-4 py-3">
                         {allocation.phase === 'incomplete' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                            <svg className="mr-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-orange-100 text-orange-700 border border-orange-200">
+                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                             Incomplete
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-200">
                             Regular
                           </span>
                         )}
@@ -708,16 +693,15 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
             </div>
           </div>
 
-          {/* Allocations by Team */}
-          <div className="glass rounded-2xl p-4 sm:p-5 mb-5 border border-gray-100/20 bg-white/10 backdrop-blur-sm shadow-sm">
-            <h3 className="text-lg font-semibold mb-4 text-dark flex items-center">
-              <svg className="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* ── Allocations by Team ── */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
+            <h3 className="text-sm font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2 mb-5">
+              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               Allocations by Team
             </h3>
-
-            <div className="space-y-4">
+            <div className="space-y-3">
               {Object.values(allocationsByTeam).map((teamData) => {
                 const isExpanded = expandedTeams.has(teamData.team_id);
                 const totalSpent = teamData.allocations.reduce((sum, a) => sum + a.amount, 0);
@@ -726,27 +710,27 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
                 return (
                   <div
                     key={teamData.team_id}
-                    className="glass rounded-xl backdrop-blur-sm border border-gray-200/50 overflow-hidden transition-all duration-200 hover:shadow-md"
+                    className="border border-slate-100 rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-sm"
                   >
                     <button
                       onClick={() => toggleTeam(teamData.team_id)}
-                      className="w-full px-4 py-3 flex items-center justify-between bg-white/40 hover:bg-white/60 transition-colors"
+                      className="w-full px-5 py-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-gray-700">
-                            {teamData.team_name.substring(0, 2)}
+                        <div className="h-9 w-9 bg-slate-800 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <span className="text-[10px] font-black text-slate-100">
+                            {teamData.team_name.substring(0, 2).toUpperCase()}
                           </span>
                         </div>
                         <div className="text-left">
-                          <div className="font-semibold text-gray-900">{teamData.team_name}</div>
-                          <div className="text-sm text-gray-600">
-                            {teamData.allocations.length} player{teamData.allocations.length !== 1 ? 's' : ''} • {formatCurrency(totalSpent)}
+                          <div className="font-extrabold text-slate-900 text-sm">{teamData.team_name}</div>
+                          <div className="text-[10px] text-slate-400 font-bold mt-0.5">
+                            {teamData.allocations.length} player{teamData.allocations.length !== 1 ? 's' : ''} · {formatCurrency(totalSpent)}
                           </div>
                         </div>
                         {hasIncomplete && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                            <svg className="mr-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-orange-100 text-orange-700 border border-orange-200">
+                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                             Has Incomplete
@@ -754,51 +738,40 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
                         )}
                       </div>
                       <svg
-                        className={`w-5 h-5 text-gray-500 transition-transform ${
-                          isExpanded ? 'transform rotate-180' : ''
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                        className={`w-4 h-4 text-slate-400 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
 
                     {isExpanded && (
-                      <div className="px-4 py-3 bg-white/20 border-t border-gray-200/50">
-                        <div className="space-y-2">
-                          {teamData.allocations.map((allocation) => (
-                            <div
-                              key={allocation.id}
-                              className={`flex items-center justify-between p-3 rounded-lg ${
-                                allocation.phase === 'incomplete' 
-                                  ? 'bg-orange-50/50 border border-orange-200/50' 
-                                  : 'bg-white/40'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-full flex items-center justify-center">
-                                  <span className="text-xs font-medium text-gray-700">
-                                    {allocation.player_name.substring(0, 2)}
-                                  </span>
-                                </div>
-                                <div>
-                                  <div className="font-medium text-gray-900">{allocation.player_name}</div>
-                                  {allocation.phase === 'incomplete' && (
-                                    <div className="text-xs text-orange-600 flex items-center gap-1">
-                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                      </svg>
-                                      Incomplete Bid
-                                    </div>
-                                  )}
-                                </div>
+                      <div className="px-5 py-4 bg-white border-t border-slate-100 space-y-2">
+                        {teamData.allocations.map((allocation) => (
+                          <div
+                            key={allocation.id}
+                            className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
+                              allocation.phase === 'incomplete'
+                                ? 'bg-orange-50 border-orange-100'
+                                : 'bg-slate-50 border-slate-100'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="h-7 w-7 bg-slate-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span className="text-[9px] font-black text-slate-600">
+                                  {allocation.player_name.substring(0, 2).toUpperCase()}
+                                </span>
                               </div>
-                              <div className="font-semibold text-primary">{formatCurrency(allocation.amount)}</div>
+                              <div>
+                                <div className="font-bold text-slate-900 text-xs">{allocation.player_name}</div>
+                                {allocation.phase === 'incomplete' && (
+                                  <div className="text-[9px] text-orange-600 font-bold uppercase">Incomplete Bid</div>
+                                )}
+                              </div>
                             </div>
-                          ))}
-                        </div>
+                            <span className="font-extrabold text-slate-900 text-sm font-mono">{formatCurrency(allocation.amount)}</span>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -807,55 +780,58 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="glass rounded-2xl p-4 sm:p-5 border border-gray-100/20 bg-white/10 backdrop-blur-sm shadow-sm">
-            <h3 className="text-lg font-semibold mb-4 text-dark flex items-center">
-              <svg className="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* ── Action Panel ── */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
+            <h3 className="text-sm font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2 mb-2">
+              <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               Actions
             </h3>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-5">
+              Finalizing will deduct team budgets, assign players, and mark the round as completed. This cannot be undone.
+            </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={handleFinalizeForReal}
                 disabled={isApplying || isCanceling}
-                className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.01] active:scale-[0.99]"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-2xl shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
               >
                 {isApplying ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    Finalizing...
+                    Finalizing…
                   </>
                 ) : (
                   <>
-                    <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                     </svg>
                     Finalize for Real
                   </>
                 )}
               </button>
-              
+
               <button
                 onClick={handleCancelPending}
                 disabled={isApplying || isCanceling}
-                className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.01] active:scale-[0.99]"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-2xl shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
               >
                 {isCanceling ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    Canceling...
+                    Canceling…
                   </>
                 ) : (
                   <>
-                    <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                     Cancel Pending Results
@@ -863,18 +839,8 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
                 )}
               </button>
             </div>
-
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-start gap-2">
-                <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div className="text-sm text-blue-800">
-                  <strong>Note:</strong> Finalizing will deduct team budgets, assign players, and mark the round as completed. This action cannot be undone. Canceling will delete these pending results and allow you to preview finalization again.
-                </div>
-              </div>
-            </div>
           </div>
+
         </div>
       </div>
 
@@ -899,3 +865,4 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
     </>
   );
 }
+

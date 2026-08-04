@@ -1765,12 +1765,21 @@ function PlayerCard({
       ? 'border border-amber-300 hover:border-amber-400/80 shadow-sm'
       : 'border border-slate-200/60 hover:border-slate-350 shadow-sm';
 
+  const getHeroBg = () => {
+    const pos = (player.position || '').toUpperCase();
+    if (pos === 'GK') return 'bg-gradient-to-br from-violet-700 via-purple-800 to-slate-950';
+    if (pos === 'CB' || pos === 'LB' || pos === 'RB' || pos === 'LWB' || pos === 'RWB' || pos === 'DEF') return 'bg-gradient-to-br from-emerald-700 via-teal-800 to-slate-950';
+    if (pos === 'CM' || pos === 'CDM' || pos === 'CAM' || pos === 'LM' || pos === 'RM' || pos === 'MID') return 'bg-gradient-to-br from-blue-700 via-indigo-800 to-slate-950';
+    if (pos === 'LW' || pos === 'RW' || pos === 'ST' || pos === 'CF' || pos === 'SS' || pos === 'FWD') return 'bg-gradient-to-br from-rose-600 via-orange-700 to-slate-950';
+    return 'bg-gradient-to-br from-slate-700 via-slate-800 to-slate-950';
+  };
+
   return (
     <div
       className={`bg-white rounded-2xl hover:shadow-xl transition-all duration-300 flex flex-col relative overflow-hidden ${cardBorderClass} ${isLocked ? 'opacity-90' : ''}`}
     >
       {/* ── TOP: Player Photo Hero ── */}
-      <div className="relative h-44 bg-gradient-to-br from-slate-800 to-slate-950 overflow-hidden flex-shrink-0">
+      <div className={`relative h-44 overflow-hidden flex-shrink-0 ${getHeroBg()}`}>
         {/* Subtle dot pattern */}
         <div className="absolute inset-0 opacity-10"
           style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
@@ -1835,7 +1844,7 @@ function PlayerCard({
       </div>
 
       {/* ── BOTTOM: Bid section ── */}
-      <div className="px-3 py-2.5 flex flex-col gap-2">
+      <div className="px-3 py-2.5 flex flex-col gap-2 bg-gradient-to-b from-slate-50 to-slate-100/60 rounded-b-2xl border-t border-slate-100">
         {hasBid && bid ? (
           <>
             <div className="flex items-center justify-between bg-slate-100 px-2.5 py-1.5 rounded-xl">
