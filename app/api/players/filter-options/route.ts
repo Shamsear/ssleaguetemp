@@ -22,7 +22,8 @@ export async function GET(request: Request) {
         SELECT 
           ARRAY_AGG(DISTINCT position ORDER BY position) FILTER (WHERE position IS NOT NULL) as positions,
           ARRAY_AGG(DISTINCT position_group ORDER BY position_group) FILTER (WHERE position_group IS NOT NULL) as position_groups,
-          ARRAY_AGG(DISTINCT playing_style ORDER BY playing_style) FILTER (WHERE playing_style IS NOT NULL) as playing_styles
+          ARRAY_AGG(DISTINCT playing_style ORDER BY playing_style) FILTER (WHERE playing_style IS NOT NULL) as playing_styles,
+          ARRAY_AGG(DISTINCT team_id) FILTER (WHERE team_id IS NOT NULL) as team_ids
         FROM footballplayers
         WHERE (retired IS NOT TRUE)
       `;
@@ -64,7 +65,8 @@ export async function GET(request: Request) {
       const data = {
         positions: result[0]?.positions || [],
         positionGroups: result[0]?.position_groups || [],
-        playingStyles: result[0]?.playing_styles || []
+        playingStyles: result[0]?.playing_styles || [],
+        teamIds: result[0]?.team_ids || []
       };
       
       return NextResponse.json({
@@ -89,7 +91,8 @@ export async function GET(request: Request) {
       SELECT 
         ARRAY_AGG(DISTINCT position ORDER BY position) FILTER (WHERE position IS NOT NULL) as positions,
         ARRAY_AGG(DISTINCT position_group ORDER BY position_group) FILTER (WHERE position_group IS NOT NULL) as position_groups,
-        ARRAY_AGG(DISTINCT playing_style ORDER BY playing_style) FILTER (WHERE playing_style IS NOT NULL) as playing_styles
+        ARRAY_AGG(DISTINCT playing_style ORDER BY playing_style) FILTER (WHERE playing_style IS NOT NULL) as playing_styles,
+        ARRAY_AGG(DISTINCT team_id) FILTER (WHERE team_id IS NOT NULL) as team_ids
       FROM footballplayers
       WHERE (retired IS NOT TRUE)
     `;
@@ -97,7 +100,8 @@ export async function GET(request: Request) {
     const data = {
       positions: result[0].positions || [],
       positionGroups: result[0].position_groups || [],
-      playingStyles: result[0].playing_styles || []
+      playingStyles: result[0].playing_styles || [],
+      teamIds: result[0].team_ids || []
     };
 
     // Update cache

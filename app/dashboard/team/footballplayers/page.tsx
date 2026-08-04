@@ -215,6 +215,7 @@ export default function PlayerStatisticsPage() {
   const [positions, setPositions] = useState<string[]>(['GK', 'CB', 'LB', 'RB', 'DMF', 'CMF', 'LMF', 'RMF', 'AMF', 'LWF', 'RWF', 'CF', 'SS']);
   const [positionGroups, setPositionGroups] = useState<string[]>([]);
   const [allPlayingStyles, setAllPlayingStyles] = useState<string[]>([]); // Store all playing styles
+  const [activeTeamIds, setActiveTeamIds] = useState<string[]>([]); // Teams that actually have players
   
   useEffect(() => {
     // Fetch all unique positions and position groups for filter dropdowns
@@ -229,6 +230,9 @@ export default function PlayerStatisticsPage() {
           if (data.playingStyles) {
             setAllPlayingStyles(data.playingStyles);
             setPlayingStyles(data.playingStyles);
+          }
+          if (data.teamIds) {
+            setActiveTeamIds(data.teamIds);
           }
         }
       } catch (err) {
@@ -742,7 +746,7 @@ export default function PlayerStatisticsPage() {
                 >
                   <option value="">All Teams</option>
                   <option value="free_agent">Free Agents</option>
-                  {teams.map(team => (
+                  {teams.filter(team => activeTeamIds.includes(team.id)).map(team => (
                     <option key={team.id} value={team.id}>{team.name}</option>
                   ))}
                 </select>
@@ -1062,7 +1066,7 @@ export default function PlayerStatisticsPage() {
               >
                 <option value="">All Teams</option>
                 <option value="free_agent">Free Agents</option>
-                {teams.map(team => (
+                {teams.filter(team => activeTeamIds.includes(team.id)).map(team => (
                   <option key={team.id} value={team.id}>{team.name}</option>
                 ))}
               </select>
