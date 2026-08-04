@@ -1202,8 +1202,15 @@ export default function TeamRoundPage() {
                             <tr className={`hover:bg-slate-50/60 transition-colors ${editingBidId === bid.id ? 'bg-amber-50/40' : bid.player.is_starred ? 'bg-amber-50/20' : ''}`}>
                               <td className="px-5 py-3.5 whitespace-nowrap">
                                 <div className="flex items-center">
-                                  <div className={`flex-shrink-0 h-7 w-7 rounded-lg flex items-center justify-center font-bold text-xs uppercase ${bid.player.is_starred ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
-                                    {bid.player.position}
+                                  <div className="relative flex-shrink-0">
+                                    <PlayerAvatar
+                                      playerId={bid.player.player_id || bid.player.id}
+                                      playerName={bid.player.name}
+                                      size={32}
+                                    />
+                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded bg-slate-900 text-white flex items-center justify-center font-extrabold text-[7px] shadow-sm ring-1 ring-white">
+                                      {bid.player.position}
+                                    </div>
                                   </div>
                                   <div className="ml-3">
                                     <div className="text-xs font-bold text-slate-800 flex items-center gap-1">
@@ -1322,8 +1329,15 @@ export default function TeamRoundPage() {
                       <div className="p-4 bg-white/50">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-start gap-3 flex-1">
-                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                              {bid.player.position[0]}
+                            <div className="relative flex-shrink-0">
+                              <PlayerAvatar
+                                playerId={bid.player.player_id || bid.player.id}
+                                playerName={bid.player.name}
+                                size={40}
+                              />
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded bg-slate-900 text-white flex items-center justify-center font-extrabold text-[7px] shadow-sm ring-1 ring-white">
+                                {bid.player.position}
+                              </div>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
@@ -1794,7 +1808,7 @@ function PlayerCard({
                 playerName={player.name}
                 size={42}
               />
-              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-md bg-slate-900 text-white flex items-center justify-center font-extrabold text-[9px] shadow-sm ring-2 ring-white">
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-sm bg-slate-900 text-white flex items-center justify-center font-extrabold text-[7px] shadow-sm ring-1 ring-white">
                 {player.position}
               </div>
             </div>
