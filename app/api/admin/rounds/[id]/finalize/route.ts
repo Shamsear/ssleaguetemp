@@ -47,10 +47,10 @@ export async function POST(
 
     const round = roundResult[0];
 
-    // Check if round is active, expired, or tiebreaker_pending (allow finalization of stuck/expired rounds)
-    if (round.status !== 'active' && round.status !== 'expired' && round.status !== 'tiebreaker_pending') {
+    // Check if round is active, expired, tiebreaker_pending, or finalizing (allow finalization of stuck/expired rounds)
+    if (round.status !== 'active' && round.status !== 'expired' && round.status !== 'tiebreaker_pending' && round.status !== 'finalizing') {
       return NextResponse.json(
-        { success: false, error: 'Round must be active, expired, or tiebreaker_pending to finalize' },
+        { success: false, error: 'Round must be active, expired, tiebreaker_pending, or finalizing to finalize' },
         { status: 400 }
       );
     }

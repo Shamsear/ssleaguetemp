@@ -127,12 +127,11 @@ export async function checkAndFinalizeExpiredRound(roundId: string): Promise<{
 
     if (!finalizationResult.success) {
       if (finalizationResult.tieDetected) {
-        // Tie detected - mark round as 'finalizing' (tiebreaker needed)
-        // Status remains 'finalizing' until tiebreaker is resolved
-        // The tiebreaker system will handle creating the tiebreaker round
+        // Tie detected - mark round as 'tiebreaker_pending' (tiebreaker needed)
+        // Status remains 'tiebreaker_pending' until tiebreaker is resolved
         await sql`
           UPDATE rounds
-          SET status = 'finalizing',
+          SET status = 'tiebreaker_pending',
               updated_at = NOW()
           WHERE id = ${roundId}
         `;
@@ -147,6 +146,15 @@ export async function checkAndFinalizeExpiredRound(roundId: string): Promise<{
       }
 
       console.error(`❌ Failed to finalize round ${roundId}:`, finalizationResult.error);
+      
+      // Revert status to active so it doesn't get stuck in finalizing
+      await sql`
+        UPDATE rounds
+        SET status = 'active',
+            updated_at = NOW()
+        WHERE id = ${roundId}
+      `;
+
       return { 
         finalized: false, 
         alreadyFinalized: false,
@@ -156,11 +164,6 @@ export async function checkAndFinalizeExpiredRound(roundId: string): Promise<{
     }
 
     // Apply finalization results immediately (no preview step for auto mode)
-    // This function handles:
-    // 1. Deducting budgets from teams
-    // 2. Allocating players to teams (creating contracts)
-    // 3. Logging transactions
-    // 4. Updating round status to 'completed'
     const applyResult = await applyFinalizationResults(
       roundId,
       finalizationResult.allocations
@@ -168,6 +171,15 @@ export async function checkAndFinalizeExpiredRound(roundId: string): Promise<{
 
     if (!applyResult.success) {
       console.error(`❌ Failed to apply finalization for round ${roundId}:`, applyResult.error);
+      
+      // Revert status to active so it doesn't get stuck in finalizing
+      await sql`
+        UPDATE rounds
+        SET status = 'active',
+            updated_at = NOW()
+        WHERE id = ${roundId}
+      `;
+
       return { 
         finalized: false, 
         alreadyFinalized: false,
@@ -181,6 +193,17 @@ export async function checkAndFinalizeExpiredRound(roundId: string): Promise<{
 
   } catch (error) {
     console.error('Error in checkAndFinalizeExpiredRound:', error);
+    try {
+      // Attempt to revert status to active so it doesn't get stuck in finalizing
+      await sql`
+        UPDATE rounds
+        SET status = 'active',
+            updated_at = NOW()
+        WHERE id = ${roundId}
+      `;
+    } catch (dbError) {
+      console.error('Failed to revert round status to active:', dbError);
+    }
     return { 
       finalized: false, 
       alreadyFinalized: false,

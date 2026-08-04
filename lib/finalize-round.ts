@@ -527,7 +527,7 @@ export async function applyFinalizationResults(
     
     const roundStatus = roundDetails[0]?.status;
     if (roundStatus === 'completed') return { success: true };
-    if (roundStatus !== 'active' && roundStatus !== 'expired' && roundStatus !== 'tiebreaker_pending' && roundStatus !== 'pending_finalization') {
+    if (roundStatus !== 'active' && roundStatus !== 'expired' && roundStatus !== 'tiebreaker_pending' && roundStatus !== 'pending_finalization' && roundStatus !== 'finalizing') {
       return { success: false, error: `Invalid status: ${roundStatus}` };
     }
     
