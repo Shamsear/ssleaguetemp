@@ -23,6 +23,7 @@ interface Player {
   playing_style?: string;
   is_starred?: boolean;
   player_id?: string;
+  retired?: boolean;
 }
 
 interface Bid {
@@ -89,6 +90,12 @@ export default function TeamRoundPage() {
   const [editingBidId, setEditingBidId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState('');
   const [showMaxBidDetails, setShowMaxBidDetails] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(30);
+
+  // Reset visible count when search term changes to speed up rendering
+  useEffect(() => {
+    setVisibleCount(30);
+  }, [searchTerm]);
 
   // Extract data from React Query result
   const round = roundData?.round;
@@ -714,54 +721,80 @@ export default function TeamRoundPage() {
     return message;
   };
 
-  // Share bids to WhatsApp
-  const handleShareToWhatsApp = () => {
+  // Calculate dynamic WhatsApp URL for browser navigation (avoids Safari popup blocker)
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(generateBidsMessage())}`;
+
+  // Copy bids to clipboard (Safari/iOS compatible synchronous action)
+  const handleCopyToClipboard = () => {
     const message = generateBidsMessage();
     if (!message) return;
     
-    // Encode the message for URL
-    const encodedMessage = encodeURIComponent(message);
-    
-    // Open WhatsApp with the message
-    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(message)
+        .then(() => {
+          showAlert({
+            type: 'success',
+            title: 'Copied!',
+            message: 'Bids copied to clipboard'
+          });
+        })
+        .catch((error) => {
+          console.error('Clipboard write failed, using fallback:', error);
+          fallbackCopy(message);
+        });
+    } else {
+      fallbackCopy(message);
+    }
   };
 
-  // Copy bids to clipboard
-  const handleCopyToClipboard = async () => {
-    const message = generateBidsMessage();
-    if (!message) return;
+  const fallbackCopy = (text: string) => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.top = '0';
+    textArea.style.left = '0';
+    textArea.style.width = '2em';
+    textArea.style.height = '2em';
+    textArea.style.padding = '0';
+    textArea.style.border = 'none';
+    textArea.style.outline = 'none';
+    textArea.style.boxShadow = 'none';
+    textArea.style.background = 'transparent';
+    document.body.appendChild(textArea);
+    textArea.focus();
     
-    try {
-      await navigator.clipboard.writeText(message);
-      showAlert({
-        type: 'success',
-        title: 'Copied!',
-        message: 'Bids copied to clipboard'
-      });
-    } catch (error) {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = message;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-999999px';
-      document.body.appendChild(textArea);
+    if (navigator.userAgent.match(/ipad|ipod|iphone/i)) {
+      const range = document.createRange();
+      range.selectNodeContents(textArea);
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      textArea.setSelectionRange(0, 999999);
+    } else {
       textArea.select();
-      try {
-        document.execCommand('copy');
+    }
+
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
         showAlert({
           type: 'success',
           title: 'Copied!',
           message: 'Bids copied to clipboard'
         });
-      } catch (err) {
-        showAlert({
-          type: 'error',
-          title: 'Copy Failed',
-          message: 'Failed to copy to clipboard'
-        });
+      } else {
+        throw new Error('Copy command returned false');
       }
-      document.body.removeChild(textArea);
+    } catch (err) {
+      showAlert({
+        type: 'error',
+        title: 'Copy Failed',
+        message: 'Failed to copy to clipboard'
+      });
     }
+    document.body.removeChild(textArea);
   };
 
   // Unlock bids for modification
@@ -1110,12 +1143,14 @@ export default function TeamRoundPage() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto mt-3 sm:mt-0 justify-end">
-                  <button
-                    onClick={handleShareToWhatsApp}
-                    className={`px-3 py-1.5 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all border ${!!submission ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200/60' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200/60'}`}
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`px-3 py-1.5 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all border inline-flex items-center justify-center ${!!submission ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200/60' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200/60'}`}
                   >
                     Share
-                  </button>
+                  </a>
                   <button
                     onClick={handleCopyToClipboard}
                     className={`px-3 py-1.5 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all border ${!!submission ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-755 border-emerald-200/60' : 'bg-blue-50 hover:bg-blue-100 text-blue-755 border-blue-200/60'}`}
@@ -1163,15 +1198,17 @@ export default function TeamRoundPage() {
                 {/* Action buttons */}
                 {myBids.length > 0 && (
                   <>
-                    <button
-                      onClick={handleShareToWhatsApp}
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="w-8 h-8 rounded-xl bg-green-600 hover:bg-green-700 text-white flex items-center justify-center transition-colors"
                       title="Share to WhatsApp"
                     >
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
                       </svg>
-                    </button>
+                    </a>
                     <button
                       onClick={handleCopyToClipboard}
                       className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-colors"
@@ -1527,31 +1564,43 @@ export default function TeamRoundPage() {
 
             {/* Players Grid */}
             {sortedPlayers.length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {sortedPlayers.map((player) => {
-                  const playerHasBid = hasBid(player.id);
-                  const playerBid = getPlayerBid(player.id);
+              <div className="space-y-6">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {sortedPlayers.slice(0, visibleCount).map((player) => {
+                    const playerHasBid = hasBid(player.id);
+                    const playerBid = getPlayerBid(player.id);
 
-                  return (
-                    <PlayerCard
-                      key={player.id}
-                      player={player}
-                      hasBid={playerHasBid}
-                      bid={playerBid}
-                      bidCount={bidCount}
-                      maxBids={round.max_bids_per_team}
-                      teamBalance={teamBalance}
-                      maxBidAllowed={maxBidThisRound}
-                      existingBidAmounts={myBids.map((b: Bid) => b.amount)}
-                      onPlaceBid={handlePlaceBid}
-                      onCancelBid={handleCancelBid}
-                      onSilentDelete={handleSilentDelete}
-                      isLocked={isLocked}
-                      submission={submission}
-                      showAlert={showAlert}
-                    />
-                  );
-                })}
+                    return (
+                      <PlayerCard
+                        key={player.id}
+                        player={player}
+                        hasBid={playerHasBid}
+                        bid={playerBid}
+                        bidCount={bidCount}
+                        maxBids={round.max_bids_per_team}
+                        teamBalance={teamBalance}
+                        maxBidAllowed={maxBidThisRound}
+                        existingBidAmounts={myBids.map((b: Bid) => b.amount)}
+                        onPlaceBid={handlePlaceBid}
+                        onCancelBid={handleCancelBid}
+                        onSilentDelete={handleSilentDelete}
+                        isLocked={isLocked}
+                        submission={submission}
+                        showAlert={showAlert}
+                      />
+                    );
+                  })}
+                </div>
+                {sortedPlayers.length > visibleCount && (
+                  <div className="flex justify-center pt-4 font-mono">
+                    <button
+                      onClick={() => setVisibleCount(prev => prev + 30)}
+                      className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-sm hover:shadow-md"
+                    >
+                      Load More Players ({sortedPlayers.length - visibleCount} remaining)
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-14 text-center">
