@@ -1081,7 +1081,7 @@ export default function SeasonDetailPage() {
                   href={`/awards/season/${seasonId}`}
                   className="inline-flex items-center text-[10px] font-mono font-bold text-amber-600 hover:text-amber-700 transition-colors uppercase tracking-wider"
                 >
-                  View Dedicated Season Honors Page {"->"}
+                  View Dedicated Season Honors Page →
                 </Link>
               </div>
               {/* Sub-tabs menu */}
@@ -1334,7 +1334,7 @@ export default function SeasonDetailPage() {
                   href={`/awards/season/${seasonId}`}
                   className="inline-flex items-center text-[10px] font-mono font-bold text-amber-600 hover:text-amber-700 transition-colors uppercase tracking-wider"
                 >
-                  View Dedicated Season Trophies Page {"->"}
+                  View Dedicated Season Trophies Page →
                 </Link>
               </div>
             </div>

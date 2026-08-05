@@ -156,7 +156,7 @@ export default function ChangeSupportedTeamPage() {
                         href="/dashboard/team/fantasy/passive-breakdown"
                         className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                     >
-                        View My Passive Points Breakdown {"->"}
+                        View My Passive Points Breakdown →
                     </Link>
                 </div>
             </div>

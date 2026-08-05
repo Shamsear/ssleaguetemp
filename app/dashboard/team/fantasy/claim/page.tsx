@@ -134,7 +134,7 @@ export default function ClaimFantasyTeamPage() {
               href="/dashboard/team/fantasy/my-team"
               className="block text-center text-indigo-600 hover:text-indigo-700 font-medium"
             >
-              Already claimed? Go to My Team {"->"}
+              Already claimed? Go to My Team →
             </Link>
           </div>
         </div>

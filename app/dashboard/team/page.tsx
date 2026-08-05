@@ -614,7 +614,7 @@ export default function TeamDashboard() {
                     href={`/register/team?season=${seasonStatus.seasonId}`}
                     className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-mono font-bold text-xs uppercase tracking-wider"
                   >
-                    Go to Registration {"->"}
+                    Go to Registration →
                   </Link>
                 )}
               </div>

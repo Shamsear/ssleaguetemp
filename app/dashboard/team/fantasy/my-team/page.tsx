@@ -520,7 +520,7 @@ export default function MyFantasyTeamPage() {
               href="/dashboard/team/fantasy/all-teams"
               className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
             >
-              View Detailed Stats {"->"}
+              View Detailed Stats →
             </Link>
           </div>
 

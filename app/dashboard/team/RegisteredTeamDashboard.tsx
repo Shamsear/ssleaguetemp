@@ -1460,7 +1460,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                           <p className="text-xs text-slate-400 font-sans mt-1">
                             {round.round_type === 'bulk'
                               ? `${round.player_count || 0} players • Fixed price bidding`
-                              : `${round.player_count || 0} players • Max ${round.max_bids_per_team || 0} bids per team`
+                              : `Max ${round.max_bids_per_team || 0} bids per team`
                             }
                           </p>
                         </div>
@@ -1482,7 +1482,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                         href={round.round_type === 'bulk' ? `/dashboard/team/bulk-round/${round.id}` : `/dashboard/team/round/${round.id}`}
                         className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider"
                       >
-                        {round.round_type === 'bulk' ? 'Enter Bulk Round {"->"}' : 'Enter Round {"->"}'}
+                        {round.round_type === 'bulk' ? 'Enter Bulk Round →' : 'Enter Round →'}
                       </Link>
                     </div>
                   ))}
@@ -1501,7 +1501,10 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                             </span>
                           </div>
                           <p className="text-xs text-slate-400 font-sans mt-1">
-                            {round.player_count || 0} players • Results are being finalized
+                            {round.player_count && round.player_count > 0
+                              ? `${round.player_count} players • Results are being finalized`
+                              : 'Results are being finalized'
+                            }
                           </p>
                         </div>
                       </div>
@@ -1988,7 +1991,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   href="/dashboard/team/fantasy/my-team"
                   className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
                 >
-                  View Full Stats {"->"}
+                  View Full Stats →
                 </Link>
               </div>
 

@@ -203,14 +203,14 @@ export default function TestNewsPage() {
                 target="_blank"
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
               >
-                View on Public Page {"->"}
+                View on Public Page →
               </a>
               <a
                 href="/admin/news"
                 target="_blank"
                 className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
               >
-                View in Admin Panel {"->"}
+                View in Admin Panel →
               </a>
             </div>
 
