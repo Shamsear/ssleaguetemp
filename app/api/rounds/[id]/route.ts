@@ -3,6 +3,7 @@ import { neon } from '@neondatabase/serverless';
 import { adminDb } from '@/lib/firebase/admin';
 import { decryptBidData } from '@/lib/encryption';
 import { broadcastSquadUpdate, broadcastWalletUpdate, broadcastRoundUpdate } from '@/lib/realtime/broadcast';
+import { verifyAuth } from '@/lib/auth-helper';
 
 const sql = neon(process.env.NEON_DATABASE_URL!);
 
@@ -243,6 +244,16 @@ export async function PATCH(
   try {
     const { id } = await params;
     const roundId = id; // Round ID is a UUID string, not an integer
+    
+    // Verify admin/committee authorization
+    const auth = await verifyAuth(['admin', 'committee_admin'], request);
+    if (!auth.authenticated) {
+      return NextResponse.json(
+        { success: false, error: auth.error || 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
 
     const {

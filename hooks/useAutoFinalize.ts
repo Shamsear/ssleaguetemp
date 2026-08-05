@@ -108,40 +108,28 @@ export function useAutoFinalize({
         console.log('✅ Auto-finalization completed successfully');
         onFinalizationComplete?.();
       } else if (data.tieDetected) {
-        // Tiebreaker detected - round status already changed to 'finalizing' by the API
+        // Tiebreaker detected
         console.log('⚠️ Tie detected during finalization. Tiebreaker created:', data.tiebreakerId);
-        console.log('Teams must submit new bids to resolve the tie.');
-        onFinalizationComplete?.(); // Refresh the page to show updated status
+        onFinalizationComplete?.(); 
       } else {
         console.error('❌ Auto-finalization failed:', data.error || data.message);
-        // Even if finalization fails, mark the round as expired
-        try {
-          await fetch(`/api/rounds/${roundId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'expired' }),
-          });
-          console.log('⏰ Round marked as expired due to finalization failure');
-          onFinalizationComplete?.(); // Refresh to show expired status
-        } catch (err) {
-          console.error('Failed to mark round as expired:', err);
+        
+        // If the round is already completed or finalized by another request, treat as success
+        const isAlreadyDone = data.error && (
+          data.error.includes('Round must be active') || 
+          data.error.includes('already finalized') ||
+          data.error.includes('completed')
+        );
+
+        if (isAlreadyDone) {
+          console.log('🏁 Round was already finalized by another process.');
+          onFinalizationComplete?.();
+        } else {
+          onFinalizationError?.(data.error || data.message || 'Finalization failed');
         }
-        onFinalizationError?.(data.error || data.message || 'Finalization failed');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Auto-finalization error:', error);
-      // Mark round as expired if finalization crashes
-      try {
-        await fetch(`/api/rounds/${roundId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'expired' }),
-        });
-        console.log('⏰ Round marked as expired due to error');
-        onFinalizationComplete?.(); // Refresh to show expired status
-      } catch (err) {
-        console.error('Failed to mark round as expired:', err);
-      }
       onFinalizationError?.(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsFinalizing(false);
