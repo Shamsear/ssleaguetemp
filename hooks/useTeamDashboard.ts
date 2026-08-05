@@ -126,8 +126,8 @@ export function useRoundData(roundId: string | undefined, enabled: boolean = tru
     enabled: enabled && !!roundId,
     staleTime: 0, // Always refetch on mount - ensures deleted/recreated rounds load fresh data
     refetchOnMount: 'always', // Force refetch when component mounts
-    refetchInterval: 3000, // Poll every 3 seconds as fallback for status changes
-    refetchIntervalInBackground: true, // Keep polling even when tab is not focused
+    refetchInterval: false, // Disabled - WebSockets and Firebase handle real-time updates
+    refetchIntervalInBackground: false, // Disabled - prevents background network drain
   });
 }
 
