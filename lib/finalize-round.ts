@@ -184,12 +184,29 @@ export async function finalizeRound(roundId: string): Promise<FinalizationResult
     console.log(`📊 ${submittedTeams.size} teams submitted bids, ${nonSubmittedTeams.length} teams didn't submit`);
 
     const allocations: AllocationResult[] = [];
-    const allocatedPlayers = new Set<string>();
-    const allocatedTeams = new Set<string>();
+
+    // Get teams and players that already have allocations in this round (from resolved tiebreakers or previous partial attempts)
+    const existingAllocationsResult = await sql`
+      SELECT team_id, player_id
+      FROM team_players
+      WHERE round_id = ${roundId}
+    `;
+    const allocatedPlayers = new Set<string>(existingAllocationsResult.map((a: any) => a.player_id));
+    const allocatedTeams = new Set<string>(existingAllocationsResult.map((a: any) => a.team_id));
+
+    // Keep track of which submitted teams have got a player in this round
+    const submittedTeamsWithPlayers = new Set<string>();
+    for (const teamId of submittedTeams) {
+      if (allocatedTeams.has(teamId)) {
+        submittedTeamsWithPlayers.add(teamId);
+      }
+    }
+
+    console.log(`🔍 Pre-existing allocations for round ${roundId}: Teams = ${allocatedTeams.size}, Players = ${allocatedPlayers.size}`);
 
     // Allocate to submitted teams (normal auction - highest bid wins, 1 player per team)
     let activeBids: Bid[] = bidsWithNames
-      .filter(bid => submittedTeams.has(bid.team_id))
+      .filter(bid => submittedTeams.has(bid.team_id) && !allocatedTeams.has(bid.team_id) && !allocatedPlayers.has(bid.player_id))
       .map(bid => ({
         id: bid.id,
         team_id: bid.team_id,
@@ -201,7 +218,7 @@ export async function finalizeRound(roundId: string): Promise<FinalizationResult
       }));
 
     // Each team gets MAX 1 player
-    while (activeBids.length > 0 && allocatedTeams.size < submittedTeams.size) {
+    while (activeBids.length > 0 && submittedTeamsWithPlayers.size < submittedTeams.size) {
       activeBids.sort((a, b) => b.amount - a.amount);
       const topBid = activeBids[0];
       const tiedBids = activeBids.filter(b => b.amount === topBid.amount && b.player_id === topBid.player_id);
@@ -240,22 +257,10 @@ export async function finalizeRound(roundId: string): Promise<FinalizationResult
 
       allocatedPlayers.add(topBid.player_id);
       allocatedTeams.add(topBid.team_id);
+      submittedTeamsWithPlayers.add(topBid.team_id);
       // Remove this player AND this team from the pool (1 player per team max)
       activeBids = activeBids.filter(b => b.player_id !== topBid.player_id && b.team_id !== topBid.team_id);
     }
-
-    // Get teams that already have players in this round (from previous finalization attempts)
-    const existingAllocations = await sql`
-      SELECT DISTINCT team_id
-      FROM team_players
-      WHERE round_id = ${roundId}
-    `;
-    const teamsWithPlayers = new Set(existingAllocations.map((a: any) => a.team_id));
-    
-    // Add to allocatedTeams to prevent duplicates
-    teamsWithPlayers.forEach(teamId => allocatedTeams.add(teamId));
-    
-    console.log(`🔍 Teams already allocated in this round: ${teamsWithPlayers.size}`);
     
     // Handle non-submitted teams (teams that didn't click Submit button)
     if (nonSubmittedTeams.length > 0) {
