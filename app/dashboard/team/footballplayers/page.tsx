@@ -470,10 +470,13 @@ export default function PlayerStatisticsPage() {
   // Only show full-page loading on initial load
   if (loading || (isLoading && players.length === 0)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066FF] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading football players database...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-extrabold font-mono">
+            Loading football players database...
+          </p>
         </div>
       </div>
     );
