@@ -426,15 +426,15 @@ export default function AllTeamsPage() {
   };
 
 
-  const isLoading = allTeamsLoading;
+  const isLoading = !seasonId || allTeamsLoading || isRefreshing;
 
-  if (loading || isLoading) {
+  if (loading) {
     return (
       <div className="console-bg min-h-screen flex items-center justify-center relative">
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10 font-mono">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading Teams...</p>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-bold">Loading...</p>
         </div>
       </div>
     );
@@ -494,20 +494,56 @@ export default function AllTeamsPage() {
 
         {/* Teams Count Badge */}
         <div className="flex items-center gap-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200/60 rounded-xl font-mono text-xs uppercase tracking-wider font-bold shadow-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <span>{teams.length} Team{teams.length !== 1 ? 's' : ''} Registered</span>
-          </div>
+          {isLoading ? (
+            <div className="h-8 bg-slate-200/80 rounded-xl w-40 animate-pulse border border-slate-200/60"></div>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200/60 rounded-xl font-mono text-xs uppercase tracking-wider font-bold shadow-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span>{teams.length} Team{teams.length !== 1 ? 's' : ''} Registered</span>
+            </div>
+          )}
         </div>
 
         {/* Copy All Balances Panel */}
-        {teams.length > 0 && (
+        {isLoading ? (
+          <div className="h-20 bg-slate-200/50 rounded-2xl w-full animate-pulse border border-slate-200/60"></div>
+        ) : teams.length > 0 && (
           <CopyAllBalances teams={teams} isDual={seasonType === 'multi' || teams.some(t => t.team.currencySystem === 'dual')} seasonName={seasonName} />
         )}
 
-        {teams.length > 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div 
+                key={i} 
+                className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 font-mono flex flex-col justify-between animate-pulse h-80"
+              >
+                <div>
+                  {/* Team Header Skeleton */}
+                  <div className="flex items-center mb-6 gap-3">
+                    <div className="h-14 w-14 bg-slate-200 rounded-xl flex-shrink-0"></div>
+                    <div className="h-5 bg-slate-200 rounded-lg w-32"></div>
+                  </div>
+
+                  {/* Team Stats Grid Skeleton */}
+                  <div className="grid grid-cols-2 gap-2 mb-6">
+                    {[...Array(4)].map((_, j) => (
+                      <div key={j} className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl h-12 flex flex-col justify-between">
+                        <div className="h-2 bg-slate-200 rounded w-12 mb-2"></div>
+                        <div className="h-3.5 bg-slate-200 rounded w-20"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Team Footer/Button Skeleton */}
+                <div className="h-10 bg-slate-200 rounded-xl w-full"></div>
+              </div>
+            ))}
+          </div>
+        ) : teams.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {teams.map((teamData) => (
               <div 
