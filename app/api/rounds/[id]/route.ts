@@ -245,8 +245,8 @@ export async function PATCH(
     const { id } = await params;
     const roundId = id; // Round ID is a UUID string, not an integer
     
-    // Verify admin/committee authorization
-    const auth = await verifyAuth(['admin', 'committee_admin'], request);
+    // Verify admin/committee/team authorization
+    const auth = await verifyAuth(['admin', 'committee_admin', 'team'], request);
     if (!auth.authenticated) {
       return NextResponse.json(
         { success: false, error: auth.error || 'Unauthorized' },
