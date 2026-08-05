@@ -140,16 +140,10 @@ export async function GET(
         fp.contract_start_season,
         fp.contract_end_season
       FROM team_players tp
-      INNER JOIN footballplayers fp ON tp.player_id = fp.id
+      INNER JOIN footballplayers fp ON tp.player_id = fp.id AND tp.season_id = fp.season_id
       WHERE tp.team_id = ${teamId}
         AND fp.team_id = ${teamId}
-        AND (
-          tp.season_id = ${seasonId}
-          OR (
-            fp.contract_start_season <= ${seasonId} 
-            AND fp.contract_end_season >= ${seasonId}
-          )
-        )
+        AND tp.season_id = ${seasonId}
       ORDER BY tp.acquired_at DESC
     `;
     console.log(`[API] Found ${footballPlayers.length} football players with active contracts for season ${seasonId}`);

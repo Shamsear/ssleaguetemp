@@ -511,16 +511,10 @@ export async function GET(request: NextRequest) {
         fp.overall_rating,
         fp.player_id as football_player_id
       FROM team_players tp
-      INNER JOIN footballplayers fp ON tp.player_id = fp.id
+      INNER JOIN footballplayers fp ON tp.player_id = fp.id AND tp.season_id = fp.season_id
       WHERE tp.team_id = ${dbTeamId}
         AND fp.team_id = ${dbTeamId}
-        AND (
-          tp.season_id = ${seasonId}
-          OR (
-            fp.contract_start_season <= ${seasonId} 
-            AND fp.contract_end_season >= ${seasonId}
-          )
-        )
+        AND tp.season_id = ${seasonId}
       ORDER BY tp.acquired_at DESC
     ` : [];
     

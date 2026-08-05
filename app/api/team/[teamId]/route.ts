@@ -94,13 +94,7 @@ export async function GET(
       INNER JOIN footballplayers fp ON tp.player_id = fp.id AND tp.season_id = fp.season_id
       WHERE tp.team_id = ${teamId}
         AND fp.team_id = ${teamId}
-        AND (
-          fp.season_id = ${seasonId}
-          OR (
-            fp.contract_start_season <= ${seasonId}
-            AND fp.contract_end_season >= ${seasonId}
-          )
-        )
+        AND tp.season_id = ${seasonId}
     `;
 
     const footballPlayers = footballPlayersData.map((player: any) => ({
