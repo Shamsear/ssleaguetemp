@@ -628,10 +628,13 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600 font-medium">Loading dashboard...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-extrabold font-mono">
+            Loading Dashboard...
+          </p>
         </div>
       </div>
     );
@@ -640,18 +643,19 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
   // Error state
   if (!dashboardData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
-        <div className="text-center max-w-md mx-auto">
-          <div className="inline-flex items-center justify-center p-4 bg-red-100 rounded-full mb-4">
+      <div className="console-bg min-h-screen flex items-center justify-center relative p-4">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center max-w-md mx-auto relative z-10 font-mono">
+          <div className="inline-flex items-center justify-center p-4 bg-red-50 border border-red-200 text-red-500 rounded-full mb-4">
             <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h3 className="text-xl font-bold text-gray-800 mb-2">Unable to load dashboard</h3>
-          <p className="text-gray-600 text-sm mb-6">{error || 'There was an error loading your team data.'}</p>
+          <h3 className="text-xl font-bold text-slate-800 mb-2 uppercase tracking-wider">Unable to load dashboard</h3>
+          <p className="text-slate-500 text-xs mb-6 font-semibold uppercase">{error || 'There was an error loading your team data.'}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
+            className="px-6 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-all font-mono font-bold uppercase tracking-wider text-xs cursor-pointer"
           >
             Refresh Page
           </button>
