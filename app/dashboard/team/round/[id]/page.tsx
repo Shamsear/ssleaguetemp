@@ -1828,7 +1828,7 @@ function PlayerCard({
       className={`bg-white rounded-2xl hover:shadow-xl transition-all duration-300 flex flex-col relative overflow-hidden ${cardBorderClass} ${isLocked ? 'opacity-90' : ''}`}
     >
       {/* ── TOP: Player Photo Hero ── */}
-      <div className={`relative h-44 overflow-hidden flex-shrink-0 ${getHeroBg()}`}>
+      <div className={`relative h-44 overflow-hidden flex-shrink-0 no-console-override ${getHeroBg()}`}>
         {/* Subtle dot pattern */}
         <div className="absolute inset-0 opacity-10"
           style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '16px 16px' }} />

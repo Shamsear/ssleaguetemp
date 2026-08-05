@@ -668,15 +668,15 @@ button[class*="hover:translate-x-"]:hover::before {
 }
 
 /* Override container cards inside forms (excluding small icon wrappers and badges) */
-.console-card div.bg-blue-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
-.console-card div.bg-purple-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
-.console-card div.bg-green-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
-.console-card div.bg-red-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
-.console-card div.bg-gray-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
-.console-card div.bg-slate-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
-.console-card div.bg-gradient-to-br:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
-.console-card div.border-2:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24),
-.console-card div.border-slate-150:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24) {
+.console-card div.bg-blue-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24):not(.no-console-override),
+.console-card div.bg-purple-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24):not(.no-console-override),
+.console-card div.bg-green-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24):not(.no-console-override),
+.console-card div.bg-red-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24):not(.no-console-override),
+.console-card div.bg-gray-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24):not(.no-console-override),
+.console-card div.bg-slate-50:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24):not(.no-console-override),
+.console-card div.bg-gradient-to-br:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24):not(.no-console-override),
+.console-card div.border-2:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24):not(.no-console-override),
+.console-card div.border-slate-150:not(.w-5):not(.w-6):not(.w-8):not(.w-10):not(.w-12):not(.w-16):not(.w-24):not(.no-console-override) {
   background-color: #f8fafc !important; /* bg-slate-50 */
   background-image: none !important;
   border: 1px solid rgba(15, 23, 42, 0.06) !important; /* border-slate-100 */
