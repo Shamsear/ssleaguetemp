@@ -4,7 +4,7 @@ import { SoccerBallIcon } from '@/components/ui/CustomIcons';
 import { Star, User, RefreshCw, Copy, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCachedTeamSeasons, useCachedSeasons } from '@/hooks/useCachedFirebase';
@@ -89,8 +89,19 @@ function CopyBalanceToggle({ teamId, eCoin, ssCoin }: { teamId: string; eCoin: n
   );
 }
 
-function CopyAllBalances({ teams, isDual, seasonName }: { teams: TeamStats[]; isDual: boolean; seasonName: string }) {
-  const [selected, setSelected] = useState<'ecoin' | 'sscoin' | 'balance'>(isDual ? 'ecoin' : 'balance');
+function CopyAllBalances({ 
+  teams, 
+  isDual, 
+  seasonName,
+  selected,
+  setSelected
+}: { 
+  teams: TeamStats[]; 
+  isDual: boolean; 
+  seasonName: string;
+  selected: 'ecoin' | 'sscoin' | 'balance';
+  setSelected: (val: 'ecoin' | 'sscoin' | 'balance') => void;
+}) {
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -202,6 +213,25 @@ export default function AllTeamsPage() {
   const [updateCounter, setUpdateCounter] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copiedTeam, setCopiedTeam] = useState<string | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<'ecoin' | 'sscoin' | 'balance'>('balance');
+  const [hasSetDefaultCurrency, setHasSetDefaultCurrency] = useState(false);
+
+  useEffect(() => {
+    if (teams.length > 0 && !hasSetDefaultCurrency) {
+      const isDual = seasonType === 'multi' || teams.some(t => t.team.currencySystem === 'dual');
+      setSelectedCurrency(isDual ? 'ecoin' : 'balance');
+      setHasSetDefaultCurrency(true);
+    }
+  }, [teams, seasonType, hasSetDefaultCurrency]);
+
+  const sortedTeams = useMemo(() => {
+    const getVal = (t: TeamStats) => {
+      if (selectedCurrency === 'ecoin') return t.team.footballBudget || 0;
+      if (selectedCurrency === 'sscoin') return t.team.realPlayerBudget || 0;
+      return t.team.balance || 0;
+    };
+    return [...teams].sort((a, b) => getVal(b) - getVal(a));
+  }, [teams, selectedCurrency]);
 
   const handleCopyBalance = (teamId: string, label: string, value: number) => {
     navigator.clipboard.writeText(String(value)).then(() => {
@@ -510,7 +540,13 @@ export default function AllTeamsPage() {
         {isLoading ? (
           <div className="h-20 bg-slate-200/50 rounded-2xl w-full animate-pulse border border-slate-200/60"></div>
         ) : teams.length > 0 && (
-          <CopyAllBalances teams={teams} isDual={seasonType === 'multi' || teams.some(t => t.team.currencySystem === 'dual')} seasonName={seasonName} />
+          <CopyAllBalances 
+            teams={teams} 
+            isDual={seasonType === 'multi' || teams.some(t => t.team.currencySystem === 'dual')} 
+            seasonName={seasonName} 
+            selected={selectedCurrency}
+            setSelected={setSelectedCurrency}
+          />
         )}
 
         {isLoading ? (
@@ -543,9 +579,9 @@ export default function AllTeamsPage() {
               </div>
             ))}
           </div>
-        ) : teams.length > 0 ? (
+        ) : sortedTeams.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {teams.map((teamData) => (
+            {sortedTeams.map((teamData) => (
               <div 
                 key={teamData.team.id} 
                 className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 hover:border-amber-400/40 hover:shadow-md transition-all duration-200 font-mono flex flex-col justify-between"
