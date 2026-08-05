@@ -31,34 +31,46 @@ export function useDashboardWebSocket(seasonId: string | null, teamId: string | 
 
     console.log('🔌 [Realtime DB] Connecting to season:', seasonId);
 
-    // Listen to squad updates
-    const unsubSquads = listenToSquadUpdates(seasonId, (event: SquadUpdateEvent) => {
-      console.log('📦 [Squad Update] Received:', event);
-      invalidateSquadCaches(queryClient, seasonId, event.team_id);
-    });
+    let unsubSquads = () => {};
+    let unsubWallets = () => {};
+    let unsubRounds = () => {};
 
-    // Listen to wallet updates
-    const unsubWallets = listenToWalletUpdates(seasonId, (event: WalletUpdateEvent) => {
-      console.log('💰 [Wallet Update] Received:', event);
-      invalidateWalletCaches(queryClient, seasonId, event.team_id);
-    });
+    try {
+      // Listen to squad updates
+      unsubSquads = listenToSquadUpdates(seasonId, (event: SquadUpdateEvent) => {
+        console.log('📦 [Squad Update] Received:', event);
+        invalidateSquadCaches(queryClient, seasonId, event.team_id);
+      });
 
-    // Listen to round updates (new rounds, status changes)
-    const { ref, onValue } = require('firebase/database');
-    const { realtimeDb } = require('@/lib/firebase/config');
-    
-    const seasonRoundsRef = ref(realtimeDb, `seasons/${seasonId}/rounds`);
-    
-    const unsubRounds = onValue(seasonRoundsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        console.log('🎯 [Round Update] Received for season:', seasonId);
-        // Invalidate dashboard queries to refetch active rounds
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-        queryClient.invalidateQueries({ queryKey: ['active-rounds'] });
-        queryClient.invalidateQueries({ queryKey: ['team-dashboard'] });
+      // Listen to wallet updates
+      unsubWallets = listenToWalletUpdates(seasonId, (event: WalletUpdateEvent) => {
+        console.log('💰 [Wallet Update] Received:', event);
+        invalidateWalletCaches(queryClient, seasonId, event.team_id);
+      });
+
+      // Listen to round updates (new rounds, status changes)
+      const { ref, onValue } = require('firebase/database');
+      const { realtimeDb } = require('@/lib/firebase/config');
+      
+      if (realtimeDb) {
+        const seasonRoundsRef = ref(realtimeDb, `seasons/${seasonId}/rounds`);
+        
+        unsubRounds = onValue(seasonRoundsRef, (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            console.log('🎯 [Round Update] Received for season:', seasonId);
+            // Invalidate dashboard queries to refetch active rounds
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['active-rounds'] });
+            queryClient.invalidateQueries({ queryKey: ['team-dashboard'] });
+          }
+        });
+      } else {
+        console.warn('⚠️ Realtime Database not initialized');
       }
-    });
+    } catch (error) {
+      console.error('❌ [Realtime DB] Error in useDashboardWebSocketConnecting:', error);
+    }
 
     return () => {
       console.log('🔌 [Realtime DB] Disconnecting from season:', seasonId);
@@ -88,14 +100,20 @@ export function useTiebreakerWebSocket(
 
     console.log('🔌 [Realtime DB] Connecting to tiebreaker:', tiebreakerRound);
 
-    const unsubscribe = listenToTiebreakerBids(
-      seasonId,
-      tiebreakerRound,
-      (event: TiebreakerBidEvent) => {
-        console.log('⚖️ [Tiebreaker Bid] Received:', event);
-        invalidateTiebreakerCaches(queryClient, tiebreakerRound);
-      }
-    );
+    let unsubscribe = () => {};
+
+    try {
+      unsubscribe = listenToTiebreakerBids(
+        seasonId,
+        tiebreakerRound,
+        (event: TiebreakerBidEvent) => {
+          console.log('⚖️ [Tiebreaker Bid] Received:', event);
+          invalidateTiebreakerCaches(queryClient, tiebreakerRound);
+        }
+      );
+    } catch (error) {
+      console.error('❌ [Realtime DB] Error in useTiebreakerWebSocket:', error);
+    }
 
     return () => {
       console.log('🔌 [Realtime DB] Disconnecting from tiebreaker:', tiebreakerRound);
@@ -116,25 +134,34 @@ export function useAuctionWebSocket(roundId: string | null, enabled: boolean = t
     if (!enabled || !roundId) return;
 
     console.log('🔌 [Realtime DB] Connecting to round:', roundId);
-    setIsConnected(true);
+    let unsubscribe = () => {};
 
-    // Listen to round status updates
-    const { ref, onValue } = require('firebase/database');
-    const { realtimeDb } = require('@/lib/firebase/config');
-    
-    const roundRef = ref(realtimeDb, `rounds/${roundId}`);
-    
-    const unsubscribe = onValue(roundRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        console.log('📊 [Round Update] Received:', data);
+    try {
+      // Listen to round status updates
+      const { ref, onValue } = require('firebase/database');
+      const { realtimeDb } = require('@/lib/firebase/config');
+      
+      if (realtimeDb) {
+        const roundRef = ref(realtimeDb, `rounds/${roundId}`);
         
-        // Invalidate round-related caches
-        queryClient.invalidateQueries({ queryKey: ['round-data', roundId] });
-        queryClient.invalidateQueries({ queryKey: ['round-status', roundId] });
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        unsubscribe = onValue(roundRef, (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            console.log('📊 [Round Update] Received:', data);
+            
+            // Invalidate round-related caches
+            queryClient.invalidateQueries({ queryKey: ['round', roundId] });
+            queryClient.invalidateQueries({ queryKey: ['roundStatus', roundId] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+          }
+        });
+        setIsConnected(true);
+      } else {
+        console.warn('⚠️ Realtime Database not initialized');
       }
-    });
+    } catch (error) {
+      console.error('❌ [Realtime DB] Error in useAuctionWebSocket:', error);
+    }
 
     return () => {
       console.log('🔌 [Realtime DB] Disconnecting from round:', roundId);
@@ -167,26 +194,36 @@ export function useWebSocket(options: {
     if (!options.enabled) return;
 
     console.log('🔌 [Realtime DB] Connecting to channel:', options.channel);
-    setIsConnected(true);
-    options.onConnect?.();
+    let unsubscribe = () => {};
 
-    // Listen to the channel path in Firebase Realtime DB
-    // Use onChildAdded to listen for new messages pushed to the channel
-    const { ref, onChildAdded } = require('firebase/database');
-    const { realtimeDb } = require('@/lib/firebase/config');
-    
-    const channelRef = ref(realtimeDb, options.channel.replace(/:/g, '/'));
-    
-    // onChildAdded fires for each new child added to the channel
-    // This is perfect for .push() broadcasts which create new child nodes
-    const unsubscribe = onChildAdded(channelRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        console.log('📨 [Channel Update] New message:', data);
-        setLastMessage(JSON.stringify(data));
-        options.onMessage?.(data);
+    try {
+      options.onConnect?.();
+
+      // Listen to the channel path in Firebase Realtime DB
+      // Use onChildAdded to listen for new messages pushed to the channel
+      const { ref, onChildAdded } = require('firebase/database');
+      const { realtimeDb } = require('@/lib/firebase/config');
+      
+      if (realtimeDb) {
+        const channelRef = ref(realtimeDb, options.channel.replace(/:/g, '/'));
+        
+        // onChildAdded fires for each new child added to the channel
+        // This is perfect for .push() broadcasts which create new child nodes
+        unsubscribe = onChildAdded(channelRef, (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            console.log('📨 [Channel Update] New message:', data);
+            setLastMessage(JSON.stringify(data));
+            options.onMessage?.(data);
+          }
+        });
+        setIsConnected(true);
+      } else {
+        console.warn('⚠️ Realtime Database not initialized');
       }
-    });
+    } catch (error) {
+      console.error('❌ [Realtime DB] Error in useWebSocket:', error);
+    }
 
     return () => {
       console.log('🔌 [Realtime DB] Disconnecting from channel:', options.channel);
