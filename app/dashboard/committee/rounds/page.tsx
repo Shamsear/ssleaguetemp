@@ -1095,6 +1095,73 @@ export default function RoundsManagementPage() {
     }
   };
 
+  const handleExtendExpiredRound = async (roundId: string) => {
+    const minutesStr = window.prompt(
+      "Extend Expired Round Deadline\n\n" +
+      "Enter the number of minutes to extend the deadline by (e.g. 5, 10, 15, 30):\n\n" +
+      "This will set the round status back to ACTIVE, allowing managers to edit and submit their drafts.",
+      "10"
+    );
+
+    if (minutesStr === null) {
+      return;
+    }
+
+    const minutes = parseInt(minutesStr);
+    if (isNaN(minutes) || minutes <= 0) {
+      showAlert({
+        type: 'warning',
+        title: 'Invalid Duration',
+        message: 'Please enter a valid number of minutes greater than 0'
+      });
+      return;
+    }
+
+    try {
+      const newEnd = new Date(Date.now() + (minutes * 60 * 1000));
+
+      const response = await fetchWithTokenRefresh(`/api/rounds/${roundId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'active',
+          end_time: newEnd.toISOString(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showAlert({
+          type: 'success',
+          title: 'Round Reopened',
+          message: `Round successfully reopened and deadline extended by ${minutes} minutes.`
+        });
+        
+        // Refresh rounds
+        const params = new URLSearchParams({ season_id: currentSeasonId! });
+        const refreshResponse = await fetchWithTokenRefresh(`/api/rounds?${params}`);
+        const refreshData = await refreshResponse.json();
+        if (refreshData.success) {
+          setRounds(refreshData.data);
+        }
+      } else {
+        showAlert({
+          type: 'error',
+          title: 'Error',
+          message: data.error || 'Failed to extend round deadline'
+        });
+      }
+    } catch (err) {
+      console.error('Error extending round deadline:', err);
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to extend round deadline'
+      });
+    }
+  };
+
   const handleToggleFinalizationMode = async (roundId: string, currentMode: string) => {
     const newMode = currentMode === 'auto' ? 'manual' : 'auto';
     setUpdatingFinalizationMode(roundId);
@@ -1534,6 +1601,19 @@ export default function RoundsManagementPage() {
       return;
     }
 
+    const extendMinutesStr = window.prompt(
+      "Reverting Round Finalization.\n\n" +
+      "To extend this round's deadline so team managers can edit and submit their bids, enter the number of minutes (e.g. 5, 10, 15, 30).\n\n" +
+      "Leave blank or enter 0 to keep the round expired:",
+      "10"
+    );
+
+    if (extendMinutesStr === null) {
+      return;
+    }
+
+    const extendMinutes = Number(extendMinutesStr) || 0;
+
     try {
       setRevertingRounds(prev => {
         const next = new Set(prev);
@@ -1543,6 +1623,8 @@ export default function RoundsManagementPage() {
 
       const response = await fetchWithTokenRefresh(`/api/admin/rounds/${roundId}/revert`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ extendMinutes })
       });
 
       const data = await response.json();
@@ -2615,6 +2697,16 @@ export default function RoundsManagementPage() {
                       >
                         <Check className="w-3.5 h-3.5" />
                         Finalize Round
+                      </button>
+                    )}
+                    
+                    {(round.status === 'expired' || round.status === 'expired_pending_finalization') && (
+                      <button
+                        onClick={() => handleExtendExpiredRound(round.id)}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Clock className="w-3.5 h-3.5 text-amber-400" />
+                        Extend Deadline
                       </button>
                     )}
                     

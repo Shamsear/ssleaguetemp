@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 import { adminDb } from '@/lib/firebase/admin';
 import { decryptBidData } from '@/lib/encryption';
-import { broadcastSquadUpdate, broadcastWalletUpdate } from '@/lib/realtime/broadcast';
+import { broadcastSquadUpdate, broadcastWalletUpdate, broadcastRoundUpdate } from '@/lib/realtime/broadcast';
 
 const sql = neon(process.env.NEON_DATABASE_URL!);
 
@@ -377,6 +377,15 @@ export async function PATCH(
         { success: false, error: 'Round not found' },
         { status: 404 }
       );
+    }
+
+    if (status !== undefined || end_time !== undefined) {
+      const r = updatedRound[0];
+      await broadcastRoundUpdate(r.season_id, roundId, {
+        type: 'round_status_changed',
+        status: r.status,
+        end_time: r.end_time,
+      }).catch(err => console.error('Failed to broadcast round update:', err));
     }
 
     return NextResponse.json({

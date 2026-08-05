@@ -1176,6 +1176,14 @@ export default function DatabaseManagementPage() {
                 Missing in Temp DB
               </Link>
 
+              <Link
+                href="/dashboard/committee/database/balance-audit"
+                className="px-4 py-2 bg-[#d97706] hover:bg-amber-500 text-slate-950 font-mono font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md text-center flex items-center justify-center gap-1.5"
+              >
+                <Database className="w-3.5 h-3.5" />
+                Balance Audit Diagnostics
+              </Link>
+
               <button
                 onClick={handleClearTempDb}
                 disabled={scraping || scrapedCount === 0}

@@ -26,6 +26,14 @@ export async function POST(
 
     const { id: roundId } = await params;
 
+    let extendMinutes = 0;
+    try {
+      const body = await request.json();
+      extendMinutes = Number(body.extendMinutes) || 0;
+    } catch (e) {
+      console.log('[Revert Round] No request body or failed to parse body');
+    }
+
     // 1. Get round details
     const roundResult = await sql`
       SELECT id, season_id, status, position, round_number
@@ -197,15 +205,38 @@ export async function POST(
       }
     }
 
-    // 5. Update round status back to 'expired'
-    await sql`
-      UPDATE rounds
-      SET status = 'expired', updated_at = NOW()
-      WHERE id = ${roundId}
-    `;
+    // 5. Update round status back to 'expired' or 'active' depending on deadline extension
+    let finalStatus = 'expired';
+    let newEndTime = null;
+
+    if (extendMinutes > 0) {
+      finalStatus = 'active';
+      newEndTime = new Date(Date.now() + extendMinutes * 60 * 1000);
+    }
+
+    if (newEndTime) {
+      await sql`
+        UPDATE rounds
+        SET status = ${finalStatus},
+            end_time = ${newEndTime.toISOString()},
+            updated_at = NOW()
+        WHERE id = ${roundId}
+      `;
+    } else {
+      await sql`
+        UPDATE rounds
+        SET status = ${finalStatus},
+            updated_at = NOW()
+        WHERE id = ${roundId}
+      `;
+    }
 
     // 6. Broadcast round update to Firebase for real-time dashboard sync
-    await broadcastRoundUpdate(roundId);
+    await broadcastRoundUpdate(seasonId, roundId, {
+      type: 'round_status_changed',
+      status: finalStatus,
+      ...(newEndTime && { end_time: newEndTime.toISOString() }),
+    });
 
     return NextResponse.json({
       success: true,
