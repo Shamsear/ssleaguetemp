@@ -400,6 +400,7 @@ export default function RoundsManagementPage() {
   const [scheduledStartTime, setScheduledStartTime] = useState<string>('');
   const [isActivatingRound, setIsActivatingRound] = useState<string | null>(null);
   const [updatingFinalizationMode, setUpdatingFinalizationMode] = useState<string | null>(null);
+  const [modifyingSubmissionTeamId, setModifyingSubmissionTeamId] = useState<string | null>(null);
 
   // Initialize scheduledStartTime default value
   useEffect(() => {
@@ -1115,6 +1116,58 @@ export default function RoundsManagementPage() {
     }
   };
 
+  const handleToggleTeamSubmission = async (roundId: string, teamId: string, currentStatus: boolean) => {
+    const action = currentStatus ? 'draft' : 'submit';
+    const actionText = currentStatus ? 'revert to draft' : 'force submit';
+    
+    showConfirm({
+      title: currentStatus ? 'Revert Submission?' : 'Force Submit Bids?',
+      message: `Are you sure you want to ${actionText} this team's bids?`,
+      onConfirm: async () => {
+        setModifyingSubmissionTeamId(teamId);
+        try {
+          const response = await fetchWithTokenRefresh(`/api/admin/rounds/${roundId}/submissions`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ teamId, action }),
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            showAlert({
+              type: 'success',
+              title: 'Success',
+              message: currentStatus ? 'Submission unlocked and reverted to draft.' : 'Bids successfully forced to submitted.'
+            });
+            
+            // Fallback manual refresh (Firebase Realtime DB handles sync automatically)
+            const subResponse = await fetchWithTokenRefresh(`/api/admin/rounds/${roundId}/submissions`);
+            const subData = await subResponse.json();
+            if (subData.success) {
+              setRoundSubmissions(prev => ({
+                ...prev,
+                [roundId]: { ...subData.stats, teams: subData.teams }
+              }));
+            }
+          } else {
+            showAlert({
+              type: 'error',
+              title: 'Error',
+              message: data.error || 'Failed to modify submission status'
+            });
+          }
+        } catch (err) {
+          showAlert({
+            type: 'error',
+            title: 'Error',
+            message: 'Failed to modify submission status'
+          });
+        } finally {
+          setModifyingSubmissionTeamId(null);
+        }
+      }
+    });
+  };
 
   const handleFinalizeRound = async (roundId: string) => {
     const confirmed = await showConfirm({
@@ -2110,16 +2163,39 @@ export default function RoundsManagementPage() {
                                   : 'bg-orange-50/50 border-orange-200/60 text-orange-800'
                               }`}
                             >
-                              <span className="font-bold truncate max-w-[200px]">{team.team_name}</span>
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
-                                team.has_submitted
-                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                                  : team.has_draft
-                                  ? 'bg-blue-100 text-blue-800 border-blue-200'
-                                  : 'bg-orange-100 text-orange-850 border-orange-200'
-                              }`}>
-                                {team.has_submitted ? 'Submitted' : team.has_draft ? `Draft (${team.draft_bid_count})` : 'Pending'}
-                              </span>
+                              <span className="font-bold truncate max-w-[150px]">{team.team_name}</span>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
+                                  team.has_submitted
+                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                                    : team.has_draft
+                                    ? 'bg-blue-100 text-blue-800 border-blue-200'
+                                    : 'bg-orange-100 text-orange-850 border-orange-200'
+                                }`}>
+                                  {team.has_submitted ? 'Submitted' : team.has_draft ? `Draft (${team.draft_bid_count})` : 'Pending'}
+                                </span>
+                                {team.has_submitted ? (
+                                  <button
+                                    onClick={() => handleToggleTeamSubmission(round.id, team.team_id, true)}
+                                    disabled={modifyingSubmissionTeamId !== null}
+                                    className="px-1.5 py-0.5 rounded bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 transition-colors text-[9px] font-bold uppercase cursor-pointer"
+                                  >
+                                    Revert
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleToggleTeamSubmission(round.id, team.team_id, false)}
+                                    disabled={modifyingSubmissionTeamId !== null || (!team.has_draft && team.bid_count === 0)}
+                                    className={`px-1.5 py-0.5 rounded transition-colors text-[9px] font-bold uppercase cursor-pointer ${
+                                      team.draft_bid_count === round.max_bids_per_team
+                                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                                        : 'bg-slate-50 border border-slate-200 text-slate-550 hover:bg-slate-100'
+                                    }`}
+                                  >
+                                    Submit
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -2133,6 +2209,7 @@ export default function RoundsManagementPage() {
                                 <th className="px-4 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
                                 <th className="px-4 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bids</th>
                                 <th className="px-4 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">Submitted At</th>
+                                <th className="px-4 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">Actions</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 font-mono text-xs">
@@ -2177,6 +2254,29 @@ export default function RoundsManagementPage() {
                                       ? <span className="text-blue-500 text-[9px] italic">Draft only</span>
                                       : '-'
                                     }
+                                  </td>
+                                  <td className="px-4 py-2.5 whitespace-nowrap text-center">
+                                    {team.has_submitted ? (
+                                      <button
+                                        onClick={() => handleToggleTeamSubmission(round.id, team.team_id, true)}
+                                        disabled={modifyingSubmissionTeamId !== null}
+                                        className="px-2 py-1 rounded bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 transition-colors text-[10px] font-bold uppercase cursor-pointer"
+                                      >
+                                        Revert to Draft
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={() => handleToggleTeamSubmission(round.id, team.team_id, false)}
+                                        disabled={modifyingSubmissionTeamId !== null || (!team.has_draft && team.bid_count === 0)}
+                                        className={`px-2.5 py-1 rounded transition-colors text-[10px] font-bold uppercase cursor-pointer ${
+                                          team.draft_bid_count === round.max_bids_per_team
+                                            ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                                            : 'bg-slate-50 border border-slate-200 text-slate-550 hover:bg-slate-100'
+                                        }`}
+                                      >
+                                        Force Submit
+                                      </button>
+                                    )}
                                   </td>
                                 </tr>
                               ))}

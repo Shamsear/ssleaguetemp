@@ -136,3 +136,121 @@ export async function GET(
     );
   }
 }
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Verify admin authorization
+    const auth = await verifyAuth(['admin', 'committee_admin']);
+    if (!auth.authenticated) {
+      return NextResponse.json(
+        { success: false, error: auth.error || 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { id: roundId } = await params;
+    const body = await request.json();
+    const { teamId, action } = body;
+
+    if (!teamId || !action || !['submit', 'draft'].includes(action)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid parameters' },
+        { status: 400 }
+      );
+    }
+
+    const sql = getAuctionDb();
+
+    // Fetch round details
+    const roundResult = await sql`
+      SELECT id, max_bids_per_team, season_id FROM rounds WHERE id = ${roundId}
+    `;
+    if (roundResult.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Round not found' },
+        { status: 404 }
+      );
+    }
+    const round = roundResult[0];
+
+    if (action === 'submit') {
+      // Get the team's active bids count for this round
+      const bidsResult = await sql`
+        SELECT COUNT(*)::integer as count FROM bids
+        WHERE team_id = ${teamId} AND round_id = ${roundId} AND status = 'active'
+      `;
+      const bidCount = bidsResult[0]?.count || 0;
+
+      // Insert or update submission
+      const submissionResult = await sql`
+        INSERT INTO bid_submissions (
+          team_id,
+          round_id,
+          bid_count,
+          is_locked,
+          submitted_at,
+          updated_at
+        ) VALUES (
+          ${teamId},
+          ${roundId},
+          ${bidCount},
+          true,
+          NOW(),
+          NOW()
+        )
+        ON CONFLICT (team_id, round_id)
+        DO UPDATE SET
+          bid_count = ${bidCount},
+          is_locked = true,
+          submitted_at = NOW(),
+          updated_at = NOW()
+        RETURNING *
+      `;
+
+      // Broadcast update
+      const { broadcastRoundUpdate } = require('@/lib/realtime/broadcast');
+      await broadcastRoundUpdate(round.season_id, roundId, {
+        type: 'submission',
+        team_id: teamId,
+        action: 'submitted',
+        bid_count: bidCount,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Team submission forced successfully',
+        data: submissionResult[0]
+      });
+
+    } else if (action === 'draft') {
+      // Revert to draft: Delete submission
+      await sql`
+        DELETE FROM bid_submissions
+        WHERE team_id = ${teamId} AND round_id = ${roundId}
+      `;
+
+      // Broadcast update
+      const { broadcastRoundUpdate } = require('@/lib/realtime/broadcast');
+      await broadcastRoundUpdate(round.season_id, roundId, {
+        type: 'submission',
+        team_id: teamId,
+        action: 'unlocked',
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Team submission reverted to draft successfully'
+      });
+    }
+
+  } catch (error: any) {
+    console.error('Error modifying round submission:', error);
+    return NextResponse.json(
+      { success: false, error: error.message || 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
