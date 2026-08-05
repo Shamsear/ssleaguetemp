@@ -38,7 +38,7 @@ import { MultiRoundAutoFinalize } from '@/components/MultiRoundAutoFinalize';
 import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import { ArrowLeft, Trash2, ShieldAlert, CheckCircle2, AlertTriangle, Info, Sparkles, Plus, Clock, Users, ChevronRight, ChevronDown, RefreshCw, Play, DollarSign, Check, FileText, Settings, Calendar, ArrowRight, Layers, HelpCircle, XCircle, CheckCircle, BarChart2 } from 'lucide-react';
+import { ArrowLeft, Trash2, RotateCcw, ShieldAlert, CheckCircle2, AlertTriangle, Info, Sparkles, Plus, Clock, Users, ChevronRight, ChevronDown, RefreshCw, Play, DollarSign, Check, FileText, Settings, Calendar, ArrowRight, Layers, HelpCircle, XCircle, CheckCircle, BarChart2 } from 'lucide-react';
 
 
 interface Round {
@@ -373,6 +373,7 @@ export default function RoundsManagementPage() {
   const [copiedRoundId, setCopiedRoundId] = useState<string | null>(null);
   const [auctionSettings, setAuctionSettings] = useState<any[]>([]);
   const [selectedAuctionSettingsId, setSelectedAuctionSettingsId] = useState<string>('');
+  const [revertingRounds, setRevertingRounds] = useState<Set<string>>(new Set());
   const timerRefs = useRef<{[key: string]: NodeJS.Timeout}>({});
   const previousRoundsRef = useRef<string>('');
 
@@ -1520,6 +1521,67 @@ export default function RoundsManagementPage() {
     }
   };
 
+  const handleRevertRound = async (roundId: string) => {
+    const confirmed = await showConfirm({
+      type: 'warning',
+      title: 'Revert Round Finalization',
+      message: 'Are you sure you want to revert this round\'s finalization? This will remove all regular player allocations from this round, reset player and team budgets, and reset bids back to active status. Resolved tiebreakers will be preserved.',
+      confirmText: 'Revert',
+      cancelText: 'Cancel'
+    });
+    
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setRevertingRounds(prev => {
+        const next = new Set(prev);
+        next.add(roundId);
+        return next;
+      });
+
+      const response = await fetchWithTokenRefresh(`/api/admin/rounds/${roundId}/revert`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showAlert({
+          type: 'success',
+          title: 'Round Reverted',
+          message: data.message || 'Round finalization reverted successfully'
+        });
+        const params = new URLSearchParams({ season_id: currentSeasonId! });
+        const refreshResponse = await fetchWithTokenRefresh(`/api/rounds?${params}`);
+        const refreshData = await refreshResponse.json();
+        if (refreshData.success) {
+          setRounds(refreshData.data);
+        }
+      } else {
+        showAlert({
+          type: 'error',
+          title: 'Error',
+          message: data.error || 'Failed to revert round finalization'
+        });
+      }
+    } catch (err) {
+      console.error('Error reverting round:', err);
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to revert round finalization'
+      });
+    } finally {
+      setRevertingRounds(prev => {
+        const next = new Set(prev);
+        next.delete(roundId);
+        return next;
+      });
+    }
+  };
+
   const handleActivateStandbyRound = async (roundId: string) => {
     const confirmed = await showConfirm({
       type: 'info',
@@ -2638,6 +2700,14 @@ export default function RoundsManagementPage() {
                       <FileText className="w-3.5 h-3.5 text-amber-400" />
                       View Details
                     </Link>
+                    <button
+                      onClick={() => handleRevertRound(round.id)}
+                      disabled={revertingRounds.has(round.id)}
+                      className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 font-bold text-[10px] uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      {revertingRounds.has(round.id) ? 'Reverting...' : 'Revert'}
+                    </button>
                     <button
                       onClick={() => handleDeleteRound(round.id)}
                       className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-[10px] uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1"
