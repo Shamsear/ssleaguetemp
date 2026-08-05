@@ -23,7 +23,9 @@ const nextConfig: NextConfig = {
   // Optimize production builds
   productionBrowserSourceMaps: false,
   images: {
-    // Enable image optimization
+    // Disable Vercel image optimization globally to prevent hitting the 5000/month limit
+    unoptimized: true,
+    // Enable image formats
     formats: ['image/avif', 'image/webp'],
     // Add caching for better performance
     minimumCacheTTL: 60,
