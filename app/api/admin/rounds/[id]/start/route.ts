@@ -67,16 +67,16 @@ export async function POST(
     
     let newEndTime: Date;
 
-    if (actualStart < scheduledStart) {
+    if (actualStart < scheduledStart && scheduledEnd > actualStart) {
       // --- Option C: Round started sooner than planned ---
       // The deadline remains fixed at the originally scheduled end_time.
       newEndTime = new Date(scheduledEnd);
       console.log(`⏰ Round ${roundId} started early. Keeping original end_time: ${newEndTime.toISOString()}`);
     } else {
-      // --- Round started late ---
-      // Shift deadline forward by the delay to preserve full planned duration.
+      // --- Round started late or original end_time has already passed ---
+      // Shift deadline forward to preserve full planned duration.
       newEndTime = new Date(actualStart + (durationSeconds * 1000));
-      console.log(`⏰ Round ${roundId} started late. Extending end_time to preserve duration: ${newEndTime.toISOString()}`);
+      console.log(`⏰ Round ${roundId} started late or early with past end_time. Setting/Extending end_time to preserve duration: ${newEndTime.toISOString()}`);
     }
 
     // 3. Update the round in Neon

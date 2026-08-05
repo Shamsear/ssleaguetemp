@@ -354,6 +354,20 @@ export async function PATCH(
         await sql`UPDATE rounds SET finalization_mode = ${finalization_mode} WHERE id = ${roundId}`;
       }
       
+      // Update end_time if explicitly passed, or recalculate if start_time/duration_seconds changed
+      if (end_time !== undefined) {
+        await sql`UPDATE rounds SET end_time = ${end_time} WHERE id = ${roundId}`;
+      } else if (start_time !== undefined || duration_seconds !== undefined) {
+        await sql`
+          UPDATE rounds 
+          SET end_time = CASE 
+            WHEN start_time IS NULL THEN NULL 
+            ELSE start_time + (COALESCE(duration_seconds, 3600) * INTERVAL '1 second')
+          END
+          WHERE id = ${roundId}
+        `;
+      }
+      
       await sql`UPDATE rounds SET updated_at = NOW() WHERE id = ${roundId}`;
       updatedRound = await sql`SELECT * FROM rounds WHERE id = ${roundId}`;
     }
