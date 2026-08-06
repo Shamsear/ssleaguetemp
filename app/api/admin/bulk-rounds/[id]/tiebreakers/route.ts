@@ -55,8 +55,7 @@ export async function GET(
 
     // Get team information for each tiebreaker
     const tiebreakerIds = tiebreakers.map(t => t.id);
-    
-    let teamsData: any[] = [];
+        let teamsData: any[] = [];
     if (tiebreakerIds.length > 0) {
       teamsData = await sql`
         SELECT 
@@ -66,8 +65,10 @@ export async function GET(
           btt.status,
           btt.current_bid,
           btt.joined_at,
-          btt.withdrawn_at
+          btt.withdrawn_at,
+          t.football_budget as budget
         FROM bulk_tiebreaker_teams btt
+        LEFT JOIN teams t ON btt.team_id = t.id
         WHERE btt.tiebreaker_id = ANY(${tiebreakerIds})
         ORDER BY btt.current_bid DESC NULLS LAST
       `;
@@ -85,10 +86,10 @@ export async function GET(
         bid_amount: team.current_bid,
         submitted_at: team.joined_at,
         withdrawn_at: team.withdrawn_at,
+        budget: team.budget,
       });
       return acc;
     }, {} as Record<string, any[]>);
-
     // Format response
     const formattedTiebreakers = tiebreakers.map(tb => {
       const teams = teamsByTiebreaker[tb.id] || [];

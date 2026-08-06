@@ -108,8 +108,10 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
     const sid = round?.season_id || '';
     const num = sid.match(/\d+$/)?.[0] || '';
     const seasonTitle = `SOUTHSOCCERS SUPER LEAGUE S${num}`;
-    const teamNames = player.tiebreaker?.submissions?.map((s: any) => s.team_name).join(', ') || '';
-    const msg = `*${seasonTitle}*\n\n⚔️ *TIEBREAKER*\n\n*PLAYER:* ${player.player_name}\n*TEAMS:* ${teamNames}`;
+    const teamsText = player.tiebreaker?.submissions
+      ?.map((s: any, idx: number) => `${idx + 1}. ${s.team_name}`)
+      ?.join('\n') || '';
+    const msg = `*${seasonTitle}*\n\n⚔️ *TIEBREAKER*\n\n*PLAYER:* ${player.player_name}\n*TEAMS:*\n${teamsText}`;
     navigator.clipboard.writeText(msg).then(() => {
       setCopiedPlayerTiebreaker(player.player_id);
       setTimeout(() => setCopiedPlayerTiebreaker(null), 2000);

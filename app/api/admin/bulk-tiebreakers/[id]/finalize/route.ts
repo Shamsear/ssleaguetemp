@@ -50,10 +50,8 @@ export async function POST(
         await sql`
           UPDATE bulk_tiebreaker_teams
           SET 
-            bid_amount = ${bid_amount},
             current_bid = ${bid_amount},
             status = 'active',
-            submitted_at = NOW(),
             withdrawn_at = NULL
           WHERE tiebreaker_id = ${tiebreakerId} AND team_id = ${teamId}
         `;
@@ -65,7 +63,7 @@ export async function POST(
             team_id,
             team_name,
             bid_amount,
-            created_at
+            bid_time
           ) VALUES (
             ${tiebreakerId},
             ${teamId},
@@ -78,10 +76,10 @@ export async function POST(
 
       // 4. Recalculate highest bidder among active teams
       const activeBids = await sql`
-        SELECT team_id, bid_amount
+        SELECT team_id, current_bid AS bid_amount
         FROM bulk_tiebreaker_teams
         WHERE tiebreaker_id = ${tiebreakerId} AND status = 'active'
-        ORDER BY bid_amount DESC, submitted_at ASC
+        ORDER BY current_bid DESC, joined_at ASC
       `;
 
       if (activeBids.length > 0) {

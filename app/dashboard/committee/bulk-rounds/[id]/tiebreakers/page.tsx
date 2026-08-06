@@ -29,6 +29,7 @@ interface TiebreakerTeam {
   bid_amount?: number;
   submitted_at?: string;
   status: string;
+  budget?: number;
 }
 
 interface BulkRound {
@@ -56,12 +57,15 @@ export default function BulkRoundTiebreakersPage() {
   const [tiebreakers, setTiebreakers] = useState<Tiebreaker[]>([]);
   const [contestedPlayers, setContestedPlayers] = useState<ContestedPlayer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [expandedTiebreakers, setExpandedTiebreakers] = useState<Set<string>>(new Set());
   const [resolvingTiebreaker, setResolvingTiebreaker] = useState<string | null>(null);
+  const [revertingTiebreaker, setRevertingTiebreaker] = useState<string | null>(null);
+  const [withdrawingTeam, setWithdrawingTeam] = useState<string | null>(null);
   const [creatingTiebreaker, setCreatingTiebreaker] = useState<string | null>(null);
   const [seasonId, setSeasonId] = useState<string | null>(null);
   const [adminBids, setAdminBids] = useState<Record<string, Record<string, string>>>({});
+  const [copiedPlayerTiebreaker, setCopiedPlayerTiebreaker] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -72,15 +76,21 @@ export default function BulkRoundTiebreakersPage() {
     }
   }, [user, loading, router]);
 
-  // Fetch round and tiebreakers
+  // Fetch round and tiebreakers in parallel
   const fetchData = useCallback(async () => {
     if (!roundId) return;
 
     setIsLoading(true);
     try {
-      // Fetch round details from bulk-rounds API
-      const roundResponse = await fetchWithTokenRefresh(`/api/bulk-rounds/${roundId}`);
-      const roundResult = await roundResponse.json();
+      const [roundRes, tiebreakerRes] = await Promise.all([
+        fetchWithTokenRefresh(`/api/bulk-rounds/${roundId}`),
+        fetchWithTokenRefresh(`/api/admin/bulk-rounds/${roundId}/tiebreakers`)
+      ]);
+
+      const [roundResult, tiebreakerResult] = await Promise.all([
+        roundRes.json(),
+        tiebreakerRes.json()
+      ]);
       
       if (roundResult.success && roundResult.data) {
         const roundData = roundResult.data;
@@ -93,35 +103,21 @@ export default function BulkRoundTiebreakersPage() {
         if (roundData.season_id) {
           setSeasonId(roundData.season_id);
         }
-      }
 
-      // Fetch tiebreakers for this round
-      const tiebreakerResponse = await fetchWithTokenRefresh(`/api/admin/bulk-rounds/${roundId}/tiebreakers`);
-      const tiebreakerResult = await tiebreakerResponse.json();
-      
-      if (tiebreakerResult.success && tiebreakerResult.data) {
-        setTiebreakers(tiebreakerResult.data);
-        console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Loaded ${tiebreakerResult.data.length} tiebreakers`);
-      } else {
-        console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Failed to load tiebreakers:', tiebreakerResult.error);
-        setTiebreakers([]);
-      }
-      
-      // Fetch contested players (pending tiebreaker creation)
-      const contestedResponse = await fetchWithTokenRefresh(`/api/bulk-rounds/${roundId}`);
-      const contestedResult = await contestedResponse.json();
-      
-      if (contestedResult.success && contestedResult.data) {
-        const roundData = contestedResult.data;
         // Filter players with status 'contested' and no tiebreaker_id
         const pending = (roundData.players || []).filter((p: any) => 
           p.status === 'contested' && p.bid_count > 1 && !p.tiebreaker_id
         );
         setContestedPlayers(pending);
-        console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Found ${pending.length} contested players needing tiebreakers`);
+      }
+
+      if (tiebreakerResult.success && tiebreakerResult.data) {
+        setTiebreakers(tiebreakerResult.data);
+      } else {
+        setTiebreakers([]);
       }
     } catch (err) {
-      console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Error fetching data:', err);
+      console.error('Error fetching data:', err);
       setTiebreakers([]);
     } finally {
       setIsLoading(false);
@@ -244,17 +240,73 @@ export default function BulkRoundTiebreakersPage() {
       const result = await response.json();
 
       if (result.success) {
-        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Tiebreaker resolved successfully! ${playerName} has been assigned to the winning team.`);
+        alert(`[SUCCESS] Tiebreaker resolved successfully! ${playerName} has been assigned to the winning team.`);
         // Refresh data instead of reloading page
         await fetchData();
       } else {
-        alert(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Failed to resolve tiebreaker: ${result.error}`);
+        alert(`[ERROR] Failed to resolve tiebreaker: ${result.error}`);
       }
     } catch (err) {
       console.error('Error resolving tiebreaker:', err);
       alert('[ERROR]  An error occurred while resolving the tiebreaker');
     } finally {
       setResolvingTiebreaker(null);
+    }
+  };
+
+  const handleRevertTiebreaker = async (tiebreakerId: string, playerName: string) => {
+    const confirmMsg = `Are you sure you want to revert the tiebreaker resolution for ${playerName}? This will release the player from their team, refund the budget, and reopen the tiebreaker. This action cannot be undone.`;
+    const confirmed = window.confirm(confirmMsg);
+    if (!confirmed) return;
+
+    setRevertingTiebreaker(tiebreakerId);
+    try {
+      const response = await fetchWithTokenRefresh(`/api/admin/bulk-tiebreakers/${tiebreakerId}/revert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`[SUCCESS] Tiebreaker for ${playerName} has been successfully reverted to active status!`);
+        await fetchData();
+      } else {
+        alert(`[ERROR] Failed to revert tiebreaker: ${result.error}`);
+      }
+    } catch (err) {
+      console.error('Error reverting tiebreaker:', err);
+      alert('[ERROR] An error occurred while reverting the tiebreaker');
+    } finally {
+      setRevertingTiebreaker(null);
+    }
+  };
+
+  const handleWithdrawTeam = async (tiebreakerId: string, teamId: string, teamName: string, playerName: string) => {
+    const confirmMsg = `Are you sure you want to withdraw ${teamName} from the tiebreaker for ${playerName}? This will ignore their bid in the finalization. If only one team remains active, the tiebreaker will automatically finalize. This action cannot be undone.`;
+    const confirmed = window.confirm(confirmMsg);
+    if (!confirmed) return;
+
+    const key = `${tiebreakerId}_${teamId}`;
+    setWithdrawingTeam(key);
+    try {
+      const response = await fetchWithTokenRefresh(`/api/admin/bulk-tiebreakers/${tiebreakerId}/withdraw`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId })
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`[SUCCESS] ${teamName} has been successfully withdrawn.${result.autoFinalized ? ` The tiebreaker was automatically resolved with winner ${result.winnerTeamName}.` : ''}`);
+        await fetchData();
+      } else {
+        alert(`[ERROR] Failed to withdraw team: ${result.error}`);
+      }
+    } catch (err) {
+      console.error('Error withdrawing team:', err);
+      alert('[ERROR] An error occurred while withdrawing the team');
+    } finally {
+      setWithdrawingTeam(null);
     }
   };
 
@@ -280,11 +332,11 @@ export default function BulkRoundTiebreakersPage() {
       const result = await response.json();
       
       if (result.success) {
-        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Tiebreaker created successfully for ${playerName}!`);
+        alert(`[SUCCESS] Tiebreaker created successfully for ${playerName}!`);
         // Refresh data instead of reloading page
         await fetchData();
       } else {
-        alert(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Failed to create tiebreaker: ${result.error}`);
+        alert(`[ERROR] Failed to create tiebreaker: ${result.error}`);
       }
     } catch (err) {
       console.error('Error creating tiebreaker:', err);
@@ -314,10 +366,12 @@ export default function BulkRoundTiebreakersPage() {
     }
   };
 
-  const filteredTiebreakers = tiebreakers.filter(tb => {
-    if (filterStatus === 'all') return true;
-    return tb.status === filterStatus;
-  });
+  const filteredTiebreakers = tiebreakers
+    .filter(tb => {
+      if (filterStatus === 'all') return true;
+      return tb.status === filterStatus;
+    })
+    .sort((a, b) => (b.teams_count || 0) - (a.teams_count || 0));
 
   // Debug: Log all tiebreaker statuses
   console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Tiebreaker statuses:', tiebreakers.map(tb => ({ id: tb.id, status: tb.status, player: tb.player_name })));
@@ -337,7 +391,7 @@ export default function BulkRoundTiebreakersPage() {
     ).length,
   };
 
-  if (loading || !user || user.role !== 'committee_admin' || isLoading) {
+  if (loading || !user || user.role !== 'committee_admin' || (isLoading && tiebreakers.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center console-bg font-mono">
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -556,9 +610,9 @@ export default function BulkRoundTiebreakersPage() {
                     className="bg-slate-50/40 border border-slate-200 rounded-2xl overflow-hidden hover:shadow-sm transition-shadow"
                   >
                     {/* Tiebreaker Header */}
-                    <button
+                    <div
                       onClick={() => toggleTiebreaker(tiebreaker.id)}
-                      className="w-full p-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors cursor-pointer"
+                      className="w-full p-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors cursor-pointer select-none"
                     >
                       <div className="flex items-center gap-4">
                         <ChevronRight
@@ -575,6 +629,38 @@ export default function BulkRoundTiebreakersPage() {
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(tiebreaker.status)}`}>
                               {tiebreaker.status}
                             </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const sid = seasonId || '';
+                                const num = sid.match(/\d+$/)?.[0] || '';
+                                const seasonTitle = `SOUTHSOCCERS SUPER LEAGUE S${num}`;
+                                const teamsText = [...(tiebreaker.teams || [])]
+                                  .sort((a, b) => a.team_name.localeCompare(b.team_name))
+                                  .map((t, idx) => `${idx + 1}. ${t.team_name}`)
+                                  .join('\n');
+                                const msg = `*${seasonTitle}*\n\n⚔️ *TIEBREAKER*\n\n*PLAYER:* ${tiebreaker.player_name}\n*TEAMS:*\n${teamsText}`;
+                                navigator.clipboard.writeText(msg).then(() => {
+                                  setCopiedPlayerTiebreaker(tiebreaker.id);
+                                  setTimeout(() => setCopiedPlayerTiebreaker(null), 2000);
+                                });
+                              }}
+                              className={`p-1 rounded-lg border transition-all active:scale-95 flex items-center justify-center cursor-pointer ${
+                                copiedPlayerTiebreaker === tiebreaker.id
+                                  ? 'bg-emerald-600 border-emerald-600 text-white'
+                                  : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-700 shadow-sm'
+                              }`}
+                              title="Copy tiebreaker details to WhatsApp"
+                            >
+                              {copiedPlayerTiebreaker === tiebreaker.id ? (
+                                <Check className="w-3.5 h-3.5" />
+                              ) : (
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 0 00-2-2h-8a2 0 00-2 2v8a2 0 002 2z" />
+                                </svg>
+                              )}
+                            </button>
                           </div>
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
                             <span>Base: £{tiebreaker.original_amount}</span>
@@ -594,14 +680,14 @@ export default function BulkRoundTiebreakersPage() {
                       <span className="text-xs text-slate-405 font-mono hidden sm:inline">
                         {new Date(tiebreaker.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
-                    </button>
+                    </div>
 
                     {/* Tiebreaker Details */}
                     {isExpanded && (
                       <div className="border-t border-slate-200/60 bg-white p-5 space-y-4 font-mono">
                         <h4 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider">Team Bids</h4>
                         <div className="space-y-2 max-w-3xl">
-                          {tiebreaker.teams
+                          {[...tiebreaker.teams]
                             .sort((a, b) => a.team_name.localeCompare(b.team_name))
                             .map((team) => (
                               <div
@@ -614,10 +700,15 @@ export default function BulkRoundTiebreakersPage() {
                               >
                                 <div>
                                   <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-bold text-slate-850 text-sm">{team.team_name}</span>
+                                    <span className="font-bold text-slate-855 text-sm">{team.team_name}</span>
                                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getTeamStatusColor(team.status)}`}>
                                       {team.status}
                                     </span>
+                                    {team.budget !== undefined && (
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border bg-amber-50 border-amber-200 text-amber-700 font-mono">
+                                        Bal: £{team.budget.toLocaleString()}
+                                      </span>
+                                    )}
                                   </div>
                                   {team.submitted_at && (
                                     <span className="text-[10px] text-slate-400 font-mono">
@@ -628,30 +719,63 @@ export default function BulkRoundTiebreakersPage() {
                                 
                                 <div className="flex items-center gap-4">
                                   {tiebreaker.status !== 'resolved' && tiebreaker.status !== 'finalized' && (
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider">Manual Bid:</span>
-                                      <div className="relative">
-                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs">£</span>
-                                        <input
-                                          type="number"
-                                          min="0"
-                                          placeholder="Enter"
-                                          disabled={resolvingTiebreaker === tiebreaker.id}
-                                          value={adminBids[tiebreaker.id]?.[team.team_id] ?? ''}
-                                          onChange={(e) => {
-                                            const val = e.target.value;
-                                            setAdminBids(prev => ({
-                                              ...prev,
-                                              [tiebreaker.id]: {
-                                                ...(prev[tiebreaker.id] || {}),
-                                                [team.team_id]: val
-                                              }
-                                            }));
-                                          }}
-                                          className="w-24 pl-5 pr-2 py-1 text-xs border border-slate-250 rounded-lg text-right font-mono font-bold focus:ring-amber-500 focus:border-amber-500 bg-white shadow-sm"
-                                        />
+                                    team.status === 'withdrawn' ? (
+                                      <span className="text-xs text-rose-600 font-extrabold uppercase tracking-wider bg-rose-50 border border-rose-100 px-2.5 py-1 rounded-lg">
+                                        Withdrawn
+                                      </span>
+                                    ) : (
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider">Manual Bid:</span>
+                                        <div className="flex items-center gap-1.5">
+                                          <div className="relative">
+                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs">£</span>
+                                            <input
+                                              type="number"
+                                              min="0"
+                                              placeholder="Enter"
+                                              disabled={resolvingTiebreaker === tiebreaker.id}
+                                              value={adminBids[tiebreaker.id]?.[team.team_id] ?? ''}
+                                              onChange={(e) => {
+                                                const val = e.target.value;
+                                                setAdminBids(prev => ({
+                                                  ...prev,
+                                                  [tiebreaker.id]: {
+                                                    ...(prev[tiebreaker.id] || {}),
+                                                    [team.team_id]: val
+                                                  }
+                                                }));
+                                              }}
+                                              className="w-24 pl-5 pr-2 py-1 text-xs border border-slate-250 rounded-lg text-right font-mono font-bold focus:ring-amber-500 focus:border-amber-500 bg-white shadow-sm"
+                                            />
+                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setAdminBids(prev => ({
+                                                ...prev,
+                                                [tiebreaker.id]: {
+                                                  ...(prev[tiebreaker.id] || {}),
+                                                  [team.team_id]: String(tiebreaker.original_amount)
+                                                }
+                                              }));
+                                            }}
+                                            className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-[10px] font-extrabold uppercase transition-colors cursor-pointer"
+                                            title={`Set manual bid to base price: £${tiebreaker.original_amount}`}
+                                          >
+                                            Base
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleWithdrawTeam(tiebreaker.id, team.team_id, team.team_name, tiebreaker.player_name)}
+                                            disabled={withdrawingTeam === `${tiebreaker.id}_${team.team_id}`}
+                                            className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[10px] font-extrabold uppercase transition-colors cursor-pointer"
+                                            title="Withdraw team from this tiebreaker"
+                                          >
+                                            {withdrawingTeam === `${tiebreaker.id}_${team.team_id}` ? '...' : 'Withdraw'}
+                                          </button>
+                                        </div>
                                       </div>
-                                    </div>
+                                    )
                                   )}
 
                                   <div className="text-right min-w-[75px]">
@@ -668,25 +792,38 @@ export default function BulkRoundTiebreakersPage() {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
+                        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-2">
                           {(() => {
                             const hasEnteredBids = Object.values(adminBids[tiebreaker.id] || {}).some(val => val.trim() !== '');
                             const canResolve = tiebreaker.current_highest_team_id || hasEnteredBids;
+                            const isResolved = tiebreaker.status === 'resolved' || tiebreaker.status === 'finalized';
                             
                             return (
-                              <button
-                                onClick={() => handleResolveTiebreaker(tiebreaker.id, tiebreaker.player_name)}
-                                disabled={resolvingTiebreaker === tiebreaker.id || tiebreaker.status === 'resolved' || tiebreaker.status === 'finalized' || !canResolve}
-                                className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all font-mono text-xs uppercase tracking-wider font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border border-green-500/20"
-                              >
-                                {resolvingTiebreaker === tiebreaker.id 
-                                  ? 'Resolving...' 
-                                  : tiebreaker.status === 'resolved' 
-                                    ? 'Already Resolved' 
-                                    : hasEnteredBids 
-                                      ? 'Save Bids & Resolve' 
-                                      : 'Resolve Tiebreaker'}
-                              </button>
+                              <>
+                                <button
+                                  onClick={() => handleResolveTiebreaker(tiebreaker.id, tiebreaker.player_name)}
+                                  disabled={resolvingTiebreaker === tiebreaker.id || isResolved || !canResolve}
+                                  className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all font-mono text-xs uppercase tracking-wider font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border border-green-500/20"
+                                >
+                                  {resolvingTiebreaker === tiebreaker.id 
+                                    ? 'Resolving...' 
+                                    : isResolved 
+                                      ? 'Resolved' 
+                                      : hasEnteredBids 
+                                        ? 'Save Bids & Resolve' 
+                                        : 'Resolve Tiebreaker'}
+                                </button>
+
+                                {isResolved && (
+                                  <button
+                                    onClick={() => handleRevertTiebreaker(tiebreaker.id, tiebreaker.player_name)}
+                                    disabled={revertingTiebreaker === tiebreaker.id}
+                                    className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-all font-mono text-xs uppercase tracking-wider font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border border-rose-500/20"
+                                  >
+                                    {revertingTiebreaker === tiebreaker.id ? 'Reverting...' : 'Revert Resolution'}
+                                  </button>
+                                )}
+                              </>
                             );
                           })()}
                         </div>
