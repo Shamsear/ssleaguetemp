@@ -61,6 +61,7 @@ export default function BulkRoundTiebreakersPage() {
   const [resolvingTiebreaker, setResolvingTiebreaker] = useState<string | null>(null);
   const [creatingTiebreaker, setCreatingTiebreaker] = useState<string | null>(null);
   const [seasonId, setSeasonId] = useState<string | null>(null);
+  const [adminBids, setAdminBids] = useState<Record<string, Record<string, string>>>({});
 
   useEffect(() => {
     if (!loading && !user) {
@@ -212,16 +213,33 @@ export default function BulkRoundTiebreakersPage() {
   };
 
   const handleResolveTiebreaker = async (tiebreakerId: string, playerName: string) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to resolve the tiebreaker for ${playerName}? This will assign the player to the highest bidder and cannot be undone.`
-    );
+    // Gather any manual bids entered for this tiebreaker
+    const tiebreakerBids = adminBids[tiebreakerId] || {};
+    const manualBids: Record<string, number> = {};
+    
+    Object.entries(tiebreakerBids).forEach(([teamId, val]) => {
+      if (val.trim() !== '') {
+        const num = Number(val);
+        if (!isNaN(num) && num >= 0) {
+          manualBids[teamId] = num;
+        }
+      }
+    });
 
+    const hasManualBids = Object.keys(manualBids).length > 0;
+    const confirmMsg = hasManualBids
+      ? `Are you sure you want to save manual bids and resolve the tiebreaker for ${playerName}? This will assign the player to the highest bidder and cannot be undone.`
+      : `Are you sure you want to resolve the tiebreaker for ${playerName}? This will assign the player to the highest bidder based on current submitted bids.`;
+
+    const confirmed = window.confirm(confirmMsg);
     if (!confirmed) return;
 
     setResolvingTiebreaker(tiebreakerId);
     try {
       const response = await fetchWithTokenRefresh(`/api/admin/bulk-tiebreakers/${tiebreakerId}/finalize`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ manualBids })
       });
       const result = await response.json();
 
@@ -584,11 +602,11 @@ export default function BulkRoundTiebreakersPage() {
                         <h4 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider">Team Bids</h4>
                         <div className="space-y-2 max-w-3xl">
                           {tiebreaker.teams
-                            .sort((a, b) => (b.bid_amount || 0) - (a.bid_amount || 0))
+                            .sort((a, b) => a.team_name.localeCompare(b.team_name))
                             .map((team) => (
                               <div
                                 key={team.team_id}
-                                className={`flex items-center justify-between p-3.5 rounded-xl border ${
+                                className={`flex flex-wrap sm:flex-nowrap items-center justify-between p-3.5 rounded-xl border gap-4 ${
                                   team.status === 'won'
                                     ? 'bg-green-50 border-green-300'
                                     : 'bg-slate-50/50 border-slate-200'
@@ -607,12 +625,43 @@ export default function BulkRoundTiebreakersPage() {
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-right">
-                                  {team.bid_amount ? (
-                                    <div className="text-base font-extrabold text-slate-850 font-mono">£{team.bid_amount}</div>
-                                  ) : (
-                                    <div className="text-xs text-slate-400 italic">No bid yet</div>
+                                
+                                <div className="flex items-center gap-4">
+                                  {tiebreaker.status !== 'resolved' && tiebreaker.status !== 'finalized' && (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider">Manual Bid:</span>
+                                      <div className="relative">
+                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs">£</span>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          placeholder="Enter"
+                                          disabled={resolvingTiebreaker === tiebreaker.id}
+                                          value={adminBids[tiebreaker.id]?.[team.team_id] ?? ''}
+                                          onChange={(e) => {
+                                            const val = e.target.value;
+                                            setAdminBids(prev => ({
+                                              ...prev,
+                                              [tiebreaker.id]: {
+                                                ...(prev[tiebreaker.id] || {}),
+                                                [team.team_id]: val
+                                              }
+                                            }));
+                                          }}
+                                          className="w-24 pl-5 pr-2 py-1 text-xs border border-slate-250 rounded-lg text-right font-mono font-bold focus:ring-amber-500 focus:border-amber-500 bg-white shadow-sm"
+                                        />
+                                      </div>
+                                    </div>
                                   )}
+
+                                  <div className="text-right min-w-[75px]">
+                                    <div className="text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">Current:</div>
+                                    {team.bid_amount ? (
+                                      <div className="text-sm font-extrabold text-slate-850 font-mono">£{team.bid_amount}</div>
+                                    ) : (
+                                      <div className="text-xs text-slate-400 italic font-mono">None</div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             ))}
@@ -620,13 +669,26 @@ export default function BulkRoundTiebreakersPage() {
 
                         {/* Action Buttons */}
                         <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
-                          <button
-                            onClick={() => handleResolveTiebreaker(tiebreaker.id, tiebreaker.player_name)}
-                            disabled={resolvingTiebreaker === tiebreaker.id || tiebreaker.status === 'resolved' || tiebreaker.status === 'finalized' || !tiebreaker.current_highest_team_id}
-                            className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all font-mono text-xs uppercase tracking-wider font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border border-green-500/20"
-                          >
-                            {resolvingTiebreaker === tiebreaker.id ? 'Resolving...' : tiebreaker.status === 'resolved' ? 'Already Resolved' : 'Resolve Tiebreaker'}
-                          </button>
+                          {(() => {
+                            const hasEnteredBids = Object.values(adminBids[tiebreaker.id] || {}).some(val => val.trim() !== '');
+                            const canResolve = tiebreaker.current_highest_team_id || hasEnteredBids;
+                            
+                            return (
+                              <button
+                                onClick={() => handleResolveTiebreaker(tiebreaker.id, tiebreaker.player_name)}
+                                disabled={resolvingTiebreaker === tiebreaker.id || tiebreaker.status === 'resolved' || tiebreaker.status === 'finalized' || !canResolve}
+                                className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all font-mono text-xs uppercase tracking-wider font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border border-green-500/20"
+                              >
+                                {resolvingTiebreaker === tiebreaker.id 
+                                  ? 'Resolving...' 
+                                  : tiebreaker.status === 'resolved' 
+                                    ? 'Already Resolved' 
+                                    : hasEnteredBids 
+                                      ? 'Save Bids & Resolve' 
+                                      : 'Resolve Tiebreaker'}
+                              </button>
+                            );
+                          })()}
                         </div>
                       </div>
                     )}

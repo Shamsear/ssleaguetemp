@@ -605,9 +605,10 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
   };
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const filteredPlayers = availablePlayers.filter(p =>
@@ -733,7 +734,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
               <Info className="w-4 h-4 text-amber-500" />
               Round Information
             </h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4">
                 <label className="block text-[10px] font-bold text-slate-405 uppercase font-mono mb-1">Base Price</label>
                 <p className="text-lg sm:text-xl font-bold text-slate-800 font-mono">£{round.base_price}</p>
@@ -741,6 +742,22 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
               <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4">
                 <label className="block text-[10px] font-bold text-slate-405 uppercase font-mono mb-1">Duration</label>
                 <p className="text-lg sm:text-xl font-bold text-slate-800 font-mono">{round.duration_seconds}s</p>
+              </div>
+              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4">
+                <label className="block text-[10px] font-bold text-slate-405 uppercase font-mono mb-1">Start Time (IST)</label>
+                <p className="text-xs sm:text-sm font-bold text-slate-800 font-mono leading-snug">
+                  {round.start_time 
+                    ? new Date(round.start_time).toLocaleString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+                    : 'Not started'}
+                </p>
+              </div>
+              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4">
+                <label className="block text-[10px] font-bold text-slate-405 uppercase font-mono mb-1">End Time (IST)</label>
+                <p className="text-xs sm:text-sm font-bold text-slate-800 font-mono leading-snug">
+                  {round.end_time 
+                    ? new Date(round.end_time).toLocaleString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+                    : 'Not set'}
+                </p>
               </div>
               <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4">
                 <label className="block text-[10px] font-bold text-slate-405 uppercase font-mono mb-1">Total Players</label>
@@ -770,26 +787,27 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                   </button>
                 </>
               )}
+              {(round.status === 'active' || round.status === 'expired' || round.status === 'expired_pending_finalization') && (
+                <button
+                  onClick={() => setShowAddTime(!showAddTime)}
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-mono text-xs uppercase tracking-wider font-bold shadow-sm cursor-pointer border border-blue-500/20"
+                >
+                  ⏱️ Adjust Time
+                </button>
+              )}
+
               {round.status === 'active' && (
-                <>
-                  <button
-                    onClick={() => setShowAddTime(!showAddTime)}
-                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-mono text-xs uppercase tracking-wider font-bold shadow-sm cursor-pointer border border-blue-500/20"
-                  >
-                    ⏱️ Add Time
-                  </button>
-                  <button
-                    onClick={() => handleUpdateStatus('completed')}
-                    disabled={(timeRemaining !== null && timeRemaining > 0) || isFinalizing}
-                    className={`px-5 py-2.5 rounded-xl transition-all font-mono text-xs uppercase tracking-wider font-bold shadow-sm flex items-center gap-2 cursor-pointer border border-transparent ${
-                      (timeRemaining !== null && timeRemaining > 0) || isFinalizing
-                        ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
-                        : 'bg-purple-600 hover:bg-purple-700 text-white border-purple-500/20'
-                    }`}
-                  >
-                    Check / Finalize Round
-                  </button>
-                </>
+                <button
+                  onClick={() => handleUpdateStatus('completed')}
+                  disabled={(timeRemaining !== null && timeRemaining > 0) || isFinalizing}
+                  className={`px-5 py-2.5 rounded-xl transition-all font-mono text-xs uppercase tracking-wider font-bold shadow-sm flex items-center gap-2 cursor-pointer border border-transparent ${
+                    (timeRemaining !== null && timeRemaining > 0) || isFinalizing
+                      ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                      : 'bg-purple-600 hover:bg-purple-700 text-white border-purple-500/20'
+                  }`}
+                >
+                  Check / Finalize Round
+                </button>
               )}
               
               {(round.status === 'scheduled' || round.status === 'expired' || round.status === 'expired_pending_finalization' || round.status === 'finalizing') && pending.length > 0 && (
@@ -808,7 +826,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
             </div>
 
             {/* Add Time Interface */}
-            {showAddTime && round.status === 'active' && (
+            {showAddTime && (round.status === 'active' || round.status === 'expired' || round.status === 'expired_pending_finalization') && (
               <div className="mt-6 p-5 bg-blue-50 border border-blue-200 rounded-2xl animate-in fade-in slide-in-from-top-4 duration-200">
                 <h3 className="font-bold text-slate-905 mb-4 flex items-center gap-2 text-sm">
                   <Clock className="w-5 h-5 text-blue-600" />

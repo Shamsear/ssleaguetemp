@@ -16,7 +16,7 @@ export async function POST(
 ) {
   try {
     // Verify authentication and authorization
-    const auth = await verifyAuth(['admin', 'committee_admin']);
+    const auth = await verifyAuth(['admin', 'committee_admin'], request);
     if (!auth.authenticated) {
       return NextResponse.json(
         { success: false, error: auth.error || 'Unauthorized' },
@@ -48,12 +48,34 @@ export async function POST(
 
     const round = rounds[0];
 
-    // Update end_time by adding the specified minutes
-    // Use sql.unsafe for interval concatenation since tagged template can't handle it
+    // Calculate new end_time and check if we need to reactivate expired rounds
+    const timeCheck = await sql`
+      SELECT end_time + (${minutes} || ' minutes')::interval as new_end_time, status
+      FROM rounds
+      WHERE id = ${id}
+    `;
+
+    if (timeCheck.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Round not found' },
+        { status: 404 }
+      );
+    }
+
+    const newEndTime = new Date(timeCheck[0].new_end_time);
+    const currentStatus = timeCheck[0].status;
+    let targetStatus = currentStatus;
+
+    // Reactivate round if time is added to an expired/pending round
+    if (newEndTime > new Date() && (currentStatus === 'expired' || currentStatus === 'expired_pending_finalization')) {
+      targetStatus = 'active';
+    }
+
     const updatedRound = await sql`
       UPDATE rounds 
       SET 
-        end_time = end_time + (${minutes} || ' minutes')::interval,
+        end_time = ${newEndTime.toISOString()},
+        status = ${targetStatus},
         updated_at = NOW()
       WHERE id = ${id}
       RETURNING *
@@ -66,6 +88,7 @@ export async function POST(
     if (seasonId) {
       await broadcastRoundUpdate(seasonId, id, {
         type: 'round_updated',
+        status: updatedRound[0].status,
         end_time: updatedRound[0].end_time,
         duration_seconds: updatedRound[0].duration_seconds,
         time_extended: true,

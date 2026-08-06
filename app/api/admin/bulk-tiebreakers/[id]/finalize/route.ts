@@ -27,6 +27,79 @@ export async function POST(
     }
 
     const { id: tiebreakerId } = await params;
+    
+    // Parse body for manual bids
+    const body = await request.json().catch(() => ({}));
+    const { manualBids } = body; // map of team_id -> bid_amount
+
+    if (manualBids && typeof manualBids === 'object' && Object.keys(manualBids).length > 0) {
+      console.log(`✍️ Admin provided manual bids for tiebreaker ${tiebreakerId}:`, manualBids);
+      for (const [teamId, bidAmtRaw] of Object.entries(manualBids)) {
+        const bid_amount = Number(bidAmtRaw);
+        if (isNaN(bid_amount) || bid_amount < 0) continue;
+        
+        // 1. Get team details
+        const teamDetails = await sql`
+          SELECT team_name FROM bulk_tiebreaker_teams
+          WHERE tiebreaker_id = ${tiebreakerId} AND team_id = ${teamId}
+        `;
+        if (teamDetails.length === 0) continue;
+        const teamName = teamDetails[0].team_name;
+
+        // 2. Update team's bid and status
+        await sql`
+          UPDATE bulk_tiebreaker_teams
+          SET 
+            bid_amount = ${bid_amount},
+            current_bid = ${bid_amount},
+            status = 'active',
+            submitted_at = NOW(),
+            withdrawn_at = NULL
+          WHERE tiebreaker_id = ${tiebreakerId} AND team_id = ${teamId}
+        `;
+
+        // 3. Log history in bulk_tiebreaker_bids
+        await sql`
+          INSERT INTO bulk_tiebreaker_bids (
+            tiebreaker_id,
+            team_id,
+            team_name,
+            bid_amount,
+            created_at
+          ) VALUES (
+            ${tiebreakerId},
+            ${teamId},
+            ${teamName},
+            ${bid_amount},
+            NOW()
+          )
+        `;
+      }
+
+      // 4. Recalculate highest bidder among active teams
+      const activeBids = await sql`
+        SELECT team_id, bid_amount
+        FROM bulk_tiebreaker_teams
+        WHERE tiebreaker_id = ${tiebreakerId} AND status = 'active'
+        ORDER BY bid_amount DESC, submitted_at ASC
+      `;
+
+      if (activeBids.length > 0) {
+        const highestBid = activeBids[0].bid_amount;
+        const highestTeamId = activeBids[0].team_id;
+
+        await sql`
+          UPDATE bulk_tiebreakers
+          SET 
+            current_highest_bid = ${highestBid},
+            current_highest_team_id = ${highestTeamId},
+            last_activity_time = NOW(),
+            updated_at = NOW()
+          WHERE id = ${tiebreakerId}
+        `;
+        console.log(`👑 Updated tiebreaker highest bidder to: ${highestTeamId} with £${highestBid}`);
+      }
+    }
 
     console.log(`🔄 Admin attempting to finalize tiebreaker ${tiebreakerId}`);
 
