@@ -152,6 +152,13 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
       
       // Handle different message types for instant UI updates
       switch (messageType) {
+        case 'bulk_bids_updated':
+          // ⚡ INSTANT: Team submitted/updated their bulk bids
+          console.log('⚡ [Committee WS] Bulk bids updated by team:', message.team_name);
+          fetchRound();
+          fetchTeamSummary();
+          break;
+
         case 'round_updated':
           // ⚡ INSTANT: Update round metadata (timer, status, etc.)
           console.log('<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Updating round metadata...', message);
