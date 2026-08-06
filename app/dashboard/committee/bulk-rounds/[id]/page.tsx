@@ -97,6 +97,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
   const [loadingTeamSummary, setLoadingTeamSummary] = useState(false);
   const [teamSummaryRefreshTrigger, setTeamSummaryRefreshTrigger] = useState(0);
   const [isFinalizing, setIsFinalizing] = useState(false);
+  const [copiedSubmissions, setCopiedSubmissions] = useState(false);
 
   // Fetch round details
   const fetchRound = useCallback(async () => {
@@ -864,10 +865,61 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
 
           {/* Team Progress Summary */}
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
-            <h2 className="text-sm sm:text-base font-extrabold mb-6 uppercase text-slate-900 tracking-wide flex items-center gap-2">
-              <Users className="w-5 h-5 text-amber-500" />
-              Team Progress
-            </h2>
+            <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
+              <h2 className="text-sm sm:text-base font-extrabold uppercase text-slate-900 tracking-wide flex items-center gap-2">
+                <Users className="w-5 h-5 text-amber-500" />
+                Team Progress
+              </h2>
+              {teamSummary.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sid = round?.season_id || '';
+                    const num = sid.match(/\d+$/)?.[0] || '';
+                    const seasonTitle = `SOUTHSOCCERS SUPER LEAGUE S${num}`;
+                    const roundNum = round?.round_number || '?';
+                    const deadline = round?.end_time
+                      ? new Date(round.end_time).toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }).toUpperCase() + ' IST'
+                      : 'TBD';
+
+                    const teamLines = [...teamSummary]
+                      .sort((a, b) => b.players_selected - a.players_selected)
+                      .map((team, idx) => {
+                        const isComplete = team.players_selected >= team.slots_needed;
+                        const tick = isComplete ? ' ✅' : '';
+                        return `${idx + 1}. ${team.team_name}${tick}`;
+                      })
+                      .join('\n');
+
+                    const msg = `*${seasonTitle}*\n\n🏆 *BID SUBMITTED TEAMS (BULK ROUND)*\n\n*ROUND ${roundNum}*\n*DEADLINE: ${deadline}*\n\n${teamLines}`;
+                    navigator.clipboard.writeText(msg).then(() => {
+                      setCopiedSubmissions(true);
+                      setTimeout(() => setCopiedSubmissions(false), 2000);
+                    });
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-black uppercase tracking-wider transition-all active:scale-95 ${
+                    copiedSubmissions 
+                      ? 'bg-emerald-600 text-white' 
+                      : 'bg-slate-800 hover:bg-slate-700 text-white shadow-md'
+                  }`}
+                  title="Copy submissions list to WhatsApp"
+                >
+                  {copiedSubmissions ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Copy to WhatsApp
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
             {loadingTeamSummary ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto"></div>
