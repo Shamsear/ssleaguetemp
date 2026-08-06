@@ -669,11 +669,11 @@ export default function TeamBulkRoundPage() {
             </svg>
           </summary>
           <ul className="space-y-1.5 sm:space-y-2 text-[10px] sm:text-xs text-slate-500 uppercase font-semibold mt-3 sm:mt-4 ml-10 sm:ml-11 list-disc">
-            <li>Click any player to bid £{bulkRound.base_price}</li>
-            <li>Click again to remove your bid</li>
-            <li>Only bidder? Player is yours!</li>
-            <li>Multiple bids trigger tiebreaker</li>
-            <li>Bids auto-save, money reserved</li>
+            <li>Click any player to select and place a bid of £{bulkRound.base_price}</li>
+            <li>Click again to remove your selected bid</li>
+            <li>You must select exactly enough players to fill all vacant squad slots</li>
+            <li>Bids are saved as a draft until you click "Submit Bids"</li>
+            <li>Unsubmitted changes will be lost if you refresh or exit the page</li>
           </ul>
         </details>
 
