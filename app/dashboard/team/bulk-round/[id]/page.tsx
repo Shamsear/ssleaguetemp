@@ -22,6 +22,8 @@ interface Player {
   is_starred?: boolean;
   photo_url?: string | null;
   player_id?: string | number;
+  nationality?: string | null;
+  club?: string | null;
 }
 
 interface BulkRound {
@@ -87,6 +89,14 @@ const PlayerCard = React.memo(({ player, isBidded, basePrice, onToggle }: Player
               <span className="hidden sm:inline">•</span>
               <span className="truncate">{player.team_name}</span>
             </div>
+            {/* Club & Nation */}
+            {(player.club || player.nationality) && (
+              <div className="flex items-center gap-1.5 text-[9px] text-slate-405/80 uppercase font-bold mt-1 flex-wrap">
+                {player.club && <span className="truncate max-w-[120px]" title={player.club}>{player.club}</span>}
+                {player.club && player.nationality && <span>•</span>}
+                {player.nationality && <span className="truncate max-w-[120px]" title={player.nationality}>{player.nationality}</span>}
+              </div>
+            )}
           </div>
           <div className={`w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-xl border flex items-center justify-center transition-all ${
             isBidded
@@ -121,7 +131,9 @@ const PlayerCard = React.memo(({ player, isBidded, basePrice, onToggle }: Player
     prevProps.player.position === nextProps.player.position &&
     prevProps.player.team_name === nextProps.player.team_name &&
     prevProps.player.overall_rating === nextProps.player.overall_rating &&
-    prevProps.player.playing_style === nextProps.player.playing_style
+    prevProps.player.playing_style === nextProps.player.playing_style &&
+    prevProps.player.nationality === nextProps.player.nationality &&
+    prevProps.player.club === nextProps.player.club
   );
 });
 
@@ -155,6 +167,7 @@ export default function TeamBulkRoundPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [teamBalance, setTeamBalance] = useState(1000);
   const [filterPosition, setFilterPosition] = useState<string>('all');
+  const [filterPlayingStyle, setFilterPlayingStyle] = useState<string>('all');
   const [filterStarred, setFilterStarred] = useState(false);
   const [squadInfo, setSquadInfo] = useState({ current: 0, max: 25, available: 25 });
   const [bidsCount, setBidsCount] = useState(0);
@@ -496,14 +509,20 @@ export default function TeamBulkRoundPage() {
     return 'text-emerald-600';
   };
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterPosition, filterStarred, filterPlayingStyle]);
+
   const filteredPlayers = useMemo(() => {
     return players.filter(player => {
       const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesPosition = filterPosition === 'all' || player.position === filterPosition;
       const matchesStarred = !filterStarred || player.is_starred;
-      return matchesSearch && matchesPosition && matchesStarred;
+      const matchesPlayingStyle = filterPlayingStyle === 'all' || player.playing_style === filterPlayingStyle;
+      return matchesSearch && matchesPosition && matchesStarred && matchesPlayingStyle;
     });
-  }, [players, searchTerm, filterPosition, filterStarred]);
+  }, [players, searchTerm, filterPosition, filterStarred, filterPlayingStyle]);
 
   const sortedPlayers = useMemo(() => {
     return [...filteredPlayers].sort((a, b) => {
@@ -520,6 +539,24 @@ export default function TeamBulkRoundPage() {
   const starredPlayersCount = useMemo(() => {
     return players.filter(p => p.is_starred).length;
   }, [players]);
+
+  const playingStylesList = useMemo(() => {
+    const styles = new Set<string>();
+    players.forEach(p => {
+      const matchesPosition = filterPosition === 'all' || p.position === filterPosition;
+      if (matchesPosition && p.playing_style) {
+        styles.add(p.playing_style);
+      }
+    });
+    return ['all', ...Array.from(styles).sort()];
+  }, [players, filterPosition]);
+
+  // Reset playing style filter if it is no longer available in the active playing styles list
+  useEffect(() => {
+    if (filterPlayingStyle !== 'all' && !playingStylesList.includes(filterPlayingStyle)) {
+      setFilterPlayingStyle('all');
+    }
+  }, [playingStylesList, filterPlayingStyle]);
 
   const totalPages = Math.ceil(sortedPlayers.length / itemsPerPage);
 
@@ -726,6 +763,14 @@ export default function TeamBulkRoundPage() {
                             <span className="hidden sm:inline">•</span>
                             <span className="truncate">{player.team_name}</span>
                           </div>
+                          {/* Club & Nation */}
+                          {(player.club || player.nationality) && (
+                            <div className="flex items-center gap-1.5 text-[9px] text-slate-405/85 uppercase font-bold mt-1 flex-wrap">
+                              {player.club && <span className="truncate max-w-[100px]" title={player.club}>{player.club}</span>}
+                              {player.club && player.nationality && <span>•</span>}
+                              {player.nationality && <span className="truncate max-w-[100px]" title={player.nationality}>{player.nationality}</span>}
+                            </div>
+                          )}
                         </div>
                         <button
                           onClick={() => handleTogglePlayer(player.id)}
@@ -858,12 +903,35 @@ export default function TeamBulkRoundPage() {
                           : 'bg-white text-slate-700 border-slate-200 hover:border-amber-400/40 hover:text-amber-600 active:scale-95'
                       }`}
                     >
-                      {pos === 'all' ? 'All' : pos}
+                      {pos === 'all' ? 'All Positions' : pos}
                     </button>
                   ))}
                 </div>
               </div>
             </div>
+
+            {/* Playing Style Tabs - Mobile Optimized with horizontal scroll */}
+            {playingStylesList.length > 1 && (
+              <div className="-mx-3 sm:-mx-4 px-3 sm:px-4 border-t border-slate-100 pt-3">
+                <div className="overflow-x-auto scrollbar-hide">
+                  <div className="flex gap-1.5 sm:gap-2 min-w-max pb-1">
+                    {playingStylesList.map((style) => (
+                      <button
+                        key={style}
+                        onClick={() => setFilterPlayingStyle(style)}
+                        className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap touch-manipulation border ${
+                          filterPlayingStyle === style
+                            ? 'bg-slate-800 text-white border-slate-900 scale-105'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-amber-400/40 hover:text-amber-600 active:scale-95'
+                        }`}
+                      >
+                        {style === 'all' ? 'All Styles' : style}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

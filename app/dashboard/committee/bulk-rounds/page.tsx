@@ -470,13 +470,14 @@ export default function BulkRoundsPage() {
                         const totalSeconds = parseInt(formData.duration_hours) * 3600 + parseInt(formData.duration_minutes) * 60 + parseInt(formData.duration_seconds);
                         const endTime = new Date(Date.now() + totalSeconds * 1000);
                         return endTime.toLocaleString('en-US', {
+                          timeZone: 'Asia/Kolkata',
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric',
                           hour: 'numeric',
                           minute: '2-digit',
                           hour12: true
-                        });
+                        }) + ' IST';
                       })()}
                     </p>
                   </div>

@@ -118,6 +118,8 @@ export async function GET(
         rp.status,
         fp.playing_style,
         fp.player_id as efootball_id,
+        fp.nationality,
+        fp.club,
         CASE WHEN sp.player_id IS NOT NULL THEN true ELSE false END as is_starred
       FROM round_players rp
       LEFT JOIN footballplayers fp ON rp.player_id = fp.id
@@ -135,6 +137,8 @@ export async function GET(
         rp.status,
         fp.playing_style,
         fp.player_id as efootball_id,
+        fp.nationality,
+        fp.club,
         false as is_starred
       FROM round_players rp
       LEFT JOIN footballplayers fp ON rp.player_id = fp.id
@@ -287,6 +291,8 @@ export async function GET(
           status: p.status,
           is_starred: p.is_starred || false,
           player_id: p.efootball_id || p.id,
+          nationality: p.nationality,
+          club: p.club,
         })),
         balance,
         squad: {

@@ -7,6 +7,7 @@ import { useEffect, useState, use, useCallback } from 'react';
 import Link from 'next/link';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { PlayerAvatar } from '@/components/PlayerImage';
 import { ArrowLeft, Clock, DollarSign, Users, Check, Calendar, ChevronRight, Info, Sparkles, Plus, Play, Layers, Settings, Download, RefreshCw, AlertTriangle, XCircle, CheckCircle, Trash2, Lock, Trophy, BarChart2 } from 'lucide-react';
 
 interface BulkBid {
@@ -1132,25 +1133,33 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                     : [...round.roundPlayers].sort((a, b) => (b.bid_count || 0) - (a.bid_count || 0))
                   ).map((player) => (
                     <div key={player.id} className="bg-slate-50/40 border border-slate-200 shadow-sm rounded-2xl hover:shadow-md transition-shadow overflow-hidden">
-                      <div className="p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <h3 className="font-extrabold text-slate-800 text-sm mb-1">{player.player_name}</h3>
-                            <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-                              <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-200">{player.position}</span>
-                              <span className="font-semibold text-slate-755">£{player.base_price}</span>
-                            </div>
-                          </div>
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase border ${
-                            player.status === 'sold' ? 'bg-green-50 text-green-700 border-green-200' :
-                            player.status === 'unsold' ? 'bg-red-55' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-red-50' :
-                            'bg-gray-50 text-gray-700 border-gray-200'
-                          }`}>
-                            {player.status}
-                          </span>
+                      <div className="p-4 flex gap-3 items-start">
+                        <div className="flex-shrink-0">
+                          <PlayerAvatar
+                            playerId={player.player_id}
+                            playerName={player.player_name}
+                            size={40}
+                          />
                         </div>
-                        
-                        <div className="flex items-center justify-between pt-3 border-t border-slate-200/60">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1 min-w-0 pr-2">
+                              <h3 className="font-extrabold text-slate-800 text-sm mb-1 uppercase truncate">{player.player_name}</h3>
+                              <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-200">{player.position}</span>
+                                <span className="font-semibold text-slate-755">£{player.base_price}</span>
+                              </div>
+                            </div>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase border ${
+                              player.status === 'sold' ? 'bg-green-50 text-green-700 border-green-200' :
+                              player.status === 'unsold' ? 'bg-red-50 text-red-700 border-red-200' :
+                              'bg-gray-50 text-gray-700 border-gray-200'
+                            }`}>
+                              {player.status}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between pt-3 border-t border-slate-200/60">
                           {shouldShowBids ? (
                             <span className={`px-2 py-1 rounded-lg text-xs font-mono font-bold border ${
                               (player.bid_count || 0) > 1 ? 'bg-orange-50 border-orange-200 text-orange-700' :
@@ -1223,6 +1232,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                           )}
                         </div>
                       </div>
+                    </div>
                       
                       {/* Expandable Bid Details - Mobile */}
                       {!player.tiebreaker_id && expandedBids.has(player.player_id) && shouldShowBids && (
@@ -1342,33 +1352,43 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                 </div>
                 
                 {/* Desktop Table View */}
-                <div className="hidden lg:block overflow-x-auto font-mono">
+                <div className="hidden lg:block overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm font-mono">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-200 bg-slate-50/50">
-                        <th className="text-left py-4 px-5 font-bold text-slate-705 text-xs font-mono uppercase tracking-wider">Player Name</th>
-                        <th className="text-left py-4 px-5 font-bold text-slate-705 text-xs font-mono uppercase tracking-wider">Position</th>
-                        <th className="text-left py-4 px-5 font-bold text-slate-705 text-xs font-mono uppercase tracking-wider">Base Price</th>
+                      <tr className="border-b border-slate-200/60 bg-slate-50">
+                        <th className="text-left py-4 px-6 font-extrabold text-slate-500 text-[10px] sm:text-xs uppercase tracking-wider">Player Name</th>
+                        <th className="text-left py-4 px-6 font-bold text-slate-500 text-[10px] sm:text-xs uppercase tracking-wider">Position</th>
+                        <th className="text-left py-4 px-6 font-bold text-slate-500 text-[10px] sm:text-xs uppercase tracking-wider">Base Price</th>
                         {shouldShowBids && (
-                          <th className="text-left py-4 px-5 font-bold text-slate-705 text-xs font-mono uppercase tracking-wider">Bids</th>
+                          <th className="text-left py-4 px-6 font-bold text-slate-500 text-[10px] sm:text-xs uppercase tracking-wider">Bids</th>
                         )}
-                        <th className="text-left py-4 px-5 font-bold text-slate-705 text-xs font-mono uppercase tracking-wider">Status</th>
+                        <th className="text-left py-4 px-6 font-bold text-slate-500 text-[10px] sm:text-xs uppercase tracking-wider">Status</th>
+                        <th className="text-right py-4 px-6 font-bold text-slate-500 text-[10px] sm:text-xs uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-100">
                       {(round.status === 'active'
                         ? [...round.roundPlayers].sort((a, b) => a.player_name.localeCompare(b.player_name))
                         : [...round.roundPlayers].sort((a, b) => (b.bid_count || 0) - (a.bid_count || 0))
                       ).map((player) => (
                         <React.Fragment key={player.id}>
-                          <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition-colors">
-                            <td className="py-4 px-5 font-extrabold text-slate-800">{player.player_name}</td>
-                            <td className="py-4 px-5 text-slate-550 font-mono text-xs">
-                              <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded">{player.position}</span>
+                          <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                            <td className="py-4 px-6 font-extrabold text-slate-800">
+                              <div className="flex items-center gap-3">
+                                <PlayerAvatar
+                                  playerId={player.player_id}
+                                  playerName={player.player_name}
+                                  size={36}
+                                />
+                                <span className="uppercase">{player.player_name}</span>
+                              </div>
                             </td>
-                            <td className="py-4 px-5 text-slate-700 font-mono">£{player.base_price}</td>
+                            <td className="py-4 px-6 text-slate-550 font-mono text-xs">
+                              <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg">{player.position}</span>
+                            </td>
+                            <td className="py-4 px-6 text-slate-700 font-mono">£{player.base_price}</td>
                             {shouldShowBids && (
-                              <td className="py-4 px-5 font-mono">
+                              <td className="py-4 px-6 font-mono">
                                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
                                   (player.bid_count || 0) > 1 ? 'bg-orange-50 border-orange-200 text-orange-700' :
                                   (player.bid_count || 0) === 1 ? 'bg-blue-50 border-blue-200 text-blue-700' :
@@ -1378,7 +1398,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                                 </span>
                               </td>
                             )}
-                            <td className="py-4 px-5">
+                            <td className="py-4 px-6">
                               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono uppercase border ${
                                 player.status === 'sold' ? 'bg-green-50 text-green-700 border-green-200' :
                                 player.status === 'unsold' ? 'bg-red-50 text-red-700 border-red-200' :
@@ -1387,7 +1407,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                                 {player.status}
                               </span>
                             </td>
-                            <td className="py-4 px-5">
+                            <td className="py-4 px-6 text-right">
                               {player.tiebreaker_id ? (
                                 <button 
                                   onClick={() => {
@@ -1399,7 +1419,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                                     }
                                     setExpandedTiebreakers(newExpanded);
                                   }}
-                                  className="px-4 py-2 bg-orange-650 hover:bg-orange-700 bg-orange-600 text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider shadow-sm cursor-pointer transition-colors"
+                                  className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider shadow-sm cursor-pointer transition-colors"
                                 >
                                   {expandedTiebreakers.has(player.player_id) ? 'Hide' : 'View'} Tiebreaker
                                 </button>

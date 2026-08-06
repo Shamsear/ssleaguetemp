@@ -50,6 +50,7 @@ export async function GET(
     const roundPlayers = await sql`
       SELECT 
         rp.*,
+        fp.player_id as efootball_id,
         COUNT(rb.id) as bid_count,
         bt.id as tiebreaker_id,
         bt.status as tiebreaker_status,
@@ -59,10 +60,11 @@ export async function GET(
         bt.start_time as tiebreaker_start_time,
         bt.last_activity_time
       FROM round_players rp
+      LEFT JOIN footballplayers fp ON rp.player_id = fp.id
       LEFT JOIN round_bids rb ON rp.round_id = rb.round_id AND rp.player_id = rb.player_id
       LEFT JOIN bulk_tiebreakers bt ON rp.player_id = bt.player_id AND bt.bulk_round_id = ${roundId}
       WHERE rp.round_id = ${roundId}
-      GROUP BY rp.id, bt.id, bt.status, bt.created_at, bt.current_highest_bid, bt.current_highest_team_id, bt.start_time, bt.last_activity_time
+      GROUP BY rp.id, fp.player_id, bt.id, bt.status, bt.created_at, bt.current_highest_bid, bt.current_highest_team_id, bt.start_time, bt.last_activity_time
       ${showAll ? sql`` : sql`HAVING COUNT(rb.id) > 0 OR bt.id IS NOT NULL`}
       ORDER BY COUNT(rb.id) DESC, rp.player_name
       LIMIT ${limit} OFFSET ${offset}
@@ -116,7 +118,10 @@ export async function GET(
       success: true,
       data: {
         ...round,
-        roundPlayers,
+        roundPlayers: roundPlayers.map(p => ({
+          ...p,
+          player_id: p.efootball_id || p.player_id,
+        })),
         stats: {
           total_players: totalPlayers,
           pending_count: parseInt(stats[0]?.pending_count || '0'),
