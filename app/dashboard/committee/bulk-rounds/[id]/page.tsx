@@ -99,6 +99,55 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
   const [teamSummaryRefreshTrigger, setTeamSummaryRefreshTrigger] = useState(0);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [copiedSubmissions, setCopiedSubmissions] = useState(false);
+  const [copiedTiebreakers, setCopiedTiebreakers] = useState(false);
+  const [copiedAcquisitions, setCopiedAcquisitions] = useState(false);
+  const [copiedPlayerTiebreaker, setCopiedPlayerTiebreaker] = useState<string | null>(null);
+  const [copiedTeamAcquisition, setCopiedTeamAcquisition] = useState<string | null>(null);
+
+  const copyTiebreakerToClipboard = useCallback((player: any) => {
+    const sid = round?.season_id || '';
+    const num = sid.match(/\d+$/)?.[0] || '';
+    const seasonTitle = `SOUTHSOCCERS SUPER LEAGUE S${num}`;
+    const teamNames = player.tiebreaker?.submissions?.map((s: any) => s.team_name).join(', ') || '';
+    const msg = `*${seasonTitle}*\n\n⚔️ *TIEBREAKER*\n\n*PLAYER:* ${player.player_name}\n*TEAMS:* ${teamNames}`;
+    navigator.clipboard.writeText(msg).then(() => {
+      setCopiedPlayerTiebreaker(player.player_id);
+      setTimeout(() => setCopiedPlayerTiebreaker(null), 2000);
+    });
+  }, [round]);
+
+  const copyTeamAcquisitionsToClipboard = useCallback((team: any) => {
+    const sid = round?.season_id || '';
+    const num = sid.match(/\d+$/)?.[0] || '';
+    const seasonTitle = `SOUTHSOCCERS SUPER LEAGUE S${num}`;
+    const roundNum = round?.round_number || '?';
+    // Find players sold to this team
+    const teamSoldPlayers = round?.roundPlayers
+      ?.filter(p => p.status === 'sold' && p.winning_team_id === team.team_id)
+      ?.map(p => p.player_name)
+      ?.sort() || [];
+
+    // Find players this team is contesting in active tiebreakers
+    const teamTiebreakerPlayers = round?.roundPlayers
+      ?.filter(p => p.tiebreaker_id && p.tiebreaker && p.tiebreaker.status === 'active' && 
+                    p.tiebreaker.submissions?.some((sub: any) => sub.team_id === team.team_id))
+      ?.map(p => p.player_name)
+      ?.sort() || [];
+
+    const soldLines = teamSoldPlayers.map(name => `* ${name}`);
+    const tbLines = teamTiebreakerPlayers.map(name => `* ${name} (⚔️ Tiebreaker)`);
+    const allLines = [...soldLines, ...tbLines];
+
+    const playersText = allLines.length > 0
+      ? allLines.join('\n')
+      : '* No players';
+
+    const msg = `*${seasonTitle}*\n\n*ROUND ${roundNum}*\n\n*${team.team_name.toUpperCase()}*\n${playersText}`;
+    navigator.clipboard.writeText(msg).then(() => {
+      setCopiedTeamAcquisition(team.team_id);
+      setTimeout(() => setCopiedTeamAcquisition(null), 2000);
+    });
+  }, [round]);
 
   // Fetch round details
   const fetchRound = useCallback(async () => {
@@ -878,55 +927,177 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                 <Users className="w-5 h-5 text-amber-500" />
                 Team Progress
               </h2>
-              {teamSummary.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const sid = round?.season_id || '';
-                    const num = sid.match(/\d+$/)?.[0] || '';
-                    const seasonTitle = `SOUTHSOCCERS SUPER LEAGUE S${num}`;
-                    const roundNum = round?.round_number || '?';
-                    const deadline = round?.end_time
-                      ? new Date(round.end_time).toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }).toUpperCase() + ' IST'
-                      : 'TBD';
+              <div className="flex items-center gap-2 flex-wrap">
+                {teamSummary.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const sid = round?.season_id || '';
+                      const num = sid.match(/\d+$/)?.[0] || '';
+                      const seasonTitle = `SOUTHSOCCERS SUPER LEAGUE S${num}`;
+                      const roundNum = round?.round_number || '?';
+                      const deadline = round?.end_time
+                        ? new Date(round.end_time).toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }).toUpperCase() + ' IST'
+                        : 'TBD';
 
-                    const teamLines = [...teamSummary]
-                      .sort((a, b) => b.players_selected - a.players_selected)
-                      .map((team, idx) => {
-                        const isComplete = team.players_selected >= team.slots_needed;
-                        const tick = isComplete ? ' ✅' : '';
-                        return `${idx + 1}. ${team.team_name}${tick}`;
-                      })
-                      .join('\n');
+                      const teamLines = [...teamSummary]
+                        .sort((a, b) => b.players_selected - a.players_selected)
+                        .map((team, idx) => {
+                          const isComplete = team.players_selected >= team.slots_needed;
+                          const tick = isComplete ? ' ✅' : '';
+                          return `${idx + 1}. ${team.team_name}${tick}`;
+                        })
+                        .join('\n');
 
-                    const msg = `*${seasonTitle}*\n\n🏆 *BID SUBMITTED TEAMS (BULK ROUND)*\n\n*ROUND ${roundNum}*\n*DEADLINE: ${deadline}*\n\n${teamLines}`;
-                    navigator.clipboard.writeText(msg).then(() => {
-                      setCopiedSubmissions(true);
-                      setTimeout(() => setCopiedSubmissions(false), 2000);
-                    });
-                  }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-black uppercase tracking-wider transition-all active:scale-95 ${
-                    copiedSubmissions 
-                      ? 'bg-emerald-600 text-white' 
-                      : 'bg-slate-800 hover:bg-slate-700 text-white shadow-md'
-                  }`}
-                  title="Copy submissions list to WhatsApp"
-                >
-                  {copiedSubmissions ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Copy to WhatsApp
-                    </>
-                  )}
-                </button>
-              )}
+                      const msg = `*${seasonTitle}*\n\n🏆 *BID SUBMITTED TEAMS (BULK ROUND)*\n\n*ROUND ${roundNum}*\n*DEADLINE: ${deadline}*\n\n${teamLines}`;
+                      navigator.clipboard.writeText(msg).then(() => {
+                        setCopiedSubmissions(true);
+                        setTimeout(() => setCopiedSubmissions(false), 2000);
+                      });
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-black uppercase tracking-wider transition-all active:scale-95 ${
+                      copiedSubmissions 
+                        ? 'bg-emerald-600 text-white' 
+                        : 'bg-slate-800 hover:bg-slate-700 text-white shadow-md'
+                    }`}
+                    title="Copy submissions list to WhatsApp"
+                  >
+                    {copiedSubmissions ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy Progress
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* Copy Tiebreakers Button */}
+                {round?.roundPlayers && round.roundPlayers.some(p => p.tiebreaker_id && p.tiebreaker && p.tiebreaker.status === 'active') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const sid = round?.season_id || '';
+                      const num = sid.match(/\d+$/)?.[0] || '';
+                      const seasonTitle = `SOUTHSOCCERS SUPER LEAGUE S${num}`;
+                      const roundNum = round?.round_number || '?';
+                      
+                      const activeTbs = round.roundPlayers.filter(p => p.tiebreaker_id && p.tiebreaker && p.tiebreaker.status === 'active');
+                      const tbLines = activeTbs
+                        .map((player, idx) => {
+                          const teamNames = player.tiebreaker?.submissions?.map(s => s.team_name).join(', ') || '';
+                          return `${idx + 1}. ${player.player_name} (${teamNames})`;
+                        })
+                        .join('\n');
+
+                      const msg = `*${seasonTitle}*\n\n⚔️ *TIEBREAKERS (BULK ROUND)*\n\n*ROUND ${roundNum}*\n\n${tbLines}`;
+                      navigator.clipboard.writeText(msg).then(() => {
+                        setCopiedTiebreakers(true);
+                        setTimeout(() => setCopiedTiebreakers(false), 2000);
+                      });
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-black uppercase tracking-wider transition-all active:scale-95 ${
+                      copiedTiebreakers 
+                        ? 'bg-emerald-600 text-white' 
+                        : 'bg-orange-600 hover:bg-orange-700 text-white shadow-md'
+                    }`}
+                    title="Copy active tiebreakers list with competing teams"
+                  >
+                    {copiedTiebreakers ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy Tiebreakers
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* Copy Acquisitions Button */}
+                {round?.roundPlayers && round.roundPlayers.some(p => p.status === 'sold') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const sid = round?.season_id || '';
+                      const num = sid.match(/\d+$/)?.[0] || '';
+                      const seasonTitle = `SOUTHSOCCERS SUPER LEAGUE S${num}`;
+                      const roundNum = round?.round_number || '?';
+
+                      // Build a map of teamId -> teamName
+                      const teamNameMap = new Map();
+                      teamSummary.forEach(t => {
+                        teamNameMap.set(t.team_id, t.team_name);
+                      });
+
+                      // Group sold players by winning team ID
+                      const soldGroupByTeam = new Map();
+                      round.roundPlayers.forEach(p => {
+                        if (p.status === 'sold' && p.winning_team_id) {
+                          if (!soldGroupByTeam.has(p.winning_team_id)) {
+                            soldGroupByTeam.set(p.winning_team_id, []);
+                          }
+                          soldGroupByTeam.get(p.winning_team_id).push(p.player_name);
+                        }
+                      });
+
+                      // Format the lines
+                      const teamBlocks = [];
+                      const sortedTeamIds = Array.from(soldGroupByTeam.keys()).sort((a, b) => {
+                        const nameA = teamNameMap.get(a) || '';
+                        const nameB = teamNameMap.get(b) || '';
+                        return nameA.localeCompare(nameB);
+                      });
+
+                      for (const teamId of sortedTeamIds) {
+                        const teamName = teamNameMap.get(teamId) || teamId;
+                        const players = soldGroupByTeam.get(teamId)
+                          .sort()
+                          .map(name => `- ${name}`)
+                          .join('\n');
+                        teamBlocks.push(`*${teamName.toUpperCase()}*\n${players}`);
+                      }
+
+                      const msg = `*${seasonTitle}*\n\n🏆 *ACQUISITIONS SUMMARY (BULK ROUND)*\n\n*ROUND ${roundNum}*\n\n${teamBlocks.join('\n\n')}`;
+                      navigator.clipboard.writeText(msg).then(() => {
+                        setCopiedAcquisitions(true);
+                        setTimeout(() => setCopiedAcquisitions(false), 2000);
+                      });
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-black uppercase tracking-wider transition-all active:scale-95 ${
+                      copiedAcquisitions 
+                        ? 'bg-emerald-600 text-white' 
+                        : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md'
+                    }`}
+                    title="Copy acquisitions list grouped by team"
+                  >
+                    {copiedAcquisitions ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy Acquisitions
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
             {loadingTeamSummary ? (
               <div className="text-center py-8">
@@ -959,11 +1130,31 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                       >
                         <div className="flex items-start justify-between mb-2">
                           <h4 className="font-extrabold text-slate-800 text-sm flex-1 pr-2 uppercase truncate">{team.team_name}</h4>
-                          {isComplete && (
-                            <span className="text-green-600 flex-shrink-0">
-                              <Check className="w-5 h-5 text-green-500" />
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => copyTeamAcquisitionsToClipboard(team)}
+                              className={`p-1.5 rounded-lg border transition-all active:scale-95 flex items-center justify-center cursor-pointer ${
+                                copiedTeamAcquisition === team.team_id
+                                  ? 'bg-emerald-600 border-emerald-600 text-white'
+                                  : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                              }`}
+                              title="Copy team acquisitions list to WhatsApp"
+                            >
+                              {copiedTeamAcquisition === team.team_id ? (
+                                <Check className="w-3.5 h-3.5" />
+                              ) : (
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 0 002 2z" />
+                                </svg>
+                              )}
+                            </button>
+                            {isComplete && (
+                              <span className="text-green-600 flex-shrink-0">
+                                <Check className="w-5 h-5 text-green-500" />
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="mt-3">
                           <div className="flex justify-between text-xs mb-1.5 font-mono">
@@ -1288,6 +1479,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                       )}
                       
                       {/* Expandable Tiebreaker Details - Mobile */}
+
                       {player.tiebreaker_id && expandedTiebreakers.has(player.player_id) && player.tiebreaker && (
                         <div className="border-t border-slate-200/60 bg-orange-50/30 p-4">
                           <div className="mb-3 flex flex-col gap-2">
@@ -1303,12 +1495,38 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                               }`}>
                                 {player.tiebreaker.status}
                               </span>
-                              <Link
-                                href={`/dashboard/committee/bulk-rounds/${round.id}/tiebreakers`}
-                                className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider"
-                              >
-                                Manage
-                              </Link>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => copyTiebreakerToClipboard(player)}
+                                  className={`px-2 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1 border ${
+                                    copiedPlayerTiebreaker === player.player_id
+                                      ? 'bg-emerald-600 text-white border-emerald-600'
+                                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                                  }`}
+                                  title="Copy tiebreaker details to WhatsApp"
+                                >
+                                  {copiedPlayerTiebreaker === player.player_id ? (
+                                    <>
+                                      <Check className="w-3 h-3" />
+                                      Copied!
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 0 002 2z" />
+                                      </svg>
+                                      Copy
+                                    </>
+                                  )}
+                                </button>
+                                <Link
+                                  href={`/dashboard/committee/bulk-rounds/${round.id}/tiebreakers`}
+                                  className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider"
+                                >
+                                  Manage
+                                </Link>
+                              </div>
                             </div>
                           </div>
                           {player.tiebreaker.highest_bid && (
@@ -1357,9 +1575,9 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                     </div>
                   ))}
                 </div>
-                
+
                 {/* Desktop Table View */}
-                <div className="hidden lg:block overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm font-mono">
+                <div className="hidden lg:block overflow-x-auto rounded-2xl border border-slate-200/60 bg-white shadow-sm font-mono">
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="border-b border-slate-200/60 bg-slate-50">
@@ -1530,13 +1748,14 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                           )}
                           
                           {/* Expandable Tiebreaker Details */}
+
                           {player.tiebreaker_id && expandedTiebreakers.has(player.player_id) && player.tiebreaker && (
                             <tr className="bg-orange-50/20 border-b border-slate-200/50">
                               <td colSpan={shouldShowBids ? 6 : 5} className="py-4 px-5">
                                 <div className="p-4 border border-orange-200/60 rounded-2xl bg-white space-y-4">
                                   <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                                     <h4 className="font-extrabold text-slate-800 flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider">
-                                      <Sparkles className="w-5 h-5 text-orange-650 text-orange-600 animate-pulse" />
+                                      <Sparkles className="w-5 h-5 text-orange-655 text-orange-600 animate-pulse" />
                                       Live Tiebreaker Auction - {player.player_name}
                                     </h4>
                                     <div className="flex items-center gap-2">
@@ -1547,9 +1766,33 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                                       }`}>
                                         {player.tiebreaker.status}
                                       </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => copyTiebreakerToClipboard(player)}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1 border ${
+                                          copiedPlayerTiebreaker === player.player_id
+                                            ? 'bg-emerald-600 text-white border-emerald-600'
+                                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm'
+                                        }`}
+                                        title="Copy tiebreaker details to WhatsApp"
+                                      >
+                                        {copiedPlayerTiebreaker === player.player_id ? (
+                                          <>
+                                            <Check className="w-3.5 h-3.5" />
+                                            Copied!
+                                          </>
+                                        ) : (
+                                          <>
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 0 002 2z" />
+                                            </svg>
+                                            Copy
+                                          </>
+                                        )}
+                                      </button>
                                       <Link
                                         href={`/dashboard/committee/bulk-rounds/${round.id}/tiebreakers`}
-                                        className="px-3 py-1.5 bg-orange-650 bg-orange-600 hover:bg-orange-750 text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider cursor-pointer"
+                                        className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider cursor-pointer"
                                       >
                                         Manage
                                       </Link>
@@ -1560,12 +1803,12 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                                     <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl max-w-2xl">
                                       <div className="flex items-center justify-between text-xs">
                                         <div>
-                                          <p className="text-[10px] text-slate-400 font-mono uppercase">Current Highest Bid</p>
+                                          <p className="text-[10px] text-slate-405 font-mono uppercase">Current Highest Bid</p>
                                           <p className="text-xl font-extrabold text-green-600 font-mono mt-0.5">£{player.tiebreaker.highest_bid}</p>
                                         </div>
                                         {player.tiebreaker.highest_bidder && (
                                           <div className="text-right">
-                                            <p className="text-[10px] text-slate-400 font-mono uppercase">Leading Team</p>
+                                            <p className="text-[10px] text-slate-405 font-mono uppercase">Leading Team</p>
                                             <p className="font-extrabold text-slate-850 mt-0.5">{player.tiebreaker.highest_bidder}</p>
                                           </div>
                                         )}
@@ -1607,7 +1850,8 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                               </td>
                             </tr>
                           )}
-                        </React.Fragment>
+
+                          </React.Fragment>
                       ))}
                     </tbody>
                   </table>
