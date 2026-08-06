@@ -1075,7 +1075,10 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
               <>
                 {/* Mobile Card View */}
                 <div className="block lg:hidden space-y-4">
-                  {round.roundPlayers?.sort((a, b) => (b.bid_count || 0) - (a.bid_count || 0)).map((player) => (
+                  {(round.status === 'active'
+                    ? [...round.roundPlayers].sort((a, b) => a.player_name.localeCompare(b.player_name))
+                    : [...round.roundPlayers].sort((a, b) => (b.bid_count || 0) - (a.bid_count || 0))
+                  ).map((player) => (
                     <div key={player.id} className="bg-slate-50/40 border border-slate-200 shadow-sm rounded-2xl hover:shadow-md transition-shadow overflow-hidden">
                       <div className="p-4">
                         <div className="flex items-start justify-between mb-3">
@@ -1298,11 +1301,13 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                           <th className="text-left py-4 px-5 font-bold text-slate-705 text-xs font-mono uppercase tracking-wider">Bids</th>
                         )}
                         <th className="text-left py-4 px-5 font-bold text-slate-705 text-xs font-mono uppercase tracking-wider">Status</th>
-                        <th className="text-left py-4 px-5 font-bold text-slate-705 text-xs font-mono uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {round.roundPlayers?.sort((a, b) => (b.bid_count || 0) - (a.bid_count || 0)).map((player) => (
+                      {(round.status === 'active'
+                        ? [...round.roundPlayers].sort((a, b) => a.player_name.localeCompare(b.player_name))
+                        : [...round.roundPlayers].sort((a, b) => (b.bid_count || 0) - (a.bid_count || 0))
+                      ).map((player) => (
                         <React.Fragment key={player.id}>
                           <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition-colors">
                             <td className="py-4 px-5 font-extrabold text-slate-800">{player.player_name}</td>

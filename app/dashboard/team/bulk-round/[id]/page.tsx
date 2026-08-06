@@ -3,13 +3,14 @@
 import { Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { useAuctionWebSocket } from '@/hooks/useWebSocket';
 import { fetchWithTokenRetry } from '@/lib/fetch-with-retry';
+import { PlayerAvatar } from '@/components/PlayerImage';
 
 interface Player {
   id: string;
@@ -19,6 +20,8 @@ interface Player {
   overall_rating: number;
   playing_style?: string;
   is_starred?: boolean;
+  photo_url?: string | null;
+  player_id?: string | number;
 }
 
 interface BulkRound {
@@ -32,6 +35,98 @@ interface BulkRound {
   player_count: number;
 }
 
+interface PlayerCardProps {
+  player: Player;
+  isBidded: boolean;
+  basePrice: number;
+  onToggle: (id: string) => void;
+}
+
+const PlayerCard = React.memo(({ player, isBidded, basePrice, onToggle }: PlayerCardProps) => {
+  return (
+    <button
+      onClick={() => onToggle(player.id)}
+      className={`bg-white border border-slate-200/60 rounded-2xl p-3 sm:p-4 transition-colors text-left active:scale-98 touch-manipulation font-mono border-l-4 w-full flex items-center gap-3 ${
+        isBidded
+          ? 'border-emerald-500 bg-emerald-50/20 border-l-emerald-500'
+          : player.is_starred
+          ? 'hover:border-amber-400/40 border-l-amber-500'
+          : 'hover:border-amber-400/40 border-l-slate-300'
+      }`}
+    >
+      {/* Player Avatar */}
+      <div className="flex-shrink-0">
+        <PlayerAvatar
+          playerId={player.player_id || player.id}
+          playerName={player.name}
+          size={44}
+        />
+      </div>
+
+      {/* Player Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0 pr-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
+              <h3 className="font-extrabold text-sm text-slate-800 truncate uppercase tracking-wide">{player.name}</h3>
+              {player.is_starred && (
+                <span className="px-1.5 py-0.5 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200/60 rounded-lg">
+                  STARRED
+                </span>
+              )}
+              {isBidded && (
+                <span className="px-1.5 py-0.5 text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-lg whitespace-nowrap">
+                  BID
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-slate-400 uppercase font-bold flex-wrap">
+              <span className="px-1.5 sm:px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-600 rounded-lg">
+                {player.position}
+              </span>
+              <span className="hidden sm:inline">•</span>
+              <span className="truncate">{player.team_name}</span>
+            </div>
+          </div>
+          <div className={`w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-xl border flex items-center justify-center transition-all ${
+            isBidded
+              ? 'bg-emerald-600 border-emerald-600 shadow-md text-white'
+              : 'border-slate-200 bg-slate-50'
+          }`}>
+            {isBidded && (
+              <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-xs mt-2 pt-1 border-t border-slate-50">
+          <span className="text-slate-400 font-bold flex items-center gap-1">
+            <Star className="w-4 h-4 text-amber-400 fill-amber-400 inline" /> {player.overall_rating}
+          </span>
+          {player.playing_style && (
+            <span className="text-[9px] text-slate-400 uppercase font-bold truncate max-w-[100px] sm:max-w-none">{player.playing_style}</span>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.isBidded === nextProps.isBidded &&
+    prevProps.basePrice === nextProps.basePrice &&
+    prevProps.player.id === nextProps.player.id &&
+    prevProps.player.is_starred === nextProps.player.is_starred &&
+    prevProps.player.name === nextProps.player.name &&
+    prevProps.player.position === nextProps.player.position &&
+    prevProps.player.team_name === nextProps.player.team_name &&
+    prevProps.player.overall_rating === nextProps.player.overall_rating &&
+    prevProps.player.playing_style === nextProps.player.playing_style
+  );
+});
+
+PlayerCard.displayName = 'PlayerCard';
+
 export default function TeamBulkRoundPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -43,6 +138,7 @@ export default function TeamBulkRoundPage() {
   const [biddedPlayers, setBiddedPlayers] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [dbBids, setDbBids] = useState<Set<string>>(new Set());
 
   // Modal system
   const {
@@ -62,9 +158,13 @@ export default function TeamBulkRoundPage() {
   const [filterStarred, setFilterStarred] = useState(false);
   const [squadInfo, setSquadInfo] = useState({ current: 0, max: 25, available: 25 });
   const [bidsCount, setBidsCount] = useState(0);
-  const [slotSettings, setSlotSettings] = useState({ maxPurchasable: 3, slotPrice: 10 });
-  const [purchasedSlots, setPurchasedSlots] = useState(0);
-  const [showSlotPurchase, setShowSlotPurchase] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 30;
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterPosition, filterStarred]);
 
   // [INFO] Enable WebSocket for real-time bid updates and round updates
   const { isConnected, lastMessage } = useAuctionWebSocket(roundId, true);
@@ -124,19 +224,15 @@ export default function TeamBulkRoundPage() {
         if (data.squad) {
           setSquadInfo(data.squad);
         }
-        if (data.slot_settings) {
-          setSlotSettings(data.slot_settings);
-        }
-        if (data.purchased_slots !== undefined) {
-          setPurchasedSlots(data.purchased_slots);
-        }
+
 
         // Fetch team's existing bids
         const bidsResponse = await fetchWithTokenRetry(`/api/team/bulk-rounds/${roundId}/bids`);
         const bidsData = await bidsResponse.json();
         
         if (bidsData.success && bidsData.data.bids) {
-          const bidPlayerIds = new Set(bidsData.data.bids.map((b: any) => b.player_id));
+          const bidPlayerIds = new Set(bidsData.data.bids.map((b: any) => b.player_id) as string[]);
+          setDbBids(new Set(bidPlayerIds));
           setBiddedPlayers(bidPlayerIds);
           setBidsCount(bidsData.data.count || 0);
         }
@@ -204,9 +300,12 @@ export default function TeamBulkRoundPage() {
           .then(res => res.json())
           .then(data => {
             if (data.success && data.data.bids) {
-              const bidPlayerIds = new Set(data.data.bids.map((b: any) => b.player_id));
-              setBiddedPlayers(bidPlayerIds);
-              setBidsCount(data.data.count || 0);
+              const bidPlayerIds = new Set(data.data.bids.map((b: any) => b.player_id) as string[]);
+              setDbBids(new Set(bidPlayerIds));
+              if (!hasUnsavedChangesRef.current) {
+                setBiddedPlayers(bidPlayerIds);
+                setBidsCount(data.data.count || 0);
+              }
             }
           })
           .catch(err => console.error('Error refetching bids:', err));
@@ -216,7 +315,104 @@ export default function TeamBulkRoundPage() {
     }
   }, [lastMessage, roundId]);
 
-  // Save/Batch Bids for bulk round
+
+
+
+
+  // Timer countdown
+  useEffect(() => {
+    if (bulkRound?.status === 'active' && bulkRound.end_time) {
+      const timer = setInterval(() => {
+        const now = new Date().getTime();
+        const end = new Date(bulkRound.end_time!).getTime();
+        const remaining = Math.max(0, Math.floor((end - now) / 1000));
+        setTimeRemaining(remaining);
+        
+        // Auto-redirect when timer reaches 0
+        if (remaining === 0) {
+          console.log('[INFO] Timer reached 0 - round should be completed');
+          showAlert({
+            type: 'info',
+            title: 'Round Ended',
+            message: 'Time is up! Waiting for admin to finalize results...'
+          });
+        }
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [bulkRound, router, showAlert]);
+
+  const squadInfoRef = useRef(squadInfo);
+  const bidsCountRef = useRef(bidsCount);
+  const teamBalanceRef = useRef(teamBalance);
+  const bulkRoundRef = useRef(bulkRound);
+  const biddedPlayersRef = useRef(biddedPlayers);
+  const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
+  const dbBidsRef = useRef(dbBids);
+
+  squadInfoRef.current = squadInfo;
+  bidsCountRef.current = bidsCount;
+  teamBalanceRef.current = teamBalance;
+  bulkRoundRef.current = bulkRound;
+  biddedPlayersRef.current = biddedPlayers;
+  hasUnsavedChangesRef.current = hasUnsavedChanges;
+  dbBidsRef.current = dbBids;
+
+  const checkHasChanges = (local: Set<string>, db: Set<string>) => {
+    if (local.size !== db.size) return true;
+    for (const id of local) {
+      if (!db.has(id)) return true;
+    }
+    return false;
+  };
+
+  const handleTogglePlayer = useCallback((playerId: string) => {
+    const currentBidded = biddedPlayersRef.current;
+    const isBidded = currentBidded.has(playerId);
+    const currentBidsCount = bidsCountRef.current;
+    const currentSquadInfo = squadInfoRef.current;
+    const currentTeamBalance = teamBalanceRef.current;
+    const currentBulkRound = bulkRoundRef.current;
+    
+    // Check constraints if adding a bid
+    if (!isBidded) {
+      // Check if slots available
+      const availableSlots = currentSquadInfo.max - currentSquadInfo.current;
+      if (currentBidsCount + 1 > availableSlots) {
+        showAlert({
+          type: 'error',
+          title: 'No Slots Available',
+          message: `No squad slots available. Current: ${currentSquadInfo.current}/${currentSquadInfo.max}, Bids: ${currentBidsCount}`
+        });
+        return;
+      }
+      
+      // Check balance
+      const totalReserved = (currentBidsCount + 1) * (currentBulkRound?.base_price || 10);
+      if (currentTeamBalance < totalReserved) {
+        showAlert({
+          type: 'error',
+          title: 'Insufficient Balance',
+          message: `Insufficient balance! Required: £${totalReserved}, Available: £${currentTeamBalance}`
+        });
+        return;
+      }
+    }
+
+    // Update local state for fast UI feedback
+    const newBidded = new Set(currentBidded);
+    if (isBidded) {
+      newBidded.delete(playerId);
+      setBidsCount(prev => prev - 1);
+    } else {
+      newBidded.add(playerId);
+      setBidsCount(prev => prev + 1);
+    }
+    setBiddedPlayers(newBidded);
+    setHasUnsavedChanges(checkHasChanges(newBidded, dbBidsRef.current));
+  }, [showAlert]);
+
   const handleSaveBulkBids = async (selectedPlayerIds: Set<string>) => {
     const playerIdsArray = Array.from(selectedPlayerIds);
     const requestedBidsCount = playerIdsArray.length;
@@ -254,7 +450,13 @@ export default function TeamBulkRoundPage() {
       if (!result.success) {
         throw new Error(result.error || 'Failed to save bulk bids');
       }
+      setDbBids(new Set(selectedPlayerIds));
       setHasUnsavedChanges(false);
+      showAlert({
+        type: 'success',
+        title: 'Bids Submitted',
+        message: 'Your bulk round bids have been saved and submitted successfully!'
+      });
     } catch (err: any) {
       console.error('Failed to save bulk bids:', err);
       showAlert({
@@ -280,148 +482,6 @@ export default function TeamBulkRoundPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-
-
-  // Timer countdown
-  useEffect(() => {
-    if (bulkRound?.status === 'active' && bulkRound.end_time) {
-      const timer = setInterval(() => {
-        const now = new Date().getTime();
-        const end = new Date(bulkRound.end_time!).getTime();
-        const remaining = Math.max(0, Math.floor((end - now) / 1000));
-        setTimeRemaining(remaining);
-        
-        // Auto-redirect when timer reaches 0
-        if (remaining === 0) {
-          console.log('[INFO] Timer reached 0 - round should be completed');
-          showAlert({
-            type: 'info',
-            title: 'Round Ended',
-            message: 'Time is up! Waiting for admin to finalize results...'
-          });
-        }
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-  }, [bulkRound, router, showAlert]);
-
-  const handleTogglePlayer = async (playerId: string) => {
-    const isBidded = biddedPlayers.has(playerId);
-    
-    // Check constraints if adding a bid
-    if (!isBidded) {
-      // Check if slots available
-      const availableSlots = squadInfo.max - squadInfo.current - bidsCount;
-      if (availableSlots <= 0) {
-        showAlert({
-          type: 'error',
-          title: 'No Slots Available',
-          message: `No squad slots available. Current: ${squadInfo.current}/${squadInfo.max}, Bids: ${bidsCount}`
-        });
-        return;
-      }
-      
-      // Check balance
-      const totalReserved = (bidsCount + 1) * (bulkRound?.base_price || 10);
-      if (teamBalance < totalReserved) {
-        showAlert({
-          type: 'error',
-          title: 'Insufficient Balance',
-          message: `Insufficient balance! Required: £${totalReserved}, Available: £${teamBalance}`
-        });
-        return;
-      }
-    }
-
-    const newBidded = new Set(biddedPlayers);
-    if (isBidded) {
-      newBidded.delete(playerId);
-      setBidsCount(prev => prev - 1);
-    } else {
-      newBidded.add(playerId);
-      setBidsCount(prev => prev + 1);
-    }
-    setBiddedPlayers(newBidded);
-    setHasUnsavedChanges(true);
-  };
-
-  const handlePurchaseSlot = async () => {
-    if (!bulkRound) return;
-
-    // Check if can purchase more
-    if (purchasedSlots >= slotSettings.maxPurchasable) {
-      setShowSlotPurchase(false);
-      showAlert({
-        type: 'error',
-        title: 'Maximum Reached',
-        message: `You have already purchased the maximum of ${slotSettings.maxPurchasable} slots.`
-      });
-      return;
-    }
-
-    // Check balance
-    if (teamBalance < slotSettings.slotPrice) {
-      setShowSlotPurchase(false);
-      showAlert({
-        type: 'error',
-        title: 'Insufficient Balance',
-        message: `You need £${slotSettings.slotPrice} to purchase a slot. Current balance: £${teamBalance}`
-      });
-      return;
-    }
-
-    try {
-      console.log('Purchasing slot...', { season_id: bulkRound.season_id });
-      
-      const response = await fetchWithTokenRetry('/api/team/manage-slots', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          slots_to_add: 1,
-          season_id: bulkRound.season_id || 'SSPSLS17'
-        })
-      });
-
-      const result = await response.json();
-      console.log('Purchase result:', result);
-
-      if (result.success) {
-        // Update local state
-        setPurchasedSlots(result.data.new_purchased_slots);
-        setSquadInfo(prev => ({
-          ...prev,
-          max: result.data.new_total_slots,
-          available: result.data.new_total_slots - prev.current
-        }));
-        setTeamBalance(result.data.new_budget);
-        setShowSlotPurchase(false);
-
-        showAlert({
-          type: 'success',
-          title: 'Slot Purchased',
-          message: result.message
-        });
-      } else {
-        setShowSlotPurchase(false);
-        showAlert({
-          type: 'error',
-          title: 'Purchase Failed',
-          message: result.error || 'Failed to purchase slot'
-        });
-      }
-    } catch (err: any) {
-      console.error('Error purchasing slot:', err);
-      setShowSlotPurchase(false);
-      showAlert({
-        type: 'error',
-        title: 'Error',
-        message: err.message || 'Failed to purchase slot'
-      });
-    }
-  };
-
-
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -436,22 +496,42 @@ export default function TeamBulkRoundPage() {
     return 'text-emerald-600';
   };
 
-  const filteredPlayers = players.filter(player => {
-    const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPosition = filterPosition === 'all' || player.position === filterPosition;
-    const matchesStarred = !filterStarred || player.is_starred;
-    return matchesSearch && matchesPosition && matchesStarred;
-  });
+  const filteredPlayers = useMemo(() => {
+    return players.filter(player => {
+      const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesPosition = filterPosition === 'all' || player.position === filterPosition;
+      const matchesStarred = !filterStarred || player.is_starred;
+      return matchesSearch && matchesPosition && matchesStarred;
+    });
+  }, [players, searchTerm, filterPosition, filterStarred]);
 
-  const sortedPlayers = [...filteredPlayers].sort((a, b) => {
-    if (a.is_starred && !b.is_starred) return -1;
-    if (!a.is_starred && b.is_starred) return 1;
-    return b.overall_rating - a.overall_rating;
-  });
+  const sortedPlayers = useMemo(() => {
+    return [...filteredPlayers].sort((a, b) => {
+      if (a.is_starred && !b.is_starred) return -1;
+      if (!a.is_starred && b.is_starred) return 1;
+      return b.overall_rating - a.overall_rating;
+    });
+  }, [filteredPlayers]);
+
+  const biddedPlayersList = useMemo(() => {
+    return players.filter(player => biddedPlayers.has(player.id));
+  }, [players, biddedPlayers]);
+
+  const starredPlayersCount = useMemo(() => {
+    return players.filter(p => p.is_starred).length;
+  }, [players]);
+
+  const totalPages = Math.ceil(sortedPlayers.length / itemsPerPage);
+
+  const paginatedPlayers = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return sortedPlayers.slice(start, start + itemsPerPage);
+  }, [sortedPlayers, currentPage]);
 
   const totalCost = bidsCount * (bulkRound?.base_price || 10);
   const remainingBalance = teamBalance - totalCost;
-  const availableSlotsNow = squadInfo.max - squadInfo.current - bidsCount;
+  const vacantSlots = squadInfo.max - squadInfo.current;
+  const availableSlotsNow = vacantSlots - bidsCount;
 
   if (loading || !user || user.role !== 'team' || isLoading) {
     return (
@@ -556,17 +636,8 @@ export default function TeamBulkRoundPage() {
             }`}>
               {squadInfo.current}/{squadInfo.max}
             </div>
-            <div className="text-[9px] text-slate-400 uppercase font-bold mt-0.5 flex items-center justify-between">
+            <div className="text-[9px] text-slate-400 uppercase font-bold mt-0.5">
               <span>current</span>
-              {purchasedSlots < slotSettings.maxPurchasable && (
-                <button
-                  onClick={() => setShowSlotPurchase(true)}
-                  className="text-amber-500 hover:text-amber-600 font-extrabold tracking-wider uppercase"
-                  title="Purchase additional slot"
-                >
-                  +Buy
-                </button>
-              )}
             </div>
           </div>
 
@@ -605,6 +676,123 @@ export default function TeamBulkRoundPage() {
             <li>Bids auto-save, money reserved</li>
           </ul>
         </details>
+
+        {/* Your Bidded Players */}
+        {(bidsCount > 0 || hasUnsavedChanges) && (
+          <div className="console-card bg-white border border-emerald-500 rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-sm font-mono border-l-8 border-l-emerald-500 animate-fadeIn">
+            <h2 className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-slate-800 mb-3 sm:mb-4 flex items-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Your Bids ({bidsCount})
+            </h2>
+
+            {biddedPlayersList.length === 0 ? (
+              <div className="text-center py-8 border border-dashed border-emerald-200 bg-emerald-50/10 rounded-2xl mb-4">
+                <p className="text-slate-400 text-xs font-mono font-bold uppercase">No active bids selected</p>
+                <p className="text-[10px] text-slate-400 font-mono mt-1">Select players from the grid below to bid</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-3 sm:mb-4">
+                {biddedPlayersList.map((player) => (
+                  <div
+                    key={player.id}
+                    className="console-card bg-emerald-50/30 border border-emerald-200 rounded-2xl p-3 sm:p-4 hover:shadow-md transition-shadow font-mono border-l-4 border-l-emerald-500 flex items-center gap-3"
+                  >
+                    {/* Player Avatar */}
+                    <div className="flex-shrink-0">
+                      <PlayerAvatar
+                        playerId={player.player_id || player.id}
+                        playerName={player.name}
+                        size={40}
+                      />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1 min-w-0 pr-2">
+                          <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
+                            <h3 className="font-extrabold text-sm text-slate-800 truncate uppercase tracking-wide">{player.name}</h3>
+                            {player.is_starred && (
+                              <span className="px-1.5 py-0.5 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200/60 rounded-lg">
+                                STARRED
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-slate-400 uppercase font-bold flex-wrap">
+                            <span className="px-1.5 sm:px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-600 rounded-lg">
+                              {player.position}
+                            </span>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="truncate">{player.team_name}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleTogglePlayer(player.id)}
+                          className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-xl bg-rose-600 border border-rose-700 flex items-center justify-center hover:bg-rose-700 active:scale-95 transition-all touch-manipulation"
+                          title="Remove bid"
+                          aria-label="Remove bid"
+                        >
+                          <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between text-xs mt-2 pt-1 border-t border-slate-100">
+                        <span className="text-slate-400 font-bold flex items-center gap-1">
+                          <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.overall_rating}
+                        </span>
+                        <span className="text-emerald-600 font-black">£{bulkRound?.base_price}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex-1">
+                  <p className="text-slate-800 font-black text-sm uppercase tracking-wide">
+                    {bidsCount} bid{bidsCount !== 1 ? 's' : ''} placed
+                  </p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 uppercase font-bold mt-1">
+                    <span className="whitespace-nowrap">Reserved: £{totalCost}</span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="whitespace-nowrap">Left: £{remainingBalance}</span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="whitespace-nowrap">{availableSlotsNow} slots</span>
+                  </div>
+                </div>
+
+                {hasUnsavedChanges && (
+                  <button
+                    type="button"
+                    onClick={() => handleSaveBulkBids(biddedPlayers)}
+                    disabled={isSaving || bidsCount !== vacantSlots}
+                    className="w-full sm:w-auto px-6 py-2.5 bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-mono font-bold uppercase rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed touch-manipulation font-black"
+                  >
+                    {isSaving ? (
+                      <span className="flex items-center gap-1.5">
+                        <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </span>
+                    ) : bidsCount < vacantSlots ? (
+                      `Select ${vacantSlots - bidsCount} More Player${vacantSlots - bidsCount !== 1 ? 's' : ''}`
+                    ) : bidsCount > vacantSlots ? (
+                      `Remove ${bidsCount - vacantSlots} Player${bidsCount - vacantSlots !== 1 ? 's' : ''}`
+                    ) : (
+                      'Submit Bids'
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Filters and Controls */}
         <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6 shadow-sm font-mono">
@@ -650,7 +838,7 @@ export default function TeamBulkRoundPage() {
                 <span>Starred Only</span>
                 {filterStarred && (
                   <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-900 rounded-lg text-[10px] font-black">
-                    {players.filter(p => p.is_starred).length}
+                    {starredPlayersCount}
                   </span>
                 )}
               </button>
@@ -679,81 +867,6 @@ export default function TeamBulkRoundPage() {
           </div>
         </div>
 
-        {/* Your Bidded Players */}
-        {bidsCount > 0 && (
-          <div className="console-card bg-white border border-emerald-500 rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-sm font-mono border-l-8 border-l-emerald-500">
-            <h2 className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-slate-800 mb-3 sm:mb-4 flex items-center">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Your Bids ({bidsCount})
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-3 sm:mb-4">
-              {players
-                .filter(player => biddedPlayers.has(player.id))
-                .map((player) => (
-                  <div
-                    key={player.id}
-                    className="console-card bg-emerald-50/30 border border-emerald-200 rounded-2xl p-3 sm:p-4 hover:shadow-md transition-shadow font-mono border-l-4 border-l-emerald-500"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1 min-w-0 pr-2">
-                        <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-                          <h3 className="font-extrabold text-sm text-slate-800 truncate uppercase tracking-wide">{player.name}</h3>
-                          {player.is_starred && (
-                            <span className="px-1.5 py-0.5 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200/60 rounded-lg">
-                              STARRED
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-slate-400 uppercase font-bold flex-wrap">
-                          <span className="px-1.5 sm:px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-600 rounded-lg">
-                            {player.position}
-                          </span>
-                          <span className="hidden sm:inline">•</span>
-                          <span className="truncate">{player.team_name}</span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleTogglePlayer(player.id)}
-                        className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-xl bg-rose-600 border border-rose-700 flex items-center justify-center hover:bg-rose-700 active:scale-95 transition-all touch-manipulation"
-                        title="Remove bid"
-                        aria-label="Remove bid"
-                      >
-                        <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between text-xs mt-2">
-                      <span className="text-slate-400 font-bold"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.overall_rating}</span>
-                      <span className="text-emerald-600 font-black">£{bulkRound?.base_price}</span>
-                    </div>
-                  </div>
-                ))
-              }
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div className="flex-1">
-                  <p className="text-slate-800 font-black text-sm uppercase tracking-wide">
-                    {bidsCount} bid{bidsCount !== 1 ? 's' : ''} placed
-                  </p>
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 uppercase font-bold mt-1">
-                    <span className="whitespace-nowrap">Reserved: £{totalCost}</span>
-                    <span className="hidden sm:inline">•</span>
-                    <span className="whitespace-nowrap">Left: £{remainingBalance}</span>
-                    <span className="hidden sm:inline">•</span>
-                    <span className="whitespace-nowrap">{availableSlotsNow} slots</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Available Players */}
         <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-sm font-mono">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -774,201 +887,63 @@ export default function TeamBulkRoundPage() {
               <p className="text-sm text-gray-500 mt-2">Try adjusting your filters</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {sortedPlayers.map((player) => {
-                const isBidded = biddedPlayers.has(player.id);
-                
-                return (
-                <button
-                  key={player.id}
-                  onClick={() => handleTogglePlayer(player.id)}
-                  className={`bg-white border border-slate-200/60 rounded-2xl p-3 sm:p-4 transition-all text-left active:scale-98 touch-manipulation font-mono border-l-4 ${
-                    isBidded
-                      ? 'border-emerald-500 bg-emerald-50/20 border-l-emerald-500'
-                      : player.is_starred
-                      ? 'hover:border-amber-400/40 border-l-amber-500'
-                      : 'hover:border-amber-400/40 border-l-slate-300'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1 min-w-0 pr-2">
-                      <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-                        <h3 className="font-extrabold text-sm text-slate-800 truncate uppercase tracking-wide">{player.name}</h3>
-                        {player.is_starred && (
-                          <span className="px-1.5 py-0.5 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200/60 rounded-lg">
-                            STARRED
-                          </span>
-                        )}
-                        {isBidded && (
-                          <span className="px-1.5 py-0.5 text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-lg whitespace-nowrap">
-                            BID
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-slate-400 uppercase font-bold flex-wrap">
-                        <span className="px-1.5 sm:px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-600 rounded-lg">
-                          {player.position}
-                        </span>
-                        <span className="hidden sm:inline">•</span>
-                        <span className="truncate">{player.team_name}</span>
-                      </div>
-                    </div>
-                    <div className={`w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-xl border flex items-center justify-center transition-all ${
-                      isBidded
-                        ? 'bg-emerald-600 border-emerald-600 shadow-md text-white'
-                        : 'border-slate-200 bg-slate-50'
-                    }`}>
-                      {isBidded && (
-                        <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {paginatedPlayers.map((player) => (
+                  <PlayerCard
+                    key={player.id}
+                    player={player}
+                    isBidded={biddedPlayers.has(player.id)}
+                    basePrice={bulkRound?.base_price || 10}
+                    onToggle={handleTogglePlayer}
+                  />
+                ))}
+              </div>
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 pt-4 border-t border-slate-100 font-mono">
+                  <div className="text-[10px] sm:text-xs text-slate-500 uppercase font-bold">
+                    Showing <span className="text-slate-800 font-black">{(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, sortedPlayers.length)}</span> of <span className="text-slate-800 font-black">{sortedPlayers.length}</span> players
                   </div>
-                  <div className="flex items-center justify-between text-xs mt-2">
-                    <span className="text-slate-400 font-bold"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> {player.overall_rating}</span>
-                    {player.playing_style && (
-                      <span className="text-[9px] text-slate-400 uppercase font-bold truncate max-w-[100px] sm:max-w-none">{player.playing_style}</span>
-                    )}
+                  
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      className="px-3 py-1.5 bg-white border border-slate-200 hover:border-amber-400/40 hover:text-amber-600 disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:text-slate-500 text-slate-700 rounded-xl text-[10px] sm:text-xs uppercase font-extrabold transition-all active:scale-95 touch-manipulation flex items-center gap-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
+                      </svg>
+                      Prev
+                    </button>
+                    
+                    <span className="px-3.5 py-1.5 bg-slate-50 border border-slate-200/60 rounded-xl text-[10px] sm:text-xs font-black text-slate-700">
+                      {currentPage} / {totalPages}
+                    </span>
+                    
+                    <button
+                      type="button"
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      className="px-3 py-1.5 bg-white border border-slate-200 hover:border-amber-400/40 hover:text-amber-600 disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:text-slate-500 text-slate-700 rounded-xl text-[10px] sm:text-xs uppercase font-extrabold transition-all active:scale-95 touch-manipulation flex items-center gap-1"
+                    >
+                      Next
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
                   </div>
-                </button>
-                );
-              })}
-            </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {/* Slot Purchase Modal */}
-      {showSlotPurchase && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="console-card bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full shadow-2xl font-mono">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-slate-50 border border-slate-200">
-                  <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <h3 className="text-base font-extrabold uppercase tracking-wider text-slate-800">Purchase Squad Slot</h3>
-              </div>
-              <button
-                onClick={() => setShowSlotPurchase(false)}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
 
-            <div className="space-y-4">
-              {/* Current Status */}
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
-                <div className="grid grid-cols-2 gap-3 text-[10px] uppercase font-bold text-slate-400">
-                  <div>
-                    <span>Current Slots:</span>
-                    <div className="font-mono font-black text-xs text-slate-800 mt-0.5">{squadInfo.max}</div>
-                  </div>
-                  <div>
-                    <span>Purchased:</span>
-                    <div className="font-mono font-black text-xs text-blue-600 mt-0.5">{purchasedSlots}/{slotSettings.maxPurchasable}</div>
-                  </div>
-                  <div>
-                    <span>Players:</span>
-                    <div className="font-mono font-black text-xs text-slate-800 mt-0.5">{squadInfo.current}</div>
-                  </div>
-                  <div>
-                    <span>Available:</span>
-                    <div className="font-mono font-black text-xs text-emerald-600 mt-0.5">{squadInfo.available}</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Purchase Details */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
-                <div className="flex items-center justify-between mb-2 text-[10px] uppercase font-bold text-slate-500">
-                  <span>Slot Price:</span>
-                  <span className="text-xs font-black text-slate-800">£{slotSettings.slotPrice}</span>
-                </div>
-                <div className="flex items-center justify-between mb-2 text-[10px] uppercase font-bold text-slate-500">
-                  <span>Your Balance:</span>
-                  <span className="text-xs font-black text-emerald-600">£{teamBalance}</span>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-[10px] uppercase font-bold text-slate-800">
-                  <span>After Purchase:</span>
-                  <span className="text-xs font-black text-slate-900">£{teamBalance - slotSettings.slotPrice}</span>
-                </div>
-              </div>
-
-              {/* Warning */}
-              <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-4">
-                <div className="flex items-start gap-2">
-                  <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <div className="text-[10px] uppercase font-bold text-amber-800">
-                    <p className="font-extrabold mb-1">Important:</p>
-                    <ul className="space-y-1 text-[9px] list-disc pl-3">
-                      <li>Purchased slots are permanent for this season</li>
-                      <li>You cannot remove slots once purchased</li>
-                      <li>Only admins can remove slots</li>
-                      <li>Transaction will be recorded</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setShowSlotPurchase(false)}
-                  className="flex-1 px-3 py-2 bg-white border border-slate-200 hover:border-amber-400/40 hover:text-amber-600 rounded-xl font-mono text-xs uppercase tracking-wider font-bold transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handlePurchaseSlot}
-                  disabled={teamBalance < slotSettings.slotPrice || purchasedSlots >= slotSettings.maxPurchasable}
-                  className="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all disabled:opacity-50"
-                >
-                  Purchase £{slotSettings.slotPrice}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Floating Save Bar */}
-      {hasUnsavedChanges && !isLoading && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-md bg-slate-900 text-white rounded-2xl p-4 shadow-2xl flex items-center justify-between border border-amber-400/30 backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-            <div>
-              <p className="text-xs font-mono uppercase font-black tracking-wider text-amber-400">Unsaved Changes</p>
-              <p className="text-[10px] text-slate-300 font-mono mt-0.5">Please save your bidding changes</p>
-            </div>
-          </div>
-          <button
-            onClick={() => handleSaveBulkBids(biddedPlayers)}
-            disabled={isSaving}
-            className="px-4 py-2 bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-mono font-bold uppercase rounded-lg transition-colors flex items-center gap-1.5 shadow-lg disabled:opacity-50"
-          >
-            {isSaving ? (
-              <span className="flex items-center gap-1.5">
-                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Saving...
-              </span>
-            ) : (
-              'Save Draft'
-            )}
-          </button>
-        </div>
-      )}
 
       {/* Modal Components */}
       <AlertModal

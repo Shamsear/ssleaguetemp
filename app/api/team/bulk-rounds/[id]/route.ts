@@ -117,6 +117,7 @@ export async function GET(
         fp.team_name,
         rp.status,
         fp.playing_style,
+        fp.player_id as efootball_id,
         CASE WHEN sp.player_id IS NOT NULL THEN true ELSE false END as is_starred
       FROM round_players rp
       LEFT JOIN footballplayers fp ON rp.player_id = fp.id
@@ -133,6 +134,7 @@ export async function GET(
         fp.team_name,
         rp.status,
         fp.playing_style,
+        fp.player_id as efootball_id,
         false as is_starred
       FROM round_players rp
       LEFT JOIN footballplayers fp ON rp.player_id = fp.id
@@ -142,6 +144,7 @@ export async function GET(
     `;
 
     console.log(`📊 Fetched ${players.length} players, starred count: ${players.filter(p => p.is_starred).length}`);
+
 
     // Get team data from Neon (budget and squad info)
     let balance = 1000; // Default balance
@@ -283,6 +286,7 @@ export async function GET(
           playing_style: p.playing_style,
           status: p.status,
           is_starred: p.is_starred || false,
+          player_id: p.efootball_id || p.id,
         })),
         balance,
         squad: {

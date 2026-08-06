@@ -165,24 +165,30 @@ export async function POST(
 
     console.log(`⚡ [Bulk Batch Save] Saving ${player_ids.length} bids for team ${teamId} in bulk round ${roundId}`);
 
-    // Perform transaction: delete old bids, write new bids
+    // Perform transaction: delete old bids, write new bids in a single bulk operation
     await sql`
       DELETE FROM round_bids
       WHERE round_id = ${roundId}
       AND team_id = ${teamId}
     `;
 
-    const insertedBids = [];
-    for (const player_id of player_ids) {
-      const insertResult = await sql`
+    let insertedBids: any[] = [];
+    if (player_ids.length > 0) {
+      insertedBids = await sql`
         INSERT INTO round_bids (
           round_id, season_id, player_id, team_id, team_name, bid_amount, bid_time
-        ) VALUES (
-          ${roundId}, ${round.season_id}, ${player_id}, ${teamId}, ${teamName}, ${round.base_price}, NOW()
         )
+        SELECT 
+          ${roundId}, 
+          ${round.season_id}, 
+          p_id, 
+          ${teamId}, 
+          ${teamName}, 
+          ${round.base_price}::integer, 
+          NOW()
+        FROM unnest(${player_ids}::text[]) AS p_id
         RETURNING id, player_id, bid_amount
       `;
-      insertedBids.push(insertResult[0]);
     }
 
     // Broadcast update via Firebase Realtime DB
