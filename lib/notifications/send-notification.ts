@@ -17,6 +17,7 @@ export interface NotificationOptions {
   teamId?: string;          // Send to team owner
   teamIds?: string[];       // Send to multiple team owners
   allUsers?: boolean;       // Send to all users with notifications enabled
+  isCommittee?: boolean;    // Send to all committee members
   excludeUserIds?: string[]; // Exclude specific users
 }
 
@@ -83,6 +84,19 @@ export async function sendNotification(
         WHERE is_active = true
       `;
       targetUserIds = usersResult.map(u => u.user_id);
+    } else if (options.isCommittee) {
+      // Get all committee users
+      const { adminDb } = await import('@/lib/firebase/admin');
+      const committeeSnapshot = await adminDb
+        .collection('users')
+        .where('role', '==', 'committee_admin')
+        .get();
+      
+      const uids: string[] = [];
+      committeeSnapshot.forEach(doc => {
+        uids.push(doc.id);
+      });
+      targetUserIds = uids;
     }
 
     // Apply exclusions

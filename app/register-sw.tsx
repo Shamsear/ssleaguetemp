@@ -9,20 +9,40 @@ import { onForegroundMessage } from '@/lib/firebase/messaging';
  */
 export default function RegisterServiceWorker() {
   useEffect(() => {
-    // Register service worker
-    if ('serviceWorker' in navigator) {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      console.warn('Service Worker not supported in this browser');
+      return;
+    }
+
+    const registerSW = () => {
+      // Prevent registering if the document is being unloaded
+      if (document.readyState === 'uninitialized') return;
+
       navigator.serviceWorker
         .register('/firebase-messaging-sw.js')
         .then((registration) => {
           console.log('[SUCCESS] Service Worker registered successfully:', registration.scope);
         })
         .catch((error) => {
-          console.error('[ERROR] Service Worker registration failed:', error);
+          // Ignore registration failures during HMR/unload states
+          if (error.name === 'InvalidStateError') {
+            console.warn('[INFO] Service Worker registration deferred due to document state.');
+          } else {
+            console.error('[ERROR] Service Worker registration failed:', error);
+          }
         });
-    } else {
-      console.warn('Service Worker not supported in this browser');
-    }
+    };
 
+    // Delay registration until page has fully loaded
+    if (document.readyState === 'complete') {
+      registerSW();
+    } else {
+      window.addEventListener('load', registerSW);
+      return () => window.removeEventListener('load', registerSW);
+    }
+  }, []);
+
+  useEffect(() => {
     // Listen for foreground messages (when app is open)
     onForegroundMessage((payload) => {
       console.log('[INFO] Received foreground message:', payload);

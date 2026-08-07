@@ -2,6 +2,7 @@
 import { Shield, Settings, Activity, BarChart2, Layers, Coins, Users } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
+import NotificationButton from '@/components/notifications/NotificationButton';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState, useCallback } from 'react';
@@ -219,9 +220,12 @@ export default function CommitteeDashboard() {
         <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm relative overflow-hidden">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-800 uppercase tracking-wider">
-                Committee Dashboard
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-800 uppercase tracking-wider">
+                  Committee Dashboard
+                </h1>
+                <NotificationButton />
+              </div>
               <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
                 Complete administrative control center
               </p>

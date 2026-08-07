@@ -353,6 +353,20 @@ export async function POST(
         // Don't fail the request
       }
 
+      // Notify committee admins
+      try {
+        await sendNotification(
+          {
+            title: `📝 New Season Sign-up: ${teamName}`,
+            body: `${teamName} has registered to participate in ${seasonData.name || seasonId}.`,
+            url: `/dashboard/committee/registration`
+          },
+          { isCommittee: true }
+        );
+      } catch (adminNotifError) {
+        console.error('Failed to notify admins of team registration:', adminNotifError);
+      }
+
       return NextResponse.json({
         success: true,
         message: `Successfully joined ${seasonData.name}!`,
@@ -406,6 +420,20 @@ export async function POST(
       declineData.currency_system = 'dual';
 
       await adminDb.collection('team_seasons').doc(teamSeasonId).set(declineData);
+
+      // Notify committee admins
+      try {
+        await sendNotification(
+          {
+            title: `❌ Season Declined: ${teamName}`,
+            body: `${teamName} has declined to join ${seasonData.name || seasonId}.`,
+            url: `/dashboard/committee/registration`
+          },
+          { isCommittee: true }
+        );
+      } catch (adminNotifError) {
+        console.error('Failed to notify admins of team decline:', adminNotifError);
+      }
 
       return NextResponse.json({
         success: true,

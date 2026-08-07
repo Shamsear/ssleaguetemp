@@ -5,6 +5,7 @@ import {
   getTeamSwapRequests 
 } from '@/lib/neon/roster-requests';
 import { getWindowById, getTeamRequestCountForWindow } from '@/lib/neon/transfer-windows';
+import { sendNotification } from '@/lib/notifications/send-notification';
 
 /**
  * POST /api/requests/swap
@@ -81,6 +82,19 @@ export async function POST(request: NextRequest) {
     }
     
     const req = await createSwapRequest(body);
+
+    // Notify committee admins
+    try {
+      const p1Name = players[0]?.player_name || 'Player 1';
+      const p2Name = players[1]?.player_name || 'Player 2';
+      await sendNotification({
+        title: `📥 New Swap/Trade Request`,
+        body: `Trade proposal submitted: ${p1Name} ↔ ${p2Name}.`,
+        url: `/dashboard/committee/requests`
+      }, { isCommittee: true });
+    } catch (err) {
+      console.error('Failed to notify admins of swap request:', err);
+    }
     
     return NextResponse.json({ success: true, data: req });
   } catch (error: any) {

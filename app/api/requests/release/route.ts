@@ -5,6 +5,7 @@ import {
   getTeamReleaseRequests 
 } from '@/lib/neon/roster-requests';
 import { getWindowById, getTeamRequestCountForWindow } from '@/lib/neon/transfer-windows';
+import { sendNotification } from '@/lib/notifications/send-notification';
 
 /**
  * POST /api/requests/release
@@ -78,6 +79,17 @@ export async function POST(request: NextRequest) {
     }
     
     const req = await createReleaseRequest(body);
+
+    // Notify committee admins
+    try {
+      await sendNotification({
+        title: `📥 New Release Request`,
+        body: `${player_name} drop request submitted.`,
+        url: `/dashboard/committee/requests`
+      }, { isCommittee: true });
+    } catch (err) {
+      console.error('Failed to notify admins of release request:', err);
+    }
     
     return NextResponse.json({ success: true, data: req });
   } catch (error: any) {
