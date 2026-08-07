@@ -81,7 +81,10 @@ export default function SearchablePlayerSelect({
       }
     };
 
-    const handleScroll = () => {
+    const handleScroll = (event: Event) => {
+      if (dropdownRef.current && dropdownRef.current.contains(event.target as Node)) {
+        return;
+      }
       setIsOpen(false);
     };
 

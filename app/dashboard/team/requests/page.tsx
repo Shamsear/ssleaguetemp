@@ -74,7 +74,29 @@ export default function RequestsOverviewPage() {
   const [activeWindows, setActiveWindows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const teamId = user?.email;
+  const [resolvedTeamId, setResolvedTeamId] = useState<string | null>(null);
+
+  // Load user's resolved team ID from Firestore user profile
+  useEffect(() => {
+    async function resolveUserTeam() {
+      if (!user?.uid) return;
+      try {
+        const { db } = await import('@/lib/firebase/config');
+        const { doc, getDoc } = await import('firebase/firestore');
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const tId = userDoc.data()?.teamId;
+          setResolvedTeamId(tId || null);
+          console.log('[OVERVIEW] Resolved team ID from Firestore:', tId);
+        }
+      } catch (err) {
+        console.error('Error resolving user team ID:', err);
+      }
+    }
+    resolveUserTeam();
+  }, [user]);
+
+  const teamId = resolvedTeamId || '';
 
   useEffect(() => {
     async function fetchData() {

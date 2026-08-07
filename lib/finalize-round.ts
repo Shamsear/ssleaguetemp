@@ -6,6 +6,7 @@ import { getTournamentDb } from './neon/tournament-config';
 import { logAuctionWin } from './transaction-logger';
 import { triggerNews } from './news/trigger';
 import { calculateReserveCore, ReserveConfig } from './reserve-calculator';
+import { createPlayerHistory } from './player-history';
 
 const sql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
 const tournamentSql = getTournamentDb();
@@ -625,7 +626,35 @@ export async function applyFinalizationResults(
         console.error(`Failed to update team ${alloc.team_id}:`, teamUpdateError);
       }
 
+      // Fetch player position for history record
+      let position: string | null = null;
+      try {
+        const playerPosRes = await sql`SELECT position FROM footballplayers WHERE id = ${alloc.player_id}`;
+        position = playerPosRes[0]?.position || null;
+      } catch (posErr) {
+        console.error(`Failed to fetch position for player ${alloc.player_id}:`, posErr);
+      }
+
       await sql`UPDATE footballplayers SET is_sold = true, team_id = ${alloc.team_id}, acquisition_value = ${alloc.amount}, season_id = ${seasonId}, round_id = ${roundId}, status = 'active', contract_start_season = ${seasonId}, contract_end_season = ${seasonId}, contract_length = 1, updated_at = NOW() WHERE id = ${alloc.player_id}`;
+
+      try {
+        await createPlayerHistory({
+          playerId: alloc.player_id,
+          playerName: alloc.player_name,
+          position: position,
+          teamId: alloc.team_id,
+          teamName: alloc.team_name,
+          seasonId: seasonId,
+          acquisitionType: 'auction',
+          acquisitionValue: alloc.amount,
+          contractStartSeason: seasonId,
+          contractEndSeason: seasonId,
+          roundId: roundId
+        });
+        console.log(`✅ Logged player_history for ${alloc.player_name}`);
+      } catch (historyError) {
+        console.error(`❌ Failed to log player_history for ${alloc.player_name}:`, historyError);
+      }
     }
 
     for (const bid of decryptedAll) {

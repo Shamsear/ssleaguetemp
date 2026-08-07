@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useTournamentContext } from '@/contexts/TournamentContext';
-import { useCachedTeams } from '@/hooks/useCachedData';
-import { ArrowRightLeft, AlertTriangle } from 'lucide-react';
+import { useCachedTeamSeasons } from '@/hooks/useCachedFirebase';
+import { ArrowRightLeft, AlertTriangle, Calendar } from 'lucide-react';
 import SearchablePlayerSelect from '@/components/ui/SearchablePlayerSelect';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
@@ -70,10 +71,34 @@ interface Player {
 export default function TeamSwapRequestPage() {
   const { user } = useAuth();
   const { seasonId: selectedSeason } = useTournamentContext();
-  const { data: teams, isLoading: teamsLoading } = useCachedTeams(selectedSeason);
+  const { data: teamSeasons, loading: teamsLoading } = useCachedTeamSeasons(
+    selectedSeason ? { seasonId: selectedSeason } : undefined
+  );
   const router = useRouter();
   
-  const teamId = user?.email;
+  const [resolvedTeamId, setResolvedTeamId] = useState<string | null>(null);
+
+  // Load user's resolved team ID from Firestore user profile
+  useEffect(() => {
+    async function resolveUserTeam() {
+      if (!user?.uid) return;
+      try {
+        const { db } = await import('@/lib/firebase/config');
+        const { doc, getDoc } = await import('firebase/firestore');
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const tId = userDoc.data()?.teamId;
+          setResolvedTeamId(tId || null);
+          console.log('[SWAP] Resolved team ID from Firestore:', tId);
+        }
+      } catch (err) {
+        console.error('Error resolving user team ID:', err);
+      }
+    }
+    resolveUserTeam();
+  }, [user]);
+
+  const teamId = resolvedTeamId || '';
 
   // Form state
   const [targetTeamId, setTargetTeamId] = useState('');
@@ -81,6 +106,97 @@ export default function TeamSwapRequestPage() {
   const [theirPlayerId, setTheirPlayerId] = useState('');
   const [cashAmount, setCashAmount] = useState<number>(0);
   const [cashDirection, setCashDirection] = useState<'A_to_B' | 'B_to_A' | 'none'>('none');
+
+  // Custom dropdown states
+  const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
+  const teamDropdownRef = useRef<HTMLDivElement>(null);
+  const teamButtonRef = useRef<HTMLDivElement>(null);
+  const [teamDropdownPosition, setTeamDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [teamSearch, setTeamSearch] = useState('');
+  const teamInputRef = useRef<HTMLInputElement>(null);
+
+  const [isWindowDropdownOpen, setIsWindowDropdownOpen] = useState(false);
+  const windowDropdownRef = useRef<HTMLDivElement>(null);
+  const windowButtonRef = useRef<HTMLDivElement>(null);
+  const [windowDropdownPosition, setWindowDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+
+  // Update dropdown positions when opened
+  useEffect(() => {
+    if (isTeamDropdownOpen && teamButtonRef.current) {
+      const rect = teamButtonRef.current.getBoundingClientRect();
+      setTeamDropdownPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  }, [isTeamDropdownOpen]);
+
+  useEffect(() => {
+    if (isTeamDropdownOpen) {
+      setTimeout(() => teamInputRef.current?.focus(), 100);
+    }
+  }, [isTeamDropdownOpen]);
+
+  useEffect(() => {
+    if (isWindowDropdownOpen && windowButtonRef.current) {
+      const rect = windowButtonRef.current.getBoundingClientRect();
+      setWindowDropdownPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  }, [isWindowDropdownOpen]);
+
+  // Click outside and scroll listeners to close dropdowns
+  useEffect(() => {
+    if (!isTeamDropdownOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (teamDropdownRef.current && !teamDropdownRef.current.contains(event.target as Node) &&
+          teamButtonRef.current && !teamButtonRef.current.contains(event.target as Node)) {
+        setIsTeamDropdownOpen(false);
+        setTeamSearch('');
+      }
+    };
+    const handleScroll = (event: Event) => {
+      if (teamDropdownRef.current && teamDropdownRef.current.contains(event.target as Node)) {
+        return;
+      }
+      setIsTeamDropdownOpen(false);
+      setTeamSearch('');
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [isTeamDropdownOpen]);
+
+  useEffect(() => {
+    if (!isWindowDropdownOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (windowDropdownRef.current && !windowDropdownRef.current.contains(event.target as Node) &&
+          windowButtonRef.current && !windowButtonRef.current.contains(event.target as Node)) {
+        setIsWindowDropdownOpen(false);
+      }
+    };
+    const handleScroll = (event: Event) => {
+      if (windowDropdownRef.current && windowDropdownRef.current.contains(event.target as Node)) {
+        return;
+      }
+      setIsWindowDropdownOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [isWindowDropdownOpen]);
 
   // Data state
   const [allPlayers, setAllPlayers] = useState<Player[]>([]);
@@ -99,9 +215,10 @@ export default function TeamSwapRequestPage() {
       if (!selectedSeason || !teamId) return;
 
       setLoadingPlayers(true);
+      setError(null);
       try {
         const [playersRes, windowsRes] = await Promise.all([
-          fetchWithTokenRefresh(`/api/players/database?limit=2000&assigned_only=true`),
+          fetchWithTokenRefresh(`/api/players/database?limit=2000&assigned_only=true&season_id=${selectedSeason}`),
           fetch(`/api/requests/windows?team_id=${teamId}&season_id=${selectedSeason}`)
         ]);
         
@@ -112,15 +229,15 @@ export default function TeamSwapRequestPage() {
           throw new Error('Failed to fetch players');
         }
 
-        const loadedPlayers: Player[] = result.data.players
-          .filter((p: any) => p.team_id && p.acquisition_value) 
+        const loadedPlayers: Player[] = (result.data.players || [])
+          .filter((p: any) => p.team_id) 
           .map((p: any) => ({
             id: p.id || p.player_id,
             player_id: p.player_id,
             player_name: p.name || 'Unknown Player',
             team_id: p.team_id,
             team_name: p.team_name || 'Unknown Team',
-            acquisition_value: p.acquisition_value || 0,
+            acquisition_value: p.acquisition_value !== undefined && p.acquisition_value !== null ? p.acquisition_value : 0,
             star_rating: p.overall_rating || 70,
             position: p.position || p.position_group || 'N/A'
           }));
@@ -136,7 +253,7 @@ export default function TeamSwapRequestPage() {
         }
       } catch (error) {
         console.error('Error loading data:', error);
-        setError('Failed to load data');
+        setError('Failed to load players or active windows');
       } finally {
         setLoadingPlayers(false);
       }
@@ -156,8 +273,25 @@ export default function TeamSwapRequestPage() {
   }, [allPlayers, targetTeamId]);
 
   const otherTeams = useMemo(() => {
-    return (teams || []).filter(t => t.id !== teamId);
-  }, [teams, teamId]);
+    const uniqueMap = new Map<string, any>();
+    (teamSeasons || [])
+      .filter((ts: any) => ts.team_id && ts.team_id !== teamId && ts.status === 'registered')
+      .forEach((ts: any) => {
+        if (!uniqueMap.has(ts.team_id)) {
+          uniqueMap.set(ts.team_id, {
+            id: ts.team_id,
+            name: ts.team_name || 'Unknown Team'
+          });
+        }
+      });
+    return Array.from(uniqueMap.values());
+  }, [teamSeasons, teamId]);
+
+  const filteredOtherTeams = useMemo(() => {
+    return otherTeams.filter(team => 
+      team.name.toLowerCase().includes(teamSearch.toLowerCase())
+    );
+  }, [otherTeams, teamSearch]);
 
   const mySelectedPlayer = useMemo(() => {
     return allPlayers.find(p => p.id === myPlayerId);
@@ -275,200 +409,316 @@ export default function TeamSwapRequestPage() {
           </div>
         </div>
 
-        <Card className="border-t-4 border-t-indigo-500">
-          <CardHeader>
-            <CardTitle className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <ArrowRightLeft className="w-5 h-5 text-indigo-500" />
-              Trade Proposal Form
-            </CardTitle>
-            <CardDescription className="text-[10px] text-slate-500 font-bold uppercase mt-1">
-              Trades are only executed after being approved by the committee.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs mb-6 flex items-center gap-2 font-bold uppercase tracking-wider">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                {error}
+        {activeWindows.length === 0 ? (
+          <Card className="border-t-4 border-t-indigo-500 bg-white">
+            <CardContent className="pt-12 pb-12 flex flex-col items-center justify-center text-center space-y-6">
+              <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center border border-amber-100 shadow-sm text-amber-500 animate-pulse">
+                <Calendar className="w-8 h-8" />
               </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {activeWindows.length === 0 ? (
-                <div className="p-4 bg-amber-50 text-amber-800 rounded-xl border border-amber-200 mb-6 font-bold uppercase text-[10px] tracking-wider">
-                  <p className="font-extrabold text-sm mb-1 text-amber-900">No Active Windows</p>
-                  <p className="normal-case font-medium text-slate-650 mt-1">There are no open swap windows available, or you have reached your request limit. You cannot submit requests at this time.</p>
-                </div>
-              ) : (
-                <div className="mb-6">
-                  <label className="text-sm font-medium mb-2 block">Select Transfer Window</label>
-                  <select
-                    value={selectedWindowId}
-                    onChange={(e) => setSelectedWindowId(e.target.value)}
-                    disabled={submitting || activeWindows.length === 1}
-                    className="w-full flex h-10 w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
-                    required
-                  >
-                    <option value="">-- Select Active Window --</option>
-                    {activeWindows.map(w => (
-                      <option key={w.id} value={w.id}>
-                        {w.name} {w.max_requests > 0 ? `(${w.remaining} requests remaining)` : ''}
-                      </option>
-                    ))}
-                  </select>
+              <div className="space-y-2 max-w-md">
+                <h2 className="text-lg font-black text-slate-800 uppercase tracking-wider">No Active Swap Windows</h2>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider leading-relaxed">
+                  There are no open swap windows available, or you have reached your request limit. Please check back when a swap window is opened by the committee.
+                </p>
+              </div>
+              <Link href="/dashboard/team/requests">
+                <button className="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-xs uppercase tracking-wider rounded-xl shadow-md cursor-pointer transition-all border border-slate-950">
+                  Return to Requests Hub
+                </button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border-t-4 border-t-indigo-500">
+            <CardHeader>
+              <CardTitle className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <ArrowRightLeft className="w-5 h-5 text-indigo-500" />
+                Trade Proposal Form
+              </CardTitle>
+              <CardDescription className="text-[10px] text-slate-500 font-bold uppercase mt-1">
+                Trades are only executed after being approved by the committee.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {error && (
+                <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs mb-6 flex items-center gap-2 font-bold uppercase tracking-wider">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  {error}
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative pb-4 border-b border-slate-100">
-                {/* Decorative dividing line for md and up */}
-                <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-slate-200 -ml-px"></div>
-                
-                {/* My Team Side */}
-                <div className="space-y-4">
-                  <div className="pb-2 border-b border-slate-150">
-                    <h3 className="font-bold text-xs uppercase text-slate-700 tracking-wider">Your Side (You Send)</h3>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="mb-6">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Select Transfer Window</label>
+                  <div className="relative font-mono text-xs">
+                    <div
+                      ref={windowButtonRef}
+                      className={`w-full px-4 py-3 rounded-xl border ${
+                        isWindowDropdownOpen ? 'border-slate-800 ring-2 ring-amber-500/20' : 'border-slate-200/80 hover:border-slate-400'
+                      } bg-white cursor-pointer transition-all shadow-sm flex items-center justify-between text-slate-800 ${
+                        activeWindows.length === 1 ? 'opacity-70 cursor-not-allowed' : ''
+                      }`}
+                      onClick={() => !submitting && activeWindows.length > 1 && setIsWindowDropdownOpen(!isWindowDropdownOpen)}
+                    >
+                      {selectedWindowId ? (
+                        <span className="font-extrabold uppercase tracking-wide">
+                          {activeWindows.find(w => w.id.toString() === selectedWindowId)?.name || 'Select Window'}
+                          {activeWindows.find(w => w.id.toString() === selectedWindowId)?.max_requests > 0 
+                            ? ` (${activeWindows.find(w => w.id.toString() === selectedWindowId)?.remaining} requests remaining)` 
+                            : ''}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 uppercase font-bold tracking-wider">-- Select Active Window --</span>
+                      )}
+                      {activeWindows.length > 1 && <span className="text-slate-400">▼</span>}
+                    </div>
+
+                    {isWindowDropdownOpen && typeof window !== 'undefined' && createPortal(
+                      <>
+                        <div 
+                          className="fixed inset-0 z-[9998]" 
+                          onClick={() => setIsWindowDropdownOpen(false)}
+                        />
+                        <div 
+                          ref={windowDropdownRef}
+                          className="fixed bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden font-mono z-[9999] max-h-[300px] overflow-y-auto"
+                          style={{
+                            top: `${windowDropdownPosition.top - window.scrollY}px`,
+                            left: `${windowDropdownPosition.left - window.scrollX}px`,
+                            width: `${windowDropdownPosition.width}px`
+                          }}
+                        >
+                          {activeWindows.map((w) => (
+                            <div
+                              key={w.id}
+                              onClick={() => {
+                                setSelectedWindowId(w.id.toString());
+                                setIsWindowDropdownOpen(false);
+                              }}
+                              className={`p-3 cursor-pointer transition-colors text-slate-800 hover:bg-slate-50 font-bold uppercase tracking-wide border-b border-slate-100 last:border-b-0 ${
+                                w.id.toString() === selectedWindowId ? 'bg-amber-50/50 text-amber-600' : ''
+                              }`}
+                            >
+                              {w.name} {w.max_requests > 0 ? `(${w.remaining} requests remaining)` : ''}
+                            </div>
+                          ))}
+                        </div>
+                      </>,
+                      document.body
+                    )}
                   </div>
-                  
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Player to Send</label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
+                  {/* Left Side: My Player */}
+                  <div className="space-y-4">
+                    <div className="border-b border-slate-100 pb-2">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Step 1</span>
+                      <h3 className="font-extrabold text-sm text-slate-700 uppercase tracking-wide">Select Your Player</h3>
+                    </div>
+
                     <SearchablePlayerSelect
                       players={myPlayers}
                       value={myPlayerId}
                       onChange={setMyPlayerId}
                       disabled={submitting}
-                      label="Select Your Player"
+                      label="Your Player"
                       placeholder="Search your roster..."
-                      color="blue"
+                      color="amber"
                       playerType="football"
                     />
+
+                    {mySelectedPlayer && (
+                      <div className="bg-slate-50/60 border border-slate-200/80 rounded-xl p-4 space-y-2 text-xs font-mono">
+                        <div className="flex justify-between">
+                          <span className="text-slate-500 font-bold uppercase">Position:</span>
+                          <span className="font-extrabold text-slate-700 uppercase">{mySelectedPlayer.position}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500 font-bold uppercase">Original Value:</span>
+                          <span className="font-extrabold text-slate-700">{mySelectedPlayer.acquisition_value} eCoin</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  
-                  {mySelectedPlayer && (
-                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs mt-2">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500 font-bold uppercase">Value:</span>
-                        <span className="font-extrabold text-slate-700">{mySelectedPlayer.acquisition_value} eCoin</span>
+
+                  {/* Right Side: Partner Team & Player */}
+                  <div className="space-y-4">
+                    <div className="border-b border-slate-100 pb-2">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Step 2</span>
+                      <h3 className="font-extrabold text-sm text-slate-700 uppercase tracking-wide">Select Trade Partner</h3>
+                    </div>
+
+                    {/* Custom Trade Partner Select Dropdown */}
+                    <div className="mb-4">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Trade Partner Team</label>
+                      <div className="relative font-mono text-xs">
+                        <div
+                          ref={teamButtonRef}
+                          className={`w-full px-4 py-3 rounded-xl border ${
+                            isTeamDropdownOpen ? 'border-slate-800 ring-2 ring-amber-500/20' : 'border-slate-200/80 hover:border-slate-400'
+                          } bg-white cursor-pointer transition-all shadow-sm flex items-center justify-between text-slate-800`}
+                          onClick={() => !submitting && setIsTeamDropdownOpen(!isTeamDropdownOpen)}
+                        >
+                          {targetTeamId ? (
+                            <span className="font-extrabold uppercase tracking-wide">
+                              {otherTeams.find(t => t.id === targetTeamId)?.name || 'Select Team'}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 uppercase font-bold tracking-wider">-- Select Team --</span>
+                          )}
+                          <span className="text-slate-400">▼</span>
+                        </div>
+
+                        {isTeamDropdownOpen && typeof window !== 'undefined' && createPortal(
+                          <>
+                            <div 
+                              className="fixed inset-0 z-[9998]" 
+                              onClick={() => {
+                                setIsTeamDropdownOpen(false);
+                                setTeamSearch('');
+                              }}
+                            />
+                            <div 
+                              ref={teamDropdownRef}
+                              className="fixed bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden font-mono z-[9999] max-h-[300px] flex flex-col"
+                              style={{
+                                top: `${teamDropdownPosition.top - window.scrollY}px`,
+                                left: `${teamDropdownPosition.left - window.scrollX}px`,
+                                width: `${teamDropdownPosition.width}px`
+                              }}
+                            >
+                              <div className="p-2 border-b border-slate-100 bg-slate-50">
+                                <input
+                                  ref={teamInputRef}
+                                  type="text"
+                                  placeholder="Search team..."
+                                  value={teamSearch}
+                                  onChange={(e) => setTeamSearch(e.target.value)}
+                                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-slate-400 font-extrabold font-mono text-slate-800"
+                                />
+                              </div>
+                              <div className="overflow-y-auto max-h-[220px] flex-1">
+                                {filteredOtherTeams.length === 0 ? (
+                                  <div className="p-4 text-center text-slate-400 uppercase font-bold text-[10px]">No matches found</div>
+                                ) : (
+                                  filteredOtherTeams.map((team) => (
+                                    <div
+                                      key={team.id}
+                                      onClick={() => {
+                                        handleTargetTeamChange({ target: { value: team.id } } as any);
+                                        setIsTeamDropdownOpen(false);
+                                        setTeamSearch('');
+                                      }}
+                                      className={`p-3 cursor-pointer transition-colors text-slate-850 hover:bg-slate-50 font-extrabold text-xs uppercase tracking-wide border-b border-slate-100 last:border-b-0 ${
+                                        team.id === targetTeamId ? 'bg-amber-50/50 text-amber-600' : ''
+                                      }`}
+                                    >
+                                      {team.name}
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          </>,
+                          document.body
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
 
-                {/* Their Team Side */}
-                <div className="space-y-4">
-                  <div className="pb-2 border-b border-slate-150">
-                    <h3 className="font-bold text-xs uppercase text-slate-700 tracking-wider">Their Side (You Receive)</h3>
-                  </div>
-                  
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Trade Partner</label>
-                    <select 
-                      value={targetTeamId}
-                      onChange={handleTargetTeamChange}
-                      className="w-full flex h-10 w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="">-- Select Team --</option>
-                      {otherTeams.map(team => (
-                        <option key={team.id} value={team.id}>{team.name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {targetTeamId && (
-                    <div>
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Player to Receive</label>
+                    {targetTeamId && (
                       <SearchablePlayerSelect
                         players={targetTeamPlayers}
                         value={theirPlayerId}
                         onChange={setTheirPlayerId}
                         disabled={submitting || !targetTeamId}
-                        label="Select Their Player"
-                        placeholder="Search their roster..."
-                        color="green"
+                        label="Their Player"
+                        placeholder="Search partner's roster..."
+                        color="blue"
                         playerType="football"
                       />
-                    </div>
-                  )}
-                  
-                  {theirSelectedPlayer && (
-                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs mt-2">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500 font-bold uppercase">Value:</span>
-                        <span className="font-extrabold text-slate-700">{theirSelectedPlayer.acquisition_value} eCoin</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+                    )}
 
-              {/* Cash Considerations */}
-              <div className="bg-slate-50 border border-slate-200 p-5 rounded-xl">
-                <h3 className="font-bold text-xs uppercase tracking-wider mb-4 text-slate-700">Cash Considerations (Optional)</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Direction</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setCashDirection('none')}
-                        className={`py-2 rounded-xl font-bold uppercase text-xs transition-all border cursor-pointer ${
-                          cashDirection === 'none' ? 'bg-slate-800 text-amber-400 border-slate-900 shadow-md' : 'bg-slate-50 hover:bg-slate-100 text-slate-500 border-slate-200'
-                        }`}
-                      >
-                        No Cash
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCashDirection('A_to_B')}
-                        className={`py-2 rounded-xl font-bold uppercase text-xs transition-all border cursor-pointer ${
-                          cashDirection === 'A_to_B' ? 'bg-slate-800 text-amber-400 border-slate-900 shadow-md' : 'bg-slate-50 hover:bg-slate-100 text-slate-500 border-slate-200'
-                        }`}
-                      >
-                        You Pay
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCashDirection('B_to_A')}
-                        className={`py-2 rounded-xl font-bold uppercase text-xs transition-all border cursor-pointer ${
-                          cashDirection === 'B_to_A' ? 'bg-slate-800 text-amber-400 border-slate-900 shadow-md' : 'bg-slate-50 hover:bg-slate-100 text-slate-500 border-slate-200'
-                        }`}
-                      >
-                        You Receive
-                      </button>
-                    </div>
+                    {theirSelectedPlayer && (
+                      <div className="bg-slate-50/60 border border-slate-200/80 rounded-xl p-4 space-y-2 text-xs font-mono">
+                        <div className="flex justify-between">
+                          <span className="text-slate-500 font-bold uppercase">Position:</span>
+                          <span className="font-extrabold text-slate-700 uppercase">{theirSelectedPlayer.position}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500 font-bold uppercase">Original Value:</span>
+                          <span className="font-extrabold text-slate-700">{theirSelectedPlayer.acquisition_value} eCoin</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  
+                </div>
+
+                {/* Step 3: Cash adjustments */}
+                <div className="pt-4 border-t border-slate-100 space-y-4">
+                  <div className="pb-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Step 3 (Optional)</span>
+                    <h3 className="font-extrabold text-sm text-slate-700 uppercase tracking-wide">Cash Adjustments</h3>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setCashDirection(prev => prev === 'none' ? 'A_to_B' : 'none')}
+                      className={`flex-1 py-2.5 rounded-xl border font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+                        cashDirection !== 'none'
+                          ? 'bg-slate-800 text-amber-400 border-slate-900 shadow-md' 
+                          : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {cashDirection !== 'none' ? 'Remove Cash Adjustment' : 'Include Cash Adjustment'}
+                    </button>
+                  </div>
+
                   {cashDirection !== 'none' && (
-                    <div>
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Amount (eCoin)</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2 text-slate-500 text-xs font-mono">$</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/80 border border-slate-200 p-4 rounded-xl">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 block">Cash Direction</label>
+                        <select
+                          value={cashDirection}
+                          onChange={(e: any) => setCashDirection(e.target.value)}
+                          disabled={submitting}
+                          className="w-full h-10 px-3 border border-slate-200 rounded-xl bg-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                        >
+                          <option value="A_to_B">We pay them</option>
+                          <option value="B_to_A">They pay us</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 block">Cash Amount (eCoin)</label>
                         <input
                           type="number"
-                          min="1"
+                          min="0"
                           value={cashAmount || ''}
-                          onChange={(e) => setCashAmount(parseInt(e.target.value) || 0)}
-                          className="flex h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500 pl-8"
+                          onChange={(e) => setCashAmount(Math.max(0, parseInt(e.target.value) || 0))}
+                          disabled={submitting}
+                          className="w-full h-10 px-3 border border-slate-200 rounded-xl bg-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                           placeholder="0"
                         />
                       </div>
                     </div>
                   )}
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={!myPlayerId || !theirPlayerId || !targetTeamId || !selectedWindowId || submitting || activeWindows.length === 0}
-                className={`w-full py-3 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                  (!myPlayerId || !theirPlayerId || !targetTeamId || !selectedWindowId || submitting || activeWindows.length === 0) ? 'opacity-50 cursor-not-allowed bg-slate-200 hover:bg-slate-200 text-slate-400 border border-slate-200' : ''
-                }`}
-              >
-                {submitting ? 'Submitting Trade Proposal...' : 'Submit Trade Proposal'}
-              </button>
-            </form>
-          </CardContent>
-        </Card>
+                <button
+                  type="submit"
+                  disabled={!myPlayerId || !theirPlayerId || !targetTeamId || !selectedWindowId || submitting || activeWindows.length === 0}
+                  className={`w-full py-3 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    (!myPlayerId || !theirPlayerId || !targetTeamId || !selectedWindowId || submitting || activeWindows.length === 0) ? 'opacity-50 cursor-not-allowed bg-slate-200 hover:bg-slate-200 text-slate-400 border border-slate-200' : ''
+                  }`}
+                >
+                  {submitting ? 'Submitting Trade Proposal...' : 'Submit Trade Proposal'}
+                </button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { triggerNews } from './news/trigger';
 import { broadcastSquadUpdate, broadcastWalletUpdate } from './realtime/broadcast';
 import { sendNotificationToSeason } from './notifications/send-notification';
+import { createPlayerHistory, getTeamName } from './player-history';
 
 const sql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
 
@@ -153,6 +154,27 @@ export async function finalizeBulkTiebreaker(
         updated_at = NOW()
       WHERE id = ${tiebreaker.player_id}
     `;
+
+    // Log to player_history
+    try {
+      const teamName = await getTeamName(tiebreaker.current_highest_team_id);
+      await createPlayerHistory({
+        playerId: tiebreaker.player_id,
+        playerName: tiebreaker.player_name,
+        position: tiebreaker.position || null,
+        teamId: tiebreaker.current_highest_team_id,
+        teamName: teamName,
+        seasonId: seasonId,
+        acquisitionType: 'auction',
+        acquisitionValue: winningAmount,
+        contractStartSeason: seasonId,
+        contractEndSeason: seasonId,
+        roundId: tiebreaker.round_id
+      });
+      console.log(`✅ Logged player_history for tiebreaker winner: ${tiebreaker.player_name}`);
+    } catch (historyError) {
+      console.error(`❌ Failed to log player_history for tiebreaker:`, historyError);
+    }
 
     // Insert/update into team_players table (composite unique constraint on player_id + season_id)
     await sql`

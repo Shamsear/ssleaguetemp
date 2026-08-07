@@ -65,10 +65,31 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const team_id = searchParams.get('team_id');
     const season_id = searchParams.get('season_id');
+    const window_id = searchParams.get('window_id');
     
     let requests;
     
-    if (team_id && season_id) {
+    if (window_id && window_id !== 'all') {
+      const { neon } = await import('@neondatabase/serverless');
+      const sql = neon(process.env.NEON_DATABASE_URL!);
+      const windowIdNum = parseInt(window_id);
+      
+      if (team_id) {
+        requests = await sql`
+          SELECT * FROM release_requests 
+          WHERE team_id = ${team_id} 
+          AND window_id = ${windowIdNum} 
+          ORDER BY submitted_at DESC
+        `;
+      } else {
+        requests = await sql`
+          SELECT * FROM release_requests 
+          WHERE status = 'pending' 
+          AND window_id = ${windowIdNum} 
+          ORDER BY submitted_at DESC
+        `;
+      }
+    } else if (team_id && season_id) {
       requests = await getTeamReleaseRequests(team_id, season_id);
     } else {
       requests = await getPendingReleaseRequests(season_id || undefined);

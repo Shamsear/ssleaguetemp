@@ -165,7 +165,15 @@ export default function WindowsManagementPage() {
     }
   };
 
-  if (!isCommitteeAdmin) return <div>Access denied.</div>;
+  if (!isCommitteeAdmin) return (
+    <div className="console-bg min-h-screen flex items-center justify-center font-mono relative">
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+      <div className="text-center relative z-10">
+        <h1 className="text-xl font-black text-rose-600 uppercase tracking-widest">Access Denied</h1>
+        <p className="mt-2 text-xs text-slate-500 font-bold uppercase tracking-wider">Committee credentials required</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
@@ -173,177 +181,217 @@ export default function WindowsManagementPage() {
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
       <div className="max-w-5xl mx-auto relative z-10 space-y-6 font-mono">
-      <div className="flex justify-between items-center border-b pb-4">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <CalendarClock className="w-8 h-8 text-indigo-600" />
-            Transfer Windows
-          </h1>
-          <p className="text-muted-foreground mt-1">Manage open/close periods and set request limits for teams.</p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/dashboard/committee/requests">
-            <Button variant="outline">View Requests</Button>
-          </Link>
-          <Button onClick={() => setIsCreating(!isCreating)} className="bg-indigo-600 hover:bg-indigo-700">
-            {isCreating ? 'Cancel' : <><Plus className="w-4 h-4 mr-2" /> New Window</>}
-          </Button>
-        </div>
-      </div>
+        {/* Back Link */}
+        <Link
+          href="/dashboard/committee/requests"
+          className="px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all font-mono text-xs uppercase tracking-wider font-extrabold flex items-center justify-center w-fit mb-4"
+        >
+          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Requests
+        </Link>
 
-      {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5" />
-          {error}
-        </div>
-      )}
-
-      {/* Create Form */}
-      {isCreating && (
-        <Card className="border-indigo-200 bg-indigo-50/30">
-          <CardHeader>
-            <CardTitle className="text-indigo-900">Create New Transfer Window</CardTitle>
-            <CardDescription>Windows are created in a 'Closed' state by default.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Window Name</label>
-                  <input 
-                    type="text"
-                    className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="e.g. Mid-Season Releases" 
-                    value={newName} 
-                    onChange={e => setNewName(e.target.value)} 
-                    required 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Type</label>
-                  <select 
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                    value={newType}
-                    onChange={(e: any) => setNewType(e.target.value)}
-                  >
-                    <option value="release">Release Window</option>
-                    <option value="swap">Swap Window</option>
-                  </select>
-                </div>
+        {/* Header Title Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/10 flex-shrink-0">
+                <CalendarClock className="w-6 h-6 text-white" />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Max Requests Allowed Per Team</label>
-                  <input 
-                    type="number" 
-                    min="0" 
-                    className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={newMaxRequests} 
-                    onChange={e => setNewMaxRequests(parseInt(e.target.value) || 0)} 
-                  />
-                  <p className="text-xs text-muted-foreground">Set to 0 for unlimited requests.</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium flex items-center gap-1">
-                    <LinkIcon className="w-3 h-3" /> Shared Limit Group (Optional)
-                  </label>
-                  <select 
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                    value={newLinkedId}
-                    onChange={e => setNewLinkedId(e.target.value)}
-                  >
-                    <option value="none">-- Standalone Window (Isolated Limit) --</option>
-                    {windows.filter(w => w.type === newType).map(w => (
-                      <option key={w.id} value={w.id.toString()}>Link to: {w.name} (ID: {w.id})</option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-muted-foreground">If linked, teams share their request count pool across both windows.</p>
-                </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wider text-slate-800">
+                  Transfer Windows
+                </h1>
+                <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
+                  Manage open/close periods and set request limits for teams
+                </p>
               </div>
-
-              <Button type="submit" disabled={submitting || !newName.trim()} className="mt-4">
-                <Save className="w-4 h-4 mr-2" /> Save Window
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Windows List */}
-      {loading ? (
-        <div className="flex justify-center p-12">
-          <div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div>
+            </div>
+            
+            <div>
+              <button 
+                onClick={() => setIsCreating(!isCreating)} 
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-900 shadow-md rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer"
+              >
+                {isCreating ? 'Cancel' : <><Plus className="w-4 h-4" /> New Window</>}
+              </button>
+            </div>
+          </div>
         </div>
-      ) : windows.length === 0 ? (
-        <div className="bg-muted/30 border rounded-lg p-12 text-center text-muted-foreground">
-          No transfer windows found for this season.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {windows.map((w) => (
-            <Card key={w.id} className={w.status === 'open' ? 'border-green-300 shadow-md ring-1 ring-green-200' : 'opacity-80 grayscale-[20%]'}>
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <Badge variant="outline" className={`mb-2 uppercase text-[10px] ${w.type === 'release' ? 'text-red-600 bg-red-50' : 'text-blue-600 bg-blue-50'}`}>
-                      {w.type} Window
-                    </Badge>
-                    <CardTitle className="text-lg">{w.name}</CardTitle>
+
+        {error && (
+          <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-center gap-2 font-bold uppercase tracking-wider">
+            <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+            {error}
+          </div>
+        )}
+
+        {/* Create Form */}
+        {isCreating && (
+          <Card className="border-slate-200 bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+            <CardHeader className="border-b border-slate-100 pb-4 mb-4">
+              <CardTitle className="text-slate-800 uppercase tracking-wider text-sm font-black">Create New Transfer Window</CardTitle>
+              <CardDescription className="text-[10px] text-slate-500 font-bold uppercase mt-1">Windows are created in a 'Closed' state by default.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleCreate} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Window Name</label>
+                    <input 
+                      type="text"
+                      className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="e.g. Mid-Season Releases" 
+                      value={newName} 
+                      onChange={e => setNewName(e.target.value)} 
+                      required 
+                    />
                   </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-[10px] font-mono text-muted-foreground mb-1">ID: {w.id}</span>
-                    <Badge className={w.status === 'open' ? 'bg-green-500 hover:bg-green-600' : 'bg-slate-400'}>
-                      {w.status.toUpperCase()}
-                    </Badge>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Type</label>
+                    <select 
+                      className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      value={newType}
+                      onChange={(e: any) => setNewType(e.target.value)}
+                    >
+                      <option value="release">Release Window</option>
+                      <option value="swap">Swap Window</option>
+                    </select>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-slate-50 p-3 rounded-lg border text-sm space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Limit Per Team:</span>
-                    <span className="font-bold">{w.max_requests === 0 ? 'Unlimited' : `${w.max_requests} requests`}</span>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Max Requests Allowed Per Team</label>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={newMaxRequests} 
+                      onChange={e => setNewMaxRequests(parseInt(e.target.value) || 0)} 
+                    />
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Set to 0 for unlimited requests.</p>
                   </div>
                   
-                  {w.linked_window_id && (
-                    <div className="flex justify-between items-center pt-2 border-t">
-                      <span className="text-muted-foreground flex items-center gap-1">
-                        <LinkIcon className="w-3 h-3" /> Linked To:
-                      </span>
-                      <span className="font-mono text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded">
-                        Window #{w.linked_window_id}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-sm font-medium">Status Toggle</span>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs ${w.status === 'closed' ? 'font-bold' : 'text-muted-foreground'}`}>Closed</span>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleStatus(w.id, w.status)}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-                        w.status === 'open' ? 'bg-indigo-600' : 'bg-slate-200'
-                      }`}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                      <LinkIcon className="w-3 h-3 text-slate-400" /> Shared Limit Group (Optional)
+                    </label>
+                    <select 
+                      className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      value={newLinkedId}
+                      onChange={e => setNewLinkedId(e.target.value)}
                     >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          w.status === 'open' ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                    <span className={`text-xs ${w.status === 'open' ? 'font-bold text-green-600' : 'text-muted-foreground'}`}>Open</span>
+                      <option value="none">-- Standalone Window (Isolated Limit) --</option>
+                      {windows.filter(w => w.type === newType).map(w => (
+                        <option key={w.id} value={w.id.toString()}>Link to: {w.name} (ID: {w.id})</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">If linked, teams share request count across both windows.</p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+
+                <div className="flex justify-end pt-2">
+                  <button 
+                    type="submit" 
+                    disabled={submitting || !newName.trim()} 
+                    className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4" /> Save Window
+                  </button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Windows List */}
+        {loading ? (
+          <div className="flex justify-center p-12">
+            <div className="animate-spin w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full"></div>
+          </div>
+        ) : windows.length === 0 ? (
+          <div className="bg-slate-50 border border-dashed rounded-2xl p-12 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">
+            No transfer windows found for this season.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {windows.map((w) => (
+              <Card 
+                key={w.id} 
+                className={w.status === 'open' 
+                  ? 'border-emerald-250 bg-emerald-50/5 shadow-md ring-1 ring-emerald-100' 
+                  : 'opacity-90 bg-white border-slate-200'
+                }
+              >
+                <CardHeader className="pb-3 border-b border-slate-100/60 mb-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <Badge variant="outline" className={`mb-2 uppercase text-[9px] font-black font-mono tracking-wider ${
+                        w.type === 'release' 
+                          ? 'text-rose-650 bg-rose-50 border-rose-100' 
+                          : 'text-indigo-650 bg-indigo-50 border-indigo-100'
+                      }`}>
+                        {w.type} Window
+                      </Badge>
+                      <CardTitle className="text-base font-extrabold text-slate-800 uppercase truncate max-w-[200px]" title={w.name}>{w.name}</CardTitle>
+                    </div>
+                    <div className="flex flex-col items-end flex-shrink-0">
+                      <span className="text-[9px] font-bold text-slate-400 font-mono mb-1">ID: #{w.id}</span>
+                      <Badge className={w.status === 'open' 
+                        ? 'bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-black uppercase tracking-wider font-mono' 
+                        : 'bg-slate-400 text-white text-[9px] font-black uppercase tracking-wider font-mono'
+                      }>
+                        {w.status.toUpperCase()}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-150 text-xs space-y-2 font-mono">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500 font-bold uppercase text-[10px]">Limit Per Team:</span>
+                      <span className="font-extrabold text-slate-700">{w.max_requests === 0 ? 'Unlimited' : `${w.max_requests} requests`}</span>
+                    </div>
+                    
+                    {w.linked_window_id && (
+                      <div className="flex justify-between items-center pt-2 border-t border-slate-150">
+                        <span className="text-slate-500 font-bold uppercase text-[10px] flex items-center gap-1">
+                          <LinkIcon className="w-3 h-3" /> Linked To:
+                        </span>
+                        <span className="font-bold text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded border">
+                          Window #{w.linked_window_id}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status Toggle</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${w.status === 'closed' ? 'text-slate-800' : 'text-slate-400'}`}>Closed</span>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleStatus(w.id, w.status)}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                          w.status === 'open' ? 'bg-emerald-500' : 'bg-slate-200'
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            w.status === 'open' ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${w.status === 'open' ? 'text-emerald-600' : 'text-slate-400'}`}>Open</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

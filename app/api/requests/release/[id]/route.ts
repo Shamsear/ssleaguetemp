@@ -6,6 +6,7 @@ import {
 import { releasePlayerNeon, NeonPlayerData } from '@/lib/player-transfers-neon';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { getAuctionDb } from '@/lib/neon/auction-config';
+import { sendNotification } from '@/lib/notifications/send-notification';
 
 /**
  * PATCH /api/requests/release/[id]
@@ -113,6 +114,21 @@ export async function PATCH(
       processed_by, 
       rejection_reason
     );
+    
+    // Send notification to team owner
+    if (status === 'approved' || status === 'rejected') {
+      try {
+        await sendNotification({
+          title: status === 'approved' ? `✅ Release Request Approved` : `❌ Release Request Rejected`,
+          body: status === 'approved' 
+            ? `Your request to release ${req.player_name} has been approved.`
+            : `Your request to release ${req.player_name} was rejected. Reason: ${rejection_reason || 'No reason provided'}`,
+          url: `/dashboard/team/requests`
+        }, { teamId: req.team_id });
+      } catch (err) {
+        console.error('Failed to send release status notification:', err);
+      }
+    }
     
     return NextResponse.json({ success: true, data: updatedReq });
   } catch (error: any) {

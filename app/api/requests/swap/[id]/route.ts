@@ -6,6 +6,7 @@ import {
 import { swapPlayersNeon, NeonPlayerData } from '@/lib/player-transfers-neon';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { getAuctionDb } from '@/lib/neon/auction-config';
+import { sendNotification } from '@/lib/notifications/send-notification';
 
 /**
  * PATCH /api/requests/swap/[id]
@@ -166,6 +167,39 @@ export async function PATCH(
       processed_by, 
       rejection_reason
     );
+    
+    // Send notifications to both requesting and target teams
+    if (status === 'approved' || status === 'rejected') {
+      try {
+        const p1Name = req.players[0]?.player_name || 'Player 1';
+        const p2Name = req.players[1]?.player_name || 'Player 2';
+        
+        const title = status === 'approved' ? `✅ Swap Request Approved` : `❌ Swap Request Rejected`;
+        const body = status === 'approved'
+          ? `The swap between ${p1Name} and ${p2Name} has been approved.`
+          : `The swap between ${p1Name} and ${p2Name} was rejected. Reason: ${rejection_reason || 'No reason provided'}`;
+
+        // Notify requesting team
+        if (req.requesting_team_id) {
+          await sendNotification({
+            title,
+            body,
+            url: `/dashboard/team/requests`
+          }, { teamId: req.requesting_team_id });
+        }
+        
+        // Notify target team
+        if (req.target_team_id && req.target_team_id !== req.requesting_team_id) {
+          await sendNotification({
+            title,
+            body,
+            url: `/dashboard/team/requests`
+          }, { teamId: req.target_team_id });
+        }
+      } catch (err) {
+        console.error('Failed to send swap status notifications:', err);
+      }
+    }
     
     return NextResponse.json({ success: true, data: updatedReq });
   } catch (error: any) {

@@ -15,15 +15,16 @@ export interface ReleaseRequestData {
   player_name: string;
   player_type: 'real' | 'football';
   refund_amount: number;
+  window_id?: number;
 }
 
 export async function createReleaseRequest(data: ReleaseRequestData) {
   const result = await sql`
     INSERT INTO release_requests (
-      team_id, season_id, player_id, player_name, player_type, refund_amount, status
+      team_id, season_id, player_id, player_name, player_type, refund_amount, status, window_id
     ) VALUES (
       ${data.team_id}, ${data.season_id}, ${data.player_id}, ${data.player_name}, 
-      ${data.player_type}, ${data.refund_amount}, 'pending'
+      ${data.player_type}, ${data.refund_amount}, 'pending', ${data.window_id || null}
     ) RETURNING *
   `;
   return result[0];
@@ -71,6 +72,7 @@ export interface SwapRequestData {
   target_team_id: string;
   cash_amount?: number;
   cash_direction?: 'A_to_B' | 'B_to_A' | 'none';
+  window_id?: number;
   players: {
     from_team_id: string;
     to_team_id: string;
@@ -87,10 +89,10 @@ export async function createSwapRequest(data: SwapRequestData) {
   
   const reqResult = await sql`
     INSERT INTO swap_requests (
-      season_id, requesting_team_id, target_team_id, cash_amount, cash_direction, status
+      season_id, requesting_team_id, target_team_id, cash_amount, cash_direction, status, window_id
     ) VALUES (
       ${data.season_id}, ${data.requesting_team_id}, ${data.target_team_id}, 
-      ${data.cash_amount || 0}, ${data.cash_direction || 'none'}, 'pending'
+      ${data.cash_amount || 0}, ${data.cash_direction || 'none'}, 'pending', ${data.window_id || null}
     ) RETURNING *
   `;
   

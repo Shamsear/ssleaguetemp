@@ -7,6 +7,7 @@ import { triggerNews } from '@/lib/news/trigger';
 import { generateTiebreakerId } from '@/lib/id-generator';
 import { broadcastSquadUpdate, broadcastWalletUpdate, broadcastRoundUpdate } from '@/lib/realtime/broadcast';
 import { sendNotification, sendNotificationToSeason } from '@/lib/notifications/send-notification';
+import { createPlayerHistory } from '@/lib/player-history';
 
 const sql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
 
@@ -96,6 +97,26 @@ async function assignPlayerToTeam(
       updated_at = NOW()
     WHERE id = ${playerId}
   `;
+
+  // Log to player_history
+  try {
+    await createPlayerHistory({
+      playerId: playerId,
+      playerName: playerName,
+      position: position || null,
+      teamId: teamId,
+      teamName: teamName,
+      seasonId: seasonId,
+      acquisitionType: 'auction',
+      acquisitionValue: price,
+      contractStartSeason: seasonId,
+      contractEndSeason: seasonId,
+      roundId: roundId
+    });
+    console.log(`✅ Logged player_history for ${playerName} in assignPlayerToTeam`);
+  } catch (historyError) {
+    console.error(`❌ Failed to log player_history for ${playerName} in assignPlayerToTeam:`, historyError);
+  }
 
   // 6. Update Neon teams table (Spent budget, players count)
   if (isNewPurchase) {
