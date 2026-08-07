@@ -116,6 +116,11 @@ export async function POST(request: NextRequest) {
     const seasonId = body.season_id || 'SSPSLS18';
     const targetTeamId = body.team_id; // Optional: target single team
 
+    // Fetch Season Info to check if it has transitioned to mid-season
+    const seasonDoc = await adminDb.collection('seasons').doc(seasonId).get();
+    const seasonData = seasonDoc.exists ? seasonDoc.data() : null;
+    const isMidSeason = seasonData?.is_mid_season === true;
+
     // Fetch Postgres teams
     let pgTeams = [];
     if (targetTeamId) {
@@ -145,8 +150,57 @@ export async function POST(request: NextRequest) {
       `;
 
       const actualPlayersCount = players.length;
-      const actualSumSpent = players.reduce((sum, p) => sum + Number(p.acquisition_value || 0), 0);
-      const actualBudget = 10000 - actualSumSpent;
+      let actualSumSpent = players.reduce((sum, p) => sum + Number(p.acquisition_value || 0), 0);
+      let actualBudget = 10000 - actualSumSpent;
+
+      if (isMidSeason) {
+        // Query all transactions for this team in Firestore and filter in-memory to prevent index errors
+        const allTeamTxsSnap = await adminDb.collection('transactions')
+          .where('team_id', '==', team.id)
+          .get();
+
+        const txs = allTeamTxsSnap.docs
+          .map(doc => ({ id: doc.id, ...doc.data() as any }))
+          .filter((tx: any) => 
+            tx.season_id === seasonId && 
+            tx.currency_type === 'football'
+          );
+
+        const getTxTime = (tx: any) => {
+          if (!tx.created_at) return 0;
+          if (typeof tx.created_at.toDate === 'function') return tx.created_at.toDate().getTime();
+          if (tx.created_at instanceof Date) return tx.created_at.getTime();
+          return new Date(tx.created_at).getTime();
+        };
+
+        // Sort descending
+        txs.sort((a, b) => getTxTime(b) - getTxTime(a));
+
+        const resetTx = txs.find((tx: any) => 
+          tx.transaction_type === 'adjustment' && 
+          tx.description === 'Mid-season budget reset to 0'
+        );
+
+        if (resetTx) {
+          const resetTime = getTxTime(resetTx);
+          const postResetTxs = txs.filter((tx: any) => getTxTime(tx) > resetTime);
+
+          let midSeasonBalance = 0;
+          let midSeasonSpent = 0;
+          for (const tx of postResetTxs) {
+            midSeasonBalance += tx.amount || 0;
+            if (tx.amount < 0) {
+              midSeasonSpent += Math.abs(tx.amount);
+            }
+          }
+          actualBudget = midSeasonBalance;
+          actualSumSpent = midSeasonSpent;
+        } else {
+          // If no reset transaction is found, fall back to 0
+          actualBudget = 0;
+          actualSumSpent = 0;
+        }
+      }
 
       // Recalculate position counts
       const positionCounts: Record<string, number> = {};

@@ -199,16 +199,22 @@ export async function releasePlayerNeon(
       }
     } else {
       // For footballplayers - make them auction-eligible again
-      await sql`
-        UPDATE footballplayers
-        SET team_id = NULL,
-            status = 'free_agent',
-            contract_id = NULL,
-            is_sold = false,
-            is_auction_eligible = true,
-            updated_at = NOW()
-        WHERE player_id = ${playerData.player_id} AND season_id = ${currentSeasonId}
-      `;
+      await Promise.all([
+        sql`
+          UPDATE footballplayers
+          SET team_id = NULL,
+              status = 'free_agent',
+              contract_id = NULL,
+              is_sold = false,
+              is_auction_eligible = true,
+              updated_at = NOW()
+          WHERE player_id = ${playerData.player_id} AND season_id = ${currentSeasonId}
+        `,
+        sql`
+          DELETE FROM team_players
+          WHERE player_id = ${playerData.id} AND season_id = ${currentSeasonId}
+        `
+      ]);
       
       // Decrement football_players_count in teams table
       try {
@@ -629,6 +635,18 @@ export async function swapPlayersNeon(
           SET team_id = ${teamAId},
               updated_at = NOW()
           WHERE player_id = ${playerBData.player_id} AND season_id = ${currentSeasonId}
+        `,
+        sql`
+          UPDATE team_players
+          SET team_id = ${teamBId},
+              acquired_at = NOW()
+          WHERE player_id = ${playerAData.id} AND season_id = ${currentSeasonId}
+        `,
+        sql`
+          UPDATE team_players
+          SET team_id = ${teamAId},
+              acquired_at = NOW()
+          WHERE player_id = ${playerBData.id} AND season_id = ${currentSeasonId}
         `
       ]);
     }

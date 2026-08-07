@@ -30,6 +30,39 @@ export default function CommitteeDashboard() {
   const [loadingRounds, setLoadingRounds] = useState(false);
   const [currentSeason, setCurrentSeason] = useState<any>(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [transitioningMidSeason, setTransitioningMidSeason] = useState(false);
+
+  const handleTransitionMidSeason = async () => {
+    if (!userSeasonId) return;
+    if (!window.confirm("WARNING: Are you sure you want to transition this season to Mid-Season?\n\nThis will permanently reset all team eCoin balances to 0. This action CANNOT be undone!")) {
+      return;
+    }
+    
+    setTransitioningMidSeason(true);
+    try {
+      const res = await fetchWithTokenRefresh(`/api/admin/seasons/${userSeasonId}/transition-mid-season`, {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        // Force update UI and cache
+        if (currentSeason) {
+          const updatedSeason = { ...currentSeason, is_mid_season: true };
+          setCurrentSeason(updatedSeason);
+          const cacheKey = `committee_season_${userSeasonId}`;
+          setSmartCache(cacheKey, updatedSeason, CACHE_DURATIONS.MEDIUM);
+        }
+      } else {
+        alert(`Failed to transition: ${data.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(`Error during transition: ${err.message || 'Unknown error'}`);
+    } finally {
+      setTransitioningMidSeason(false);
+    }
+  };
 
   // Collapsible sections state
   const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({
@@ -848,6 +881,51 @@ export default function CommitteeDashboard() {
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider group-hover:text-amber-600 transition-colors mb-1">Team Slots</h4>
                   <p className="text-[10px] text-slate-500 font-bold uppercase">Manage player slots</p>
                 </Link>
+              </div>
+
+              {/* Mid-Season Phase Control Banner */}
+              <div className="mt-6 pt-6 border-t border-slate-100">
+                <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="flex gap-4">
+                    <div className="p-3 rounded-xl bg-amber-100/80 text-amber-800 flex-shrink-0 self-start md:self-center">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-1">Mid-Season Phase Control</h3>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase leading-relaxed max-w-2xl">
+                        {currentSeason?.is_mid_season 
+                          ? "This season is currently in the Mid-Season phase. All team starting eCoin budgets have been reset to 0, and transfer budgets are active."
+                          : "Transition the season to Mid-Season phase. This permanently resets starting eCoin budgets to 0. Afterwards, teams can only bid using eCoins gained from releasing players."
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  {!currentSeason?.is_mid_season ? (
+                    <button
+                      onClick={handleTransitionMidSeason}
+                      disabled={transitioningMidSeason}
+                      className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-2 whitespace-nowrap self-stretch md:self-auto justify-center"
+                    >
+                      {transitioningMidSeason ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Transitioning...
+                        </>
+                      ) : (
+                        "Transition to Mid-Season"
+                      )}
+                    </button>
+                  ) : (
+                    <span className="px-4 py-2 bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider rounded-lg border border-emerald-200">
+                      Mid-Season Active
+                    </span>
+                  )}
+                </div>
               </div>
             )}
           </div>
