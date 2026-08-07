@@ -1122,7 +1122,19 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                                   <h3 className="text-base sm:text-lg font-extrabold text-slate-805 truncate leading-tight">{contract.team_name}</h3>
                                 </div>
                                 <span className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider text-white ${statusStyle} shrink-0 text-center`}>
-                                  {contract.status === 'released' ? '🔴 Released' : contract.status === 'swapped' ? '<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Swapped' : contract.status === 'takeover' ? '<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Takeover' : '🟢 Active'}
+                                  {contract.status === 'released' ? (
+                                    '🔴 Released'
+                                  ) : contract.status === 'swapped' ? (
+                                    <>
+                                      <RefreshCw className="w-3 h-3 inline-block mr-1 align-text-bottom text-white" /> Swapped
+                                    </>
+                                  ) : contract.status === 'takeover' ? (
+                                    <>
+                                      <RefreshCw className="w-3 h-3 inline-block mr-1 align-text-bottom text-white" /> Takeover
+                                    </>
+                                  ) : (
+                                    '🟢 Active'
+                                  )}
                                 </span>
                               </div>
                             </div>
