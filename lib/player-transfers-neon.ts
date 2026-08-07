@@ -636,7 +636,7 @@ export async function swapPlayersNeon(
     // Update team balances with fee
     let newTeamABalance = teamABalance;
     let newTeamBBalance = teamBBalance;
-    let feePaidTo = undefined;
+    let feePaidTo = null;
     
     if (feeAmount > 0) {
       newTeamABalance -= feeAmount;

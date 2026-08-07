@@ -41,6 +41,41 @@ export async function POST(request: NextRequest) {
         );
       }
     }
+
+    // Validate if the player is already involved in pending swap or release requests
+    const { neon } = await import('@neondatabase/serverless');
+    const sql = neon(process.env.NEON_DATABASE_URL!);
+
+    // 1. Check pending releases
+    const pendingReleases = await sql`
+      SELECT id FROM release_requests 
+      WHERE player_id = ${player_id} 
+      AND status = 'pending' 
+      AND season_id = ${season_id}
+    `;
+
+    if (pendingReleases.length > 0) {
+      return NextResponse.json(
+        { success: false, error: `Cannot submit request. ${player_name} already has a pending release request.` },
+        { status: 400 }
+      );
+    }
+
+    // 2. Check pending swaps
+    const pendingSwaps = await sql`
+      SELECT sr.id FROM swap_request_players srp
+      JOIN swap_requests sr ON srp.swap_request_id = sr.id
+      WHERE srp.player_id = ${player_id}
+      AND sr.status = 'pending'
+      AND sr.season_id = ${season_id}
+    `;
+
+    if (pendingSwaps.length > 0) {
+      return NextResponse.json(
+        { success: false, error: `Cannot submit request. ${player_name} is currently involved in a pending swap request.` },
+        { status: 400 }
+      );
+    }
     
     const req = await createReleaseRequest(body);
     

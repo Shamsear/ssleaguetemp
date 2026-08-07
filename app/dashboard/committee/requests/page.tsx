@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTournamentContext } from '@/contexts/TournamentContext';
 import { ArrowRightLeft, UserMinus, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useCachedTeamSeasons } from '@/hooks/useCachedFirebase';
 import Link from 'next/link';
 
 // Custom UI Components replacing missing shadcn imports
@@ -88,6 +89,16 @@ export default function CommitteeRequestsPage() {
   const selectedWindowObj = windows.find(w => w.id.toString() === selectedWindow);
   const showSwaps = selectedWindow === 'all' || !selectedWindowObj || selectedWindowObj.type === 'swap';
   const showReleases = selectedWindow === 'all' || !selectedWindowObj || selectedWindowObj.type === 'release';
+
+  const { data: teamSeasons } = useCachedTeamSeasons(
+    selectedSeason ? { seasonId: selectedSeason } : undefined
+  );
+
+  const getTeamName = (teamId: string) => {
+    if (!teamSeasons) return teamId;
+    const teamSeason = teamSeasons.find((t: any) => t.team_id === teamId);
+    return teamSeason?.team_name || teamId;
+  };
 
   useEffect(() => {
     fetchWindows();
@@ -323,7 +334,7 @@ export default function CommitteeRequestsPage() {
                           <div>
                             <CardTitle className="text-xs font-black text-amber-600 uppercase tracking-wider">Trade Proposal</CardTitle>
                             <CardDescription className="text-[9px] text-slate-400 font-bold uppercase mt-1">
-                              {req.requesting_team_id} &harr; {req.target_team_id}
+                              {getTeamName(req.requesting_team_id)} &harr; {getTeamName(req.target_team_id)}
                             </CardDescription>
                           </div>
                           <div className="text-[10px] font-bold text-slate-400 font-mono">
@@ -335,9 +346,9 @@ export default function CommitteeRequestsPage() {
                             <div key={p.id} className="flex flex-col bg-slate-50/80 p-3 rounded-xl border border-slate-150 text-xs font-mono">
                               <span className="font-extrabold text-sm text-slate-700 mb-0.5">{p.player_name}</span>
                               <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-wider mt-1">
-                                <span className="bg-white px-2 py-0.5 rounded border border-slate-150">{p.from_team_id}</span>
+                                <span className="bg-white px-2 py-0.5 rounded border border-slate-150">{getTeamName(p.from_team_id)}</span>
                                 <ArrowRightLeft className="w-3 h-3 text-slate-400" />
-                                <span className="bg-white px-2 py-0.5 rounded border border-slate-150">{p.to_team_id}</span>
+                                <span className="bg-white px-2 py-0.5 rounded border border-slate-150">{getTeamName(p.to_team_id)}</span>
                               </div>
                             </div>
                           ))}
@@ -346,8 +357,8 @@ export default function CommitteeRequestsPage() {
                             <div className="bg-emerald-50/60 text-emerald-800 p-3 rounded-xl border border-emerald-150 text-xs flex items-center justify-center font-bold uppercase tracking-wider font-mono">
                               <DollarSign className="w-3.5 h-3.5 mr-1 text-emerald-600" />
                               {req.cash_direction === 'A_to_B' 
-                                ? `${req.requesting_team_id} pays ${req.target_team_id} $${req.cash_amount}`
-                                : `${req.target_team_id} pays ${req.requesting_team_id} $${req.cash_amount}`}
+                                ? `${getTeamName(req.requesting_team_id)} pays ${getTeamName(req.target_team_id)} $${req.cash_amount}`
+                                : `${getTeamName(req.target_team_id)} pays ${getTeamName(req.requesting_team_id)} $${req.cash_amount}`}
                             </div>
                           )}
                         </CardContent>
@@ -394,7 +405,7 @@ export default function CommitteeRequestsPage() {
                         <CardHeader className="bg-slate-50/50 pb-3 border-b border-slate-100 mb-3">
                           <CardTitle className="text-sm font-black text-rose-700 uppercase tracking-wider">{req.player_name}</CardTitle>
                           <CardDescription className="text-[9px] text-slate-400 font-bold uppercase mt-1">
-                            Requested by: {req.team_id}
+                            Requested by: {getTeamName(req.team_id)}
                           </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2 text-xs font-mono">

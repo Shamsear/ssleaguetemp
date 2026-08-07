@@ -41,6 +41,44 @@ export async function POST(request: NextRequest) {
         );
       }
     }
+
+    // Validate if any of the players are already involved in pending swap or release requests
+    const { neon } = await import('@neondatabase/serverless');
+    const sql = neon(process.env.NEON_DATABASE_URL!);
+    const playerIds = players.map(p => p.player_id);
+
+    // 1. Check pending releases
+    const pendingReleases = await sql`
+      SELECT player_name FROM release_requests 
+      WHERE player_id = ANY(${playerIds}) 
+      AND status = 'pending' 
+      AND season_id = ${season_id}
+    `;
+
+    if (pendingReleases.length > 0) {
+      const names = pendingReleases.map(r => r.player_name).join(', ');
+      return NextResponse.json(
+        { success: false, error: `Cannot submit request. The following player(s) have pending release requests: ${names}` },
+        { status: 400 }
+      );
+    }
+
+    // 2. Check pending swaps
+    const pendingSwaps = await sql`
+      SELECT srp.player_name FROM swap_request_players srp
+      JOIN swap_requests sr ON srp.swap_request_id = sr.id
+      WHERE srp.player_id = ANY(${playerIds})
+      AND sr.status = 'pending'
+      AND sr.season_id = ${season_id}
+    `;
+
+    if (pendingSwaps.length > 0) {
+      const names = pendingSwaps.map(s => s.player_name).join(', ');
+      return NextResponse.json(
+        { success: false, error: `Cannot submit request. The following player(s) are already involved in pending swap requests: ${names}` },
+        { status: 400 }
+      );
+    }
     
     const req = await createSwapRequest(body);
     
