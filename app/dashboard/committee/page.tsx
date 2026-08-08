@@ -882,6 +882,21 @@ export default function CommitteeDashboard() {
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider group-hover:text-amber-600 transition-colors mb-1">Team Slots</h4>
                   <p className="text-[10px] text-slate-500 font-bold uppercase">Manage player slots</p>
                 </Link>
+
+                <Link href="/dashboard/committee/player-replacement" className="group bg-slate-50 border border-slate-200/60 rounded-xl p-4 hover:border-amber-400 hover:shadow-md hover:bg-white transition-all">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2 rounded-lg bg-slate-850 text-amber-400 border border-slate-905 flex-shrink-0">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                      </svg>
+                    </div>
+                    <svg className="w-4 h-4 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider group-hover:text-amber-600 transition-colors mb-1">Replacement</h4>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">Replace won players</p>
+                </Link>
               </div>
 
               {/* Mid-Season Phase Control Banner */}
