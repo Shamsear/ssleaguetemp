@@ -236,7 +236,7 @@ export default function TeamsManagement() {
   const filteredTeams = teams.filter(team => {
     const matchesSearch = normalizeStr(team.team_name).includes(normalizeStr(searchQuery)) ||
                           normalizeStr(team.team_code).includes(normalizeStr(searchQuery)) ||
-                          (team.owner_name || '').toLowerCase().includes(searchQuery.toLowerCase());
+                          normalizeStr(team.owner_name).includes(normalizeStr(searchQuery));
     const matchesSeason = filterSeason === 'all' || team.season_id === filterSeason;
     const matchesStatus = filterStatus === 'all' || 
                           (filterStatus === 'active' && team.is_active) ||

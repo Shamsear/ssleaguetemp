@@ -10,6 +10,7 @@ import {
   deleteResetRequest 
 } from '@/lib/firebase/passwordResetRequests';
 import { PasswordResetRequest } from '@/types/passwordResetRequest';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 import { 
   KeyRound, 
   Mail, 
@@ -70,12 +71,12 @@ export default function PasswordRequestsManagement() {
     }
 
     if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery;
       filtered = filtered.filter(r => 
-        (r.username || '').toLowerCase().includes(q) || 
-        (r.userEmail || '').toLowerCase().includes(q) ||
-        (r.teamName || '').toLowerCase().includes(q) ||
-        (r.reason || '').toLowerCase().includes(q)
+        normalizeStr(r.username).includes(normalizeStr(q)) || 
+        normalizeStr(r.userEmail).includes(normalizeStr(q)) ||
+        normalizeStr(r.teamName).includes(normalizeStr(q)) ||
+        normalizeStr(r.reason).includes(normalizeStr(q))
       );
     }
     

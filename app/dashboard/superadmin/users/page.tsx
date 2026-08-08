@@ -71,12 +71,12 @@ function UsersManagementContent() {
     }
 
     if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery;
       filtered = filtered.filter(u => 
-        (u.username || '').toLowerCase().includes(q) || 
-        (u.email || '').toLowerCase().includes(q) ||
-        (u.role || '').toLowerCase().includes(q) ||
-        (u.role === 'team' && 'teamName' in u && (u.teamName || '').toLowerCase().includes(q))
+        normalizeStr(u.username).includes(normalizeStr(q)) || 
+        normalizeStr(u.email).includes(normalizeStr(q)) ||
+        normalizeStr(u.role).includes(normalizeStr(q)) ||
+        (u.role === 'team' && 'teamName' in u && normalizeStr((u as any).teamName).includes(normalizeStr(q)))
       );
     }
     

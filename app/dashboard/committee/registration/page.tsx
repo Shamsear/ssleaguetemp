@@ -453,7 +453,7 @@ export default function TeamRegistrationPage() {
               <tbody className="divide-y divide-slate-100">
                 {(() => {
                   const filteredTeams = teams.filter(team => 
-                    (team.team_name || team.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    normalizeStr(team.team_name || team.name || '').includes(normalizeStr(searchQuery)) ||
                     normalizeStr(team.id).includes(normalizeStr(searchQuery))
                   );
 
