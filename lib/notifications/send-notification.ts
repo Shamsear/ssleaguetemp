@@ -1,5 +1,6 @@
 import admin from 'firebase-admin';
 import { neon } from '@neondatabase/serverless';
+import { adminDb } from '@/lib/firebase/admin';
 
 const sql = neon(process.env.NEON_TOURNAMENT_DB_URL!);
 
@@ -57,7 +58,6 @@ export async function sendNotification(
       targetUserIds = options.userIds;
     } else if (options.teamId) {
       // Resolve teamId to actual Firebase Auth user_id from Firestore team_seasons
-      const { adminDb } = await import('@/lib/firebase/admin');
       const teamSeasonsSnapshot = await adminDb
         .collection('team_seasons')
         .where('team_id', '==', options.teamId)
@@ -86,7 +86,6 @@ export async function sendNotification(
       targetUserIds = usersResult.map(u => u.user_id);
     } else if (options.isCommittee) {
       // Get all committee users
-      const { adminDb } = await import('@/lib/firebase/admin');
       const committeeSnapshot = await adminDb
         .collection('users')
         .where('role', '==', 'committee_admin')
@@ -209,7 +208,6 @@ export async function sendNotificationToSeason(
 ): Promise<{ success: boolean; sentCount: number; failedCount: number }> {
   try {
     // Get all teams registered for this season from Firebase
-    const { adminDb } = await import('@/lib/firebase/admin');
     const teamSeasonsSnapshot = await adminDb
       .collection('team_seasons')
       .where('season_id', '==', seasonId)
