@@ -200,14 +200,14 @@ export default function TeamPlayersPage() {
       
       if (activeTab === 'auction') {
         const auctionPlayer = player as AuctionPlayer;
-        const positionMatch = normalizeStr(auctionPlayer.position?).includes(normalizeStr(searchTerm));
+        const positionMatch = normalizeStr(auctionPlayer.position).includes(normalizeStr(searchTerm));
         const searchMatch = matchesSearch || positionMatch;
         const matchesPosition = positionFilter === 'all' || auctionPlayer.position === positionFilter;
         const matchesGroup = positionGroupFilter === 'all' || auctionPlayer.position_group === positionGroupFilter;
         return searchMatch && matchesPosition && matchesGroup;
       } else {
         const tournamentPlayer = player as TournamentPlayer;
-        const categoryMatch = normalizeStr(tournamentPlayer.category?).includes(normalizeStr(searchTerm));
+        const categoryMatch = normalizeStr(tournamentPlayer.category).includes(normalizeStr(searchTerm));
         const searchMatch = matchesSearch || categoryMatch;
         
         // Tournament player filters

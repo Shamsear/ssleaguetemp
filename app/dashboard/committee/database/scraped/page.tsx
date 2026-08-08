@@ -152,9 +152,9 @@ export default function ScrapedPlayersViewPage() {
     setCurrentPage(1)
     return players.filter(p => {
       const matchesSearch = 
-        normalizeStr(p.name?).includes(normalizeStr(searchTerm)) ||
-        normalizeStr(p.team_name?).includes(normalizeStr(searchTerm)) ||
-        normalizeStr(p.nationality?).includes(normalizeStr(searchTerm)) ||
+        normalizeStr(p.name).includes(normalizeStr(searchTerm)) ||
+        normalizeStr(p.team_name).includes(normalizeStr(searchTerm)) ||
+        normalizeStr(p.nationality).includes(normalizeStr(searchTerm)) ||
         p.player_id?.toString().includes(searchTerm)
 
       const matchesPosition = positionFilter === 'ALL' || p.position === positionFilter

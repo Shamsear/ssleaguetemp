@@ -86,8 +86,8 @@ export default function ImportPreviewPage() {
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
       filtered = filtered.filter(player => 
-        normalizeStr(player.name?).includes(normalizeStr(term)) ||
-        normalizeStr(player.team_name?).includes(normalizeStr(term))
+        normalizeStr(player.name).includes(normalizeStr(term)) ||
+        normalizeStr(player.team_name).includes(normalizeStr(term))
       )
     }
 

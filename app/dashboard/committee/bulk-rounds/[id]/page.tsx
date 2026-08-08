@@ -673,8 +673,8 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
   };
 
   const filteredPlayers = availablePlayers.filter(p =>
-    normalizeStr(p.full_name?).includes(normalizeStr(searchTerm)) ||
-    normalizeStr(p.position?).includes(normalizeStr(searchTerm))
+    normalizeStr(p.full_name).includes(normalizeStr(searchTerm)) ||
+    normalizeStr(p.position).includes(normalizeStr(searchTerm))
   );
 
   const playersByStatus = () => {

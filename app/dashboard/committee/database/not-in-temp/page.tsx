@@ -184,10 +184,10 @@ export default function NotInTempPlayersPage() {
   // Filter players
   const filteredPlayers = players.filter(p => {
     const matchesSearch = 
-      normalizeStr(p.name?).includes(normalizeStr(searchTerm)) ||
-      normalizeStr(p.team_name?).includes(normalizeStr(searchTerm)) ||
-      normalizeStr(p.club?).includes(normalizeStr(searchTerm)) ||
-      normalizeStr(p.nationality?).includes(normalizeStr(searchTerm)) ||
+      normalizeStr(p.name).includes(normalizeStr(searchTerm)) ||
+      normalizeStr(p.team_name).includes(normalizeStr(searchTerm)) ||
+      normalizeStr(p.club).includes(normalizeStr(searchTerm)) ||
+      normalizeStr(p.nationality).includes(normalizeStr(searchTerm)) ||
       p.player_id?.toString().includes(searchTerm)
 
     const matchesPosition = positionFilter === 'ALL' || p.position === positionFilter

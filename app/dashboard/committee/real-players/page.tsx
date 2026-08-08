@@ -1649,7 +1649,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
                                       const searchTerm = (dropdownSearchTerms.get(team.id) || '').toLowerCase();
                                       if (!searchTerm) return true;
                                       return normalizeStr(p.playerName).includes(normalizeStr(searchTerm)) ||
-                                        normalizeStr(p.category?).includes(normalizeStr(searchTerm));
+                                        normalizeStr(p.category).includes(normalizeStr(searchTerm));
                                     })
                                     .slice(0, 50)
                                     .map(player => (
@@ -1681,7 +1681,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
                                     const searchTerm = (dropdownSearchTerms.get(team.id) || '').toLowerCase();
                                     if (!searchTerm) return true;
                                     return normalizeStr(p.playerName).includes(normalizeStr(searchTerm)) ||
-                                      normalizeStr(p.category?).includes(normalizeStr(searchTerm));
+                                      normalizeStr(p.category).includes(normalizeStr(searchTerm));
                                   }).length === 0 && (
                                       <div className="px-3 py-4 text-center text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                                         No players found

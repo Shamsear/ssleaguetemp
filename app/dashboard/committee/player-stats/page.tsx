@@ -352,7 +352,7 @@ export default function PlayerStatsPage() {
   const filteredPlayers = players
     .filter(p =>
       normalizeStr(p.player_name).includes(normalizeStr(searchTerm)) ||
-      normalizeStr(p.team?).includes(normalizeStr(searchTerm))
+      normalizeStr(p.team).includes(normalizeStr(searchTerm))
     )
     .sort((a, b) => {
       const aVal = a[sortBy] ?? 0;

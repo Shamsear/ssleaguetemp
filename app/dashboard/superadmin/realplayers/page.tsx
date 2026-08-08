@@ -91,12 +91,12 @@ export default function RealPlayersPage() {
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       let filtered = players.filter(p => 
-        normalizeStr(p.name?).includes(normalizeStr(term)) ||
-        normalizeStr(p.display_name?).includes(normalizeStr(term)) ||
-        normalizeStr(p.player_id?).includes(normalizeStr(term)) ||
-        normalizeStr(p.phone?).includes(normalizeStr(term)) ||
-        normalizeStr(p.email?).includes(normalizeStr(term)) ||
-        normalizeStr(p.place?).includes(normalizeStr(term))
+        normalizeStr(p.name).includes(normalizeStr(term)) ||
+        normalizeStr(p.display_name).includes(normalizeStr(term)) ||
+        normalizeStr(p.player_id).includes(normalizeStr(term)) ||
+        normalizeStr(p.phone).includes(normalizeStr(term)) ||
+        normalizeStr(p.email).includes(normalizeStr(term)) ||
+        normalizeStr(p.place).includes(normalizeStr(term))
       );
       
       // Apply place filter

@@ -205,9 +205,9 @@ export default function AddScrapedPlayersPage() {
   // Filter players
   const filteredPlayers = newPlayers.filter(p => {
     const matchesSearch = 
-      normalizeStr(p.name?).includes(normalizeStr(searchTerm)) ||
-      normalizeStr(p.team_name?).includes(normalizeStr(searchTerm)) ||
-      normalizeStr(p.nationality?).includes(normalizeStr(searchTerm)) ||
+      normalizeStr(p.name).includes(normalizeStr(searchTerm)) ||
+      normalizeStr(p.team_name).includes(normalizeStr(searchTerm)) ||
+      normalizeStr(p.nationality).includes(normalizeStr(searchTerm)) ||
       p.player_id?.toString().includes(searchTerm)
 
     const matchesPosition = positionFilter === 'ALL' || p.position === positionFilter

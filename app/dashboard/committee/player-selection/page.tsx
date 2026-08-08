@@ -103,9 +103,9 @@ export default function PlayerSelectionPage() {
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase()
       filtered = filtered.filter(p =>
-        normalizeStr(p.name?).includes(normalizeStr(searchLower)) ||
-        normalizeStr(p.player_id?).includes(normalizeStr(searchLower)) ||
-        normalizeStr(p.position?).includes(normalizeStr(searchLower))
+        normalizeStr(p.name).includes(normalizeStr(searchLower)) ||
+        normalizeStr(p.player_id).includes(normalizeStr(searchLower)) ||
+        normalizeStr(p.position).includes(normalizeStr(searchLower))
       )
     }
 

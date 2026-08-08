@@ -176,8 +176,8 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const filteredPlayers = availablePlayers.filter(p =>
-    normalizeStr(p.full_name?).includes(normalizeStr(searchTerm)) ||
-    normalizeStr(p.position?).includes(normalizeStr(searchTerm))
+    normalizeStr(p.full_name).includes(normalizeStr(searchTerm)) ||
+    normalizeStr(p.position).includes(normalizeStr(searchTerm))
   );
 
   if (loading || isLoading || !round) {

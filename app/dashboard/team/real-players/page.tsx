@@ -202,8 +202,8 @@ export default function RealPlayersPage() {
     .filter((player) => {
       const matchesSearch =
         normalizeStr(player.player_name).includes(normalizeStr(searchTerm)) ||
-        (normalizeStr(player.display_name?).includes(normalizeStr(searchTerm))) ||
-        (normalizeStr(player.team?).includes(normalizeStr(searchTerm)) ?? false);
+        (normalizeStr(player.display_name).includes(normalizeStr(searchTerm))) ||
+        (normalizeStr(player.team).includes(normalizeStr(searchTerm)) ?? false);
       const matchesCat = categoryFilter === 'all' || player.category === categoryFilter;
       const matchesTeam = teamFilter === 'all' 
         ? true 

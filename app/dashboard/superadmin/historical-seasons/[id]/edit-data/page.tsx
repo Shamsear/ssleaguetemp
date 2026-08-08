@@ -427,9 +427,9 @@ export default function EditSeasonDataPage() {
 
   // Filter players based on search
   const filteredPlayers = players.filter(player => 
-    normalizeStr(player.name?).includes(normalizeStr(searchTerm)) ||
-    normalizeStr(player.team?).includes(normalizeStr(searchTerm)) ||
-    normalizeStr(player.category?).includes(normalizeStr(searchTerm))
+    normalizeStr(player.name).includes(normalizeStr(searchTerm)) ||
+    normalizeStr(player.team).includes(normalizeStr(searchTerm)) ||
+    normalizeStr(player.category).includes(normalizeStr(searchTerm))
   );
   
   // Apply sorting to players
@@ -437,9 +437,9 @@ export default function EditSeasonDataPage() {
 
   // Filter teams based on search
   const filteredTeams = teams.filter(team => 
-    normalizeStr(team.team_name?).includes(normalizeStr(searchTerm)) ||
-    normalizeStr(team.owner_name?).includes(normalizeStr(searchTerm)) ||
-    normalizeStr(team.team_code?).includes(normalizeStr(searchTerm))
+    normalizeStr(team.team_name).includes(normalizeStr(searchTerm)) ||
+    normalizeStr(team.owner_name).includes(normalizeStr(searchTerm)) ||
+    normalizeStr(team.team_code).includes(normalizeStr(searchTerm))
   );
   
   // Apply sorting to teams

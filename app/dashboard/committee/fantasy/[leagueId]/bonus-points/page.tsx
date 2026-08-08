@@ -181,15 +181,15 @@ export default function BonusPointsPage() {
     return items.filter((item: any) => {
       if (targetType === 'player') {
         return (
-          normalizeStr(item.player_name?).includes(normalizeStr(search)) ||
-          normalizeStr(item.real_player_id?).includes(normalizeStr(search)) ||
-          normalizeStr(item.position?).includes(normalizeStr(search)) ||
-          normalizeStr(item.real_team_name?).includes(normalizeStr(search))
+          normalizeStr(item.player_name).includes(normalizeStr(search)) ||
+          normalizeStr(item.real_player_id).includes(normalizeStr(search)) ||
+          normalizeStr(item.position).includes(normalizeStr(search)) ||
+          normalizeStr(item.real_team_name).includes(normalizeStr(search))
         )
       } else {
         return (
-          normalizeStr(item.team_name?).includes(normalizeStr(search)) ||
-          normalizeStr(item.team_id?).includes(normalizeStr(search))
+          normalizeStr(item.team_name).includes(normalizeStr(search)) ||
+          normalizeStr(item.team_id).includes(normalizeStr(search))
         )
       }
     })

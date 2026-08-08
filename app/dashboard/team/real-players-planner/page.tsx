@@ -271,10 +271,10 @@ export default function RealPlayersPlannerPage() {
     return availableRealPlayers
       .filter(
         (p) =>
-          normalizeStr(p.player_name?).includes(normalizeStr(term)) ||
-          normalizeStr(p.display_name?).includes(normalizeStr(term)) ||
-          normalizeStr(p.team?).includes(normalizeStr(term)) ||
-          normalizeStr(p.category?).includes(normalizeStr(term))
+          normalizeStr(p.player_name).includes(normalizeStr(term)) ||
+          normalizeStr(p.display_name).includes(normalizeStr(term)) ||
+          normalizeStr(p.team).includes(normalizeStr(term)) ||
+          normalizeStr(p.category).includes(normalizeStr(term))
       )
       .filter((p) => !players.some((pl) => pl.player_id === p.player_id));
   };
