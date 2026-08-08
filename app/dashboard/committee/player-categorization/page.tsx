@@ -8,7 +8,6 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import * as XLSX from 'xlsx';
 import { 
-import { normalizeStr } from '@/lib/utils/normalizeStr';
   ArrowLeft, 
   Layers, 
   Sparkles, 
@@ -25,6 +24,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
   Search,
   Check
 } from 'lucide-react';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 // Helper to group sub-seasons (like 16.5 into 16, 17.5 into 17)
 function getBaseSeasonId(seasonId: string): string {

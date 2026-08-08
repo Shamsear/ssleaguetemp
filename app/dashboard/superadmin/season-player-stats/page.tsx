@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 import { getIdToken } from 'firebase/auth';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { 
-import { normalizeStr } from '@/lib/utils/normalizeStr';
   ArrowLeft, 
   Search, 
   Download, 
@@ -21,6 +20,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
   Users, 
   Sparkles 
 } from 'lucide-react';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface PlayerStats {
   id: string;

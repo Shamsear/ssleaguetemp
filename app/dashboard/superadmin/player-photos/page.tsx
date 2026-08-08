@@ -7,7 +7,6 @@ import { db } from '@/lib/firebase/config';
 import { collection, query, getDocs, doc, updateDoc, orderBy } from 'firebase/firestore';
 import Image from 'next/image';
 import { 
-import { normalizeStr } from '@/lib/utils/normalizeStr';
   ArrowLeft, 
   Search, 
   Upload, 
@@ -21,6 +20,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
   Move,
   Maximize2
 } from 'lucide-react';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface Player {
   id: string;

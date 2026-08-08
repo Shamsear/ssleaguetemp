@@ -14,7 +14,6 @@ import {
 import { getAllSeasons } from '@/lib/firebase/seasons';
 import { useCachedTeams } from '@/hooks/useCachedData';
 import { 
-import { normalizeStr } from '@/lib/utils/normalizeStr';
   PlusCircle, 
   Search, 
   Trash2, 
@@ -34,6 +33,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
   RefreshCw,
   Sparkles
 } from 'lucide-react';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 export default function TeamsManagement() {
   const { user, loading } = useAuth();

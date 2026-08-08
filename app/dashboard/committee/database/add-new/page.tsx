@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
 import { 
-import { normalizeStr } from '@/lib/utils/normalizeStr';
   ArrowLeft, 
   Search, 
   RefreshCw, 
@@ -18,6 +17,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
   Plus,
   Info
 } from 'lucide-react'
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 export default function AddScrapedPlayersPage() {
   const router = useRouter()

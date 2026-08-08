@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import {
-import { normalizeStr } from '@/lib/utils/normalizeStr';
   Image as ImageIcon,
   Trash2,
   RefreshCw,
@@ -35,6 +34,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
   UserCheck,
   CheckCircle2,
 } from 'lucide-react';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

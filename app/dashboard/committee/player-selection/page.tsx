@@ -9,6 +9,7 @@ import { useModal } from '@/hooks/useModal'
 import AlertModal from '@/components/modals/AlertModal'
 import ConfirmModal from '@/components/modals/ConfirmModal'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface FootballPlayer {
   id: string
@@ -455,7 +456,6 @@ export default function PlayerSelectionPage() {
         { content: '4. You can only edit the "Eligible" column - other columns are for reference' },
         { content: '5. Save this file after making changes' },
         { content: '6. Upload the saved file back to the system using the import feature' },
-import { normalizeStr } from '@/lib/utils/normalizeStr';
         { content: '' },
         { content: 'Important Notes:' },
         { content: '• Do NOT change the Player ID or Name columns' },

@@ -11,6 +11,7 @@ import { usePlayerStats } from '@/hooks';
 import { useTournament } from '@/hooks/useTournaments';
 import TournamentSelector from '@/components/TournamentSelector';
 import { ArrowLeft, TrendingUp, Activity, Trophy, Download, Search, Award, Shield, Star, Crown, ChevronRight, Info, CheckCircle, X, Flame, BarChart2 } from 'lucide-react';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface PlayerStats {
   player_id: string;
@@ -178,7 +179,6 @@ export default function PlayerStatsPage() {
   const exportToExcel = async () => {
     try {
       // Dynamically import xlsx
-import { normalizeStr } from '@/lib/utils/normalizeStr';
       const XLSX = await import('xlsx');
       
       // Prepare data for export

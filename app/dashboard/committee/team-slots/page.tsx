@@ -8,7 +8,6 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import { db } from '@/lib/firebase/config'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
 import {
-import { normalizeStr } from '@/lib/utils/normalizeStr';
   ArrowLeft,
   Settings,
   Search,
@@ -25,6 +24,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
   CheckCircle,
   DollarSign
 } from 'lucide-react'
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 
 interface Team {
