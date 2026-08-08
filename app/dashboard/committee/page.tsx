@@ -776,7 +776,8 @@ export default function CommitteeDashboard() {
             </button>
 
             {expandedSections.auction && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-4 border-t border-slate-100">
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-4 border-t border-slate-100">
                 <Link href="/dashboard/committee/auction-settings" className="group bg-slate-50 border border-slate-200/60 rounded-xl p-4 hover:border-amber-400 hover:shadow-md hover:bg-white transition-all">
                   <div className="flex items-center justify-between mb-3">
                     <div className="p-2 rounded-lg bg-slate-850 text-amber-400 border border-slate-905 flex-shrink-0">
@@ -927,6 +928,7 @@ export default function CommitteeDashboard() {
                   )}
                 </div>
               </div>
+              </>
             )}
           </div>
 

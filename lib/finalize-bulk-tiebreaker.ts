@@ -4,7 +4,7 @@
 
 import { neon } from '@neondatabase/serverless';
 import { logAuctionWin } from './transaction-logger';
-import { getFirestore } from 'firebase-admin/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 import { triggerNews } from './news/trigger';
 import { broadcastSquadUpdate, broadcastWalletUpdate } from './realtime/broadcast';
 import { sendNotificationToSeason } from './notifications/send-notification';
@@ -275,7 +275,6 @@ export async function finalizeBulkTiebreaker(
     // Check if transaction already exists in Firebase
     let transactionExists = false;
     if (firebaseUid) {
-      const adminDb = getFirestore();
       const existingTxns = await adminDb.collection('transactions')
         .where('userId', '==', firebaseUid)
         .where('seasonId', '==', seasonId)
@@ -321,7 +320,6 @@ export async function finalizeBulkTiebreaker(
     }
     
     // Update team balance and log transaction in Firebase
-    const adminDb = getFirestore();
     const teamSeasonId = `${tiebreaker.current_highest_team_id}_${seasonId}`;
     const teamSeasonRef = adminDb.collection('team_seasons').doc(teamSeasonId);
     const teamSeasonSnap = await teamSeasonRef.get();

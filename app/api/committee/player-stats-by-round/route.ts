@@ -376,39 +376,7 @@ export async function GET(request: NextRequest) {
     // Fetch player photos from Firebase
     try {
       console.log('[Player Stats By Round] Starting Firebase photo fetch...');
-      const { initializeApp, getApps, cert } = await import('firebase-admin/app');
-      const { getFirestore } = await import('firebase-admin/firestore');
-      
-      // Initialize Firebase Admin if not already initialized
-      if (getApps().length === 0) {
-        console.log('[Player Stats By Round] Initializing Firebase Admin...');
-        // Use individual environment variables
-        const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
-        const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-        const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-        if (!projectId || !clientEmail || !privateKey) {
-          console.error('[Player Stats By Round] Missing Firebase Admin credentials:', {
-            hasProjectId: !!projectId,
-            hasClientEmail: !!clientEmail,
-            hasPrivateKey: !!privateKey
-          });
-          throw new Error('Firebase Admin credentials not configured');
-        }
-
-        initializeApp({
-          credential: cert({
-            projectId,
-            clientEmail,
-            privateKey,
-          }),
-        });
-        console.log('[Player Stats By Round] Firebase Admin initialized successfully');
-      } else {
-        console.log('[Player Stats By Round] Using existing Firebase Admin instance');
-      }
-
-      const adminDb = getFirestore();
+      // Using globally imported adminDb instance
       
       // Fetch player photos
       console.log('[Player Stats By Round] Fetching realplayers collection from Firestore...');

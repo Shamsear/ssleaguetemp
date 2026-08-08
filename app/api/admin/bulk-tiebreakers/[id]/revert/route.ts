@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 import { verifyAuth } from '@/lib/auth-helper';
-import { getFirestore } from 'firebase-admin/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 import { broadcastSquadUpdate, broadcastWalletUpdate } from '@/lib/realtime/broadcast';
 
 const sql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
@@ -177,7 +177,6 @@ export async function POST(
 
       if (firebaseUid) {
         try {
-          const adminDb = getFirestore();
           const existingTxns = await adminDb.collection('transactions')
             .where('userId', '==', firebaseUid)
             .where('seasonId', '==', seasonId)
@@ -198,7 +197,6 @@ export async function POST(
 
       // Refund Firebase team season budget and count
       try {
-        const adminDb = getFirestore();
         const teamSeasonId = `${winnerTeamId}_${seasonId}`;
         const teamSeasonRef = adminDb.collection('team_seasons').doc(teamSeasonId);
         const teamSeasonSnap = await teamSeasonRef.get();

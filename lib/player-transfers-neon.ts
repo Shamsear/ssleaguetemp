@@ -14,6 +14,7 @@
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { getAuctionDb } from '@/lib/neon/auction-config';
 import { db } from '@/lib/firebase/config';
+import { adminDb } from '@/lib/firebase/admin';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { 
   logReleaseRefund,
@@ -154,8 +155,6 @@ export async function releasePlayerNeon(
     
     // Get team_season document to update balance
     const teamSeasonDocId = `${playerData.team_id}_${currentSeasonId}`;
-    const { getFirestore } = await import('firebase-admin/firestore');
-    const adminDb = getFirestore();
     const teamSeasonRef = adminDb.collection('team_seasons').doc(teamSeasonDocId);
     const teamSeasonSnap = await teamSeasonRef.get();
     
@@ -325,9 +324,6 @@ export async function transferPlayerNeon(
     );
     
     // Get both team_season documents
-    const { getFirestore } = await import('firebase-admin/firestore');
-    const adminDb = getFirestore();
-    
     const oldTeamSeasonDocId = `${playerData.team_id}_${currentSeasonId}`;
     const newTeamSeasonDocId = `${newTeamId}_${currentSeasonId}`;
     
@@ -543,9 +539,6 @@ export async function swapPlayersNeon(
     const teamBId = playerBData.team_id;
     
     // Get both team_season documents
-    const { getFirestore } = await import('firebase-admin/firestore');
-    const adminDb = getFirestore();
-    
     const [teamASnap, teamBSnap] = await Promise.all([
       adminDb.collection('team_seasons').doc(`${teamAId}_${currentSeasonId}`).get(),
       adminDb.collection('team_seasons').doc(`${teamBId}_${currentSeasonId}`).get()

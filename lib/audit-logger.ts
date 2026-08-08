@@ -5,7 +5,7 @@
  * Logs committee admin actions like finalization previews, applications, and cancellations
  */
 
-import { getFirestore } from 'firebase-admin/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 
 export type AuditActionType = 
   | 'preview_finalization'      // Committee previewed finalization results
@@ -38,7 +38,7 @@ export interface AuditLogData {
  */
 export async function logAuditAction(data: AuditLogData): Promise<void> {
   try {
-    const db = getFirestore();
+    const db = adminDb;
     
     // Filter out undefined values from metadata
     const cleanMetadata = data.metadata ? 

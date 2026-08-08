@@ -5,7 +5,7 @@
  * including auctions, salaries, fines, player registrations, etc.
  */
 
-import { getFirestore } from 'firebase-admin/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 
 export type TransactionType = 
   | 'auction_win'           // Won player in auction
@@ -49,7 +49,7 @@ export interface TransactionData {
  */
 export async function logTransaction(data: TransactionData): Promise<void> {
   try {
-    const db = getFirestore();
+    const db = adminDb;
     
     // Filter out undefined values from metadata
     const cleanMetadata = data.metadata ? 

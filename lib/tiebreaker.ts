@@ -1,6 +1,5 @@
 import { neon } from '@neondatabase/serverless';
 import { logAuctionWin } from './transaction-logger';
-import { getFirestore } from 'firebase-admin/firestore';
 import { generateTiebreakerId, generateTeamTiebreakerId } from './id-generator';
 
 const sql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
