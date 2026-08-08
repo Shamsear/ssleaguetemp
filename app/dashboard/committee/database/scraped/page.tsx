@@ -152,9 +152,9 @@ export default function ScrapedPlayersViewPage() {
     setCurrentPage(1)
     return players.filter(p => {
       const matchesSearch = 
-        p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.team_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.nationality?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        normalizeStr(p.name?).includes(normalizeStr(searchTerm)) ||
+        normalizeStr(p.team_name?).includes(normalizeStr(searchTerm)) ||
+        normalizeStr(p.nationality?).includes(normalizeStr(searchTerm)) ||
         p.player_id?.toString().includes(searchTerm)
 
       const matchesPosition = positionFilter === 'ALL' || p.position === positionFilter
@@ -285,6 +285,7 @@ export default function ScrapedPlayersViewPage() {
           <h2 className="text-lg font-extrabold text-slate-700 font-mono">Scraped Registry is Empty</h2>
           <p className="text-slate-500 text-xs mt-2 leading-relaxed font-mono">
             No player stats have been crawled yet. Go back to the Database Scraper Console to select a position and trigger a live import job.
+import { normalizeStr } from '@/lib/utils/normalizeStr';
           </p>
           <Link
             href="/dashboard/committee/database"

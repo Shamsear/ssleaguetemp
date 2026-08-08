@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Award, ChevronDown, Star, Target, TrendingUp, Trophy, Users } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface Player {
   real_player_id: string;
@@ -113,8 +114,8 @@ export default function FantasyPlayersPage() {
     if (searchQuery) {
       filtered = filtered.filter(
         (p) =>
-          p.player_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.real_team_name.toLowerCase().includes(searchQuery.toLowerCase())
+          normalizeStr(p.player_name).includes(normalizeStr(searchQuery)) ||
+          normalizeStr(p.real_team_name).includes(normalizeStr(searchQuery))
       );
     }
 

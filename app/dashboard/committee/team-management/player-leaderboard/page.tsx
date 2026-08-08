@@ -10,6 +10,7 @@ import { useTournament } from '@/hooks/useTournaments';
 import { usePlayerStats } from '@/hooks';
 import { usePermissions } from '@/hooks/usePermissions';
 import TournamentSelector from '@/components/TournamentSelector';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface PlayerStats {
   id: string;
@@ -152,8 +153,8 @@ export default function PlayerLeaderboardPage() {
     if (searchTerm) {
       filtered = filtered.filter(
         (p) =>
-          p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.player_id.toLowerCase().includes(searchTerm.toLowerCase())
+          normalizeStr(p.name).includes(normalizeStr(searchTerm)) ||
+          normalizeStr(p.player_id).includes(normalizeStr(searchTerm))
       );
     }
 

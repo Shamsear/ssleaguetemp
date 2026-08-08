@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface PlayerStats {
     id: string;
@@ -222,7 +223,7 @@ export default function MyPlayerStatsPage() {
 
     const filteredPlayers = players
         .filter(p =>
-            p.player_name.toLowerCase().includes(searchTerm.toLowerCase())
+            normalizeStr(p.player_name).includes(normalizeStr(searchTerm))
         )
         .sort((a, b) => {
             const aVal = a[sortBy] ?? 0;

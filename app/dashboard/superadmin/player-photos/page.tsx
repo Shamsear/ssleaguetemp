@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase/config';
 import { collection, query, getDocs, doc, updateDoc, orderBy } from 'firebase/firestore';
 import Image from 'next/image';
 import { 
+import { normalizeStr } from '@/lib/utils/normalizeStr';
   ArrowLeft, 
   Search, 
   Upload, 
@@ -110,9 +111,9 @@ export default function PlayerPhotosManagement() {
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(p => 
-        p.name.toLowerCase().includes(term) ||
-        p.player_id.toLowerCase().includes(term) ||
-        (p.email && p.email.toLowerCase().includes(term))
+        normalizeStr(p.name).includes(normalizeStr(term)) ||
+        normalizeStr(p.player_id).includes(normalizeStr(term)) ||
+        (p.email && normalizeStr(p.email).includes(normalizeStr(term)))
       );
     }
 

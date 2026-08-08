@@ -636,14 +636,14 @@ export default function RealPlayersPage() {
     .filter(p => categoryFilter === 'all' || p.category === categoryFilter)
     .filter(p => {
       const q = playerSearchQuery.toLowerCase();
-      return p.playerName.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+      return normalizeStr(p.playerName).includes(normalizeStr(q)) || normalizeStr(p.category).includes(normalizeStr(q));
     })
     .sort((a, b) => a.playerName.localeCompare(b.playerName));
 
   const filteredTeamsForDropdown = teams
     .filter(t => {
       const q = teamSearchQuery.toLowerCase();
-      return t.name.toLowerCase().includes(q);
+      return normalizeStr(t.name).includes(normalizeStr(q));
     })
     .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -846,7 +846,7 @@ export default function RealPlayersPage() {
   };
 
   const filteredAvailablePlayers = availablePlayers.filter(p =>
-    p.playerName.toLowerCase().includes(searchTerm.toLowerCase())
+    normalizeStr(p.playerName).includes(normalizeStr(searchTerm))
   );
 
   const minPlayers = currentSeason?.min_real_players || 5;
@@ -1369,6 +1369,7 @@ export default function RealPlayersPage() {
                             <Link href="/dashboard/committee/player-categorization" className="text-amber-500 underline">
                               Categorize players
                             </Link> to import members
+import { normalizeStr } from '@/lib/utils/normalizeStr';
                           </>
                         )}
                       </p>
@@ -1647,8 +1648,8 @@ export default function RealPlayersPage() {
                                     .filter(p => {
                                       const searchTerm = (dropdownSearchTerms.get(team.id) || '').toLowerCase();
                                       if (!searchTerm) return true;
-                                      return p.playerName.toLowerCase().includes(searchTerm) ||
-                                        p.category?.toLowerCase().includes(searchTerm);
+                                      return normalizeStr(p.playerName).includes(normalizeStr(searchTerm)) ||
+                                        normalizeStr(p.category?).includes(normalizeStr(searchTerm));
                                     })
                                     .slice(0, 50)
                                     .map(player => (
@@ -1679,8 +1680,8 @@ export default function RealPlayersPage() {
                                   {availablePlayers.filter(p => {
                                     const searchTerm = (dropdownSearchTerms.get(team.id) || '').toLowerCase();
                                     if (!searchTerm) return true;
-                                    return p.playerName.toLowerCase().includes(searchTerm) ||
-                                      p.category?.toLowerCase().includes(searchTerm);
+                                    return normalizeStr(p.playerName).includes(normalizeStr(searchTerm)) ||
+                                      normalizeStr(p.category?).includes(normalizeStr(searchTerm));
                                   }).length === 0 && (
                                       <div className="px-3 py-4 text-center text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">
                                         No players found

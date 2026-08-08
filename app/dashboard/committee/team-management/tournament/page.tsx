@@ -15,6 +15,7 @@ import ConfirmModal from '@/components/modals/ConfirmModal';
 import RoundFixturesShareButton from '@/components/RoundFixturesShareButton';
 import TournamentStandings from '@/components/tournament/TournamentStandings';
 import { Activity, AlertTriangle, ArrowLeft, Award, Ban, BarChart2, Bot, Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, ClipboardList, Clock, DollarSign, Download, Eye, FileText, Handshake, HeartCrack, HelpCircle, Info, Layers, Lightbulb, Pencil, Play, Plus, RefreshCw, Search, Settings, Share2, Shield, Shuffle, Sparkles, Star, Trash2, Trophy, Users, X, XCircle, Crown, Flame, Swords } from 'lucide-react';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 const getCategoryColor = (name: string) => {
   const normalized = name.trim().toLowerCase();
@@ -1611,8 +1612,8 @@ export function TournamentDashboardPageContent() {
 
   // Filter teams for search
   const filteredTeams = allTeams.filter((teamData: any) =>
-    teamData.team.name.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
-    teamData.team.id.toLowerCase().includes(teamSearchTerm.toLowerCase())
+    normalizeStr(teamData.team.name).includes(normalizeStr(teamSearchTerm)) ||
+    normalizeStr(teamData.team.id).includes(normalizeStr(teamSearchTerm))
   );
 
   // Get selected tournament details

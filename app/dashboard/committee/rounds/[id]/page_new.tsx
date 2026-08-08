@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface Bid {
   id: string;
@@ -175,8 +176,8 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const filteredPlayers = availablePlayers.filter(p =>
-    p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.position?.toLowerCase().includes(searchTerm.toLowerCase())
+    normalizeStr(p.full_name?).includes(normalizeStr(searchTerm)) ||
+    normalizeStr(p.position?).includes(normalizeStr(searchTerm))
   );
 
   if (loading || isLoading || !round) {

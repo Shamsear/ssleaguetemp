@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import OptimizedImage from '@/components/OptimizedImage';
 import { createPortal } from 'react-dom';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface RealPlayer {
   player_id: string;
@@ -270,10 +271,10 @@ export default function RealPlayersPlannerPage() {
     return availableRealPlayers
       .filter(
         (p) =>
-          p.player_name?.toLowerCase().includes(term) ||
-          p.display_name?.toLowerCase().includes(term) ||
-          p.team?.toLowerCase().includes(term) ||
-          p.category?.toLowerCase().includes(term)
+          normalizeStr(p.player_name?).includes(normalizeStr(term)) ||
+          normalizeStr(p.display_name?).includes(normalizeStr(term)) ||
+          normalizeStr(p.team?).includes(normalizeStr(term)) ||
+          normalizeStr(p.category?).includes(normalizeStr(term))
       )
       .filter((p) => !players.some((pl) => pl.player_id === p.player_id));
   };

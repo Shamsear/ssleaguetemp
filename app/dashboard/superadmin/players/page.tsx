@@ -7,6 +7,7 @@ import { getAllRealPlayers, getRealPlayerStatistics, createRealPlayer } from '@/
 import { RealPlayerData } from '@/types/realPlayer';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 export default function PlayersManagement() {
   const { user, loading } = useAuth();
@@ -147,19 +148,19 @@ export default function PlayersManagement() {
       filtered = filtered.filter(p => {
         // Search in player name and ID
         const matchesBasicInfo = 
-          p.name.toLowerCase().includes(term) ||
-          p.player_id.toLowerCase().includes(term) ||
-          (p.display_name && p.display_name.toLowerCase().includes(term));
+          normalizeStr(p.name).includes(normalizeStr(term)) ||
+          normalizeStr(p.player_id).includes(normalizeStr(term)) ||
+          (p.display_name && normalizeStr(p.display_name).includes(normalizeStr(term)));
         
         // Search in team info (team_name is the assigned team, team is previous team)
         const matchesTeam = 
-          (p.team_name && p.team_name.toLowerCase().includes(term)) ||
-          (p.team && p.team.toLowerCase().includes(term)) ||
-          (p.team_code && p.team_code.toLowerCase().includes(term));
+          (p.team_name && normalizeStr(p.team_name).includes(normalizeStr(term))) ||
+          (p.team && normalizeStr(p.team).includes(normalizeStr(term))) ||
+          (p.team_code && normalizeStr(p.team_code).includes(normalizeStr(term)));
         
         // Search in season info
         const matchesSeason = 
-          (p.season_name && p.season_name.toLowerCase().includes(term));
+          (p.season_name && normalizeStr(p.season_name).includes(normalizeStr(term)));
         
         return matchesBasicInfo || matchesTeam || matchesSeason;
       });

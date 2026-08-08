@@ -103,9 +103,9 @@ export default function PlayerSelectionPage() {
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase()
       filtered = filtered.filter(p =>
-        p.name?.toLowerCase().includes(searchLower) ||
-        p.player_id?.toLowerCase().includes(searchLower) ||
-        p.position?.toLowerCase().includes(searchLower)
+        normalizeStr(p.name?).includes(normalizeStr(searchLower)) ||
+        normalizeStr(p.player_id?).includes(normalizeStr(searchLower)) ||
+        normalizeStr(p.position?).includes(normalizeStr(searchLower))
       )
     }
 
@@ -455,6 +455,7 @@ export default function PlayerSelectionPage() {
         { content: '4. You can only edit the "Eligible" column - other columns are for reference' },
         { content: '5. Save this file after making changes' },
         { content: '6. Upload the saved file back to the system using the import feature' },
+import { normalizeStr } from '@/lib/utils/normalizeStr';
         { content: '' },
         { content: 'Important Notes:' },
         { content: '• Do NOT change the Player ID or Name columns' },

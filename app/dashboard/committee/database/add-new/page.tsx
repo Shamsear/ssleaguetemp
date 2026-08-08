@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
 import { 
+import { normalizeStr } from '@/lib/utils/normalizeStr';
   ArrowLeft, 
   Search, 
   RefreshCw, 
@@ -204,9 +205,9 @@ export default function AddScrapedPlayersPage() {
   // Filter players
   const filteredPlayers = newPlayers.filter(p => {
     const matchesSearch = 
-      p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.team_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.nationality?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      normalizeStr(p.name?).includes(normalizeStr(searchTerm)) ||
+      normalizeStr(p.team_name?).includes(normalizeStr(searchTerm)) ||
+      normalizeStr(p.nationality?).includes(normalizeStr(searchTerm)) ||
       p.player_id?.toString().includes(searchTerm)
 
     const matchesPosition = positionFilter === 'ALL' || p.position === positionFilter

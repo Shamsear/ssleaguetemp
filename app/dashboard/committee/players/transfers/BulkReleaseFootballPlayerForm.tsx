@@ -101,14 +101,17 @@ export default function BulkReleaseFootballPlayerForm() {
     loadPlayers();
   }, [userSeasonId, cachedTeams]);
 
+  const normalizeStr = (str: string) =>
+    str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
   // Filtered players based on search
   const filteredPlayers = useMemo(() => {
     if (!searchQuery) return players;
-    const searchLower = searchQuery.toLowerCase();
+    const cleanSearch = normalizeStr(searchQuery);
     return players.filter(p =>
-      p.player_name.toLowerCase().includes(searchLower) ||
-      p.team_name?.toLowerCase().includes(searchLower) ||
-      p.position.toLowerCase().includes(searchLower)
+      normalizeStr(p.player_name).includes(cleanSearch) ||
+      normalizeStr(p.team_name ?? '').includes(cleanSearch) ||
+      normalizeStr(p.position).includes(cleanSearch)
     );
   }, [players, searchQuery]);
 

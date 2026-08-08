@@ -11,6 +11,7 @@ import PlayerImage, { PlayerAvatar } from '@/components/PlayerImage';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useCachedSeasons } from '@/hooks/useCachedFirebase';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 // Position constants
 const POSITIONS = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
@@ -195,18 +196,18 @@ export default function TeamPlayersPage() {
   // Filter and sort players based on current tab
   const filteredPlayers = currentPlayers
     .filter(player => {
-      const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = normalizeStr(player.name).includes(normalizeStr(searchTerm));
       
       if (activeTab === 'auction') {
         const auctionPlayer = player as AuctionPlayer;
-        const positionMatch = auctionPlayer.position?.toLowerCase().includes(searchTerm.toLowerCase());
+        const positionMatch = normalizeStr(auctionPlayer.position?).includes(normalizeStr(searchTerm));
         const searchMatch = matchesSearch || positionMatch;
         const matchesPosition = positionFilter === 'all' || auctionPlayer.position === positionFilter;
         const matchesGroup = positionGroupFilter === 'all' || auctionPlayer.position_group === positionGroupFilter;
         return searchMatch && matchesPosition && matchesGroup;
       } else {
         const tournamentPlayer = player as TournamentPlayer;
-        const categoryMatch = tournamentPlayer.category?.toLowerCase().includes(searchTerm.toLowerCase());
+        const categoryMatch = normalizeStr(tournamentPlayer.category?).includes(normalizeStr(searchTerm));
         const searchMatch = matchesSearch || categoryMatch;
         
         // Tournament player filters

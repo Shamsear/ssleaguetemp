@@ -131,7 +131,7 @@ export async function getAllPlayers(filters?: {
         params.push(filters.retired);
       }
       if (filters?.search) {
-        query += ` AND (name ILIKE $${paramIndex++} OR player_id ILIKE $${paramIndex++} OR position ILIKE $${paramIndex++})`;
+        query += ` AND (unaccent(name) ILIKE unaccent($${paramIndex++}) OR player_id ILIKE $${paramIndex++} OR position ILIKE $${paramIndex++})`;
         const searchPattern = `%${filters.search}%`;
         params.push(searchPattern, searchPattern, searchPattern);
       }
@@ -453,7 +453,7 @@ export async function getTotalPlayerCountWithFilters(filters?: {
         params.push(filters.retired);
       }
       if (filters?.search) {
-        query += ` AND (name ILIKE $${paramIndex++} OR player_id ILIKE $${paramIndex++} OR position ILIKE $${paramIndex++})`;
+        query += ` AND (unaccent(name) ILIKE unaccent($${paramIndex++}) OR player_id ILIKE $${paramIndex++} OR position ILIKE $${paramIndex++})`;
         const searchPattern = `%${filters.search}%`;
         params.push(searchPattern, searchPattern, searchPattern);
       }
@@ -478,7 +478,7 @@ export async function getTotalPlayerCountWithFilters(filters?: {
 export async function searchPlayers(searchTerm: string, limit: number = 50): Promise<FootballPlayer[]> {
   const result = await sql`
     SELECT * FROM footballplayers 
-    WHERE name ILIKE ${'%' + searchTerm + '%'}
+    WHERE unaccent(name) ILIKE unaccent(${'%' + searchTerm + '%'})
     OR player_id ILIKE ${'%' + searchTerm + '%'}
     ORDER BY name ASC
     LIMIT ${limit}

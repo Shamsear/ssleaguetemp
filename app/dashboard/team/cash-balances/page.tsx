@@ -21,6 +21,7 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { createPortal } from 'react-dom';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface CashPayment {
   payment_id: string;
@@ -323,7 +324,7 @@ export default function TeamCashBalances() {
               <p className="text-xs uppercase font-extrabold">No Teams Registered</p>
               <p className="text-[10px] font-bold uppercase mt-1">No data available for this season</p>
             </div>
-          ) : balances.filter(t => t.team_name.toLowerCase().includes(searchQuery.toLowerCase()) || t.team_id.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+          ) : balances.filter(t => normalizeStr(t.team_name).includes(normalizeStr(searchQuery)) || normalizeStr(t.team_id).includes(normalizeStr(searchQuery))).length === 0 ? (
             <div className="py-12 text-center text-slate-400">
               <HelpCircle className="w-12 h-12 mx-auto text-slate-300 mb-3" />
               <p className="text-xs uppercase font-extrabold">No Teams Found</p>
@@ -351,7 +352,7 @@ export default function TeamCashBalances() {
                 </thead>
                 <tbody>
                   {balances
-                    .filter(t => t.team_name.toLowerCase().includes(searchQuery.toLowerCase()) || t.team_id.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .filter(t => normalizeStr(t.team_name).includes(normalizeStr(searchQuery)) || normalizeStr(t.team_id).includes(normalizeStr(searchQuery)))
                     .map((team) => {
                     const totalPaymentsSum = team.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
                     const seasonPaymentsSum = team.payments?.filter(p => p.season_id === selectedSeasonId).reduce((sum, p) => sum + p.amount, 0) || 0;

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface FantasyTeam {
   id: string;
@@ -288,8 +289,8 @@ export default function ManagePlayersPage() {
   };
 
   const filteredDrafted = draftedPlayers.filter(p =>
-    p.player_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.team_name.toLowerCase().includes(searchQuery.toLowerCase())
+    normalizeStr(p.player_name).includes(normalizeStr(searchQuery)) ||
+    normalizeStr(p.team_name).includes(normalizeStr(searchQuery))
   );
 
   if (loading || isLoading) {

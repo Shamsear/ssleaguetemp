@@ -7,6 +7,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface PlayerEligibility {
     id: string;
@@ -121,8 +122,8 @@ export default function PlayerEligibilityPage() {
 
     const filteredPlayers = players
         .filter(p => {
-            const matchesSearch = p.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                p.team_name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesSearch = normalizeStr(p.player_name).includes(normalizeStr(searchTerm)) ||
+                normalizeStr(p.team_name).includes(normalizeStr(searchTerm));
             const matchesTeam = filterTeam === 'all' || p.team_id === filterTeam;
             const matchesEligibility = filterEligibility === 'all' ||
                 (filterEligibility === 'eligible' && p.matches_played >= minGames) ||

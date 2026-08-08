@@ -8,6 +8,7 @@ import { Check, DollarSign, Edit, Filter, Lock, Save, Shield, Sparkles, Star, Tr
 import { useAutoCloseDraft } from '@/hooks/useAutoCloseDraft';
 // Firebase Realtime DB handles draft status updates automatically
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface Player {
   real_player_id: string;
@@ -414,7 +415,7 @@ export default function TeamDraftPage() {
     if (filter.position !== 'all' && player.position !== filter.position) return false;
     if (filter.team !== 'all' && player.team !== filter.team) return false;
     if (filter.stars !== 'all' && player.star_rating !== parseInt(filter.stars)) return false;
-    if (filter.search && !player.player_name.toLowerCase().includes(filter.search.toLowerCase()))
+    if (filter.search && !normalizeStr(player.player_name).includes(normalizeStr(filter.search)))
       return false;
     return true;
   });

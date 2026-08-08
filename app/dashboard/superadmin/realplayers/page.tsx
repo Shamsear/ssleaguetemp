@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import Link from 'next/link';
 import PlayerPhoto from '@/components/PlayerPhoto';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface RealPlayer {
   player_id: string;
@@ -90,12 +91,12 @@ export default function RealPlayersPage() {
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       let filtered = players.filter(p => 
-        p.name?.toLowerCase().includes(term) ||
-        p.display_name?.toLowerCase().includes(term) ||
-        p.player_id?.toLowerCase().includes(term) ||
-        p.phone?.toLowerCase().includes(term) ||
-        p.email?.toLowerCase().includes(term) ||
-        p.place?.toLowerCase().includes(term)
+        normalizeStr(p.name?).includes(normalizeStr(term)) ||
+        normalizeStr(p.display_name?).includes(normalizeStr(term)) ||
+        normalizeStr(p.player_id?).includes(normalizeStr(term)) ||
+        normalizeStr(p.phone?).includes(normalizeStr(term)) ||
+        normalizeStr(p.email?).includes(normalizeStr(term)) ||
+        normalizeStr(p.place?).includes(normalizeStr(term))
       );
       
       // Apply place filter

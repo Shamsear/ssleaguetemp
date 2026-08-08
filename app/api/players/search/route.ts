@@ -18,7 +18,7 @@ async function getAllPlayers() {
   // Fetch fresh data
   const realPlayersRef = collection(db, 'realplayers');
   const playersSnapshot = await getDocs(
-    query(realPlayersRef, orderBy('player_id'), firestoreLimit(500))
+    query(realPlayersRef, orderBy('player_id'))
   );
 
   const players = playersSnapshot.docs.map(doc => ({
@@ -53,59 +53,16 @@ export async function GET(request: NextRequest) {
       const allPlayersData = await getAllPlayers();
       allPlayers = allPlayersData.slice(0, limit);
     } else {
-      // Query Firestore directly for prefix matches (highly optimized, only fetches needed docs)
-      const realPlayersRef = collection(db, 'realplayers');
-      const termLower = term.toLowerCase();
+      // Search in memory from all players cache (enables substring matching & diacritic-insensitive search)
+      const allPlayersData = await getAllPlayers();
+      const normalizeStr = (str: string) => 
+        str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const cleanTerm = normalizeStr(term);
       
-      // Capitalize first letters of name search to match CamelCase formatting in Firestore
-      const termCapitalized = term.split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ');
-
-      const [idSnapshot, nameSnapshot] = await Promise.all([
-        getDocs(
-          query(
-            realPlayersRef,
-            where('player_id', '>=', termLower),
-            where('player_id', '<=', termLower + '\uf8ff'),
-            firestoreLimit(limit)
-          )
-        ),
-        getDocs(
-          query(
-            realPlayersRef,
-            where('name', '>=', termCapitalized),
-            where('name', '<=', termCapitalized + '\uf8ff'),
-            firestoreLimit(limit)
-          )
-        )
-      ]);
-
-      const playerMap = new Map<string, any>();
-      
-      idSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        if (data.player_id) {
-          playerMap.set(data.player_id, {
-            id: doc.id,
-            player_id: data.player_id,
-            name: data.name,
-          });
-        }
-      });
-
-      nameSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        if (data.player_id) {
-          playerMap.set(data.player_id, {
-            id: doc.id,
-            player_id: data.player_id,
-            name: data.name,
-          });
-        }
-      });
-
-      allPlayers = Array.from(playerMap.values()).slice(0, limit);
+      allPlayers = allPlayersData.filter(player => 
+        (player.name && normalizeStr(player.name).includes(cleanTerm)) ||
+        (player.player_id && normalizeStr(player.player_id).includes(cleanTerm))
+      ).slice(0, limit);
     }
 
     if (allPlayers.length === 0) {

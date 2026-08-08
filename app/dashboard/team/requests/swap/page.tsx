@@ -10,6 +10,7 @@ import { ArrowRightLeft, AlertTriangle, Calendar } from 'lucide-react';
 import SearchablePlayerSelect from '@/components/ui/SearchablePlayerSelect';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 // Custom UI Components replacing missing shadcn imports
 const Card = ({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -289,7 +290,7 @@ export default function TeamSwapRequestPage() {
 
   const filteredOtherTeams = useMemo(() => {
     return otherTeams.filter(team => 
-      team.name.toLowerCase().includes(teamSearch.toLowerCase())
+      normalizeStr(team.name).includes(normalizeStr(teamSearch))
     );
   }, [otherTeams, teamSearch]);
 

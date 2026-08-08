@@ -65,9 +65,11 @@ export default function SearchablePlayerSelect({
     return playerType === 'football' ? (player.acquisition_value || 0) : (player.auction_value || 0);
   };
 
-  const filteredPlayers = players.filter(p => 
-    p.player_name.toLowerCase().includes(search.toLowerCase()) ||
-    p.team_name?.toLowerCase().includes(search.toLowerCase())
+  const normalizeStr = (str: string) =>
+    str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const filteredPlayers = players.filter(p =>
+    normalizeStr(p.player_name).includes(normalizeStr(search)) ||
+    normalizeStr(p.team_name ?? '').includes(normalizeStr(search))
   );
 
   // Close dropdown when clicking outside or scrolling outside

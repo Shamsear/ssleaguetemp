@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { ArrowLeft, BarChart2, Calendar, ClipboardList, Search, User } from 'lucide-react';
 import { db } from '@/lib/firebase/client';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface PlayerStats {
   id: string;
@@ -233,8 +234,8 @@ export default function TeamPlayerStatsPage() {
 
   const filteredPlayers = players
     .filter(p =>
-      p.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.team?.toLowerCase().includes(searchTerm.toLowerCase())
+      normalizeStr(p.player_name).includes(normalizeStr(searchTerm)) ||
+      normalizeStr(p.team?).includes(normalizeStr(searchTerm))
     )
     .sort((a, b) => {
       const aVal = a[sortBy] ?? 0;

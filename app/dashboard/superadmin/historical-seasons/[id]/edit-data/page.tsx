@@ -7,6 +7,7 @@ import { getIdToken } from 'firebase/auth';
 import { getSmartCache, setSmartCache, CACHE_DURATIONS } from '@/utils/smartCache';
 import { clearCache } from '@/utils/cache';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface Team {
   id: string;
@@ -426,9 +427,9 @@ export default function EditSeasonDataPage() {
 
   // Filter players based on search
   const filteredPlayers = players.filter(player => 
-    player.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    player.team?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    player.category?.toLowerCase().includes(searchTerm.toLowerCase())
+    normalizeStr(player.name?).includes(normalizeStr(searchTerm)) ||
+    normalizeStr(player.team?).includes(normalizeStr(searchTerm)) ||
+    normalizeStr(player.category?).includes(normalizeStr(searchTerm))
   );
   
   // Apply sorting to players
@@ -436,9 +437,9 @@ export default function EditSeasonDataPage() {
 
   // Filter teams based on search
   const filteredTeams = teams.filter(team => 
-    team.team_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    team.owner_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    team.team_code?.toLowerCase().includes(searchTerm.toLowerCase())
+    normalizeStr(team.team_name?).includes(normalizeStr(searchTerm)) ||
+    normalizeStr(team.owner_name?).includes(normalizeStr(searchTerm)) ||
+    normalizeStr(team.team_code?).includes(normalizeStr(searchTerm))
   );
   
   // Apply sorting to teams

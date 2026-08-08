@@ -11,6 +11,7 @@ import TournamentSelector from '@/components/TournamentSelector';
 import PosterStudio from '@/components/PosterStudio';
 import { ArrowLeft, Award, BarChart2, Calendar, ClipboardList, Download, FileSpreadsheet, Search, Trophy, User, Users } from 'lucide-react';
 import PlayerPhoto from '@/components/PlayerPhoto';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface PlayerStats {
   player_id: string;
@@ -230,14 +231,14 @@ export default function PlayerStatsByRoundPage() {
   let filteredPlayers = playerStats.filter((player) => {
     // For 'By Week' tab, use separate search terms
     if (activeTab === 'by-week') {
-      const matchesPlayer = !playerSearchTerm || player.player_name.toLowerCase().includes(playerSearchTerm.toLowerCase());
-      const matchesTeam = !teamSearchTerm || player.team_name.toLowerCase().includes(teamSearchTerm.toLowerCase());
+      const matchesPlayer = !playerSearchTerm || normalizeStr(player.player_name).includes(normalizeStr(playerSearchTerm));
+      const matchesTeam = !teamSearchTerm || normalizeStr(player.team_name).includes(normalizeStr(teamSearchTerm));
       return matchesPlayer && matchesTeam;
     }
     
     // For 'All' tab, use combined search
-    return player.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           player.team_name.toLowerCase().includes(searchTerm.toLowerCase());
+    return normalizeStr(player.player_name).includes(normalizeStr(searchTerm)) ||
+           normalizeStr(player.team_name).includes(normalizeStr(searchTerm));
   });
 
   // Apply tab filters

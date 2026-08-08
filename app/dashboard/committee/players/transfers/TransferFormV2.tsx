@@ -104,13 +104,16 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
     loadPlayers();
   }, [userSeasonId, cachedTeams, playerType]);
 
+  const normalizeStr = (str: string) =>
+    str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
   // Get filtered players based on search
   const filteredPlayers = useMemo(() => {
     if (!searchPlayer) return players;
-    const searchLower = searchPlayer.toLowerCase();
-    return players.filter(p => 
-      p.player_name.toLowerCase().includes(searchLower) ||
-      p.team_name?.toLowerCase().includes(searchLower)
+    const cleanSearch = normalizeStr(searchPlayer);
+    return players.filter(p =>
+      normalizeStr(p.player_name).includes(cleanSearch) ||
+      normalizeStr(p.team_name ?? '').includes(cleanSearch)
     );
   }, [players, searchPlayer]);
 

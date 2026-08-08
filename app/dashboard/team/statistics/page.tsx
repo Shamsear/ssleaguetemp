@@ -7,6 +7,7 @@ import Link from 'next/link';
 import PlayerImage, { PlayerAvatar } from '@/components/PlayerImage';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 // Position constants
 const POSITIONS = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
@@ -108,7 +109,7 @@ export default function PlayerStatisticsPage() {
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(player =>
-        player.name.toLowerCase().includes(searchTerm.toLowerCase())
+        normalizeStr(player.name).includes(normalizeStr(searchTerm))
       );
     }
 

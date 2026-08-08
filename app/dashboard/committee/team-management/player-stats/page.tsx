@@ -143,9 +143,9 @@ export default function PlayerStatsPage() {
     // Search filter (only for 'all' tab)
     if (activeTab === 'all' && searchTerm) {
       filtered = filtered.filter((p) =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.player_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.team_name.toLowerCase().includes(searchTerm.toLowerCase())
+        normalizeStr(p.name).includes(normalizeStr(searchTerm)) ||
+        normalizeStr(p.player_id).includes(normalizeStr(searchTerm)) ||
+        normalizeStr(p.team_name).includes(normalizeStr(searchTerm))
       );
     }
 
@@ -178,6 +178,7 @@ export default function PlayerStatsPage() {
   const exportToExcel = async () => {
     try {
       // Dynamically import xlsx
+import { normalizeStr } from '@/lib/utils/normalizeStr';
       const XLSX = await import('xlsx');
       
       // Prepare data for export

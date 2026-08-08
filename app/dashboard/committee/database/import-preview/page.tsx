@@ -86,8 +86,8 @@ export default function ImportPreviewPage() {
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
       filtered = filtered.filter(player => 
-        player.name?.toLowerCase().includes(term) ||
-        player.team_name?.toLowerCase().includes(term)
+        normalizeStr(player.name?).includes(normalizeStr(term)) ||
+        normalizeStr(player.team_name?).includes(normalizeStr(term))
       )
     }
 
@@ -596,6 +596,7 @@ export default function ImportPreviewPage() {
           <div>
             <h3 className="text-lg font-semibold text-gray-800 mb-1">Ready to Import</h3>
             <p className="text-sm text-gray-600">Review your changes and start the import process</p>
+import { normalizeStr } from '@/lib/utils/normalizeStr';
           </div>
           <div className="flex gap-3">
             <button

@@ -108,13 +108,16 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
     loadPlayers();
   }, [userSeasonId, cachedTeams, playerType]);
 
+  const normalizeStr = (str: string) =>
+    str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
   // Get filtered players for Player A based on search
   const filteredPlayersA = useMemo(() => {
     if (!searchPlayerA) return players;
-    const searchLower = searchPlayerA.toLowerCase();
-    return players.filter(p => 
-      p.player_name.toLowerCase().includes(searchLower) ||
-      p.team_name?.toLowerCase().includes(searchLower)
+    const cleanSearch = normalizeStr(searchPlayerA);
+    return players.filter(p =>
+      normalizeStr(p.player_name).includes(cleanSearch) ||
+      normalizeStr(p.team_name ?? '').includes(cleanSearch)
     );
   }, [players, searchPlayerA]);
 
@@ -136,10 +139,10 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
   // Get filtered players for Player B based on search
   const filteredPlayersB = useMemo(() => {
     if (!searchPlayerB) return availablePlayersForB;
-    const searchLower = searchPlayerB.toLowerCase();
-    return availablePlayersForB.filter(p => 
-      p.player_name.toLowerCase().includes(searchLower) ||
-      p.team_name?.toLowerCase().includes(searchLower)
+    const cleanSearch = normalizeStr(searchPlayerB);
+    return availablePlayersForB.filter(p =>
+      normalizeStr(p.player_name).includes(cleanSearch) ||
+      normalizeStr(p.team_name ?? '').includes(cleanSearch)
     );
   }, [availablePlayersForB, searchPlayerB]);
 

@@ -10,6 +10,7 @@ import { BarChart2, ArrowLeft, Pencil, Check, Search, Calendar, Users, Trophy, C
 import { db } from '@/lib/firebase/client';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import PlayerPhoto from '@/components/PlayerPhoto';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface PlayerStats {
   id: string;
@@ -350,8 +351,8 @@ export default function PlayerStatsPage() {
 
   const filteredPlayers = players
     .filter(p =>
-      p.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.team?.toLowerCase().includes(searchTerm.toLowerCase())
+      normalizeStr(p.player_name).includes(normalizeStr(searchTerm)) ||
+      normalizeStr(p.team?).includes(normalizeStr(searchTerm))
     )
     .sort((a, b) => {
       const aVal = a[sortBy] ?? 0;

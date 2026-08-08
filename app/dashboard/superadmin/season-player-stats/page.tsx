@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { getIdToken } from 'firebase/auth';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { 
+import { normalizeStr } from '@/lib/utils/normalizeStr';
   ArrowLeft, 
   Search, 
   Download, 
@@ -244,9 +245,9 @@ export default function SeasonPlayerStats() {
 
   // Filters logic
   const filteredPlayers = players.filter(player => {
-    const matchesSearch = player.player_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          player.player_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          player.team_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = normalizeStr(player.player_name).includes(normalizeStr(searchQuery)) ||
+                          normalizeStr(player.player_id).includes(normalizeStr(searchQuery)) ||
+                          normalizeStr(player.team_name?).includes(normalizeStr(searchQuery));
     const matchesPosition = filterPosition === 'all' || player.position === filterPosition;
     const matchesTeam = filterTeam === 'all' || player.team_code === filterTeam;
     const matchesStatus = filterStatus === 'all' || 

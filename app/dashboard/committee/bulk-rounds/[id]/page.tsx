@@ -9,6 +9,7 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { PlayerAvatar } from '@/components/PlayerImage';
 import { ArrowLeft, Clock, DollarSign, Users, Check, Calendar, ChevronRight, Info, Sparkles, Plus, Play, Layers, Settings, Download, RefreshCw, AlertTriangle, XCircle, CheckCircle, Trash2, Lock, Trophy, BarChart2 } from 'lucide-react';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface BulkBid {
   player_id: string;
@@ -672,8 +673,8 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
   };
 
   const filteredPlayers = availablePlayers.filter(p =>
-    p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.position?.toLowerCase().includes(searchTerm.toLowerCase())
+    normalizeStr(p.full_name?).includes(normalizeStr(searchTerm)) ||
+    normalizeStr(p.position?).includes(normalizeStr(searchTerm))
   );
 
   const playersByStatus = () => {

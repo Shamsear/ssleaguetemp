@@ -10,9 +10,10 @@ import { ArrowLeft, RefreshCw, Search, ShieldAlert, CheckCircle, AlertTriangle, 
 
 export default function PlayerReplacementPage() {
   const { seasonId: selectedSeason } = useTournamentContext();
-  const { user } = usePermissions();
+  const { user, userSeasonId } = usePermissions();
+  const activeSeasonId = userSeasonId || selectedSeason;
   const { data: teamSeasons, loading: teamsLoading } = useCachedTeamSeasons(
-    selectedSeason ? { seasonId: selectedSeason } : undefined
+    activeSeasonId ? { seasonId: activeSeasonId } : undefined
   );
 
   // States
@@ -35,26 +36,27 @@ export default function PlayerReplacementPage() {
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const currentTeam = teamSeasons?.find((t: any) => t.team_id === selectedTeamId);
+  const filteredTeamSeasons = teamSeasons?.filter((t: any) => t.season_id === activeSeasonId) || [];
+  const currentTeam = filteredTeamSeasons.find((t: any) => t.team_id === selectedTeamId);
 
   // Load squad when team is selected
   useEffect(() => {
-    if (selectedTeamId && selectedSeason) {
+    if (selectedTeamId && activeSeasonId) {
       fetchSquad();
     } else {
       setSquad([]);
     }
-  }, [selectedTeamId, selectedSeason]);
+  }, [selectedTeamId, activeSeasonId]);
 
   const fetchSquad = async () => {
     setSquadLoading(true);
     try {
       const response = await fetch(
-        `/api/players/database?limit=2000&assigned_only=true&team_id=${selectedTeamId}&season_id=${selectedSeason}`
+        `/api/players/database?limit=2000&assigned_only=true&team_id=${selectedTeamId}&season_id=${activeSeasonId}`
       );
       const data = await response.json();
       if (data.success) {
-        setSquad(data.data || []);
+        setSquad(data.data?.players || []);
       }
     } catch (err) {
       console.error('Failed to fetch squad:', err);
@@ -78,7 +80,7 @@ export default function PlayerReplacementPage() {
 
     try {
       const response = await fetch(
-        `/api/admin/player-replacement/info?player_id=${player.id}&season_id=${selectedSeason}`
+        `/api/admin/player-replacement/info?player_id=${player.id}&season_id=${activeSeasonId}`
       );
       const resData = await response.json();
       if (resData.success) {
@@ -99,7 +101,7 @@ export default function PlayerReplacementPage() {
 
   // Handle bulk round search query change with debounce
   useEffect(() => {
-    if (!selectedPlayer || !selectedSeason || !isModalOpen || !candidateInfo) return;
+    if (!selectedPlayer || !activeSeasonId || !isModalOpen || !candidateInfo) return;
     if (candidateInfo.round?.round_type !== 'bulk') return;
 
     if (searchTimeoutRef.current) {
@@ -110,7 +112,7 @@ export default function PlayerReplacementPage() {
       setInfoLoading(true);
       try {
         const response = await fetch(
-          `/api/admin/player-replacement/info?player_id=${selectedPlayer.id}&season_id=${selectedSeason}&search=${encodeURIComponent(searchQuery)}`
+          `/api/admin/player-replacement/info?player_id=${selectedPlayer.id}&season_id=${activeSeasonId}&search=${encodeURIComponent(searchQuery)}`
         );
         const resData = await response.json();
         if (resData.success) {
@@ -145,7 +147,7 @@ export default function PlayerReplacementPage() {
 
   // Submit replacement execution
   const handleExecuteReplacement = async () => {
-    if (!selectedPlayer || !selectedCandidateId || !selectedTeamId || !selectedSeason) return;
+    if (!selectedPlayer || !selectedCandidateId || !selectedTeamId || !activeSeasonId) return;
 
     if (!confirm('Are you sure you want to replace this player? This will permanently modify database rosters, transaction ledgers, position counts, and team budgets.')) {
       return;
@@ -163,7 +165,7 @@ export default function PlayerReplacementPage() {
           original_player_id: selectedPlayer.id,
           replacement_player_id: selectedCandidateId,
           team_id: selectedTeamId,
-          season_id: selectedSeason,
+          season_id: activeSeasonId,
           new_price: newPrice
         })
       });
@@ -234,7 +236,7 @@ export default function PlayerReplacementPage() {
           </div>
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 bg-amber-100 text-amber-800 text-[10px] font-black uppercase rounded-lg border border-amber-200">
-              Season: {selectedSeason || 'None'}
+              Season: {activeSeasonId || 'None'}
             </span>
           </div>
         </div>
@@ -253,7 +255,7 @@ export default function PlayerReplacementPage() {
               className="w-full md:max-w-md px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-amber-400 focus:bg-white text-slate-800 text-xs font-bold uppercase tracking-wider transition-colors outline-none cursor-pointer"
             >
               <option value="">-- CHOOSE A TEAM --</option>
-              {teamSeasons?.map((team: any) => (
+              {filteredTeamSeasons.map((team: any) => (
                 <option key={team.team_id} value={team.team_id}>
                   {team.team_name}
                 </option>

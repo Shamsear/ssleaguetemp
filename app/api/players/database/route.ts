@@ -78,7 +78,7 @@ export async function GET(request: Request) {
     let paramIndex = 1;
 
     if (search) {
-      whereParts.push(`fp.name ILIKE $${paramIndex++}`);
+      whereParts.push(`unaccent(fp.name) ILIKE unaccent($${paramIndex++})`);
       queryParams.push(`%${search}%`);
     }
 

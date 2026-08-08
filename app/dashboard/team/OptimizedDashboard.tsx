@@ -8,6 +8,7 @@ import { useDashboardWebSocket } from '@/hooks/useWebSocket';
 import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 // Position constants
 const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'DMF', 'CMF', 'AMF', 'LMF', 'RMF', 'LWF', 'RWF', 'SS', 'CF'];
@@ -231,13 +232,13 @@ export default function OptimizedDashboard({ seasonStatus, user }: Props) {
   // Filter players based on search and position
   const filteredPlayers = players.filter(player => {
     const matchesPosition = selectedPosition === 'all' || player.position === selectedPosition;
-    const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = normalizeStr(player.name).includes(normalizeStr(searchTerm));
     return matchesPosition && matchesSearch;
   });
 
   // Filter bids
   const filteredBids = activeBids.filter(bid =>
-    bid.player.name.toLowerCase().includes(bidSearchTerm.toLowerCase())
+    normalizeStr(bid.player.name).includes(normalizeStr(bidSearchTerm))
   );
 
   // Filter results

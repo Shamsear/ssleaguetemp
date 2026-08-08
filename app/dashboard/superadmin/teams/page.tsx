@@ -14,6 +14,7 @@ import {
 import { getAllSeasons } from '@/lib/firebase/seasons';
 import { useCachedTeams } from '@/hooks/useCachedData';
 import { 
+import { normalizeStr } from '@/lib/utils/normalizeStr';
   PlusCircle, 
   Search, 
   Trash2, 
@@ -233,8 +234,8 @@ export default function TeamsManagement() {
   };
 
   const filteredTeams = teams.filter(team => {
-    const matchesSearch = team.team_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          team.team_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = normalizeStr(team.team_name).includes(normalizeStr(searchQuery)) ||
+                          normalizeStr(team.team_code).includes(normalizeStr(searchQuery)) ||
                           (team.owner_name || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesSeason = filterSeason === 'all' || team.season_id === filterSeason;
     const matchesStatus = filterStatus === 'all' || 

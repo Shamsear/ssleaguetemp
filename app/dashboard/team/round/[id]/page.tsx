@@ -12,6 +12,7 @@ import { useAuctionWebSocket } from '@/hooks/useWebSocket';
 import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { PlayerAvatar } from '@/components/PlayerImage';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface Player {
   id: string;
@@ -852,7 +853,7 @@ export default function TeamRoundPage() {
 
   // Filter players
   const filteredPlayers = players.filter((player: Player) =>
-    player.name.toLowerCase().includes(searchTerm.toLowerCase())
+    normalizeStr(player.name).includes(normalizeStr(searchTerm))
   );
 
   // Sort players (starred first)

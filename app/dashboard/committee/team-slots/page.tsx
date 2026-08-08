@@ -8,6 +8,7 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import { db } from '@/lib/firebase/config'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
 import {
+import { normalizeStr } from '@/lib/utils/normalizeStr';
   ArrowLeft,
   Settings,
   Search,
@@ -296,7 +297,7 @@ export default function TeamSlotsManagementPage() {
   }
 
   const filteredTeams = teams.filter(team =>
-    team.name.toLowerCase().includes(searchTerm.toLowerCase())
+    normalizeStr(team.name).includes(normalizeStr(searchTerm))
   )
 
   if (authLoading || loading) {

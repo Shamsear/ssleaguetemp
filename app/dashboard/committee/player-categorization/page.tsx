@@ -8,6 +8,7 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import * as XLSX from 'xlsx';
 import { 
+import { normalizeStr } from '@/lib/utils/normalizeStr';
   ArrowLeft, 
   Layers, 
   Sparkles, 
@@ -656,7 +657,7 @@ export default function PlayerCategorizationPage() {
   const filteredPlayers = useMemo(() => {
     return sortedPlayers.filter(p => {
       // 1. Search term (by name)
-      const matchesSearch = p.player_name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = normalizeStr(p.player_name).includes(normalizeStr(searchTerm));
       
       // 2. Proposed Category filter
       const proposed = proposedCategories.get(p.id) || '';

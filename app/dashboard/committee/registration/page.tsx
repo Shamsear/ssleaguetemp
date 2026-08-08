@@ -10,6 +10,7 @@ import { getSeasonById, updateSeason } from '@/lib/firebase/seasons';
 import { Season } from '@/types/season';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 export default function TeamRegistrationPage() {
   const { user, loading } = useAuth();
@@ -453,7 +454,7 @@ export default function TeamRegistrationPage() {
                 {(() => {
                   const filteredTeams = teams.filter(team => 
                     (team.team_name || team.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    team.id.toLowerCase().includes(searchQuery.toLowerCase())
+                    normalizeStr(team.id).includes(normalizeStr(searchQuery))
                   );
 
                   if (filteredTeams.length === 0) {

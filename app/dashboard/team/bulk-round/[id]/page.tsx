@@ -11,6 +11,7 @@ import ConfirmModal from '@/components/modals/ConfirmModal';
 import { useAuctionWebSocket } from '@/hooks/useWebSocket';
 import { fetchWithTokenRetry } from '@/lib/fetch-with-retry';
 import { PlayerAvatar } from '@/components/PlayerImage';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface Player {
   id: string;
@@ -516,7 +517,7 @@ export default function TeamBulkRoundPage() {
 
   const filteredPlayers = useMemo(() => {
     return players.filter(player => {
-      const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = normalizeStr(player.name).includes(normalizeStr(searchTerm));
       const matchesPosition = filterPosition === 'all' || player.position === filterPosition;
       const matchesStarred = !filterStarred || player.is_starred;
       const matchesPlayingStyle = filterPlayingStyle === 'all' || player.playing_style === filterPlayingStyle;

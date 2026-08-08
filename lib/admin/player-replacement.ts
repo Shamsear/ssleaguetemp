@@ -110,7 +110,7 @@ export async function getReplacementInfo(
                fp.club, fp.overall_rating, fp.is_sold, fp.team_id as current_team_id
         FROM round_players rp
         JOIN footballplayers fp ON rp.player_id = fp.id
-        WHERE rp.round_id = ${roundId} AND rp.player_name ILIKE ${'%' + search + '%'}
+        WHERE rp.round_id = ${roundId} AND unaccent(rp.player_name) ILIKE unaccent(${'%' + search + '%'})
         LIMIT 50
       `;
     } else {

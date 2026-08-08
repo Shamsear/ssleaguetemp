@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import {
+import { normalizeStr } from '@/lib/utils/normalizeStr';
   Image as ImageIcon,
   Trash2,
   RefreshCw,
@@ -431,7 +432,7 @@ export default function ImageKitMediaPage() {
     const list = linkEntities[key] || [];
     if (!linkSearch) return list;
     const q = linkSearch.toLowerCase();
-    return list.filter(e => e.label.toLowerCase().includes(q) || e.subtitle.toLowerCase().includes(q));
+    return list.filter(e => normalizeStr(e.label).includes(normalizeStr(q)) || normalizeStr(e.subtitle).includes(normalizeStr(q)));
   })();
 
   // ─── Render ───────────────────────────────────────────────────────────────────

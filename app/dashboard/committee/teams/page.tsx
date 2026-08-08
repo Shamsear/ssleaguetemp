@@ -11,6 +11,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import Image from 'next/image';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface TeamData {
   team: {
@@ -91,7 +92,7 @@ export default function CommitteeTeamsPage() {
   // Filter and sort teams
   const filteredTeams = teams
     .filter(team => 
-      team.team.name.toLowerCase().includes(searchQuery.toLowerCase())
+      normalizeStr(team.team.name).includes(normalizeStr(searchQuery))
     )
     .sort((a, b) => {
       switch (sortBy) {

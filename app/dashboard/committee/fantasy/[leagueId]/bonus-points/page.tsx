@@ -9,6 +9,7 @@ import { useModal } from '@/hooks/useModal'
 import AlertModal from '@/components/modals/AlertModal'
 import ConfirmModal from '@/components/modals/ConfirmModal'
 import Link from 'next/link'
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface RealPlayer {
   real_player_id: string
@@ -180,15 +181,15 @@ export default function BonusPointsPage() {
     return items.filter((item: any) => {
       if (targetType === 'player') {
         return (
-          item.player_name?.toLowerCase().includes(search) ||
-          item.real_player_id?.toLowerCase().includes(search) ||
-          item.position?.toLowerCase().includes(search) ||
-          item.real_team_name?.toLowerCase().includes(search)
+          normalizeStr(item.player_name?).includes(normalizeStr(search)) ||
+          normalizeStr(item.real_player_id?).includes(normalizeStr(search)) ||
+          normalizeStr(item.position?).includes(normalizeStr(search)) ||
+          normalizeStr(item.real_team_name?).includes(normalizeStr(search))
         )
       } else {
         return (
-          item.team_name?.toLowerCase().includes(search) ||
-          item.team_id?.toLowerCase().includes(search)
+          normalizeStr(item.team_name?).includes(normalizeStr(search)) ||
+          normalizeStr(item.team_id?).includes(normalizeStr(search))
         )
       }
     })

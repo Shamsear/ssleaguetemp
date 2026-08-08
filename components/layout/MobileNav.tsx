@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTeamRegistration } from '@/contexts/TeamRegistrationContext';
 import { useFirebaseAuth } from '@/hooks/useFirebase';
 import { useRouter, usePathname } from 'next/navigation';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 export default function MobileNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -523,15 +524,15 @@ export default function MobileNav() {
                   <div className="text-[9px] text-[#B8860B] uppercase tracking-wider font-mono mb-3 select-none">
                     {`> query: find --filter="${searchQuery}" --results=${
                       getNavLinks().filter(link => 
-                        link.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        link.cat.toLowerCase().includes(searchQuery.toLowerCase())
+                        normalizeStr(link.label).includes(normalizeStr(searchQuery)) ||
+                        normalizeStr(link.cat).includes(normalizeStr(searchQuery))
                       ).length
                     }`}
                   </div>
                   {(() => {
                     const filtered = getNavLinks().filter(link => 
-                      link.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      link.cat.toLowerCase().includes(searchQuery.toLowerCase())
+                      normalizeStr(link.label).includes(normalizeStr(searchQuery)) ||
+                      normalizeStr(link.cat).includes(normalizeStr(searchQuery))
                     );
                     return filtered.length > 0 ? (
                       <div className="grid grid-cols-2 gap-2">

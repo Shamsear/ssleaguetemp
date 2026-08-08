@@ -26,6 +26,7 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { createPortal } from 'react-dom';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface CashPayment {
   payment_id: string;
@@ -706,7 +707,7 @@ export default function SuperAdminCashBalances() {
             </div>
           ) : ( (() => {
             const filteredBalances = balances
-              .filter(t => t.team_name.toLowerCase().includes(searchQuery.toLowerCase()) || t.team_id.toLowerCase().includes(searchQuery.toLowerCase()))
+              .filter(t => normalizeStr(t.team_name).includes(normalizeStr(searchQuery)) || normalizeStr(t.team_id).includes(normalizeStr(searchQuery)))
               .filter(team => {
                 if (selectedSeasonId === 'all' || statusFilter === 'all') return true;
 

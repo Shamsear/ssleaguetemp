@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import OptimizedImage from '@/components/OptimizedImage';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface RealPlayer {
   player_id: string;
@@ -200,9 +201,9 @@ export default function RealPlayersPage() {
   const filteredPlayers = players
     .filter((player) => {
       const matchesSearch =
-        player.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (player.display_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (player.team?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+        normalizeStr(player.player_name).includes(normalizeStr(searchTerm)) ||
+        (normalizeStr(player.display_name?).includes(normalizeStr(searchTerm))) ||
+        (normalizeStr(player.team?).includes(normalizeStr(searchTerm)) ?? false);
       const matchesCat = categoryFilter === 'all' || player.category === categoryFilter;
       const matchesTeam = teamFilter === 'all' 
         ? true 

@@ -10,6 +10,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface RealPlayer {
   id: string;
@@ -180,8 +181,8 @@ export default function TeamMembersPage() {
     if (searchTerm) {
       filtered = filtered.filter(
         (p) =>
-          p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.player_id.toLowerCase().includes(searchTerm.toLowerCase())
+          normalizeStr(p.name).includes(normalizeStr(searchTerm)) ||
+          normalizeStr(p.player_id).includes(normalizeStr(searchTerm))
       );
     }
 

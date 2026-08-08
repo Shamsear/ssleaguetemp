@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface Player {
   player_id: string;
@@ -361,9 +362,9 @@ export default function FootballPlayerAuctionHistoryPage() {
     let filtered = round.players;
     if (searchTerm) {
       filtered = filtered.filter(player => 
-        player.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        player.team_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        player.position.toLowerCase().includes(searchTerm.toLowerCase())
+        normalizeStr(player.player_name).includes(normalizeStr(searchTerm)) ||
+        normalizeStr(player.team_name).includes(normalizeStr(searchTerm)) ||
+        normalizeStr(player.position).includes(normalizeStr(searchTerm))
       );
     }
 

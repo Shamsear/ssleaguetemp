@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { AlertCircle, ArrowLeftRight, Calendar, Check, DollarSign, Filter, Search, Star, TrendingUp, Users, X, XCircle } from 'lucide-react';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 interface Player {
   squad_id?: string;
@@ -335,7 +336,7 @@ export default function TeamTransfersPage() {
 
   // Filter available players
   const filteredPlayers = availablePlayers.filter(player => {
-    if (searchTerm && !player.player_name.toLowerCase().includes(searchTerm.toLowerCase())) {
+    if (searchTerm && !normalizeStr(player.player_name).includes(normalizeStr(searchTerm))) {
       return false;
     }
     if (positionFilter !== 'all' && player.position !== positionFilter) {

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 
 // Position constants
 const POSITIONS = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
@@ -65,8 +66,8 @@ export default function TeamPlayersPage() {
   // Filter players
   const filteredPlayers = players.filter(player => {
     const matchesSearch = 
-      player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      player.position.toLowerCase().includes(searchTerm.toLowerCase());
+      normalizeStr(player.name).includes(normalizeStr(searchTerm)) ||
+      normalizeStr(player.position).includes(normalizeStr(searchTerm));
     
     const matchesPosition = positionFilter === 'all' || player.position === positionFilter;
     const matchesGroup = positionGroupFilter === 'all' || player.position_group === positionGroupFilter;

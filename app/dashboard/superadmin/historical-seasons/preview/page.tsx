@@ -1713,14 +1713,14 @@ export default function PreviewHistoricalSeason() {
                                   
                                   // Filter players based on search (by name or ID)
                                   const filteredSuggested = suggested.filter(p => 
-                                    p.name.toLowerCase().includes(searchQuery) ||
-                                    (p.player_id && p.player_id.toLowerCase().includes(searchQuery))
+                                    normalizeStr(p.name).includes(normalizeStr(searchQuery)) ||
+                                    (p.player_id && normalizeStr(p.player_id).includes(normalizeStr(searchQuery)))
                                   );
                                   const filteredOthers = existingEntities.players
                                     .filter(p => !suggested.some(s => s.player_id === p.player_id))
                                     .filter(p => 
-                                      p.name.toLowerCase().includes(searchQuery) ||
-                                      (p.player_id && p.player_id.toLowerCase().includes(searchQuery))
+                                      normalizeStr(p.name).includes(normalizeStr(searchQuery)) ||
+                                      (p.player_id && normalizeStr(p.player_id).includes(normalizeStr(searchQuery)))
                                     )
                                     .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                                   
@@ -2038,6 +2038,7 @@ export default function PreviewHistoricalSeason() {
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-1">Ready to Import</h3>
               <p className="text-sm text-gray-600">Review your changes and start the import process</p>
+import { normalizeStr } from '@/lib/utils/normalizeStr';
             </div>
             <div className="flex gap-3">
               <button
