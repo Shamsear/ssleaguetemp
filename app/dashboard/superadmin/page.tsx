@@ -26,7 +26,8 @@ import {
   Award, 
   ListOrdered, 
   BarChart3,
-  DollarSign
+  DollarSign,
+  RefreshCw
 } from 'lucide-react';
 
 export default function SuperAdminDashboard() {
@@ -439,6 +440,19 @@ export default function SuperAdminDashboard() {
                 </div>
                 <h3 className="font-bold text-slate-800 text-sm">Bulk Stats Update</h3>
                 <p className="text-[11px] text-slate-550 mt-1.5 font-sans leading-relaxed">Export player stats, update via Excel, and reimport with preview validation.</p>
+              </div>
+            </button>
+
+            <button 
+              onClick={() => router.push('/dashboard/committee/player-replacement')}
+              className="console-card bg-white border border-slate-200/60 hover:border-blue-400/40 p-5 shadow-sm transition-all hover:-translate-y-0.5 flex flex-col justify-between min-h-[160px] text-left"
+            >
+              <div>
+                <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 w-fit mb-4 border border-blue-100">
+                  <RefreshCw className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-800 text-sm">Player Replacement</h3>
+                <p className="text-[11px] text-slate-550 mt-1.5 font-sans leading-relaxed">Transactional swap tool to replace won players with other round candidates.</p>
               </div>
             </button>
           </div>
