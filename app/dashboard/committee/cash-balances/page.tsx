@@ -163,7 +163,7 @@ export default function CommitteeCashBalances() {
       }
       setError(null);
 
-      const res = await fetchWithTokenRefresh(`/api/reports/cash-balances?season_id=${selectedSeasonId}&show_all_teams=true`);
+      const res = await fetchWithTokenRefresh(`/api/reports/cash-balances?season_id=${selectedSeasonId}`);
       const data = await res.json();
 
       if (data.success) {
