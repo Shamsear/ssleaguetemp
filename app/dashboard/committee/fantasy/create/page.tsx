@@ -1,6 +1,5 @@
 'use client';
-import { CheckCircle, Trophy } from 'lucide-react';
-
+import { CheckCircle, Trophy, AlertCircle, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -30,14 +29,11 @@ export default function CreateFantasyLeaguePage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      console.log('No user, redirecting to login');
       router.push('/login');
       return;
     }
     if (!loading && user) {
-      console.log('User role:', user.role);
       if (user.role !== 'committee_admin' && user.role !== 'super_admin') {
-        console.log('User role not authorized, redirecting to dashboard');
         router.push('/dashboard');
       }
     }
@@ -46,25 +42,18 @@ export default function CreateFantasyLeaguePage() {
   useEffect(() => {
     const loadCurrentSeason = async () => {
       try {
-        console.log('Loading current season for user:', user);
-        
-        // Check if user has season_id (use type assertion as seasonId may exist but not in type)
         const userSeasonId = (user as any)?.seasonId;
         
-        // Check if fantasy league already exists for this season in PostgreSQL
         if (userSeasonId) {
           try {
             const response = await fetchWithTokenRefresh(`/api/fantasy/leagues/${userSeasonId}`);
             const data = await response.json();
             
             if (response.ok && data.success) {
-              console.log('Existing league data:', data);
-              setExistingLeague(data.league); // Extract the league object from the response
+              setExistingLeague(data.league);
               setIsLoading(false);
               return;
             } else if (response.status === 404 && data.message && data.message.includes('tournament')) {
-              // Season/tournament doesn't exist - show specific error
-              console.log('Tournament not created for season:', userSeasonId);
               showAlert({
                 type: 'error',
                 title: 'Tournament Not Created',
@@ -72,24 +61,18 @@ export default function CreateFantasyLeaguePage() {
               });
               setIsLoading(false);
               return;
-            } else {
-              console.log('League API returned error:', data.error || 'Unknown error');
-              console.log('Will attempt to load seasons and auto-create league');
             }
           } catch (error) {
             console.log('Error checking for existing league:', error);
           }
         }
         
-        // Fetch seasons from PostgreSQL API
         const seasonsResponse = await fetchWithTokenRefresh('/api/seasons');
         if (!seasonsResponse.ok) {
           throw new Error('Failed to fetch seasons');
         }
         
         const seasonsData = await seasonsResponse.json();
-        
-        // Filter non-completed seasons
         const activeSeasonsData = seasonsData.filter((s: any) => s.status !== 'completed');
         
         if (activeSeasonsData.length === 0) {
@@ -98,41 +81,24 @@ export default function CreateFantasyLeaguePage() {
             title: 'No Active Season',
             message: 'No available seasons found. Please create a season first.',
           });
-          setIsLoading(false);
-          return;
-        }
-
-        const seasonsList = activeSeasonsData.map((s: any) => ({
-          id: s.id,
-          season_id: s.season_id,
-          season_name: s.name || s.season_name,
-          status: s.status,
-        }));
-
-        // If user has a season ID, try to find that specific season
-        if (userSeasonId) {
-          const userSeason = seasonsList.find((s: Season) => s.season_id === userSeasonId || s.id === userSeasonId);
-          
-          if (userSeason) {
-            console.log('Loaded season:', userSeason);
-            setSeasons([userSeason]);
-            setSelectedSeasonId(userSeason.season_id || userSeason.id);
-            setLeagueName(`${userSeason.season_name || 'Unnamed Season'} Fantasy League`);
-            setIsLoading(false);
-            return;
+        } else {
+          setSeasons(activeSeasonsData);
+          if (userSeasonId) {
+            const currentSeason = activeSeasonsData.find((s: any) => s.season_id === userSeasonId);
+            if (currentSeason) {
+              setSelectedSeasonId(currentSeason.season_id);
+              setLeagueName(`${currentSeason.season_name} Fantasy League`);
+            }
           }
         }
-
-        // Otherwise, show all active seasons
-        setSeasons(seasonsList);
-        setIsLoading(false);
       } catch (error) {
         console.error('Error loading current season:', error);
         showAlert({
           type: 'error',
           title: 'Error',
-          message: `Failed to load current season: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          message: 'Failed to load season data.',
         });
+      } finally {
         setIsLoading(false);
       }
     };
@@ -144,77 +110,58 @@ export default function CreateFantasyLeaguePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Get the season ID - either from selectedSeasonId or from the single season
-    const seasonIdToUse = selectedSeasonId || (seasons.length === 1 ? (seasons[0].season_id || seasons[0].id) : null);
-    
-    console.log('Form submitted with selectedSeasonId:', selectedSeasonId);
-    console.log('Seasons array:', seasons);
-    console.log('Season ID to use:', seasonIdToUse);
-
-    if (!seasonIdToUse) {
+    if (!selectedSeasonId || !leagueName.trim()) {
       showAlert({
-        type: 'warning',
+        type: 'error',
         title: 'Validation Error',
-        message: 'Please select a season',
-      });
-      return;
-    }
-
-    if (!leagueName.trim()) {
-      showAlert({
-        type: 'warning',
-        title: 'Validation Error',
-        message: 'Please enter a league name',
+        message: 'Please fill in all required fields.',
       });
       return;
     }
 
     setIsSubmitting(true);
-
     try {
-      // Create the league first by calling the API
-      console.log('Creating fantasy league for season:', seasonIdToUse);
-      
-      const response = await fetchWithTokenRefresh(`/api/fantasy/leagues/${seasonIdToUse}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        // Use detailed message if available
-        throw new Error(errorData.message || errorData.error || 'Failed to create fantasy league');
-      }
+      const response = await fetchWithTokenRefresh('/api/fantasy/leagues', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          season_id: selectedSeasonId,
+          name: leagueName.trim(),
+        }),
+      });
 
       const data = await response.json();
-      console.log('League created/fetched:', data.league);
-      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create fantasy league');
+      }
+
       showAlert({
         type: 'success',
-        title: 'Success!',
-        message: 'Fantasy league is ready!',
+        title: 'Success',
+        message: 'Fantasy league created successfully!',
       });
-      
-      // Navigate to league dashboard after successful creation
+
       setTimeout(() => {
-        router.push(`/dashboard/committee/fantasy/${seasonIdToUse}`);
-      }, 1000);
+        router.push(`/dashboard/committee/fantasy/${data.league_id || data.id}`);
+      }, 1500);
     } catch (error) {
-      console.error('Error creating fantasy league:', error);
+      console.error('Error creating league:', error);
       showAlert({
         type: 'error',
         title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to create fantasy league',
+        message: error instanceof Error ? error.message : 'Failed to create fantasy league.',
       });
+    } finally {
       setIsSubmitting(false);
     }
   };
 
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
@@ -224,62 +171,52 @@ export default function CreateFantasyLeaguePage() {
   // If league already exists, show existing league card
   if (existingLeague) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-slate-50 py-8 px-4">
         <AlertModal {...alertState} onClose={closeAlert} />
 
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="mb-8">
             <Link
               href="/dashboard/committee"
-              className="inline-flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors mb-4"
+              className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-4"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Back to Dashboard
+              ← Back to Dashboard
             </Link>
 
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                </svg>
+              <div className="w-16 h-16 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm">
+                <Trophy className="w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Fantasy League Already Exists</h1>
-                <p className="text-gray-600 mt-1">Only one fantasy league per season is allowed</p>
+                <h1 className="text-3xl font-bold text-slate-900">Fantasy League Exists</h1>
+                <p className="text-slate-500 mt-1 font-semibold text-sm">Only one fantasy league per season is allowed</p>
               </div>
             </div>
           </div>
 
           {/* Existing League Card */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6 mb-6">
+          <div className="bg-white border border-slate-200 p-8 rounded-2xl shadow-sm">
+            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-6 mb-6">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 text-white shadow-sm">
+                  <CheckCircle className="w-6 h-6" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-green-900 mb-2">{existingLeague.name || existingLeague.league_name}</h2>
-                  <div className="space-y-1 text-sm text-green-800">
-                    <p>📅 <strong>Status:</strong> {existingLeague.status?.toUpperCase() || 'DRAFT'}</p>
-                    <p><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> <strong>League ID:</strong> {existingLeague.league_id || existingLeague.id}</p>
+                  <h2 className="text-xl font-bold text-emerald-950 mb-2">{existingLeague.name || existingLeague.league_name}</h2>
+                  <div className="space-y-1 text-xs font-semibold text-emerald-800 uppercase tracking-wider">
+                    <p>📅 Status: {existingLeague.status || 'DRAFT'}</p>
+                    <p>🏆 League ID: {existingLeague.league_id || existingLeague.id}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6">
+            <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-5 mb-6 text-indigo-800">
               <div className="flex items-start gap-3">
-                <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-sm text-blue-900">
-                  A fantasy league already exists for this season. Only one fantasy league can be created per season.
-                  You can manage the existing league using the button below.
+                <AlertCircle className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+                <p className="text-xs font-semibold leading-relaxed">
+                  A fantasy league already exists for this season. You can proceed to manage the active league options directly.
                 </p>
               </div>
             </div>
@@ -287,15 +224,15 @@ export default function CreateFantasyLeaguePage() {
             <div className="flex gap-4">
               <Link
                 href="/dashboard/committee"
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-colors text-center"
+                className="flex-1 px-6 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors text-center text-sm shadow-sm"
               >
                 &larr; Back to Dashboard
               </Link>
               <Link
                 href={`/dashboard/committee/fantasy/${existingLeague.league_id || existingLeague.season_id || existingLeague.id}`}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl text-center"
+                className="flex-1 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg text-center text-sm"
               >
-                <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Manage League  &rarr; 
+                Manage League &rarr;
               </Link>
             </div>
           </div>
@@ -305,66 +242,58 @@ export default function CreateFantasyLeaguePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-slate-50 py-8 px-4">
       <AlertModal {...alertState} onClose={closeAlert} />
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/dashboard/committee"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-4"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Dashboard
+            ← Back to Dashboard
           </Link>
 
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
+            <div className="w-16 h-16 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm">
+              <Trophy className="w-8 h-8" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Create Fantasy League</h1>
-              <p className="text-gray-600 mt-1">Set up a new fantasy league for a season</p>
+              <h1 className="text-3xl font-bold text-slate-900">Create Fantasy League</h1>
+              <p className="text-slate-500 mt-1 font-semibold text-sm">Set up a new fantasy league for the season</p>
             </div>
           </div>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+        <div className="bg-white border border-slate-200 p-8 rounded-2xl shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Season Selection/Display */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-bold text-slate-700 mb-2">
                 {seasons.length === 1 ? 'Season (Current Admin Season)' : 'Select Season *'}
               </label>
               
               {seasons.length === 0 ? (
-                // Loading state
-                <div className="w-full px-4 py-3 border-2 border-gray-300 bg-gray-50 rounded-xl text-gray-500">
-                  Loading season...
+                <div className="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl text-slate-400 text-sm">
+                  Loading season options...
                 </div>
               ) : seasons.length === 1 ? (
-                // Auto-selected display for single season
                 <>
-                  <div className="w-full px-4 py-3 border-2 border-indigo-300 bg-indigo-50 rounded-xl text-gray-900 flex items-center justify-between">
-                    <span className="font-medium">
+                  <div className="w-full px-4 py-3 border border-indigo-200 bg-indigo-50/50 rounded-xl text-indigo-900 flex items-center justify-between text-sm">
+                    <span className="font-bold">
                       {seasons[0]?.season_name || seasons[0]?.season_id || 'Unknown Season'}
                     </span>
-                    <span className="px-3 py-1 bg-indigo-600 text-white text-xs font-semibold rounded-full">
+                    <span className="px-2.5 py-0.5 bg-indigo-600 text-white text-[10px] font-black rounded-full uppercase tracking-wider">
                       AUTO-SELECTED
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-indigo-600">
-                    Yes Automatically set to your current active season
+                  <p className="mt-2 text-xs text-indigo-600 font-semibold">
+                    Automatically set to your active committee season
                   </p>
                 </>
               ) : (
-                // Dropdown for multiple seasons
                 <>
                   <select
                     value={selectedSeasonId}
@@ -375,7 +304,7 @@ export default function CreateFantasyLeaguePage() {
                         setLeagueName(`${selectedSeason.season_name} Fantasy League`);
                       }
                     }}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-xl bg-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-900"
                     required
                   >
                     <option value="">-- Select a Season --</option>
@@ -385,16 +314,13 @@ export default function CreateFantasyLeaguePage() {
                       </option>
                     ))}
                   </select>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Choose which season this fantasy league will run for
-                  </p>
                 </>
               )}
             </div>
 
             {/* League Name */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-bold text-slate-700 mb-2">
                 Fantasy League Name *
               </label>
               <input
@@ -402,29 +328,24 @@ export default function CreateFantasyLeaguePage() {
                 value={leagueName}
                 onChange={(e) => setLeagueName(e.target.value)}
                 placeholder="e.g., Season 16 Fantasy League"
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-900"
                 required
               />
-              <p className="mt-2 text-sm text-gray-500">
-                This name will be displayed to all participants
+              <p className="mt-2 text-xs text-slate-400 font-semibold">
+                This name will be visible to all managers and team builders
               </p>
             </div>
 
             {/* Info Box */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-5">
+            <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-5 text-indigo-900">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
+                <AlertCircle className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-blue-900 mb-2">What happens when you create a fantasy league?</p>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Fantasy teams automatically created for all registered teams</li>
-                    <li><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Default scoring rules configured (goals, MOTM, wins, etc.)</li>
-                    <li><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> League status set to "Draft" mode</li>
-                    <li><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Ready for player draft assignment</li>
+                  <p className="text-xs font-bold uppercase mb-2">Fantasy initialization details:</p>
+                  <ul className="text-[11px] font-semibold text-indigo-850 space-y-1.5 list-disc list-inside">
+                    <li>Fantasy rosters will be initialized for all participating clubs</li>
+                    <li>Default scoring metrics (goals, clean sheets) will be populated</li>
+                    <li>The league is set to "Draft Config" window by default</li>
                   </ul>
                 </div>
               </div>
@@ -434,25 +355,25 @@ export default function CreateFantasyLeaguePage() {
             <div className="flex gap-4 pt-4">
               <Link
                 href="/dashboard/committee"
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-colors text-center"
+                className="flex-1 px-6 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors text-center text-sm shadow-sm"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-1.5 text-sm"
               >
                 {isSubmitting ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                  <>
+                    <RefreshCw className="animate-spin h-4 w-4" />
                     Creating...
-                  </span>
+                  </>
                 ) : (
-                  '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Create Fantasy League'
+                  <>
+                    <Trophy className="w-4 h-4 text-amber-400" />
+                    Create Fantasy League
+                  </>
                 )}
               </button>
             </div>

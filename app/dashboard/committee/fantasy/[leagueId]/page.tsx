@@ -181,20 +181,8 @@ export default function FantasyLeagueDashboard() {
     
     // Draft Management (NEW MODEL)
     {
-      title: 'Generate Draft Tiers',
-      description: 'Create 7 tiers from player pool for blind bidding',
-      icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-        </svg>
-      ),
-      href: `/dashboard/committee/fantasy/${leagueId}/draft/generate-tiers`,
-      color: 'from-violet-500 to-purple-600',
-      badge: 'NEW',
-    },
-    {
       title: 'Process Draft',
-      description: 'Process all tier bids and assign players to teams',
+      description: 'Process all blind slot bids and assign players/teams exclusively',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -206,7 +194,7 @@ export default function FantasyLeagueDashboard() {
     },
     {
       title: 'Draft Results',
-      description: 'View tier-by-tier draft results and team squads',
+      description: 'View slot-by-slot draft results and winning team squads',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -323,7 +311,7 @@ export default function FantasyLeagueDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       <AlertModal {...alertState} onClose={closeAlert} />
 
       {/* Hero Header Section */}
@@ -424,7 +412,7 @@ export default function FantasyLeagueDashboard() {
         </div>
 
         {/* Lineup Lock Control */}
-        <div className="mb-8 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl shadow-lg border-2 border-purple-200 p-6">
+        <div className="mb-8 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${isLineupLocked ? 'bg-red-500' : 'bg-green-500'

@@ -321,7 +321,7 @@ export default function FantasyTeamsPage() {
   if (!user || !league) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-slate-50">
       <AlertModal {...alertState} onClose={closeAlert} />
 
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -329,12 +329,9 @@ export default function FantasyTeamsPage() {
         <div className="mb-8">
           <Link
             href="/dashboard/team/fantasy/my-team"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-4"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to My Team
+            ← Back to My Team
           </Link>
 
           <div className="flex items-center gap-4">

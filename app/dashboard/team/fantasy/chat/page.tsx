@@ -224,10 +224,10 @@ export default function FantasyChatPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading chat...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-slate-600 font-semibold">Loading chat...</p>
         </div>
       </div>
     );
@@ -235,27 +235,27 @@ export default function FantasyChatPage() {
 
   if (!fantasyTeam) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">You need to join a fantasy league to access chat.</p>
+          <p className="text-slate-600 font-semibold">You need to join a fantasy league to access chat.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       <div className="max-w-4xl mx-auto p-4">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">League Chat</h1>
-          <p className="text-sm text-gray-600 mt-1">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 mb-4">
+          <h1 className="text-2xl font-bold text-slate-900">League Chat</h1>
+          <p className="text-sm text-slate-500 mt-1">
             Chat with other teams in your league
           </p>
         </div>
 
         {/* Chat Container */}
-        <div className="bg-white rounded-lg shadow-sm flex flex-col" style={{ height: 'calc(100vh - 250px)' }}>
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col" style={{ height: 'calc(100vh - 250px)' }}>
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 ? (

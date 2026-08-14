@@ -365,11 +365,11 @@ export default function TeamTransfersPage() {
 
   if (!user || !teamInfo) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="text-center max-w-md">
-          <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Fantasy Team</h2>
-          <p className="text-gray-600 mb-6">You need to register for the fantasy league first.</p>
+          <AlertCircle className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">No Fantasy Team</h2>
+          <p className="text-slate-500 text-sm mb-6">You need to register for the fantasy league first.</p>
           <Link
             href="/dashboard/team"
             className="inline-block px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
@@ -383,22 +383,19 @@ export default function TeamTransfersPage() {
 
   if (!transferWindow || !transferWindow.is_active) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 p-4">
+      <div className="min-h-screen bg-slate-50 p-4">
         <div className="max-w-4xl mx-auto">
           <Link
             href="/dashboard/team/fantasy/my-team"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-6"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to My Team
+            ← Back to My Team
           </Link>
 
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
-            <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Transfer Window Closed</h2>
-            <p className="text-gray-600 mb-6">
+          <div className="bg-white border border-slate-200 p-8 rounded-2xl shadow-sm text-center">
+            <Calendar className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Transfer Window Closed</h2>
+            <p className="text-slate-500 text-sm mb-6">
               The transfer window is currently closed. Check back when the next window opens.
             </p>
             <Link
@@ -417,18 +414,15 @@ export default function TeamTransfersPage() {
   const transfersRemaining = transferWindow.max_transfers_per_window - transfersUsed;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 p-4">
+    <div className="min-h-screen bg-slate-50 p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <Link
             href="/dashboard/team/fantasy/my-team"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-4"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to My Team
+            ← Back to My Team
           </Link>
 
           <div className="flex items-center gap-3 mb-4">

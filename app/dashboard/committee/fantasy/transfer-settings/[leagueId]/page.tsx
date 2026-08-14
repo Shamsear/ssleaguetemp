@@ -121,18 +121,15 @@ export default function TransferSettingsPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <Link
             href={`/dashboard/committee/fantasy/${leagueId}`}
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-4"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to League
+            ← Back to League
           </Link>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl">
@@ -146,11 +143,11 @@ export default function TransferSettingsPage() {
         </div>
 
         {/* Transfer Window Status */}
-        <div className="glass rounded-3xl shadow-xl backdrop-blur-md border border-white/20 p-6 mb-6">
+        <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Transfer Window Status</h2>
-              <p className="text-gray-600">
+              <h2 className="text-xl font-bold text-slate-900 mb-2">Transfer Window Status</h2>
+              <p className="text-slate-500">
                 {settings.is_transfer_window_open
                   ? 'Transfer window is currently open'
                   : 'Transfer window is currently closed'}
@@ -158,10 +155,10 @@ export default function TransferSettingsPage() {
             </div>
             <button
               onClick={toggleTransferWindow}
-              className={`px-6 py-3 rounded-lg font-medium text-white ${
+              className={`px-5 py-2.5 rounded-xl font-bold text-white shadow transition-all ${
                 settings.is_transfer_window_open
-                  ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
-                  : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                  ? 'bg-rose-600 hover:bg-rose-700'
+                  : 'bg-indigo-600 hover:bg-indigo-700'
               }`}
             >
               {settings.is_transfer_window_open ? 'Close Window' : 'Open Window'}
@@ -170,8 +167,8 @@ export default function TransferSettingsPage() {
         </div>
 
         {/* Settings Form */}
-        <div className="glass rounded-3xl shadow-xl backdrop-blur-md border border-white/20 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Transfer Configuration</h2>
+        <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+          <h2 className="text-xl font-bold text-slate-900 mb-6">Transfer Configuration</h2>
 
           <div className="space-y-6">
             {/* Max Transfers */}

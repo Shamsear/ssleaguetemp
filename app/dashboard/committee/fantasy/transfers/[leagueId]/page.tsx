@@ -301,18 +301,15 @@ export default function TransfersManagementPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 py-8 px-4">
+    <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <Link
             href={`/dashboard/committee/fantasy/${leagueId}`}
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-4"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Fantasy Management
+            ← Back to Fantasy Management
           </Link>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl">
@@ -326,7 +323,7 @@ export default function TransfersManagementPage() {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-t-2xl shadow-lg border border-gray-200 border-b-0">
+        <div className="bg-white rounded-t-2xl border border-slate-200 border-b-0 shadow-sm">
           <div className="flex">
             <button
               onClick={() => setActiveTab('windows')}
@@ -365,7 +362,7 @@ export default function TransfersManagementPage() {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-white rounded-b-2xl shadow-lg border border-gray-200 border-t-0 p-6">
+        <div className="bg-white rounded-b-2xl border border-slate-200 border-t-0 p-6 shadow-sm">
           {activeTab === 'windows' ? (
             <div className="space-y-6">
               {/* Create New Window */}

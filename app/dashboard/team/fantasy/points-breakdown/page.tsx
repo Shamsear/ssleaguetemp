@@ -119,10 +119,10 @@ export default function TeamPointsBreakdownPage() {
 
     if (loading || isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-lg text-gray-600 font-medium">Loading your points breakdown...</p>
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
+                    <p className="text-lg text-slate-600 font-semibold">Loading your points breakdown...</p>
                 </div>
             </div>
         );
@@ -130,14 +130,14 @@ export default function TeamPointsBreakdownPage() {
 
     if (!team) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
-                <div className="text-center bg-white rounded-xl shadow-lg p-8">
-                    <p className="text-gray-600 text-lg mb-4">No fantasy team found for your account</p>
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="text-center bg-white border border-slate-200 p-8 rounded-2xl shadow-sm">
+                    <p className="text-slate-600 text-lg mb-4 font-semibold">No fantasy team found for your account</p>
                     <Link
                         href="/dashboard/team/fantasy/my-team"
-                        className="text-blue-600 hover:text-blue-700 font-semibold"
+                        className="text-indigo-600 hover:text-indigo-700 font-bold text-sm"
                     >
-                        {"<-"} Back to My Team
+                        ← Back to My Team
                     </Link>
                 </div>
             </div>
@@ -145,18 +145,15 @@ export default function TeamPointsBreakdownPage() {
     }
 
     return (
-        <div className="min-h-screen py-6 px-4 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
+        <div className="min-h-screen py-6 px-4 bg-slate-50">
             <div className="container mx-auto max-w-6xl">
                 {/* Header */}
                 <div className="mb-6">
                     <Link
                         href="/dashboard/team/fantasy/my-team"
-                        className="inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors mb-4"
+                        className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-4"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Back to My Team
+                        ← Back to My Team
                     </Link>
 
                     <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">

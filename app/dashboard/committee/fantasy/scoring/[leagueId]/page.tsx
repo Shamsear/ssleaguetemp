@@ -1,5 +1,4 @@
 'use client';
-
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -184,35 +183,35 @@ export default function CustomScoringRulesPage() {
   };
 
   const getRuleColor = (pointsValue: number) => {
-    if (pointsValue > 0) return 'text-green-600 bg-green-50 border-green-200';
-    if (pointsValue < 0) return 'text-red-600 bg-red-50 border-red-200';
-    return 'text-gray-600 bg-gray-50 border-gray-200';
+    if (pointsValue > 0) return 'text-emerald-600 bg-emerald-50 border-emerald-200';
+    if (pointsValue < 0) return 'text-rose-600 bg-rose-50 border-rose-200';
+    return 'text-slate-500 bg-slate-50 border-slate-200';
   };
 
   const commonRuleTypes = [
-    { value: 'goals_scored', label: 'Goal Scored', icon: <Activity className="w-3.5 h-3.5 text-red-500 inline-block" /> },
-    { value: 'clean_sheet', label: 'Clean Sheet', icon: <Shield className="w-3.5 h-3.5 text-blue-500 inline-block" /> },
+    { value: 'goals_scored', label: 'Goal Scored', icon: <Activity className="w-3.5 h-3.5 text-red-500 inline-block mr-1 align-text-bottom" /> },
+    { value: 'clean_sheet', label: 'Clean Sheet', icon: <Shield className="w-3.5 h-3.5 text-blue-500 inline-block mr-1 align-text-bottom" /> },
     { value: 'goals_conceded', label: 'Goal Conceded', icon: '🥅' },
-    { value: 'motm', label: 'Man of the Match', icon: '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />' },
-    { value: 'win', label: 'Win', icon: '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />' },
+    { value: 'motm', label: 'Man of the Match', icon: '⭐️' },
+    { value: 'win', label: 'Win', icon: '✓' },
     { value: 'draw', label: 'Draw', icon: '🤝' },
-    { value: 'loss', label: 'Loss', icon: '<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" />' },
+    { value: 'loss', label: 'Loss', icon: '✗' },
     { value: 'fine_goals', label: 'Fine Goals', icon: '💸' },
-    { value: 'substitution_penalty', label: 'Substitution Penalty', icon: '<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" />' },
+    { value: 'substitution_penalty', label: 'Substitution Penalty', icon: '🔄' },
     { value: 'hat_trick', label: 'Hat-trick (3+ goals)', icon: '🎩' },
-    { value: 'brace', label: 'Brace (2 goals)', icon: '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />' },
+    { value: 'brace', label: 'Brace (2 goals)', icon: '⚔️' },
     { value: 'concedes_4_plus_goals', label: 'Concedes 4+ Goals', icon: '🚨' },
     { value: 'concedes_15_plus_goals', label: 'Concedes 15+ Goals', icon: '💥' },
     { value: 'scored_6_plus_goals', label: 'Scored 6+ Goals', icon: '🔥' },
     { value: 'match_played', label: 'Match Played', icon: '🎮' },
     { value: 'golden_boot', label: 'Golden Boot Award', icon: '👢' },
     { value: 'best_attacker', label: 'Best Attacker Award', icon: '⚔️' },
-    { value: 'custom', label: 'Custom Rule', icon: '<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" />' },
+    { value: 'custom', label: 'Custom Rule', icon: '📋' },
   ];
 
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -221,26 +220,23 @@ export default function CustomScoringRulesPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 py-8 px-4">
+    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto">
         <Link
           href={`/dashboard/committee/fantasy/${leagueId}`}
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors mb-6"
+          className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-6"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to League Dashboard
+          ← Back to League Dashboard
         </Link>
 
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Custom Scoring Rules</h1>
-            <p className="text-gray-600 mt-1">Define how players earn points</p>
+            <h1 className="text-3xl font-bold text-slate-900">Custom Scoring Rules</h1>
+            <p className="text-slate-500 mt-1">Define how players and teams earn points</p>
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
+            className="px-5 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all flex items-center gap-2 shadow"
           >
             <Plus className="w-5 h-5" />
             Create New Rule
@@ -249,51 +245,51 @@ export default function CustomScoringRulesPage() {
 
         {/* Create Form */}
         {showCreateForm && (
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Create New Scoring Rule</h3>
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6 shadow-sm">
+            <h3 className="text-lg font-bold text-slate-900 mb-4">Create New Scoring Rule</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Rule Name *</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Rule Name *</label>
                 <input
                   type="text"
                   value={newRule.rule_name}
                   onChange={(e) => setNewRule({ ...newRule, rule_name: e.target.value })}
                   placeholder="e.g., Goal Bonus"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Rule Type *</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Rule Type *</label>
                 <select
                   value={newRule.rule_type}
                   onChange={(e) => setNewRule({ ...newRule, rule_type: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                 >
                   <option value="">Select type...</option>
                   {commonRuleTypes.map((type) => (
                     <option key={type.value} value={type.value}>
-                      {type.icon} {type.label}
+                      {type.label}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Points Value *</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Points Value *</label>
                 <input
                   type="number"
                   value={newRule.points_value}
                   onChange={(e) => setNewRule({ ...newRule, points_value: parseFloat(e.target.value) })}
                   placeholder="e.g., 10"
                   step="0.5"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Applies To</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Applies To</label>
                 <select
                   value={newRule.applies_to}
                   onChange={(e) => setNewRule({ ...newRule, applies_to: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                 >
                   <option value="player">Player</option>
                   <option value="team">Team</option>
@@ -301,88 +297,76 @@ export default function CustomScoringRulesPage() {
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Description</label>
                 <input
                   type="text"
                   value={newRule.description}
                   onChange={(e) => setNewRule({ ...newRule, description: e.target.value })}
                   placeholder="Optional description..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
               
               {/* Bonus Rule Toggle */}
               <div className="md:col-span-2">
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-2 cursor-pointer mt-2">
                   <input
                     type="checkbox"
                     checked={newRule.is_bonus_rule}
                     onChange={(e) => setNewRule({ ...newRule, is_bonus_rule: e.target.checked })}
-                    className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded"
                   />
-                  <span className="text-sm font-medium text-gray-700">🎁 This is a Bonus/Conditional Rule</span>
+                  <span className="text-sm font-bold text-slate-700">🎁 This is a Bonus/Conditional Rule</span>
                 </label>
-                <p className="text-xs text-gray-500 mt-1 ml-6">Enable this for special conditions like new player bonus, streak bonus, etc.</p>
+                <p className="text-xs text-slate-400 mt-1 ml-6">Enable this for special conditions like new player bonus, streak bonus, etc.</p>
               </div>
               
               {/* Conditional Fields for Bonus Rules */}
               {newRule.is_bonus_rule && (
                 <>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Bonus Condition Type *</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Bonus Condition Type *</label>
                     <select
                       value={newRule.bonus_condition_type}
                       onChange={(e) => setNewRule({ ...newRule, bonus_condition_type: e.target.value, bonus_params: {} })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                     >
                       <option value="">Select condition...</option>
                       <option value="new_player">🆕 New Player Bonus (first X matches)</option>
                       <option value="streak">🔥 Streak Bonus (consecutive events)</option>
                       <option value="milestone">🎯 Milestone Bonus (reach X goals/assists)</option>
-                      <option value="match_result"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Match Result Bonus (win/draw/loss)</option>
+                      <option value="match_result">🏆 Match Result Bonus (win/draw/loss)</option>
                       <option value="comeback">💪 Comeback Bonus (winning after being behind)</option>
                       <option value="clean_sheet_streak">🛡️ Clean Sheet Streak (consecutive clean sheets)</option>
                       <option value="goal_difference">⚡ Goal Difference Bonus (winning by X+ goals)</option>
-                      <option value="against_top_team"><Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /> Top Team Bonus (performance vs top teams)</option>
+                      <option value="against_top_team">👑 Top Team Bonus (performance vs top teams)</option>
                       <option value="captain_bonus">©️ Captain/Vice Captain Bonus (multiplier)</option>
                     </select>
                   </div>
                   
-                  {/* New Player Bonus Fields */}
+                  {/* Sub-conditions based on type */}
                   {newRule.bonus_condition_type === 'new_player' && (
                     <div className="md:col-span-2 grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">First X Matches</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">First X Matches</label>
                         <input
                           type="number"
                           value={newRule.bonus_params.matches_count || 1}
                           onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, matches_count: parseInt(e.target.value) } })}
                           min="1"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Since Gameweek (optional)</label>
-                        <input
-                          type="number"
-                          value={newRule.bonus_params.since_gameweek || ''}
-                          onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, since_gameweek: e.target.value ? parseInt(e.target.value) : null } })}
-                          placeholder="e.g., 5"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-4 py-2 border border-slate-300 rounded-lg"
                         />
                       </div>
                     </div>
                   )}
-                  
-                  {/* Streak Bonus Fields */}
                   {newRule.bonus_condition_type === 'streak' && (
                     <div className="md:col-span-2 grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Event Type</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Event Type</label>
                         <select
                           value={newRule.bonus_params.event_type || 'goal'}
                           onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, event_type: e.target.value } })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-white"
                         >
                           <option value="goal">Goals</option>
                           <option value="assist">Assists</option>
@@ -390,165 +374,15 @@ export default function CustomScoringRulesPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Consecutive Matches</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Consecutive Matches</label>
                         <input
                           type="number"
                           value={newRule.bonus_params.consecutive_matches || 3}
                           onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, consecutive_matches: parseInt(e.target.value) } })}
                           min="2"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-4 py-2 border border-slate-300 rounded-lg"
                         />
                       </div>
-                    </div>
-                  )}
-                  
-                  {/* Milestone Bonus Fields */}
-                  {newRule.bonus_condition_type === 'milestone' && (
-                    <div className="md:col-span-2 grid grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Event Type</label>
-                        <select
-                          value={newRule.bonus_params.event_type || 'goal'}
-                          onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, event_type: e.target.value } })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                        >
-                          <option value="goal">Goals</option>
-                          <option value="assist">Assists</option>
-                          <option value="clean_sheet">Clean Sheets</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Count</label>
-                        <input
-                          type="number"
-                          value={newRule.bonus_params.count || 10}
-                          onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, count: parseInt(e.target.value) } })}
-                          min="1"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Scope</label>
-                        <select
-                          value={newRule.bonus_params.scope || 'season'}
-                          onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, scope: e.target.value } })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                        >
-                          <option value="season">Season</option>
-                          <option value="tournament">Tournament</option>
-                        </select>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Match Result Bonus Fields */}
-                  {newRule.bonus_condition_type === 'match_result' && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Result Type</label>
-                      <select
-                        value={newRule.bonus_params.result_type || 'win'}
-                        onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, result_type: e.target.value } })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      >
-                        <option value="win">Team Wins</option>
-                        <option value="draw">Team Draws</option>
-                        <option value="loss">Team Loses</option>
-                      </select>
-                      <p className="text-xs text-gray-500 mt-1">All players get this bonus if their team achieves this result</p>
-                    </div>
-                  )}
-                  
-                  {/* Comeback Bonus Fields */}
-                  {newRule.bonus_condition_type === 'comeback' && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Minimum Goals Behind</label>
-                      <input
-                        type="number"
-                        value={newRule.bonus_params.goals_behind || 1}
-                        onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, goals_behind: parseInt(e.target.value) } })}
-                        min="1"
-                        placeholder="e.g., 1 or 2"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Bonus applied when team wins after being this many goals behind</p>
-                    </div>
-                  )}
-                  
-                  {/* Clean Sheet Streak Fields */}
-                  {newRule.bonus_condition_type === 'clean_sheet_streak' && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Consecutive Clean Sheets</label>
-                      <input
-                        type="number"
-                        value={newRule.bonus_params.consecutive_count || 3}
-                        onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, consecutive_count: parseInt(e.target.value) } })}
-                        min="2"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Bonus for defenders/goalkeeper when team achieves consecutive clean sheets</p>
-                    </div>
-                  )}
-                  
-                  {/* Goal Difference Bonus Fields */}
-                  {newRule.bonus_condition_type === 'goal_difference' && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Minimum Goal Difference</label>
-                      <input
-                        type="number"
-                        value={newRule.bonus_params.min_difference || 3}
-                        onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, min_difference: parseInt(e.target.value) } })}
-                        min="2"
-                        placeholder="e.g., 3 for winning 4-1"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Bonus when team wins by X or more goals</p>
-                    </div>
-                  )}
-                  
-                  {/* Against Top Team Fields */}
-                  {newRule.bonus_condition_type === 'against_top_team' && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Top Teams (Rankings)</label>
-                      <input
-                        type="number"
-                        value={newRule.bonus_params.top_rank || 3}
-                        onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, top_rank: parseInt(e.target.value) } })}
-                        min="1"
-                        placeholder="e.g., 3 for top 3 teams"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Bonus for scoring/assisting against teams in top X positions</p>
-                    </div>
-                  )}
-                  
-                  {/* Captain Bonus Fields */}
-                  {newRule.bonus_condition_type === 'captain_bonus' && (
-                    <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Captain Multiplier</label>
-                        <input
-                          type="number"
-                          value={newRule.bonus_params.captain_multiplier || 2}
-                          onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, captain_multiplier: parseFloat(e.target.value) } })}
-                          min="1"
-                          step="0.5"
-                          placeholder="e.g., 2 for double points"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Vice Captain Multiplier</label>
-                        <input
-                          type="number"
-                          value={newRule.bonus_params.vice_captain_multiplier || 1.5}
-                          onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, vice_captain_multiplier: parseFloat(e.target.value) } })}
-                          min="1"
-                          step="0.5"
-                          placeholder="e.g., 1.5 for 1.5x points"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                      <p className="md:col-span-2 text-xs text-gray-500">Multiply points for captain and vice-captain</p>
                     </div>
                   )}
                 </>
@@ -557,13 +391,13 @@ export default function CustomScoringRulesPage() {
             <div className="flex gap-3">
               <button
                 onClick={createRule}
-                className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-sm shadow"
               >
                 Create Rule
               </button>
               <button
                 onClick={() => setShowCreateForm(false)}
-                className="px-6 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
+                className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-sm"
               >
                 Cancel
               </button>
@@ -572,20 +406,20 @@ export default function CustomScoringRulesPage() {
         )}
 
         {/* Rules List */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Active Rules</h2>
+        <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900 mb-4">Active Rules</h2>
           
           {rules.length === 0 ? (
-            <p className="text-center text-gray-500 py-12">No scoring rules yet. Create your first rule!</p>
+            <p className="text-center text-slate-400 py-12 text-sm italic">No scoring rules yet. Create your first rule!</p>
           ) : (
             <div className="space-y-3">
               {rules.map((rule) => (
                 <div
                   key={rule.rule_id}
-                  className={`flex items-center justify-between p-4 border-2 rounded-xl transition-all ${
+                  className={`flex items-center justify-between p-4 border rounded-xl transition-all ${
                     editingRule?.rule_id === rule.rule_id
-                      ? 'border-indigo-300 bg-indigo-50'
-                      : 'border-gray-200 bg-gray-50'
+                      ? 'border-indigo-300 bg-indigo-50/50 shadow-sm'
+                      : 'border-slate-200 bg-slate-50/30 hover:border-slate-300'
                   }`}
                 >
                   {editingRule?.rule_id === rule.rule_id ? (
@@ -596,19 +430,19 @@ export default function CustomScoringRulesPage() {
                           type="text"
                           value={editingRule.rule_name}
                           onChange={(e) => setEditingRule({ ...editingRule, rule_name: e.target.value })}
-                          className="px-3 py-2 border border-gray-300 rounded-lg"
+                          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         />
                         <input
                           type="number"
                           value={editingRule.points_value}
                           onChange={(e) => setEditingRule({ ...editingRule, points_value: parseFloat(e.target.value) })}
-                          className="px-3 py-2 border border-gray-300 rounded-lg"
+                          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                           step="0.5"
                         />
                         <select
                           value={editingRule.applies_to}
                           onChange={(e) => setEditingRule({ ...editingRule, applies_to: e.target.value })}
-                          className="px-3 py-2 border border-gray-300 rounded-lg"
+                          className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         >
                           <option value="player">Player</option>
                           <option value="team">Team</option>
@@ -618,13 +452,13 @@ export default function CustomScoringRulesPage() {
                       <div className="flex items-center gap-2 ml-4">
                         <button
                           onClick={() => updateRule(rule.rule_id)}
-                          className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                          className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow"
                         >
                           <Save className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setEditingRule(null)}
-                          className="p-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                          className="p-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -634,37 +468,37 @@ export default function CustomScoringRulesPage() {
                     // View Mode
                     <>
                       <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-bold text-gray-900">{rule.rule_name}</h3>
-                          <span className={`px-3 py-1 rounded-full text-sm font-bold border-2 ${getRuleColor(rule.points_value)}`}>
+                        <div className="flex flex-wrap items-center gap-2.5 mb-1.5">
+                          <h3 className="font-bold text-slate-800 text-sm">{rule.rule_name}</h3>
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-black border ${getRuleColor(rule.points_value)}`}>
                             {rule.points_value > 0 ? '+' : ''}{rule.points_value} pts
                           </span>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                          <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-black rounded uppercase tracking-wider">
                             {rule.applies_to}
                           </span>
                           {!rule.is_active && (
-                            <span className="px-2 py-1 bg-gray-200 text-gray-600 text-xs font-medium rounded">
+                            <span className="px-2 py-0.5 bg-slate-200 text-slate-500 text-[10px] font-black rounded uppercase tracking-wider">
                               Inactive
                             </span>
                           )}
                         </div>
                         {rule.description && (
-                          <p className="text-sm text-gray-600">{rule.description}</p>
+                          <p className="text-xs text-slate-500 leading-relaxed">{rule.description}</p>
                         )}
-                        <p className="text-xs text-gray-500 mt-1">Type: {rule.rule_type}</p>
+                        <p className="text-[10px] text-slate-400 mt-1">Type: {rule.rule_type}</p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 ml-4">
                         <button
                           onClick={() => setEditingRule(rule)}
-                          className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors border border-slate-200"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => deleteRule(rule.rule_id, rule.rule_name)}
-                          className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                          className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors border border-red-200"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </>
@@ -676,9 +510,9 @@ export default function CustomScoringRulesPage() {
         </div>
 
         {/* Info Box */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-semibold text-blue-900 mb-2">How Scoring Rules Work:</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
+        <div className="mt-6 bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 text-indigo-850">
+          <h4 className="font-bold text-indigo-900 text-sm mb-2">How Scoring Rules Work:</h4>
+          <ul className="text-xs space-y-1.5 leading-relaxed text-indigo-750">
             <li>• Create custom rules to define how players earn points</li>
             <li>• Positive values add points, negative values deduct them</li>
             <li>• Rules can apply to individual players, teams, or both</li>

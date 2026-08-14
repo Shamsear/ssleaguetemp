@@ -94,10 +94,10 @@ export default function PassiveBreakdownPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading breakdown...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-slate-600 font-semibold">Loading breakdown...</p>
         </div>
       </div>
     );
@@ -105,12 +105,17 @@ export default function PassiveBreakdownPage() {
 
   if (error || !data) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-          <p className="text-red-600 font-medium">{error || 'Failed to load data'}</p>
-          <Link href="/dashboard/team/fantasy/my-team" className="mt-4 inline-block text-blue-600 hover:underline">
-            {"<-"} Back to My Team
-          </Link>
+      <div className="min-h-screen bg-slate-50 py-8 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center shadow-sm">
+            <p className="text-red-600 font-semibold">{error || 'Failed to load data'}</p>
+            <Link
+              href="/dashboard/team/fantasy/my-team"
+              className="mt-4 inline-block text-indigo-600 hover:text-indigo-700 font-bold text-sm"
+            >
+              ← Back to My Team
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -120,15 +125,19 @@ export default function PassiveBreakdownPage() {
   const adminBonusTotal = data.admin_bonuses.reduce((sum, b) => sum + b.points, 0);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      {/* Header */}
-      <div className="mb-6">
-        <Link href="/dashboard/team/fantasy/my-team" className="text-blue-600 hover:underline mb-2 inline-block">
-          {"<-"} Back to My Team
-        </Link>
-        <h1 className="text-3xl font-bold text-gray-900">Passive Points Breakdown</h1>
-        <p className="text-gray-600 mt-1">Detailed breakdown of all passive points earned</p>
-      </div>
+    <div className="min-h-screen bg-slate-50 py-8 px-4">
+      <div className="container mx-auto max-w-6xl">
+        {/* Header */}
+        <div className="mb-6">
+          <Link
+            href="/dashboard/team/fantasy/my-team"
+            className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-4"
+          >
+            ← Back to My Team
+          </Link>
+          <h1 className="text-3xl font-bold text-slate-900">Passive Points Breakdown</h1>
+          <p className="text-slate-500 mt-1">Detailed breakdown of all passive points earned</p>
+        </div>
 
       {/* Team Info */}
       <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl shadow-xl border border-green-200 p-6 mb-8">
@@ -279,24 +288,25 @@ export default function PassiveBreakdownPage() {
       </div>
 
       {/* Summary Footer */}
-      <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+      <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-600 mb-1">Total Passive Points Breakdown</p>
-            <p className="text-lg text-gray-700">
-              <span className="font-semibold text-green-600">{teamBonusTotal} pts</span> (Team Performance) + 
-              <span className="font-semibold text-yellow-600"> {adminBonusTotal} pts</span> (Admin Bonuses) = 
-              <span className="font-bold text-blue-600 text-xl"> {data.stats.total_passive_points} pts</span>
+            <p className="text-sm text-slate-500 mb-1">Total Passive Points Breakdown</p>
+            <p className="text-lg text-slate-700">
+              <span className="font-semibold text-emerald-600">{teamBonusTotal} pts</span> (Team Performance) + 
+              <span className="font-semibold text-amber-600"> {adminBonusTotal} pts</span> (Admin Bonuses) = 
+              <span className="font-bold text-indigo-600 text-xl"> {data.stats.total_passive_points} pts</span>
             </p>
           </div>
           <Link 
             href="/dashboard/team/fantasy/my-team"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold text-sm shadow-sm"
           >
             Back to My Team
           </Link>
         </div>
       </div>
+    </div>
     </div>
   );
 }

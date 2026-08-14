@@ -16,6 +16,7 @@ acquisition_type: character varying
 acquired_at: timestamp without time zone
 
 --- Leagues ---
+SSPSLFLS17 (SSPSLS17) - Active: true
 SSPSLFLS16 (SSPSLS16) - Active: true
 
 --- Columns in fantasy_team_bonus_points ---

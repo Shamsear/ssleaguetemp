@@ -148,10 +148,10 @@ export default function LineupPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 sm:p-8 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 p-4 sm:p-8 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-sm sm:text-base text-gray-600">Loading squad...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-sm sm:text-base text-slate-600 font-semibold">Loading squad...</p>
         </div>
       </div>
     );
@@ -163,11 +163,11 @@ export default function LineupPage() {
   const subs = squad.filter(p => !selectedStarters.has(p.real_player_id));
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Set Your Lineup</h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Set Your Lineup</h1>
+          <p className="text-sm sm:text-base text-slate-500 mt-2">
             Select 5 starting players and choose your captain (2x points) and vice-captain (1.5x points)
           </p>
         </div>

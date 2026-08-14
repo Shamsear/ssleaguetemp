@@ -44,15 +44,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       settings: {
         budget_per_team: Number(league.budget_per_team),
-        min_squad_size: Number(league.min_squad_size || 11),
-        max_squad_size: Number(league.max_squad_size),
+        min_squad_size: Number(league.min_squad_size || 5),
+        max_squad_size: Number(league.max_squad_size || 7),
         league_name: league.league_name,
         season_name: league.season_name,
         season_id: league.season_id,
         draft_status: league.draft_status || 'pending',
-        draft_opens_at: league.draft_opens_at,
-        draft_closes_at: league.draft_closes_at,
+        draft_opens_at: leagues[0].draft_opens_at,
+        draft_closes_at: leagues[0].draft_closes_at,
         is_draft_active: league.draft_status === 'active',
+        category_settings: league.category_settings || null,
       },
     });
   } catch (error) {
@@ -76,7 +77,9 @@ export async function POST(request: NextRequest) {
       budget_per_team,
       min_squad_size,
       max_squad_size,
-      require_team_affiliation,
+      draft_opens_at,
+      draft_closes_at,
+      category_settings,
     } = body;
 
     // Validate input
@@ -91,9 +94,12 @@ export async function POST(request: NextRequest) {
     const result = await fantasySql`
       UPDATE fantasy_leagues
       SET 
-        budget_per_team = ${budget_per_team || 1000},
-        min_squad_size = ${min_squad_size || 11},
-        max_squad_size = ${max_squad_size || 15},
+        budget_per_team = ${budget_per_team || 500},
+        min_squad_size = ${min_squad_size || 5},
+        max_squad_size = ${max_squad_size || 7},
+        draft_opens_at = ${draft_opens_at || null},
+        draft_closes_at = ${draft_closes_at || null},
+        category_settings = ${category_settings ? JSON.stringify(category_settings) : null},
         updated_at = NOW()
       WHERE league_id = ${fantasy_league_id}
       RETURNING *
@@ -113,6 +119,9 @@ export async function POST(request: NextRequest) {
         budget_per_team: Number(result[0].budget_per_team),
         min_squad_size: Number(result[0].min_squad_size),
         max_squad_size: Number(result[0].max_squad_size),
+        draft_opens_at: result[0].draft_opens_at,
+        draft_closes_at: result[0].draft_closes_at,
+        category_settings: result[0].category_settings,
       },
     });
   } catch (error) {

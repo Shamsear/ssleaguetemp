@@ -37,15 +37,15 @@ export default function ChangeSupportedTeamPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
             </div>
         );
     }
 
     if (!hasFantasyTeam) {
         return (
-            <div className="min-h-screen bg-gray-50 p-8">
+            <div className="min-h-screen bg-slate-50 p-8">
                 <div className="max-w-4xl mx-auto">
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
                         <h2 className="text-xl font-semibold text-yellow-800 mb-2">
@@ -56,7 +56,7 @@ export default function ChangeSupportedTeamPage() {
                         </p>
                         <Link
                             href="/dashboard/team/fantasy/claim"
-                            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                            className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
                         >
                             Claim Your Fantasy Team
                         </Link>
@@ -67,20 +67,20 @@ export default function ChangeSupportedTeamPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-slate-50">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <Link
                         href="/dashboard/team/fantasy/my-team"
-                        className="text-blue-600 hover:text-blue-700 text-sm font-medium mb-4 inline-flex items-center"
+                        className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-4"
                     >
-                        {"<-"} Back to My Team
+                        ← Back to My Team
                     </Link>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2 mt-4">
+                    <h1 className="text-3xl font-bold text-slate-900 mb-2 mt-4">
                         Change Supported Team
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-slate-500">
                         Change your passive team during an active window.
                     </p>
                 </div>
