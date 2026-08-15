@@ -1,6 +1,6 @@
 'use client';
 
-import { Trophy } from 'lucide-react';
+import { Trophy, Shield, Star, Users, Award, Calendar, AlertTriangle, ArrowLeft, ArrowUp, ArrowDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -77,10 +77,11 @@ export default function FantasyLeaderboardPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold">Loading leaderboard standings...</p>
         </div>
       </div>
     );
@@ -90,22 +91,18 @@ export default function FantasyLeaderboardPage() {
 
   if (leaderboard.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-gray-300 to-gray-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono px-4">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="max-w-md w-full bg-white border border-slate-200/60 p-8 rounded-3xl text-center shadow-sm relative z-10">
+          <div className="w-16 h-16 bg-slate-800 border border-slate-700 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow">
+            <Trophy className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">No Fantasy League Yet</h2>
-          <p className="text-gray-600 mb-6">
-            The fantasy league hasn't been created yet.
+          <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">No Active Leaderboard</h3>
+          <p className="text-xs text-slate-455 font-bold uppercase leading-normal mb-6">
+            Standings will generate automatically once the first match round is calculated.
           </p>
-          <Link
-            href="/dashboard/team"
-            className="inline-block px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
-          >
-            Back to Dashboard
+          <Link href="/dashboard" className="px-6 py-3 bg-slate-800 border border-slate-900 hover:bg-slate-750 text-amber-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm">
+            Return to Dashboard
           </Link>
         </div>
       </div>
@@ -113,113 +110,131 @@ export default function FantasyLeaderboardPage() {
   }
 
   const getRankColor = (rank: number) => {
-    if (rank === 1) return 'from-yellow-400 to-yellow-600';
-    if (rank === 2) return 'from-gray-300 to-gray-500';
-    if (rank === 3) return 'from-orange-400 to-orange-600';
-    return 'from-gray-200 to-gray-400';
+    if (rank === 1) return 'from-amber-400 to-yellow-500 text-slate-900 border-amber-500 shadow-amber-500/10';
+    if (rank === 2) return 'from-slate-350 to-slate-450 text-slate-950 border-slate-350 shadow-slate-350/10';
+    if (rank === 3) return 'from-amber-700 to-amber-800 text-white border-amber-750 shadow-amber-700/10';
+    return 'from-slate-700 to-slate-800 text-amber-400 border-slate-900 shadow-slate-900/10';
   };
 
-  const getRankIcon = (rank: number) => {
-    if (rank === 1) return '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />';
-    if (rank === 2) return '<Trophy className="w-4 h-4 text-slate-400 fill-slate-400" />';
-    if (rank === 3) return '<Trophy className="w-4 h-4 text-amber-700 fill-amber-700" />';
-    return `#${rank}`;
+  const getRankBadgeClass = (rank: number) => {
+    if (rank === 1) return 'bg-amber-500 text-slate-900 border-amber-600';
+    if (rank === 2) return 'bg-slate-300 text-slate-900 border-slate-400';
+    if (rank === 3) return 'bg-amber-750 text-white border-amber-800';
+    return 'bg-slate-800 text-slate-300 border-slate-900';
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Header */}
-        <div className="mb-8">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative z-10 space-y-6">
+        {/* Navigation */}
+        <div className="flex justify-between items-center">
           <Link
             href="/dashboard/team/fantasy/my-team"
-            className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-4"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
-            ← Back to My Team
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to My Team
           </Link>
+        </div>
 
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-xl">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
+        {/* Header Banner */}
+        <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-slate-800 border border-slate-900 rounded-2xl text-amber-400 shadow-sm shrink-0">
+              <Trophy className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> {leagueName}</h1>
-              <p className="text-gray-600 mt-1">Fantasy League Standings</p>
+              <div className="text-[9px] uppercase bg-amber-500 border border-amber-600 text-slate-900 px-2.5 py-0.5 rounded-lg font-black tracking-wider w-fit">
+                STANDINGS LEADERBOARD
+              </div>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-1 uppercase">{leagueName}</h1>
             </div>
           </div>
         </div>
 
-        {/* Leaderboard */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          {/* Top 3 Podium */}
+        {/* Standings Console Container */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm">
+          {/* Podium Display (Top 3 Teams) */}
           {leaderboard.length >= 3 && (
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-8 border-b-4 border-yellow-300">
-              <div className="grid grid-cols-3 gap-4 max-w-4xl mx-auto">
+            <div className="bg-slate-50/50 border-b border-slate-100 p-6 sm:p-8">
+              <div className="grid grid-cols-3 gap-3 max-w-2xl mx-auto items-end pt-4">
                 {/* 2nd Place */}
-                <div className="text-center pt-8">
-                  <div className={`w-16 h-16 mx-auto bg-gradient-to-br ${getRankColor(2)} rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg mb-3`}>
-                    <Trophy className="w-4 h-4 text-slate-400 fill-slate-400" />
+                <div className="text-center space-y-2">
+                  <div className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto bg-gradient-to-br ${getRankColor(2)} border-2 rounded-full flex items-center justify-center font-black text-lg shadow-sm shrink-0 relative`}>
+                    2
+                    <span className="absolute -bottom-1 -right-1 bg-slate-400 text-[8px] px-1 py-0.5 rounded uppercase font-black tracking-wider">SILVER</span>
                   </div>
-                  <p className={`font-bold text-gray-900 mb-1 ${leaderboard[1].fantasy_team_id === myTeamId ? 'text-indigo-600' : ''}`}>
-                    {leaderboard[1].team_name}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">{leaderboard[1].total_points}</p>
-                  <p className="text-xs text-gray-600">pts</p>
+                  <div className="min-w-0">
+                    <p className={`font-black text-[10px] sm:text-xs uppercase truncate px-1 ${leaderboard[1].fantasy_team_id === myTeamId ? 'text-amber-600' : 'text-slate-800'}`}>
+                      {leaderboard[1].team_name}
+                    </p>
+                    <p className="text-xs font-black text-slate-500 mt-0.5">{leaderboard[1].total_points} pts</p>
+                  </div>
                 </div>
 
                 {/* 1st Place */}
-                <div className="text-center">
-                  <div className={`w-20 h-20 mx-auto bg-gradient-to-br ${getRankColor(1)} rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-xl mb-3`}>
-                    <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />
+                <div className="text-center space-y-2">
+                  <div className="w-5 h-5 mx-auto text-amber-500 flex items-center justify-center animate-bounce">
+                    <Trophy className="w-5 h-5 fill-amber-500" />
                   </div>
-                  <p className={`font-bold text-gray-900 mb-1 ${leaderboard[0].fantasy_team_id === myTeamId ? 'text-indigo-600' : ''}`}>
-                    {leaderboard[0].team_name}
-                  </p>
-                  <p className="text-3xl font-bold text-yellow-600">{leaderboard[0].total_points}</p>
-                  <p className="text-sm text-gray-600">pts</p>
+                  <div className={`w-18 h-18 sm:w-20 sm:h-20 mx-auto bg-gradient-to-br ${getRankColor(1)} border-2 rounded-full flex items-center justify-center font-black text-xl shadow-md shrink-0 relative`}>
+                    1
+                    <span className="absolute -bottom-1 -right-1 bg-amber-500 text-[8px] text-slate-900 px-1 py-0.5 rounded uppercase font-black tracking-wider">CHAMP</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`font-black text-xs sm:text-sm uppercase truncate px-1 ${leaderboard[0].fantasy_team_id === myTeamId ? 'text-amber-600 font-extrabold' : 'text-slate-850'}`}>
+                      {leaderboard[0].team_name}
+                    </p>
+                    <p className="text-sm font-black text-amber-600 mt-0.5">{leaderboard[0].total_points} pts</p>
+                  </div>
                 </div>
 
                 {/* 3rd Place */}
-                <div className="text-center pt-8">
-                  <div className={`w-16 h-16 mx-auto bg-gradient-to-br ${getRankColor(3)} rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg mb-3`}>
-                    <Trophy className="w-4 h-4 text-amber-700 fill-amber-700" />
+                <div className="text-center space-y-2">
+                  <div className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto bg-gradient-to-br ${getRankColor(3)} border-2 rounded-full flex items-center justify-center font-black text-lg shadow-sm shrink-0 relative`}>
+                    3
+                    <span className="absolute -bottom-1 -right-1 bg-amber-800 text-[8px] text-white px-1 py-0.5 rounded uppercase font-black tracking-wider">BRONZE</span>
                   </div>
-                  <p className={`font-bold text-gray-900 mb-1 ${leaderboard[2].fantasy_team_id === myTeamId ? 'text-indigo-600' : ''}`}>
-                    {leaderboard[2].team_name}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">{leaderboard[2].total_points}</p>
-                  <p className="text-xs text-gray-600">pts</p>
+                  <div className="min-w-0">
+                    <p className={`font-black text-[10px] sm:text-xs uppercase truncate px-1 ${leaderboard[2].fantasy_team_id === myTeamId ? 'text-amber-600' : 'text-slate-800'}`}>
+                      {leaderboard[2].team_name}
+                    </p>
+                    <p className="text-xs font-black text-slate-500 mt-0.5">{leaderboard[2].total_points} pts</p>
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Full Rankings */}
+          {/* Full Rankings list */}
           <div className="p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Full Standings</h3>
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-1.5">
+              Standings Board
+            </h3>
             <div className="space-y-2">
               {leaderboard.map((entry) => (
                 <div
                   key={entry.fantasy_team_id}
-                  className={`flex items-center justify-between p-4 rounded-xl transition-all ${
+                  className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
                     entry.fantasy_team_id === myTeamId
-                      ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-300'
-                      : 'bg-gray-50 hover:bg-gray-100'
+                      ? 'bg-amber-50/20 border-amber-400 shadow-sm'
+                      : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200'
                   }`}
                 >
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white shadow-md ${
-                      entry.rank <= 3 ? `bg-gradient-to-br ${getRankColor(entry.rank)}` : 'bg-gray-400'
-                    }`}>
-                      {getRankIcon(entry.rank)}
+                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                    {/* Rank Badge */}
+                    <div className={`w-8 h-8 rounded-lg border font-black text-xs flex items-center justify-center shrink-0 shadow-sm ${getRankBadgeClass(entry.rank)}`}>
+                      {entry.rank}
                     </div>
+
+                    {/* Logo/Fallback circle */}
                     {entry.team_logo ? (
                       <img 
                         src={entry.team_logo} 
                         alt={`${entry.team_name} logo`}
-                        className="w-12 h-12 rounded-full object-cover"
+                        className="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-250 bg-white"
                         style={{
                           objectPosition: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
                           transform: `scale(${(entry as any).logo_scale_circle ?? 1})`,
@@ -227,32 +242,40 @@ export default function FantasyLeaderboardPage() {
                         }}
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
+                      <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-900 text-amber-400 font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
                         {entry.team_name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <div className="flex-1">
-                      <p className={`font-bold text-gray-900 ${entry.fantasy_team_id === myTeamId ? 'text-indigo-600' : ''}`}>
+
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-xs font-black uppercase truncate ${entry.fantasy_team_id === myTeamId ? 'text-amber-700' : 'text-slate-800'}`}>
                         {entry.team_name}
-                        {entry.fantasy_team_id === myTeamId && <span className="ml-2 text-xs bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full">You</span>}
+                        {entry.fantasy_team_id === myTeamId && (
+                          <span className="ml-2 text-[8px] bg-amber-500 border border-amber-600 text-slate-900 px-2 py-0.5 rounded font-black tracking-wider uppercase">
+                            YOU
+                          </span>
+                        )}
                       </p>
+                      <p className="text-[9px] font-bold text-slate-450 uppercase mt-0.5 truncate">{entry.owner_name}</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-6 text-sm">
-                    <div className="text-right">
-                      <p className="text-gray-600">Total</p>
-                      <p className="text-xl font-bold text-indigo-600">{entry.total_points}</p>
+                  <div className="flex gap-4 sm:gap-6 text-right shrink-0">
+                    <div>
+                      <p className="text-[8px] text-slate-400 uppercase font-black">Squad</p>
+                      <p className="text-xs font-black text-slate-800 mt-0.5">{entry.player_count}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-gray-600">Players</p>
-                      <p className="text-xl font-bold text-gray-900">{entry.player_count}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-gray-600">Last Round</p>
-                      <p className={`text-xl font-bold ${entry.last_round_points > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                    <div className="w-px bg-slate-200" />
+                    <div>
+                      <p className="text-[8px] text-slate-400 uppercase font-black">Round</p>
+                      <p className={`text-xs font-black mt-0.5 ${entry.last_round_points > 0 ? 'text-emerald-650' : 'text-slate-500'}`}>
                         {entry.last_round_points || 0}
                       </p>
+                    </div>
+                    <div className="w-px bg-slate-200" />
+                    <div>
+                      <p className="text-[8px] text-slate-400 uppercase font-black">Total</p>
+                      <p className="text-sm font-black text-indigo-650 mt-0.5">{entry.total_points}</p>
                     </div>
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 'use client';
-import { Search, DollarSign, Clock, CheckCircle, AlertTriangle, User, Shield, Info, Trash2, ArrowUp, ArrowDown, Save, Lock } from 'lucide-react';
+
+import { Search, DollarSign, Clock, CheckCircle, AlertTriangle, User, Shield, Info, Trash2, ArrowUp, ArrowDown, Save, Lock, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
@@ -25,6 +26,7 @@ interface DraftSettings {
   category_settings?: {
     slots: Slot[];
     lists: Record<string, string[]>;
+    max_bids_per_team?: number;
   };
 }
 
@@ -114,6 +116,10 @@ export default function TeamDraftPage() {
         const isDraftActive = settingsData.settings?.is_draft_active || false;
         seasonId = settingsData.settings?.season_id;
         
+        const loadedCategorySettings = typeof settingsData.settings?.category_settings === 'string'
+          ? JSON.parse(settingsData.settings.category_settings)
+          : settingsData.settings?.category_settings;
+
         settingsObj = {
           budget: settingsData.settings?.budget_per_team || 500,
           is_active: isDraftActive,
@@ -121,25 +127,34 @@ export default function TeamDraftPage() {
           draft_status: draftStatus,
           draft_opens_at: settingsData.settings?.draft_opens_at || '',
           draft_closes_at: settingsData.settings?.draft_closes_at || '',
-          category_settings: settingsData.settings?.category_settings
+          category_settings: loadedCategorySettings
         };
         setDraftSettings(settingsObj);
+
+        const serverActiveSlot = Number(loadedCategorySettings?.active_slot_index);
+        if (serverActiveSlot) {
+          setActiveSlotIndex(serverActiveSlot);
+        }
       }
 
       // 3. Fetch all players in the pool
       const playersRes = await fetchWithTokenRefresh(`/api/fantasy/players/pool?league_id=${leagueId}`);
+      let playersList: Player[] = [];
       if (playersRes.ok) {
         const playersData = await playersRes.json();
-        setAvailablePlayers(playersData.players || []);
+        playersList = playersData.players || [];
+        setAvailablePlayers(playersList);
       }
 
       // 4. Fetch real teams in the tournament
       const teamsRes = await fetchWithTokenRefresh(
         seasonId ? `/api/teams/registered?season_id=${seasonId}` : '/api/teams/registered'
       );
+      let teamsList: RealTeam[] = [];
       if (teamsRes.ok) {
         const teamsData = await teamsRes.json();
-        setRealTeams(teamsData.teams || []);
+        teamsList = teamsData.teams || [];
+        setRealTeams(teamsList);
       }
 
       // 5. Fetch team's current bids
@@ -150,7 +165,7 @@ export default function TeamDraftPage() {
         // Map bids to local state structure
         const mappedBids: LocalBid[] = (bidsData.bids || []).map((b: any) => {
           if (b.bid_type === 'player') {
-            const playerObj = (playersData.players || []).find((p: any) => p.real_player_id === b.target_id);
+            const playerObj = playersList.find((p: any) => p.real_player_id === b.target_id);
             return {
               slot_index: b.slot_index,
               priority: b.priority,
@@ -161,7 +176,7 @@ export default function TeamDraftPage() {
               team_name: playerObj?.real_team_name
             };
           } else {
-            const teamObj = (teamsData.teams || []).find((t: any) => t.team_uid === b.target_id);
+            const teamObj = teamsList.find((t: any) => t.team_uid === b.target_id);
             return {
               slot_index: b.slot_index,
               priority: b.priority,
@@ -222,16 +237,28 @@ export default function TeamDraftPage() {
 
   // Math for remaining budget: deduct the maximum bid amount placed in each slot
   const calculateRemainingBudget = () => {
-    if (!draftSettings) return 0;
-    const maxBidsBySlot: Record<number, number> = {};
-    localBids.forEach(bid => {
-      const idx = bid.slot_index;
-      if (!maxBidsBySlot[idx] || bid.bid_amount > maxBidsBySlot[idx]) {
-        maxBidsBySlot[idx] = bid.bid_amount;
-      }
-    });
-    const spent = Object.values(maxBidsBySlot).reduce((sum, amt) => sum + amt, 0);
-    return Math.max(0, draftSettings.budget - spent);
+    if (!draftSettings || !myTeam) return 0;
+    const activeSlot = draftSettings.category_settings?.active_slot_index 
+      ? Number(draftSettings.category_settings.active_slot_index) 
+      : null;
+
+    if (activeSlot) {
+      // Slot-by-slot: Remaining budget is the team's current database budget minus the max bid in the active slot
+      const slotBids = localBids.filter(b => b.slot_index === activeSlot);
+      const maxBidInSlot = slotBids.length > 0 ? Math.max(...slotBids.map(b => b.bid_amount)) : 0;
+      return Math.max(0, Number(myTeam.budget_remaining || 0) - maxBidInSlot);
+    } else {
+      // Legacy batch mode
+      const maxBidsBySlot: Record<number, number> = {};
+      localBids.forEach(bid => {
+        const idx = bid.slot_index;
+        if (!maxBidsBySlot[idx] || bid.bid_amount > maxBidsBySlot[idx]) {
+          maxBidsBySlot[idx] = bid.bid_amount;
+        }
+      });
+      const spent = Object.values(maxBidsBySlot).reduce((sum, amt) => sum + amt, 0);
+      return Math.max(0, draftSettings.budget - spent);
+    }
   };
 
   const getActiveSlot = (): Slot | undefined => {
@@ -287,6 +314,17 @@ export default function TeamDraftPage() {
     }
 
     const slotBids = localBids.filter(b => b.slot_index === activeSlotIndex);
+    const maxBidsLimit = draftSettings?.category_settings?.max_bids_per_team || 0;
+
+    if (maxBidsLimit > 0 && slotBids.length >= maxBidsLimit) {
+      showAlert({
+        type: 'error',
+        title: 'Bid Limit Exceeded',
+        message: `You cannot place more than ${maxBidsLimit} bids for this draft round.`
+      });
+      return;
+    }
+
     const nextPriority = slotBids.length + 1;
 
     const newBid: LocalBid = {
@@ -357,24 +395,41 @@ export default function TeamDraftPage() {
 
   const saveBids = async (lockSubmit: boolean = false) => {
     if (!myTeam || !draftSettings) return;
+    const activeSlot = draftSettings.category_settings?.active_slot_index 
+      ? Number(draftSettings.category_settings.active_slot_index) 
+      : null;
 
     if (lockSubmit) {
-      // Ensure they have placed at least one bid for each of the 6 slots
-      const activeSlotIndices = new Set(localBids.map(b => b.slot_index));
-      const requiredSlots = draftSettings.category_settings?.slots.map(s => s.slot_index) || [1,2,3,4,5,6];
-      const missingSlots = requiredSlots.filter(idx => !activeSlotIndices.has(idx));
+      if (activeSlot) {
+        const slotBids = localBids.filter(b => b.slot_index === activeSlot);
+        if (slotBids.length === 0) {
+          showAlert({
+            type: 'error',
+            title: 'No Bids Placed',
+            message: `You must place at least one bid for the active slot (${
+              draftSettings.category_settings?.slots.find(s => s.slot_index === activeSlot)?.name || `Slot ${activeSlot}`
+            }) before submitting.`
+          });
+          return;
+        }
+      } else {
+        // Ensure they have placed at least one bid for each of the 6 slots
+        const activeSlotIndices = new Set(localBids.map(b => b.slot_index));
+        const requiredSlots = draftSettings.category_settings?.slots.map(s => s.slot_index) || [1,2,3,4,5,6];
+        const missingSlots = requiredSlots.filter(idx => !activeSlotIndices.has(idx));
 
-      if (missingSlots.length > 0) {
-        const slotNames = missingSlots.map(idx => {
-          const s = draftSettings.category_settings?.slots.find(sl => sl.slot_index === idx);
-          return s ? s.name : `Slot ${idx}`;
-        });
-        showAlert({
-          type: 'error',
-          title: 'Missing Roster Slots',
-          message: `To submit and lock, you must bid on at least one choice for: ${slotNames.join(', ')}.`
-        });
-        return;
+        if (missingSlots.length > 0) {
+          const slotNames = missingSlots.map(idx => {
+            const s = draftSettings.category_settings?.slots.find(sl => sl.slot_index === idx);
+            return s ? s.name : `Slot ${idx}`;
+          });
+          showAlert({
+            type: 'error',
+            title: 'Missing Roster Slots',
+            message: `To submit and lock, you must bid on at least one choice for: ${slotNames.join(', ')}.`
+          });
+          return;
+        }
       }
 
       if (!confirm('Are you sure you want to lock your draft submissions? Once locked, you cannot modify your bids unless unlocked by the committee admin.')) {
@@ -462,10 +517,11 @@ export default function TeamDraftPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-900">
-        <div className="text-center text-white">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400 mx-auto"></div>
-          <p className="mt-4 text-slate-400">Loading draft dashboard...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading draft dashboard...</p>
         </div>
       </div>
     );
@@ -473,14 +529,17 @@ export default function TeamDraftPage() {
 
   if (!myTeam || !draftSettings) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center">
-          <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-white mb-2">No Active Fantasy League</h3>
-          <p className="text-slate-400 text-sm mb-6">
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono px-4">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="max-w-md w-full bg-white border border-slate-200/60 p-8 rounded-3xl text-center shadow-sm relative z-10 font-mono">
+          <div className="w-16 h-16 bg-slate-800 border border-slate-700 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">No Active Fantasy League</h3>
+          <p className="text-xs text-slate-455 font-bold uppercase leading-normal mb-6">
             Your team is not registered in an active fantasy league. Contact the committee admin to enable fantasy.
           </p>
-          <Link href="/dashboard" className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all inline-block">
+          <Link href="/dashboard" className="px-6 py-3 bg-slate-800 border border-slate-900 hover:bg-slate-700 text-amber-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm">
             Return to Dashboard
           </Link>
         </div>
@@ -488,281 +547,377 @@ export default function TeamDraftPage() {
     );
   }
 
-  const isBiddingLocked = myTeam.draft_submitted || draftSettings.draft_status === 'completed' || timeRemaining <= 0;
+  const activeSlot = draftSettings?.category_settings?.active_slot_index 
+    ? Number(draftSettings.category_settings.active_slot_index) 
+    : null;
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      <AlertModal {...alertState} onClose={closeAlert} />
+  if (draftSettings.draft_status === 'completed') {
+    return (
+      <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="max-w-md mx-auto relative z-10 font-mono">
+          <Link
+            href="/dashboard/team/fantasy/my-team"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm mb-6 transition-all"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to My Team
+          </Link>
 
-      {/* Top Banner (Status, Countdown, Budget) */}
-      <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 shadow-md sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase bg-indigo-900/60 text-indigo-300 border border-indigo-700/50 px-2 py-0.5 rounded font-black tracking-wider">
-                FANTASY DRAFT ACTIVE
-              </span>
-              <span className="text-xs text-slate-400 font-bold">{myTeam.team_name}</span>
+          <div className="console-card bg-white border border-slate-200/60 p-8 rounded-3xl text-center shadow-sm">
+            <div className="w-16 h-16 bg-slate-800 border border-slate-700 text-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow">
+              <CheckCircle className="w-8 h-8 text-emerald-500" />
             </div>
-            <h1 className="text-xl font-black text-white mt-1">Blind Bid Category Draft</h1>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-6">
-            {/* Countdown */}
-            <div className="flex items-center gap-2.5 bg-slate-950 border border-slate-800 px-4 py-2 rounded-xl">
-              <Clock className="w-4 h-4 text-indigo-400" />
-              <div>
-                <p className="text-[9px] text-slate-400 uppercase font-black">Draft Closes In</p>
-                <h4 className="text-sm font-black text-white">{formatTime(timeRemaining)}</h4>
-              </div>
-            </div>
-
-            {/* Budget Display */}
-            <div className="flex items-center gap-2.5 bg-slate-950 border border-slate-800 px-4 py-2 rounded-xl">
-              <DollarSign className="w-4 h-4 text-emerald-400" />
-              <div>
-                <p className="text-[9px] text-slate-400 uppercase font-black">Remaining Budget</p>
-                <h4 className="text-sm font-black text-emerald-400">{calculateRemainingBudget()} / {draftSettings.budget} Cr</h4>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <div>
-              {isBiddingLocked ? (
-                <div className="flex items-center gap-2">
-                  <span className="px-4 py-2.5 bg-emerald-950 text-emerald-300 border border-emerald-800 text-xs font-black rounded-xl uppercase flex items-center gap-1.5 shadow">
-                    <CheckCircle className="w-4 h-4" /> Locked & Submitted
-                  </span>
-                  {myTeam.draft_submitted && draftSettings.draft_status === 'active' && timeRemaining > 0 && (
-                    <button
-                      onClick={handleUnlock}
-                      disabled={isSubmitting}
-                      className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-all"
-                    >
-                      Unlock
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => saveBids(false)}
-                    disabled={isSaving || isSubmitting}
-                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black rounded-xl border border-slate-700 transition-all uppercase flex items-center gap-1 shadow"
-                  >
-                    <Save className="w-3.5 h-3.5" /> Save Draft
-                  </button>
-                  <button
-                    onClick={() => saveBids(true)}
-                    disabled={isSaving || isSubmitting}
-                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl transition-all uppercase flex items-center gap-1.5 shadow"
-                  >
-                    <Lock className="w-3.5 h-3.5" /> Submit & Lock
-                  </button>
-                </div>
-              )}
-            </div>
+            <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">Draft Completed</h3>
+            <p className="text-xs text-slate-455 font-bold uppercase leading-normal mb-6">
+              The fantasy league draft is completed and all rosters are finalized.
+            </p>
           </div>
         </div>
       </div>
+    );
+  }
 
-      <div className="max-w-7xl mx-auto px-6 py-6 w-full flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* LEFT AREA: Player Pool & Real Teams (Columns 1-7) */}
-        <div className="lg:col-span-7 flex flex-col min-h-[500px]">
-          {/* Active Slot Context Card */}
-          {(() => {
-            const slot = getActiveSlot();
-            if (!slot) return null;
-            return (
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-4 flex items-center justify-between gap-4">
-                <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Slot Selection Pool</span>
-                  <h3 className="text-lg font-black text-white mt-0.5">{slot.name}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Showing pool for list ID: <code className="text-indigo-400">{slot.list_id}</code> (Base Price: {slot.base_price} Credits)</p>
-                </div>
-                <div className="bg-slate-950 border border-slate-800 w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg text-indigo-400 shadow">
-                  {slot.slot_index}
-                </div>
-              </div>
-            );
-          })()}
+  if (activeSlot === null || draftSettings.draft_status === 'pending') {
+    return (
+      <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="max-w-md mx-auto relative z-10 font-mono">
+          <Link
+            href="/dashboard/team/fantasy/my-team"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm mb-6 transition-all"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to My Team
+          </Link>
 
-          {/* Search bar */}
-          <div className="relative mb-4">
-            <span className="absolute left-4 top-3.5 text-slate-500">
-              <Search className="w-4.5 h-4.5" />
-            </span>
-            <input
-              type="text"
-              placeholder="Search by name, team, position..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-inner"
-            />
+          <div className="console-card bg-white border border-slate-200/60 p-8 rounded-3xl text-center shadow-sm">
+            <div className="w-16 h-16 bg-slate-800 border border-slate-700 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow">
+              <Clock className="w-8 h-8 text-amber-500 animate-pulse" />
+            </div>
+            <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">Draft Round Not Started</h3>
+            <p className="text-xs text-slate-455 font-bold uppercase leading-normal mb-6">
+              The fantasy draft is conducted round-by-round. Please wait for the committee admin to start the active bidding round.
+            </p>
           </div>
+        </div>
+      </div>
+    );
+  }
 
-          {/* List display */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl flex-1 overflow-hidden flex flex-col shadow-lg">
-            <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
-              <h3 className="font-bold text-slate-300 text-sm">Available Targets</h3>
-              <span className="text-xs text-slate-500">{getFilteredPool().length} items found</span>
+  const isBiddingLocked = 
+    myTeam?.draft_submitted || 
+    (draftSettings?.draft_closes_at && timeRemaining <= 0);
+
+  const isSlotDisabled = (slotIdx: number) => {
+    return isBiddingLocked || slotIdx !== activeSlot;
+  };
+
+  return (
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <AlertModal {...alertState} onClose={closeAlert} />
+
+      <div className="max-w-6xl mx-auto relative z-10 space-y-6 font-mono">
+        {/* Navigation */}
+        <div className="flex justify-between items-center">
+          <Link
+            href="/dashboard/team/fantasy/my-team"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to My Team
+          </Link>
+        </div>
+
+        {/* Top Banner (Status, Countdown, Budget) */}
+        <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] uppercase bg-amber-500 border border-amber-600 text-slate-900 px-2.5 py-0.5 rounded-lg font-black tracking-wider">
+                  FANTASY DRAFT ACTIVE
+                </span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase">{myTeam.team_name}</span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-1.5 uppercase">Blind Bid Category Draft</h1>
             </div>
 
-            <div className="flex-1 overflow-y-auto max-h-[550px] divide-y divide-slate-800">
-              {getFilteredPool().map((item: any) => {
-                const isRealTeam = !('real_player_id' in item);
-                const itemId = isRealTeam ? item.team_uid : item.real_player_id;
-                const name = isRealTeam ? item.team_name : item.player_name;
-                const desc = isRealTeam ? 'Real Team' : `${item.real_team_name} • ${item.position}`;
-
-                return (
-                  <div key={itemId} className="p-4 flex items-center justify-between hover:bg-slate-800/40 transition-colors">
-                    <div>
-                      <h4 className="font-bold text-white text-sm">{name}</h4>
-                      <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      {!isRealTeam && (
-                        <span className={`px-2 py-0.5 text-[9px] font-black rounded-full uppercase tracking-wider ${
-                          item.category === 'RED' ? 'bg-red-950 text-red-300 border border-red-800/50' :
-                          item.category === 'BLUE' ? 'bg-blue-950 text-blue-300 border border-blue-800/50' :
-                          item.category === 'BLACK' ? 'bg-zinc-800 text-zinc-300 border border-zinc-700/50' :
-                          'bg-slate-800 text-slate-300 border border-slate-700/50'
-                        }`}>
-                          {item.category}
-                        </span>
-                      )}
-                      
-                      <button
-                        onClick={() => addBidToSlot(itemId, name, !isRealTeam, item.real_team_name)}
-                        disabled={isBiddingLocked}
-                        className="px-4 py-1.5 bg-indigo-600/90 hover:bg-indigo-600 disabled:opacity-40 text-white text-xs font-black rounded-lg transition-colors shadow"
-                      >
-                        + Select Target
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {getFilteredPool().length === 0 && (
-                <div className="p-12 text-center text-slate-500 text-sm">
-                  <Info className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                  No matching targets in this slot's configuration list.
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Countdown */}
+              <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200/80 px-4 py-2.5 rounded-xl">
+                <Clock className="w-4.5 h-4.5 text-indigo-650" />
+                <div>
+                  <p className="text-[8px] text-slate-400 uppercase font-black">Draft Closes In</p>
+                  <h4 className="text-xs font-black text-slate-800 uppercase mt-0.5">{formatTime(timeRemaining)}</h4>
                 </div>
-              )}
+              </div>
+
+              {/* Budget Display */}
+              <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200/80 px-4 py-2.5 rounded-xl">
+                <DollarSign className="w-4.5 h-4.5 text-emerald-650" />
+                <div>
+                  <p className="text-[8px] text-slate-400 uppercase font-black">Remaining Budget</p>
+                  <h4 className="text-xs font-black text-emerald-600 mt-0.5">{calculateRemainingBudget()} / {draftSettings.budget} Cr</h4>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div>
+                {isBiddingLocked ? (
+                  <div className="flex items-center gap-2">
+                    <span className="px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-250 text-xs font-black rounded-xl uppercase flex items-center gap-1.5 shadow-sm">
+                      <CheckCircle className="w-4 h-4 text-emerald-600" /> Locked & Submitted
+                    </span>
+                    {myTeam.draft_submitted && draftSettings.draft_status === 'active' && timeRemaining > 0 && (
+                      <button
+                        onClick={handleUnlock}
+                        disabled={isSubmitting}
+                        className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer"
+                      >
+                        Unlock
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => saveBids(false)}
+                      disabled={isSaving || isSubmitting}
+                      className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-black rounded-xl border border-slate-300 transition-all uppercase flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                      <Save className="w-3.5 h-3.5" /> Save Draft
+                    </button>
+                    <button
+                      onClick={() => saveBids(true)}
+                      disabled={isSaving || isSubmitting}
+                      className="px-5 py-2.5 bg-slate-800 hover:bg-slate-750 text-white text-xs font-black rounded-xl transition-all uppercase flex items-center gap-1.5 shadow-sm cursor-pointer border border-slate-900"
+                    >
+                      <Lock className="w-3.5 h-3.5" /> Submit & Lock
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* RIGHT PANEL: Roster Slots & Bids Wishlist (Columns 8-12) */}
-        <div className="lg:col-span-5 flex flex-col gap-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg">
-            <h2 className="text-base font-black text-white mb-4 border-b border-slate-800 pb-2">Roster Slots Bidding</h2>
-
-            <div className="space-y-4">
-              {draftSettings.category_settings?.slots.map(slot => {
-                const isActive = slot.slot_index === activeSlotIndex;
-                const slotBids = localBids.filter(b => b.slot_index === slot.slot_index).sort((a,b) => a.priority - b.priority);
-
-                return (
-                  <div
-                    key={slot.slot_index}
-                    onClick={() => setActiveSlotIndex(slot.slot_index)}
-                    className={`border rounded-xl p-4 transition-all cursor-pointer ${
-                      isActive 
-                        ? 'border-indigo-500 bg-indigo-950/20 shadow-md shadow-indigo-950/20' 
-                        : 'border-slate-800 bg-slate-950/30 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${
-                          isActive ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'
-                        }`}>
-                          {slot.slot_index}
-                        </span>
-                        <h4 className={`text-xs font-black uppercase tracking-wider ${isActive ? 'text-indigo-400' : 'text-slate-300'}`}>
-                          {slot.name}
-                        </h4>
-                      </div>
-                      <span className="text-[10px] text-slate-500 font-bold bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                        Base: {slot.base_price} Credits
-                      </span>
-                    </div>
-
-                    {/* Wishlist/fallback bids in this slot */}
-                    {slotBids.length > 0 ? (
-                      <div className="space-y-2 mt-3 pl-8">
-                        {slotBids.map((bid, bIndex) => (
-                          <div 
-                            key={bid.target_id} 
-                            className="bg-slate-900/60 border border-slate-850 p-2.5 rounded-lg flex items-center justify-between gap-3"
-                            onClick={(e) => e.stopPropagation()} // Prevent clicking container from switching slots
-                          >
-                            <div className="min-w-0 flex-1">
-                              <span className="text-[9px] uppercase font-black text-indigo-400">
-                                Priority {bid.priority}
-                              </span>
-                              <h5 className="font-bold text-white text-xs truncate mt-0.5">{bid.target_name}</h5>
-                              <p className="text-[9px] text-slate-500 truncate">{bid.team_name || 'Roster Target'}</p>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              {/* Bid Amount input */}
-                              <input
-                                type="number"
-                                value={bid.bid_amount}
-                                disabled={isBiddingLocked}
-                                onChange={(e) => updateBidAmount(slot.slot_index, bid.target_id, parseInt(e.target.value) || 0)}
-                                className="w-16 px-2 py-1 bg-slate-950 border border-slate-800 rounded text-center text-xs font-bold text-emerald-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                min={slot.base_price}
-                                required
-                              />
-
-                              {/* Priority controls */}
-                              {!isBiddingLocked && (
-                                <div className="flex flex-col gap-0.5">
-                                  <button
-                                    onClick={() => handlePriorityChange(slot.slot_index, bid.target_id, 'up')}
-                                    disabled={bIndex === 0}
-                                    className="p-0.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded disabled:opacity-30"
-                                  >
-                                    <ArrowUp className="w-3 h-3" />
-                                  </button>
-                                  <button
-                                    onClick={() => handlePriorityChange(slot.slot_index, bid.target_id, 'down')}
-                                    disabled={bIndex === slotBids.length - 1}
-                                    className="p-0.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded disabled:opacity-30"
-                                  >
-                                    <ArrowDown className="w-3 h-3" />
-                                  </button>
-                                </div>
-                              )}
-
-                              {/* Delete button */}
-                              {!isBiddingLocked && (
-                                <button
-                                  onClick={() => removeBid(slot.slot_index, bid.target_id)}
-                                  className="p-1 text-slate-500 hover:text-red-400 hover:bg-red-950/20 rounded transition-colors"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-[10px] text-slate-500 italic pl-8 mt-2">No bids placed for this slot yet. Select a target from the pool.</p>
-                    )}
+        {/* Content split grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* LEFT AREA: Player Pool & Real Teams (Columns 1-7) */}
+          <div className="lg:col-span-7 flex flex-col space-y-4">
+            {/* Active Slot Context Card */}
+            {(() => {
+              const slot = getActiveSlot();
+              if (!slot) return null;
+              return (
+                <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl flex items-center justify-between gap-4">
+                  <div>
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Active Slot Selection Pool</span>
+                    <h3 className="text-base font-black text-slate-900 mt-0.5 uppercase">{slot.name}</h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">List ID: <code className="text-indigo-600 font-extrabold">{slot.list_id}</code> | Base Price: {slot.base_price} Credits</p>
                   </div>
-                );
-              })}
+                  <div className="bg-slate-800 border border-slate-900 w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg text-amber-400 shadow-sm shrink-0">
+                    {slot.slot_index}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Search bar */}
+            <div className="relative">
+              <span className="absolute left-4 top-3.5 text-slate-400">
+                <Search className="w-4.5 h-4.5" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search by name, team, category..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-white border border-slate-250 rounded-xl text-xs font-bold uppercase text-slate-850 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+              />
+            </div>
+
+            {/* Available Targets Pool Card */}
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden flex flex-col shadow-sm">
+              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 className="font-black text-slate-800 text-xs uppercase tracking-wider">Available Targets Pool</h3>
+                <span className="text-[9px] text-slate-500 font-bold uppercase">{getFilteredPool().length} items found</span>
+              </div>
+
+              <div className="overflow-y-auto max-h-[500px] divide-y divide-slate-100">
+                {getFilteredPool().map((item: any) => {
+                  const isRealTeam = !('real_player_id' in item);
+                  const itemId = isRealTeam ? item.team_uid : item.real_player_id;
+                  const name = isRealTeam ? item.team_name : item.player_name;
+                  const desc = isRealTeam ? 'Real Team' : `${item.real_team_name} | ${item.position}`;
+
+                  return (
+                    <div key={itemId} className="p-4 flex items-center justify-between hover:bg-slate-50/40 transition-colors gap-3">
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-xs uppercase">{name}</h4>
+                        <p className="text-[9px] text-slate-450 font-bold uppercase mt-1">{desc}</p>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        {!isRealTeam && (
+                          <span className={`px-2 py-0.5 text-[8px] font-black rounded-lg border uppercase tracking-wider ${
+                            item.category === 'RED' ? 'bg-red-50 border-red-200 text-red-700' :
+                            item.category === 'BLUE' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                            item.category === 'BLACK' ? 'bg-zinc-100 border-zinc-200 text-zinc-700' :
+                            'bg-slate-50 border-slate-200 text-slate-650'
+                          }`}>
+                            {item.category}
+                          </span>
+                        )}
+                        
+                        <button
+                          onClick={() => addBidToSlot(itemId, name, !isRealTeam, item.real_team_name)}
+                          disabled={isBiddingLocked || isSlotDisabled(activeSlotIndex)}
+                          className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-750 disabled:opacity-40 text-amber-400 font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer border border-slate-900"
+                        >
+                          Select
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {getFilteredPool().length === 0 && (
+                  <div className="p-12 text-center text-slate-400 text-xs uppercase font-bold">
+                    <Info className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                    No matching targets in this slot's configuration list.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* RIGHT PANEL: Roster Slots & Bids Wishlist (Columns 8-12) */}
+          <div className="lg:col-span-5 flex flex-col space-y-4">
+            <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
+              <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Roster Slots Bidding</h2>
+
+              {activeSlot !== null && activeSlotIndex !== activeSlot && (
+                <div className="mb-4 bg-amber-50 border border-amber-200 p-3.5 rounded-xl text-[10px] text-amber-700 font-bold uppercase flex items-center gap-2 leading-relaxed">
+                  <Lock className="w-4 h-4 text-amber-500 shrink-0" />
+                  This slot is locked. Bidding is currently active for Slot {activeSlot}: {draftSettings.category_settings?.slots.find(s => s.slot_index === activeSlot)?.name || `Slot ${activeSlot}`}.
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {(draftSettings.category_settings?.slots || [])
+                  .filter(slot => {
+                    if (activeSlot !== null) {
+                      return slot.slot_index === activeSlot;
+                    }
+                    return true;
+                  })
+                  .map(slot => {
+                    const isActive = slot.slot_index === activeSlotIndex;
+                    const slotBids = localBids.filter(b => b.slot_index === slot.slot_index).sort((a,b) => a.priority - b.priority);
+
+                  return (
+                    <div
+                      key={slot.slot_index}
+                      onClick={() => setActiveSlotIndex(slot.slot_index)}
+                      className={`border rounded-2xl p-4 transition-all cursor-pointer ${
+                        isActive 
+                          ? 'border-amber-500 bg-amber-50/20 shadow-sm' 
+                          : 'border-slate-200 bg-slate-50/50 hover:border-slate-350'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${
+                            isActive ? 'bg-amber-500 text-slate-900' : 'bg-slate-200 text-slate-600'
+                          }`}>
+                            {slot.slot_index}
+                          </span>
+                          <h4 className={`text-xs font-black uppercase tracking-wider ${isActive ? 'text-amber-600' : 'text-slate-700'} flex items-center gap-1.5`}>
+                            {slot.name}
+                            {activeSlot !== null && slot.slot_index !== activeSlot && (
+                              <Lock className="w-3 h-3 text-slate-400 shrink-0" />
+                            )}
+                          </h4>
+                        </div>
+                        <span className="text-[9px] text-slate-550 font-bold bg-white px-2 py-0.5 rounded border border-slate-200">
+                          Base: {slot.base_price} Cr
+                        </span>
+                      </div>
+
+                      {/* Wishlist/fallback bids in this slot */}
+                      {slotBids.length > 0 ? (
+                        <div className="space-y-2 mt-3 pl-8">
+                          {slotBids.map((bid, bIndex) => (
+                            <div 
+                              key={bid.target_id} 
+                              className="bg-white border border-slate-200 p-2.5 rounded-xl flex items-center justify-between gap-3 shadow-sm"
+                              onClick={(e) => e.stopPropagation()} // Prevent clicking container from switching slots
+                            >
+                              <div className="min-w-0 flex-1">
+                                <span className="text-[8px] uppercase font-black text-amber-650">
+                                  Priority {bid.priority}
+                                </span>
+                                <h5 className="font-bold text-slate-800 text-xs truncate mt-0.5 uppercase">{bid.target_name}</h5>
+                                <p className="text-[9px] text-slate-450 truncate uppercase">{bid.team_name || 'Roster Target'}</p>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                {/* Bid Amount input */}
+                                <input
+                                  type="number"
+                                  value={bid.bid_amount}
+                                  disabled={isSlotDisabled(slot.slot_index)}
+                                  onChange={(e) => updateBidAmount(slot.slot_index, bid.target_id, parseInt(e.target.value) || 0)}
+                                  className="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-center text-xs font-bold text-emerald-600 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-50"
+                                  min={slot.base_price}
+                                  required
+                                />
+
+                                {/* Priority controls */}
+                                {!isSlotDisabled(slot.slot_index) && (
+                                  <div className="flex flex-col gap-0.5">
+                                    <button
+                                      onClick={() => handlePriorityChange(slot.slot_index, bid.target_id, 'up')}
+                                      disabled={bIndex === 0}
+                                      className="p-0.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded disabled:opacity-30"
+                                    >
+                                      <ArrowUp className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      onClick={() => handlePriorityChange(slot.slot_index, bid.target_id, 'down')}
+                                      disabled={bIndex === slotBids.length - 1}
+                                      className="p-0.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded disabled:opacity-30"
+                                    >
+                                      <ArrowDown className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                )}
+
+                                {/* Delete button */}
+                                {!isSlotDisabled(slot.slot_index) && (
+                                  <button
+                                    onClick={() => removeBid(slot.slot_index, bid.target_id)}
+                                    className="p-1 text-slate-450 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[9px] text-slate-450 font-bold uppercase italic pl-8 mt-2.5">No bids placed for this slot yet. Select a target.</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
         </div>
 
       </div>

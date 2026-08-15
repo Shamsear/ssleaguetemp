@@ -328,12 +328,54 @@ export async function POST(request: NextRequest) {
     const fantasyTeamId = teamDocId;
 
     // Get league budget
+    let budgetPerTeam = 500.00;
     const leagueResult = await fantasySql`
       SELECT budget_per_team FROM fantasy_leagues 
       WHERE league_id = ${finalLeagueId}
       LIMIT 1
     `;
-    const budgetPerTeam = leagueResult[0]?.budget_per_team || 100.00;
+    
+    if (leagueResult.length === 0) {
+      // Auto-initialize fantasy league if missing
+      const seasonId = finalLeagueId.replace('SSPSLFLS', 'SSPSLS');
+      const seasonDoc = await adminDb.collection('seasons').doc(seasonId).get();
+      const seasonData = seasonDoc.data();
+      const seasonName = seasonData?.description || seasonData?.season_number || seasonId;
+
+      const defaultCategorySettings = {
+        slots: [
+          { slot_index: 1, name: 'Red Slot 1', list_id: 'red_list_1', base_price: 20 },
+          { slot_index: 2, name: 'Red Slot 2', list_id: 'red_list_2', base_price: 15 },
+          { slot_index: 3, name: 'Blue Slot', list_id: 'blue_list', base_price: 10 },
+          { slot_index: 4, name: 'Black Slot', list_id: 'black_list', base_price: 5 },
+          { slot_index: 5, name: 'White Slot', list_id: 'white_list', base_price: 3 },
+          { slot_index: 6, name: 'Real Team Slot', list_id: 'real_team_list', base_price: 25 }
+        ],
+        lists: {
+          red_list_1: [],
+          red_list_2: [],
+          blue_list: [],
+          black_list: [],
+          white_list: [],
+          real_team_list: []
+        },
+        max_bids_per_team: 10
+      };
+
+      await fantasySql`
+        INSERT INTO fantasy_leagues (
+          league_id, season_id, season_name, league_name,
+          budget_per_team, max_squad_size, max_transfers_per_window, points_cost_per_transfer,
+          category_settings
+        ) VALUES (
+          ${finalLeagueId}, ${seasonId}, ${seasonName}, ${'Fantasy League - ' + seasonName},
+          500.00, 7, 2, 4,
+          ${JSON.stringify(defaultCategorySettings)}
+        )
+      `;
+    } else {
+      budgetPerTeam = Number(leagueResult[0].budget_per_team) || 500.00;
+    }
     
     // Create fantasy team in PostgreSQL
     await fantasySql`

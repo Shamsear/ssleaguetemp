@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Trash2, Edit2, Save, X, XCircle, Star, RefreshCw, CheckCircle, Shield, Trophy, Crown, Activity, BarChart2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, X, XCircle, Star, RefreshCw, CheckCircle, Shield, Trophy, Crown, Activity, BarChart2, ArrowLeft } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 
 interface ScoringRule {
@@ -211,8 +211,12 @@ export default function CustomScoringRulesPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading scoring rules...</p>
+        </div>
       </div>
     );
   }
@@ -220,50 +224,61 @@ export default function CustomScoringRulesPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6">
-      <div className="max-w-5xl mx-auto">
-        <Link
-          href={`/dashboard/committee/fantasy/${leagueId}`}
-          className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-6"
-        >
-          ← Back to League Dashboard
-        </Link>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="max-w-5xl mx-auto relative z-10 space-y-6 font-mono">
+        {/* Navigation */}
+        <div>
+          <Link
+            href={`/dashboard/committee/fantasy/${leagueId}`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
+        </div>
+
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Custom Scoring Rules</h1>
-            <p className="text-slate-500 mt-1">Define how players and teams earn points</p>
+            <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">FANTASY CONSOLE</span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5 uppercase">
+              Custom Scoring Rules
+            </h1>
+            <p className="text-xs text-slate-400 font-mono mt-1">
+              Define how players and teams earn points
+            </p>
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="px-5 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all flex items-center gap-2 shadow"
+            className="px-5 py-3 bg-slate-800 border border-slate-900 hover:bg-slate-700 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer shrink-0"
           >
-            <Plus className="w-5 h-5" />
-            Create New Rule
+            <Plus className="w-4 h-4" /> Create New Rule
           </button>
         </div>
 
         {/* Create Form */}
         {showCreateForm && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6 shadow-sm">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Create New Scoring Rule</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-4">
+            <h3 className="text-xs font-black text-slate-850 uppercase tracking-wider">Create New Scoring Rule</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Rule Name *</label>
+                <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">Rule Name *</label>
                 <input
                   type="text"
                   value={newRule.rule_name}
                   onChange={(e) => setNewRule({ ...newRule, rule_name: e.target.value })}
                   placeholder="e.g., Goal Bonus"
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Rule Type *</label>
+                <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">Rule Type *</label>
                 <select
                   value={newRule.rule_type}
                   onChange={(e) => setNewRule({ ...newRule, rule_type: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
                 >
                   <option value="">Select type...</option>
                   {commonRuleTypes.map((type) => (
@@ -274,22 +289,22 @@ export default function CustomScoringRulesPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Points Value *</label>
+                <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">Points Value *</label>
                 <input
                   type="number"
                   value={newRule.points_value}
                   onChange={(e) => setNewRule({ ...newRule, points_value: parseFloat(e.target.value) })}
                   placeholder="e.g., 10"
                   step="0.5"
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Applies To</label>
+                <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">Applies To</label>
                 <select
                   value={newRule.applies_to}
                   onChange={(e) => setNewRule({ ...newRule, applies_to: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
                 >
                   <option value="player">Player</option>
                   <option value="team">Team</option>
@@ -297,39 +312,39 @@ export default function CustomScoringRulesPage() {
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Description</label>
+                <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">Description</label>
                 <input
                   type="text"
                   value={newRule.description}
                   onChange={(e) => setNewRule({ ...newRule, description: e.target.value })}
                   placeholder="Optional description..."
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
                 />
               </div>
               
               {/* Bonus Rule Toggle */}
               <div className="md:col-span-2">
-                <label className="flex items-center gap-2 cursor-pointer mt-2">
+                <label className="flex items-center gap-2.5 cursor-pointer mt-2">
                   <input
                     type="checkbox"
                     checked={newRule.is_bonus_rule}
                     onChange={(e) => setNewRule({ ...newRule, is_bonus_rule: e.target.checked })}
-                    className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded"
+                    className="w-4 h-4 text-amber-500 focus:ring-amber-400 border-slate-300 rounded cursor-pointer"
                   />
-                  <span className="text-sm font-bold text-slate-700">🎁 This is a Bonus/Conditional Rule</span>
+                  <span className="text-xs font-bold text-slate-705 uppercase">🎁 This is a Bonus/Conditional Rule</span>
                 </label>
-                <p className="text-xs text-slate-400 mt-1 ml-6">Enable this for special conditions like new player bonus, streak bonus, etc.</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase mt-1.5 ml-6">Enable this for special conditions like new player bonus, streak bonus, etc.</p>
               </div>
               
               {/* Conditional Fields for Bonus Rules */}
               {newRule.is_bonus_rule && (
                 <>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Bonus Condition Type *</label>
+                    <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">Bonus Condition Type *</label>
                     <select
                       value={newRule.bonus_condition_type}
                       onChange={(e) => setNewRule({ ...newRule, bonus_condition_type: e.target.value, bonus_params: {} })}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
                     >
                       <option value="">Select condition...</option>
                       <option value="new_player">🆕 New Player Bonus (first X matches)</option>
@@ -348,13 +363,13 @@ export default function CustomScoringRulesPage() {
                   {newRule.bonus_condition_type === 'new_player' && (
                     <div className="md:col-span-2 grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">First X Matches</label>
+                        <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">First X Matches</label>
                         <input
                           type="number"
                           value={newRule.bonus_params.matches_count || 1}
                           onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, matches_count: parseInt(e.target.value) } })}
                           min="1"
-                          className="w-full px-4 py-2 border border-slate-300 rounded-lg"
+                          className="w-full px-4 py-2 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
                         />
                       </div>
                     </div>
@@ -362,11 +377,11 @@ export default function CustomScoringRulesPage() {
                   {newRule.bonus_condition_type === 'streak' && (
                     <div className="md:col-span-2 grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Event Type</label>
+                        <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">Event Type</label>
                         <select
                           value={newRule.bonus_params.event_type || 'goal'}
                           onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, event_type: e.target.value } })}
-                          className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-white"
+                          className="w-full px-4 py-2 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
                         >
                           <option value="goal">Goals</option>
                           <option value="assist">Assists</option>
@@ -374,13 +389,13 @@ export default function CustomScoringRulesPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Consecutive Matches</label>
+                        <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">Consecutive Matches</label>
                         <input
                           type="number"
                           value={newRule.bonus_params.consecutive_matches || 3}
                           onChange={(e) => setNewRule({ ...newRule, bonus_params: { ...newRule.bonus_params, consecutive_matches: parseInt(e.target.value) } })}
                           min="2"
-                          className="w-full px-4 py-2 border border-slate-300 rounded-lg"
+                          className="w-full px-4 py-2 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
                         />
                       </div>
                     </div>
@@ -391,13 +406,13 @@ export default function CustomScoringRulesPage() {
             <div className="flex gap-3">
               <button
                 onClick={createRule}
-                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-sm shadow"
+                className="px-5 py-2 bg-slate-800 border border-slate-900 hover:bg-slate-700 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider rounded-lg shadow-sm transition-all cursor-pointer"
               >
                 Create Rule
               </button>
               <button
                 onClick={() => setShowCreateForm(false)}
-                className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-sm"
+                className="px-5 py-2 bg-slate-100 border border-slate-250 text-slate-700 font-mono font-bold text-xs uppercase tracking-wider rounded-lg cursor-pointer"
               >
                 Cancel
               </button>
@@ -406,20 +421,20 @@ export default function CustomScoringRulesPage() {
         )}
 
         {/* Rules List */}
-        <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Active Rules</h2>
+        <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-4">
+          <h2 className="text-xs font-black text-slate-855 uppercase tracking-wider">Active Rules</h2>
           
           {rules.length === 0 ? (
-            <p className="text-center text-slate-400 py-12 text-sm italic">No scoring rules yet. Create your first rule!</p>
+            <p className="text-center text-slate-400 py-12 text-xs font-bold uppercase italic">No scoring rules yet. Create your first rule!</p>
           ) : (
             <div className="space-y-3">
               {rules.map((rule) => (
                 <div
                   key={rule.rule_id}
-                  className={`flex items-center justify-between p-4 border rounded-xl transition-all ${
+                  className={`flex items-center justify-between p-4 border rounded-2xl transition-all ${
                     editingRule?.rule_id === rule.rule_id
-                      ? 'border-indigo-300 bg-indigo-50/50 shadow-sm'
-                      : 'border-slate-200 bg-slate-50/30 hover:border-slate-300'
+                      ? 'border-amber-300 bg-amber-50/20 shadow-sm'
+                      : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
                   }`}
                 >
                   {editingRule?.rule_id === rule.rule_id ? (
@@ -430,19 +445,19 @@ export default function CustomScoringRulesPage() {
                           type="text"
                           value={editingRule.rule_name}
                           onChange={(e) => setEditingRule({ ...editingRule, rule_name: e.target.value })}
-                          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
                         />
                         <input
                           type="number"
                           value={editingRule.points_value}
                           onChange={(e) => setEditingRule({ ...editingRule, points_value: parseFloat(e.target.value) })}
-                          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
                           step="0.5"
                         />
                         <select
                           value={editingRule.applies_to}
                           onChange={(e) => setEditingRule({ ...editingRule, applies_to: e.target.value })}
-                          className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase bg-white"
                         >
                           <option value="player">Player</option>
                           <option value="team">Team</option>
@@ -452,15 +467,15 @@ export default function CustomScoringRulesPage() {
                       <div className="flex items-center gap-2 ml-4">
                         <button
                           onClick={() => updateRule(rule.rule_id)}
-                          className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow"
+                          className="p-2 bg-slate-800 border border-slate-900 text-amber-450 hover:bg-slate-700 rounded-lg shadow cursor-pointer"
                         >
-                          <Save className="w-4 h-4" />
+                          <Save className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => setEditingRule(null)}
-                          className="p-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300"
+                          className="p-2 bg-slate-100 border border-slate-250 text-slate-700 rounded-lg hover:bg-slate-200 cursor-pointer"
                         >
-                          <X className="w-4 h-4" />
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </>
@@ -468,35 +483,35 @@ export default function CustomScoringRulesPage() {
                     // View Mode
                     <>
                       <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-2.5 mb-1.5">
-                          <h3 className="font-bold text-slate-800 text-sm">{rule.rule_name}</h3>
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-black border ${getRuleColor(rule.points_value)}`}>
-                            {rule.points_value > 0 ? '+' : ''}{rule.points_value} pts
+                        <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                          <h3 className="font-bold text-slate-800 text-xs uppercase">{rule.rule_name}</h3>
+                          <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black border uppercase tracking-wider ${getRuleColor(rule.points_value)}`}>
+                            {rule.points_value > 0 ? '+' : ''}{rule.points_value} PTS
                           </span>
-                          <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-black rounded uppercase tracking-wider">
+                          <span className="px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 text-[9px] font-black rounded uppercase tracking-wider">
                             {rule.applies_to}
                           </span>
                           {!rule.is_active && (
-                            <span className="px-2 py-0.5 bg-slate-200 text-slate-500 text-[10px] font-black rounded uppercase tracking-wider">
+                            <span className="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 text-[9px] font-black rounded uppercase tracking-wider">
                               Inactive
                             </span>
                           )}
                         </div>
                         {rule.description && (
-                          <p className="text-xs text-slate-500 leading-relaxed">{rule.description}</p>
+                          <p className="text-[10px] text-slate-500 leading-normal uppercase font-bold">{rule.description}</p>
                         )}
-                        <p className="text-[10px] text-slate-400 mt-1">Type: {rule.rule_type}</p>
+                        <p className="text-[9px] text-slate-400 font-semibold uppercase mt-0.5">Type: {rule.rule_type.replace('_', ' ')}</p>
                       </div>
                       <div className="flex items-center gap-2 ml-4">
                         <button
                           onClick={() => setEditingRule(rule)}
-                          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors border border-slate-200"
+                          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 rounded-lg transition-colors cursor-pointer"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => deleteRule(rule.rule_id, rule.rule_name)}
-                          className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors border border-red-200"
+                          className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -510,9 +525,9 @@ export default function CustomScoringRulesPage() {
         </div>
 
         {/* Info Box */}
-        <div className="mt-6 bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 text-indigo-850">
-          <h4 className="font-bold text-indigo-900 text-sm mb-2">How Scoring Rules Work:</h4>
-          <ul className="text-xs space-y-1.5 leading-relaxed text-indigo-750">
+        <div className="console-card bg-slate-50 border border-slate-200/60 p-5 rounded-3xl shadow-sm text-slate-800 space-y-2">
+          <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">How Scoring Rules Work:</h4>
+          <ul className="text-[10px] uppercase font-bold text-slate-500 space-y-1 ml-1">
             <li>• Create custom rules to define how players earn points</li>
             <li>• Positive values add points, negative values deduct them</li>
             <li>• Rules can apply to individual players, teams, or both</li>

@@ -43,103 +43,157 @@ export async function POST(request: NextRequest) {
     `;
 
     const teamsWithLineups = new Set(lineups.map((l: any) => l.team_id));
-    const teamsWithoutLineups = teams.filter((t: any) => !teamsWithLineups.has(t.team_id));
+    const teamsWithoutLineups = lineups.length > 0 ? teams.filter((t: any) => !teamsWithLineups.has(t.team_id)) : [];
 
-    // Preview calculation for each lineup
+    // Preview calculation for each lineup/team
     const teamPreviews = [];
     let totalPointsToAward = 0;
     let highestScoringTeam = { team_name: '', points: 0 };
     let lowestScoringTeam = { team_name: '', points: Infinity };
 
-    for (const lineup of lineups) {
-      const startingPlayerIds = lineup.starting_player_ids || [];
-      const captainId = lineup.captain_player_id;
-      const viceCaptainId = lineup.vice_captain_player_id;
-      const powerUp = lineup.power_up_used;
-
-      // Get player points for this round (simulated - in real implementation, fetch from matches)
-      // For preview, we'll use estimated points based on player stats
-      const playerPoints = await fantasySql`
-        SELECT 
-          fs.real_player_id,
-          fs.player_name,
-          fs.position,
-          COALESCE(SUM(fpp.points), 0) as estimated_points
-        FROM fantasy_squad fs
-        LEFT JOIN fantasy_player_points fpp ON fs.real_player_id = fpp.real_player_id
-          AND fpp.team_id = ${lineup.team_id}
-        WHERE fs.team_id = ${lineup.team_id}
-          AND fs.real_player_id = ANY(${startingPlayerIds})
-        GROUP BY fs.real_player_id, fs.player_name, fs.position
-      `;
-
-      let lineupPoints = 0;
-      let captainBonus = 0;
-      let vcBonus = 0;
-      let powerUpBonus = 0;
-
-      const playerBreakdown = playerPoints.map((player: any) => {
-        const basePoints = Number(player.estimated_points) || Math.floor(Math.random() * 15); // Random for preview
-        let multiplier = 1;
-        let bonusType = '';
-
-        if (player.real_player_id === captainId) {
-          multiplier = powerUp === 'triple_captain' ? 3 : 2;
-          bonusType = powerUp === 'triple_captain' ? 'Triple Captain (3x)' : 'Captain (2x)';
-          captainBonus = basePoints * (multiplier - 1);
-        } else if (player.real_player_id === viceCaptainId) {
-          multiplier = 1.5;
-          bonusType = 'Vice-Captain (1.5x)';
-          vcBonus = basePoints * 0.5;
-        }
-
-        const finalPoints = basePoints * multiplier;
-        lineupPoints += finalPoints;
-
-        return {
-          player_name: player.player_name,
-          position: player.position,
-          base_points: basePoints,
-          multiplier,
-          bonus_type: bonusType,
-          final_points: Math.round(finalPoints),
-        };
-      });
-
-      // Bench boost power-up
-      if (powerUp === 'bench_boost') {
-        const benchPlayerIds = lineup.bench_player_ids || [];
-        const benchPoints = await fantasySql`
-          SELECT COALESCE(SUM(fpp.points), 0) as bench_points
+    if (lineups.length === 0) {
+      // Lineup-free mode preview: Use squad players directly
+      for (const team of teams) {
+        const playerPoints = await fantasySql`
+          SELECT 
+            fs.real_player_id,
+            fs.player_name,
+            fs.position,
+            COALESCE(SUM(fpp.points), 0) as estimated_points
           FROM fantasy_squad fs
           LEFT JOIN fantasy_player_points fpp ON fs.real_player_id = fpp.real_player_id
-          WHERE fs.team_id = ${lineup.team_id}
-            AND fs.real_player_id = ANY(${benchPlayerIds})
+            AND fpp.team_id = ${team.team_id}
+          WHERE fs.team_id = ${team.team_id}
+          GROUP BY fs.real_player_id, fs.player_name, fs.position
         `;
-        powerUpBonus = Number(benchPoints[0]?.bench_points) || Math.floor(Math.random() * 20);
-        lineupPoints += powerUpBonus;
-      }
 
-      totalPointsToAward += lineupPoints;
+        let teamPoints = 0;
+        const playerBreakdown = playerPoints.map((player: any) => {
+          const basePoints = Number(player.estimated_points) || Math.floor(Math.random() * 15);
+          teamPoints += basePoints;
 
-      if (lineupPoints > highestScoringTeam.points) {
-        highestScoringTeam = { team_name: lineup.team_name, points: Math.round(lineupPoints) };
-      }
-      if (lineupPoints < lowestScoringTeam.points) {
-        lowestScoringTeam = { team_name: lineup.team_name, points: Math.round(lineupPoints) };
-      }
+          return {
+            player_name: player.player_name,
+            position: player.position,
+            base_points: basePoints,
+            multiplier: 1,
+            bonus_type: '',
+            final_points: Math.round(basePoints),
+          };
+        });
 
-      teamPreviews.push({
-        team_name: lineup.team_name,
-        lineup_points: Math.round(lineupPoints),
-        captain_bonus: Math.round(captainBonus),
-        vc_bonus: Math.round(vcBonus),
-        power_up: powerUp || 'None',
-        power_up_bonus: Math.round(powerUpBonus),
-        total_points: Math.round(lineupPoints),
-        player_breakdown: playerBreakdown,
-        is_locked: lineup.is_locked,
-      });
+        totalPointsToAward += teamPoints;
+
+        if (teamPoints > highestScoringTeam.points) {
+          highestScoringTeam = { team_name: team.team_name, points: Math.round(teamPoints) };
+        }
+        if (teamPoints < lowestScoringTeam.points) {
+          lowestScoringTeam = { team_name: team.team_name, points: Math.round(teamPoints) };
+        }
+
+        teamPreviews.push({
+          team_name: team.team_name,
+          lineup_points: Math.round(teamPoints),
+          captain_bonus: 0,
+          vc_bonus: 0,
+          power_up: 'None',
+          power_up_bonus: 0,
+          total_points: Math.round(teamPoints),
+          player_breakdown: playerBreakdown,
+          is_locked: true,
+        });
+      }
+    } else {
+      for (const lineup of lineups) {
+        const startingPlayerIds = lineup.starting_player_ids || [];
+        const captainId = lineup.captain_player_id;
+        const viceCaptainId = lineup.vice_captain_player_id;
+        const powerUp = lineup.power_up_used;
+
+        // Get player points for this round (simulated - in real implementation, fetch from matches)
+        // For preview, we'll use estimated points based on player stats
+        const playerPoints = await fantasySql`
+          SELECT 
+            fs.real_player_id,
+            fs.player_name,
+            fs.position,
+            COALESCE(SUM(fpp.points), 0) as estimated_points
+          FROM fantasy_squad fs
+          LEFT JOIN fantasy_player_points fpp ON fs.real_player_id = fpp.real_player_id
+            AND fpp.team_id = ${lineup.team_id}
+          WHERE fs.team_id = ${lineup.team_id}
+            AND fs.real_player_id = ANY(${startingPlayerIds})
+          GROUP BY fs.real_player_id, fs.player_name, fs.position
+        `;
+
+        let lineupPoints = 0;
+        let captainBonus = 0;
+        let vcBonus = 0;
+        let powerUpBonus = 0;
+
+        const playerBreakdown = playerPoints.map((player: any) => {
+          const basePoints = Number(player.estimated_points) || Math.floor(Math.random() * 15); // Random for preview
+          let multiplier = 1;
+          let bonusType = '';
+
+          if (player.real_player_id === captainId) {
+            multiplier = powerUp === 'triple_captain' ? 3 : 2;
+            bonusType = powerUp === 'triple_captain' ? 'Triple Captain (3x)' : 'Captain (2x)';
+            captainBonus = basePoints * (multiplier - 1);
+          } else if (player.real_player_id === viceCaptainId) {
+            multiplier = 1.5;
+            bonusType = 'Vice-Captain (1.5x)';
+            vcBonus = basePoints * 0.5;
+          }
+
+          const finalPoints = basePoints * multiplier;
+          lineupPoints += finalPoints;
+
+          return {
+            player_name: player.player_name,
+            position: player.position,
+            base_points: basePoints,
+            multiplier,
+            bonus_type: bonusType,
+            final_points: Math.round(finalPoints),
+          };
+        });
+
+        // Bench boost power-up
+        if (powerUp === 'bench_boost') {
+          const benchPlayerIds = lineup.bench_player_ids || [];
+          const benchPoints = await fantasySql`
+            SELECT COALESCE(SUM(fpp.points), 0) as bench_points
+            FROM fantasy_squad fs
+            LEFT JOIN fantasy_player_points fpp ON fs.real_player_id = fpp.real_player_id
+            WHERE fs.team_id = ${lineup.team_id}
+              AND fs.real_player_id = ANY(${benchPlayerIds})
+          `;
+          powerUpBonus = Number(benchPoints[0]?.bench_points) || Math.floor(Math.random() * 20);
+          lineupPoints += powerUpBonus;
+        }
+
+        totalPointsToAward += lineupPoints;
+
+        if (lineupPoints > highestScoringTeam.points) {
+          highestScoringTeam = { team_name: lineup.team_name, points: Math.round(lineupPoints) };
+        }
+        if (lineupPoints < lowestScoringTeam.points) {
+          lowestScoringTeam = { team_name: lineup.team_name, points: Math.round(lineupPoints) };
+        }
+
+        teamPreviews.push({
+          team_name: lineup.team_name,
+          lineup_points: Math.round(lineupPoints),
+          captain_bonus: Math.round(captainBonus),
+          vc_bonus: Math.round(vcBonus),
+          power_up: powerUp || 'None',
+          power_up_bonus: Math.round(powerUpBonus),
+          total_points: Math.round(lineupPoints),
+          player_breakdown: playerBreakdown,
+          is_locked: lineup.is_locked,
+        });
+      }
     }
 
     // Generate warnings
@@ -175,19 +229,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const isLineupFree = lineups.length === 0;
+
     return NextResponse.json({
       success: true,
       preview: {
         round_summary: {
           round_id,
           total_teams: teams.length,
-          lineups_submitted: lineups.length,
-          lineups_locked: lineups.filter((l: any) => l.is_locked).length,
-          teams_without_lineups: teamsWithoutLineups.length,
+          lineups_submitted: isLineupFree ? teams.length : lineups.length,
+          lineups_locked: isLineupFree ? teams.length : lineups.filter((l: any) => l.is_locked).length,
+          teams_without_lineups: isLineupFree ? 0 : teamsWithoutLineups.length,
         },
         points_distribution: {
           total_points_to_award: Math.round(totalPointsToAward),
-          average_points: lineups.length > 0 ? Math.round(totalPointsToAward / lineups.length) : 0,
+          average_points: teams.length > 0 ? Math.round(totalPointsToAward / teams.length) : 0,
           highest_scoring_team: highestScoringTeam.points > 0 ? highestScoringTeam : null,
           lowest_scoring_team: lowestScoringTeam.points < Infinity ? lowestScoringTeam : null,
         },

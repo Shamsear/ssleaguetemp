@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fantasySql } from '@/lib/neon/fantasy-config';
-import { getTournamentDb } from '@/lib/neon/tournament-config';
 
 /**
  * GET /api/fantasy/leagues?season_id=xxx
@@ -18,25 +17,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get season data from Neon tournament database
-    const tournamentSql = getTournamentDb();
-    const seasons = await tournamentSql`
-      SELECT season_number, description, code
-      FROM seasons
-      WHERE id = ${season_id}
-      LIMIT 1
-    `;
-
-    if (seasons.length === 0) {
+    if (!season_id.startsWith('SSPSLS')) {
       return NextResponse.json(
-        { error: 'Season not found' },
-        { status: 404 }
+        { error: 'Invalid season ID format' },
+        { status: 400 }
       );
     }
 
-    const seasonData = seasons[0];
-    const seasonNumber = seasonData.season_number || seasonData.code || season_id.slice(0, 8);
-    const seasonName = seasonData.description || seasonData.season_number || season_id;
+    const seasonNumber = season_id.replace('SSPSLS', '');
+    const seasonName = `Season ${seasonNumber}`;
     
     // Generate readable league ID like SSPSLFLS16
     const league_id = `SSPSLFLS${seasonNumber}`;

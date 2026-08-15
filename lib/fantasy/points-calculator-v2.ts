@@ -31,10 +31,64 @@ export async function calculateLineupPoints(leagueId: string, roundId: string) {
     `;
 
     if (lineups.length === 0) {
+      // Fallback for lineup-free season:
+      // 1. Get all teams in this league
+      const teams = await fantasySql`
+        SELECT team_id
+        FROM fantasy_teams
+        WHERE league_id = ${leagueId}
+      `;
+
+      const scoringRules = await getScoringRules(leagueId);
+      let totalPointsAwarded = 0;
+
+      // 2. Process and record player points for each team's roster
+      for (const t of teams) {
+        const squadPlayers = await fantasySql`
+          SELECT real_player_id
+          FROM fantasy_squad
+          WHERE team_id = ${t.team_id}
+        `;
+
+        for (const p of squadPlayers) {
+          const playerPoints = await calculatePlayerPoints(
+            p.real_player_id,
+            roundId,
+            scoringRules
+          );
+          const formMultiplier = await getPlayerFormMultiplier(p.real_player_id);
+          const finalPoints = playerPoints * formMultiplier;
+          totalPointsAwarded += finalPoints;
+
+          await recordPlayerPoints(t.team_id, p.real_player_id, roundId, {
+            base_points: playerPoints,
+            multiplier: 1.0,
+            form_multiplier: formMultiplier,
+            final_points: finalPoints,
+            is_captain: false,
+            is_vice_captain: false,
+            is_bench: false
+          });
+        }
+
+        // Update team total points
+        await updateTeamTotalPoints(t.team_id, leagueId);
+      }
+
+      // 3. Calculate H2H results (will return empty if no fixtures scheduled)
+      let h2hResults = [];
+      try {
+        h2hResults = await calculateH2HResults(leagueId, roundId);
+      } catch (error: any) {
+        console.error('Error calculating H2H results:', error);
+      }
+
       return {
         success: true,
         lineups_processed: 0,
-        message: 'No locked lineups to process'
+        message: 'Processed round in no-lineup mode successfully',
+        h2h_fixtures_processed: h2hResults.length,
+        total_points_awarded: Math.round(totalPointsAwarded)
       };
     }
 
@@ -377,15 +431,33 @@ async function recordPlayerPoints(
  * Update team's total points
  */
 async function updateTeamTotalPoints(teamId: string, leagueId: string) {
-  // Sum all lineup points for this team
-  const [result] = await fantasySql`
-    SELECT COALESCE(SUM(total_points), 0) as total
+  // Check if any lineups exist for this team/league
+  const [lineupCount] = await fantasySql`
+    SELECT COUNT(*) as count
     FROM fantasy_lineups
     WHERE team_id = ${teamId}
       AND league_id = ${leagueId}
   `;
 
-  const totalPoints = result?.total || 0;
+  let totalPoints = 0;
+  if (parseInt(lineupCount?.count || '0') > 0) {
+    // Lineup mode: Sum all lineup points for this team
+    const [result] = await fantasySql`
+      SELECT COALESCE(SUM(total_points), 0) as total
+      FROM fantasy_lineups
+      WHERE team_id = ${teamId}
+        AND league_id = ${leagueId}
+    `;
+    totalPoints = result?.total || 0;
+  } else {
+    // No-lineup mode: Sum all player points directly
+    const [result] = await fantasySql`
+      SELECT COALESCE(SUM(final_points), 0) as total
+      FROM fantasy_player_points
+      WHERE team_id = ${teamId}
+    `;
+    totalPoints = parseInt(result?.total || '0') || 0;
+  }
 
   await fantasySql`
     UPDATE fantasy_teams

@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { ArrowLeft, Calendar } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 
 interface TransferWindow {
@@ -116,8 +117,12 @@ export default function TransferWindowsPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading transfer windows...</p>
+        </div>
       </div>
     );
   }
@@ -125,23 +130,43 @@ export default function TransferWindowsPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <Link
-          href={`/dashboard/committee/fantasy/${leagueId}`}
-          className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-6"
-        >
-          ← Back to Fantasy Management
-        </Link>
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
-        <h1 className="text-3xl font-bold text-slate-900 mb-8">Transfer Windows Management</h1>
+      <div className="max-w-5xl mx-auto relative z-10 space-y-6 font-mono">
+        {/* Navigation */}
+        <div>
+          <Link
+            href={`/dashboard/committee/fantasy/${leagueId}`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
+        </div>
 
-        {/* Create New Window */}
-        <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm mb-8">
-          <h2 className="text-xl font-bold text-slate-900 mb-4">Create New Transfer Window</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
+          <div>
+            <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">FANTASY CONSOLE</span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5 uppercase">
+              Transfer Windows
+            </h1>
+            <p className="text-xs text-slate-400 font-mono mt-1">
+              Configure and open fantasy squad transfer phases
+            </p>
+          </div>
+          <div className="w-16 h-16 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center text-amber-400 shadow-sm shrink-0">
+            <Calendar className="w-8 h-8" />
+          </div>
+        </div>
+
+        {/* Create Form */}
+        <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-4">
+          <h2 className="text-xs font-black text-slate-850 uppercase tracking-wider">Create New Transfer Window</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">
                 Window Name
               </label>
               <input
@@ -149,80 +174,80 @@ export default function TransferWindowsPage() {
                 value={newWindowName}
                 onChange={(e) => setNewWindowName(e.target.value)}
                 placeholder="e.g., Week 1 Transfers"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">
                 Opens At
               </label>
               <input
                 type="datetime-local"
                 value={newOpensAt}
                 onChange={(e) => setNewOpensAt(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">
                 Closes At
               </label>
               <input
                 type="datetime-local"
                 value={newClosesAt}
                 onChange={(e) => setNewClosesAt(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
               />
             </div>
           </div>
           <button
             onClick={createWindow}
             disabled={isCreating}
-            className="w-full px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-3 px-6 bg-slate-800 border border-slate-900 hover:bg-slate-700 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            {isCreating ? 'Creating...' : 'Create Transfer Window'}
+            {isCreating ? 'Creating Window...' : 'Create Transfer Window'}
           </button>
         </div>
 
         {/* Existing Windows */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Transfer Windows</h2>
+        <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-4">
+          <h2 className="text-xs font-black text-slate-850 uppercase tracking-wider">Configured Windows</h2>
           
           {windows.length === 0 ? (
-            <p className="text-center text-gray-500 py-12">No transfer windows created yet</p>
+            <p className="text-center text-slate-400 py-12 text-xs font-bold uppercase italic">No transfer windows created yet</p>
           ) : (
             <div className="space-y-3">
               {windows.map((window) => (
                 <div
                   key={window.window_id}
-                  className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 border border-slate-205 rounded-2xl gap-4"
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-bold text-gray-900">{window.window_name}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        window.status === 'active' ? 'bg-green-100 text-green-800' :
-                        window.status === 'upcoming' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-bold text-xs uppercase text-slate-800">{window.window_name}</h3>
+                      <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider ${
+                        window.status === 'active' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
+                        window.status === 'upcoming' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                        'bg-slate-100 border-slate-200 text-slate-600'
                       }`}>
-                        {window.status.toUpperCase()}
+                        {window.status}
                       </span>
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-[10px] font-bold text-slate-450 uppercase flex flex-wrap items-center gap-2">
                       <span>Opens: {new Date(window.opens_at).toLocaleString()}</span>
-                      <span className="mx-2">•</span>
+                      <span className="text-slate-300">•</span>
                       <span>Closes: {new Date(window.closes_at).toLocaleString()}</span>
                     </div>
                   </div>
                   <button
                     onClick={() => toggleWindow(window.window_id)}
-                    className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+                    className={`px-5 py-2.5 rounded-xl font-mono font-bold text-xs uppercase tracking-wider border cursor-pointer transition-all shadow-sm ${
                       window.is_active
-                        ? 'bg-red-500 text-white hover:bg-red-600'
-                        : 'bg-green-500 text-white hover:bg-green-600'
+                        ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
+                        : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
                     }`}
                   >
-                    {window.is_active ? 'Close' : 'Open'}
+                    {window.is_active ? 'Force Close' : 'Force Open'}
                   </button>
                 </div>
               ))}
@@ -231,9 +256,9 @@ export default function TransferWindowsPage() {
         </div>
 
         {/* Info Box */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-semibold text-blue-900 mb-2">How Transfer Windows Work:</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
+        <div className="console-card bg-slate-50 border border-slate-200/60 p-5 rounded-3xl shadow-sm text-slate-800 space-y-2">
+          <h4 className="font-bold text-slate-905 text-xs uppercase tracking-wider">How Transfer Windows Work:</h4>
+          <ul className="text-[10px] uppercase font-bold text-slate-500 space-y-1 ml-1">
             <li>• Create windows to define when teams can make transfers</li>
             <li>• Only one window can be active at a time</li>
             <li>• Teams can only swap players during active windows</li>

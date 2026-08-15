@@ -1,5 +1,5 @@
 'use client';
-import { DollarSign, Users, Calendar, Plus, Trash2, ListFilter, ShieldCheck } from 'lucide-react';
+import { DollarSign, Users, Calendar, Plus, Trash2, ListFilter, ShieldCheck, ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -25,6 +25,7 @@ interface DraftSettings {
   category_settings: {
     slots: Slot[];
     lists: Record<string, string[]>; // list_id -> array of player_ids
+    max_bids_per_team?: number;
   };
 }
 
@@ -44,6 +45,7 @@ export default function DraftSettingsPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPopulating, setIsPopulating] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'slots' | 'lists'>('general');
   const [playerTab, setPlayerTab] = useState<string>('RED');
   
@@ -73,7 +75,8 @@ export default function DraftSettingsPage() {
         black_list: [],
         white_list: [],
         real_team_list: []
-      }
+      },
+      max_bids_per_team: 10
     }
   });
 
@@ -123,7 +126,8 @@ export default function DraftSettingsPage() {
               black_list: [],
               white_list: [],
               real_team_list: []
-            }
+            },
+            max_bids_per_team: 15
           };
 
           const categorySettings = data.settings.category_settings || defaultCategorySettings;
@@ -134,6 +138,9 @@ export default function DraftSettingsPage() {
           }
           if (!categorySettings.slots) {
             categorySettings.slots = defaultCategorySettings.slots;
+          }
+          if (categorySettings.max_bids_per_team === undefined) {
+            categorySettings.max_bids_per_team = 10;
           }
 
           setSettings({
@@ -152,7 +159,18 @@ export default function DraftSettingsPage() {
       const playersResponse = await fetchWithTokenRefresh(`/api/fantasy/players/pool?league_id=${leagueId}`);
       if (playersResponse.ok) {
         const data = await playersResponse.json();
-        setPlayers(data.players || []);
+        const poolPlayers = data.players || [];
+        setPlayers(poolPlayers);
+
+        // Dynamically select the first category that has players
+        if (poolPlayers.length > 0) {
+          const availableCategories = ['RED', 'BLUE', 'BLACK', 'WHITE', 'ICONIC'].filter(cat => 
+            poolPlayers.some((p: any) => (p.category || '').toUpperCase() === cat)
+          );
+          if (availableCategories.length > 0 && !availableCategories.includes(playerTab)) {
+            setPlayerTab(availableCategories[0]);
+          }
+        }
       }
 
     } catch (error) {
@@ -167,6 +185,43 @@ export default function DraftSettingsPage() {
       loadAllData();
     }
   }, [user, leagueId]);
+
+  const handlePopulatePlayers = async () => {
+    setIsPopulating(true);
+    try {
+      const seasonId = leagueId.replace('SSPSLFLS', 'SSPSLS');
+      const response = await fetchWithTokenRefresh('/api/fantasy/players/populate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          league_id: leagueId,
+          season_id: seasonId
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to populate players');
+      }
+
+      showAlert({
+        type: 'success',
+        title: 'Success',
+        message: 'Fantasy player pool populated successfully!',
+      });
+      loadAllData();
+    } catch (error) {
+      console.error('Error populating players:', error);
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: error instanceof Error ? error.message : 'Failed to populate players',
+      });
+    } finally {
+      setIsPopulating(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -365,10 +420,11 @@ export default function DraftSettingsPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading settings...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading settings...</p>
         </div>
       </div>
     );
@@ -377,51 +433,106 @@ export default function DraftSettingsPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       <AlertModal {...alertState} onClose={closeAlert} />
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
-        {/* Header */}
-        <div className="mb-8">
+      <div className="max-w-5xl mx-auto relative z-10 space-y-6 font-mono">
+        {/* Navigation */}
+        <div>
           <Link
             href={`/dashboard/committee/fantasy/${leagueId}`}
-            className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors mb-4 text-sm font-semibold"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
-            ← Back to Dashboard
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
           </Link>
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">Fantasy settings</h1>
-              <p className="text-slate-500 mt-1">Configure draft windows, squad slot structures, and player allocations</p>
-            </div>
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50"
-            >
-              {isSaving ? 'Saving...' : '💾 Save Settings'}
-            </button>
-          </div>
         </div>
 
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+          <div>
+            <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">FANTASY CONSOLE</span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5 uppercase">
+              Draft Settings
+            </h1>
+            <p className="text-xs text-slate-400 font-mono mt-1">
+              Configure draft windows, slot structures, and player allocations
+            </p>
+          </div>
+          
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-900 border border-amber-600 font-bold rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 text-xs uppercase tracking-wider font-black shrink-0 cursor-pointer"
+          >
+            {isSaving ? 'Saving...' : 'Save Settings'}
+          </button>
+        </div>
+
+        {/* Player Pool Warning Banner */}
+        {players.length === 0 && (
+          <div className="console-card bg-amber-50 border border-amber-250/60 rounded-2xl p-5 text-amber-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-[10px] font-black uppercase mb-1">Player Pool Empty</h4>
+                <p className="text-[10px] font-bold text-slate-600 leading-relaxed uppercase">
+                  No players have been populated into the fantasy database for this league yet. 
+                  You must populate the players first.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handlePopulatePlayers}
+              disabled={isPopulating}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-900 border border-amber-600 text-xs font-black uppercase rounded-xl transition-all shadow-sm shrink-0 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 font-black"
+            >
+              {isPopulating ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  Populating...
+                </>
+              ) : (
+                <>
+                  <Users className="w-3.5 h-3.5" />
+                  Populate Players
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
         {/* Tab Controls */}
-        <div className="flex border-b border-slate-200 mb-6 gap-2">
+        <div className="flex border-b border-slate-200 gap-2 text-xs font-black uppercase tracking-wider">
           <button
             onClick={() => setActiveTab('general')}
-            className={`px-4 py-3 font-semibold text-sm border-b-2 transition-all ${activeTab === 'general' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+            className={`px-4 py-3 border-b-2 transition-all cursor-pointer ${
+              activeTab === 'general'
+                ? 'border-amber-500 text-amber-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
           >
             ⚙️ General config
           </button>
           <button
             onClick={() => setActiveTab('slots')}
-            className={`px-4 py-3 font-semibold text-sm border-b-2 transition-all ${activeTab === 'slots' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+            className={`px-4 py-3 border-b-2 transition-all cursor-pointer ${
+              activeTab === 'slots'
+                ? 'border-amber-500 text-amber-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
           >
             📋 Squad Slots & Prices
           </button>
           <button
             onClick={() => setActiveTab('lists')}
-            className={`px-4 py-3 font-semibold text-sm border-b-2 transition-all ${activeTab === 'lists' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+            className={`px-4 py-3 border-b-2 transition-all cursor-pointer ${
+              activeTab === 'lists'
+                ? 'border-amber-500 text-amber-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
           >
             👥 Player List allocations
           </button>
@@ -431,70 +542,96 @@ export default function DraftSettingsPage() {
         {activeTab === 'general' && (
           <div className="space-y-6">
             {/* Budget */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
+              <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-emerald-500" />
                 Team Budget configuration
               </h2>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Starting Budget (Credits)</label>
+              <div className="space-y-3">
+                <label className="block text-xs font-bold text-slate-700 uppercase">Starting Budget (Credits)</label>
                 <input
                   type="number"
                   value={settings.budget_per_team}
                   onChange={(e) => setSettings({ ...settings, budget_per_team: parseInt(e.target.value) || 0 })}
-                  className="w-full max-w-xs px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full max-w-md px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 bg-white shadow-sm text-xs font-bold uppercase"
                   min="1"
                   required
                 />
-                <p className="text-xs text-slate-400 mt-2">The starting balance provided to each team (defaults to 500).</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase">The starting balance provided to each team (defaults to 500).</p>
+              </div>
+            </div>
+
+            {/* Max Bids per Team */}
+            <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
+              <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-indigo-500" />
+                Max Bids Limit per Team
+              </h2>
+              <div className="space-y-3">
+                <label className="block text-xs font-bold text-slate-700 uppercase">Max Bids Allowed per Round</label>
+                <input
+                  type="number"
+                  value={settings.category_settings.max_bids_per_team || 15}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    category_settings: {
+                      ...settings.category_settings,
+                      max_bids_per_team: parseInt(e.target.value) || 0
+                    }
+                  })}
+                  className="w-full max-w-md px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 bg-white shadow-sm text-xs font-bold uppercase"
+                  min="1"
+                  required
+                />
+                <p className="text-[10px] text-slate-400 font-bold uppercase">The maximum number of bids (including primary & fallback choices) a team is allowed to place for each round/slot (defaults to 15).</p>
               </div>
             </div>
 
             {/* Time Window */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-indigo-500" />
+            <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
+              <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-amber-500" />
                 Draft timeline (Bidding Window)
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Draft Window Opens At</label>
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase">Draft Window Opens At</label>
                   <input
                     type="datetime-local"
                     value={settings.draft_opens_at}
                     onChange={(e) => setSettings({ ...settings, draft_opens_at: e.target.value })}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 bg-white shadow-sm text-xs font-bold uppercase"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Draft Window Closes At</label>
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase">Draft Window Closes At</label>
                   <input
                     type="datetime-local"
                     value={settings.draft_closes_at}
                     onChange={(e) => setSettings({ ...settings, draft_closes_at: e.target.value })}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 bg-white shadow-sm text-xs font-bold uppercase"
                   />
                 </div>
               </div>
-              <p className="text-xs text-slate-400 mt-3">Teams can only place, modify or lock bids while the current time is between these boundaries.</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase mt-3">Teams can only place, modify or lock bids while the current time is between these boundaries.</p>
             </div>
           </div>
         )}
 
         {/* TAB 2: Squad Slots configuration */}
         {activeTab === 'slots' && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="flex justify-between items-center mb-6">
+          <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-6">
+            <div className="flex justify-between items-center pb-4 border-b">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Roster Slot specifications</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Specify the slots each manager must bid on and populate</p>
+                <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">Roster Slot specifications</h2>
+                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Specify the slots each manager must bid on</p>
               </div>
               <button
                 type="button"
                 onClick={addSlot}
-                className="px-4 py-2 text-sm bg-indigo-50 text-indigo-600 border border-indigo-200 font-bold rounded-lg hover:bg-indigo-100 transition-colors flex items-center gap-1"
+                className="px-4 py-2 text-xs bg-slate-100 text-slate-700 border border-slate-200 font-bold rounded-xl hover:bg-slate-200 transition-colors flex items-center gap-1 uppercase tracking-wider cursor-pointer font-black"
               >
-                <Plus className="w-4 h-4" /> Add Slot
+                <Plus className="w-3.5 h-3.5" /> Add Slot
               </button>
             </div>
 
@@ -507,34 +644,54 @@ export default function DraftSettingsPage() {
                   
                   <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs text-slate-400 font-bold mb-1 uppercase">Slot Name</label>
+                      <label className="block text-[10px] text-slate-455 font-bold mb-1.5 uppercase">Slot Name</label>
                       <input
                         type="text"
                         value={slot.name}
                         onChange={(e) => updateSlot(index, { name: e.target.value })}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 bg-white"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-400 font-bold mb-1 uppercase">Target List ID</label>
-                      <select
+                      <label className="block text-[10px] text-slate-455 font-bold mb-1.5 uppercase">Target List ID</label>
+                      <input
+                        type="text"
                         value={slot.list_id}
-                        onChange={(e) => updateSlot(index, { list_id: e.target.value })}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      >
-                        {Object.keys(settings.category_settings.lists).map(listId => (
-                          <option key={listId} value={listId}>{listId}</option>
-                        ))}
-                      </select>
+                        onChange={(e) => {
+                          const newId = e.target.value.trim();
+                          const oldId = slot.list_id;
+                          
+                          // Update slot list_id
+                          const updatedSlots = [...settings.category_settings.slots];
+                          updatedSlots[index] = { ...updatedSlots[index], list_id: newId };
+                          
+                          // Rename the list key in category_settings.lists
+                          const updatedLists = { ...settings.category_settings.lists };
+                          if (oldId !== newId && newId) {
+                            updatedLists[newId] = updatedLists[oldId] || [];
+                            delete updatedLists[oldId];
+                          }
+                          
+                          setSettings({
+                            ...settings,
+                            category_settings: {
+                              slots: updatedSlots,
+                              lists: updatedLists
+                            }
+                          });
+                        }}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 bg-white"
+                        required
+                      />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-400 font-bold mb-1 uppercase">Base Price (Credits)</label>
+                      <label className="block text-[10px] text-slate-455 font-bold mb-1.5 uppercase">Base Price (Credits)</label>
                       <input
                         type="number"
                         value={slot.base_price}
                         onChange={(e) => updateSlot(index, { base_price: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 bg-white"
                         min="0"
                         required
                       />
@@ -544,7 +701,7 @@ export default function DraftSettingsPage() {
                   <button
                     type="button"
                     onClick={() => removeSlot(index)}
-                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-5 md:mt-0"
+                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-5 md:mt-0 cursor-pointer"
                     title="Delete Slot"
                   >
                     <Trash2 className="w-5 h-5" />
@@ -557,29 +714,38 @@ export default function DraftSettingsPage() {
 
         {/* TAB 3: Player List Allocations */}
         {activeTab === 'lists' && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
+          <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center pb-4 border-b gap-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Allocate players to lists</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Assign players from the active season pool to draft lists</p>
+                <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">Allocate players to lists</h2>
+                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Assign players from the active season pool to draft lists</p>
               </div>
-              <button
-                type="button"
-                onClick={autoCategorizeAll}
-                className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1.5 shadow"
-              >
-                <ListFilter className="w-4 h-4" /> Auto Categorize
-              </button>
+              
+              {players.length > 0 && (
+                <button
+                  type="button"
+                  onClick={autoCategorizeAll}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-amber-400 text-xs font-black rounded-xl transition-all shadow flex items-center gap-1.5 uppercase tracking-wider cursor-pointer"
+                >
+                  <ListFilter className="w-4 h-4" /> Auto Categorize
+                </button>
+              )}
             </div>
 
             {/* Category tabs */}
-            <div className="flex flex-wrap gap-2 mb-6 border-b pb-4">
-              {['RED', 'BLUE', 'BLACK', 'WHITE', 'ICONIC'].map(cat => (
+            <div className="flex flex-wrap gap-2 mb-6 pb-2">
+              {['RED', 'BLUE', 'BLACK', 'WHITE', 'ICONIC']
+                .filter(cat => players.some(p => (p.category || '').toUpperCase() === cat))
+                .map(cat => (
                 <button
                   key={cat}
                   type="button"
                   onClick={() => setPlayerTab(cat)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-full border transition-all ${playerTab === cat ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                  className={`px-3 py-1.5 text-[10px] font-black rounded-full border uppercase tracking-wider transition-all cursor-pointer ${
+                    playerTab === cat
+                      ? 'bg-amber-500 text-slate-900 border-amber-600 shadow-sm'
+                      : 'bg-slate-100 text-slate-600 border-slate-200/60 hover:bg-slate-200'
+                  }`}
                 >
                   {cat} ({players.filter(p => (p.category || '').toUpperCase() === cat).length})
                 </button>
@@ -595,16 +761,16 @@ export default function DraftSettingsPage() {
                   return (
                     <div key={player.real_player_id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div>
-                        <h4 className="font-bold text-slate-800 text-sm">{player.player_name}</h4>
-                        <p className="text-xs text-slate-400 mt-0.5">{player.real_team_name || 'No Team'}</p>
+                        <h4 className="font-black text-slate-800 text-xs uppercase">{player.player_name}</h4>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{player.real_team_name || 'No Team'}</p>
                       </div>
 
                       <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <span className="text-xs text-slate-400 whitespace-nowrap">Assign to:</span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase whitespace-nowrap">Assign to:</span>
                         <select
                           value={currentList}
                           onChange={(e) => allocatePlayer(player.real_player_id, e.target.value)}
-                          className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 w-full sm:w-44"
+                          className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-bold uppercase bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent w-full sm:w-48 cursor-pointer"
                         >
                           <option value="">-- Unassigned --</option>
                           {Object.keys(settings.category_settings.lists).map(listId => (
@@ -617,7 +783,7 @@ export default function DraftSettingsPage() {
                 })}
 
               {players.filter(p => (p.category || '').toUpperCase() === playerTab).length === 0 && (
-                <div className="p-8 text-center text-slate-400 text-sm">
+                <div className="p-8 text-center text-slate-400 text-xs font-bold uppercase">
                   No players found in category {playerTab} for the current season.
                 </div>
               )}

@@ -40,6 +40,17 @@ export async function GET(request: NextRequest) {
     }
 
     const league = leagues[0];
+    const categorySettings = typeof league.category_settings === 'string'
+      ? JSON.parse(league.category_settings)
+      : (league.category_settings || {});
+    
+    if (categorySettings && categorySettings.max_bids_per_team === undefined) {
+      const teamsCount = await fantasySql`
+        SELECT COUNT(*)::int as count FROM fantasy_teams 
+        WHERE league_id = ${league_id} AND is_enabled = true
+      `;
+      categorySettings.max_bids_per_team = teamsCount[0]?.count || 10;
+    }
 
     return NextResponse.json({
       settings: {
@@ -53,7 +64,7 @@ export async function GET(request: NextRequest) {
         draft_opens_at: leagues[0].draft_opens_at,
         draft_closes_at: leagues[0].draft_closes_at,
         is_draft_active: league.draft_status === 'active',
-        category_settings: league.category_settings || null,
+        category_settings: categorySettings,
       },
     });
   } catch (error) {

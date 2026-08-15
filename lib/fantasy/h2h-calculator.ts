@@ -117,7 +117,19 @@ async function processH2HFixture(fixture: H2HFixture): Promise<H2HResult> {
       AND is_locked = true
   `;
 
-  const teamAPoints = teamALineup?.total_points || 0;
+  let teamAPoints = 0;
+  if (teamALineup) {
+    teamAPoints = teamALineup.total_points || 0;
+  } else {
+    // Fallback: Sum points of all players in squad for this round
+    const [pointsResult] = await fantasySql`
+      SELECT COALESCE(SUM(final_points), 0) as total_points
+      FROM fantasy_player_points
+      WHERE team_id = ${fixture.team_a_id}
+        AND round_id = ${fixture.round_id}
+    `;
+    teamAPoints = parseInt(pointsResult?.total_points || '0') || 0;
+  }
 
   // 2. Get lineup points for team B
   const [teamBLineup] = await fantasySql`
@@ -128,7 +140,19 @@ async function processH2HFixture(fixture: H2HFixture): Promise<H2HResult> {
       AND is_locked = true
   `;
 
-  const teamBPoints = teamBLineup?.total_points || 0;
+  let teamBPoints = 0;
+  if (teamBLineup) {
+    teamBPoints = teamBLineup.total_points || 0;
+  } else {
+    // Fallback: Sum points of all players in squad for this round
+    const [pointsResult] = await fantasySql`
+      SELECT COALESCE(SUM(final_points), 0) as total_points
+      FROM fantasy_player_points
+      WHERE team_id = ${fixture.team_b_id}
+        AND round_id = ${fixture.round_id}
+    `;
+    teamBPoints = parseInt(pointsResult?.total_points || '0') || 0;
+  }
 
   // 3. Determine winner and award H2H points
   let winnerId: string | null = null;

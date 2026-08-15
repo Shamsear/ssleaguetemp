@@ -11,11 +11,12 @@ import { sendNotification } from '@/lib/notifications/send-notification';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { league_id, draft_status, draft_opens_at, draft_closes_at } = body;
+    const { league_id, draft_status, draft_opens_at, draft_closes_at, active_slot_index } = body;
 
     console.log('🔵 Received from client:', {
       draft_opens_at,
-      draft_closes_at
+      draft_closes_at,
+      active_slot_index
     });
 
     // Ensure PostgreSQL session uses UTC timezone
@@ -41,16 +42,54 @@ export async function POST(request: NextRequest) {
     const opensQuery = draft_opens_at ? `'${draft_opens_at}'::timestamp AT TIME ZONE 'UTC'` : 'NULL';
     const closesQuery = draft_closes_at ? `'${draft_closes_at}'::timestamp AT TIME ZONE 'UTC'` : 'NULL';
     
-    const result = await fantasySql`
-      UPDATE fantasy_leagues
-      SET 
-        draft_status = ${draft_status},
-        draft_opens_at = ${fantasySql.unsafe(opensQuery)},
-        draft_closes_at = ${fantasySql.unsafe(closesQuery)},
-        updated_at = CURRENT_TIMESTAMP
-      WHERE league_id = ${league_id}
-      RETURNING *
-    `;
+    let result: any[] = [];
+    await fantasySql.begin(async sql => {
+      // Get current category settings to preserve other slots
+      const currentLeagues = await sql`
+        SELECT category_settings FROM fantasy_leagues WHERE league_id = ${league_id}
+      `;
+      
+      const categorySettings = currentLeagues[0]?.category_settings || {};
+      if (active_slot_index !== undefined) {
+        categorySettings.active_slot_index = Number(active_slot_index);
+      }
+
+      result = await sql`
+        UPDATE fantasy_leagues
+        SET 
+          draft_status = ${draft_status},
+          draft_opens_at = ${fantasySql.unsafe(opensQuery)},
+          draft_closes_at = ${fantasySql.unsafe(closesQuery)},
+          category_settings = ${categorySettings},
+          updated_at = CURRENT_TIMESTAMP
+        WHERE league_id = ${league_id}
+        RETURNING *
+      `;
+
+      if (draft_status === 'active') {
+        // Reset team submission lock for the current round
+        await sql`
+          UPDATE fantasy_teams
+          SET draft_submitted = false
+          WHERE league_id = ${league_id}
+        `;
+
+        // If we are open for a specific slot, delete draft bids for that slot only
+        const targetSlot = Number(categorySettings.active_slot_index);
+        if (targetSlot) {
+          await sql`
+            DELETE FROM fantasy_draft_bids
+            WHERE league_id = ${league_id} AND slot_index = ${targetSlot}
+          `;
+          console.log(`🔄 Cleared previous bids for slot ${targetSlot} for league ${league_id}`);
+        } else {
+          await sql`
+            DELETE FROM fantasy_draft_bids
+            WHERE league_id = ${league_id}
+          `;
+        }
+      }
+    });
 
     console.log('🟢 Stored in database:', {
       draft_opens_at: result[0]?.draft_opens_at,

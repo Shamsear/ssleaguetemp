@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFantasyDb } from '@/lib/neon/fantasy-config';
-import { getTournamentDb } from '@/lib/neon/tournament-config';
 
 /**
  * GET /api/fantasy/leagues/[leagueId]
@@ -54,29 +53,16 @@ export async function GET(
       console.log('League not found, attempting auto-creation...');
       
       try {
-        const tournamentSql = getTournamentDb();
-        
-        // Get season info from tournaments (leagueId is season_id like SSPSLS16)
-        const tournaments = await tournamentSql`
-          SELECT DISTINCT season_id
-          FROM tournaments
-          WHERE season_id = ${leagueId}
-          LIMIT 1
-        `;
-
-        if (tournaments.length === 0) {
-          console.error('Season not found in tournaments:', leagueId);
+        const seasonId = leagueId;
+        if (!seasonId || !seasonId.startsWith('SSPSLS')) {
           return NextResponse.json(
             { 
               error: 'Season not found',
-              message: `Season ${leagueId} does not exist. Please create the tournament/season first before creating a fantasy league.`,
-              details: 'A tournament must be created for this season before the fantasy league can be initialized.'
+              message: `Season ID ${seasonId} is invalid. Please ensure the season ID starts with SSPSLS.`,
             },
             { status: 404 }
           );
         }
-
-        const seasonId = leagueId;
         const seasonNumber = seasonId.replace('SSPSLS', '');
         const seasonName = `Season ${seasonNumber}`;
         const newLeagueId = `SSPSLFLS${seasonNumber}`;

@@ -667,10 +667,13 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
       throw new Error(`No slot configurations found in league settings`);
     }
 
+    const activeSlotIdx = Number(categorySettings.active_slot_index) || null;
     const slots = categorySettings.slots.sort((a: any, b: any) => a.slot_index - b.slot_index);
-    console.log(`📊 Found ${slots.length} configured slots to process`);
+    const slotsToProcess = activeSlotIdx ? slots.filter((s: any) => s.slot_index === activeSlotIdx) : slots;
+    
+    console.log(`📊 Found ${slots.length} configured slots. Active slot: ${activeSlotIdx || 'ALL'}. Slots to process: ${slotsToProcess.length}`);
 
-    // 2. Fetch participating teams and initialize balances/rosters
+    // 2. Fetch participating teams
     const teams = await fantasySql`
       SELECT team_id, team_name, budget_remaining
       FROM fantasy_teams
@@ -681,42 +684,132 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
       throw new Error('No active teams in this fantasy league');
     }
 
-    const teamBudgets = new Map<string, number>();
-    const teamNames = new Map<string, string>();
-    const teamFilledSlots = new Map<string, Set<number>>(); // team_id -> set of slot_indices filled
+    // 3. Fetch existing squad entries
+    const existingSquad = await fantasySql`
+      SELECT team_id, real_player_id, purchase_price
+      FROM fantasy_squad
+      WHERE league_id = ${leagueId} AND acquisition_type = 'draft'
+    `;
 
-    // Reset teams to clean slate (budget, draft status)
-    for (const t of teams) {
-      teamBudgets.set(t.team_id, budgetPerTeam);
-      teamNames.set(t.team_id, t.team_name);
-      teamFilledSlots.set(t.team_id, new Set<number>());
-    }
-
-    // 3. Reset existing draft state in database for clean finalization
-    await fantasySql.begin(async sql => {
-      // Clear squad draft entries
-      await sql`
-        DELETE FROM fantasy_squad 
-        WHERE league_id = ${leagueId} AND acquisition_type = 'draft'
-      `;
-      // Reset players to undrafted/available
-      await sql`
-        UPDATE fantasy_players 
-        SET drafted_by_team_id = NULL, current_price = NULL, is_available = true 
-        WHERE league_id = ${leagueId}
-      `;
-      // Reset team budgets and supported team links
-      await sql`
-        UPDATE fantasy_teams 
-        SET budget_remaining = ${budgetPerTeam}, 
-            supported_team_id = NULL, 
-            supported_team_name = NULL,
-            draft_submitted = true
-        WHERE league_id = ${leagueId}
-      `;
+    // Map players to slot index
+    const playerToSlotMap = new Map<string, number>();
+    const slotLists = categorySettings.lists || {};
+    slots.forEach((s: any) => {
+      const list = slotLists[s.list_id] || [];
+      list.forEach((pId: string) => {
+        playerToSlotMap.set(pId, s.slot_index);
+      });
     });
 
-    // 4. Fetch all bids submitted
+    const teamBudgets = new Map<string, number>();
+    const teamNames = new Map<string, string>();
+    const teamFilledSlots = new Map<string, Set<number>>();
+    const refundedBudgets = new Map<string, number>();
+
+    for (const t of teams) {
+      // If we are doing slot-by-slot, use their current budget; otherwise use budgetPerTeam
+      teamBudgets.set(t.team_id, activeSlotIdx ? Number(t.budget_remaining) : budgetPerTeam);
+      teamNames.set(t.team_id, t.team_name);
+      teamFilledSlots.set(t.team_id, new Set<number>());
+      refundedBudgets.set(t.team_id, 0);
+    }
+
+    const playersToDelete: string[] = [];
+    
+    // Process existing squad entries to build teamFilledSlots and calculate refunds
+    for (const item of existingSquad) {
+      const pId = item.real_player_id;
+      const tId = item.team_id;
+      const price = Number(item.purchase_price) || 0;
+      const slotIndex = playerToSlotMap.get(pId);
+
+      if (slotIndex) {
+        if (activeSlotIdx && slotIndex === activeSlotIdx) {
+          // Refund budget for the re-drafted slot
+          teamBudgets.set(tId, teamBudgets.get(tId)! + price);
+          refundedBudgets.set(tId, refundedBudgets.get(tId)! + price);
+          playersToDelete.push(pId);
+        } else {
+          teamFilledSlots.get(tId)!.add(slotIndex);
+        }
+      }
+    }
+
+    // Process previous real team bids for Slot 6 refunds
+    const previousTeamBids = await fantasySql`
+      SELECT team_id, target_id, bid_amount
+      FROM fantasy_draft_bids
+      WHERE league_id = ${leagueId} AND bid_type = 'real_team' AND status = 'won'
+    `;
+    for (const item of previousTeamBids) {
+      const tId = item.team_id;
+      const price = Number(item.bid_amount) || 0;
+      if (activeSlotIdx && activeSlotIdx === 6) {
+        teamBudgets.set(tId, teamBudgets.get(tId)! + price);
+        refundedBudgets.set(tId, refundedBudgets.get(tId)! + price);
+      } else {
+        teamFilledSlots.get(tId)!.add(6);
+      }
+    }
+
+    // 4. Perform database resets for active slot inside transaction
+    await fantasySql.begin(async sql => {
+      if (activeSlotIdx) {
+        // Delete squad players for this active slot
+        if (playersToDelete.length > 0) {
+          await sql`
+            DELETE FROM fantasy_squad 
+            WHERE league_id = ${leagueId} AND real_player_id = ANY(${playersToDelete})
+          `;
+          await sql`
+            UPDATE fantasy_players 
+            SET drafted_by_team_id = NULL, current_price = NULL, is_available = true 
+            WHERE league_id = ${leagueId} AND real_player_id = ANY(${playersToDelete})
+          `;
+        }
+
+        // If active slot is real team (Slot 6), clear links
+        if (activeSlotIdx === 6) {
+          await sql`
+            UPDATE fantasy_teams
+            SET supported_team_id = NULL, supported_team_name = NULL
+            WHERE league_id = ${leagueId}
+          `;
+        }
+
+        // Refund budgets in DB
+        for (const [tId, refund] of refundedBudgets.entries()) {
+          if (refund > 0) {
+            await sql`
+              UPDATE fantasy_teams
+              SET budget_remaining = budget_remaining + ${refund}
+              WHERE team_id = ${tId} AND league_id = ${leagueId}
+            `;
+          }
+        }
+      } else {
+        // legacy batch clear: delete everything
+        await sql`
+          DELETE FROM fantasy_squad 
+          WHERE league_id = ${leagueId} AND acquisition_type = 'draft'
+        `;
+        await sql`
+          UPDATE fantasy_players 
+          SET drafted_by_team_id = NULL, current_price = NULL, is_available = true 
+          WHERE league_id = ${leagueId}
+        `;
+        await sql`
+          UPDATE fantasy_teams 
+          SET budget_remaining = ${budgetPerTeam}, 
+              supported_team_id = NULL, 
+              supported_team_name = NULL,
+              draft_submitted = true
+          WHERE league_id = ${leagueId}
+        `;
+      }
+    });
+
+    // 5. Fetch all bids submitted
     const allBids = await fantasySql`
       SELECT id, bid_id, team_id, slot_index, priority, target_id, bid_type, bid_amount, submitted_at
       FROM fantasy_draft_bids
@@ -726,22 +819,37 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
 
     console.log(`📥 Loaded ${allBids.length} total bids from database`);
 
-    // Keep track of which players and real teams are already won (exclusive ownership)
-    const awardedTargets = new Set<string>(); // target_id (player_id or real_team_id)
-
-    // Store the winning bids to write to database
+    const awardedTargets = new Set<string>();
     const winningBidsList: any[] = [];
-    const lostBidsList: string[] = []; // bid_ids that lost
+    const lostBidsList: string[] = [];
 
-    // 5. Process slot-by-slot
-    for (const slot of slots) {
+    // Populate awardedTargets for slots NOT being processed
+    if (activeSlotIdx) {
+      const activeSlotPlayers = slotLists[slotsToProcess[0]?.list_id] || [];
+      const nonActiveAwardedPlayers = await fantasySql`
+        SELECT real_player_id
+        FROM fantasy_squad
+        WHERE league_id = ${leagueId} AND NOT (real_player_id = ANY(${activeSlotPlayers}))
+      `;
+      nonActiveAwardedPlayers.forEach((p: any) => awardedTargets.add(p.real_player_id));
+
+      if (activeSlotIdx !== 6) {
+        const nonActiveAwardedTeams = await fantasySql`
+          SELECT supported_team_id
+          FROM fantasy_teams
+          WHERE league_id = ${leagueId} AND supported_team_id IS NOT NULL
+        `;
+        nonActiveAwardedTeams.forEach((t: any) => awardedTargets.add(t.supported_team_id));
+      }
+    }
+
+    // 6. Process slot-by-slot
+    for (const slot of slotsToProcess) {
       const slotIdx = slot.slot_index;
       console.log(`\n🔄 Processing Slot ${slotIdx}: ${slot.name} (Base Price: ${slot.base_price})`);
 
-      // Filter bids for this specific slot
       const slotBids = allBids.filter((b: any) => b.slot_index === slotIdx);
 
-      // Group bids by target_id
       const bidsByTarget = new Map<string, any[]>();
       slotBids.forEach((bid: any) => {
         if (!bidsByTarget.has(bid.target_id)) {
@@ -754,15 +862,12 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
       let skippedCount = 0;
       let failedCount = 0;
 
-      // Evaluate bids for each target_id (player or real team) in this slot
       for (const [targetId, targetBids] of bidsByTarget.entries()) {
-        // Skip if this player/team has already been won in a previous slot (exclusive ownership)
         if (awardedTargets.has(targetId)) {
           targetBids.forEach((b: any) => lostBidsList.push(b.bid_id));
           continue;
         }
 
-        // Sort bids for this target by bid_amount DESC, then submitted_at ASC (timestamp tiebreaker)
         const sortedBids = [...targetBids].sort((a: any, b: any) => {
           if (Number(b.bid_amount) !== Number(a.bid_amount)) {
             return Number(b.bid_amount) - Number(a.bid_amount);
@@ -770,26 +875,22 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
           return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
         });
 
-        // Find the highest valid bid
         let wonBid = null;
         for (const bid of sortedBids) {
           const teamId = bid.team_id;
           const bidAmt = Number(bid.bid_amount);
 
-          // Check if team has already filled this slot
           if (teamFilledSlots.get(teamId)!.has(slotIdx)) {
             skippedCount++;
             continue;
           }
 
-          // Check budget
           const currentBudget = teamBudgets.get(teamId)!;
           if (currentBudget < bidAmt) {
             failedCount++;
             continue;
           }
 
-          // Winner found!
           wonBid = bid;
           break;
         }
@@ -798,22 +899,16 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
           const teamId = wonBid.team_id;
           const bidAmt = Number(wonBid.bid_amount);
 
-          // Deduct from budget
-          const currentBudget = teamBudgets.get(teamId)!;
-          teamBudgets.set(teamId, currentBudget - bidAmt);
-
-          // Mark slot filled
+          teamBudgets.set(teamId, teamBudgets.get(teamId)! - bidAmt);
           teamFilledSlots.get(teamId)!.add(slotIdx);
-
-          // Exclude target from future assignments
           awardedTargets.add(targetId);
 
-          // Add to winning list
           winningBidsList.push(wonBid);
           slotWinners.push({
             team_id: teamId,
             team_name: teamNames.get(teamId) || teamId,
             target_id: targetId,
+            target_name: targetId,
             bid_type: wonBid.bid_type,
             bid_amount: bidAmt
           });
@@ -825,14 +920,12 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
           }
           totalBudgetSpent += bidAmt;
 
-          // All other bids for this target in this slot are lost
           sortedBids.forEach((b: any) => {
             if (b.bid_id !== wonBid.bid_id) {
               lostBidsList.push(b.bid_id);
             }
           });
         } else {
-          // If no bid won this target, all bids on it lost
           sortedBids.forEach((b: any) => lostBidsList.push(b.bid_id));
         }
       }
@@ -846,41 +939,46 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
         failed: failedCount,
         winning_bids: slotWinners
       });
-
-      console.log(`✅ Slot ${slotIdx} complete: ${slotWinners.length} winners, ${skippedCount} skipped, ${failedCount} failed`);
     }
 
-    // 6. Write final assignments to the database inside a transaction
+    // 7. Write results to database
     const { v4: uuidv4 } = require('uuid');
-    
     await fantasySql.begin(async sql => {
-      // 6.1 Update team budgets and support teams in PostgreSQL
+      // 7.1 Update team budgets and real team links
       for (const [teamId, budget] of teamBudgets.entries()) {
-        const winningTeamBid = winningBidsList.find(b => b.team_id === teamId && b.bid_type === 'real_team');
-        
-        let supportedTeamId = null;
-        let supportedTeamName = null;
+        if (!activeSlotIdx || activeSlotIdx === 6) {
+          const winningTeamBid = winningBidsList.find(b => b.team_id === teamId && b.bid_type === 'real_team');
+          
+          let supportedTeamId = null;
+          let supportedTeamName = null;
 
-        if (winningTeamBid) {
-          // Fetch real team name
-          const realTeams = await sql`
-            SELECT team_name FROM teams WHERE team_uid = ${winningTeamBid.target_id} LIMIT 1
+          if (winningTeamBid) {
+            const realTeams = await sql`
+              SELECT team_name FROM teams WHERE team_uid = ${winningTeamBid.target_id} LIMIT 1
+            `;
+            supportedTeamId = winningTeamBid.target_id;
+            supportedTeamName = realTeams[0]?.team_name || winningTeamBid.target_id;
+          }
+
+          await sql`
+            UPDATE fantasy_teams
+            SET budget_remaining = ${budget},
+                supported_team_id = ${supportedTeamId},
+                supported_team_name = ${supportedTeamName},
+                updated_at = CURRENT_TIMESTAMP
+            WHERE team_id = ${teamId} AND league_id = ${leagueId}
           `;
-          supportedTeamId = winningTeamBid.target_id;
-          supportedTeamName = realTeams[0]?.team_name || winningTeamBid.target_id;
+        } else {
+          await sql`
+            UPDATE fantasy_teams
+            SET budget_remaining = ${budget},
+                updated_at = CURRENT_TIMESTAMP
+            WHERE team_id = ${teamId} AND league_id = ${leagueId}
+          `;
         }
-
-        await sql`
-          UPDATE fantasy_teams
-          SET budget_remaining = ${budget},
-              supported_team_id = ${supportedTeamId},
-              supported_team_name = ${supportedTeamName},
-              updated_at = CURRENT_TIMESTAMP
-          WHERE team_id = ${teamId} AND league_id = ${leagueId}
-        `;
       }
 
-      // 6.2 Write winning player roster entries to fantasy_squad and fantasy_players
+      // 7.2 Write winning player roster entries to fantasy_squad and fantasy_players
       for (const bid of winningBidsList) {
         if (bid.bid_type === 'player') {
           // Get player details

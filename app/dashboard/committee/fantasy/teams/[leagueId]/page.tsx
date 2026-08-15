@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
-import { Activity, AlertTriangle, Award, BarChart2, CheckCircle, ChevronDown, Crown, Gift, Handshake, Shield as ShieldIcon, Star, Target, TrendingUp, Trophy, XCircle } from 'lucide-react';
+import { Activity, AlertTriangle, Award, BarChart2, CheckCircle, ChevronDown, Crown, Gift, Handshake, Shield as ShieldIcon, Star, Target, TrendingUp, Trophy, XCircle, ArrowLeft } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import ShareableTeamCard from '@/components/fantasy/ShareableTeamCard';
 
@@ -257,10 +257,11 @@ export default function FantasyTeamsPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading team rosters...</p>
         </div>
       </div>
     );
@@ -269,68 +270,77 @@ export default function FantasyTeamsPage() {
   if (!user || !league) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
       <AlertModal {...alertState} onClose={closeAlert} />
 
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header */}
-        <div className="mb-8">
+      <div className="max-w-7xl mx-auto relative z-10 space-y-6 font-mono">
+        {/* Navigation */}
+        <div>
           <Link
             href={`/dashboard/committee/fantasy/${leagueId}`}
-            className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-4"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
-            ← Back to League Dashboard
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
           </Link>
+        </div>
 
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Fantasy Teams</h1>
-              <p className="text-gray-600 mt-1">{league.name} - Team Rosters</p>
-            </div>
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
+          <div>
+            <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">FANTASY CONSOLE</span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5 uppercase">
+              Fantasy Team Rosters
+            </h1>
+            <p className="text-xs text-slate-400 font-mono mt-1">
+              {league.name} — Manager Squad breakdown
+            </p>
+          </div>
+          <div className="w-16 h-16 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center text-amber-400 shadow-sm shrink-0">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Teams List */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Teams ({teams.length})</h2>
+            <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-4">
+              <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">Teams ({teams.length})</h2>
               
-              <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
                 {teams.length === 0 ? (
-                  <div className="text-center py-12">
-                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="text-center py-12 text-slate-400">
+                    <svg className="w-10 h-10 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    <p className="text-gray-500 font-medium mb-2">No teams registered yet</p>
-                    <p className="text-sm text-gray-400">Teams will appear here once players register for the fantasy league</p>
+                    <p className="text-xs font-bold uppercase mb-1">No teams registered yet</p>
+                    <p className="text-[10px] uppercase font-semibold text-slate-400">Rosters will appear here once managers register</p>
                   </div>
                 ) : (
                   teams.map((team) => (
                     <button
                       key={team.id}
                       onClick={() => loadTeamPlayers(team)}
-                      className={`w-full text-left p-4 rounded-xl transition-all ${
+                      className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer ${
                         selectedTeam?.id === team.id
-                          ? 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-lg'
-                          : 'bg-gray-50 hover:bg-gray-100 text-gray-900'
+                          ? 'bg-slate-800 border-slate-900 text-amber-400 shadow-sm'
+                          : 'bg-slate-50 border-slate-100 hover:border-slate-200 text-slate-700 hover:bg-slate-100'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <p className="font-semibold">{team.team_name}</p>
-                          <p className={`text-sm ${selectedTeam?.id === team.id ? 'text-indigo-100' : 'text-gray-600'}`}>
+                          <p className="font-bold text-xs uppercase">{team.team_name}</p>
+                          <p className={`text-[10px] font-bold uppercase mt-0.5 ${selectedTeam?.id === team.id ? 'text-amber-300' : 'text-slate-450'}`}>
                             {team.owner_name}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-bold">{team.total_points}</p>
-                          <p className={`text-xs ${selectedTeam?.id === team.id ? 'text-indigo-100' : 'text-gray-500'}`}>
+                          <p className="text-sm font-black font-mono">{team.total_points}</p>
+                          <p className={`text-[9px] font-bold uppercase ${selectedTeam?.id === team.id ? 'text-amber-300' : 'text-slate-400'}`}>
                             {team.player_count} players
                           </p>
                         </div>
@@ -344,14 +354,14 @@ export default function FantasyTeamsPage() {
 
           {/* Team Roster */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
+            <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
               {selectedTeam ? (
                 <>
-                  <div className="mb-6 pb-4 border-b border-gray-200">
-                    <div className="flex items-start justify-between mb-3">
+                  <div className="mb-6 pb-4 border-b border-slate-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                       <div>
-                        <h2 className="text-2xl font-bold text-gray-900">{selectedTeam.team_name}</h2>
-                        <p className="text-gray-600">Owner: {selectedTeam.owner_name}</p>
+                        <h2 className="text-sm font-black text-slate-850 uppercase tracking-wider">{selectedTeam.team_name}</h2>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Owner: {selectedTeam.owner_name}</p>
                       </div>
                       <ShareableTeamCard
                         teamName={selectedTeam.team_name}
@@ -363,29 +373,24 @@ export default function FantasyTeamsPage() {
                         leagueName={league?.name}
                       />
                     </div>
-                    <div className="flex gap-6 mt-3 flex-wrap">
-                      <div>
-                        <p className="text-sm text-gray-500">Total Points</p>
-                        <p className="text-2xl font-bold text-indigo-600">{selectedTeam.total_points}</p>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                      <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                        <p className="text-[9px] text-slate-450 font-bold uppercase mb-0.5">Total Points</p>
+                        <p className="text-lg font-black text-amber-600">{selectedTeam.total_points}</p>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Players</p>
-                        <p className="text-2xl font-bold text-gray-900">{selectedTeam.player_count}</p>
+                      <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                        <p className="text-[9px] text-slate-450 font-bold uppercase mb-0.5">Players</p>
+                        <p className="text-lg font-black text-slate-800">{selectedTeam.player_count}</p>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Rank</p>
-                        <p className="text-2xl font-bold text-gray-900">#{selectedTeam.rank || '-'}</p>
+                      <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                        <p className="text-[9px] text-slate-450 font-bold uppercase mb-0.5">Rank</p>
+                        <p className="text-lg font-black text-slate-800">#{selectedTeam.rank || '-'}</p>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Budget Remaining</p>
-                        <p className={`text-2xl font-bold ${
-                          (selectedTeam.budget_remaining ?? 0) > 0 
-                            ? 'text-green-600' 
-                            : (selectedTeam.budget_remaining ?? 0) < 0 
-                            ? 'text-red-600' 
-                            : 'text-gray-900'
-                        }`}>
-                          €{selectedTeam.budget_remaining ?? 0}M
+                      <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                        <p className="text-[9px] text-slate-450 font-bold uppercase mb-0.5">Budget Remaining</p>
+                        <p className={`text-lg font-black ${(selectedTeam.budget_remaining ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          ₹{(selectedTeam.budget_remaining ?? 0).toFixed(1)} credits
                         </p>
                       </div>
                     </div>
@@ -395,24 +400,24 @@ export default function FantasyTeamsPage() {
                       <div className="mt-4">
                         <button
                           onClick={togglePassiveBreakdown}
-                          className="w-full p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border-2 border-green-200 hover:border-green-300 transition-all group"
+                          className="w-full p-4 bg-slate-50 border border-emerald-200/50 hover:border-emerald-300 rounded-xl transition-all cursor-pointer group"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                                <ShieldIcon className="w-5 h-5 text-white" />
+                              <div className="w-8 h-8 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg flex items-center justify-center">
+                                <ShieldIcon className="w-4 h-4" />
                               </div>
-                              <div className="text-left">
-                                <p className="text-xs text-gray-600 font-medium">Supported Team (Passive Points)</p>
-                                <p className="text-lg font-bold text-gray-900">{selectedTeam.supported_team_name}</p>
+                              <div className="text-left font-mono">
+                                <p className="text-[9px] text-slate-400 font-bold uppercase">Supported Team (Passive Points)</p>
+                                <p className="text-xs font-bold text-slate-800 uppercase">{selectedTeam.supported_team_name}</p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 font-mono">
                               <div className="text-right">
-                                <p className="text-xs text-gray-600">Passive Points</p>
-                                <p className="text-2xl font-bold text-green-600">{selectedTeam.passive_points || 0}</p>
+                                <p className="text-[9px] text-slate-400 font-bold uppercase">Passive Points</p>
+                                <p className="text-sm font-black text-emerald-650">{selectedTeam.passive_points || 0}</p>
                               </div>
-                              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${
+                              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${
                                 showPassiveBreakdown ? 'rotate-180' : ''
                               }`} />
                             </div>
@@ -421,59 +426,59 @@ export default function FantasyTeamsPage() {
 
                         {/* Passive Points Breakdown */}
                         {showPassiveBreakdown && (
-                          <div className="mt-2 p-4 bg-white border-2 border-green-200 rounded-xl">
+                          <div className="mt-2 p-4 bg-white border border-emerald-200 rounded-xl space-y-4">
                             {isLoadingPassive ? (
-                              <div className="flex items-center justify-center py-8">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                              <div className="flex items-center justify-center py-6">
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
                               </div>
                             ) : passiveData && passiveData.stats ? (
                               <>
                                 {/* Stats Grid */}
-                                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-                                  <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg p-3 text-center text-white">
-                                    <p className="text-2xl font-bold">{passiveData.stats.total_passive_points}</p>
-                                    <p className="text-xs">Total Passive</p>
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                  <div className="bg-slate-800 border border-slate-900 rounded-lg p-3 text-center text-amber-400">
+                                    <p className="text-base font-black font-mono">{passiveData.stats.total_passive_points}</p>
+                                    <p className="text-[9px] uppercase font-bold text-amber-300">Total Passive</p>
                                   </div>
-                                  <div className="bg-green-50 rounded-lg p-3 text-center border-2 border-green-200">
-                                    <p className="text-2xl font-bold text-green-600">
+                                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center">
+                                    <p className="text-base font-black text-slate-800">
                                       {passiveData.rounds.reduce((sum: number, r: any) => sum + (r.total_bonus || 0), 0)}
                                     </p>
-                                    <p className="text-xs text-gray-600">Team Bonuses</p>
+                                    <p className="text-[9px] uppercase font-bold text-slate-450">Team Bonuses</p>
                                   </div>
-                                  <div className="bg-yellow-50 rounded-lg p-3 text-center border-2 border-yellow-200">
-                                    <p className="text-2xl font-bold text-yellow-600">
+                                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center">
+                                    <p className="text-base font-black text-slate-800">
                                       {passiveData.admin_bonuses?.reduce((sum: number, b: any) => sum + (b.points || 0), 0) || 0}
                                     </p>
-                                    <p className="text-xs text-gray-600">Admin Bonuses</p>
+                                    <p className="text-[9px] uppercase font-bold text-slate-450">Admin Bonuses</p>
                                   </div>
-                                  <div className="bg-blue-50 rounded-lg p-3 text-center">
-                                    <p className="text-2xl font-bold text-blue-600">{passiveData.stats.total_rounds}</p>
-                                    <p className="text-xs text-gray-600">Rounds</p>
+                                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center">
+                                    <p className="text-base font-black text-slate-800">{passiveData.stats.total_rounds}</p>
+                                    <p className="text-[9px] uppercase font-bold text-slate-450">Rounds</p>
                                   </div>
-                                  <div className="bg-purple-50 rounded-lg p-3 text-center">
-                                    <p className="text-2xl font-bold text-purple-600">{passiveData.stats.average_per_round}</p>
-                                    <p className="text-xs text-gray-600">Avg/Round</p>
+                                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center">
+                                    <p className="text-base font-black text-slate-800">{passiveData.stats.average_per_round}</p>
+                                    <p className="text-[9px] uppercase font-bold text-slate-450">Avg/Round</p>
                                   </div>
                                 </div>
 
                                 {/* Admin Bonus Points */}
                                 {passiveData.admin_bonuses && passiveData.admin_bonuses.length > 0 && (
-                                  <div className="mb-4">
-                                    <h4 className="font-bold text-gray-900 mb-3"><Gift className="w-4 h-4 text-rose-500" /> Admin Bonus Points</h4>
-                                    <div className="space-y-2">
+                                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                                    <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1">
+                                      <Gift className="w-3.5 h-3.5 text-rose-500" /> Admin Bonus Points
+                                    </h4>
+                                    <div className="grid gap-2">
                                       {passiveData.admin_bonuses.map((bonus: any) => (
-                                        <div key={bonus.id} className="border-2 border-yellow-300 rounded-lg p-3 bg-gradient-to-r from-yellow-50 to-amber-50">
-                                          <div className="flex items-center justify-between">
-                                            <div>
-                                              <p className="font-semibold text-gray-900">{bonus.reason}</p>
-                                              <p className="text-xs text-gray-500">
-                                                Awarded: {new Date(bonus.awarded_at).toLocaleDateString()}
-                                              </p>
-                                            </div>
-                                            <div className="text-right">
-                                              <p className="text-2xl font-bold text-yellow-600">{bonus.points > 0 ? '+' : ''}{bonus.points}</p>
-                                              <p className="text-xs text-gray-500">bonus pts</p>
-                                            </div>
+                                        <div key={bonus.id} className="border border-slate-200/80 rounded-xl p-3 bg-slate-50 flex items-center justify-between">
+                                          <div>
+                                            <p className="font-bold text-xs uppercase text-slate-800">{bonus.reason}</p>
+                                            <p className="text-[9px] text-slate-400 font-bold mt-0.5">
+                                              Awarded: {new Date(bonus.awarded_at).toLocaleDateString()}
+                                            </p>
+                                          </div>
+                                          <div className="text-right">
+                                            <p className="text-base font-black text-amber-600">{bonus.points > 0 ? '+' : ''}{bonus.points}</p>
+                                            <p className="text-[9px] text-slate-405 font-bold uppercase">bonus pts</p>
                                           </div>
                                         </div>
                                       ))}
@@ -482,52 +487,54 @@ export default function FantasyTeamsPage() {
                                 )}
 
                                 {/* Round-by-Round Breakdown */}
-                                <h4 className="font-bold text-gray-900 mb-3">Round-by-Round Bonuses</h4>
-                                {passiveData.rounds.length === 0 ? (
-                                  <p className="text-center text-gray-500 py-4">No passive points earned yet</p>
-                                ) : (
-                                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                                    {passiveData.rounds.map((round: any, idx: number) => {
-                                      const breakdown = round.bonus_breakdown || {};
-                                      const bonusTypes = Object.keys(breakdown);
-                                      
-                                      return (
-                                        <div key={idx} className="border border-gray-200 rounded-lg p-3 bg-gradient-to-r from-green-50 to-blue-50">
-                                          <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-3">
-                                              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
-                                                <span className="font-bold text-white text-sm">R{round.round_number}</span>
-                                              </div>
-                                              <div>
-                                                <p className="font-semibold text-gray-900">Round {round.round_number}</p>
-                                                <p className="text-xs text-gray-600">{round.real_team_name}</p>
-                                              </div>
-                                            </div>
-                                            <div className="text-right">
-                                              <p className="text-2xl font-bold text-green-600">+{round.total_bonus}</p>
-                                              <p className="text-xs text-gray-500">bonus pts</p>
-                                            </div>
-                                          </div>
-
-                                          {/* Bonus Breakdown */}
-                                          {bonusTypes.length > 0 && (
-                                            <div className="grid grid-cols-2 gap-2 text-sm mt-2 pt-2 border-t border-green-200">
-                                              {bonusTypes.map((type) => (
-                                                <div key={type} className="flex items-center justify-between px-2 py-1 bg-white rounded">
-                                                  <span className="text-gray-700 capitalize">{type.replace(/_/g, ' ')}</span>
-                                                  <span className="font-bold text-green-600">+{breakdown[type]}</span>
+                                <div className="space-y-2 pt-2 border-t border-slate-100">
+                                  <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-wider">Round-by-Round Bonuses</h4>
+                                  {passiveData.rounds.length === 0 ? (
+                                    <p className="text-center text-slate-400 py-4 text-[10px] font-bold uppercase">No passive points earned yet</p>
+                                  ) : (
+                                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                                      {passiveData.rounds.map((round: any, idx: number) => {
+                                        const breakdown = round.bonus_breakdown || {};
+                                        const bonusTypes = Object.keys(breakdown);
+                                        
+                                        return (
+                                          <div key={idx} className="border border-slate-150 rounded-xl p-3 bg-slate-50/50 flex flex-col gap-2">
+                                            <div className="flex items-center justify-between">
+                                              <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 bg-slate-800 text-amber-400 rounded-lg flex items-center justify-center font-bold text-xs font-mono">
+                                                  R{round.round_number}
                                                 </div>
-                                              ))}
+                                                <div>
+                                                  <p className="font-bold text-xs uppercase text-slate-805">Round {round.round_number}</p>
+                                                  <p className="text-[9px] text-slate-400 font-bold uppercase">{round.real_team_name}</p>
+                                                </div>
+                                              </div>
+                                              <div className="text-right">
+                                                <p className="text-sm font-black text-emerald-650">+{round.total_bonus}</p>
+                                                <p className="text-[9px] text-slate-400 font-bold uppercase">bonus pts</p>
+                                              </div>
                                             </div>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
+
+                                            {/* Bonus Breakdown */}
+                                            {bonusTypes.length > 0 && (
+                                              <div className="grid grid-cols-2 gap-2 text-[10px] font-bold uppercase pt-2 border-t border-slate-150">
+                                                {bonusTypes.map((type) => (
+                                                  <div key={type} className="flex items-center justify-between px-2.5 py-1 bg-white border border-slate-100 rounded-lg text-slate-650">
+                                                    <span>{type.replace(/_/g, ' ')}</span>
+                                                    <span className="text-emerald-650 font-black">+{breakdown[type]}</span>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
                               </>
                             ) : passiveData?.error ? (
-                              <p className="text-center text-red-600 py-4">Failed to load passive points breakdown</p>
+                              <p className="text-center text-rose-600 py-4 text-xs font-bold uppercase">Failed to load passive points breakdown</p>
                             ) : null}
                           </div>
                         )}
@@ -537,52 +544,52 @@ export default function FantasyTeamsPage() {
 
                   {isLoadingPlayers ? (
                     <div className="text-center py-12">
-                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
-                      <p className="mt-3 text-gray-600">Loading players...</p>
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500 mx-auto"></div>
+                      <p className="mt-3 text-xs text-slate-450 uppercase font-bold tracking-wider">Loading players...</p>
                     </div>
                   ) : teamPlayers.length === 0 ? (
-                    <div className="text-center py-12">
-                      <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="text-center py-12 text-slate-400">
+                      <svg className="w-10 h-10 text-slate-350 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                       </svg>
-                      <p className="text-gray-500 font-medium mb-2">No players drafted yet</p>
-                      <p className="text-sm text-gray-400">This team hasn't participated in the draft</p>
+                      <p className="text-xs font-bold uppercase mb-1">No players drafted yet</p>
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase">This team hasn't participated in the draft</p>
                     </div>
                   ) : (
-                    <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                    <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
                       {teamPlayers.map((player, index) => (
-                        <div key={player.draft_id} className="border border-gray-200 rounded-xl overflow-hidden">
+                        <div key={player.draft_id} className="border border-slate-200/80 rounded-xl overflow-hidden bg-slate-50/50">
                           <button
                             onClick={() => togglePlayerBreakdown(player.real_player_id)}
-                            className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-indigo-50 hover:to-blue-50 transition-all group"
+                            className="w-full flex items-center justify-between p-4 hover:bg-slate-100/50 transition-all cursor-pointer group"
                           >
                             <div className="flex items-center gap-4 flex-1">
-                              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                              <div className="w-8 h-8 bg-slate-800 text-amber-400 border border-slate-700 rounded-lg flex items-center justify-center font-bold font-mono text-xs shadow-sm">
                                 {index + 1}
                               </div>
-                              <div className="flex-1 text-left">
+                              <div className="flex-1 text-left font-mono">
                                 <div className="flex items-center gap-2">
-                                  <p className="font-semibold text-gray-900">{player.player_name}</p>
+                                  <p className="font-bold text-xs uppercase text-slate-800">{player.player_name}</p>
                                   {player.is_captain && (
-                                    <Crown className="w-4 h-4 text-yellow-600" title="Captain (2x points)" />
+                                    <Crown className="w-3.5 h-3.5 text-amber-500 fill-amber-500" title="Captain (2x points)" />
                                   )}
                                   {player.is_vice_captain && (
-                                    <Star className="w-4 h-4 text-blue-600" title="Vice-Captain (1.5x points)" />
+                                    <Star className="w-3.5 h-3.5 text-amber-405 fill-amber-405" title="Vice-Captain (1.5x points)" />
                                   )}
                                 </div>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-[9px] text-slate-400 font-bold uppercase">
                                   {player.real_team_name || 'Real Player'}
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4 font-mono">
                               <div className="text-right">
-                                <p className="text-xl font-bold text-indigo-600">{player.total_points}</p>
-                                <p className="text-xs text-gray-500 group-hover:text-indigo-600 transition">
-                                  {player.purchase_price ? `€${player.purchase_price}M` : 'Click for details'}
+                                <p className="text-sm font-black text-amber-600">{player.total_points}</p>
+                                <p className="text-[9px] font-bold text-slate-450 uppercase group-hover:text-amber-505 transition">
+                                  {player.purchase_price ? `₹${player.purchase_price} credits` : 'Click for details'}
                                 </p>
                               </div>
-                              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${
+                              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${
                                 expandedPlayer === player.real_player_id ? 'rotate-180' : ''
                               }`} />
                             </div>
@@ -590,219 +597,229 @@ export default function FantasyTeamsPage() {
 
                           {/* Expanded Player Breakdown */}
                           {expandedPlayer === player.real_player_id && (
-                            <div className="border-t border-gray-200 bg-white p-6">
+                            <div className="border-t border-slate-150 bg-white p-5 space-y-4">
                               {isLoadingPlayer ? (
-                                <div className="flex items-center justify-center py-8">
-                                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                                <div className="flex items-center justify-center py-6">
+                                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500"></div>
                                 </div>
                               ) : playerData && playerData.stats ? (
                                 <>
                                   {/* Stats Grid */}
-                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                                    <div className="bg-purple-50 rounded-lg p-3 text-center">
-                                      <TrendingUp className="w-5 h-5 text-purple-600 mx-auto mb-1" />
-                                      <p className="text-2xl font-bold text-purple-600">{playerData.stats?.total_points || 0}</p>
-                                      <p className="text-xs text-gray-600">Total Points</p>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 font-mono">
+                                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
+                                      <TrendingUp className="w-4 h-4 text-slate-500 mx-auto mb-1" />
+                                      <p className="text-lg font-black text-amber-600">{playerData.stats?.total_points || 0}</p>
+                                      <p className="text-[9px] uppercase font-bold text-slate-450">Total Points</p>
                                     </div>
-                                    <div className="bg-green-50 rounded-lg p-3 text-center">
-                                      <Target className="w-5 h-5 text-green-600 mx-auto mb-1" />
-                                      <p className="text-2xl font-bold text-green-600">{playerData.stats?.total_goals || 0}</p>
-                                      <p className="text-xs text-gray-600">Goals</p>
+                                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
+                                      <Target className="w-4 h-4 text-slate-500 mx-auto mb-1" />
+                                      <p className="text-lg font-black text-slate-800">{playerData.stats?.total_goals || 0}</p>
+                                      <p className="text-[9px] uppercase font-bold text-slate-450">Goals</p>
                                     </div>
-                                    <div className="bg-blue-50 rounded-lg p-3 text-center">
-                                      <ShieldIcon className="w-5 h-5 text-blue-600 mx-auto mb-1" />
-                                      <p className="text-2xl font-bold text-blue-600">{playerData.stats?.total_clean_sheets || 0}</p>
-                                      <p className="text-xs text-gray-600">Clean Sheets</p>
+                                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
+                                      <ShieldIcon className="w-4 h-4 text-slate-500 mx-auto mb-1" />
+                                      <p className="text-lg font-black text-slate-800">{playerData.stats?.total_clean_sheets || 0}</p>
+                                      <p className="text-[9px] uppercase font-bold text-slate-450">Clean Sheets</p>
                                     </div>
-                                    <div className="bg-amber-50 rounded-lg p-3 text-center">
-                                      <Award className="w-5 h-5 text-amber-600 mx-auto mb-1" />
-                                      <p className="text-2xl font-bold text-amber-600">{playerData.stats?.total_motm || 0}</p>
-                                      <p className="text-xs text-gray-600">MOTM</p>
+                                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
+                                      <Award className="w-4 h-4 text-slate-500 mx-auto mb-1" />
+                                      <p className="text-lg font-black text-slate-800">{playerData.stats?.total_motm || 0}</p>
+                                      <p className="text-[9px] uppercase font-bold text-slate-450">MOTM</p>
                                     </div>
                                   </div>
 
                                   {/* Additional Stats */}
-                                  <div className="bg-gray-50 rounded-lg p-3 mb-6 grid grid-cols-5 gap-3 text-center text-sm">
+                                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 grid grid-cols-5 gap-3 text-center text-[10px] font-mono font-bold uppercase">
                                     <div>
-                                      <p className="text-gray-600">Purchase Price</p>
-                                      <p className="font-bold text-orange-600">€{player.purchase_price || 0}M</p>
+                                      <p className="text-slate-400 mb-0.5">Price</p>
+                                      <p className="font-bold text-slate-800">₹{player.purchase_price || 0} credits</p>
                                     </div>
                                     <div>
-                                      <p className="text-gray-600">Matches</p>
-                                      <p className="font-bold text-gray-900">{playerData.stats?.total_matches || 0}</p>
+                                      <p className="text-slate-400 mb-0.5">Matches</p>
+                                      <p className="font-bold text-slate-800">{playerData.stats?.total_matches || 0}</p>
                                     </div>
                                     <div>
-                                      <p className="text-gray-600">Avg Points</p>
-                                      <p className="font-bold text-indigo-600">{playerData.stats?.average_points || 0}</p>
+                                      <p className="text-slate-400 mb-0.5">Avg Points</p>
+                                      <p className="font-bold text-amber-600">{playerData.stats?.average_points || 0}</p>
                                     </div>
                                     <div>
-                                      <p className="text-gray-600">Best Game</p>
-                                      <p className="font-bold text-green-600">{playerData.stats.best_performance}</p>
+                                      <p className="text-slate-400 mb-0.5">Best Game</p>
+                                      <p className="font-bold text-slate-800">{playerData.stats.best_performance}</p>
                                     </div>
                                     <div>
-                                      <p className="text-gray-600">Bonus</p>
-                                      <p className="font-bold text-purple-600">{playerData.stats.total_bonus_points}</p>
+                                      <p className="text-slate-400 mb-0.5">Bonus</p>
+                                      <p className="font-bold text-slate-800">{playerData.stats.total_bonus_points}</p>
                                     </div>
                                   </div>
 
                                   {/* Match History */}
-                                  <h4 className="font-bold text-gray-900 mb-3">Match-by-Match Performance</h4>
-                                  {playerData.matches.length === 0 ? (
-                                    <p className="text-center text-gray-500 py-4">No match data yet</p>
-                                  ) : (
-                                    <div className="space-y-3 max-h-96 overflow-y-auto">
-                                      {playerData.matches.map((match: any, idx: number) => {
-                                        // Calculate individual point components using database rules
-                                        if (!scoringRules) return null; // Wait for rules to load
-                                        
-                                        // Calculate result from actual goals (don't trust match.result field)
-                                        const playerGoals = match.goals_scored || 0;
-                                        const opponentGoals = match.goals_conceded || 0;
-                                        const won = playerGoals > opponentGoals;
-                                        const draw = playerGoals === opponentGoals;
-                                        const actualResult = won ? 'win' : draw ? 'draw' : 'loss';
-                                        
-                                        const goalPoints = playerGoals * (scoringRules.goals_scored || 0);
-                                        const cleanSheetPoints = match.clean_sheet ? (scoringRules.clean_sheet || 0) : 0;
-                                        const motmPoints = match.motm ? (scoringRules.motm || 0) : 0;
-                                        const resultPoints = won ? (scoringRules.win || 0) : draw ? (scoringRules.draw || 0) : 0;
-                                        const appearancePoints = scoringRules.match_played || 0;
-                                        const hatTrickPoints = (playerGoals >= 3 && scoringRules.hat_trick) ? scoringRules.hat_trick : 0;
-                                        const concedePoints = (opponentGoals >= 4 && scoringRules.concedes_4_plus_goals) ? scoringRules.concedes_4_plus_goals : 0;
-                                        
-                                        const basePoints = goalPoints + cleanSheetPoints + motmPoints + resultPoints + appearancePoints + hatTrickPoints + concedePoints;
-                                        const multiplier = match.is_captain ? 2 : match.is_vice_captain ? 1.5 : 1;
-                                        const totalPoints = Math.round(basePoints * multiplier);
+                                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                                    <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-wider">Match-by-Match Performance</h4>
+                                    {playerData.matches.length === 0 ? (
+                                      <p className="text-center text-slate-400 py-4 text-[10px] font-bold uppercase">No match data yet</p>
+                                    ) : (
+                                      <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                                        {playerData.matches.map((match: any, idx: number) => {
+                                          if (!scoringRules) return null;
+                                          
+                                          const playerGoals = match.goals_scored || 0;
+                                          const opponentGoals = match.goals_conceded || 0;
+                                          const won = playerGoals > opponentGoals;
+                                          const draw = playerGoals === opponentGoals;
+                                          const actualResult = won ? 'win' : draw ? 'draw' : 'loss';
+                                          
+                                          const goalPoints = playerGoals * (scoringRules.goals_scored || 0);
+                                          const cleanSheetPoints = match.clean_sheet ? (scoringRules.clean_sheet || 0) : 0;
+                                          const motmPoints = match.motm ? (scoringRules.motm || 0) : 0;
+                                          const resultPoints = won ? (scoringRules.win || 0) : draw ? (scoringRules.draw || 0) : 0;
+                                          const appearancePoints = scoringRules.match_played || 0;
+                                          const hatTrickPoints = (playerGoals >= 3 && scoringRules.hat_trick) ? scoringRules.hat_trick : 0;
+                                          const concedePoints = (opponentGoals >= 4 && scoringRules.concedes_4_plus_goals) ? scoringRules.concedes_4_plus_goals : 0;
+                                          
+                                          const basePoints = goalPoints + cleanSheetPoints + motmPoints + resultPoints + appearancePoints + hatTrickPoints + concedePoints;
+                                          const multiplier = match.is_captain ? 2 : match.is_vice_captain ? 1.5 : 1;
+                                          const totalPoints = Math.round(basePoints * multiplier);
 
-                                        return (
-                                          <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden">
-                                            {/* Match Header */}
-                                            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-indigo-50 to-blue-50">
-                                              <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
-                                                  <span className="font-bold text-white">R{match.round_number}</span>
-                                                </div>
-                                                <div>
-                                                  <p className="font-semibold text-gray-900">
-                                                    {match.opponent_name || 'vs Opponent'}
-                                                  </p>
-                                                  <p className="text-xs text-gray-600">
-                                                    {actualResult === 'win' ? '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Win' : actualResult === 'draw' ? '<Handshake className="w-4 h-4 text-emerald-500" /> Draw' : '<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Loss'}
-                                                    {` • ${playerGoals}-${opponentGoals}`}
-                                                  </p>
-                                                </div>
-                                              </div>
-                                              <div className="text-right">
-                                                <p className="text-2xl font-bold text-indigo-600">{totalPoints}</p>
-                                                <p className="text-xs text-gray-500">pts</p>
-                                              </div>
-                                            </div>
-
-                                            {/* Points Breakdown */}
-                                            <div className="p-3 bg-white space-y-2">
-                                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                                {/* Base Points */}
-                                                {goalPoints !== 0 && (
-                                                  <div className="flex items-center justify-between px-2 py-1 bg-green-50 rounded">
-                                                    <span className="text-gray-700 flex items-center gap-1">
-                                                      <Target className="w-3 h-3 text-green-600" />
-                                                      Goals ({match.goals_scored})
-                                                    </span>
-                                                    <span className="font-semibold text-green-700">{goalPoints}pts</span>
+                                          return (
+                                            <div key={idx} className="border border-slate-150 rounded-xl overflow-hidden font-mono">
+                                              {/* Match Header */}
+                                              <div className="flex items-center justify-between p-3 bg-slate-50">
+                                                <div className="flex items-center gap-3">
+                                                  <div className="w-8 h-8 bg-slate-800 text-amber-450 border border-slate-700 rounded-lg flex items-center justify-center font-bold text-xs">
+                                                    R{match.round_number}
                                                   </div>
-                                                )}
-                                                {hatTrickPoints !== 0 && (
-                                                  <div className="flex items-center justify-between px-2 py-1 bg-orange-50 rounded">
-                                                    <span className="text-gray-700 flex items-center gap-1">
-                                                      <TrendingUp className="w-3 h-3 text-orange-600" />
-                                                      Hat-trick Bonus
-                                                    </span>
-                                                    <span className="font-semibold text-orange-700">{hatTrickPoints}pts</span>
-                                                  </div>
-                                                )}
-                                                {cleanSheetPoints !== 0 && (
-                                                  <div className="flex items-center justify-between px-2 py-1 bg-blue-50 rounded">
-                                                    <span className="text-gray-700 flex items-center gap-1">
-                                                      <ShieldIcon className="w-3 h-3 text-blue-600" />
-                                                      Clean Sheet
-                                                    </span>
-                                                    <span className="font-semibold text-blue-700">{cleanSheetPoints}pts</span>
-                                                  </div>
-                                                )}
-                                                {concedePoints !== 0 && (
-                                                  <div className="flex items-center justify-between px-2 py-1 bg-red-50 rounded">
-                                                    <span className="text-gray-700 flex items-center gap-1">
-                                                      <span className="text-red-600"><AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></span>
-                                                      Conceded 4+ Goals
-                                                    </span>
-                                                    <span className="font-semibold text-red-700">{concedePoints}pts</span>
-                                                  </div>
-                                                )}
-                                                {motmPoints !== 0 && (
-                                                  <div className="flex items-center justify-between px-2 py-1 bg-amber-50 rounded">
-                                                    <span className="text-gray-700 flex items-center gap-1">
-                                                      <Award className="w-3 h-3 text-amber-600" />
-                                                      MOTM
-                                                    </span>
-                                                    <span className="font-semibold text-amber-700">{motmPoints}pts</span>
-                                                  </div>
-                                                )}
-                                                {resultPoints !== 0 && (
-                                                  <div className="flex items-center justify-between px-2 py-1 bg-purple-50 rounded">
-                                                    <span className="text-gray-700">
-                                                      {actualResult === 'win' ? '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Win' : '<Handshake className="w-4 h-4 text-emerald-500" /> Draw'}
-                                                    </span>
-                                                    <span className="font-semibold text-purple-700">{resultPoints}pts</span>
-                                                  </div>
-                                                )}
-                                                {appearancePoints !== 0 && (
-                                                  <div className="flex items-center justify-between px-2 py-1 bg-gray-50 rounded">
-                                                    <span className="text-gray-700"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Appearance</span>
-                                                    <span className="font-semibold text-gray-700">{appearancePoints}pt</span>
-                                                  </div>
-                                                )}
-                                              </div>
-
-                                              {/* Multiplier & Total */}
-                                              <div className="pt-2 border-t border-gray-200">
-                                                <div className="flex items-center justify-between text-sm">
-                                                  <span className="text-gray-600">Base Points</span>
-                                                  <span className="font-semibold text-gray-900">{basePoints}pts</span>
-                                                </div>
-                                                {multiplier !== 1 && (
-                                                  <>
-                                                    <div className="flex items-center justify-between text-sm mt-1">
-                                                      <span className="text-gray-600 flex items-center gap-1">
-                                                        {match.points_multiplier === 200 || multiplier === 2 ? (
-                                                          <>
-                                                            <Crown className="w-3 h-3 text-yellow-600" />
-                                                            Captain Multiplier
-                                                          </>
+                                                  <div>
+                                                    <p className="font-bold text-xs uppercase text-slate-805">
+                                                      {match.opponent_name || 'vs Opponent'}
+                                                    </p>
+                                                    <p className="text-[9px] text-slate-400 font-bold uppercase flex items-center gap-1.5 mt-0.5">
+                                                      <span className="flex items-center gap-0.5">
+                                                        {actualResult === 'win' ? (
+                                                          <span className="text-emerald-600 font-black">WIN</span>
+                                                        ) : actualResult === 'draw' ? (
+                                                          <span className="text-slate-550 font-black">DRAW</span>
                                                         ) : (
-                                                          <>
-                                                            <Star className="w-3 h-3 text-blue-600" />
-                                                            Vice-Captain Multiplier
-                                                          </>
+                                                          <span className="text-rose-600 font-black">LOSS</span>
                                                         )}
                                                       </span>
-                                                      <span className="font-semibold text-indigo-600">×{multiplier}</span>
+                                                      <span>•</span>
+                                                      <span>{playerGoals}-{opponentGoals}</span>
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                                <div className="text-right">
+                                                  <p className="text-sm font-black text-amber-600">{totalPoints}</p>
+                                                  <p className="text-[9px] text-slate-405 font-bold uppercase">pts</p>
+                                                </div>
+                                              </div>
+
+                                              {/* Points Breakdown */}
+                                              <div className="p-3 bg-white space-y-2 text-[10px] font-bold uppercase">
+                                                <div className="grid grid-cols-2 gap-2">
+                                                  {goalPoints !== 0 && (
+                                                    <div className="flex items-center justify-between px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg text-slate-650">
+                                                      <span className="flex items-center gap-1">
+                                                        <Target className="w-3 h-3 text-slate-500" />
+                                                        Goals ({match.goals_scored})
+                                                      </span>
+                                                      <span className="text-slate-800 font-black">{goalPoints}pts</span>
                                                     </div>
-                                                    <div className="flex items-center justify-between text-base font-bold mt-2 pt-2 border-t border-gray-200">
-                                                      <span className="text-gray-900">Final Points</span>
-                                                      <span className="text-indigo-600">{totalPoints}pts</span>
+                                                  )}
+                                                  {hatTrickPoints !== 0 && (
+                                                    <div className="flex items-center justify-between px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg text-slate-650">
+                                                      <span className="flex items-center gap-1">
+                                                        <TrendingUp className="w-3 h-3 text-slate-500" />
+                                                        Hat-trick Bonus
+                                                      </span>
+                                                      <span className="text-slate-805 font-black">{hatTrickPoints}pts</span>
                                                     </div>
-                                                  </>
-                                                )}
+                                                  )}
+                                                  {cleanSheetPoints !== 0 && (
+                                                    <div className="flex items-center justify-between px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg text-slate-650">
+                                                      <span className="flex items-center gap-1">
+                                                        <ShieldIcon className="w-3 h-3 text-slate-500" />
+                                                        Clean Sheet
+                                                      </span>
+                                                      <span className="text-slate-805 font-black">{cleanSheetPoints}pts</span>
+                                                    </div>
+                                                  )}
+                                                  {concedePoints !== 0 && (
+                                                    <div className="flex items-center justify-between px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg text-slate-650">
+                                                      <span className="flex items-center gap-1">
+                                                        <AlertTriangle className="w-3 h-3 text-slate-500" />
+                                                        Conceded 4+ Goals
+                                                      </span>
+                                                      <span className="text-rose-600 font-black">{concedePoints}pts</span>
+                                                    </div>
+                                                  )}
+                                                  {motmPoints !== 0 && (
+                                                    <div className="flex items-center justify-between px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg text-slate-650">
+                                                      <span className="flex items-center gap-1">
+                                                        <Award className="w-3 h-3 text-slate-500" />
+                                                        MOTM
+                                                      </span>
+                                                      <span className="text-slate-805 font-black">{motmPoints}pts</span>
+                                                    </div>
+                                                  )}
+                                                  {resultPoints !== 0 && (
+                                                    <div className="flex items-center justify-between px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg text-slate-650">
+                                                      <span>
+                                                        {actualResult === 'win' ? 'WIN BONUS' : 'DRAW BONUS'}
+                                                      </span>
+                                                      <span className="text-slate-805 font-black">{resultPoints}pts</span>
+                                                    </div>
+                                                  )}
+                                                  {appearancePoints !== 0 && (
+                                                    <div className="flex items-center justify-between px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg text-slate-650">
+                                                      <span className="flex items-center gap-1">
+                                                        <Activity className="w-3 h-3 text-slate-500" /> Appearance
+                                                      </span>
+                                                      <span className="text-slate-800 font-black">{appearancePoints}pt</span>
+                                                    </div>
+                                                  )}
+                                                </div>
+
+                                                {/* Multiplier & Total */}
+                                                <div className="pt-2 border-t border-slate-150">
+                                                  <div className="flex items-center justify-between text-slate-500 text-[9px] font-bold uppercase">
+                                                    <span>Base Points</span>
+                                                    <span className="text-slate-800 font-black">{basePoints}pts</span>
+                                                  </div>
+                                                  {multiplier !== 1 && (
+                                                    <>
+                                                      <div className="flex items-center justify-between text-slate-500 text-[9px] font-bold uppercase mt-1">
+                                                        <span className="flex items-center gap-1">
+                                                          {match.points_multiplier === 200 || multiplier === 2 ? (
+                                                            <>
+                                                              <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />
+                                                              Captain Multiplier
+                                                            </>
+                                                          ) : (
+                                                            <>
+                                                              <Star className="w-3 h-3 text-amber-405 fill-amber-405" />
+                                                              Vice-Captain Multiplier
+                                                            </>
+                                                          )}
+                                                        </span>
+                                                        <span className="text-amber-600 font-black">×{multiplier}</span>
+                                                      </div>
+                                                      <div className="flex items-center justify-between text-xs font-black mt-2 pt-2 border-t border-slate-150">
+                                                        <span className="text-slate-900">Final Points</span>
+                                                        <span className="text-amber-600">{totalPoints}pts</span>
+                                                      </div>
+                                                    </>
+                                                  )}
+                                                </div>
                                               </div>
                                             </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
                                 </>
                               ) : (
-                                <p className="text-center text-red-600 py-4">Failed to load player data</p>
+                                <p className="text-center text-rose-600 py-4 text-[10px] font-bold uppercase">Failed to load player details</p>
                               )}
                             </div>
                           )}
@@ -812,11 +829,11 @@ export default function FantasyTeamsPage() {
                   )}
                 </>
               ) : (
-                <div className="text-center py-12">
-                  <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="text-center py-12 text-slate-400">
+                  <svg className="w-10 h-10 text-slate-350 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
-                  <p className="text-gray-500">Select a team to view roster</p>
+                  <p className="text-xs font-bold uppercase">Select a team to view roster</p>
                 </div>
               )}
             </div>

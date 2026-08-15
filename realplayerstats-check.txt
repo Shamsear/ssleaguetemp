@@ -1,8 +1,10 @@
 
 🔍 Checking realplayerstats for team: SSPSLT0013
 
-Found 1 seasons for team SSPSLT0013:
-  - SSPSLS12 (team: Psychoz)
+Found 3 seasons for team SSPSLT0013:
+  - SSPSLS15 (team: PSYCHOZ)
+  - SSPSLS13 (team: PSYCHOZ)
+  - SSPSLS12 (team: PSYCHOZ)
 
 🔍 Checking S15 specifically:
 
@@ -10,26 +12,26 @@ Found 0 players in S15:
 
 📊 Total stats:
 
-Total records in realplayerstats: 538
+Total records in realplayerstats: 1011
 
-Distinct teams (53):
-  - SSPSLT0001: Classic Tens
-  - SSPSLT0002: Manchester United
-  - SSPSLT0003: Red Panthers
-  - SSPSLT0004: Red Hawks
-  - SSPSLT0004: Red Hawks FC
-  - SSPSLT0005: Tm Asgardians
-  - SSPSLT0007: Barcelona
-  - SSPSLT0007: FC Barcelona
-  - SSPSLT0008: La Masia FC
-  - SSPSLT0008: La Masia
-  - SSPSLT0009: Qatar Gladiators
-  - SSPSLT0010: Varsity Soccers
-  - SSPSLT0011: Spartans United
-  - SSPSLT0012: Red Stallions FC
-  - SSPSLT0012: Red Stallions
-  - SSPSLT0013: Psychoz
-  - SSPSLT0014: Black Panthers
-  - SSPSLT0015: Legends
-  - SSPSLT0015: Legends FC
-  - SSPSLT0016: Blue Strikers
+Distinct teams (62):
+  - SSPSLT0001: CLASSIC TENS
+  - SSPSLT0002: MANCHESTER UNITED
+  - SSPSLT0003: RED PANTHERS
+  - SSPSLT0004: RED HAWKS FC
+  - SSPSLT0005: TM ASGARDIANS
+  - SSPSLT0006: FC BARCELONA
+  - SSPSLT0006: AZZURI
+  - SSPSLT0006: AZZURRI
+  - SSPSLT0007: FC BARCELONA(A)
+  - SSPSLT0007: FC BARCELONA
+  - SSPSLT0008: LA MASIA FC
+  - SSPSLT0008: LA MASIA
+  - SSPSLT0009: QATAR GLADIATORS
+  - SSPSLT0010: VARSITY SOCCERS
+  - SSPSLT0011: SPARTANS UNITED
+  - SSPSLT0012: RED STALLIONS
+  - SSPSLT0012: RED STALLIONS FC
+  - SSPSLT0013: PSYCHOZ
+  - SSPSLT0014: BLACK PANTHERS
+  - SSPSLT0015: LEGENDS

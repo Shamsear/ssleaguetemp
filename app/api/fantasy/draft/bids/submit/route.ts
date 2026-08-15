@@ -99,34 +99,62 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Validate budget constraint:
-    // Max potential spend is the sum of the highest bid placed in each slot
-    const slotMaxBids: Record<number, number> = {};
-    bids.forEach(bid => {
-      const slotIdx = bid.slot_index;
-      const amt = Number(bid.bid_amount);
-      if (!slotMaxBids[slotIdx] || amt > slotMaxBids[slotIdx]) {
-        slotMaxBids[slotIdx] = amt;
-      }
-    });
+    const activeSlot = categorySettings?.active_slot_index ? Number(categorySettings.active_slot_index) : null;
+    const maxBidsLimit = Number(categorySettings?.max_bids_per_team) || 0;
 
-    const maxSpend = Object.values(slotMaxBids).reduce((sum, amt) => sum + amt, 0);
+    // Validate max bids per team limit if configured
+    if (maxBidsLimit > 0) {
+      const activeSlotBids = bids.filter(b => activeSlot ? b.slot_index === activeSlot : true);
+      if (activeSlotBids.length > maxBidsLimit) {
+        return NextResponse.json(
+          { error: `You cannot place more than ${maxBidsLimit} bids for this draft round.` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 4. Validate budget constraint:
+    let maxSpend = 0;
+    if (activeSlot) {
+      // Incremental mode: max spend is the highest bid in the active slot
+      const activeSlotBids = bids.filter(b => b.slot_index === activeSlot);
+      maxSpend = activeSlotBids.length > 0 ? Math.max(...activeSlotBids.map(b => Number(b.bid_amount))) : 0;
+    } else {
+      // Legacy batch mode
+      const slotMaxBids: Record<number, number> = {};
+      bids.forEach(bid => {
+        const slotIdx = bid.slot_index;
+        const amt = Number(bid.bid_amount);
+        if (!slotMaxBids[slotIdx] || amt > slotMaxBids[slotIdx]) {
+          slotMaxBids[slotIdx] = amt;
+        }
+      });
+      maxSpend = Object.values(slotMaxBids).reduce((sum, amt) => sum + amt, 0);
+    }
+
     const budgetLimit = Number(budget_remaining);
 
     if (maxSpend > budgetLimit) {
       return NextResponse.json(
-        { error: `Insufficient budget. The total of your highest bids per slot is ${maxSpend}, which exceeds your remaining budget of ${budgetLimit}.` },
+        { error: `Insufficient budget. Your highest bid for this round is ${maxSpend}, which exceeds your remaining budget of ${budgetLimit}.` },
         { status: 400 }
       );
     }
 
     // 5. Transaction to replace bids and update submit status
     await fantasySql.begin(async sql => {
-      // Delete old bids
-      await sql`
-        DELETE FROM fantasy_draft_bids
-        WHERE team_id = ${team_id} AND league_id = ${league_id}
-      `;
+      // Delete old bids for the active slot or all if batch
+      if (activeSlot) {
+        await sql`
+          DELETE FROM fantasy_draft_bids
+          WHERE team_id = ${team_id} AND league_id = ${league_id} AND slot_index = ${activeSlot}
+        `;
+      } else {
+        await sql`
+          DELETE FROM fantasy_draft_bids
+          WHERE team_id = ${team_id} AND league_id = ${league_id}
+        `;
+      }
 
       // Insert new bids
       if (bids.length > 0) {

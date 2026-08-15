@@ -49,7 +49,8 @@ export async function POST(request: NextRequest) {
           ps.player_name,
           ps.team_id,
           ps.team,
-          ps.star_rating
+          ps.star_rating,
+          ps.category
         FROM player_seasons ps
         WHERE ps.season_id = ${season_id}
       `;
@@ -60,7 +61,8 @@ export async function POST(request: NextRequest) {
           ps.player_name,
           ps.team_id,
           ps.team,
-          3 as star_rating
+          3 as star_rating,
+          ps.category
         FROM realplayerstats ps
         WHERE ps.season_id = ${season_id}
       `;
@@ -92,6 +94,7 @@ export async function POST(request: NextRequest) {
             real_team_name,
             position,
             star_rating,
+            category,
             draft_price,
             current_price,
             is_available
@@ -103,6 +106,7 @@ export async function POST(request: NextRequest) {
             ${playerData.team || ''},
             'Unknown',
             ${starRating},
+            ${playerData.category || 'WHITE'},
             ${draftPrice},
             ${draftPrice},
             true
@@ -114,6 +118,7 @@ export async function POST(request: NextRequest) {
             real_team_name = EXCLUDED.real_team_name,
             position = EXCLUDED.position,
             star_rating = EXCLUDED.star_rating,
+            category = EXCLUDED.category,
             draft_price = EXCLUDED.draft_price,
             updated_at = CURRENT_TIMESTAMP
         `;

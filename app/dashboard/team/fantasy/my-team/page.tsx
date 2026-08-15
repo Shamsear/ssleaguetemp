@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { Crown, Gift, Star, Trophy, User, Users } from 'lucide-react';
+import { Crown, Gift, Star, Trophy, User, Users, ArrowLeft, ArrowUp, ArrowDown, Info, ShieldAlert, Award, Plus, RefreshCw, Shield, Activity } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -204,10 +204,11 @@ export default function MyFantasyTeamPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Loading team details...</p>
         </div>
       </div>
     );
@@ -229,10 +230,9 @@ export default function MyFantasyTeamPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to register');
+        throw new Error(errorData.error || errorData.message || 'Failed to register');
       }
 
-      const data = await response.json();
       // Reload the page to show the newly created team
       window.location.reload();
     } catch (error) {
@@ -247,40 +247,39 @@ export default function MyFantasyTeamPage() {
 
   if (!fantasyTeam) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-gray-300 to-gray-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono px-4">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="max-w-md w-full bg-white border border-slate-200/60 p-8 rounded-3xl text-center shadow-sm relative z-10">
+          <div className="w-16 h-16 bg-slate-800 border border-slate-700 text-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow">
+            <Trophy className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+          <h2 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">
             {canRegister ? 'Join Fantasy League' : 'No Fantasy League Yet'}
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-xs text-slate-455 font-bold uppercase leading-normal mb-6">
             {canRegister
-              ? `Register for the fantasy league and start building your dream team!`
-              : 'The committee hasn\'t created a fantasy league for this season yet.'}
+              ? `Register your squad for the season and compete for the championship!`
+              : 'The league administrator has not opened the fantasy league for registrations yet.'}
           </p>
           {canRegister ? (
             <div className="space-y-3">
               <button
                 onClick={handleRegister}
                 disabled={isRegistering}
-                className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3.5 bg-slate-800 border border-slate-900 hover:bg-slate-700 text-amber-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer font-black"
               >
                 {isRegistering ? (
                   <span className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-400"></div>
                     Registering...
                   </span>
                 ) : (
-                  '🎮 Register for Fantasy League'
+                  'Register My Team'
                 )}
               </button>
               <Link
                 href="/dashboard/team"
-                className="inline-block w-full px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-colors"
+                className="inline-block w-full px-6 py-3.5 bg-slate-100 hover:bg-slate-250 border border-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
               >
                 Back to Dashboard
               </Link>
@@ -288,7 +287,7 @@ export default function MyFantasyTeamPage() {
           ) : (
             <Link
               href="/dashboard/team"
-              className="inline-block px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
+              className="inline-block px-6 py-3.5 bg-slate-850 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
             >
               Back to Dashboard
             </Link>
@@ -299,24 +298,122 @@ export default function MyFantasyTeamPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header */}
-        <div className="mb-8">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+      {/* Ambient Gold Glow */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto relative z-10 space-y-6 font-mono">
+        {/* Navigation */}
+        <div>
           <Link
             href="/dashboard/team"
-            className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-4"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
-            ← Back to Dashboard
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
           </Link>
+        </div>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {/* Header Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex items-center gap-4">
+            {fantasyTeam.supported_team_logo ? (
+              <img
+                src={fantasyTeam.supported_team_logo}
+                alt={`${fantasyTeam.team_name} logo`}
+                className="w-16 h-16 rounded-2xl object-cover border border-slate-250 shadow-sm"
+                style={{
+                  objectPosition: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
+                  transform: `scale(${(fantasyTeam as any).logo_scale_circle ?? 1})`,
+                  transformOrigin: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
+                }}
+              />
+            ) : (
+              <div className="w-16 h-16 bg-slate-800 border border-slate-700 text-amber-400 rounded-2xl flex items-center justify-center shadow-sm">
+                <Users className="w-8 h-8" />
+              </div>
+            )}
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">MY ROSTER</span>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5 uppercase">
+                {fantasyTeam.team_name}
+              </h1>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2.5 w-full md:w-auto">
+            <Link
+              href={`/dashboard/team/fantasy/draft`}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-450 border border-amber-600 text-slate-900 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" /> Draft & Roster
+            </Link>
+
+            <Link
+              href={`/dashboard/team/fantasy/transfers`}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-750 border border-slate-900 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Transfers
+            </Link>
+
+            <Link
+              href={`/dashboard/team/fantasy/all-teams`}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+            >
+              <Users className="w-3.5 h-3.5" /> All Teams
+            </Link>
+
+            <Link
+              href={`/dashboard/team/fantasy/leaderboard`}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+            >
+              <Trophy className="w-3.5 h-3.5" /> Leaderboard
+            </Link>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm text-center">
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">League Rank</span>
+            <h4 className="text-xl font-black text-slate-850 mt-1">
+              {fantasyTeam.rank && fantasyTeam.rank < 999 ? `#${fantasyTeam.rank}` : 'Unranked'}
+            </h4>
+          </div>
+
+          <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm text-center">
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Total Points</span>
+            <h4 className="text-xl font-black text-amber-600 mt-1">{fantasyTeam.total_points}</h4>
+          </div>
+
+          <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm text-center">
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Roster Budget</span>
+            <h4 className={`text-xl font-black mt-1 ${Number(fantasyTeam.budget_remaining || 0) < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+              {fantasyTeam.budget_remaining || 0} Cr
+            </h4>
+          </div>
+
+          <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm text-center">
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Squad Count</span>
+            <h4 className="text-xl font-black text-slate-800 mt-1">{fantasyTeam.player_count} / 5</h4>
+          </div>
+
+          <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm text-center col-span-2 md:col-span-1">
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Avg / Player</span>
+            <h4 className="text-xl font-black text-blue-600 mt-1">
+              {fantasyTeam.player_count > 0 ? Math.round((fantasyTeam.total_points / fantasyTeam.player_count) * 10) / 10 : 0}
+            </h4>
+          </div>
+        </div>
+
+        {/* Supported Team (Passive Points) */}
+        {fantasyTeam.supported_team_name && (
+          <div className="console-card bg-gradient-to-r from-emerald-50/50 to-blue-50/50 border border-slate-200/80 p-6 rounded-3xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="flex items-center gap-4">
               {fantasyTeam.supported_team_logo ? (
                 <img
                   src={fantasyTeam.supported_team_logo}
-                  alt={`${fantasyTeam.team_name} logo`}
-                  className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shadow-sm"
+                  alt={`${fantasyTeam.supported_team_name} logo`}
+                  className="w-14 h-14 rounded-full object-cover border border-slate-200"
                   style={{
                     objectPosition: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
                     transform: `scale(${(fantasyTeam as any).logo_scale_circle ?? 1})`,
@@ -324,184 +421,84 @@ export default function MyFantasyTeamPage() {
                   }}
                 />
               ) : (
-                <div className="w-16 h-16 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center shadow-sm">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
+                <div className="w-14 h-14 rounded-full bg-emerald-600 text-white font-bold text-lg flex items-center justify-center">
+                  {fantasyTeam.supported_team_name.charAt(0).toUpperCase()}
                 </div>
               )}
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{fantasyTeam.team_name}</h1>
-                <p className="text-gray-600 mt-1">Your Fantasy Squad</p>
+                <span className="text-[9px] text-emerald-600 font-bold uppercase tracking-wider">SUPPORTED REAL TEAM</span>
+                <h3 className="text-lg font-black text-slate-900 mt-0.5 uppercase">{fantasyTeam.supported_team_name}</h3>
+                <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">Earns passive points based on real team performance</p>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href={`/dashboard/team/fantasy/draft`}
-                className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg"
-              >
-                ➕ Draft Players & Set Captain
-              </Link>
-
-              <Link
-                href={`/dashboard/team/fantasy/transfers`}
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all shadow-lg"
-              >
-                🔄 Transfers
-              </Link>
-
-              <Link
-                href={`/dashboard/team/fantasy/all-teams`}
-                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg"
-              >
-                <Users className="w-4 h-4 text-slate-500" /> All Teams
-              </Link>
-
-              <Link
-                href={`/dashboard/team/fantasy/leaderboard`}
-                className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all shadow-lg"
-              >
-                <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Leaderboard
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
-            <p className="text-sm text-gray-600 mb-1">League Rank</p>
-            <p className="text-3xl font-bold text-purple-600">
-              {fantasyTeam.rank && fantasyTeam.rank < 999 ? `#${fantasyTeam.rank}` : 'Unranked'}
-            </p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
-            <p className="text-sm text-gray-600 mb-1">Total Points</p>
-            <p className="text-3xl font-bold text-blue-600">{fantasyTeam.total_points}</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
-            <p className="text-sm text-gray-600 mb-1">Budget</p>
-            <p className={`text-3xl font-bold ${(fantasyTeam.budget_remaining || 0) < 0 ? 'text-red-600' : 'text-green-600'}`}>
-              €{fantasyTeam.budget_remaining || 0}M
-            </p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
-            <p className="text-sm text-gray-600 mb-1">Players</p>
-            <p className="text-3xl font-bold text-indigo-600">{fantasyTeam.player_count}</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
-            <p className="text-sm text-gray-600 mb-1">Avg Per Player</p>
-            <p className="text-3xl font-bold text-orange-600">
-              {fantasyTeam.player_count > 0 ? Math.round((fantasyTeam.total_points / fantasyTeam.player_count) * 10) / 10 : 0}
-            </p>
-          </div>
-        </div>
-
-        {/* Supported Team */}
-        {fantasyTeam.supported_team_name && (
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl shadow-xl border border-green-200 p-6 mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-4">
-                {fantasyTeam.supported_team_logo ? (
-                  <img
-                    src={fantasyTeam.supported_team_logo}
-                    alt={`${fantasyTeam.supported_team_name} logo`}
-                    className="w-16 h-16 rounded-full object-cover"
-                    style={{
-                      objectPosition: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
-                      transform: `scale(${(fantasyTeam as any).logo_scale_circle ?? 1})`,
-                      transformOrigin: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
-                    }}
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold text-2xl">
-                    {fantasyTeam.supported_team_name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">Supported Team (Passive Points)</h3>
-                  <p className="text-2xl font-bold text-green-600">{fantasyTeam.supported_team_name}</p>
-                  <p className="text-sm text-gray-600 mt-1">Earning passive points from team performance</p>
-                </div>
+            <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-4 md:pt-0">
+              <div className="text-left md:text-right font-mono">
+                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Passive Points Earned</span>
+                <h4 className="text-2xl font-black text-emerald-600 mt-0.5">{fantasyTeam.passive_points || 0} pts</h4>
               </div>
-              {fantasyTeam.passive_points !== undefined && (
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Total Passive Points</p>
-                  <p className="text-3xl font-bold text-blue-600">{fantasyTeam.passive_points}</p>
-                </div>
-              )}
-            </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Link
+                  href={`/dashboard/team/fantasy/points-breakdown`}
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-sm"
+                >
+                  <Activity className="w-3 h-3" /> Breakdown Log
+                </Link>
 
-            {/* Points Breakdown Link */}
-            <div className="pt-4 border-t border-green-200 flex gap-3">
-              <Link
-                href={`/dashboard/team/fantasy/points-breakdown`}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-green-300 hover:bg-green-50 transition-colors text-sm font-medium text-gray-700"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                View Points Breakdown
-              </Link>
-
-              <Link
-                href={`/dashboard/team/fantasy/change-supported-team`}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-lg hover:from-rose-600 hover:to-pink-700 transition-colors text-sm font-medium shadow-md"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-                Change Supported Team
-              </Link>
+                <Link
+                  href={`/dashboard/team/fantasy/change-supported-team`}
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-750 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-sm"
+                >
+                  <RefreshCw className="w-3 h-3" /> Change Team
+                </Link>
+              </div>
             </div>
           </div>
         )}
 
         {/* Recent Performance */}
         {recentRounds.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Player Performance</h2>
+          <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
+            <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-4">Recent Round Performance</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {recentRounds.map((round) => (
-                <div key={round.round} className="text-center p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl">
-                  <p className="text-sm text-gray-600 mb-1">Round {round.round}</p>
-                  <p className="text-2xl font-bold text-indigo-600">{round.points}</p>
-                  <p className="text-xs text-gray-500">pts</p>
+                <div key={round.round} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-center">
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">Round {round.round}</p>
+                  <p className="text-xl font-black text-slate-850 mt-1">{round.points} <span className="text-[10px] text-slate-400 font-bold">PTS</span></p>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Captain & Vice-Captain Info (Display Only) */}
+        {/* Captain & Vice-Captain Summary */}
         {players.some(p => p.is_captain || p.is_vice_captain) && (
-          <div className="bg-gradient-to-r from-yellow-50 to-blue-50 rounded-2xl shadow-xl border border-yellow-200 p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Captain & Vice-Captain</h2>
+          <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-4">
+            <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider">Active Captaincy Roles</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {players.find(p => p.is_captain) && (
-                <div className="flex items-center gap-3 p-4 bg-white/60 rounded-xl border border-yellow-300">
-                  <span className="text-3xl"><Crown className="w-4 h-4 text-amber-500 fill-amber-500" /></span>
+                <div className="flex items-center gap-3.5 p-4 bg-amber-50/50 border border-amber-200 rounded-2xl shadow-sm">
+                  <div className="p-2.5 bg-amber-500 border border-amber-600 text-white rounded-xl">
+                    <Crown className="w-5 h-5" />
+                  </div>
                   <div>
-                    <p className="text-sm text-gray-600">Captain (2x Points)</p>
-                    <p className="font-bold text-gray-900">
+                    <span className="text-[9px] text-amber-700 font-bold uppercase tracking-wider">Captain (2x Points multiplier)</span>
+                    <h4 className="font-extrabold text-slate-800 text-sm mt-0.5 uppercase">
                       {players.find(p => p.is_captain)?.player_name}
-                    </p>
+                    </h4>
                   </div>
                 </div>
               )}
               {players.find(p => p.is_vice_captain) && (
-                <div className="flex items-center gap-3 p-4 bg-white/60 rounded-xl border border-blue-300">
-                  <span className="text-3xl"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /></span>
+                <div className="flex items-center gap-3.5 p-4 bg-blue-50/50 border border-blue-250 rounded-2xl shadow-sm">
+                  <div className="p-2.5 bg-slate-800 border border-slate-900 text-amber-400 rounded-xl">
+                    <Star className="w-5 h-5" />
+                  </div>
                   <div>
-                    <p className="text-sm text-gray-600">Vice-Captain (1.5x Points)</p>
-                    <p className="font-bold text-gray-900">
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Vice-Captain (1.5x Points fallback)</span>
+                    <h4 className="font-extrabold text-slate-800 text-sm mt-0.5 uppercase">
                       {players.find(p => p.is_vice_captain)?.player_name}
-                    </p>
+                    </h4>
                   </div>
                 </div>
               )}
@@ -509,231 +506,260 @@ export default function MyFantasyTeamPage() {
           </div>
         )}
 
-        {/* Players List */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">My Players</h2>
+        {/* Players List Card */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <div>
+              <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider">Drafted Players Squad</h2>
+              <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Click on a player row to view match-by-match score telemetry</p>
+            </div>
             <Link
               href="/dashboard/team/fantasy/all-teams"
-              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+              className="text-xs font-black text-slate-800 hover:text-amber-600 uppercase tracking-wider font-bold"
             >
-              View Detailed Stats →
+              Detailed Stats →
             </Link>
           </div>
 
           {players.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">No players drafted yet</p>
+            <div className="text-center py-16 font-mono text-slate-400 uppercase font-bold text-xs">
+              No players currently drafted to your roster.
             </div>
           ) : (
-            <div className="space-y-3">
-              {players.map((player, index) => (
-                <div key={player.draft_id} className="border border-gray-200 rounded-xl overflow-hidden">
-                  {/* Player Summary */}
-                  <button
-                    onClick={() => loadPlayerMatchStats(player.real_player_id)}
-                    className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white hover:from-indigo-50 hover:to-purple-50 transition-all"
-                  >
-                    <div className="flex items-center gap-4 mb-2 sm:mb-0">
-                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-                        {index + 1}
-                      </div>
-                      <div className="text-left">
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-gray-900">{player.player_name}</p>
-                          {player.is_captain && (
-                            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full border border-yellow-300">
-                              <Crown className="w-4 h-4 text-amber-500 fill-amber-500" /> C
-                            </span>
-                          )}
-                          {player.is_vice_captain && (
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-bold rounded-full border border-blue-300">
-                              <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> VC
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-600">Draft Pick #{player.draft_order}</p>
-                      </div>
-                    </div>
+            <div className="divide-y divide-slate-100">
+              {players.map((player, index) => {
+                const isExpanded = expandedPlayer === player.real_player_id;
+                const stats = playerMatchStats[player.real_player_id];
+                const isLoaderActive = loadingPlayerStats[player.real_player_id];
 
-                    <div className="flex items-center gap-6 text-sm">
-                      <div className="text-center">
-                        <p className="text-gray-600">Total Points</p>
-                        <p className="text-lg font-bold text-indigo-600">{player.total_points}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-gray-600">Matches</p>
-                        <p className="text-lg font-bold text-gray-900">{player.matches_played}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-gray-600">Avg</p>
-                        <p className="text-lg font-bold text-green-600">{player.average_points}</p>
-                      </div>
-                      <svg
-                        className={`w-5 h-5 text-gray-400 transition-transform ${expandedPlayer === player.real_player_id ? 'rotate-180' : ''}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </button>
-
-                  {/* Expanded Player Details */}
-                  {expandedPlayer === player.real_player_id && (
-                    <div className="border-t border-gray-200 bg-white p-4">
-                      {loadingPlayerStats[player.real_player_id] ? (
-                        <div className="text-center py-8">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-                          <p className="mt-2 text-sm text-gray-600">Loading match stats...</p>
+                return (
+                  <div key={player.draft_id} className="transition-colors hover:bg-slate-50/40">
+                    {/* Player Row Toggle */}
+                    <button
+                      onClick={() => loadPlayerMatchStats(player.real_player_id)}
+                      className="w-full flex flex-col md:flex-row justify-between items-start md:items-center p-5 text-left transition-all gap-4"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-9 h-9 bg-slate-800 border border-slate-700 text-amber-450 rounded-xl flex items-center justify-center text-xs font-black shadow-sm shrink-0">
+                          {index + 1}
                         </div>
-                      ) : playerMatchStats[player.real_player_id] ? (
                         <div>
-                          {/* Stats Summary */}
-                          {playerMatchStats[player.real_player_id].stats && (
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg p-3 text-center text-white">
-                                <p className="text-2xl font-bold">{playerMatchStats[player.real_player_id].stats.total_points}</p>
-                                <p className="text-xs">Total Points</p>
+                          <div className="flex items-center flex-wrap gap-2">
+                            <h4 className="font-bold text-slate-900 text-sm uppercase">{player.player_name}</h4>
+                            {player.is_captain && (
+                              <span className="px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 text-[9px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1">
+                                <Crown className="w-3 h-3 text-amber-500 fill-amber-500" /> C
+                              </span>
+                            )}
+                            {player.is_vice_captain && (
+                              <span className="px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 text-[9px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1">
+                                <Star className="w-3 h-3 text-amber-400 fill-amber-400" /> VC
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Draft order: #{player.draft_order}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end text-xs font-mono border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                        <div className="text-center">
+                          <span className="text-[9px] text-slate-400 font-bold uppercase block">Total Points</span>
+                          <span className="text-sm font-black text-amber-600 mt-0.5 block">{player.total_points}</span>
+                        </div>
+                        <div className="text-center">
+                          <span className="text-[9px] text-slate-400 font-bold uppercase block">Matches</span>
+                          <span className="text-sm font-black text-slate-800 mt-0.5 block">{player.matches_played}</span>
+                        </div>
+                        <div className="text-center">
+                          <span className="text-[9px] text-slate-400 font-bold uppercase block">Average</span>
+                          <span className="text-sm font-black text-green-600 mt-0.5 block">{player.average_points}</span>
+                        </div>
+                        <div className="pl-4 shrink-0 text-slate-400">
+                          <svg
+                            className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Expandable performance section */}
+                    {isExpanded && (
+                      <div className="bg-slate-50/50 border-t border-slate-100 p-6 space-y-4">
+                        {isLoaderActive ? (
+                          <div className="text-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto"></div>
+                            <p className="mt-3 text-[10px] text-slate-400 font-bold uppercase">Loading match score sheets...</p>
+                          </div>
+                        ) : stats ? (
+                          <div className="space-y-5">
+                            {/* Points Grid cards */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                              <div className="bg-white border border-slate-200/60 p-4 rounded-xl text-center shadow-sm">
+                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Total Points</span>
+                                <h4 className="text-lg font-black text-slate-800 mt-0.5">{stats.stats.total_points || 0}</h4>
                               </div>
-                              <div className="bg-green-50 rounded-lg p-3 text-center border-2 border-green-200">
-                                <p className="text-2xl font-bold text-green-600">
-                                  {playerMatchStats[player.real_player_id].stats.total_points - (playerMatchStats[player.real_player_id].stats.total_admin_bonus || 0)}
-                                </p>
-                                <p className="text-xs text-gray-600">Match Points</p>
+                              <div className="bg-white border border-slate-200/60 p-4 rounded-xl text-center shadow-sm">
+                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Matchday Points</span>
+                                <h4 className="text-lg font-black text-emerald-600 mt-0.5">
+                                  {(stats.stats.total_points || 0) - (stats.stats.total_admin_bonus || 0)}
+                                </h4>
                               </div>
-                              <div className="bg-yellow-50 rounded-lg p-3 text-center border-2 border-yellow-200">
-                                <p className="text-2xl font-bold text-yellow-600">
-                                  {playerMatchStats[player.real_player_id].stats.total_admin_bonus || 0}
-                                </p>
-                                <p className="text-xs text-gray-600">Admin Bonus</p>
+                              <div className="bg-white border border-slate-200/60 p-4 rounded-xl text-center shadow-sm">
+                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Admin Adjustments</span>
+                                <h4 className={`text-lg font-black mt-0.5 ${(stats.stats.total_admin_bonus || 0) !== 0 ? 'text-amber-600' : 'text-slate-500'}`}>
+                                  {stats.stats.total_admin_bonus || 0}
+                                </h4>
                               </div>
-                              <div className="bg-blue-50 rounded-lg p-3 text-center">
-                                <p className="text-2xl font-bold text-blue-600">{playerMatchStats[player.real_player_id].stats.total_matches}</p>
-                                <p className="text-xs text-gray-600">Matches</p>
+                              <div className="bg-white border border-slate-200/60 p-4 rounded-xl text-center shadow-sm">
+                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Total Matches</span>
+                                <h4 className="text-lg font-black text-blue-650 mt-0.5">{stats.stats.total_matches || 0}</h4>
                               </div>
                             </div>
-                          )}
 
-                          {/* Admin Bonuses */}
-                          {playerMatchStats[player.real_player_id].admin_bonuses && playerMatchStats[player.real_player_id].admin_bonuses.length > 0 && (
-                            <div className="mb-4">
-                              <h4 className="font-semibold text-gray-900 mb-2 text-sm"><Gift className="w-4 h-4 text-rose-500" /> Admin Bonus Points</h4>
+                            {/* Admin adjustments */}
+                            {stats.admin_bonuses && stats.admin_bonuses.length > 0 && (
                               <div className="space-y-2">
-                                {playerMatchStats[player.real_player_id].admin_bonuses.map((bonus) => (
-                                  <div key={bonus.id} className="border-2 border-yellow-300 rounded-lg p-2 bg-gradient-to-r from-yellow-50 to-amber-50">
-                                    <div className="flex items-center justify-between">
+                                <h5 className="text-[10px] text-slate-455 font-black uppercase tracking-wider flex items-center gap-1.5">
+                                  <Gift className="w-4 h-4 text-amber-500" /> Admin Adjustment Logs
+                                </h5>
+                                <div className="space-y-2">
+                                  {stats.admin_bonuses.map((bonus) => (
+                                    <div key={bonus.id} className="bg-white border border-amber-250 p-3.5 rounded-xl flex items-center justify-between shadow-sm">
                                       <div>
-                                        <p className="font-semibold text-gray-900 text-sm">{bonus.reason}</p>
-                                        <p className="text-xs text-gray-500">
-                                          {new Date(bonus.awarded_at).toLocaleDateString()}
+                                        <p className="font-bold text-slate-800 text-xs uppercase">{bonus.reason}</p>
+                                        <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">
+                                          Awarded: {new Date(bonus.awarded_at).toLocaleDateString()}
                                         </p>
                                       </div>
-                                      <div className="text-right">
-                                        <p className="text-xl font-bold text-yellow-600">{bonus.points > 0 ? '+' : ''}{bonus.points}</p>
-                                        <p className="text-xs text-gray-500">pts</p>
+                                      <span className="font-black text-amber-650 text-xs">
+                                        {bonus.points > 0 ? '+' : ''}{bonus.points} Points
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Match Logs */}
+                            <div className="space-y-2">
+                              <h5 className="text-[10px] text-slate-455 font-black uppercase tracking-wider flex items-center gap-1.5">
+                                <Award className="w-4 h-4 text-blue-500" /> Match Score Logs
+                              </h5>
+                              {stats.matches && stats.matches.length > 0 ? (
+                                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                  {stats.matches.map((match, idx) => (
+                                    <div key={idx} className="bg-white border border-slate-150 p-3.5 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-sm hover:border-slate-250 transition-colors">
+                                      <div>
+                                        <h5 className="font-bold text-slate-800 text-xs uppercase">Round {match.round_number}</h5>
+                                        <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">opponent: {match.opponent}</p>
+                                      </div>
+                                      
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {match.goals_scored > 0 && (
+                                          <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-250 text-emerald-700 text-[9px] font-black rounded-lg uppercase flex items-center gap-1">
+                                            <SoccerBallIcon className="w-3 h-3 text-emerald-600" /> {match.goals_scored} Goals
+                                          </span>
+                                        )}
+                                        {match.clean_sheet && (
+                                          <span className="px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 text-[9px] font-black rounded-lg uppercase flex items-center gap-1">
+                                            <Shield className="w-3 h-3 text-blue-600" /> Clean Sheet
+                                          </span>
+                                        )}
+                                        {match.motm && (
+                                          <span className="px-2 py-0.5 bg-amber-50 border border-amber-250 text-amber-700 text-[9px] font-black rounded-lg uppercase flex items-center gap-1">
+                                            <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> MOTM
+                                          </span>
+                                        )}
+                                        {match.goals_conceded > 0 && (
+                                          <span className="px-2 py-0.5 bg-rose-50 border border-rose-250 text-rose-700 text-[9px] font-black rounded-lg uppercase flex items-center gap-1">
+                                            <ShieldAlert className="w-3 h-3 text-rose-600" /> {match.goals_conceded} Conceded
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <div className="text-right font-mono ml-auto sm:ml-0 shrink-0">
+                                        <span className="text-[9px] text-slate-400 font-bold uppercase block">Match Points</span>
+                                        <span className="text-sm font-black text-amber-600 mt-0.5 block">{match.total_points}</span>
                                       </div>
                                     </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Match-by-Match Performance */}
-                          <h4 className="font-semibold text-gray-900 mb-3">Match-by-Match Performance</h4>
-                          {playerMatchStats[player.real_player_id].matches.length > 0 ? (
-                            <div className="space-y-2 max-h-64 overflow-y-auto">
-                              {playerMatchStats[player.real_player_id].matches.map((match, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg text-sm">
-                                  <div className="flex-1">
-                                    <p className="font-semibold text-gray-900">Round {match.round_number}</p>
-                                    <p className="text-gray-600 text-xs">vs {match.opponent}</p>
-                                  </div>
-                                  <div className="flex gap-4 text-xs">
-                                    {match.goals_scored > 0 && (
-                                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded"><SoccerBallIcon className="w-4 h-4" /> {match.goals_scored}</span>
-                                    )}
-                                    {match.clean_sheet && (
-                                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">🛡️ CS</span>
-                                    )}
-                                    {match.motm && (
-                                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /> MOTM</span>
-                                    )}
-                                    {match.goals_conceded > 0 && (
-                                      <span className="px-2 py-1 bg-red-100 text-red-800 rounded">🥅 -{match.goals_conceded}</span>
-                                    )}
-                                  </div>
-                                  <div className="text-right ml-4">
-                                    <p className="text-lg font-bold text-indigo-600">{match.total_points}</p>
-                                    <p className="text-xs text-gray-500">pts</p>
-                                  </div>
+                                  ))}
                                 </div>
-                              ))}
+                              ) : (
+                                <p className="text-[10px] text-slate-400 font-bold uppercase italic p-4 bg-white border rounded-xl text-center shadow-sm">No matches recorded for this player.</p>
+                              )}
                             </div>
-                          ) : (
-                            <p className="text-center text-gray-500 py-4">No matches played yet</p>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-center text-gray-500 py-4">No match stats available yet</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+                          </div>
+                        ) : (
+                          <p className="text-[10px] text-slate-400 font-bold uppercase italic text-center p-4">No performance logs retrieved.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
 
         {/* Other Teams Section */}
-        <div className="mt-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">League Teams</h2>
-            <button
-              onClick={() => setShowOtherTeams(!showOtherTeams)}
-              className="px-4 py-2 bg-indigo-100 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-200 transition-colors"
-            >
-              {showOtherTeams ? 'Hide Teams' : `Show All Teams (${otherTeams.length})`}
-            </button>
-          </div>
-
-          {showOtherTeams && (
-            <div className="space-y-3 mt-4">
-              {otherTeams.map((team) => (
-                <div
-                  key={team.id}
-                  className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${team.rank === 1 ? 'bg-yellow-400 text-yellow-900' :
-                      team.rank === 2 ? 'bg-gray-300 text-gray-700' :
-                        team.rank === 3 ? 'bg-orange-400 text-orange-900' :
-                          'bg-gray-200 text-gray-600'
-                      }`}>
-                      #{team.rank}
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900">{team.team_name}</p>
-                      <p className="text-sm text-gray-600">{team.owner_name}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-6 text-sm">
-                    <div className="text-center">
-                      <p className="text-gray-600">Points</p>
-                      <p className="text-lg font-bold text-indigo-600">{team.total_points}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-gray-600">Players</p>
-                      <p className="text-lg font-bold text-gray-900">{team.player_count}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+        {otherTeams.length > 0 && (
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+              <div>
+                <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider">Other League Competitors</h2>
+                <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Toggle to view standings of other squads in this league</p>
+              </div>
+              <button
+                onClick={() => setShowOtherTeams(!showOtherTeams)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-amber-400 border border-slate-900 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer"
+              >
+                {showOtherTeams ? 'Hide Standings' : `Show Competitors (${otherTeams.length})`}
+              </button>
             </div>
-          )}
-        </div>
+
+            {showOtherTeams && (
+              <div className="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+                {otherTeams.map((team) => (
+                  <div
+                    key={team.id}
+                    className="p-4 flex items-center justify-between hover:bg-slate-50/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-8 h-8 rounded-lg border font-black text-xs flex items-center justify-center shadow-sm ${
+                        team.rank === 1 ? 'bg-amber-50 border-amber-250 text-amber-700' :
+                        team.rank === 2 ? 'bg-slate-100 border-slate-200 text-slate-600' :
+                        team.rank === 3 ? 'bg-orange-50 border-orange-200 text-orange-700' :
+                        'bg-slate-50 border-slate-100 text-slate-450'
+                      }`}>
+                        #{team.rank}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-xs uppercase">{team.team_name}</h4>
+                        <p className="text-[9px] text-slate-455 font-bold uppercase mt-0.5">owner: {team.owner_name}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-6 text-xs font-mono">
+                      <div className="text-center">
+                        <span className="text-[8px] text-slate-400 font-bold uppercase block">Points</span>
+                        <span className="text-xs font-black text-amber-600 mt-0.5 block">{team.total_points}</span>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-[8px] text-slate-400 font-bold uppercase block">Squad</span>
+                        <span className="text-xs font-bold text-slate-700 mt-0.5 block">{team.player_count}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
