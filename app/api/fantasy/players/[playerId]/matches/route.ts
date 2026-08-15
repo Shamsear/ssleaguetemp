@@ -27,8 +27,7 @@ export async function GET(
     const tournamentDb = neon(process.env.NEON_TOURNAMENT_DB_URL!);
     const fantasyDb = neon(process.env.FANTASY_DATABASE_URL!);
 
-    // Get player's fantasy squad info (captain/VC status)
-    // If team_id is provided, use it to get the correct team's data
+    // Get player's fantasy squad info (captain/VC status) if drafted
     const squadInfo = teamId 
       ? await fantasyDb`
           SELECT fs.is_captain, fs.is_vice_captain, fs.team_id
@@ -48,15 +47,9 @@ export async function GET(
           LIMIT 1
         `;
 
-    if (squadInfo.length === 0) {
-      return NextResponse.json(
-        { error: 'Player not found in fantasy squad' },
-        { status: 404 }
-      );
-    }
-
     const isCaptain = squadInfo[0]?.is_captain || false;
     const isViceCaptain = squadInfo[0]?.is_vice_captain || false;
+    const playerTeamId = squadInfo[0]?.team_id || null;
 
     // Get all completed matchups for this player
     const matchups = await tournamentDb`
@@ -84,29 +77,37 @@ export async function GET(
     `;
 
     // Get fantasy_player_points records for this player to get actual multipliers
-    const playerTeamId = squadInfo[0]?.team_id;
     let playerPointsMap = new Map();
     
-    if (playerTeamId) {
-      const playerPoints = await fantasyDb`
-        SELECT 
-          fixture_id,
-          points_multiplier,
-          base_points,
-          total_points
-        FROM fantasy_player_points
-        WHERE team_id = ${playerTeamId}
-          AND real_player_id = ${playerId}
-      `;
+    const playerPoints = playerTeamId
+      ? await fantasyDb`
+          SELECT 
+            fixture_id,
+            points_multiplier,
+            base_points,
+            total_points
+          FROM fantasy_player_points
+          WHERE team_id = ${playerTeamId}
+            AND real_player_id = ${playerId}
+        `
+      : await fantasyDb`
+          SELECT 
+            fixture_id,
+            points_multiplier,
+            base_points,
+            total_points
+          FROM fantasy_player_points
+          WHERE team_id IS NULL
+            AND real_player_id = ${playerId}
+        `;
       
-      playerPoints.forEach((p: any) => {
-        playerPointsMap.set(p.fixture_id, {
-          points_multiplier: p.points_multiplier,
-          base_points: p.base_points,
-          total_points: p.total_points
-        });
+    playerPoints.forEach((p: any) => {
+      playerPointsMap.set(p.fixture_id, {
+        points_multiplier: p.points_multiplier,
+        base_points: p.base_points,
+        total_points: p.total_points
       });
-    }
+    });
 
     // Process matches
     const matches = matchups.map((m: any) => {
@@ -117,7 +118,6 @@ export async function GET(
       const cleanSheet = goalsConceded === 0;
       const motm = m.motm_player_id === playerId;
       
-      // Get actual points_multiplier from fantasy_player_points
       const pointsData = playerPointsMap.get(m.fixture_id);
 
       return {
@@ -129,7 +129,7 @@ export async function GET(
         motm: motm,
         is_captain: isCaptain,
         is_vice_captain: isViceCaptain,
-        points_multiplier: pointsData?.points_multiplier || (isCaptain ? 200 : isViceCaptain ? 150 : 100),
+        points_multiplier: pointsData?.points_multiplier || 100,
         base_points: pointsData?.base_points || 0,
         total_points: pointsData?.total_points || 0,
       };
@@ -141,28 +141,16 @@ export async function GET(
     const totalMotm = matches.filter((m: any) => m.motm).length;
     const totalMatches = matches.length;
 
-    // Get total points from fantasy_squad for the specific team
-    // playerTeamId is already defined above from squadInfo[0]?.team_id
-    
     const pointsData = await fantasyDb`
-      SELECT fs.total_points, ft.league_id
-      FROM fantasy_squad fs
-      JOIN fantasy_teams ft ON fs.team_id = ft.team_id
-      WHERE fs.real_player_id = ${playerId}
-      AND fs.team_id = ${playerTeamId}
-      AND ft.league_id = ${leagueId}
+      SELECT total_points, league_id
+      FROM fantasy_players
+      WHERE real_player_id = ${playerId}
+        AND league_id = ${leagueId}
       LIMIT 1
     `;
 
-    console.log('📊 [Player Matches] Points query:', {
-      playerId,
-      teamId: playerTeamId,
-      leagueId,
-      result: pointsData[0]
-    });
-
     const totalPoints = pointsData[0]?.total_points || 0;
-    const playerLeagueId = pointsData[0]?.league_id;
+    const playerLeagueId = pointsData[0]?.league_id || leagueId;
     const averagePoints = totalMatches > 0 ? (totalPoints / totalMatches).toFixed(1) : '0.0';
     
     // Find best performance

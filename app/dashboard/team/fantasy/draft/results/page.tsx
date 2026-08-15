@@ -1,5 +1,5 @@
 'use client';
-import { Award, DollarSign, ArrowRight, ShieldCheck, Star } from 'lucide-react';
+import { Award, DollarSign, ArrowRight, ShieldCheck, Star, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
@@ -32,6 +32,7 @@ export default function DraftResultsPage() {
   const [squad, setSquad] = useState<SquadPlayer[]>([]);
   const [bids, setBids] = useState<BidResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [draftStatus, setDraftStatus] = useState<string>('pending');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -44,19 +45,38 @@ export default function DraftResultsPage() {
     if (!user) return;
     setIsLoading(true);
     try {
-      // 1. Fetch my team and squad details
+      // 1. Fetch my team and league details
       const teamRes = await fetchWithTokenRefresh(`/api/fantasy/teams/my-team?user_id=${user.uid}`);
       if (teamRes.ok) {
         const data = await teamRes.json();
         setMyTeam(data.team);
-        setSquad(data.squad || []);
-      }
-
-      // 2. Fetch my bids results
-      const bidsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/bids/my-bids?user_id=${user.uid}`);
-      if (bidsRes.ok) {
-        const bidsData = await bidsRes.json();
-        setBids(bidsData.bids || []);
+        
+        // 2. Check if draft is completed before showing results
+        const leagueId = data.team?.fantasy_league_id;
+        if (leagueId) {
+          const settingsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/settings?league_id=${leagueId}`);
+          if (settingsRes.ok) {
+            const settingsData = await settingsRes.json();
+            const status = settingsData.settings?.draft_status || 'pending';
+            setDraftStatus(status);
+            
+            // Only load results if draft is completed
+            if (status === 'completed') {
+              setSquad(data.squad || []);
+              
+              // 3. Fetch my bids results
+              const bidsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/bids/my-bids?user_id=${user.uid}`);
+              if (bidsRes.ok) {
+                const bidsData = await bidsRes.json();
+                setBids(bidsData.bids || []);
+              }
+            } else {
+              // Draft not completed yet - don't show results
+              setSquad([]);
+              setBids([]);
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to load draft results:', error);
@@ -84,6 +104,40 @@ export default function DraftResultsPage() {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
         No fantasy team found.
+      </div>
+    );
+  }
+
+  // Show waiting message if draft is not completed
+  if (draftStatus !== 'completed') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 py-8 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto">
+          
+          {/* Navigation */}
+          <div className="mb-6">
+            <Link
+              href="/dashboard"
+              className="text-slate-400 hover:text-indigo-400 font-semibold text-xs transition-colors"
+            >
+              ← Back to Dashboard
+            </Link>
+          </div>
+
+          {/* Waiting Card */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center shadow-lg">
+            <div className="w-16 h-16 bg-amber-900/20 border border-amber-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Clock className="w-8 h-8 text-amber-400" />
+            </div>
+            <h2 className="text-xl font-black text-white mb-2">Draft Results Not Available Yet</h2>
+            <p className="text-sm text-slate-400 mb-4">
+              The draft is currently <span className="text-amber-400 font-bold uppercase">{draftStatus}</span>
+            </p>
+            <p className="text-xs text-slate-500">
+              Results will be available once the committee finalizes the draft.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }

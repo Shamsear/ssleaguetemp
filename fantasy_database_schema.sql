@@ -340,6 +340,7 @@ CREATE TABLE IF NOT EXISTS fantasy_leagues (
   number_of_tiers INTEGER DEFAULT 7,
   lineup_lock_enabled BOOLEAN DEFAULT true,
   current_active_tier INTEGER,
+  draft_finalization_mode VARCHAR(20) DEFAULT 'auto', -- 'auto' or 'manual'
   PRIMARY KEY (id),
   UNIQUE (league_id)
 );
@@ -347,6 +348,8 @@ CREATE TABLE IF NOT EXISTS fantasy_leagues (
 CREATE UNIQUE INDEX IF NOT EXISTS fantasy_leagues_league_id_key ON public.fantasy_leagues USING btree (league_id);
 
 CREATE INDEX IF NOT EXISTS idx_fantasy_leagues_draft_status ON public.fantasy_leagues USING btree (draft_status);
+
+CREATE INDEX IF NOT EXISTS idx_fantasy_leagues_finalization_mode ON public.fantasy_leagues USING btree (draft_finalization_mode);
 
 
 -- ============================================
@@ -356,7 +359,7 @@ CREATE INDEX IF NOT EXISTS idx_fantasy_leagues_draft_status ON public.fantasy_le
 CREATE TABLE IF NOT EXISTS fantasy_player_points (
   id SERIAL NOT NULL,
   league_id VARCHAR(100) NOT NULL,
-  team_id VARCHAR(100) NOT NULL,
+  team_id VARCHAR(100), -- Nullable: NULL for undrafted players' base points, set for drafted players
   real_player_id VARCHAR(100) NOT NULL,
   player_name VARCHAR(255) NOT NULL,
   fixture_id VARCHAR(100),

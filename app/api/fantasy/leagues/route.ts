@@ -3,20 +3,45 @@ import { fantasySql } from '@/lib/neon/fantasy-config';
 
 /**
  * GET /api/fantasy/leagues?season_id=xxx
- * Get or create fantasy league for a season
+ * Get fantasy league(s)
+ * - If season_id provided: Get or create fantasy league for that season
+ * - If no parameters: Get all fantasy leagues
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const season_id = searchParams.get('season_id');
 
+    // If no season_id, return all leagues
     if (!season_id) {
-      return NextResponse.json(
-        { error: 'Missing season_id parameter' },
-        { status: 400 }
-      );
+      const allLeagues = await fantasySql`
+        SELECT 
+          league_id,
+          season_id,
+          season_name,
+          league_name,
+          draft_status,
+          is_active,
+          created_at
+        FROM fantasy_leagues
+        ORDER BY created_at DESC
+      `;
+
+      return NextResponse.json({ 
+        success: true,
+        leagues: allLeagues.map(league => ({
+          league_id: league.league_id,
+          name: league.league_name,
+          status: league.is_active ? 'active' : 'inactive',
+          season_id: league.season_id,
+          season_name: league.season_name,
+          draft_status: league.draft_status,
+          created_at: league.created_at
+        }))
+      });
     }
 
+    // Otherwise, get/create league for specific season
     if (!season_id.startsWith('SSPSLS')) {
       return NextResponse.json(
         { error: 'Invalid season ID format' },

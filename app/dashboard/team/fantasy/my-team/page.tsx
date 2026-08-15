@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { Crown, Gift, Star, Trophy, User, Users, ArrowLeft, ArrowUp, ArrowDown, Info, ShieldAlert, Award, Plus, RefreshCw, Shield, Activity } from 'lucide-react';
+import { Crown, Gift, Star, Trophy, User, Users, ArrowLeft, ArrowUp, ArrowDown, Info, ShieldAlert, Award, Plus, RefreshCw, Shield, Activity, Target } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -353,6 +353,13 @@ export default function MyFantasyTeamPage() {
               className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-750 border border-slate-900 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm"
             >
               <RefreshCw className="w-3.5 h-3.5" /> Transfers
+            </Link>
+
+            <Link
+              href={`/dashboard/team/fantasy/all-players-points`}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 border border-blue-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm"
+            >
+              <Target className="w-3.5 h-3.5" /> All Players
             </Link>
 
             <Link

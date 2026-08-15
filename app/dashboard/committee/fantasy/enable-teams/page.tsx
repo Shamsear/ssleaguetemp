@@ -62,9 +62,14 @@ export default function EnableFantasyTeamsPage() {
         setStatus(data);
       } else {
         console.error('Failed to check status:', data.error);
+        // Show error to user
+        if (data.error) {
+          alert(`Error: ${data.error}`);
+        }
       }
     } catch (error) {
       console.error('Failed to check status:', error);
+      alert('Failed to load team status. Please try again.');
     } finally {
       setIsLoading(false);
     }

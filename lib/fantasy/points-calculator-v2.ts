@@ -9,6 +9,9 @@ import { checkAchievements } from './achievements';
  * Vice-captain gets 1.5x multiplier
  * Bench players earn 0 points (unless Bench Boost active)
  * 
+ * ALSO calculates base points for ALL players in the league (drafted and undrafted)
+ * to enable acquisition planning
+ * 
  * After lineup points are calculated, H2H results are also calculated
  * Then achievements are checked for all teams
  */
@@ -139,7 +142,17 @@ export async function calculateLineupPoints(leagueId: string, roundId: string) {
       // Don't fail the entire operation if H2H calculation fails
     }
 
-    // 7. Check achievements for all teams after points calculation
+    // 7. Calculate base points for ALL players (drafted and undrafted)
+    let allPlayersPointsCount = 0;
+    try {
+      allPlayersPointsCount = await calculateAllPlayersBasePoints(leagueId, roundId, scoringRules);
+      console.log(`[Base Points] Calculated base points for ${allPlayersPointsCount} players in league ${leagueId}`);
+    } catch (error: any) {
+      console.error('Error calculating base points for all players:', error);
+      // Don't fail the entire operation if base points calculation fails
+    }
+
+    // 8. Check achievements for all teams after points calculation
     const achievementsUnlocked: any[] = [];
     for (const lineup of lineups) {
       try {
@@ -163,7 +176,8 @@ export async function calculateLineupPoints(leagueId: string, roundId: string) {
       total_points_awarded: totalPointsAwarded,
       highest_scoring_team: highestScoringTeam,
       h2h_fixtures_processed: h2hResults.length,
-      achievements_unlocked: achievementsUnlocked.length
+      achievements_unlocked: achievementsUnlocked.length,
+      all_players_points_calculated: allPlayersPointsCount
     };
 
   } catch (error: any) {
@@ -529,6 +543,136 @@ export async function calculateTeamLineupPoints(
   await updateTeamTotalPoints(teamId, lineup.league_id);
 
   return lineupPoints.total;
+}
+
+/**
+ * Calculate base points for ALL players in the league (drafted and undrafted)
+ * This allows teams to view player performance for acquisition planning
+ * Points are stored with team_id = NULL for undrafted players
+ */
+async function calculateAllPlayersBasePoints(
+  leagueId: string,
+  roundId: string,
+  scoringRules: ScoringRule[]
+): Promise<number> {
+  // Get all players in the league
+  const allPlayers = await fantasySql`
+    SELECT real_player_id, is_available
+    FROM fantasy_players
+    WHERE league_id = ${leagueId}
+  `;
+
+  // Get all drafted players for this league
+  const draftedPlayers = await fantasySql`
+    SELECT DISTINCT real_player_id
+    FROM fantasy_squad
+    WHERE league_id = ${leagueId}
+  `;
+
+  const draftedPlayerIds = new Set(draftedPlayers.map((p: any) => p.real_player_id));
+  let processedCount = 0;
+
+  // Calculate and store base points for each player
+  for (const player of allPlayers) {
+    const playerId = player.real_player_id;
+    
+    // Skip if this player is drafted (they already have points recorded with team_id)
+    if (draftedPlayerIds.has(playerId)) {
+      continue;
+    }
+
+    // Calculate base points (without any multipliers)
+    const basePoints = await calculatePlayerPoints(playerId, roundId, scoringRules);
+
+    // Only record if player actually played (has points)
+    if (basePoints > 0) {
+      await recordAllPlayerBasePoints(leagueId, playerId, roundId, basePoints);
+      processedCount++;
+    }
+  }
+
+  return processedCount;
+}
+
+/**
+ * Record base points for undrafted players
+ * team_id is NULL to indicate these are league-wide base points
+ */
+async function recordAllPlayerBasePoints(
+  leagueId: string,
+  playerId: string,
+  roundId: string,
+  basePoints: number
+) {
+  // Get player name from fantasy_players or round_players
+  const [playerInfo] = await fantasySql`
+    SELECT fp.real_player_id, rp.player_name
+    FROM fantasy_players fp
+    LEFT JOIN round_players rp ON rp.real_player_id = fp.real_player_id 
+      AND rp.round_id = ${roundId}
+    WHERE fp.league_id = ${leagueId} 
+      AND fp.real_player_id = ${playerId}
+    LIMIT 1
+  `;
+
+  const playerName = playerInfo?.player_name || 'Unknown Player';
+  const pointsId = `base_${leagueId}_${playerId}_${roundId}_${Date.now()}`;
+
+  await fantasySql`
+    INSERT INTO fantasy_player_points (
+      points_id,
+      league_id,
+      team_id,
+      real_player_id,
+      player_name,
+      fantasy_round_id,
+      base_points,
+      total_points,
+      points_multiplier,
+      is_captain,
+      is_vice_captain,
+      is_bench,
+      recorded_at
+    )
+    VALUES (
+      ${pointsId},
+      ${leagueId},
+      NULL,
+      ${playerId},
+      ${playerName},
+      ${roundId},
+      ${basePoints},
+      ${basePoints},
+      1,
+      false,
+      false,
+      false,
+      NOW()
+    )
+    ON CONFLICT (league_id, real_player_id, fantasy_round_id)
+    WHERE team_id IS NULL
+    DO UPDATE SET
+      base_points = ${basePoints},
+      total_points = ${basePoints},
+      updated_at = NOW()
+  `;
+
+  // Update total_points in fantasy_players table
+  await fantasySql`
+    UPDATE fantasy_players
+    SET 
+      total_points = COALESCE(
+        (SELECT SUM(base_points) 
+         FROM fantasy_player_points 
+         WHERE real_player_id = ${playerId} 
+           AND league_id = ${leagueId}
+           AND team_id IS NULL),
+        0
+      ),
+      updated_at = NOW()
+    WHERE league_id = ${leagueId}
+      AND real_player_id = ${playerId}
+  `;
 }
 
 // Types

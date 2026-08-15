@@ -173,6 +173,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    console.log(`[Enable Teams] Checking fantasy status for season: ${season_id}`);
+
     // Get all registered teams for this season
     const teamSeasonsSnap = await adminDb
       .collection('team_seasons')
@@ -181,6 +183,7 @@ export async function GET(request: NextRequest) {
       .get();
 
     if (teamSeasonsSnap.empty) {
+      console.log(`[Enable Teams] No registered teams found for season: ${season_id}`);
       return NextResponse.json(
         { error: 'No registered teams found for this season' },
         { status: 404 }
@@ -188,6 +191,8 @@ export async function GET(request: NextRequest) {
     }
 
     const teamIds = teamSeasonsSnap.docs.map(doc => doc.data().team_id);
+    console.log(`[Enable Teams] Found ${teamIds.length} registered teams: ${teamIds.join(', ')}`);
+    
     const teams: { enabled: any[]; disabled: any[] } = {
       enabled: [],
       disabled: [],
@@ -195,6 +200,7 @@ export async function GET(request: NextRequest) {
 
     const seasonNumber = season_id.replace('SSPSLS', '');
     const league_id = `SSPSLFLS${seasonNumber}`;
+    console.log(`[Enable Teams] Using fantasy league_id: ${league_id}`);
 
     // Check teams in batches
     for (let i = 0; i < teamIds.length; i += 10) {
@@ -217,18 +223,20 @@ export async function GET(request: NextRequest) {
         
         // Check PostgreSQL for fantasy status
         const fantasyTeam = await fantasySql`
-          SELECT * FROM fantasy_teams
+          SELECT team_id, is_enabled, created_at FROM fantasy_teams
           WHERE team_id = ${teamId} AND league_id = ${league_id}
           LIMIT 1
         `;
         
-        const isEnabled = fantasyTeam.length > 0 && fantasyTeam[0].is_enabled;
+        const isEnabled = fantasyTeam.length > 0 && fantasyTeam[0].is_enabled === true;
+        
+        console.log(`[Enable Teams] Team ${teamData.team_name} (${teamId}): ${fantasyTeam.length > 0 ? `Found in DB, is_enabled=${fantasyTeam[0].is_enabled}` : 'Not in DB'} → ${isEnabled ? 'ENABLED' : 'DISABLED'}`);
         
         const teamInfo = {
           id: teamData.id,
           name: teamData.team_name,
           fantasy_participating: isEnabled,
-          fantasy_joined_at: fantasyTeam[0]?.created_at,
+          fantasy_joined_at: fantasyTeam[0]?.created_at || null,
         };
 
         if (isEnabled) {
@@ -239,9 +247,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    console.log(`[Enable Teams] Summary: ${teams.enabled.length} enabled, ${teams.disabled.length} disabled`);
+
     return NextResponse.json({
       success: true,
       season_id,
+      league_id, // Include league_id in response for debugging
       total_teams: teamIds.length,
       fantasy_enabled_count: teams.enabled.length,
       fantasy_disabled_count: teams.disabled.length,
@@ -249,7 +260,7 @@ export async function GET(request: NextRequest) {
       teams_without_fantasy: teams.disabled,
     });
   } catch (error) {
-    console.error('Error checking fantasy status:', error);
+    console.error('[Enable Teams] Error checking fantasy status:', error);
     return NextResponse.json(
       {
         error: 'Failed to check fantasy status',

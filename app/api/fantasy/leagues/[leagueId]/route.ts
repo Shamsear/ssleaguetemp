@@ -267,3 +267,68 @@ export async function GET(
     );
   }
 }
+
+/**
+ * PATCH /api/fantasy/leagues/[leagueId]
+ * Update fantasy league settings (e.g., draft_finalization_mode)
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ leagueId: string }> }
+) {
+  try {
+    const { leagueId } = await params;
+
+    if (!leagueId) {
+      return NextResponse.json(
+        { error: 'League ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+    const { draft_finalization_mode } = body;
+
+    // Validate finalization_mode if provided
+    if (draft_finalization_mode && !['auto', 'manual'].includes(draft_finalization_mode)) {
+      return NextResponse.json(
+        { error: 'Invalid draft_finalization_mode. Must be either "auto" or "manual"' },
+        { status: 400 }
+      );
+    }
+
+    const sql = getFantasyDb();
+
+    // Update the league
+    const updated = await sql`
+      UPDATE fantasy_leagues
+      SET 
+        draft_finalization_mode = COALESCE(${draft_finalization_mode}, draft_finalization_mode),
+        updated_at = NOW()
+      WHERE league_id = ${leagueId}
+      RETURNING *
+    `;
+
+    if (updated.length === 0) {
+      return NextResponse.json(
+        { error: 'Fantasy league not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      league: updated[0],
+      message: 'Fantasy league updated successfully',
+    });
+  } catch (error) {
+    console.error('Error updating fantasy league:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to update fantasy league',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}

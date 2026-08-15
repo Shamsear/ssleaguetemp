@@ -34,6 +34,11 @@ export default function ProcessDraftPage() {
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number>(1);
   const [opensAt, setOpensAt] = useState('');
   const [closesAt, setClosesAt] = useState('');
+  const [finalizationMode, setFinalizationMode] = useState<'auto' | 'manual'>('auto');
+  const [isUpdatingFinalizationMode, setIsUpdatingFinalizationMode] = useState(false);
+  const [previewResults, setPreviewResults] = useState<any>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [addTimeMinutes, setAddTimeMinutes] = useState<string>('10');
 
   const { alertState, showAlert, closeAlert } = useModal();
 
@@ -83,6 +88,13 @@ export default function ProcessDraftPage() {
         };
         setOpensAt(formatForInput(settingsData.settings?.draft_opens_at));
         setClosesAt(formatForInput(settingsData.settings?.draft_closes_at));
+      }
+
+      // 3. Fetch league settings to get finalization mode
+      const leagueRes = await fetchWithTokenRefresh(`/api/fantasy/leagues/${leagueId}`);
+      if (leagueRes.ok) {
+        const leagueData = await leagueRes.json();
+        setFinalizationMode(leagueData.league?.draft_finalization_mode || 'auto');
       }
     } catch (err) {
       console.error('Failed to load submissions:', err);
@@ -179,6 +191,128 @@ export default function ProcessDraftPage() {
     }
   };
 
+  const handleToggleFinalizationMode = async () => {
+    const newMode = finalizationMode === 'auto' ? 'manual' : 'auto';
+    setIsUpdatingFinalizationMode(true);
+    try {
+      const response = await fetchWithTokenRefresh(`/api/fantasy/leagues/${leagueId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_finalization_mode: newMode }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setFinalizationMode(newMode);
+        showAlert({
+          type: 'success',
+          title: 'Mode Updated',
+          message: `Draft finalization mode changed to ${newMode.toUpperCase()}`,
+        });
+      } else {
+        throw new Error(data.error || 'Failed to update finalization mode');
+      }
+    } catch (err: any) {
+      showAlert({
+        type: 'error',
+        title: 'Update Failed',
+        message: err.message || 'Failed to update finalization mode',
+      });
+    } finally {
+      setIsUpdatingFinalizationMode(false);
+    }
+  };
+
+  const handlePreview = async () => {
+    setIsLoadingPreview(true);
+    setPreviewResults(null);
+    try {
+      const response = await fetchWithTokenRefresh('/api/fantasy/draft/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ league_id: leagueId })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to generate preview');
+      }
+
+      setPreviewResults(data);
+      showAlert({
+        type: 'success',
+        title: 'Preview Generated!',
+        message: `Preview shows ${data.total_players_drafted} players and ${data.total_teams_drafted} teams would be awarded.`,
+      });
+    } catch (err: any) {
+      console.error('Error generating preview:', err);
+      showAlert({
+        type: 'error',
+        title: 'Preview Failed',
+        message: err.message || 'An error occurred while generating preview.',
+      });
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  };
+
+  const handleAddTime = async () => {
+    const minutes = parseInt(addTimeMinutes || '0');
+    
+    if (isNaN(minutes) || minutes === 0) {
+      showAlert({
+        type: 'warning',
+        title: 'Invalid Duration',
+        message: 'Please enter a valid number of minutes to add or subtract'
+      });
+      return;
+    }
+
+    try {
+      if (!closesAt) {
+        showAlert({
+          type: 'warning',
+          title: 'No Deadline Set',
+          message: 'Draft must have a deadline set before adjusting time'
+        });
+        return;
+      }
+
+      const currentEnd = new Date(closesAt);
+      const newEnd = new Date(currentEnd.getTime() + (minutes * 60 * 1000));
+
+      const response = await fetchWithTokenRefresh('/api/fantasy/draft/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          league_id: leagueId,
+          draft_closes_at: newEnd.toISOString(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to adjust time');
+      }
+
+      setClosesAt(newEnd.toISOString().slice(0, 16)); // Format for datetime-local input
+      showAlert({
+        type: 'success',
+        title: minutes > 0 ? 'Time Added' : 'Time Reduced',
+        message: `${minutes > 0 ? 'Added' : 'Removed'} ${Math.abs(minutes)} minute${Math.abs(minutes) !== 1 ? 's' : ''} ${minutes > 0 ? 'to' : 'from'} the draft deadline`,
+      });
+      loadSubmissions();
+    } catch (err: any) {
+      console.error('Error adjusting time:', err);
+      showAlert({
+        type: 'error',
+        title: 'Adjustment Failed',
+        message: err.message || 'Failed to adjust time',
+      });
+    }
+  };
+
   if (loading || isLoading) {
     return (
       <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
@@ -221,6 +355,35 @@ export default function ProcessDraftPage() {
           </div>
           <div className="w-16 h-16 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center text-amber-400 shadow-sm shrink-0">
             <Users className="w-8 h-8" />
+          </div>
+        </div>
+
+        {/* Finalization Mode Toggle Card */}
+        <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+            <div>
+              <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-1">Draft Finalization Mode</h2>
+              <p className="text-[10px] text-slate-450 font-bold uppercase leading-normal">
+                {finalizationMode === 'auto' 
+                  ? 'Automatic mode: Draft will finalize automatically when closed' 
+                  : 'Manual mode: Requires admin to manually trigger finalization after draft closes'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] text-slate-400 font-bold uppercase">Current Mode:</span>
+              <button
+                onClick={handleToggleFinalizationMode}
+                disabled={isUpdatingFinalizationMode || draftStatus === 'completed'}
+                title={draftStatus === 'completed' ? 'Cannot change mode after finalization' : `Click to switch to ${finalizationMode === 'auto' ? 'Manual' : 'Auto'} mode`}
+                className={`px-3 py-1.5 border text-[9px] font-black rounded-lg uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                  finalizationMode === 'manual'
+                    ? 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                }`}
+              >
+                {isUpdatingFinalizationMode ? '...' : finalizationMode === 'manual' ? '⚙️ Manual' : '⚡ Auto'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -319,12 +482,34 @@ export default function ProcessDraftPage() {
               </button>
             )}
             {draftStatus === 'active' && (
-              <button
-                onClick={() => handleUpdateStatus('closed')}
-                className="px-4 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-mono font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer transition-all shadow-sm"
-              >
-                ⏸ Close Round (Lock Bids)
-              </button>
+              <>
+                <button
+                  onClick={() => handleUpdateStatus('closed')}
+                  className="px-4 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-mono font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer transition-all shadow-sm"
+                >
+                  ⏸ Close Round (Lock Bids)
+                </button>
+                
+                {/* Add/Reduce Time Controls */}
+                <div className="flex items-center gap-3 ml-auto">
+                  <div className="relative flex-1 max-w-[120px]">
+                    <input
+                      type="number"
+                      value={addTimeMinutes}
+                      onChange={(e) => setAddTimeMinutes(e.target.value)}
+                      className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none text-xs font-bold font-mono shadow-sm text-slate-800"
+                      placeholder="e.g. 10 or -10"
+                    />
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[10px] text-slate-400 font-bold uppercase">min</span>
+                  </div>
+                  <button
+                    onClick={handleAddTime}
+                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    <Clock className="w-3 h-3 text-amber-400" /> Adjust Time
+                  </button>
+                </div>
+              </>
             )}
             {(draftStatus === 'closed' || draftStatus === 'active') && (
               <button
@@ -379,22 +564,49 @@ export default function ProcessDraftPage() {
           <div>
             <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-1">Resolve Draft Bids</h2>
             <p className="text-[10px] text-slate-450 font-bold uppercase leading-normal">
-              When you run the resolution engine, the system will process all blind bids slot-by-slot, resolve priority fallbacks, and assign players/teams exclusively.
+              {finalizationMode === 'auto' 
+                ? 'When you close the draft, the system will automatically process all blind bids slot-by-slot, resolve priority fallbacks, and assign players/teams exclusively.'
+                : 'Preview the results before finalizing, then manually trigger finalization when ready. The system will process all blind bids slot-by-slot, resolve priority fallbacks, and assign players/teams exclusively.'}
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 items-center pt-2">
-            <button
-              onClick={handleFinalize}
-              disabled={isProcessing || draftStatus === 'pending'}
-              title={draftStatus === 'pending' ? 'Draft must be opened and closed before finalization' : ''}
-              className="w-full sm:w-auto px-6 py-3.5 bg-slate-800 border border-slate-900 hover:bg-slate-700 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-            >
-              <Play className="w-4 h-4 text-amber-400" />
-              {isProcessing ? 'Processing Draft Engine...' : 'Run Resolution Engine & Finalize'}
-            </button>
+            {finalizationMode === 'manual' && draftStatus === 'closed' && (
+              <>
+                <button
+                  onClick={handlePreview}
+                  disabled={isLoadingPreview}
+                  className="w-full sm:w-auto px-6 py-3.5 bg-blue-600 border border-blue-700 hover:bg-blue-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                >
+                  <Play className="w-4 h-4" />
+                  {isLoadingPreview ? 'Generating Preview...' : 'Preview Results'}
+                </button>
+                
+                <button
+                  onClick={handleFinalize}
+                  disabled={isProcessing}
+                  className="w-full sm:w-auto px-6 py-3.5 bg-slate-800 border border-slate-900 hover:bg-slate-700 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                >
+                  <Play className="w-4 h-4 text-amber-400" />
+                  {isProcessing ? 'Processing Draft Engine...' : 'Finalize Draft (Apply Changes)'}
+                </button>
+              </>
+            )}
 
-            {submittedCount < totalTeams && (
+            {finalizationMode === 'auto' && (
+              <div className="w-full sm:w-auto px-4 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl flex items-center justify-center gap-2">
+                ⚡ Auto-finalization enabled: Draft will finalize automatically when closed
+              </div>
+            )}
+
+            {draftStatus === 'pending' && (
+              <span className="text-[10px] text-slate-500 font-bold uppercase flex items-center gap-1.5 leading-tight">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                Draft must be opened and closed before finalization
+              </span>
+            )}
+
+            {submittedCount < totalTeams && draftStatus !== 'pending' && (
               <span className="text-[10px] text-amber-600 font-bold uppercase flex items-center gap-1.5 leading-tight">
                 <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                 Warning: {totalTeams - submittedCount} teams have not submitted/locked their draft lists yet.
@@ -438,6 +650,100 @@ export default function ProcessDraftPage() {
             ))}
           </div>
         </div>
+
+        {/* Preview Results display (shows when preview is generated, not applied) */}
+        {previewResults && previewResults.is_preview && (
+          <div className="console-card bg-blue-50 border-2 border-blue-200 rounded-3xl p-6 shadow-lg space-y-6">
+            <div className="flex items-center justify-between border-b border-blue-200 pb-3">
+              <div>
+                <h2 className="text-xs font-black text-blue-900 uppercase tracking-wider flex items-center gap-2">
+                  <span className="px-2 py-0.5 bg-blue-600 text-white rounded text-[8px]">PREVIEW</span>
+                  Draft Resolution Preview
+                </h2>
+                <p className="text-[9px] text-blue-700 font-bold uppercase mt-1">⚠️ No changes have been applied - this is a preview only</p>
+              </div>
+              <button
+                onClick={() => setPreviewResults(null)}
+                className="text-blue-600 hover:text-blue-800 font-bold text-xs"
+              >
+                ✕ Close
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="bg-white border border-blue-200 p-4 rounded-2xl text-center">
+                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider">Players to Award</span>
+                <h4 className="text-lg font-black text-blue-900 mt-1">{previewResults.total_players_drafted}</h4>
+              </div>
+              <div className="bg-white border border-blue-200 p-4 rounded-2xl text-center">
+                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider">Teams to Award</span>
+                <h4 className="text-lg font-black text-blue-900 mt-1">{previewResults.total_teams_drafted}</h4>
+              </div>
+              <div className="bg-white border border-blue-200 p-4 rounded-2xl text-center">
+                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider">Budget to Spend</span>
+                <h4 className="text-lg font-black text-blue-900 mt-1">{previewResults.total_budget_spent} Cr</h4>
+              </div>
+              <div className="bg-white border border-blue-200 p-4 rounded-2xl text-center">
+                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider">Avg Squad Size</span>
+                <h4 className="text-lg font-black text-blue-900 mt-1">{previewResults.average_squad_size.toFixed(1)}</h4>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {previewResults.results_by_slot.map((slot: any) => (
+                <div key={slot.slot_index} className="border border-blue-200 bg-white rounded-2xl p-5 shadow-sm space-y-4">
+                  <h3 className="font-black text-blue-900 border-b border-blue-150 pb-2 mb-3 text-[11px] uppercase flex justify-between">
+                    <span>{slot.slot_name}</span>
+                    <span className="text-[9px] text-blue-700 font-black">{slot.winners} would win / {slot.total_bids} bids</span>
+                  </h3>
+                  {slot.winning_bids.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {slot.winning_bids.map((win: any) => (
+                        <div key={win.target_id} className="bg-blue-50 border border-blue-150 p-3.5 rounded-xl flex items-center justify-between shadow-sm">
+                          <div>
+                            <span className="text-[9px] font-black text-blue-600 uppercase tracking-wider">{win.bid_type === 'player' ? 'Player' : 'Real Team'}</span>
+                            <h4 className="font-bold text-blue-900 text-xs mt-0.5 uppercase">{win.target_id}</h4>
+                            <p className="text-[9px] text-blue-700 font-bold uppercase mt-1">Would go to: {win.team_name}</p>
+                          </div>
+                          <span className="font-black text-blue-700 text-xs">{win.bid_amount} Credits</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-blue-600 font-bold uppercase italic">No bids would be resolved for this slot.</p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-white border border-blue-200 rounded-xl p-4">
+              <h3 className="text-xs font-black text-blue-900 uppercase mb-3">Team Impact Preview</h3>
+              <div className="space-y-2">
+                {previewResults.team_previews?.map((team: any) => (
+                  <div key={team.team_id} className="flex items-center justify-between p-2 bg-blue-50 rounded-lg">
+                    <span className="text-xs font-bold text-blue-900">{team.team_name}</span>
+                    <div className="flex items-center gap-4 text-[10px] font-bold">
+                      <span className="text-emerald-700">+{team.players_won} players</span>
+                      <span className="text-rose-700">-{team.budget_spent} Cr</span>
+                      <span className="text-blue-700">{team.projected_budget} Cr left</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-xs font-black text-amber-900 uppercase">Preview Mode</h4>
+                <p className="text-[10px] text-amber-800 font-bold mt-1">
+                  This is a preview calculation only. No changes have been saved to the database. 
+                  Click "Finalize Draft" to apply these changes permanently.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Results display */}
         {results && results.success && (
