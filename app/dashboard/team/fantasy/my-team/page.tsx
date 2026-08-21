@@ -356,6 +356,13 @@ export default function MyFantasyTeamPage() {
             </Link>
 
             <Link
+              href={`/dashboard/team/fantasy/captain-selection`}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 border border-amber-600 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm"
+            >
+              <Crown className="w-3.5 h-3.5" /> Captain
+            </Link>
+
+            <Link
               href={`/dashboard/team/fantasy/all-players-points`}
               className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 border border-blue-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm"
             >

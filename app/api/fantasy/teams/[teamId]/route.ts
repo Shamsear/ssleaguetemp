@@ -12,7 +12,10 @@ export async function GET(
   try {
     const { teamId } = await params;
 
+    console.log('[Team API] Fetching team with ID:', teamId);
+
     if (!teamId) {
+      console.error('[Team API] Team ID is missing');
       return NextResponse.json(
         { error: 'Team ID is required' },
         { status: 400 }
@@ -26,7 +29,10 @@ export async function GET(
       LIMIT 1
     `;
 
+    console.log('[Team API] Teams found:', teams.length);
+
     if (teams.length === 0) {
+      console.error('[Team API] Fantasy team not found for ID:', teamId);
       return NextResponse.json(
         { error: 'Fantasy team not found' },
         { status: 404 }
@@ -34,6 +40,7 @@ export async function GET(
     }
 
     const teamData = teams[0];
+    console.log('[Team API] Team data:', { team_id: teamData.team_id, team_name: teamData.team_name });
 
     // Get squad players from fantasy_squad (current active squad)
     const squadPlayers = await fantasySql`
@@ -52,6 +59,8 @@ export async function GET(
       WHERE team_id = ${teamId}
       ORDER BY total_points DESC
     `;
+
+    console.log('[Team API] Squad players found:', squadPlayers.length);
 
     // Get match statistics for each player
     const draftedPlayers = await Promise.all(
@@ -124,7 +133,7 @@ export async function GET(
       }
     });
   } catch (error) {
-    console.error('Error fetching fantasy team:', error);
+    console.error('[Team API] Error fetching fantasy team:', error);
     return NextResponse.json(
       { error: 'Failed to fetch fantasy team', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

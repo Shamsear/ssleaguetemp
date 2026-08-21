@@ -353,6 +353,51 @@ CREATE INDEX IF NOT EXISTS idx_fantasy_leagues_finalization_mode ON public.fanta
 
 
 -- ============================================
+-- Table: fantasy_captain_windows
+-- Description: Captain selection windows per round - admin creates one for each round
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS fantasy_captain_windows (
+  id SERIAL PRIMARY KEY,
+  window_id VARCHAR(100) UNIQUE NOT NULL,
+  league_id VARCHAR(100) NOT NULL,
+  round_id VARCHAR(100) NOT NULL,
+  round_number INTEGER,
+  round_name VARCHAR(255),
+  window_status VARCHAR(20) DEFAULT 'pending',
+  -- Status: pending (not started), open (active), closed (ended), locked (finalized)
+  
+  opens_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  closes_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  
+  created_by_user_id VARCHAR(100),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  
+  total_teams INTEGER DEFAULT 0,
+  teams_with_captain_set INTEGER DEFAULT 0,
+  
+  notes TEXT,
+  
+  UNIQUE(league_id, round_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_captain_windows_league ON fantasy_captain_windows(league_id);
+CREATE INDEX IF NOT EXISTS idx_captain_windows_round ON fantasy_captain_windows(round_id);
+CREATE INDEX IF NOT EXISTS idx_captain_windows_status ON fantasy_captain_windows(window_status);
+CREATE INDEX IF NOT EXISTS idx_captain_windows_opens_at ON fantasy_captain_windows(opens_at);
+CREATE INDEX IF NOT EXISTS idx_captain_windows_closes_at ON fantasy_captain_windows(closes_at);
+
+
+-- ============================================
+-- Table: fantasy_captain_history (Updated)
+-- Description: Audit trail of all captain/VC changes
+-- ============================================
+
+-- Note: fantasy_captain_history already exists, window_id column added via migration
+
+
+-- ============================================
 -- Table: fantasy_player_points
 -- ============================================
 

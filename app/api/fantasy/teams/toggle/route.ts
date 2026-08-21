@@ -54,10 +54,10 @@ export async function POST(request: NextRequest) {
     const budgetPerTeam = leagueResult[0]?.budget_per_team || 100.00;
 
     if (enable) {
-      // Check if fantasy team already exists for this league
+      // Check if fantasy team already exists (unique constraint is on team_id)
       const existingTeams = await fantasySql`
         SELECT team_id FROM fantasy_teams
-        WHERE real_team_id = ${team_id} AND league_id = ${league_id}
+        WHERE team_id = ${team_id}
         LIMIT 1
       `;
       
@@ -68,8 +68,9 @@ export async function POST(request: NextRequest) {
           SET is_enabled = true,
               owner_uid = ${ownerUid},
               owner_name = ${ownerName},
+              league_id = ${league_id},
               updated_at = CURRENT_TIMESTAMP
-          WHERE real_team_id = ${team_id} AND league_id = ${league_id}
+          WHERE team_id = ${team_id}
         `;
         console.log(`✅ ${teamName} - fantasy re-enabled (existing record updated)`);
       } else {
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
         UPDATE fantasy_teams
         SET is_enabled = false,
             updated_at = CURRENT_TIMESTAMP
-        WHERE real_team_id = ${team_id} AND league_id = ${league_id}
+        WHERE team_id = ${team_id}
       `;
 
       console.log(`❌ ${teamName} - fantasy disabled`);

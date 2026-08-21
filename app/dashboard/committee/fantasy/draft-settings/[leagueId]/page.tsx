@@ -1,5 +1,5 @@
 'use client';
-import { DollarSign, Users, Calendar, Plus, Trash2, ListFilter, ShieldCheck, ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
+import { DollarSign, Users, Calendar, Plus, Trash2, ListFilter, ShieldCheck, ArrowLeft, AlertCircle, RefreshCw, ArrowLeftRight } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -33,8 +33,64 @@ interface Player {
   real_player_id: string;
   player_name: string;
   real_team_name: string;
-  category: string;
-  star_rating: number;
+  category: string;  star_rating: number;
+}
+
+interface RedListPanelProps {
+  listId: string;
+  label: string;
+  players: Player[];
+  otherListId: string;
+  movePlayerBetweenLists: (playerId: string, fromList: string, toList: string) => void;
+  allocatePlayer: (playerId: string, listId: string) => void;
+  wouldListConflict: (playerId: string, listId: string) => boolean;
+  getPlayerListAssignment: (playerId: string) => string;
+}
+
+function RedListPanel({ listId, label, players, otherListId, movePlayerBetweenLists, allocatePlayer, wouldListConflict, getPlayerListAssignment }: RedListPanelProps) {
+  return (
+    <div className="border border-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">{label}</h4>
+        <span className="text-[10px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-200">
+          {players.length} player{players.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+      <div className="max-h-[340px] overflow-y-auto divide-y divide-slate-100">
+        {players.map(player => {
+          const hasConflict = wouldListConflict(player.real_player_id, listId);
+          return (
+            <div key={player.real_player_id} className={`px-4 py-3 flex items-center justify-between gap-3 ${hasConflict ? 'bg-red-50' : ''}`}>
+              <div className="min-w-0">
+                <div className="font-black text-slate-800 text-[11px] uppercase truncate">{player.player_name}</div>
+                <div className="text-[10px] text-slate-400 font-bold uppercase">{player.real_team_name || '—'}</div>
+                {hasConflict && <div className="text-[10px] text-red-500 font-black uppercase">⚠ Same team</div>}
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => movePlayerBetweenLists(player.real_player_id, listId, otherListId)}
+                  className="px-2 py-1 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 rounded-md hover:bg-amber-100 transition-colors cursor-pointer uppercase"
+                  title={`Move to ${otherListId}`}
+                >⇄</button>
+                <button
+                  type="button"
+                  onClick={() => allocatePlayer(player.real_player_id, '')}
+                  className="px-2 py-1 text-[10px] font-bold bg-slate-50 text-slate-500 border border-slate-200 rounded-md hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors cursor-pointer uppercase"
+                  title="Unassign"
+                >✕</button>
+              </div>
+            </div>
+          );
+        })}
+        {players.length === 0 && (
+          <div className="p-8 text-center text-slate-300 text-xs font-bold uppercase">
+            No players assigned
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function DraftSettingsPage() {
@@ -338,6 +394,30 @@ export default function DraftSettingsPage() {
   const allocatePlayer = (playerId: string, listId: string) => {
     const updatedLists = { ...settings.category_settings.lists };
 
+    // Validate: same-category players from the same real team cannot be in the same list
+    if (listId) {
+      const player = players.find(p => p.real_player_id === playerId);
+      const playerCat = (player?.category?.toUpperCase() || '');
+      if (player && playerCat && player.real_team_name) {
+        const catLists = getListsForCategory(playerCat);
+        if (catLists.length >= 2) {
+          const teamMates = (updatedLists[listId] || []).filter(id => {
+            if (id === playerId) return false;
+            const p = players.find(pl => pl.real_player_id === id);
+            return p && (p.category?.toUpperCase() || '') === playerCat && p.real_team_name === player.real_team_name;
+          });
+          if (teamMates.length > 0) {
+            showAlert({
+              type: 'error',
+              title: 'Same-Team Conflict',
+              message: `${player.real_team_name} already has a ${playerCat} player in this list. Players from the same team must be in different ${playerCat} lists.`,
+            });
+            return;
+          }
+        }
+      }
+    }
+
     // 1. Remove player from all other lists
     Object.keys(updatedLists).forEach(key => {
       updatedLists[key] = updatedLists[key].filter(id => id !== playerId);
@@ -362,34 +442,41 @@ export default function DraftSettingsPage() {
 
   const autoCategorizeAll = () => {
     const updatedLists = { ...settings.category_settings.lists };
-    
-    // Reset lists
-    Object.keys(updatedLists).forEach(key => {
-      updatedLists[key] = [];
+    Object.keys(updatedLists).forEach(key => { updatedLists[key] = [];
     });
 
-    // Auto assign based on player category matching the list name
+    // Group players by category
+    const categoryMap: Record<string, Player[]> = {};
     players.forEach(p => {
-      const category = p.category?.toUpperCase() || 'WHITE';
-      if (category === 'RED') {
-        // Distribute RED players between red_list_1 and red_list_2
-        if (updatedLists['red_list_1'].length <= updatedLists['red_list_2'].length) {
-          updatedLists['red_list_1'].push(p.real_player_id);
-        } else {
-          updatedLists['red_list_2'].push(p.real_player_id);
-        }
-      } else if (category === 'BLUE') {
-        updatedLists['blue_list'].push(p.real_player_id);
-      } else if (category === 'BLACK') {
-        updatedLists['black_list'].push(p.real_player_id);
-      } else if (category === 'WHITE') {
-        updatedLists['white_list'].push(p.real_player_id);
-      } else if (category === 'ICONIC') {
-        // Fallback to iconic or red list
-        if (updatedLists['red_list_1']) {
-          updatedLists['red_list_1'].push(p.real_player_id);
-        }
+      const cat = (p.category?.toUpperCase() || 'UNASSIGNED');
+      if (!categoryMap[cat]) categoryMap[cat] = [];
+      categoryMap[cat].push(p);
+    });
+
+    Object.entries(categoryMap).forEach(([cat, catPlayers]) => {
+      const catLists = getListsForCategory(cat);
+      if (catLists.length >= 2) {
+        // Multi-list category: split same-team players across lists
+        const teamMap: Record<string, number> = {};
+        catPlayers.forEach(p => {
+          const team = p.real_team_name || 'unknown';
+          let idx = teamMap[team] !== undefined ? teamMap[team] : -1;
+          if (idx === -1) {
+            idx = updatedLists[catLists[0]].length <= updatedLists[catLists[1]].length ? 0 : 1;
+            teamMap[team] = idx;
+          } else {
+            idx = idx === 0 ? 1 : 0;
+            teamMap[team] = idx;
+          }
+          updatedLists[catLists[idx]].push(p.real_player_id);
+        });
+      } else if (catLists.length === 1) {
+        // Single list: assign all players
+        catPlayers.forEach(p => {
+          updatedLists[catLists[0]].push(p.real_player_id);
+        });
       }
+      // 0 lists for this category: skip (unassigned)
     });
 
     setSettings({
@@ -416,6 +503,73 @@ export default function DraftSettingsPage() {
       }
     });
     return foundList;
+  };
+
+  /** Get all list IDs that belong to a category (by prefix match on list_id) */
+  const getListsForCategory = (category: string): string[] => {
+    const prefix = category.toLowerCase() + '_list';
+    return Object.keys(settings.category_settings.lists).filter(k =>
+      k.toLowerCase() === prefix || k.toLowerCase().startsWith(prefix + '_')
+    );
+  };
+
+  /** Swap all players between the first two lists of a category */
+  const swapCategoryLists = (category: string) => {
+    const lists = getListsForCategory(category);
+    if (lists.length < 2) return;
+    const updatedLists = { ...settings.category_settings.lists };
+    const temp = [...(updatedLists[lists[0]] || [])];
+    updatedLists[lists[0]] = [...(updatedLists[lists[1]] || [])];
+    updatedLists[lists[1]] = temp;
+    setSettings({
+      ...settings,
+      category_settings: {
+        ...settings.category_settings,
+        lists: updatedLists
+      }
+    });
+  };
+
+  const movePlayerBetweenLists = (playerId: string, fromList: string, toList: string) => {
+    const updatedLists = { ...settings.category_settings.lists };
+    updatedLists[fromList] = (updatedLists[fromList] || []).filter(id => id !== playerId);
+    if (!updatedLists[toList]) updatedLists[toList] = [];
+    updatedLists[toList].push(playerId);
+    setSettings({
+      ...settings,
+      category_settings: {
+        ...settings.category_settings,
+        lists: updatedLists
+      }
+    });
+  };
+
+  const getPlayersInList = (listId: string) => {
+    const ids = settings.category_settings.lists[listId] || [];
+    return ids.map(id => players.find(p => p.real_player_id === id)).filter(Boolean) as Player[];
+  };
+
+  const getUnassignedForCategory = (category: string) => {
+    return players.filter(p => {
+      const cat = (p.category || '').toUpperCase();
+      if (cat !== category) return false;
+      return getPlayerListAssignment(p.real_player_id) === '';
+    });
+  };
+
+  /** Check if assigning a player to a list would conflict with a same-team player in a multi-list category */
+  const wouldListConflict = (playerId: string, listId: string): boolean => {
+    const player = players.find(p => p.real_player_id === playerId);
+    if (!player || !player.real_team_name) return false;
+    const playerCat = (player.category?.toUpperCase() || '');
+    const catLists = getListsForCategory(playerCat);
+    if (catLists.length < 2) return false;
+    const listPlayerIds = settings.category_settings.lists[listId] || [];
+    return listPlayerIds.some(id => {
+      if (id === playerId) return false;
+      const p = players.find(pl => pl.real_player_id === id);
+      return p && (p.category?.toUpperCase() || '') === playerCat && p.real_team_name === player.real_team_name;
+    });
   };
 
   if (loading || isLoading) {
@@ -752,42 +906,101 @@ export default function DraftSettingsPage() {
               ))}
             </div>
 
-            {/* Player list */}
-            <div className="max-h-[500px] overflow-y-auto border rounded-xl divide-y divide-slate-100">
-              {players
-                .filter(p => (p.category || '').toUpperCase() === playerTab)
-                .map(player => {
-                  const currentList = getPlayerListAssignment(player.real_player_id);
-                  return (
-                    <div key={player.real_player_id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      <div>
-                        <h4 className="font-black text-slate-800 text-xs uppercase">{player.player_name}</h4>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{player.real_team_name || 'No Team'}</p>
-                      </div>
-
-                      <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase whitespace-nowrap">Assign to:</span>
-                        <select
-                          value={currentList}
-                          onChange={(e) => allocatePlayer(player.real_player_id, e.target.value)}
-                          className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-bold uppercase bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent w-full sm:w-48 cursor-pointer"
-                        >
-                          <option value="">-- Unassigned --</option>
-                          {Object.keys(settings.category_settings.lists).map(listId => (
-                            <option key={listId} value={listId}>{listId}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  );
-                })}
-
-              {players.filter(p => (p.category || '').toUpperCase() === playerTab).length === 0 && (
-                <div className="p-8 text-center text-slate-400 text-xs font-bold uppercase">
-                  No players found in category {playerTab} for the current season.
+            {/* Dynamic: side-by-side for categories with 2+ lists */}
+            {getListsForCategory(playerTab).length >= 2 ? (
+              <div className="space-y-4">
+                {/* Swap button */}
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => swapCategoryLists(playerTab)}
+                    className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-amber-400 text-xs font-black rounded-xl transition-all shadow flex items-center gap-2 uppercase tracking-wider cursor-pointer"
+                  >
+                    <ArrowLeftRight className="w-4 h-4" /> Swap Lists
+                  </button>
                 </div>
-              )}
-            </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {getListsForCategory(playerTab).slice(0, 2).map((listId, i, arr) => (
+                    <RedListPanel
+                      key={listId}
+                      listId={listId}
+                      label={listId.replace(/_/g, ' ')}
+                      players={getPlayersInList(listId)}
+                      otherListId={arr[1 - i]}
+                      movePlayerBetweenLists={movePlayerBetweenLists}
+                      allocatePlayer={allocatePlayer}
+                      wouldListConflict={wouldListConflict}
+                      getPlayerListAssignment={getPlayerListAssignment}
+                    />
+                  ))}
+                </div>
+
+                {/* Unassigned players for this category */}
+                {getUnassignedForCategory(playerTab).length > 0 && (
+                  <div className="border border-dashed border-slate-300 rounded-xl p-4">
+                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-3">Unassigned ({getUnassignedForCategory(playerTab).length})</h4>
+                    <div className="space-y-2">
+                      {getUnassignedForCategory(playerTab).map(p => (
+                        <div key={p.real_player_id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                          <div>
+                            <span className="font-black text-slate-800 text-xs uppercase">{p.player_name}</span>
+                            <span className="text-[10px] text-slate-400 font-bold ml-2">{p.real_team_name}</span>
+                          </div>
+                          <div className="flex gap-1.5">
+                            {getListsForCategory(playerTab).slice(0, 2).map((listId, i) => (
+                              <button
+                                key={listId}
+                                type="button"
+                                onClick={() => allocatePlayer(p.real_player_id, listId)}
+                                className="px-3 py-1 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors cursor-pointer uppercase"
+                              >→ List {i + 1}</button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Non-RED: dropdown-based view */
+              <div className="max-h-[500px] overflow-y-auto border rounded-xl divide-y divide-slate-100">
+                {players
+                  .filter(p => (p.category || '').toUpperCase() === playerTab)
+                  .map(player => {
+                    const currentList = getPlayerListAssignment(player.real_player_id);
+                    return (
+                      <div key={player.real_player_id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div>
+                          <h4 className="font-black text-slate-800 text-xs uppercase">{player.player_name}</h4>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{player.real_team_name || 'No Team'}</p>
+                        </div>
+
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase whitespace-nowrap">Assign to:</span>
+                          <select
+                            value={currentList}
+                            onChange={(e) => allocatePlayer(player.real_player_id, e.target.value)}
+                            className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-bold uppercase bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent w-full sm:w-48 cursor-pointer"
+                          >
+                            <option value="">-- Unassigned --</option>
+                            {Object.keys(settings.category_settings.lists).map(listId => (
+                              <option key={listId} value={listId}>{listId}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                {players.filter(p => (p.category || '').toUpperCase() === playerTab).length === 0 && (
+                  <div className="p-8 text-center text-slate-400 text-xs font-bold uppercase">
+                    No players found in category {playerTab} for the current season.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
