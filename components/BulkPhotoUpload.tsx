@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { getStorage, ref, uploadBytes, deleteObject, listAll } from 'firebase/storage';
 import { app } from '@/lib/firebase/config';
+import { CheckCircle2, XCircle, BarChart2 } from 'lucide-react';
 import { Camera, UploadCloud, Trash2, Info, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react';
 
 export default function BulkPhotoUpload() {
@@ -177,9 +178,9 @@ export default function BulkPhotoUpload() {
             </p>
             {uploadResult.summary && (
               <div className="mt-2 text-slate-500 space-y-0.5">
-                <p>✅ Success: {uploadResult.summary.success}</p>
-                <p>❌ Failed: {uploadResult.summary.failed}</p>
-                <p>📊 Total: {uploadResult.summary.total}</p>
+                <p className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Success: {uploadResult.summary.success}</p>
+                <p className="flex items-center gap-1"><XCircle className="w-3.5 h-3.5 text-red-500" /> Failed: {uploadResult.summary.failed}</p>
+                <p className="flex items-center gap-1"><BarChart2 className="w-3.5 h-3.5 text-slate-500" /> Total: {uploadResult.summary.total}</p>
               </div>
             )}
             {uploadResult.errors && uploadResult.errors.length > 0 && (
@@ -244,9 +245,9 @@ export default function BulkPhotoUpload() {
             </p>
             {deleteResult.summary && (
               <div className="mt-2 text-slate-500 space-y-0.5">
-                <p>✅ Deleted: {deleteResult.summary.success}</p>
-                <p>❌ Failed: {deleteResult.summary.failed}</p>
-                <p>📊 Total: {deleteResult.summary.total}</p>
+                <p className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Deleted: {deleteResult.summary.success}</p>
+                <p className="flex items-center gap-1"><XCircle className="w-3.5 h-3.5 text-red-500" /> Failed: {deleteResult.summary.failed}</p>
+                <p className="flex items-center gap-1"><BarChart2 className="w-3.5 h-3.5 text-slate-500" /> Total: {deleteResult.summary.total}</p>
               </div>
             )}
           </div>

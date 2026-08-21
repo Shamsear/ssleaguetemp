@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 
 interface Player {
     player_id: string;
@@ -235,7 +236,7 @@ export default function BlindLineupSubmission({
                     Matchups will be auto-created: Your Player 1 vs Their Player 1, etc.
                 </p>
                 <p className="text-sm text-purple-800 font-semibold mt-2">
-                    ⚠️ Warning: Once submitted, your lineup cannot be changed!
+                    <AlertTriangle className="w-4 h-4 inline mr-1" /> Warning: Once submitted, your lineup cannot be changed!
                 </p>
             </div>
 
@@ -249,7 +250,7 @@ export default function BlindLineupSubmission({
                                 ? 'bg-green-100 text-green-700'
                                 : 'bg-yellow-100 text-yellow-700'
                                 }`}>
-                                {lineupStatus?.my_lineup ? '✅ Submitted' : '⏳ Not submitted'}
+                                {lineupStatus?.my_lineup ? 'Submitted' : 'Not submitted'}
                             </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -258,7 +259,7 @@ export default function BlindLineupSubmission({
                                 ? 'bg-green-100 text-green-700'
                                 : 'bg-gray-100 text-gray-700'
                                 }`}>
-                                {lineupStatus?.opponent_submitted ? '✅ Submitted' : '⏳ Waiting...'}
+                                {lineupStatus?.opponent_submitted ? 'Submitted' : 'Waiting...'}
                             </span>
                         </div>
                     </div>

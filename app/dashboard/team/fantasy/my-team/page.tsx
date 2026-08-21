@@ -314,13 +314,13 @@ export default function MyFantasyTeamPage() {
         </div>
 
         {/* Header Card */}
-        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="flex items-center gap-4">
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
+          <div className="flex items-center gap-5">
             {fantasyTeam.supported_team_logo ? (
               <img
                 src={fantasyTeam.supported_team_logo}
                 alt={`${fantasyTeam.team_name} logo`}
-                className="w-16 h-16 rounded-2xl object-cover border border-slate-250 shadow-sm"
+                className="w-16 h-16 rounded-2xl object-cover border border-slate-250 shadow-sm shrink-0"
                 style={{
                   objectPosition: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
                   transform: `scale(${(fantasyTeam as any).logo_scale_circle ?? 1})`,
@@ -328,93 +328,119 @@ export default function MyFantasyTeamPage() {
                 }}
               />
             ) : (
-              <div className="w-16 h-16 bg-slate-800 border border-slate-700 text-amber-400 rounded-2xl flex items-center justify-center shadow-sm">
+              <div className="w-16 h-16 bg-slate-800 border border-slate-700 text-amber-400 rounded-2xl flex items-center justify-center shadow-sm shrink-0">
                 <Users className="w-8 h-8" />
               </div>
             )}
-            <div>
+            <div className="flex-1 min-w-0">
               <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">MY ROSTER</span>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5 uppercase">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5 uppercase truncate">
                 {fantasyTeam.team_name}
               </h1>
             </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2.5 w-full md:w-auto">
             <Link
-              href={`/dashboard/team/fantasy/draft`}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-450 border border-amber-600 text-slate-900 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer"
+              href="/dashboard/team/fantasy/draft"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-amber-500 hover:bg-amber-450 border border-amber-600 text-slate-900 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer shrink-0"
             >
-              <Plus className="w-3.5 h-3.5" /> Draft & Roster
-            </Link>
-
-            <Link
-              href={`/dashboard/team/fantasy/transfers`}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-750 border border-slate-900 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Transfers
-            </Link>
-
-            <Link
-              href={`/dashboard/team/fantasy/captain-selection`}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 border border-amber-600 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm"
-            >
-              <Crown className="w-3.5 h-3.5" /> Captain
-            </Link>
-
-            <Link
-              href={`/dashboard/team/fantasy/all-players-points`}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 border border-blue-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm"
-            >
-              <Target className="w-3.5 h-3.5" /> All Players
-            </Link>
-
-            <Link
-              href={`/dashboard/team/fantasy/all-teams`}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
-            >
-              <Users className="w-3.5 h-3.5" /> All Teams
-            </Link>
-
-            <Link
-              href={`/dashboard/team/fantasy/leaderboard`}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
-            >
-              <Trophy className="w-3.5 h-3.5" /> Leaderboard
+              <Plus className="w-3.5 h-3.5" /> Manage Squad
             </Link>
           </div>
         </div>
 
+        {/* Quick Actions Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          <Link
+            href={`/dashboard/team/fantasy/transfers`}
+            className="group flex items-center gap-3 p-4 bg-white border border-slate-200/60 rounded-2xl shadow-sm hover:border-amber-300 hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 bg-slate-800 border border-slate-700 text-amber-400 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-600 transition-all">
+              <RefreshCw className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate">Transfers</h4>
+              <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Swap players</p>
+            </div>
+          </Link>
+
+          <Link
+            href={`/dashboard/team/fantasy/captain-selection`}
+            className="group flex items-center gap-3 p-4 bg-white border border-slate-200/60 rounded-2xl shadow-sm hover:border-amber-300 hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 bg-amber-50 border border-amber-200 text-amber-600 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-600 transition-all">
+              <Crown className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate">Captain</h4>
+              <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Assign roles</p>
+            </div>
+          </Link>
+
+          <Link
+            href={`/dashboard/team/fantasy/all-players-points`}
+            className="group flex items-center gap-3 p-4 bg-white border border-slate-200/60 rounded-2xl shadow-sm hover:border-amber-300 hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 bg-blue-50 border border-blue-200 text-blue-600 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-600 transition-all">
+              <Target className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate">All Players</h4>
+              <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">View scores</p>
+            </div>
+          </Link>
+
+          <Link
+            href={`/dashboard/team/fantasy/all-teams`}
+            className="group flex items-center gap-3 p-4 bg-white border border-slate-200/60 rounded-2xl shadow-sm hover:border-amber-300 hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 bg-slate-100 border border-slate-200 text-slate-600 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-600 transition-all">
+              <Users className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate">All Teams</h4>
+              <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Compare squads</p>
+            </div>
+          </Link>
+
+          <Link
+            href={`/dashboard/team/fantasy/leaderboard`}
+            className="group flex items-center gap-3 p-4 bg-white border border-slate-200/60 rounded-2xl shadow-sm hover:border-amber-300 hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-600 transition-all">
+              <Trophy className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate">Leaderboard</h4>
+              <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">See standings</p>
+            </div>
+          </Link>
+        </div>
+
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm text-center">
-            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">League Rank</span>
-            <h4 className="text-xl font-black text-slate-850 mt-1">
-              {fantasyTeam.rank && fantasyTeam.rank < 999 ? `#${fantasyTeam.rank}` : 'Unranked'}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="console-card bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-sm text-center">
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Rank</span>
+            <h4 className="text-2xl font-black text-amber-400 mt-1">
+              {fantasyTeam.rank && fantasyTeam.rank < 999 ? `#${fantasyTeam.rank}` : '—'}
             </h4>
           </div>
 
           <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm text-center">
-            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Total Points</span>
-            <h4 className="text-xl font-black text-amber-600 mt-1">{fantasyTeam.total_points}</h4>
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Points</span>
+            <h4 className="text-2xl font-black text-slate-800 mt-1">{fantasyTeam.total_points}</h4>
           </div>
 
           <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm text-center">
-            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Roster Budget</span>
-            <h4 className={`text-xl font-black mt-1 ${Number(fantasyTeam.budget_remaining || 0) < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-              {fantasyTeam.budget_remaining || 0} Cr
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Budget</span>
+            <h4 className={`text-2xl font-black mt-1 ${Number(fantasyTeam.budget_remaining || 0) < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+              {fantasyTeam.budget_remaining || 0}
             </h4>
+            <span className="text-[9px] text-slate-400 font-bold uppercase">credits</span>
           </div>
 
           <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm text-center">
-            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Squad Count</span>
-            <h4 className="text-xl font-black text-slate-800 mt-1">{fantasyTeam.player_count} / 5</h4>
-          </div>
-
-          <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm text-center col-span-2 md:col-span-1">
-            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Avg / Player</span>
-            <h4 className="text-xl font-black text-blue-600 mt-1">
-              {fantasyTeam.player_count > 0 ? Math.round((fantasyTeam.total_points / fantasyTeam.player_count) * 10) / 10 : 0}
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Squad</span>
+            <h4 className="text-2xl font-black text-slate-800 mt-1">
+              {fantasyTeam.player_count}<span className="text-sm text-slate-400 font-bold"> / 5</span>
             </h4>
           </div>
         </div>

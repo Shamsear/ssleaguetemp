@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { BarChart2, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 interface FinalizationStep {
   step_number: number;
@@ -62,8 +63,8 @@ export default function FinalizationProgress({
         const allocationSteps: FinalizationStep[] = result.allocations?.map((alloc: any, index: number) => ({
           step_number: index + 1,
           action: alloc.phase === 'incomplete' 
-            ? `📊 Allocated to incomplete team (average price)`
-            : `✅ Allocated`,
+            ? `Allocated to incomplete team (average price)`
+            : `Allocated`,
           team_name: alloc.team_name,
           player_name: alloc.player_name,
           amount: alloc.amount,
@@ -85,7 +86,7 @@ export default function FinalizationProgress({
         
         const tieStep: FinalizationStep = {
           step_number: 1,
-          action: `⚠️ Tie detected for ${result.tiedBids?.[0]?.player_name || 'player'}`,
+          action: `Tie detected for ${result.tiedBids?.[0]?.player_name || 'player'}`,
           team_name: result.tiedBids?.map((b: any) => b.team_name).join(', ') || '',
           player_name: result.tiedBids?.[0]?.player_name || 'Unknown',
           amount: result.tiedBids?.[0]?.amount || 0,
@@ -209,7 +210,7 @@ export default function FinalizationProgress({
           <div className="p-6 border-t bg-gray-50">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600">
-                ✅ All players successfully allocated
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 inline mr-1" /> All players successfully allocated
               </div>
               <button
                 onClick={onComplete}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Calendar, Clock, Info, AlertTriangle, CheckCircle2, Star, RotateCw, Trash2, ClipboardList } from 'lucide-react';
 
 interface Player {
   player_id: string;
@@ -440,12 +441,12 @@ export default function LineupSubmission({
           <div className="mt-2 space-y-1">
             {deadlineInfo.roundStart && (
               <p className="text-xs sm:text-sm text-gray-600">
-                📅 Round starts: {new Date(deadlineInfo.roundStart).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+                <Calendar className="w-3.5 h-3.5 inline mr-1" /> Round starts: {new Date(deadlineInfo.roundStart).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
               </p>
             )}
             {deadlineInfo.deadline && (
               <p className="text-xs sm:text-sm font-semibold text-blue-700">
-                ⏰ Lineup locks: {new Date(deadlineInfo.deadline).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} (1 hour grace period)
+                <Clock className="w-3.5 h-3.5 inline mr-1" /> Lineup locks: {new Date(deadlineInfo.deadline).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} (1 hour grace period)
               </p>
             )}
           </div>
@@ -456,7 +457,7 @@ export default function LineupSubmission({
       {roster.length === 5 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <p className="text-xs sm:text-sm text-blue-800">
-            ℹ️ Your team has exactly 5 players. All players have been automatically selected as starters.
+            <Info className="w-3.5 h-3.5 inline mr-1" /> Your team has exactly 5 players. All players have been automatically selected as starters.
           </p>
         </div>
       )}
@@ -472,7 +473,7 @@ export default function LineupSubmission({
       {!enableCategoryRequirements && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-3">
           <p className="text-xs sm:text-sm text-green-800 flex items-center gap-2">
-            <span className="text-lg">✅</span>
+            <CheckCircle2 className="w-5 h-5 text-green-600" />
             <span><strong>No Category Restrictions:</strong> You can select any players for your lineup without category requirements.</span>
           </p>
         </div>
@@ -518,7 +519,7 @@ export default function LineupSubmission({
       {/* Validation Errors */}
       {validationErrors.length > 0 && (
         <div className="bg-red-50 border border-red-300 rounded-lg p-3">
-          <h4 className="text-xs sm:text-sm font-semibold text-red-800 mb-2">⚠️ Issues:</h4>
+          <h4 className="text-xs sm:text-sm font-semibold text-red-800 mb-2"><AlertTriangle className="w-4 h-4 inline mr-1" /> Issues:</h4>
           <ul className="space-y-1">
             {validationErrors.map((err, idx) => (
               <li key={idx} className="text-xs sm:text-sm text-red-700 flex items-start gap-2">
@@ -535,7 +536,7 @@ export default function LineupSubmission({
         {/* Starting XI */}
         <div className="rounded-xl p-3 sm:p-4 border-2 border-green-200 bg-gradient-to-br from-green-50 to-white">
           <h4 className="text-sm sm:text-base font-bold text-gray-900 mb-3 flex items-center">
-            <span className="text-green-600 mr-2 text-lg">⭐</span>
+            <Star className="w-5 h-5 text-green-600 mr-2 fill-green-600" />
             Starting XI ({startingXI?.length || 0}/{squadSize})
           </h4>
           <div className="space-y-2">
@@ -571,7 +572,7 @@ export default function LineupSubmission({
         {/* Substitutes */}
         <div className="rounded-xl p-3 sm:p-4 border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white">
           <h4 className="text-sm sm:text-base font-bold text-gray-900 mb-3 flex items-center">
-            <span className="text-blue-600 mr-2 text-lg">🔄</span>
+            <RotateCw className="w-5 h-5 text-blue-600 mr-2" />
             Substitutes ({substitutes?.length || 0}/{maxSubstitutes})
           </h4>
           <div className="space-y-2">
@@ -620,7 +621,7 @@ export default function LineupSubmission({
             disabled={(startingXI?.length || 0) === 0 && (substitutes?.length || 0) === 0}
             className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-bold bg-gradient-to-r from-gray-400 to-gray-500 text-white hover:from-gray-500 hover:to-gray-600 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-md disabled:shadow-none flex items-center justify-center gap-2"
           >
-            <span className="text-base sm:text-lg">🗑️</span>
+            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Clear</span>
           </button>
         </div>
@@ -629,7 +630,7 @@ export default function LineupSubmission({
       {/* Available Players */}
       {isEditable && roster.length > 5 && (
         <div className="rounded-xl p-3 sm:p-4 border-2 border-gray-200 bg-white">
-          <h4 className="text-sm sm:text-base font-bold text-gray-900 mb-3">📋 Available Players</h4>
+          <h4 className="text-sm sm:text-base font-bold text-gray-900 mb-3"><ClipboardList className="w-4 h-4 inline mr-1" /> Available Players</h4>
           <div className="space-y-2">
             {roster.filter(p => !isPlayerSelected(p.player_id)).map(player => (
               <div key={player.player_id} className="flex items-center justify-between bg-gray-50 rounded-lg p-2.5 sm:p-3 border border-gray-200">
@@ -643,14 +644,14 @@ export default function LineupSubmission({
                     disabled={(startingXI?.length || 0) >= squadSize}
                     className="px-2 sm:px-3 py-1.5 text-xs font-medium rounded-md bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
-                    ⭐ Start
+                    Start
                   </button>
                   <button
                     onClick={() => handlePlayerToggle(player.player_id, false)}
                     disabled={(substitutes?.length || 0) >= maxSubstitutes}
                     className="px-2 sm:px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
-                    🔄 Sub
+                    Sub
                   </button>
                 </div>
               </div>
@@ -694,7 +695,7 @@ export default function LineupSubmission({
                   Submitting...
                 </span>
               ) : (
-                <span>✅ {existingLineup ? 'Update Lineup' : 'Submit Lineup'}</span>
+                <span>{existingLineup ? 'Update Lineup' : 'Submit Lineup'}</span>
               )}
             </button>
           </div>

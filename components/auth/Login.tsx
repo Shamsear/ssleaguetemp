@@ -124,11 +124,11 @@ export default function Login() {
       const errorMsg = error.message?.toLowerCase() || '';
       
       if (errorMsg.includes('invalid-credential') || errorMsg.includes('invalid credential')) {
-        errorMessage = '❌ Invalid username or password. Please check your credentials.';
+        errorMessage = 'Invalid username or password. Please check your credentials.';
       } else if (errorMsg.includes('user-not-found') || errorMsg.includes('user not found')) {
-        errorMessage = '❌ User not found. Please check your username.';
+        errorMessage = 'User not found. Please check your username.';
       } else if (errorMsg.includes('wrong-password') || errorMsg.includes('wrong password')) {
-        errorMessage = '❌ Incorrect password. Please try again.';
+        errorMessage = 'Incorrect password. Please try again.';
       } else if (errorMsg.includes('too-many-requests') || errorMsg.includes('too many requests')) {
         errorMessage = '⏳ Too many failed attempts. Please wait a few minutes and try again.';
       } else if (errorMsg.includes('network')) {

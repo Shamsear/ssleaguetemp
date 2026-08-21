@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { AlertTriangle, Pencil, Swords } from 'lucide-react';
 
 interface Player {
     id: string;
@@ -408,7 +409,7 @@ export default function CommitteeMatchupCreator({
 
                 {error && (
                     <div className="bg-rose-50 border border-rose-250 rounded-2xl p-4 mb-4 text-xs font-bold text-rose-700 flex items-center gap-2">
-                        <span>⚠️</span> {error}
+                        <AlertTriangle className="w-4 h-4" /> {error}
                     </div>
                 )}
 
@@ -523,7 +524,7 @@ export default function CommitteeMatchupCreator({
                         <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
                                 <p className="font-bold text-slate-900 text-sm">{homeTeamName}</p>
-                                <p className="text-[10px] text-amber-700 mt-0.5">⚠️ Lineup not set</p>
+                                <p className="text-[10px] text-amber-700 mt-0.5 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Lineup not set</p>
                             </div>
                             <button
                                 onClick={() => handleSetLineup('home')}
@@ -542,7 +543,7 @@ export default function CommitteeMatchupCreator({
                                 onClick={() => handleSetLineup('home')}
                                 className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider rounded-xl transition-all border border-slate-200 cursor-pointer self-start sm:self-auto"
                             >
-                                ✏️ Edit Lineup
+                                <Pencil className="w-3 h-3 inline mr-1" /> Edit Lineup
                             </button>
                         </div>
                     )}
@@ -551,7 +552,7 @@ export default function CommitteeMatchupCreator({
                         <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
                                 <p className="font-bold text-slate-900 text-sm">{awayTeamName}</p>
-                                <p className="text-[10px] text-amber-700 mt-0.5">⚠️ Lineup not set</p>
+                                <p className="text-[10px] text-amber-700 mt-0.5 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Lineup not set</p>
                             </div>
                             <button
                                 onClick={() => handleSetLineup('away')}
@@ -570,7 +571,7 @@ export default function CommitteeMatchupCreator({
                                 onClick={() => handleSetLineup('away')}
                                 className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider rounded-xl transition-all border border-slate-200 cursor-pointer self-start sm:self-auto"
                             >
-                                ✏️ Edit Lineup
+                                <Pencil className="w-3 h-3 inline mr-1" /> Edit Lineup
                             </button>
                         </div>
                     )}
@@ -600,7 +601,7 @@ export default function CommitteeMatchupCreator({
             {/* Error Message */}
             {error && (
                 <div className="bg-rose-50 border border-rose-250 rounded-2xl p-4 mb-4 text-xs font-bold text-rose-700 flex items-center gap-2">
-                    <span>⚠️</span> {error}
+<AlertTriangle className="w-4 h-4" /> {error}
                 </div>
             )}
 
@@ -796,7 +797,7 @@ export default function CommitteeMatchupCreator({
                         </>
                     ) : (
                         <>
-                            ⚔️ Create {selectedMatchups.length} Matchup{selectedMatchups.length !== 1 ? 's' : ''}
+                            <Swords className="w-4 h-4 inline mr-1" /> Create {selectedMatchups.length} Matchup{selectedMatchups.length !== 1 ? 's' : ''}
                         </>
                     )}
                 </button>

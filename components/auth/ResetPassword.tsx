@@ -3,6 +3,7 @@
 import { useState, FormEvent, ChangeEvent, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { XCircle } from 'lucide-react';
 import { changePassword } from '@/lib/firebase/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { PasswordResetRequest } from '@/types/passwordResetRequest';
@@ -260,7 +261,7 @@ function ResetPasswordContent() {
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
         <div className="max-w-md w-full relative z-10">
           <div className="console-card bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm text-center space-y-4">
-            <div className="text-4xl">❌</div>
+            <div className="text-4xl text-red-500"><XCircle className="w-12 h-12" /></div>
             <h3 className="text-xl font-bold text-slate-900">Invalid Reset Link</h3>
             <p className="text-xs text-slate-500 font-mono">{error}</p>
             <Link

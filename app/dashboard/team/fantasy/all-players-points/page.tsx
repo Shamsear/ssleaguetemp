@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
+import { Fragment, useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
@@ -17,7 +17,12 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  Star,
+  Shield,
+  AlertTriangle,
+  RotateCw,
 } from 'lucide-react';
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
 
 const PAGE_SIZE = 50;
 
@@ -96,6 +101,34 @@ export default function AllPlayersPointsPage() {
   const [totalDrafted, setTotalDrafted] = useState(0);
   const [totalAll, setTotalAll] = useState(0);
 
+  // Draft settings for list assignments
+  const [categorySettings, setCategorySettings] = useState<any>(null);
+
+  // Get the list label for a player (e.g., "RED 1", "RED 2", "BLACK")
+  const getPlayerListLabel = (playerId: string, category: string | null): string => {
+    if (!categorySettings?.lists || !category) return category || '—';
+    const cat = category.toUpperCase();
+    const lists = categorySettings.lists;
+    // Find which list this player belongs to
+    for (const [listId, playerIds] of Object.entries(lists)) {
+      if ((playerIds as string[]).includes(playerId)) {
+        // Check if this list belongs to the current category
+        const listCat = listId.replace(/_list_?\d*$/i, '').toUpperCase();
+        if (listCat === cat) {
+          // Count how many lists exist for this category
+          const catLists = Object.keys(lists).filter(k => k.replace(/_list_?\d*$/i, '').toUpperCase() === cat);
+          if (catLists.length >= 2) {
+            // Find the index of this list among category lists
+            const idx = catLists.indexOf(listId) + 1;
+            return `${cat} ${idx}`;
+          }
+          return cat;
+        }
+      }
+    }
+    return category;
+  };
+
   // Expandable row state
   const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
   const [breakdownCache, setBreakdownCache] = useState<Record<string, MatchBreakdown[]>>({});
@@ -160,6 +193,17 @@ export default function AllPlayersPointsPage() {
         }
 
         setLeagueId(fetchedLeagueId);
+
+        // Fetch draft settings for list assignments
+        try {
+          const settingsResponse = await fetchWithTokenRefresh(`/api/fantasy/draft/settings?league_id=${fetchedLeagueId}`);
+          if (settingsResponse.ok) {
+            const settingsData = await settingsResponse.json();
+            setCategorySettings(settingsData.settings?.category_settings || null);
+          }
+        } catch {
+          // Draft settings not available — that's fine
+        }
 
         // Try to get rounds (optional)
         try {
@@ -526,9 +570,8 @@ export default function AllPlayersPointsPage() {
                     const matches = breakdownCache[player.real_player_id] || [];
                     const colSpan = 7 + (selectedRound ? 2 : 0);
                     return (
-                      <>
+                      <Fragment key={player.real_player_id}>
                         <tr
-                          key={player.real_player_id}
                           onClick={() => toggleExpand(player.real_player_id)}
                           className={`cursor-pointer transition-colors ${isExpanded ? 'bg-amber-50/60' : 'hover:bg-amber-50/40'}`}
                         >
@@ -555,11 +598,11 @@ export default function AllPlayersPointsPage() {
                             </span>
                           </td>
 
-                          {/* Category */}
+                          {/* Category / List */}
                           <td className="px-5 py-3.5">
                             {player.category ? (
                               <span className="inline-block px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
-                                {player.category}
+                                {getPlayerListLabel(player.real_player_id, player.category)}
                               </span>
                             ) : (
                               <span className="text-slate-300 text-xs">—</span>
@@ -612,10 +655,10 @@ export default function AllPlayersPointsPage() {
                             <td className="px-5 py-3.5">
                               {player.round_stats ? (
                                 <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                                  {player.round_stats.goals > 0 && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">⚽ {player.round_stats.goals}</span>}
-                                  {player.round_stats.assists > 0 && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold text-[10px] border border-blue-200">🎯 {player.round_stats.assists}</span>}
-                                  {player.round_stats.motm && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-bold text-[10px] border border-amber-200">⭐ MOTM</span>}
-                                  {player.round_stats.clean_sheet && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 font-bold text-[10px] border border-slate-200">🛡️ CS</span>}
+                                  {player.round_stats.goals > 0 && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200"><SoccerBallIcon className="w-3 h-3" /> {player.round_stats.goals}</span>}
+                                  {player.round_stats.assists > 0 && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold text-[10px] border border-blue-200"><Target className="w-3 h-3" /> {player.round_stats.assists}</span>}
+                                  {player.round_stats.motm && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-bold text-[10px] border border-amber-200"><Star className="w-3 h-3 fill-amber-400" /> MOTM</span>}
+                                  {player.round_stats.clean_sheet && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 font-bold text-[10px] border border-slate-200"><Shield className="w-3 h-3" /> CS</span>}
                                   {!player.round_stats.goals && !player.round_stats.assists && !player.round_stats.motm && !player.round_stats.clean_sheet && <span className="text-slate-300 text-[10px]">—</span>}
                                 </div>
                               ) : (
@@ -652,11 +695,11 @@ export default function AllPlayersPointsPage() {
                                             <span className={`text-base font-extrabold ${m.base_points > 0 ? 'text-amber-600' : 'text-slate-400'}`}>{m.base_points} pts</span>
                                           </div>
                                           <div className="flex flex-wrap gap-1 mb-2">
-                                            {m.goals_scored > 0 && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">⚽ {m.goals_scored}</span>}
-                                            {m.is_motm && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 font-bold text-[10px] border border-amber-200">⭐ MOTM</span>}
-                                            {m.is_clean_sheet && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 font-bold text-[10px] border border-slate-200">🛡️ CS</span>}
-                                            {m.fine_goals > 0 && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-red-50 text-red-600 font-bold text-[10px] border border-red-200">⚠️ Fine ×{m.fine_goals}</span>}
-                                            {m.substitution_penalty !== 0 && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-orange-50 text-orange-600 font-bold text-[10px] border border-orange-200">🔄 Sub</span>}
+                                            {m.goals_scored > 0 && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200"><SoccerBallIcon className="w-3 h-3" /> {m.goals_scored}</span>}
+                                            {m.is_motm && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 font-bold text-[10px] border border-amber-200"><Star className="w-3 h-3 fill-amber-400" /> MOTM</span>}
+                                            {m.is_clean_sheet && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 font-bold text-[10px] border border-slate-200"><Shield className="w-3 h-3" /> CS</span>}
+                                            {m.fine_goals > 0 && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-red-50 text-red-600 font-bold text-[10px] border border-red-200"><AlertTriangle className="w-3 h-3" /> Fine ×{m.fine_goals}</span>}
+                                            {m.substitution_penalty !== 0 && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-orange-50 text-orange-600 font-bold text-[10px] border border-orange-200"><RotateCw className="w-3 h-3" /> Sub</span>}
                                           </div>
                                           {m.points_breakdown && Object.keys(m.points_breakdown).length > 0 && (
                                             <div className="border-t border-slate-100 pt-1.5 space-y-0.5">
@@ -679,7 +722,7 @@ export default function AllPlayersPointsPage() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     );
                   })}
                 </tbody>

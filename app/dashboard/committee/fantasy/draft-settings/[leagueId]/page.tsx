@@ -1,5 +1,5 @@
 'use client';
-import { DollarSign, Users, Calendar, Plus, Trash2, ListFilter, ShieldCheck, ArrowLeft, AlertCircle, RefreshCw, ArrowLeftRight } from 'lucide-react';
+import { DollarSign, Users, Calendar, Plus, Trash2, ListFilter, ShieldCheck, ArrowLeft, AlertCircle, RefreshCw, ArrowLeftRight, Settings, ClipboardList, Smartphone, AlertTriangle, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -48,23 +48,59 @@ interface RedListPanelProps {
 }
 
 function RedListPanel({ listId, label, players, otherListId, movePlayerBetweenLists, allocatePlayer, wouldListConflict, getPlayerListAssignment }: RedListPanelProps) {
+  const sortedPlayers = [...players].sort((a, b) => {
+    const teamA = (a.real_team_name || '').toUpperCase();
+    const teamB = (b.real_team_name || '').toUpperCase();
+    if (teamA !== teamB) return teamA.localeCompare(teamB);
+    return (a.player_name || '').toUpperCase().localeCompare((b.player_name || '').toUpperCase());
+  });
+
+  const generateWhatsAppMessage = () => {
+    let msg = `📋 *${label.toUpperCase()}*\n`;
+    msg += `Players: ${sortedPlayers.length}\n`;
+    msg += `────────────────\n`;
+    sortedPlayers.forEach((p, i) => {
+      msg += `${i + 1}. ${p.player_name} - ${p.real_team_name || 'No Team'}\n`;
+    });
+    return msg;
+  };
+
+  const handleCopyWhatsApp = async () => {
+    const msg = generateWhatsAppMessage();
+    try {
+      await navigator.clipboard.writeText(msg);
+      alert('Copied! Paste in WhatsApp.');
+    } catch {
+      alert('Failed to copy. Please try again.');
+    }
+  };
+
   return (
     <div className="border border-slate-200 rounded-xl overflow-hidden">
       <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
-        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">{label}</h4>
-        <span className="text-[10px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-200">
-          {players.length} player{players.length !== 1 ? 's' : ''}
-        </span>
+        <div className="flex items-center gap-2">
+          <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">{label}</h4>
+          <span className="text-[10px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-200">
+            {players.length}
+          </span>
+        </div>
+        {players.length > 0 && (
+          <button
+            type="button"
+            onClick={handleCopyWhatsApp}
+            className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2 py-1 rounded-md transition-colors cursor-pointer uppercase"
+            title="Copy list to WhatsApp"
+          ><Smartphone className="w-3 h-3 inline-block mr-1" /> Copy</button>
+        )}
       </div>
       <div className="max-h-[340px] overflow-y-auto divide-y divide-slate-100">
-        {players.map(player => {
+        {sortedPlayers.map(player => {
           const hasConflict = wouldListConflict(player.real_player_id, listId);
           return (
             <div key={player.real_player_id} className={`px-4 py-3 flex items-center justify-between gap-3 ${hasConflict ? 'bg-red-50' : ''}`}>
               <div className="min-w-0">
                 <div className="font-black text-slate-800 text-[11px] uppercase truncate">{player.player_name}</div>
-                <div className="text-[10px] text-slate-400 font-bold uppercase">{player.real_team_name || '—'}</div>
-                {hasConflict && <div className="text-[10px] text-red-500 font-black uppercase">⚠ Same team</div>}
+                <div className="text-[10px] text-slate-400 font-bold uppercase">{player.real_team_name || '—'}</div>                    {hasConflict && <div className="text-[10px] text-red-500 font-black uppercase flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Same team</div>}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button
@@ -72,13 +108,13 @@ function RedListPanel({ listId, label, players, otherListId, movePlayerBetweenLi
                   onClick={() => movePlayerBetweenLists(player.real_player_id, listId, otherListId)}
                   className="px-2 py-1 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 rounded-md hover:bg-amber-100 transition-colors cursor-pointer uppercase"
                   title={`Move to ${otherListId}`}
-                >⇄</button>
+                ><ArrowLeftRight className="w-3 h-3" /></button>
                 <button
                   type="button"
                   onClick={() => allocatePlayer(player.real_player_id, '')}
                   className="px-2 py-1 text-[10px] font-bold bg-slate-50 text-slate-500 border border-slate-200 rounded-md hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors cursor-pointer uppercase"
                   title="Unassign"
-                >✕</button>
+                ><X className="w-3 h-3" /></button>
               </div>
             </div>
           );
@@ -668,7 +704,7 @@ export default function DraftSettingsPage() {
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            ⚙️ General config
+            <Settings className="w-3.5 h-3.5 inline-block mr-1" /> General config
           </button>
           <button
             onClick={() => setActiveTab('slots')}
@@ -678,7 +714,7 @@ export default function DraftSettingsPage() {
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            📋 Squad Slots & Prices
+            <ClipboardList className="w-3.5 h-3.5 inline-block mr-1" /> Squad Slots & Prices
           </button>
           <button
             onClick={() => setActiveTab('lists')}
@@ -688,7 +724,7 @@ export default function DraftSettingsPage() {
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            👥 Player List allocations
+            <Users className="w-3.5 h-3.5 inline-block mr-1" /> Player List allocations
           </button>
         </div>
 
@@ -964,8 +1000,45 @@ export default function DraftSettingsPage() {
                 )}
               </div>
             ) : (
-              /* Non-RED: dropdown-based view */
-              <div className="max-h-[500px] overflow-y-auto border rounded-xl divide-y divide-slate-100">
+              /* Single-list or no-list: dropdown-based view */
+              <div className="space-y-4">
+                {/* Copy single list to WhatsApp */}
+                {(() => {
+                  const catLists = getListsForCategory(playerTab);
+                  const listId = catLists[0];
+                  if (!listId) return null;
+                  const listPlayers = getPlayersInList(listId);
+                  if (listPlayers.length === 0) return null;
+                  const sorted = [...listPlayers].sort((a, b) => {
+                    const tA = (a.real_team_name || '').toUpperCase();
+                    const tB = (b.real_team_name || '').toUpperCase();
+                    if (tA !== tB) return tA.localeCompare(tB);
+                    return (a.player_name || '').toUpperCase().localeCompare((b.player_name || '').toUpperCase());
+                  });
+                  return (
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          let msg = `📋 *${playerTab.toUpperCase()}*\n`;
+                          msg += `Players: ${sorted.length}\n`;
+                          msg += `────────────────\n`;
+                          sorted.forEach((p, i) => {
+                            msg += `${i + 1}. ${p.player_name} - ${p.real_team_name || 'No Team'}\n`;
+                          });
+                          try {
+                            await navigator.clipboard.writeText(msg);
+                            alert('Copied! Paste in WhatsApp.');
+                          } catch {
+                            alert('Failed to copy.');
+                          }
+                        }}
+                        className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-3 py-1.5 rounded-md transition-colors cursor-pointer uppercase flex items-center gap-1"
+                      ><Smartphone className="w-3 h-3" /> Copy to WhatsApp</button>
+                    </div>
+                  );
+                })()}
+                <div className="max-h-[500px] overflow-y-auto border rounded-xl divide-y divide-slate-100">
                 {players
                   .filter(p => (p.category || '').toUpperCase() === playerTab)
                   .map(player => {
@@ -999,6 +1072,7 @@ export default function DraftSettingsPage() {
                     No players found in category {playerTab} for the current season.
                   </div>
                 )}
+              </div>
               </div>
             )}
           </div>
