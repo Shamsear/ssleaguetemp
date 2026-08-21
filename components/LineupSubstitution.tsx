@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { RotateCw, ArrowDown, ArrowUp, ClipboardList } from 'lucide-react';
 
 interface Player {
   player_id: string;
@@ -152,7 +153,7 @@ export default function LineupSubstitution({
       {/* Header */}
       <div className="glass rounded-xl p-4 border border-blue-200/50">
         <h3 className="text-lg font-bold text-gray-900 flex items-center">
-          <span className="text-blue-600 mr-2">🔄</span>
+          <RotateCw className="w-5 h-5 text-blue-600 mr-2" />
           Make Substitution
         </h3>
         <p className="text-sm text-gray-600 mt-1">
@@ -165,7 +166,7 @@ export default function LineupSubstitution({
         {/* Starting XI - Select Player to Remove */}
         <div className="glass rounded-xl p-4 border border-red-200/50">
           <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-            <span className="text-red-600 mr-2">⬇️</span>
+            <ArrowDown className="w-5 h-5 text-red-600 mr-2" />
             Player Coming OFF
           </h4>
           <div className="space-y-2">
@@ -199,7 +200,7 @@ export default function LineupSubstitution({
         {/* Substitutes - Select Player to Bring On */}
         <div className="glass rounded-xl p-4 border border-green-200/50">
           <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-            <span className="text-green-600 mr-2">⬆️</span>
+            <ArrowUp className="w-5 h-5 text-green-600 mr-2" />
             Player Coming ON
           </h4>
           <div className="space-y-2">
@@ -263,7 +264,7 @@ export default function LineupSubstitution({
               </div>
               
               <div className="text-center font-mono flex-shrink-0">
-                <div className="text-2xl">🔄</div>
+                <RotateCw className="w-6 h-6 text-orange-500" />
                 <div className="text-[10px] font-black text-orange-700 bg-orange-100 border border-orange-200 px-2 py-0.5 rounded-lg mt-1">+{penalty} Goals Penalty</div>
               </div>
 
@@ -303,7 +304,7 @@ export default function LineupSubstitution({
       {substitutionHistory.length > 0 && (
         <div className="glass rounded-xl p-4 border border-gray-200/50">
           <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-            <span className="text-gray-600 mr-2">📋</span>
+            <ClipboardList className="w-5 h-5 text-gray-600 mr-2" />
             Substitution History
           </h4>
           <div className="space-y-3">
@@ -344,7 +345,7 @@ export default function LineupSubstitution({
                   <div className="font-bold text-red-600">{getPlayerById(selectedOut!)?.name}</div>
                   <div className="text-xs text-gray-600">OUT</div>
                 </div>
-                <div className="text-2xl">🔄</div>
+                <RotateCw className="w-6 h-6 text-orange-500" />
                 <div className="text-center">
                   <div className="font-bold text-green-600">{getPlayerById(selectedIn!)?.name}</div>
                   <div className="text-xs text-gray-600">IN</div>

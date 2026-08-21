@@ -175,7 +175,7 @@ export default function FixtureTimeline({ fixtureId, isOpen, onClose }: FixtureT
 
                       {event.notes && (
                         <div className="mt-2.5 text-[10px] text-amber-700 bg-amber-50/50 border border-amber-200/50 p-2.5 rounded-xl flex items-start gap-1.5">
-                          <span className="shrink-0 mt-0.5">⚠️</span>
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                           <div>
                             <span className="font-extrabold uppercase tracking-wide">Note:</span> {event.notes}
                           </div>

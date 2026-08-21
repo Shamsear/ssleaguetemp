@@ -236,7 +236,7 @@ export default function FixtureLineup({
                   )}
                   {getAvailablePlayersForSlot(idx).map(p => (
                     <option key={p.player_id} value={p.player_id}>
-                      {p.name} {p.star_rating && `(⭐${p.star_rating})`}
+                      {p.name} {p.star_rating && `(★${p.star_rating})`}
                     </option>
                   ))}
                 </select>

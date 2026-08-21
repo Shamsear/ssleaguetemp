@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import LeagueStandingsTable from './LeagueStandingsTable';
 import GroupStageStandings from './GroupStageStandings';
+import { AlertTriangle, BarChart2, Target, Trophy, Medal } from 'lucide-react';
 import KnockoutBracket from './KnockoutBracket';
 import ShareableLeaderboard from './ShareableLeaderboard';
 
@@ -97,7 +98,7 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-        <span className="text-4xl mb-2 block">⚠️</span>
+        <AlertTriangle className="w-10 h-10 text-red-500 mb-2" />
         <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Standings</h3>
         <p className="text-sm text-red-600">{error}</p>
       </div>
@@ -107,7 +108,7 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
   if (!data) {
     return (
       <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-8 text-center font-mono shadow-sm">
-        <span className="text-6xl mb-4 block">📊</span>
+        <BarChart2 className="w-14 h-14 text-slate-400 mb-4" />
         <h3 className="text-lg font-medium text-gray-600 mb-2">No Standings Available</h3>
         <p className="text-sm text-gray-500">Standings will appear once matches are completed</p>
       </div>
@@ -129,7 +130,7 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
         <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 sm:p-6 shadow-sm font-mono">
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3 lg:gap-4">
             <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-xl">🎯</span>
+              <Target className="w-5 h-5 text-slate-600" />
               <label className="text-xs font-black text-slate-800 uppercase tracking-wider whitespace-nowrap">Filter by Round:</label>
             </div>
             
@@ -140,7 +141,7 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
                 onChange={(e) => setSelectedRound(e.target.value === 'all' ? null : Number(e.target.value))}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs font-bold uppercase tracking-wider text-slate-700 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-sm"
               >
-                <option value="all">📊 All Rounds (Current Standings)</option>
+                <option value="all">All Rounds (Current Standings)</option>
                 {availableRounds.map((roundNum) => (
                   <option key={roundNum} value={roundNum}>
                     Round {roundNum}
@@ -159,7 +160,7 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
                     : 'bg-white text-slate-750 border border-slate-200 hover:border-amber-400/40 hover:text-amber-600'
                 }`}
               >
-                📊 All Rounds
+                All Rounds
               </button>
               <div className="h-5 w-px bg-slate-200 mx-1"></div>
               {availableRounds.map((roundNum) => (
@@ -227,7 +228,7 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
                 : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
             }`}
           >
-            {format === 'group_stage' ? '🏆 Group Stage' : '⚽ League Standings'}
+            {format === 'group_stage' ? 'Group Stage' : 'League Standings'}
           </button>
           <button
             onClick={() => setActiveTab('knockout')}
@@ -237,7 +238,7 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
                 : 'bg-slate-50 text-slate-500 hover:text-slate-850 hover:bg-slate-100 border border-slate-200/30'
             }`}
           >
-            🥇 Knockout Stage
+            Knockout Stage
           </button>
         </div>
       )}
@@ -271,11 +272,11 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
       <div className="flex items-center justify-center font-mono">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-xl">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            {format === 'league' && has_knockout && '⚽ League + 🥇 Knockout Format'}
-            {format === 'league' && !has_knockout && '⚽ League Format'}
-            {format === 'group_stage' && has_knockout && '🏆 Group Stage + 🥇 Knockout Format'}
-            {format === 'group_stage' && !has_knockout && '🏆 Group Stage Format'}
-            {format === 'knockout' && '🥇 Knockout Format'}
+            {format === 'league' && has_knockout && 'League + Knockout Format'}
+            {format === 'league' && !has_knockout && 'League Format'}
+            {format === 'group_stage' && has_knockout && 'Group Stage + Knockout Format'}
+            {format === 'group_stage' && !has_knockout && 'Group Stage Format'}
+            {format === 'knockout' && 'Knockout Format'}
           </span>
         </div>
       </div>

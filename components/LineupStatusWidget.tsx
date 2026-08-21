@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { ClipboardList, AlertTriangle, Lock } from 'lucide-react';
 
 interface Fixture {
   id: string;
@@ -173,7 +174,7 @@ export default function LineupStatusWidget({ teamId, seasonId }: LineupStatusWid
       {/* Fixtures List */}
       {upcomingFixtures.length === 0 ? (
         <div className="text-center py-8">
-          <div className="text-gray-400 text-4xl mb-3">📋</div>
+          <ClipboardList className="w-10 h-10 text-gray-400 mb-3" />
           <p className="text-sm text-gray-600">No upcoming fixtures</p>
         </div>
       ) : (
@@ -201,12 +202,12 @@ export default function LineupStatusWidget({ teamId, seasonId }: LineupStatusWid
                       </span>
                       {needsAttention && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse">
-                          ⚠️ Action Required
+                          Action Required
                         </span>
                       )}
                       {status.isLocked && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-400 text-white">
-                          🔒 Locked
+                          Locked
                         </span>
                       )}
                       {status.hasLineup && !status.isLocked && (

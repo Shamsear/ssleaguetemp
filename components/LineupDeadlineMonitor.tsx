@@ -2,6 +2,7 @@
 
 import { useLineupDeadlineMonitor } from '@/hooks/useLineupDeadlineMonitor';
 import { useEffect, useState } from 'react';
+import { CheckCircle2, Clock, Timer } from 'lucide-react';
 
 interface LineupDeadlineMonitorProps {
   seasonId: string;
@@ -86,7 +87,7 @@ export default function LineupDeadlineMonitor({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-2xl">
-            {isExpired ? '✅' : timeRemaining < 60000 ? '⏰' : '⏱️'}
+{isExpired ? <CheckCircle2 className="w-6 h-6" /> : timeRemaining < 60000 ? <Clock className="w-6 h-6" /> : <Timer className="w-6 h-6" />}
           </span>
           <div>
             <h3 className="font-semibold text-gray-900">
