@@ -1,7 +1,14 @@
-import { HfInference } from '@huggingface/inference';
 import sharp from 'sharp';
 
-const hf = new HfInference(process.env.HUGGING_FACE_TOKEN);
+let hf: ReturnType<typeof import('@huggingface/inference').HfInference> | null = null;
+
+async function getHf() {
+  if (!hf) {
+    const { HfInference } = await import('@huggingface/inference');
+    hf = new HfInference(process.env.HUGGING_FACE_TOKEN);
+  }
+  return hf;
+}
 
 export interface ImageGenerationOptions {
   width?: number;
@@ -20,7 +27,8 @@ export async function generateImageWithSDXL(
   try {
     console.log(`🎨 Generating image with SDXL: "${prompt}"`);
     
-    const blob = await hf.textToImage({
+    const h = await getHf();
+    const blob = await h.textToImage({
       model: 'stabilityai/stable-diffusion-xl-base-1.0',
       inputs: prompt,
       parameters: {
@@ -56,7 +64,8 @@ export async function generateImage(
   try {
     console.log(`🎨 Generating image with FLUX.1: "${prompt}"`);
     
-    const blob = await hf.textToImage({
+    const h = await getHf();
+    const blob = await h.textToImage({
       model,
       inputs: prompt,
       parameters: {

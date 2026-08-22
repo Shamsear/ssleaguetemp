@@ -14,7 +14,7 @@ import { Trophy, Award, Sparkles } from 'lucide-react';
 /**
  * Get image URL without any transformations
  * Returns original ImageKit URL as-is for client-side processing
- * Use manual background removal button with @imgly/background-removal for bg removal
+ * Use manual background removal button for bg removal
  */
 function getImageWithBgRemoval(imageUrl: string | undefined): string {
   if (!imageUrl) {
