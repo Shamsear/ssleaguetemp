@@ -778,7 +778,7 @@ export default function MyFantasyTeamPage() {
                         team.rank === 3 ? 'bg-orange-50 border-orange-200 text-orange-700' :
                         'bg-slate-50 border-slate-100 text-slate-450'
                       }`}>
-                        #{team.rank}
+                        #{team.rank >= 999 ? '—' : team.rank}
                       </div>
                       <div>
                         <h4 className="font-bold text-slate-800 text-xs uppercase">{team.team_name}</h4>
