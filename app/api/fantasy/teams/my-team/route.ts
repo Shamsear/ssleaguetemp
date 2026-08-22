@@ -171,7 +171,7 @@ export async function GET(request: NextRequest) {
         const teamDoc = await adminDb.collection('teams').doc(baseTeamId).get();
         if (teamDoc.exists) {
           const firebaseTeamData = teamDoc.data();
-          teamLogo = firebaseTeamData?.logo_url || null;
+          teamLogo = firebaseTeamData?.logo_url || firebaseTeamData?.team_logo || firebaseTeamData?.logo || null;
           logo_position_x_circle = firebaseTeamData?.logo_position_x_circle || null;
           logo_position_y_circle = firebaseTeamData?.logo_position_y_circle || null;
           logo_scale_circle = firebaseTeamData?.logo_scale_circle || null;

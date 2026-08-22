@@ -314,33 +314,35 @@ export default function MyFantasyTeamPage() {
         </div>
 
         {/* Header Card */}
-        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
-          <div className="flex items-center gap-5">
-            {fantasyTeam.supported_team_logo ? (
-              <img
-                src={fantasyTeam.supported_team_logo}
-                alt={`${fantasyTeam.team_name} logo`}
-                className="w-16 h-16 rounded-2xl object-cover border border-slate-250 shadow-sm shrink-0"
-                style={{
-                  objectPosition: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
-                  transform: `scale(${(fantasyTeam as any).logo_scale_circle ?? 1})`,
-                  transformOrigin: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
-                }}
-              />
-            ) : (
-              <div className="w-16 h-16 bg-slate-800 border border-slate-700 text-amber-400 rounded-2xl flex items-center justify-center shadow-sm shrink-0">
-                <Users className="w-8 h-8" />
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
+            <div className="flex items-center gap-3 sm:gap-5 flex-1 min-w-0">
+              {fantasyTeam.supported_team_logo ? (
+                <img
+                  src={fantasyTeam.supported_team_logo}
+                  alt={`${fantasyTeam.team_name} logo`}
+                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl object-cover border border-slate-250 shadow-sm shrink-0"
+                  style={{
+                    objectPosition: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
+                    transform: `scale(${(fantasyTeam as any).logo_scale_circle ?? 1})`,
+                    transformOrigin: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
+                  }}
+                />
+              ) : (
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-slate-800 border border-slate-700 text-amber-400 rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+                  <Users className="w-6 h-6 sm:w-8 sm:h-8" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">MY ROSTER</span>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5 uppercase break-words">
+                  {fantasyTeam.team_name}
+                </h1>
               </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">MY ROSTER</span>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5 uppercase truncate">
-                {fantasyTeam.team_name}
-              </h1>
             </div>
             <Link
               href="/dashboard/team/fantasy/draft"
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-amber-500 hover:bg-amber-450 border border-amber-600 text-slate-900 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer shrink-0"
+              className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-amber-500 hover:bg-amber-450 border border-amber-600 text-slate-900 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer sm:shrink-0 w-full sm:w-auto"
             >
               <Plus className="w-3.5 h-3.5" /> Manage Squad
             </Link>
