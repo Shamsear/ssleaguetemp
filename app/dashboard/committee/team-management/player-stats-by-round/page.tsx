@@ -321,7 +321,7 @@ export default function PlayerStatsByRoundPage() {
 
   const exportToExcel = async () => {
     try {
-      const XLSX = await import('xlsx');
+      const ExcelJS = (await import('exceljs')).default;
 
       const exportData = filteredPlayers.map((player, index) => ({
         'Rank': index + 1,
@@ -340,20 +340,28 @@ export default function PlayerStatsByRoundPage() {
         'Win Rate (%)': player.win_rate.toFixed(1),
       }));
 
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-
+      const workbook = new ExcelJS.Workbook();
       const sheetName = selectedRound === 'all'
         ? 'All Rounds'
         : `Rounds 1-${selectedRound}`;
-
-      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+      const worksheet = workbook.addWorksheet(sheetName);
+      if (exportData.length > 0) {
+        worksheet.columns = Object.keys(exportData[0]).map(key => ({ header: key, key, width: Math.max(key.length + 2, 12) }));
+        exportData.forEach(row => worksheet.addRow(row));
+      }
 
       const fileName = selectedRound === 'all'
         ? `player_stats_all_rounds_${new Date().toISOString().split('T')[0]}.xlsx`
         : `player_stats_rounds_1_to_${selectedRound}_${new Date().toISOString().split('T')[0]}.xlsx`;
 
-      XLSX.writeFile(workbook, fileName);
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting to Excel:', error);
       alert('Failed to export to Excel');

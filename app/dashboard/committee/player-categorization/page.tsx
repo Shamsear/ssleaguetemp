@@ -6,7 +6,6 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
-import * as XLSX from 'xlsx';
 import { 
   ArrowLeft, 
   Layers, 
@@ -633,22 +632,21 @@ export default function PlayerCategorizationPage() {
     });
 
 
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Player Categories');
-
-    // Auto-adjust column widths
-    const maxLenMap = new Map<string, number>();
-    exportData.forEach(row => {
-      Object.keys(row).forEach(key => {
-        const valStr = String(row[key]);
-        const currentMax = maxLenMap.get(key) || key.length;
-        if (valStr.length > currentMax) maxLenMap.set(key, valStr.length);
-      });
-    });
-    worksheet['!cols'] = Array.from(maxLenMap.keys()).map(key => ({ wch: (maxLenMap.get(key) || 10) + 4 }));
-
-    XLSX.writeFile(workbook, `Player-Categorization-${userSeasonId}.xlsx`);
+    const ExcelJS = (await import('exceljs')).default;
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Player Categories');
+    if (exportData.length > 0) {
+      worksheet.columns = Object.keys(exportData[0]).map(key => ({ header: key, key, width: Math.max(key.length + 4, 12) }));
+      exportData.forEach(row => worksheet.addRow(row));
+    }
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Player-Categorization-${userSeasonId}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
 

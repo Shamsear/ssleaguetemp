@@ -178,8 +178,8 @@ export default function PlayerStatsPage() {
 
   const exportToExcel = async () => {
     try {
-      // Dynamically import xlsx
-      const XLSX = await import('xlsx');
+      // Dynamically import ExcelJS
+      const ExcelJS = (await import('exceljs')).default;
       
       // Prepare data for export
       const exportData = filteredPlayers.map((player, index) => ({
@@ -202,34 +202,14 @@ export default function PlayerStatsPage() {
         'Star Rating': player.star_rating
       }));
 
-      // Create worksheet
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      
-      // Set column widths
-      const columnWidths = [
-        { wch: 6 },  // Rank
-        { wch: 25 }, // Player Name
-        { wch: 15 }, // Player ID
-        { wch: 20 }, // Team
-        { wch: 15 }, // Matches Played
-        { wch: 8 },  // Wins
-        { wch: 8 },  // Draws
-        { wch: 8 },  // Losses
-        { wch: 12 }, // Goals Scored
-        { wch: 14 }, // Goals Conceded
-        { wch: 12 }, // Clean Sheets
-        { wch: 12 }, // POTM Awards
-        { wch: 12 }, // Win Rate
-        { wch: 14 }, // Current Points
-        { wch: 12 }, // Base Points
-        { wch: 14 }, // Points Change
-        { wch: 12 }  // Star Rating
-      ];
-      worksheet['!cols'] = columnWidths;
-
-      // Create workbook
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Player Stats');
+      // Create workbook with ExcelJS
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Player Stats');
+      const colWidths = [6, 25, 15, 20, 15, 8, 8, 8, 12, 14, 12, 12, 12, 14, 12, 14, 12];
+      if (exportData.length > 0) {
+        worksheet.columns = Object.keys(exportData[0]).map((key, i) => ({ header: key, key, width: colWidths[i] || 12 }));
+        exportData.forEach(row => worksheet.addRow(row));
+      }
 
       // Generate filename with tournament and date
       const tournamentName = tournament?.tournament_name || 'Tournament';
@@ -237,7 +217,14 @@ export default function PlayerStatsPage() {
       const filename = `${tournamentName}_Player_Stats_${date}.xlsx`;
 
       // Save file
-      XLSX.writeFile(workbook, filename);
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
       
       console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Exported ${exportData.length} players to ${filename}`);
     } catch (error) {

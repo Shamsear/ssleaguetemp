@@ -8,7 +8,6 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { Download, FileSpreadsheet, AlertTriangle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import * as XLSX from 'xlsx';
 
 interface SeasonStats {
   season_id: string;
@@ -291,71 +290,58 @@ export default function ExportPlayersPage() {
         excelArray.push(row);
       });
 
-      // Create worksheet from array
-      const worksheet = XLSX.utils.aoa_to_sheet(excelArray);
-
-      // Set column widths
-      const columnWidths = [
-        { wch: 5 },  // #
-        { wch: 25 }, // Player Name
-      ];
-
-      // Add widths for each season's columns (5 columns per season)
-      sortedSeasons.forEach(() => {
-        columnWidths.push(
-          { wch: 10 }, // Matches
-          { wch: 10 }, // Goals
-          { wch: 8 },  // Wins
-          { wch: 8 },  // Draws
-          { wch: 8 }   // Losses
-        );
+      // Create workbook with ExcelJS
+      const ExcelJS = (await import('exceljs')).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Players', {
+        views: [{ state: 'frozen', ySplit: 2 }]
       });
 
-      worksheet['!cols'] = columnWidths;
+      // Build column definitions
+      const baseCols = [
+        { header: '#', key: 'num', width: 5 },
+        { header: 'Player Name', key: 'name', width: 25 },
+      ];
+      const seasonCols = sortedSeasons.flatMap(() => [
+        { header: 'MP', width: 10 },
+        { header: 'Goals', width: 10 },
+        { header: 'W', width: 8 },
+        { header: 'D', width: 8 },
+        { header: 'L', width: 8 },
+      ]);
+      worksheet.columns = [...baseCols, ...seasonCols];
 
       // Merge cells for season headers
-      const merges: any[] = [];
-      let colIndex = 2; // Start after player info columns (0, 1)
-      
-      sortedSeasons.forEach(() => {
-        // Merge season name across its 5 stat columns
-        merges.push({
-          s: { r: 0, c: colIndex },     // Start: row 0, col colIndex
-          e: { r: 0, c: colIndex + 4 }  // End: row 0, col colIndex + 4
-        });
-        colIndex += 5;
+      let colIdx = 3; // 1-indexed, after # and Name
+      sortedSeasons.forEach((season) => {
+        worksheet.mergeCells(1, colIdx, 1, colIdx + 4);
+        const cell = worksheet.getCell(1, colIdx);
+        cell.value = season.displayName || season.name;
+        cell.font = { bold: true, size: 12 };
+        cell.alignment = { horizontal: 'center', vertical: 'center' };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD4AF37' } };
+        colIdx += 5;
       });
 
-      worksheet['!merges'] = merges;
-
-      // Style header rows (bold)
-      const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-      
-      // Style first two rows (headers)
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const address1 = XLSX.utils.encode_cell({ r: 0, c: C });
-        const address2 = XLSX.utils.encode_cell({ r: 1, c: C });
-        
-        if (worksheet[address1]) {
-          worksheet[address1].s = {
-            font: { bold: true, sz: 12 },
-            alignment: { horizontal: 'center', vertical: 'center' },
-            fill: { fgColor: { rgb: 'FFD4AF37' } }
-          };
-        }
-        
-        if (worksheet[address2]) {
-          worksheet[address2].s = {
-            font: { bold: true, sz: 10 },
-            alignment: { horizontal: 'center', vertical: 'center' },
-            fill: { fgColor: { rgb: 'FFF3F4F6' } }
-          };
+      // Add data rows (skip the first two header rows from excelArray)
+      for (let i = 2; i < excelArray.length; i++) {
+        const row = excelArray[i];
+        if (row && row.length > 0) {
+          worksheet.addRow(row);
         }
       }
 
-      // Create workbook
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Players');
+      // Style sub-header row (row 2)
+      worksheet.getRow(2).eachCell((cell) => {
+        cell.font = { bold: true, size: 10 };
+        cell.alignment = { horizontal: 'center', vertical: 'center' };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } };
+      });
+
+      // Generate buffer
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
 
       // Generate filename with proper season names
       const seasonsText = selectedSeasons.length === 1
@@ -366,7 +352,11 @@ export default function ExportPlayersPage() {
       const filename = `RealPlayers_${seasonsText}_${new Date().toISOString().split('T')[0]}.xlsx`;
 
       // Download
-      XLSX.writeFile(workbook, filename);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
 
       setSuccess(`Excel file "${filename}" downloaded successfully with ${players.size} players!`);
     } catch (error: any) {

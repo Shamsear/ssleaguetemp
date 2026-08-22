@@ -8,7 +8,6 @@ import PlayerImage, { PlayerAvatar } from '@/components/PlayerImage';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import * as XLSX from 'xlsx';
 
 // Position constants
 // Dynamic positions and position groups will be generated from actual player data
@@ -950,16 +949,17 @@ export default function PlayerStatisticsPage() {
                       'Starred': player.is_starred ? 'Yes' : 'No'
                     }));
 
-                    const ws = XLSX.utils.json_to_sheet(exportData);
-                    ws['!cols'] = [
-                      { wch: 5 },  { wch: 25 }, { wch: 10 }, { wch: 20 }, { wch: 20 },
-                      { wch: 12 }, { wch: 8 },  { wch: 12 }, { wch: 12 }, { wch: 10 },
-                      { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 18 },
-                      { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 20 }, { wch: 8 }
-                    ];
-
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, 'Football Players');
+                    const ExcelJS = (await import('exceljs')).default;
+                    const wb = new ExcelJS.Workbook();
+                    const ws = wb.addWorksheet('Football Players');
+                    if (exportData.length > 0) {
+                      const colWidths = [5, 25, 10, 20, 20, 12, 8, 12, 12, 10, 10, 12, 10, 10, 18, 10, 12, 12, 12, 20, 8];
+                      ws.columns = Object.keys(exportData[0]).map((key, i) => ({ header: key, key, width: colWidths[i] || 12 }));
+                      exportData.forEach(row => ws.addRow(row));
+                    }
+                    const buffer = await wb.xlsx.writeBuffer();
+                    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                    const url = URL.createObjectURL(blob);
 
                     const timestamp = new Date().toISOString().split('T')[0];
                     let filename = `Football_Players_${timestamp}`;
@@ -974,7 +974,11 @@ export default function PlayerStatisticsPage() {
                     }
                     filename += '.xlsx';
 
-                    XLSX.writeFile(wb, filename);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
 
                     showAlert({
                       type: 'success',

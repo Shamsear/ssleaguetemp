@@ -4,7 +4,6 @@ import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { db } from '@/lib/firebase/config'
 import { collection, doc, getDoc, getDocs, Timestamp, onSnapshot, query as firestoreQuery, where } from 'firebase/firestore'
-import * as XLSX from 'xlsx'
 
 interface Season {
   id: string
@@ -443,25 +442,26 @@ function PlayersRegistrationPageContent() {
         }
       })
 
-      const ws = XLSX.utils.json_to_sheet(exportData)
-      
-      ws['!cols'] = [
-        { wch: 5 },  // #
-        { wch: 25 }, // Name
-        { wch: 15 }, // Player ID
-        { wch: 20 }, // Registration Date
-        { wch: 30 }, // Email
-        { wch: 15 }, // Phone Number
-        { wch: 18 }  // Smart Assist
-      ]
-
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Registered Players')
+      const ExcelJS = (await import('exceljs')).default
+      const wb = new ExcelJS.Workbook()
+      const ws = wb.addWorksheet('Registered Players')
+      const colWidths = [5, 25, 15, 20, 30, 15, 18]
+      if (exportData.length > 0) {
+        ws.columns = Object.keys(exportData[0]).map((key, i) => ({ header: key, key, width: colWidths[i] || 12 }))
+        exportData.forEach(row => ws.addRow(row))
+      }
+      const buffer = await wb.xlsx.writeBuffer()
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = URL.createObjectURL(blob)
 
       const timestamp = new Date().toISOString().split('T')[0]
       const filename = `registered_players_${season?.name || seasonId}_${timestamp}.xlsx`
 
-      XLSX.writeFile(wb, filename)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      a.click()
+      URL.revokeObjectURL(url)
       
       setSuccess(`Exported ${exportData.length} players to Excel!`)
       setTimeout(() => setSuccess(null), 3000)

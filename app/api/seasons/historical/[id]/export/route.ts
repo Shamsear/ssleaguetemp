@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
 import { verifyAuth } from '@/lib/auth-helper';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 export async function GET(
   request: NextRequest,
@@ -189,7 +189,7 @@ export async function GET(
     });
 
     // Create Excel workbook
-    const workbook = XLSX.utils.book_new();
+    const workbook = new ExcelJS.Workbook();
 
     // Teams Sheet (full structure with standings)
     const teamsSheetData = teams.map(team => ({
@@ -208,27 +208,23 @@ export async function GET(
       cup: team.cup
     }));
     
-    const teamsSheet = teamsSheetData.length > 0 
-      ? XLSX.utils.json_to_sheet(teamsSheetData)
-      : XLSX.utils.aoa_to_sheet([['rank', 'team', 'owner_name', 'p', 'mp', 'w', 'd', 'l', 'f', 'a', 'gd', 'percentage', 'cup']]);
-    
-    teamsSheet['!cols'] = [
-      { width: 8 },  // rank
-      { width: 25 }, // team
-      { width: 20 }, // owner_name
-      { width: 8 },  // p
-      { width: 8 },  // mp
-      { width: 8 },  // w
-      { width: 8 },  // d
-      { width: 8 },  // l
-      { width: 8 },  // f
-      { width: 8 },  // a
-      { width: 8 },  // gd
-      { width: 10 }, // percentage
-      { width: 15 }  // cup
+    const teamsSheet = workbook.addWorksheet('Teams');
+    teamsSheet.columns = [
+      { header: 'rank', key: 'rank', width: 8 },
+      { header: 'team', key: 'team', width: 25 },
+      { header: 'owner_name', key: 'owner_name', width: 20 },
+      { header: 'p', key: 'p', width: 8 },
+      { header: 'mp', key: 'mp', width: 8 },
+      { header: 'w', key: 'w', width: 8 },
+      { header: 'd', key: 'd', width: 8 },
+      { header: 'l', key: 'l', width: 8 },
+      { header: 'f', key: 'f', width: 8 },
+      { header: 'a', key: 'a', width: 8 },
+      { header: 'gd', key: 'gd', width: 8 },
+      { header: 'percentage', key: 'percentage', width: 10 },
+      { header: 'cup', key: 'cup', width: 15 },
     ];
-    
-    XLSX.utils.book_append_sheet(workbook, teamsSheet, 'Teams');
+    teamsSheetData.forEach(row => teamsSheet.addRow(row));
 
     // Players Sheet
     const playersSheetData = players.map(player => {
@@ -272,45 +268,31 @@ export async function GET(
       return playerRow;
     });
     
-    const playersSheet = playersSheetData.length > 0
-      ? XLSX.utils.json_to_sheet(playersSheetData)
-      : XLSX.utils.aoa_to_sheet([[
-          'player_id', 'name', 'team', 'category', 'goals_scored', 'goals_per_game',
-          'goals_conceded', 'conceded_per_game', 'net_goals', 'cleansheets',
-          'points', 'potm', 'win', 'draw', 'loss', 'total_matches', 'base_points', 'raw_points',
-          'Cat Trophy 1', 'Cat Trophy 2', 'Cat Trophy 3', 'Cat Trophy 4', 'Cat Trophy 5',
-          'Ind Trophy 1', 'Ind Trophy 2', 'Ind Trophy 3', 'Ind Trophy 4', 'Ind Trophy 5'
-        ]]);
-    
-    playersSheet['!cols'] = [
-      { width: 15 }, // player_id
-      { width: 25 }, // name
-      { width: 25 }, // team
-      { width: 15 }, // category
-      { width: 12 }, // goals_scored
-      { width: 12 }, // goals_per_game
-      { width: 12 }, // goals_conceded
-      { width: 12 }, // conceded_per_game
-      { width: 12 }, // net_goals
-      { width: 12 }, // cleansheets
-      { width: 10 }, // points
-      { width: 10 }, // potm
-      { width: 8 },  // win
-      { width: 8 },  // draw
-      { width: 8 },  // loss
-      { width: 15 }, // total_matches
-      { width: 12 }, // base_points
-      { width: 12 }  // raw_points
+    const playersSheet = workbook.addWorksheet('Players');
+    playersSheet.columns = [
+      { header: 'player_id', key: 'player_id', width: 15 },
+      { header: 'name', key: 'name', width: 25 },
+      { header: 'team', key: 'team', width: 25 },
+      { header: 'category', key: 'category', width: 15 },
+      { header: 'goals_scored', key: 'goals_scored', width: 12 },
+      { header: 'goals_per_game', key: 'goals_per_game', width: 12 },
+      { header: 'goals_conceded', key: 'goals_conceded', width: 12 },
+      { header: 'conceded_per_game', key: 'conceded_per_game', width: 12 },
+      { header: 'net_goals', key: 'net_goals', width: 12 },
+      { header: 'cleansheets', key: 'cleansheets', width: 12 },
+      { header: 'points', key: 'points', width: 10 },
+      { header: 'potm', key: 'potm', width: 10 },
+      { header: 'win', key: 'win', width: 8 },
+      { header: 'draw', key: 'draw', width: 8 },
+      { header: 'loss', key: 'loss', width: 8 },
+      { header: 'total_matches', key: 'total_matches', width: 15 },
+      { header: 'base_points', key: 'base_points', width: 12 },
+      { header: 'raw_points', key: 'raw_points', width: 12 },
     ];
-    
-    XLSX.utils.book_append_sheet(workbook, playersSheet, 'Players');
+    playersSheetData.forEach(row => playersSheet.addRow(row));
 
     // Generate Excel buffer
-    const buffer = XLSX.write(workbook, { 
-      type: 'buffer', 
-      bookType: 'xlsx',
-      compression: true
-    });
+    const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
 
     const filename = `season_stats_${season.short_name || season.name || sessionId}_${new Date().toISOString().split('T')[0]}.xlsx`;
 

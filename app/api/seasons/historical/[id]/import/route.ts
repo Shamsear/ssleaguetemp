@@ -4,7 +4,7 @@ import admin from 'firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 interface ImportStats {
   teams: { updated: number; unchanged: number; errors: string[] };
@@ -139,18 +139,37 @@ export async function POST(
 
       // Read Excel file
       const buffer = Buffer.from(await file.arrayBuffer());
-      const workbook = XLSX.read(buffer, { type: 'buffer' });
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(buffer);
+
+      // Helper to convert worksheet rows to JSON
+      const sheetToJson = (sheet: ExcelJS.Worksheet): any[] => {
+        const headers: string[] = [];
+        const result: any[] = [];
+        sheet.eachRow((row, rowNumber) => {
+          if (rowNumber === 1) {
+            row.eachCell((cell) => { headers.push(String(cell.value || '')); });
+          } else {
+            const obj: any = {};
+            row.eachCell((cell, colNumber) => {
+              obj[headers[colNumber - 1]] = cell.value;
+            });
+            result.push(obj);
+          }
+        });
+        return result;
+      };
 
       // Extract teams data from Excel
-      if (workbook.SheetNames.includes('Teams')) {
-        const teamsSheet = workbook.Sheets['Teams'];
-        teamsToImport = XLSX.utils.sheet_to_json(teamsSheet);
+      const teamsSheet = workbook.getWorksheet('Teams');
+      if (teamsSheet) {
+        teamsToImport = sheetToJson(teamsSheet);
       }
 
       // Extract players data from Excel
-      if (workbook.SheetNames.includes('Players')) {
-        const playersSheet = workbook.Sheets['Players'];
-        playersToImport = XLSX.utils.sheet_to_json(playersSheet);
+      const playersSheet = workbook.getWorksheet('Players');
+      if (playersSheet) {
+        playersToImport = sheetToJson(playersSheet);
       }
     }
 
