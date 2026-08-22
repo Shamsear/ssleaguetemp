@@ -226,7 +226,7 @@ export default function FantasyLeaderboardPage() {
                   <div className="flex items-center gap-2.5 sm:gap-3.5 flex-1 min-w-0">
                     {/* Rank Badge */}
                     <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border font-black text-[10px] sm:text-xs flex items-center justify-center shrink-0 shadow-sm ${getRankBadgeClass(entry.rank)}`}>
-                      {entry.rank}
+                      {entry.rank >= 999 ? '—' : entry.rank}
                     </div>
 
                     {/* Logo/Fallback circle */}
