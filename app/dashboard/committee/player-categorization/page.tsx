@@ -573,7 +573,7 @@ export default function PlayerCategorizationPage() {
   };
 
   // Export recommendations to Excel
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!hasCalculated) return;
 
     // Category priority order for sorting (Red = 1 = highest)

@@ -228,7 +228,7 @@ export default function ExportPlayersPage() {
     }
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     if (players.size === 0) {
       setError('No players to export. Please load data first.');
       return;
