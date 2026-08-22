@@ -1,5 +1,5 @@
 'use client';
-import { XCircle, CheckCircle, Lock, BarChart2, AlertTriangle } from 'lucide-react';
+import { XCircle, CheckCircle, Lock, BarChart2, AlertTriangle, ClipboardList } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -494,7 +494,7 @@ export default function WeeklyLineupsPage() {
 
               {/* Lineup Details */}
               <div>
-                <h3 className="font-bold text-gray-900 mb-4 text-lg">📋 Team-by-Team Details</h3>
+                <h3 className="font-bold text-gray-900 mb-4 text-lg"><ClipboardList className="w-5 h-5 inline text-slate-500 mr-1" /> Team-by-Team Details</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full border border-gray-200 rounded-lg">
                     <thead className="bg-gray-50">

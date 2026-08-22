@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { Trophy, Medal, BarChart2, Target, Award } from 'lucide-react';
 
 interface TeamStats {
   team_id: string;
@@ -34,7 +36,7 @@ export default function LeagueStandingsTable({
   if (standings.length === 0) {
     return (
       <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-8 text-center font-mono shadow-sm">
-        <span className="text-4xl mb-3 block">⚽</span>
+        <SoccerBallIcon className="w-10 h-10" />
         <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-2">No Team Statistics Available</h3>
         <p className="text-xs text-slate-500 uppercase font-semibold">Team standings will appear once matches are completed</p>
       </div>
@@ -51,7 +53,7 @@ export default function LeagueStandingsTable({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center">
-                <span className="text-xl">⚽</span>
+                <SoccerBallIcon className="w-5 h-5" />
               </div>
               <div>
                 <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">League Table</h3>
@@ -104,9 +106,9 @@ export default function LeagueStandingsTable({
                   {/* Header */}
                   <div className="flex items-center gap-3 mb-3">
                     <div className="text-xl font-bold font-mono">
-                      {index === 0 && '🥇'}
-                      {index === 1 && '🥈'}
-                      {index === 2 && '🥉'}
+                      {index === 0 && <Award className="w-5 h-5 text-amber-500" />}
+                      {index === 1 && <Medal className="w-5 h-5 text-slate-400" />}
+                      {index === 2 && <Medal className="w-5 h-5 text-amber-700" />}
                       {index > 2 && `#${index + 1}`}
                     </div>
                     
@@ -137,7 +139,7 @@ export default function LeagueStandingsTable({
                         )}
                         {isPlayoffSpot && (
                           <span className="text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-250/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                            🎯 Playoff
+                            <Target className="w-3 h-3 text-rose-500 mr-1" /> Playoff
                           </span>
                         )}
                       </div>
@@ -252,9 +254,9 @@ export default function LeagueStandingsTable({
                       }`}
                     >
                       <td className="px-3 sm:px-6 py-3.5 whitespace-nowrap text-left text-xs font-black text-slate-800">
-                        {index === 0 && <span className="text-lg">🥇</span>}
-                        {index === 1 && <span className="text-lg">🥈</span>}
-                        {index === 2 && <span className="text-lg">🥉</span>}
+                        {index === 0 && <Award className="w-5 h-5 text-amber-500" />}
+                        {index === 1 && <Medal className="w-5 h-5 text-slate-400" />}
+                        {index === 2 && <Medal className="w-5 h-5 text-amber-700" />}
                         {index > 2 && <span className="font-bold">{`#${index + 1}`}</span>}
                       </td>
                       <td className="px-3 sm:px-6 py-3.5 text-left">
@@ -289,7 +291,7 @@ export default function LeagueStandingsTable({
                               )}
                               {isPlayoffSpot && (
                                 <span className="text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-250/30 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-                                  🎯 Playoff
+                                  <Target className="w-3 h-3 text-rose-500 mr-1" /> Playoff
                                 </span>
                               )}
                             </div>
@@ -341,7 +343,7 @@ export default function LeagueStandingsTable({
       <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm font-mono relative overflow-hidden">
         <div className="flex items-start gap-3">
           <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span className="text-lg">📊</span>
+            <BarChart2 className="w-5 h-5 text-slate-500" />
           </div>
           <div>
             <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-2">League Table Legend</h3>
@@ -364,7 +366,7 @@ export default function LeagueStandingsTable({
         <div className="console-card bg-gradient-to-br from-amber-500/5 via-orange-500/[0.02] to-transparent border border-amber-500/20 rounded-2xl p-5 shadow-sm font-mono relative overflow-hidden">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-center flex-shrink-0 animate-pulse">
-              <span className="text-2xl">🏆</span>
+              <Trophy className="w-6 h-6 text-amber-500" />
             </div>
             <div>
               <h3 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Current Leader</h3>

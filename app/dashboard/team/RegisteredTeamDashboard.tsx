@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { AlertCircle, ArrowRightLeft, BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Flame, Info, Settings, Star, TrendingUp, Trophy, User, UserMinus, Users, Coins, RefreshCw } from 'lucide-react';
+import { AlertCircle, ArrowRightLeft, BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Flame, Info, Settings, Star, TrendingUp, Trophy, User, UserMinus, Users, Coins, RefreshCw, Target, Award, Gem, Plus, RotateCcw } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
@@ -1029,7 +1029,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 onClick={() => handleTabChange('auctions')}
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-105 transition-all text-xs font-mono font-bold uppercase tracking-wider"
               >
-                <span>🔥</span>
+                <Flame className="w-4 h-4 text-orange-500" />
                 <span>View All Rounds</span>
               </button>
 
@@ -1047,7 +1047,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 href="/dashboard/team/auction-results"
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
               >
-                <span>🎯</span>
+                <Target className="w-4 h-4 text-rose-500" />
                 <span>Auction Results</span>
               </Link>
               <Link
@@ -1162,7 +1162,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 href={`/awards/season/${seasonStatus.seasonId}`}
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider"
               >
-                <span>🏅</span>
+                <Award className="w-4 h-4 text-amber-400" />
                 <span>Season Awards</span>
               </Link>
               <Link
@@ -1209,7 +1209,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 href="/dashboard/team/budget-planner"
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
               >
-                <span>💰</span>
+                <Gem className="w-4 h-4 text-blue-500" />
                 <span>Budget Planner</span>
               </Link>
               <Link
@@ -1971,7 +1971,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                     <div className="font-bold text-slate-800 text-sm uppercase">Team Profile</div>
                   </Link>
                   <Link href="/dashboard/team/budget-planner" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
-                    <div className="text-3xl mb-2">💰</div>
+                    <div className="flex justify-center text-3xl mb-2"><Gem className="w-5 h-5 text-blue-500" /></div>
                     <div className="font-bold text-slate-800 text-sm uppercase">Budget Planner</div>
                   </Link>
                   <Link href="/dashboard/team/real-players-planner" className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250">
@@ -2028,7 +2028,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   href="/dashboard/team/fantasy/draft"
                   className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250 border-l-4 border-emerald-500"
                 >
-                  <div className="text-3xl mb-2">➕</div>
+                  <div className="flex justify-center text-3xl mb-2"><Plus className="w-5 h-5 text-slate-500" /></div>
                   <div className="font-bold text-slate-805 text-sm uppercase">Draft Players</div>
                   <div className="text-xs text-slate-400 mt-1 font-sans">Add players to your team</div>
                 </Link>
@@ -2037,7 +2037,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   href="/dashboard/team/fantasy/transfers"
                   className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-250 border-l-4 border-blue-500"
                 >
-                  <div className="text-3xl mb-2">🔄</div>
+                  <div className="flex justify-center text-3xl mb-2"><RotateCcw className="w-5 h-5 text-blue-500" /></div>
                   <div className="font-bold text-slate-800 text-sm uppercase">Transfers</div>
                   <div className="text-xs text-slate-400 mt-1 font-sans">Manage your transfers</div>
                 </Link>

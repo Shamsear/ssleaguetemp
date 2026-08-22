@@ -2841,7 +2841,7 @@ export function TournamentDashboardPageContent() {
 
                   {groupAssignments.length === 0 && unassignedTeams.length === 0 && (
                     <div className="text-center py-12">
-                      <div className="text-6xl mb-4">🎯</div>
+                      <Target className="w-16 h-16 text-rose-500 mx-auto mb-4" />
                       <h3 className="text-xl font-bold text-gray-900 mb-2">No Teams in Tournament</h3>
                       <p className="text-gray-600 mb-4">
                         Please assign teams to this tournament first in the Teams tab.
@@ -2902,9 +2902,9 @@ export function TournamentDashboardPageContent() {
                       >
                         <option value="league"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> League</option>
                         <option value="cup"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cup</option>
-                        <option value="ucl">🌟 Champions League</option>
+                        <option value="ucl"><Sparkles className="w-4 h-4 inline-block text-amber-400 mr-1 align-text-bottom" /> Champions League</option>
                         <option value="uel"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Europa League</option>
-                        <option value="super_cup">🏅 Super Cup</option>
+                        <option value="super_cup"><Award className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Super Cup</option>
                         <option value="league_cup"><Trophy className="w-4 h-4 text-blue-500" /> League Cup</option>
                       </select>
                     </div>
@@ -4173,9 +4173,9 @@ export function TournamentDashboardPageContent() {
                       >
                         <option value="league"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> League</option>
                         <option value="cup"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cup</option>
-                        <option value="ucl">🌟 Champions League</option>
+                        <option value="ucl"><Sparkles className="w-4 h-4 inline-block text-amber-400 mr-1 align-text-bottom" /> Champions League</option>
                         <option value="uel"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Europa League</option>
-                        <option value="super_cup">🏅 Super Cup</option>
+                        <option value="super_cup"><Award className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Super Cup</option>
                         <option value="league_cup"><Trophy className="w-4 h-4 text-blue-500" /> League Cup</option>
                       </select>
                     </div>

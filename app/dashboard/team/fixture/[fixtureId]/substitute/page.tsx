@@ -1,6 +1,6 @@
 'use client';
 
-import { Star } from 'lucide-react';
+import { Star, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -169,7 +169,7 @@ export default function FixtureSubstitutePage() {
               </div>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-blue-600 mb-2">🔄 Substitutes ({lineup.substitutes.length})</h4>
+              <h4 className="text-sm font-semibold text-blue-600 mb-2"><RefreshCw className="w-4 h-4 inline text-blue-500 mr-1" /> Substitutes ({lineup.substitutes.length})</h4>
               <div className="text-xs text-gray-600 space-y-1">
                 {lineup.substitutes.map((playerId: string, idx: number) => (
                   <div key={playerId} className="bg-blue-50 rounded px-2 py-1">

@@ -6,6 +6,8 @@
  */
 
 import React from 'react';
+import { SoccerBallIcon, GloveIcon } from '@/components/ui/CustomIcons';
+import { Trophy, Award, Sparkles } from 'lucide-react';
 
 // ─── Helper Functions ─────────────────────────────────────────────────────────
 
@@ -243,7 +245,7 @@ const VWatermark = () => (
 
 function AwardChips({ themeKey }: { themeKey: string }) {
   const [aB, aBl, aG] = AWARD_ACTIVE[themeKey] ?? [false, false, false];
-  const chips = [{ icon: '👟', on: aB }, { icon: '⚽', on: aBl }, { icon: '🧤', on: aG }];
+  const chips = [{ icon: <Award size={17} />, on: aB }, { icon: <SoccerBallIcon className="w-[17px] h-[17px]" />, on: aBl }, { icon: <GloveIcon className="w-[17px] h-[17px]" />, on: aG }];
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
       {chips.map((a, i) => (
@@ -2140,11 +2142,10 @@ export function TeamOfDayDesign({
             </div>
           ) : (
             <div style={{
-              fontSize: 200,
-              color: 'rgba(0,229,255,0.2)',
               zIndex: 2,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              🏆
+              <Trophy size={200} color="rgba(0,229,255,0.2)" />
             </div>
           )}
         </div>
@@ -2600,8 +2601,8 @@ export function SinglePlayerDesign({
             width: 280, height: 700,
             background: 'linear-gradient(180deg, rgba(212,168,48,0.07) 0%, rgba(212,168,48,0.02) 55%, transparent 100%)',
             borderRadius: '140px 140px 0 0', border: '1px solid rgba(212,168,48,0.1)', borderBottom: 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 160, opacity: 0.12,
-          }}>⚽</div>
+            display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.12,
+          }}><SoccerBallIcon className="w-[160px] h-[160px]" /></div>
         )}
       </div>
 

@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { toPng } from 'html-to-image';
 import { FixturesSnapshot, Match } from './tournament/FixturesSnapshot';
 import { Clock, ClipboardList } from 'lucide-react';
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
 
 interface Matchup {
   position: number;
@@ -76,7 +77,7 @@ export default function FixtureShareButton({ fixture, matchups }: Props) {
       case 'scheduled':
         return <span className="text-blue-600 font-bold flex items-center gap-1"><Clock className="w-4 h-4" /> SCHEDULED</span>;
       case 'in_progress':
-        return <span className="text-orange-600 font-bold">⚽ IN PROGRESS</span>;
+        return <span className="text-orange-600 font-bold inline-flex items-center gap-1"><SoccerBallIcon className="w-4 h-4" /> IN PROGRESS</span>;
       default:
         return <span className="text-gray-600 font-bold flex items-center gap-1"><ClipboardList className="w-4 h-4" /> {fixture.status.toUpperCase()}</span>;
     }

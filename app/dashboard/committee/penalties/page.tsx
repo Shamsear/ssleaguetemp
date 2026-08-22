@@ -1,5 +1,5 @@
 'use client';
-import { CheckCircle, AlertTriangle, BarChart2 } from 'lucide-react';
+import { CheckCircle, AlertTriangle, BarChart2, ClipboardList, Settings } from 'lucide-react';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -489,7 +489,7 @@ export default function TournamentPenaltiesPage() {
                                                                             : 'bg-slate-800 hover:bg-slate-750 text-white'
                                                                     }`}
                                                                 >
-                                                                    <span>{isExpanded && showHistory ? '✕' : '📋'}</span>
+                                                                    {isExpanded && showHistory ? <span>✕</span> : <ClipboardList className="w-4 h-4 inline" />}
                                                                     {isExpanded && showHistory ? 'Close' : 'History'}
                                                                 </button>
                                                             )}
@@ -823,7 +823,7 @@ export default function TournamentPenaltiesPage() {
                 {/* Info Box */}
                 <div className="console-card bg-slate-50 border border-slate-200 rounded-2xl p-5 font-mono text-xs">
                     <div className="flex items-start gap-3">
-                        <span className="text-lg">⚙️</span>
+                        <Settings className="w-5 h-5 text-slate-500" />
                         <div className="space-y-2">
                             <h3 className="text-xs font-bold text-slate-850 uppercase tracking-wider">How Penalties Work</h3>
                             <ul className="space-y-1 text-slate-500 font-bold uppercase tracking-wide text-[10px]">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Trophy } from 'lucide-react';
 
 export default function TestPlayerAwards() {
   const [loading, setLoading] = useState(false);
@@ -82,7 +83,7 @@ export default function TestPlayerAwards() {
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            🏆 Test Player Awards
+            <Trophy className="w-8 h-8 inline text-amber-500 mr-2" /> Test Player Awards
           </h1>
           <p className="text-gray-600 mb-8">
             Create test player awards to verify the system

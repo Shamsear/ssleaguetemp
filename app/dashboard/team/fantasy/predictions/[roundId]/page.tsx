@@ -1,7 +1,7 @@
 'use client';
 
 import { CrystalBallIcon } from '@/components/ui/CustomIcons';
-import { Clock, Info, Save } from 'lucide-react';
+import { Clock, Info, Save, Gem } from 'lucide-react';
 /**
  * Fantasy Predictions Page
  * Submit predictions for H2H matchups to earn bonus points
@@ -269,7 +269,7 @@ export default function PredictionsPage() {
 
       {/* Bonus Points Info */}
       <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg p-6 mb-6 text-white">
-        <h2 className="text-xl font-bold mb-3">💰 Bonus Points</h2>
+        <h2 className="text-xl font-bold mb-3"><Gem className="w-5 h-5 inline text-blue-300 mr-1" /> Bonus Points</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <div className="text-2xl font-bold">+5</div>

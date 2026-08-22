@@ -1,4 +1,5 @@
 import React from 'react';
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
 
 // Data shapes expected
 export interface Match {
@@ -144,7 +145,7 @@ export function FixturesSnapshot({
                         crossOrigin="anonymous" 
                       />
                     ) : (
-                      <span style={{ fontSize: '24px' }}>⚽</span>
+                      <SoccerBallIcon className="w-6 h-6 text-slate-500" />
                     )}
                   </div>
                 </div>
@@ -184,7 +185,7 @@ export function FixturesSnapshot({
                         crossOrigin="anonymous" 
                       />
                     ) : (
-                      <span style={{ fontSize: '24px' }}>⚽</span>
+                      <SoccerBallIcon className="w-6 h-6 text-slate-500" />
                     )}
                   </div>
                   <span style={{ color: awayWin ? '#059669' : '#111111', fontSize: '20px', fontWeight: 800 }}>

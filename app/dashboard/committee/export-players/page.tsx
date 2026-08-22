@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { BarChart2 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Download, FileSpreadsheet, AlertTriangle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -606,7 +607,7 @@ export default function ExportPlayersPage() {
 
         {/* Info Card */}
         <div className="console-card bg-blue-50 border border-blue-200/60 rounded-2xl p-4 font-mono text-xs">
-          <h3 className="font-bold text-blue-800 uppercase mb-2 text-[10px]">📊 How This Works:</h3>
+          <h3 className="font-bold text-blue-800 uppercase mb-2 text-[10px]"><BarChart2 className="w-3 h-3 inline text-blue-500 mr-1" /> How This Works:</h3>
           <ul className="space-y-1 text-blue-700 font-semibold">
             <li>• Shows players registered in <strong>your current season ({userSeasonId})</strong></li>
             <li>• Displays their stats from <strong>selected seasons</strong></li>

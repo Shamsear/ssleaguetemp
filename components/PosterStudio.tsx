@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   Focus
 } from 'lucide-react';
+import { renderEmoji } from '@/components/ui/CustomIcons';
 
 interface PlayerStats {
   player_id: string;
@@ -2777,7 +2778,7 @@ function SinglePlayerPoster({ player, theme, themeKey }: { player: PlayerStats; 
             color: theme.accent,
             textTransform: 'uppercase',
           }}>
-            {theme.emoji} {theme.tagline}
+            {renderEmoji(theme.emoji, 'w-4 h-4 inline-block mr-1')} {theme.tagline}
           </span>
         </div>
       </div>
@@ -2971,7 +2972,7 @@ function MultiPlayerPoster({
             color: theme.accent,
             textTransform: 'uppercase',
           }}>
-            {theme.emoji} {theme.tagline}
+            {renderEmoji(theme.emoji, 'w-4 h-4 inline-block mr-1')} {theme.tagline}
           </span>
         </div>
         <h1 style={{

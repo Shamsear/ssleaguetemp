@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Trophy, BarChart2 } from 'lucide-react';
 
 interface GroupTeam {
   team_id: string;
@@ -31,7 +32,7 @@ export default function GroupStageStandings({ groupStandings, currentUserId }: G
   if (groups.length === 0) {
     return (
       <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-8 text-center font-mono shadow-sm">
-        <span className="text-6xl mb-4 block">🏆</span>
+        <Trophy className="w-16 h-16 text-amber-500" />
         <h3 className="text-lg font-medium text-gray-600 mb-2">No Group Stage Data Available</h3>
         <p className="text-sm text-gray-500">Group standings will appear once matches are completed</p>
       </div>
@@ -71,7 +72,7 @@ export default function GroupStageStandings({ groupStandings, currentUserId }: G
         <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/40">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center">
-              <span className="text-xl">🏆</span>
+              <Trophy className="w-5 h-5 text-amber-500" />
             </div>
             <div>
               <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Group {selectedGroup} Standings</h3>
@@ -246,7 +247,7 @@ export default function GroupStageStandings({ groupStandings, currentUserId }: G
               onClick={() => setSelectedGroup(group)}
             >
               <h4 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-2 font-mono">
-                <span className="text-lg">🏆</span>
+                <Trophy className="w-5 h-5 text-amber-500" />
                 Group {group}
               </h4>
               <div className="space-y-2 font-mono">
@@ -279,7 +280,7 @@ export default function GroupStageStandings({ groupStandings, currentUserId }: G
       <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm font-mono relative overflow-hidden">
         <div className="flex items-start gap-3">
           <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span className="text-lg">📊</span>
+            <BarChart2 className="w-5 h-5 text-slate-500" />
           </div>
           <div>
             <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-2">Group Stage Legend</h3>

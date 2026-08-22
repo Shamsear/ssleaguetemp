@@ -1,7 +1,7 @@
 'use client';
 
 import { CrystalBallIcon } from '@/components/ui/CustomIcons';
-import { Info, Pencil } from 'lucide-react';
+import { Info, Pencil, Gem } from 'lucide-react';
 /**
  * Fantasy Predictions List Page
  * View all rounds and access prediction submission
@@ -148,7 +148,7 @@ export default function PredictionsListPage() {
 
       {/* Bonus Points Info */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <h3 className="font-semibold text-blue-900 mb-3">💰 How to Earn Points</h3>
+        <h3 className="font-semibold text-blue-900 mb-3"><Gem className="w-4 h-4 inline text-blue-500 mr-1" /> How to Earn Points</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
           <div className="text-center">
             <div className="text-xl font-bold text-blue-600">+5</div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { Trophy, Award } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
 interface FantasyTeam {
@@ -163,7 +164,7 @@ export default function ShareableFantasyLeaderboard({
 
           {/* Leaderboard Title */}
           <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-6 py-4 text-center">
-            <h2 className="text-3xl font-bold uppercase tracking-wide">🏆 STANDINGS 🏆</h2>
+            <h2 className="text-3xl font-bold uppercase tracking-wide flex items-center justify-center gap-2"><Trophy className="w-8 h-8 text-amber-500" /> STANDINGS <Trophy className="w-8 h-8 text-amber-500" /></h2>
           </div>
 
           {/* Table */}
@@ -193,13 +194,13 @@ export default function ShareableFantasyLeaderboard({
                       <td className="py-4 px-3 text-center border-2 border-purple-200">
                         <div className="flex items-center justify-center">
                           {index === 0 && (
-                            <span className="text-4xl">🥇</span>
+                            <Award className="w-10 h-10 text-amber-500" />
                           )}
                           {index === 1 && (
-                            <span className="text-4xl">🥈</span>
+                            <Award className="w-10 h-10 text-slate-400" />
                           )}
                           {index === 2 && (
-                            <span className="text-4xl">🥉</span>
+                            <Award className="w-10 h-10 text-amber-700" />
                           )}
                           {index > 2 && (
                             <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold px-4 py-2 rounded-lg text-lg">

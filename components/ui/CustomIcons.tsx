@@ -123,7 +123,8 @@ import {
   Gamepad2, Info, Lightbulb, Shield, Scale, LogOut, Gavel, UserCheck, Gift, 
   Dumbbell, BookOpen, Type, Globe, Users, Bot, Handshake, HeartCrack, TrendingUp, 
   TrendingDown, Calendar, BarChart2, ClipboardList, Search, Settings, Clock, 
-  AlertCircle, Ban, Pencil, Save, Check, XCircle
+  AlertCircle, Ban, Pencil, Save, Check, XCircle, CheckCircle2, RefreshCw, 
+  Circle, Newspaper, AlertTriangle, BellOff
 } from 'lucide-react';
 
 export const renderEmoji = (emoji: string | undefined | null, className: string = "w-4 h-4 inline-block align-text-bottom mr-1") => {
@@ -164,6 +165,15 @@ export const renderEmoji = (emoji: string | undefined | null, className: string 
   if (clean === 'ℹ️' || clean === 'ℹ') return <Info className={`${className} text-blue-500`} />;
   if (clean === '⏳') return <Clock className={`${className} text-slate-550`} />;
   if (clean === '🚨') return <AlertCircle className={`${className} text-rose-500`} />;
+  if (clean === '✅') return <CheckCircle2 className={`${className} text-green-500`} />;
+  if (clean === '❌') return <XCircle className={`${className} text-red-500`} />;
+  if (clean === '🔄') return <RefreshCw className={`${className} text-blue-500`} />;
+  if (clean === '🔴') return <Circle className={`${className} text-red-500 fill-red-500`} />;
+  if (clean === '🟢') return <Circle className={`${className} text-green-500 fill-green-500`} />;
+  if (clean === '🥈') return <Medal className={`${className} text-slate-400`} />;
+  if (clean === '📰') return <Newspaper className={`${className} text-blue-500`} />;
+  if (clean === '🛡️' || clean === '🛡') return <Shield className={`${className} text-blue-500`} />;
+  if (clean === '⚠️' || clean === '⚠') return <AlertTriangle className={`${className} text-yellow-500`} />;
   
   // Fallback for custom component strings
   if (clean.includes('<Star')) return <Star className={`${className} text-amber-400 fill-amber-400`} />;

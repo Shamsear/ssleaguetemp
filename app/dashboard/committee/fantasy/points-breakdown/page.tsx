@@ -1,5 +1,5 @@
 'use client';
-import { Star, Trophy, Crown, Activity, BarChart2 } from 'lucide-react';
+import { Star, Trophy, Crown, Activity, BarChart2, ClipboardList, Award, Calendar } from 'lucide-react';
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -231,7 +231,7 @@ export default function FantasyPointsBreakdownPage() {
 
                                 {/* Player & Team Summary */}
                                 <div className="p-6 bg-gradient-to-br from-slate-50 to-blue-50 border-b-2 border-blue-200">
-                                    <h3 className="text-xl font-bold text-gray-900 mb-4">📋 Points Summary</h3>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-4"><ClipboardList className="w-5 h-5 inline text-slate-500 mr-1" /> Points Summary</h3>
                                     
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         {/* Active Players Summary */}
@@ -361,7 +361,7 @@ export default function FantasyPointsBreakdownPage() {
                                                                     return (
                                                                         <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
                                                                             <div className="flex items-center justify-between">
-                                                                                <span className="text-sm font-semibold text-gray-700">🏅 Team Award Bonuses (TOD/TOW)</span>
+                                                                                <span className="text-sm font-semibold text-gray-700"><Award className="w-4 h-4 inline text-amber-500 mr-1" /> Team Award Bonuses (TOD/TOW)</span>
                                                                                 <span className="text-lg font-bold text-purple-600">+{teamBonuses}</span>
                                                                             </div>
                                                                         </div>
@@ -560,7 +560,7 @@ export default function FantasyPointsBreakdownPage() {
                                     <div className="p-4 sm:p-6 border-t-4 border-purple-200 bg-gradient-to-br from-purple-50/50 via-pink-50/30 to-purple-50/50">
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                                             <h3 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex items-center gap-2">
-                                                <span className="text-2xl sm:text-3xl">🏅</span>
+                                                <Award className="w-7 h-7 text-amber-500" />
                                                 <span>Award Bonus Points</span>
                                             </h3>
                                             <div className="flex items-center gap-3">
@@ -649,7 +649,7 @@ export default function FantasyPointsBreakdownPage() {
                                                                 )}
                                                                 {awardRound && (
                                                                     <div className="flex items-center gap-2">
-                                                                        <span className="text-xs font-medium text-gray-500">📅</span>
+                                                                        <Calendar className="w-3 h-3 inline text-slate-500" />
                                                                         <span className="text-xs font-semibold text-gray-700">
                                                                             {awardRound}
                                                                         </span>

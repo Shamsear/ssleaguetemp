@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { renderEmoji } from '@/components/ui/CustomIcons';
+import { Lightbulb, Gem } from 'lucide-react';
 
 type Team = {
   id: number;
@@ -220,7 +222,7 @@ export default function AdminTransactionsPage() {
                 onChange={(e) => setCurrencyType(e.target.value as CurrencyType)}
                 className="mr-2"
               />
-              💵 Dollar (Real Players)
+              Dollar (Real Players)
             </label>
             <label className="flex items-center">
               <input
@@ -230,7 +232,7 @@ export default function AdminTransactionsPage() {
                 onChange={(e) => setCurrencyType(e.target.value as CurrencyType)}
                 className="mr-2"
               />
-              💶 Euro (Football Players)
+              Euro (Football Players)
             </label>
           </div>
         </div>
@@ -318,16 +320,16 @@ export default function AdminTransactionsPage() {
 
       {/* Instructions */}
       <div className="mt-6 bg-blue-50 p-4 rounded text-sm">
-        <h3 className="font-semibold mb-2">💡 Transaction Types</h3>
+        <h3 className="font-semibold mb-2"><Lightbulb className="w-4 h-4 inline text-amber-500 mr-1" /> Transaction Types</h3>
         <ul className="space-y-1 list-disc list-inside">
           <li><strong>Fine:</strong> Deduct money from team (always positive amount)</li>
           <li><strong>Bonus:</strong> Add money to team (always positive amount)</li>
           <li><strong>Adjustment:</strong> Manual correction (positive adds, negative deducts)</li>
         </ul>
-        <h3 className="font-semibold mb-2 mt-4">💰 Currency Types</h3>
+        <h3 className="font-semibold mb-2 mt-4"><Gem className="w-4 h-4 inline text-blue-500 mr-1" /> Currency Types</h3>
         <ul className="space-y-1 list-disc list-inside">
-          <li><strong>💵 Dollar (Real Players):</strong> Affects team's dollar balance (for SS Members)</li>
-          <li><strong>💶 Euro (Football Players):</strong> Affects team's euro balance (for football players)</li>
+          <li><strong>Dollar (Real Players):</strong> Affects team's dollar balance (for SS Members)</li>
+          <li><strong>Euro (Football Players):</strong> Affects team's euro balance (for football players)</li>
         </ul>
       </div>
     </div>

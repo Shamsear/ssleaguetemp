@@ -11,7 +11,7 @@ import {
   getUrgencyColor,
   isCountdownUrgent,
 } from '@/lib/utils/tiebreakerUtils';
-import { Clock, TrendingUp, Users, AlertCircle } from 'lucide-react';
+import { Clock, TrendingUp, Users, AlertCircle, Trophy, AlertTriangle } from 'lucide-react';
 
 interface TiebreakerCardProps {
   tiebreaker: Tiebreaker;
@@ -83,7 +83,7 @@ export default function TiebreakerCard({
                 <p className="text-xs text-gray-600">Your Status</p>
                 <p className="text-sm font-semibold">
                   {myStatus.you_are_highest ? (
-                    <span className="text-green-700">🏆 Leading Bid</span>
+                    <span className="text-green-700 inline-flex items-center gap-1"><Trophy className="w-4 h-4 text-amber-500" /> Leading Bid</span>
                   ) : myStatus.status === 'withdrawn' ? (
                     <span className="text-gray-600">Withdrawn</span>
                   ) : (
@@ -110,7 +110,7 @@ export default function TiebreakerCard({
               <p className="text-xs text-gray-600">Time Remaining</p>
               <p className={`text-sm font-semibold ${isUrgent ? urgencyColor : 'text-gray-900'}`}>
                 {tiebreaker.time_remaining}
-                {isUrgent && <span className="ml-2 text-xs">⚠️ Urgent</span>}
+                {isUrgent && <span className="ml-2 text-xs inline-flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-yellow-500" /> Urgent</span>}
               </p>
             </div>
           </div>

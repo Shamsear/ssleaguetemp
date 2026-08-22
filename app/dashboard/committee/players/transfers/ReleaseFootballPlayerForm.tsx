@@ -1,5 +1,5 @@
 'use client';
-import { DollarSign, CheckCircle, BarChart2, AlertTriangle, Unlock } from 'lucide-react';
+import { DollarSign, CheckCircle, BarChart2, AlertTriangle, Unlock, Sparkles } from 'lucide-react';
 
 import { useState, useEffect, useMemo } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -300,7 +300,7 @@ export default function ReleaseFootballPlayerForm() {
 
       {success && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl font-mono text-xs uppercase tracking-wide">
-          <p className="font-extrabold">✨ Success</p>
+          <p className="font-extrabold"><Sparkles className="w-4 h-4 inline text-amber-400 mr-1" /> Success</p>
           <pre className="whitespace-pre-wrap text-[10px] mt-2 font-mono leading-relaxed">{success}</pre>
         </div>
       )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, Clock, Star, Trophy, User, Users, Megaphone, Medal, Zap, Settings, Coins } from 'lucide-react';
+import { Calendar, Clock, Star, Trophy, User, Users, Megaphone, Medal, Zap, Settings, Coins, Gem } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamRegistration } from '@/contexts/TeamRegistrationContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
@@ -1193,7 +1193,7 @@ export default function TeamDashboard() {
                     href="/dashboard/team/budget-planner"
                     className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all text-xs font-mono font-bold uppercase tracking-wider"
                   >
-                    <span>💰</span>
+                    <Gem className="w-4 h-4 text-blue-500" />
                     <span>Budget Planner</span>
                   </Link>
                   <Link

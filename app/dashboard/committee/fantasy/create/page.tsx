@@ -1,5 +1,5 @@
 'use client';
-import { CheckCircle, Trophy, AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react';
+import { CheckCircle, Trophy, AlertCircle, RefreshCw, ArrowLeft, Calendar, Gem } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -243,8 +243,8 @@ export default function CreateFantasyLeaguePage() {
                 <div className="flex-1">
                   <h2 className="text-xl font-bold text-emerald-950 mb-2">{existingLeague.name || existingLeague.league_name}</h2>
                   <div className="space-y-1 text-xs font-bold text-emerald-800 uppercase tracking-wider">
-                    <p>📅 Status: {existingLeague.status || 'DRAFT'}</p>
-                    <p>🏆 League ID: {existingLeague.league_id || existingLeague.id}</p>
+                    <p><Calendar className="w-3 h-3 inline text-slate-500 mr-1" /> Status: {existingLeague.status || 'DRAFT'}</p>
+                    <p><Trophy className="w-3 h-3 inline text-amber-500 mr-1" /> League ID: {existingLeague.league_id || existingLeague.id}</p>
                   </div>
                 </div>
               </div>

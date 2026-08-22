@@ -1,5 +1,7 @@
 'use client';
 
+import { Trophy, Info } from 'lucide-react';
+
 interface KnockoutMatch {
   id: string;
   round: string;
@@ -117,7 +119,7 @@ export default function KnockoutBracket({ knockoutFixtures }: KnockoutBracketPro
                               'bg-slate-50/50 border-slate-200/20 text-slate-700'
                             }`}>
                               <div className="flex items-center gap-1.5 flex-1 min-w-0 font-mono">
-                                {homeWon && <span className="text-xs">🏆</span>}
+                                {homeWon && <Trophy className="w-3 h-3 text-amber-500" />}
                                 <span className={`truncate ${isPending ? 'text-slate-400 italic font-medium' : 'font-extrabold'}`}>
                                   {match.home_team}
                                 </span>
@@ -141,7 +143,7 @@ export default function KnockoutBracket({ knockoutFixtures }: KnockoutBracketPro
                               'bg-slate-50/50 border-slate-200/20 text-slate-700'
                             }`}>
                               <div className="flex items-center gap-1.5 flex-1 min-w-0 font-mono">
-                                {awayWon && <span className="text-xs">🏆</span>}
+                                {awayWon && <Trophy className="w-3 h-3 text-amber-500" />}
                                 <span className={`truncate ${isPending ? 'text-slate-400 italic font-medium' : 'font-extrabold'}`}>
                                   {match.away_team}
                                 </span>
@@ -168,7 +170,7 @@ export default function KnockoutBracket({ knockoutFixtures }: KnockoutBracketPro
       <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm font-mono relative overflow-hidden">
         <div className="flex items-start gap-3">
           <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span className="text-lg">ℹ️</span>
+            <Info className="w-5 h-5 text-blue-500" />
           </div>
           <div>
             <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-2">Knockout Stage Info</h3>
@@ -176,7 +178,7 @@ export default function KnockoutBracket({ knockoutFixtures }: KnockoutBracketPro
               <li>• Single-elimination format - lose and you're out</li>
               <li>• Winners advance to the next round</li>
               <li>• Matches marked "TBD" will be determined by earlier round results</li>
-              <li>• 🏆 indicates the winner of a completed match</li>
+              <li>• <Trophy className="w-3 h-3 text-amber-500 inline-block mx-1" /> indicates the winner of a completed match</li>
             </ul>
           </div>
         </div>

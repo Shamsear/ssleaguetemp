@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Flame, Target, Trophy, Zap, Shield, Crown, Sparkles, Award } from 'lucide-react';
 import { Plus, Trash2, Edit2, Save, X, XCircle, Star, RefreshCw, CheckCircle, Shield, Trophy, Crown, Activity, BarChart2, ArrowLeft } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 
@@ -348,14 +349,14 @@ export default function CustomScoringRulesPage() {
                     >
                       <option value="">Select condition...</option>
                       <option value="new_player">🆕 New Player Bonus (first X matches)</option>
-                      <option value="streak">🔥 Streak Bonus (consecutive events)</option>
-                      <option value="milestone">🎯 Milestone Bonus (reach X goals/assists)</option>
-                      <option value="match_result">🏆 Match Result Bonus (win/draw/loss)</option>
-                      <option value="comeback">💪 Comeback Bonus (winning after being behind)</option>
-                      <option value="clean_sheet_streak">🛡️ Clean Sheet Streak (consecutive clean sheets)</option>
-                      <option value="goal_difference">⚡ Goal Difference Bonus (winning by X+ goals)</option>
-                      <option value="against_top_team">👑 Top Team Bonus (performance vs top teams)</option>
-                      <option value="captain_bonus">©️ Captain/Vice Captain Bonus (multiplier)</option>
+                      <option value="streak"><Flame className="w-3 h-3 inline text-orange-500 mr-1" /> Streak Bonus (consecutive events)</option>
+                      <option value="milestone"><Target className="w-3 h-3 inline text-rose-500 mr-1" /> Milestone Bonus (reach X goals/assists)</option>
+                      <option value="match_result"><Trophy className="w-3 h-3 inline text-amber-500 mr-1" /> Match Result Bonus (win/draw/loss)</option>
+                      <option value="comeback"><Zap className="w-3 h-3 inline text-yellow-500 mr-1" /> Comeback Bonus (winning after being behind)</option>
+                      <option value="clean_sheet_streak"><Shield className="w-3 h-3 inline text-blue-500 mr-1" /> Clean Sheet Streak (consecutive clean sheets)</option>
+                      <option value="goal_difference"><Zap className="w-3 h-3 inline text-yellow-500 mr-1" /> Goal Difference Bonus (winning by X+ goals)</option>
+                      <option value="against_top_team"><Crown className="w-3 h-3 inline text-amber-500 mr-1" /> Top Team Bonus (performance vs top teams)</option>
+                      <option value="captain_bonus"><Award className="w-3 h-3 inline text-amber-500 mr-1" /> Captain/Vice Captain Bonus (multiplier)</option>
                     </select>
                   </div>
                   

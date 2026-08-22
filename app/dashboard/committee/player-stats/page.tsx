@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { GloveIcon } from '@/components/ui/CustomIcons';
+import { ClipboardList } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
@@ -537,7 +539,7 @@ export default function PlayerStatsPage() {
         <div className="console-card bg-white border border-slate-200/60 rounded-2xl overflow-hidden font-mono shadow-sm">
           <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/40 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <span className="text-lg font-bold">📋</span>
+              <ClipboardList className="w-5 h-5 text-slate-500" />
               <div>
                 <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Player Standings & Stats</h3>
                 <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Click expand button for matchday performance breakdown</p>
@@ -1360,7 +1362,7 @@ export default function PlayerStatsPage() {
                 </p>
               </div>
               <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center flex-shrink-0 font-mono">
-                <span className="text-lg">🧤</span>
+                <GloveIcon className="w-5 h-5" />
               </div>
             </div>
           </div>

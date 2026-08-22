@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { Trophy, BarChart2, TrendingUp, Calendar, AlertTriangle, CheckCircle2, XCircle, Handshake, Shield, Target, Award } from 'lucide-react';
 
 interface TeamStatisticsProps {
   teamId: string;
@@ -119,7 +121,7 @@ export default function TeamStatistics({ teamId, seasonId, tournamentId }: TeamS
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-        <span className="text-4xl mb-2 block">⚠️</span>
+        <AlertTriangle className="w-10 h-10 text-yellow-500 mx-auto mb-2" />
         <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Statistics</h3>
         <p className="text-sm text-red-600">{error}</p>
       </div>
@@ -129,7 +131,7 @@ export default function TeamStatistics({ teamId, seasonId, tournamentId }: TeamS
   if (!data) {
     return (
       <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-8 text-center">
-        <span className="text-6xl mb-4 block">📊</span>
+        <BarChart2 className="w-16 h-16 text-slate-500 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-600 mb-2">No Statistics Available</h3>
         <p className="text-sm text-gray-500">Statistics will appear once matches are completed</p>
       </div>
@@ -179,7 +181,7 @@ export default function TeamStatistics({ teamId, seasonId, tournamentId }: TeamS
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            📊 Overall Stats
+            <BarChart2 className="w-4 h-4 inline-block mr-1" /> Overall Stats
           </button>
           <button
             onClick={() => setActiveTab('tournaments')}
@@ -189,7 +191,7 @@ export default function TeamStatistics({ teamId, seasonId, tournamentId }: TeamS
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            🏆 By Tournament
+            <Trophy className="w-4 h-4 inline-block mr-1" /> By Tournament
           </button>
           <button
             onClick={() => setActiveTab('seasons')}
@@ -199,7 +201,7 @@ export default function TeamStatistics({ teamId, seasonId, tournamentId }: TeamS
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            📅 By Season
+            <Calendar className="w-4 h-4 inline-block mr-1" /> By Season
           </button>
         </div>
       </div>
@@ -228,25 +230,25 @@ function OverallStatsView({ stats }: { stats: OverallStats }) {
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard 
-          icon="⚽" 
+          icon={<SoccerBallIcon className="w-8 h-8" />} 
           label="Matches" 
           value={stats.matches_played} 
           color="blue"
         />
         <MetricCard 
-          icon="🏆" 
+          icon={<Trophy className="w-8 h-8 text-amber-500" />} 
           label="Wins" 
           value={stats.wins} 
           color="green"
         />
         <MetricCard 
-          icon="📊" 
+          icon={<BarChart2 className="w-8 h-8 text-slate-500" />} 
           label="Points" 
           value={stats.points} 
           color="purple"
         />
         <MetricCard 
-          icon="📈" 
+          icon={<TrendingUp className="w-8 h-8 text-emerald-500" />} 
           label="Win %" 
           value={`${stats.win_percentage}%`} 
           color="indigo"
@@ -264,27 +266,27 @@ function OverallStatsView({ stats }: { stats: OverallStats }) {
             {/* Match Results */}
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-gray-500 uppercase">Match Results</h4>
-              <StatRow label="Wins" value={stats.wins} icon="✅" color="green" />
-              <StatRow label="Draws" value={stats.draws} icon="🤝" color="gray" />
-              <StatRow label="Losses" value={stats.losses} icon="❌" color="red" />
-              <StatRow label="Clean Sheets" value={stats.clean_sheets} icon="🛡️" color="blue" />
+              <StatRow label="Wins" value={stats.wins} icon={<CheckCircle2 className="w-5 h-5 text-green-500" />} color="green" />
+              <StatRow label="Draws" value={stats.draws} icon={<Handshake className="w-5 h-5 text-gray-500" />} color="gray" />
+              <StatRow label="Losses" value={stats.losses} icon={<XCircle className="w-5 h-5 text-red-500" />} color="red" />
+              <StatRow label="Clean Sheets" value={stats.clean_sheets} icon={<Shield className="w-5 h-5 text-blue-500" />} color="blue" />
             </div>
 
             {/* Goals */}
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-gray-500 uppercase">Goals</h4>
-              <StatRow label="Goals For" value={stats.goals_for} icon="⚽" color="green" />
-              <StatRow label="Goals Against" value={stats.goals_against} icon="🥅" color="red" />
+              <StatRow label="Goals For" value={stats.goals_for} icon={<SoccerBallIcon className="w-5 h-5" />} color="green" />
+              <StatRow label="Goals Against" value={stats.goals_against} icon={<XCircle className="w-5 h-5 text-red-500" />} color="red" />
               <StatRow 
                 label="Goal Difference" 
                 value={stats.goal_difference > 0 ? `+${stats.goal_difference}` : stats.goal_difference} 
-                icon="📊" 
+                icon={<BarChart2 className="w-5 h-5 text-slate-500" />} 
                 color={stats.goal_difference > 0 ? 'green' : stats.goal_difference < 0 ? 'red' : 'gray'}
               />
               <StatRow 
                 label="Avg Goals/Match" 
                 value={(stats.goals_for / (stats.matches_played || 1)).toFixed(2)} 
-                icon="🎯" 
+                icon={<Target className="w-5 h-5 text-rose-500" />} 
                 color="blue"
               />
             </div>
@@ -299,7 +301,7 @@ function TournamentStatsView({ tournaments }: { tournaments: TournamentStats[] }
   if (tournaments.length === 0) {
     return (
       <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-8 text-center">
-        <span className="text-6xl mb-4 block">🏆</span>
+        <Trophy className="w-16 h-16 text-amber-500 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-600 mb-2">No Tournament Data</h3>
         <p className="text-sm text-gray-500">Tournament statistics will appear once you participate</p>
       </div>
@@ -323,7 +325,7 @@ function TournamentStatsView({ tournaments }: { tournaments: TournamentStats[] }
               <div className="flex items-center gap-2 flex-wrap">
                 {tournament.league_position && (
                   <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
-                    🏅 Position: {tournament.league_position}
+                    <Award className="w-3 h-3 inline-block mr-1" /> Position: {tournament.league_position}
                   </span>
                 )}
                 {tournament.group_name && tournament.group_position && (
@@ -333,7 +335,7 @@ function TournamentStatsView({ tournaments }: { tournaments: TournamentStats[] }
                 )}
                 {tournament.knockout_stage_reached && (
                   <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
-                    🥇 {tournament.knockout_stage_reached}
+                    <Trophy className="w-3 h-3 inline-block mr-1 text-amber-500" /> {tournament.knockout_stage_reached}
                   </span>
                 )}
               </div>
@@ -368,7 +370,7 @@ function SeasonStatsView({ seasons }: { seasons: SeasonSummary[] }) {
   if (seasons.length === 0) {
     return (
       <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-8 text-center">
-        <span className="text-6xl mb-4 block">📅</span>
+        <Calendar className="w-16 h-16 text-slate-500 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-600 mb-2">No Season Data</h3>
         <p className="text-sm text-gray-500">Season statistics will appear once you participate</p>
       </div>
@@ -421,7 +423,7 @@ function SeasonStatsView({ seasons }: { seasons: SeasonSummary[] }) {
   );
 }
 
-function MetricCard({ icon, label, value, color }: { icon: string; label: string; value: string | number; color: string }) {
+function MetricCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color: string }) {
   const colorClasses = {
     blue: 'from-blue-50 to-blue-100 border-blue-200',
     green: 'from-green-50 to-green-100 border-green-200',
@@ -431,14 +433,14 @@ function MetricCard({ icon, label, value, color }: { icon: string; label: string
 
   return (
     <div className={`bg-gradient-to-br ${colorClasses[color as keyof typeof colorClasses]} border rounded-xl p-4 text-center`}>
-      <div className="text-3xl mb-2">{icon}</div>
+      <div className="flex justify-center mb-2">{icon}</div>
       <div className="text-2xl font-bold text-gray-900">{value}</div>
       <div className="text-xs text-gray-600 font-medium">{label}</div>
     </div>
   );
 }
 
-function StatRow({ label, value, icon, color }: { label: string; value: string | number; icon: string; color: string }) {
+function StatRow({ label, value, icon, color }: { label: string; value: string | number; icon: React.ReactNode; color: string }) {
   const colorClasses = {
     green: 'text-green-600',
     red: 'text-red-600',
@@ -449,7 +451,7 @@ function StatRow({ label, value, icon, color }: { label: string; value: string |
   return (
     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
       <div className="flex items-center gap-2">
-        <span className="text-lg">{icon}</span>
+        {icon}
         <span className="text-sm font-medium text-gray-700">{label}</span>
       </div>
       <span className={`text-lg font-bold ${colorClasses[color as keyof typeof colorClasses]}`}>

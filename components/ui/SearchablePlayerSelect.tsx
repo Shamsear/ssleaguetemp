@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { Star } from 'lucide-react';
 
 interface Player {
   id: string;
@@ -153,7 +154,7 @@ export default function SearchablePlayerSelect({
             <div className="flex-1">
               <div className="font-extrabold text-slate-800 uppercase tracking-wide">{selectedPlayer.player_name}</div>
               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                {selectedPlayer.team_name} • <span className="text-amber-600 font-extrabold">{playerType === 'football' ? `${getPlayerValue(selectedPlayer)} eCoin` : `$${getPlayerValue(selectedPlayer)}`}</span> • {playerType === 'football' && selectedPlayer.position ? selectedPlayer.position : (selectedPlayer.star_rating > 20 ? `OVR: ${selectedPlayer.star_rating}` : `${selectedPlayer.star_rating}⭐`)}
+                {selectedPlayer.team_name} • <span className="text-amber-600 font-extrabold">{playerType === 'football' ? `${getPlayerValue(selectedPlayer)} eCoin` : `$${getPlayerValue(selectedPlayer)}`}</span> • {playerType === 'football' && selectedPlayer.position ? selectedPlayer.position : (selectedPlayer.star_rating > 20 ? `OVR: ${selectedPlayer.star_rating}` : <>{selectedPlayer.star_rating}<Star className="w-3 h-3 inline text-amber-400 fill-amber-400" /></>)}
               </div>
             </div>
             <button
@@ -243,7 +244,7 @@ export default function SearchablePlayerSelect({
                         {playerType === 'football' ? `${getPlayerValue(player)} eCoin` : `$${getPlayerValue(player)}`}
                       </div>
                       <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                        {playerType === 'football' && player.position ? player.position : (player.star_rating > 20 ? `OVR: ${player.star_rating}` : `${player.star_rating}⭐`)}
+                        {playerType === 'football' && player.position ? player.position : (player.star_rating > 20 ? `OVR: ${player.star_rating}` : <>{player.star_rating}<Star className="w-3 h-3 inline text-amber-400 fill-amber-400" /></>)}
                       </div>
                     </div>
                   </div>

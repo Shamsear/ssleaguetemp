@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Trophy, ClipboardList } from 'lucide-react';
 
 export default function SetupPlayerAwards() {
   const [loading, setLoading] = useState(false);
@@ -36,7 +37,7 @@ export default function SetupPlayerAwards() {
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            🏆 Player Awards System Setup
+            <Trophy className="w-8 h-8 inline text-amber-500 mr-2" /> Player Awards System Setup
           </h1>
           <p className="text-gray-600 mb-8">
             Create the player_awards table in the database
@@ -177,7 +178,7 @@ export default function SetupPlayerAwards() {
 
         <div className="mt-8 bg-white rounded-2xl shadow-xl p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            📋 Next Steps
+            <ClipboardList className="w-6 h-6 inline text-slate-500 mr-2" /> Next Steps
           </h2>
           <ol className="space-y-3 text-gray-700">
             <li className="flex items-start">

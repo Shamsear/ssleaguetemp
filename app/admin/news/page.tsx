@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { Newspaper } from 'lucide-react'
 
 interface NewsItem {
   id: string
@@ -216,7 +217,7 @@ export default function AdminNewsPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">📰 News Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2"><Newspaper className="w-8 h-8 inline text-blue-500 mr-2" /> News Management</h1>
           <p className="text-gray-600">Review and publish AI-generated news</p>
         </div>
 

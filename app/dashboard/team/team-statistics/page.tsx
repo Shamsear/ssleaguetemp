@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart2, Calendar, Globe, Lightbulb, Trophy } from 'lucide-react';
+import { BarChart2, Calendar, Globe, Lightbulb, Trophy, Target } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -104,7 +104,7 @@ export default function TeamStatisticsPage() {
         {viewMode === 'tournament' && (
           <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-6 border border-gray-100/20">
             <div className="flex items-center gap-3 mb-4">
-              <span className="text-2xl">🎯</span>
+              <Target className="w-6 h-6 text-rose-500" />
               <h2 className="text-xl font-bold text-gray-900">Select Tournament</h2>
             </div>
             <TournamentSelector

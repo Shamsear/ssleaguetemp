@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 interface PollOption {
   text_en: string;
@@ -172,13 +173,13 @@ export default function CreatePollPage() {
 
       {success && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 font-medium">✅ Poll created successfully! Redirecting...</p>
+          <p className="text-green-800 font-medium"><CheckCircle2 className="w-4 h-4 inline text-green-500 mr-1" /> Poll created successfully! Redirecting...</p>
         </div>
       )}
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-800 font-medium">❌ {error}</p>
+          <p className="text-red-800 font-medium"><XCircle className="w-4 h-4 inline text-red-500 mr-1" /> {error}</p>
         </div>
       )}
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { requestNotificationPermission, getNotificationPermission, isNotificationSupported } from '@/lib/firebase/messaging';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { AlertTriangle, CheckCircle2, XCircle, Circle } from 'lucide-react';
 
 interface Device {
   id: number;
@@ -343,14 +344,14 @@ export default function NotificationButton() {
     if (isSafariDesktop) {
       return (
         <div className="px-4 py-3 rounded-xl bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
-          <p className="font-medium mb-1">⚠️ Limited Support</p>
+          <p className="font-medium mb-1 inline-flex items-center gap-1"><AlertTriangle className="w-4 h-4 text-yellow-500" /> Limited Support</p>
           <p className="text-xs mb-2">
             Safari has limited notification support. Missing:
           </p>
           <ul className="text-xs space-y-1 ml-4 list-disc">
-            <li>Notification API: {typeof window !== 'undefined' && 'Notification' in window ? '✅' : '❌'}</li>
-            <li>Service Worker: {'serviceWorker' in navigator ? '✅' : '❌'}</li>
-            <li>Push Manager: {'PushManager' in window ? '✅' : '❌'}</li>
+            <li>Notification API: {typeof window !== 'undefined' && 'Notification' in window ? <CheckCircle2 className="w-3 h-3 text-green-500 inline" /> : <XCircle className="w-3 h-3 text-red-500 inline" />}</li>
+            <li>Service Worker: {'serviceWorker' in navigator ? <CheckCircle2 className="w-3 h-3 text-green-500 inline" /> : <XCircle className="w-3 h-3 text-red-500 inline" />}</li>
+            <li>Push Manager: {'PushManager' in window ? <CheckCircle2 className="w-3 h-3 text-green-500 inline" /> : <XCircle className="w-3 h-3 text-red-500 inline" />}</li>
           </ul>
           <p className="text-xs mt-2">
             For full notification support, please use <strong>Google Chrome</strong> or <strong>Firefox</strong>.
@@ -363,14 +364,14 @@ export default function NotificationButton() {
     if (isAndroid) {
       return (
         <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm">
-          <p className="font-medium mb-1">🔴 Notifications Not Available</p>
+          <p className="font-medium mb-1 inline-flex items-center gap-1"><Circle className="w-3 h-3 text-red-500 fill-red-500" /> Notifications Not Available</p>
           <p className="text-xs mb-2">
             Notifications should work on Android Chrome but something is missing:
           </p>
           <ul className="text-xs space-y-1 ml-4 list-disc">
-            <li>Notification API: {typeof window !== 'undefined' && 'Notification' in window ? '✅' : '❌'}</li>
-            <li>Service Worker: {'serviceWorker' in navigator ? '✅' : '❌'}</li>
-            <li>Push Manager: {'PushManager' in window ? '✅' : '❌'}</li>
+            <li>Notification API: {typeof window !== 'undefined' && 'Notification' in window ? <CheckCircle2 className="w-3 h-3 text-green-500 inline" /> : <XCircle className="w-3 h-3 text-red-500 inline" />}</li>
+            <li>Service Worker: {'serviceWorker' in navigator ? <CheckCircle2 className="w-3 h-3 text-green-500 inline" /> : <XCircle className="w-3 h-3 text-red-500 inline" />}</li>
+            <li>Push Manager: {'PushManager' in window ? <CheckCircle2 className="w-3 h-3 text-green-500 inline" /> : <XCircle className="w-3 h-3 text-red-500 inline" />}</li>
           </ul>
           <p className="text-xs mt-2">Try refreshing the page or check if you're on HTTPS.</p>
         </div>

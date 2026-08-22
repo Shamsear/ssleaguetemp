@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { ClipboardList, AlertTriangle } from 'lucide-react';
 
 interface Penalty {
     id: number;
@@ -126,7 +127,7 @@ export default function PenaltyHistoryModal({
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl sticky top-0">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <span className="text-3xl">📋</span>
+                            <ClipboardList className="w-8 h-8 text-white" />
                             <div>
                                 <h2 className="text-xl font-bold">Penalty History</h2>
                                 <p className="text-sm text-blue-100">{team.team_name}</p>
@@ -162,7 +163,7 @@ export default function PenaltyHistoryModal({
                             {activePenalties.length > 0 && (
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                        <span className="text-red-600">⚠️</span>
+                                        <AlertTriangle className="w-5 h-5 text-red-600" />
                                         Active Penalties ({activePenalties.length})
                                     </h3>
                                     <div className="space-y-4">

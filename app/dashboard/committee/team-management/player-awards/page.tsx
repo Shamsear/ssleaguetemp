@@ -1,6 +1,6 @@
 'use client';
 import { GloveIcon } from '@/components/ui/CustomIcons';
-import { Trophy, Crown, Star, Activity } from 'lucide-react';
+import { Trophy, Crown, Star, Activity, Shield, Medal } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
@@ -380,7 +380,7 @@ export default function PlayerAwardsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> {player.goals}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">🛡️ {player.clean_sheets}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900"><Shield className="w-4 h-4 inline-block text-blue-500 mr-1 align-text-bottom" /> {player.clean_sheets}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> {player.potm}</td>
                   </tr>
                 ))}

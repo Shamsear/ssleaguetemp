@@ -1,5 +1,5 @@
 'use client';
-import { CheckCircle, Clock, AlertTriangle, Users, Play, ArrowLeft } from 'lucide-react';
+import { CheckCircle, Clock, AlertTriangle, Users, Play, ArrowLeft, Target, Timer, Flag } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -452,20 +452,20 @@ export default function ProcessDraftPage() {
           {draftStatus === 'active' && slots.length > 0 && (
             <div className="pt-2 text-xs font-bold text-slate-650 uppercase flex flex-col gap-2">
               <div className="flex items-center gap-1.5">
-                <span>🎯 Active Draft Slot:</span>
+                <span><Target className="w-3 h-3 inline text-rose-500 mr-1" /> Active Draft Slot:</span>
                 <span className="text-amber-600 font-black">
                   {slots.find(s => s.slot_index === selectedSlotIndex)?.name || `Slot ${selectedSlotIndex}`}
                 </span>
               </div>
               {opensAt && (
                 <div className="flex items-center gap-1.5 text-slate-500">
-                  <span>⏳ Opened At:</span>
+                  <span><Timer className="w-3 h-3 inline text-slate-500 mr-1" /> Opened At:</span>
                   <span className="text-slate-700 font-bold">{new Date(opensAt).toLocaleString()}</span>
                 </div>
               )}
               {closesAt && (
                 <div className="flex items-center gap-1.5 text-slate-500">
-                  <span>🏁 Deadline (Closes):</span>
+                  <span><Flag className="w-3 h-3 inline text-rose-500 mr-1" /> Deadline (Closes):</span>
                   <span className="text-rose-600 font-black">{new Date(closesAt).toLocaleString()}</span>
                 </div>
               )}
