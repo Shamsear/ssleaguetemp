@@ -13,6 +13,10 @@ import {
   CheckCircle,
   AlertTriangle
 } from 'lucide-react'
+import Link from 'next/link'
+import { getReadStats, logReadStats, resetReadCount } from '@/utils/readCounter'
+import { getCacheStatistics, invalidateAllCaches, invalidatePlayerCaches, invalidateTeamCaches } from '@/utils/smartCache'
+import { getCacheInfo } from '@/utils/cache'
 
 export default function MonitoringPage() {
   const router = useRouter()
