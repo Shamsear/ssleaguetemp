@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Trophy, Lightbulb } from 'lucide-react';
 import { getIdToken } from 'firebase/auth';
 import { getSmartCache, setSmartCache, CACHE_DURATIONS } from '@/utils/smartCache';
 import { clearCache } from '@/utils/cache';
@@ -546,7 +547,7 @@ export default function EditSeasonDataPage() {
                   : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900'
               }`}
             >
-              <span>🏆</span>
+              <Trophy className="w-4 h-4 text-amber-500" />
               <span>Teams ({teams.length})</span>
             </button>
             <button
@@ -1067,7 +1068,7 @@ export default function EditSeasonDataPage() {
               </svg>
             </div>
             <div className="text-sm text-slate-600">
-              <p className="font-semibold mb-1">💡 Excel-Style Editing Tips:</p>
+              <p className="font-semibold mb-1"><Lightbulb className="w-4 h-4 inline text-amber-500 mr-1" /> Excel-Style Editing Tips:</p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>All fields are directly editable - click any cell to modify</li>
                 <li><strong>Copy/Paste from Excel:</strong> Copy a column from Excel (multiple cells), click any cell here, and paste (Ctrl+V) - data fills down automatically!</li>

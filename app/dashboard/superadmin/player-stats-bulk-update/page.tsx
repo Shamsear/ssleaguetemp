@@ -558,7 +558,7 @@ export default function PlayerStatsBulkUpdate() {
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-xs font-bold text-green-800 mb-2">✅ Import Successful!</p>
+                  <p className="text-xs font-bold text-green-800 mb-2"><CheckCircle className="w-4 h-4 inline text-green-500 mr-1" /> Import Successful!</p>
                   <div className="text-[11px] text-green-700 space-y-1">
                     <p>• Updated: {importResult.summary.successful} players</p>
                     {importResult.summary.failed > 0 && (

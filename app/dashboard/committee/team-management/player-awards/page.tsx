@@ -401,7 +401,7 @@ export default function PlayerAwardsPage() {
               <div><strong>Golden Glove <GloveIcon className="w-4 h-4" />:</strong> Most clean sheets</div>
               <div><strong>Golden Ball <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />:</strong> Most POTM awards</div>
               <div><strong>Legend <Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />:</strong> Top Legend category players</div>
-              <div><strong>Classic 🎖️:</strong> Top Classic category players</div>
+              <div><strong>Classic <Medal className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />:</strong> Top Classic category players</div>
               <div><strong>Overall <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />:</strong> Best overall performance</div>
             </div>
           </div>

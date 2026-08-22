@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { ClipboardList, Flame, Gem, Star } from 'lucide-react';
 import Link from 'next/link';
 
 interface TeamCarryover {
@@ -285,13 +287,13 @@ export default function SeasonCarryoverPage() {
             {/* What Will Be Updated Section */}
             <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl shadow-lg p-6 mb-6 border-2 border-blue-200">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <span>📋</span> What Will Be Updated
+                <ClipboardList className="w-5 h-5 text-slate-500" /> What Will Be Updated
               </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Firebase team_seasons */}
                 <div className="bg-white rounded-lg p-4 shadow">
-                  <h3 className="font-bold text-lg text-blue-600 mb-3">🔥 Firebase: team_seasons</h3>
+                  <h3 className="font-bold text-lg text-blue-600 mb-3"><Flame className="w-5 h-5 inline text-orange-500 mr-1" /> Firebase: team_seasons</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-start gap-2">
                       <span className="text-green-600 font-bold">✓</span>
@@ -343,7 +345,7 @@ export default function SeasonCarryoverPage() {
 
                 {/* Neon Tournament DB */}
                 <div className="bg-white rounded-lg p-4 shadow">
-                  <h3 className="font-bold text-lg text-green-600 mb-3">⚽ Neon: player_seasons</h3>
+                  <h3 className="font-bold text-lg text-green-600 mb-3"><SoccerBallIcon className="w-5 h-5" /> Neon: player_seasons</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-start gap-2">
                       <span className="text-green-600 font-bold">✓</span>
@@ -401,7 +403,7 @@ export default function SeasonCarryoverPage() {
 
             {/* Team Balances */}
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">💰 Team Balance Carryover</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4"><Gem className="w-5 h-5 inline text-blue-500 mr-1" /> Team Balance Carryover</h2>
               
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -476,7 +478,7 @@ export default function SeasonCarryoverPage() {
 
             {/* Player Changes */}
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">⭐ Player Stats Carryover</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4"><Star className="w-5 h-5 inline text-amber-400 fill-amber-400 mr-1" /> Player Stats Carryover</h2>
               
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -516,10 +518,10 @@ export default function SeasonCarryoverPage() {
                         </td>
                         <td className="px-3 py-3 text-center">
                           <span className="text-sm font-semibold text-green-600">
-                            {'⭐'.repeat(player.new_star_rating)}
+                            {Array.from({ length: player.new_star_rating }, (_, i) => <Star key={i} className="w-3 h-3 inline text-amber-400 fill-amber-400" />)}
                           </span>
                           {player.source_star_rating !== player.new_star_rating && (
-                            <div className="text-xs text-gray-500">(from: {'⭐'.repeat(player.source_star_rating || 0)})</div>
+                            <div className="text-xs text-gray-500">(from: {Array.from({ length: player.source_star_rating || 0 }, (_, i) => <Star key={i} className="w-2 h-2 inline text-amber-400 fill-amber-400" />)})</div>
                           )}
                         </td>
                         <td className="px-3 py-3 text-center text-sm text-gray-600">{player.current_points}</td>

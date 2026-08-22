@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { getStorage, ref, uploadBytes, deleteObject, listAll } from 'firebase/storage';
 import { app } from '@/lib/firebase/config';
-import { CheckCircle2, XCircle, BarChart2 } from 'lucide-react';
-import { Camera, UploadCloud, Trash2, Info, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Camera, UploadCloud, Trash2, Info, AlertTriangle, CheckCircle2, RefreshCw, XCircle, BarChart2 } from 'lucide-react';
 
 export default function BulkPhotoUpload() {
   const [uploading, setUploading] = useState(false);

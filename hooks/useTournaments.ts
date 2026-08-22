@@ -1,4 +1,7 @@
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Trophy, Award, Star, Sparkles, Crown } from 'lucide-react';
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
 
 interface Tournament {
   id: string;
@@ -66,23 +69,24 @@ export function useTournament(tournamentId: string | null | undefined) {
   });
 }
 
-// Helper function to get tournament icon emoji
-export function getTournamentIcon(type: string): string {
+// Helper function to get tournament icon
+export function getTournamentIcon(type: string): React.ReactNode {
+  const className = 'w-5 h-5 inline-block';
   switch (type) {
     case 'league':
-      return '🏆';
+      return React.createElement(Trophy, { className: `${className} text-amber-500` });
     case 'cup':
-      return '🏅';
+      return React.createElement(Award, { className: `${className} text-amber-500` });
     case 'ucl':
-      return '⭐';
+      return React.createElement(Star, { className: `${className} text-amber-400 fill-amber-400` });
     case 'uel':
-      return '🌟';
+      return React.createElement(Sparkles, { className: `${className} text-amber-400` });
     case 'super_cup':
-      return '👑';
+      return React.createElement(Crown, { className: `${className} text-amber-500` });
     case 'league_cup':
-      return '🥇';
+      return React.createElement(Award, { className: `${className} text-amber-500` });
     default:
-      return '⚽';
+      return React.createElement(SoccerBallIcon, { className });
   }
 }
 

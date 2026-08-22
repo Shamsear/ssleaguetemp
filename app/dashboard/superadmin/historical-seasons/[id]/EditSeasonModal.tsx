@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getIdToken } from 'firebase/auth';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { ClipboardList, Trophy, Star } from 'lucide-react';
 
 interface EditSeasonModalProps {
   isOpen: boolean;
@@ -168,7 +169,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
           {/* Basic Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              <span className="text-xl">📋</span>
+              <ClipboardList className="w-5 h-5 text-slate-500" />
               Basic Information
             </h3>
             
@@ -220,7 +221,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
           {/* Champions */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              <span className="text-xl">🏆</span>
+              <Trophy className="w-5 h-5 text-amber-500" />
               Champions & Awards
             </h3>
             
@@ -258,7 +259,7 @@ export default function EditSeasonModal({ isOpen, onClose, season, firebaseUser,
           {/* Individual Awards */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              <span className="text-xl">⭐</span>
+              <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
               Individual Awards
             </h3>
 

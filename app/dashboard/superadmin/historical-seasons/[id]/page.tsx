@@ -3,6 +3,8 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { Trophy, BarChart2, Star, TrendingUp, Award, Crown, ClipboardList, CheckCircle2, Target, Info, XCircle } from 'lucide-react';
 import { getIdToken } from 'firebase/auth';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 
@@ -1194,7 +1196,7 @@ export default function HistoricalSeasonDetailPage() {
                   <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
                   </svg>
-                  <span className="hidden sm:inline">📊 Excel Editor</span>
+                  <span className="hidden sm:inline"><BarChart2 className="w-4 h-4 inline mr-1" /> Excel Editor</span>
                   <span className="sm:hidden">Excel</span>
                 </button>
                 
@@ -1337,7 +1339,7 @@ export default function HistoricalSeasonDetailPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                     </div>
-                    <span className="text-xs font-medium opacity-80">🏆</span>
+                    <Trophy className="w-3 h-3 text-amber-500" />
                   </div>
                   <div className="text-3xl font-extrabold text-slate-800">{teams.length}</div>
                   <div className="text-xs text-slate-400 font-bold uppercase mt-1">Teams</div>
@@ -1373,7 +1375,7 @@ export default function HistoricalSeasonDetailPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
                     </div>
-                    <span className="text-xs font-medium opacity-80">⚽</span>
+                    <SoccerBallIcon className="w-3 h-3" />
                   </div>
                   <div className="text-3xl font-extrabold text-slate-800">{totalGoalsScored.toLocaleString()}</div>
                   <div className="text-xs text-slate-400 font-bold uppercase mt-1">Total Goals</div>
@@ -1388,7 +1390,7 @@ export default function HistoricalSeasonDetailPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </div>
-                  <h3 className="text-sm font-extrabold text-slate-800">📊 Category Distribution</h3>
+                  <h3 className="text-sm font-extrabold text-slate-800"><BarChart2 className="w-4 h-4 inline text-slate-500 mr-1" /> Category Distribution</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                   {Object.entries(categoryDistribution).map(([category, count]) => {
@@ -1424,7 +1426,7 @@ export default function HistoricalSeasonDetailPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-sm font-extrabold text-slate-800">🏆 Teams Overview</h3>
+                    <h3 className="text-sm font-extrabold text-slate-800"><Trophy className="w-4 h-4 inline text-amber-500 mr-1" /> Teams Overview</h3>
                     <p className="text-xs text-slate-500 font-mono">Team performance and player statistics</p>
                   </div>
                 </div>
@@ -1776,7 +1778,7 @@ export default function HistoricalSeasonDetailPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-sm font-extrabold text-slate-800">📈 Player Statistics</h3>
+                  <h3 className="text-sm font-extrabold text-slate-800"><TrendingUp className="w-4 h-4 inline text-emerald-500 mr-1" /> Player Statistics</h3>
                   <p className="text-xs text-slate-500 font-mono">Detailed performance metrics and rankings</p>
                 </div>
               </div>
@@ -2004,7 +2006,7 @@ export default function HistoricalSeasonDetailPage() {
                                 <td className="px-3 py-4 text-center">
                                   {stats.potm ? (
                                     <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700">
-                                      <span className="text-sm">🌟</span>
+                                      <Star className="w-4 h-4 text-amber-400" />
                                       {stats.potm}
                                     </span>
                                   ) : (
@@ -2145,7 +2147,7 @@ export default function HistoricalSeasonDetailPage() {
                               {stats.potm && (
                                 <div className="text-center bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg p-2.5 col-span-2 sm:col-span-1">
                                   <div className="flex items-center justify-center gap-1">
-                                    <span className="text-lg">🌟</span>
+                                    <Star className="w-5 h-5 text-amber-400" />
                                     <div className="text-lg font-bold text-amber-500">{stats.potm}</div>
                                   </div>
                                   <div className="text-xs text-orange-700 font-medium">POTM</div>
@@ -2172,7 +2174,7 @@ export default function HistoricalSeasonDetailPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-sm font-extrabold text-slate-800">🏅 Team Standings & Awards</h3>
+                  <h3 className="text-sm font-extrabold text-slate-800"><Award className="w-4 h-4 inline text-amber-500 mr-1" /> Team Standings & Awards</h3>
                   <p className="text-xs text-slate-500 font-mono">Final standings, league winners, and cup champions</p>
                 </div>
               </div>
@@ -2215,7 +2217,7 @@ export default function HistoricalSeasonDetailPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </div>
-                  <h4 className="text-sm font-extrabold text-slate-800">📋 Final Team Standings</h4>
+                  <h4 className="text-sm font-extrabold text-slate-800"><ClipboardList className="w-4 h-4 inline text-slate-500 mr-1" /> Final Team Standings</h4>
                 </div>
 
                 {teamStats.length === 0 ? (
@@ -2289,7 +2291,7 @@ export default function HistoricalSeasonDetailPage() {
                                       <div>
                                         <div className={`font-semibold ${isChampion ? 'text-yellow-700' : 'text-gray-900'}`}>
                                           {team.team_name}
-                                          {isChampion && <span className="ml-2 text-yellow-600">👑</span>}
+                                          {isChampion && <Crown className="w-4 h-4 inline text-amber-500 ml-1" />}
                                         </div>
                                         <div className="text-xs text-slate-400">{team.owner_name || 'N/A'}</div>
                                       </div>
@@ -2360,7 +2362,7 @@ export default function HistoricalSeasonDetailPage() {
                                 <div className="flex-1">
                                   <div className={`font-bold ${isChampion ? 'text-yellow-700' : 'text-gray-900'}`}>
                                     {team.team_name}
-                                    {isChampion && <span className="ml-1">👑</span>}
+                                    {isChampion && <Crown className="w-4 h-4 inline text-amber-500 ml-1" />}
                                   </div>
                                   <div className="text-xs text-slate-400">{team.owner_name || 'N/A'}</div>
                                 </div>
@@ -2418,7 +2420,7 @@ export default function HistoricalSeasonDetailPage() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-sm font-extrabold text-slate-800">🏆 Team Trophies</h4>
+                      <h4 className="text-sm font-extrabold text-slate-800"><Trophy className="w-4 h-4 inline text-amber-500 mr-1" /> Team Trophies</h4>
                       <p className="text-xs text-slate-500 font-mono">Championship trophies and special achievements</p>
                     </div>
                   </div>
@@ -2541,7 +2543,7 @@ export default function HistoricalSeasonDetailPage() {
                           </button>
                           <div className="flex items-start gap-3 mb-3">
                             <div className="p-2 bg-yellow-100 rounded-lg flex-shrink-0">
-                              <span className="text-2xl">🏆</span>
+                              <Trophy className="w-6 h-6 text-amber-500" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <h5 className="font-bold text-yellow-800 text-base truncate" title={trophy.trophy_name}>
@@ -2581,7 +2583,7 @@ export default function HistoricalSeasonDetailPage() {
                         <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z" />
                       </svg>
                     </div>
-                    <h4 className="text-sm font-extrabold text-slate-800">🏆 Cup Competition Results</h4>
+                    <h4 className="text-sm font-extrabold text-slate-800"><Trophy className="w-4 h-4 inline text-amber-500 mr-1" /> Cup Competition Results</h4>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {teamStats
@@ -2641,7 +2643,7 @@ export default function HistoricalSeasonDetailPage() {
                         <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z" />
                       </svg>
                     </div>
-                    <h4 className="text-sm font-extrabold text-slate-800">🏆 Additional Cup Awards</h4>
+                    <h4 className="text-sm font-extrabold text-slate-800"><Trophy className="w-4 h-4 inline text-amber-500 mr-1" /> Additional Cup Awards</h4>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {awards.filter(a => a.award_category?.toLowerCase().includes('cup')).map((award) => (
@@ -2669,7 +2671,7 @@ export default function HistoricalSeasonDetailPage() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-sm font-extrabold text-slate-800">🎯 Player Awards</h4>
+                      <h4 className="text-sm font-extrabold text-slate-800"><Target className="w-4 h-4 inline text-rose-500 mr-1" /> Player Awards</h4>
                       <p className="text-xs text-slate-500 font-mono">Individual and category awards</p>
                     </div>
                   </div>
@@ -2806,7 +2808,7 @@ export default function HistoricalSeasonDetailPage() {
                     {playerAwards.filter(a => a.award_category === 'individual').length > 0 && (
                       <div>
                         <h5 className="text-lg font-semibold text-purple-800 mb-4 flex items-center gap-2">
-                          <span>🌟</span> Individual Awards
+                          <Star className="w-5 h-5 text-amber-400" /> Individual Awards
                         </h5>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                           {playerAwards
@@ -2849,7 +2851,7 @@ export default function HistoricalSeasonDetailPage() {
                     {playerAwards.filter(a => a.award_category === 'category').length > 0 && (
                       <div>
                         <h5 className="text-lg font-semibold text-purple-800 mb-4 flex items-center gap-2">
-                          <span>🏅</span> Category Awards
+                          <Award className="w-5 h-5 text-amber-500" /> Category Awards
                         </h5>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                           {playerAwards
@@ -2921,7 +2923,7 @@ export default function HistoricalSeasonDetailPage() {
                           </svg>
                         </div>
                         <div>
-                          <h3 className="text-lg font-bold text-slate-850 mb-4">📋 How to Update Historical Season Data</h3>
+                          <h3 className="text-lg font-bold text-slate-850 mb-4"><ClipboardList className="w-5 h-5 inline text-slate-500 mr-1" /> How to Update Historical Season Data</h3>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-slate-500">
                             <div className="bg-white/60 rounded-lg p-4 border border-blue-200/50">
                               <div className="flex items-center gap-2 mb-2">
@@ -3025,7 +3027,7 @@ export default function HistoricalSeasonDetailPage() {
                     {/* Import Results */}
                     {importResults && (
                       <div className="mt-8 bg-green-50/50 rounded-xl p-6 border border-green-100">
-                        <h3 className="text-lg font-bold text-green-800 mb-4">✅ Import Results</h3>
+                        <h3 className="text-lg font-bold text-green-800 mb-4"><CheckCircle2 className="w-5 h-5 inline text-green-500 mr-1" /> Import Results</h3>
                         <p className="text-green-700 mb-4">{importResults.message}</p>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -3121,7 +3123,7 @@ export default function HistoricalSeasonDetailPage() {
                     <div className="mb-6">
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <h3 className="text-sm font-extrabold text-slate-800">📋 Import Preview</h3>
+                          <h3 className="text-sm font-extrabold text-slate-800"><ClipboardList className="w-4 h-4 inline text-slate-500 mr-1" /> Import Preview</h3>
                           <p className="text-xs text-slate-500 font-mono">Review and edit data before importing</p>
                         </div>
                         <button
@@ -3404,7 +3406,7 @@ export default function HistoricalSeasonDetailPage() {
                                         team.linked_team_id ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-300'
                                       }`}
                                     >
-                                      <option value="">❌ Not Linked</option>
+                                      <option value=""><XCircle className="w-3 h-3 inline text-red-500 mr-1" /> Not Linked</option>
                                       {existingEntities?.teams && existingEntities.teams.length > 0 && (
                                         <>
                                           {existingEntities.teams

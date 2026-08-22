@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 export default function CheckRolePage() {
   const { user, loading, firebaseUser } = useAuth();
@@ -44,9 +45,9 @@ export default function CheckRolePage() {
               <div className="w-48 font-semibold text-gray-700">Firebase User:</div>
               <div className="flex-1">
                 {firebaseUser ? (
-                  <span className="text-green-600">✅ Authenticated</span>
+                  <span className="text-green-600 inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Authenticated</span>
                 ) : (
-                  <span className="text-red-600">❌ Not authenticated</span>
+                  <span className="text-red-600 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> Not authenticated</span>
                 )}
               </div>
             </div>
@@ -69,9 +70,9 @@ export default function CheckRolePage() {
               <div className="w-48 font-semibold text-gray-700">User Document:</div>
               <div className="flex-1">
                 {user ? (
-                  <span className="text-green-600">✅ Loaded</span>
+                  <span className="text-green-600 inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Loaded</span>
                 ) : (
-                  <span className="text-red-600">❌ Not loaded</span>
+                  <span className="text-red-600 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> Not loaded</span>
                 )}
               </div>
             </div>
@@ -100,9 +101,9 @@ export default function CheckRolePage() {
                   <div className="w-48 font-semibold text-gray-700">Is Active:</div>
                   <div className="flex-1">
                     {user.isActive ? (
-                      <span className="text-green-600">✅ Yes</span>
+                      <span className="text-green-600 inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Yes</span>
                     ) : (
-                      <span className="text-red-600">❌ No</span>
+                      <span className="text-red-600 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> No</span>
                     )}
                   </div>
                 </div>
@@ -111,9 +112,9 @@ export default function CheckRolePage() {
                   <div className="w-48 font-semibold text-gray-700">Is Approved:</div>
                   <div className="flex-1">
                     {user.isApproved ? (
-                      <span className="text-green-600">✅ Yes</span>
+                      <span className="text-green-600 inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Yes</span>
                     ) : (
-                      <span className="text-red-600">❌ No</span>
+                      <span className="text-red-600 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> No</span>
                     )}
                   </div>
                 </div>
@@ -143,27 +144,27 @@ export default function CheckRolePage() {
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <span className="font-medium text-gray-700">Can access Season Carryover page?</span>
               {user?.role === 'super_admin' ? (
-                <span className="text-green-600 font-semibold">✅ Yes</span>
+                <span className="text-green-600 font-semibold inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Yes</span>
               ) : (
-                <span className="text-red-600 font-semibold">❌ No (requires super_admin role)</span>
+                <span className="text-red-600 font-semibold inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> No (requires super_admin role)</span>
               )}
             </div>
 
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <span className="font-medium text-gray-700">Can access Awards Order page?</span>
               {user?.role === 'super_admin' ? (
-                <span className="text-green-600 font-semibold">✅ Yes</span>
+                <span className="text-green-600 font-semibold inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Yes</span>
               ) : (
-                <span className="text-red-600 font-semibold">❌ No (requires super_admin role)</span>
+                <span className="text-red-600 font-semibold inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> No (requires super_admin role)</span>
               )}
             </div>
 
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <span className="font-medium text-gray-700">Can access Committee pages?</span>
               {user?.role === 'committee_admin' || user?.role === 'super_admin' ? (
-                <span className="text-green-600 font-semibold">✅ Yes</span>
+                <span className="text-green-600 font-semibold inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Yes</span>
               ) : (
-                <span className="text-red-600 font-semibold">❌ No (requires committee_admin or super_admin role)</span>
+                <span className="text-red-600 font-semibold inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> No (requires committee_admin or super_admin role)</span>
               )}
             </div>
           </div>

@@ -3,6 +3,8 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { SoccerBallIcon, GloveIcon } from '@/components/ui/CustomIcons';
+import { Target, Crown, Sparkles } from 'lucide-react';
 import { getIdToken } from 'firebase/auth';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { 
@@ -379,7 +381,7 @@ export default function EditHistoricalSeasonPage() {
             {/* Top Scorer */}
             <div className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-5 space-y-4">
               <h4 className="text-xs font-mono font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                <span>⚽</span> Top Scorer
+                <SoccerBallIcon className="w-4 h-4" /> Top Scorer
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2 space-y-2">
@@ -415,7 +417,7 @@ export default function EditHistoricalSeasonPage() {
             {/* Best Goalkeeper */}
             <div className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-5 space-y-4">
               <h4 className="text-xs font-mono font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                <span>🧤</span> Best Goalkeeper
+                <GloveIcon className="w-4 h-4" /> Best Goalkeeper
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2 space-y-2">
@@ -488,7 +490,7 @@ export default function EditHistoricalSeasonPage() {
               {/* MVP */}
               <div className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-5 space-y-4">
                 <h4 className="text-xs font-mono font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                  <span>👑</span> MVP
+                  <Crown className="w-4 h-4 text-amber-500" /> MVP
                 </h4>
                 <div className="space-y-2">
                   <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
@@ -508,7 +510,7 @@ export default function EditHistoricalSeasonPage() {
               {/* POTM */}
               <div className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-5 space-y-4">
                 <h4 className="text-xs font-mono font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                  <span>🌟</span> Player of the Match (POTM)
+                  <Sparkles className="w-4 h-4 text-amber-400" /> Player of the Match (POTM)
                 </h4>
                 <div className="space-y-2">
                   <label className="block text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">

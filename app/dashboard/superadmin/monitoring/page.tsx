@@ -3,10 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import Link from 'next/link'
-import { getReadStats, logReadStats, resetReadCount } from '@/utils/readCounter'
-import { getCacheStatistics, invalidateAllCaches, invalidatePlayerCaches, invalidateTeamCaches } from '@/utils/smartCache'
-import { getCacheInfo } from '@/utils/cache'
 import { 
   ArrowLeft, 
   Activity, 
@@ -375,7 +371,7 @@ export default function MonitoringPage() {
             <div className="rounded-2xl p-4 bg-emerald-50 border border-emerald-250 text-emerald-700 text-xs flex items-center gap-3">
               <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
               <div>
-                <h3 className="font-bold uppercase tracking-wider text-emerald-850 mb-1">✅ System Running Well</h3>
+                <h3 className="font-bold uppercase tracking-wider text-emerald-850 mb-1">System Running Well</h3>
                 <p className="text-emerald-600/90 leading-relaxed font-mono">
                   Your read usage is low and caching is active. System is optimized!
                 </p>
