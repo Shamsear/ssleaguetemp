@@ -124,7 +124,7 @@ export default function FantasyLeaderboardPage() {
   };
 
   return (
-    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-6 sm:pb-12 px-3 sm:px-6 font-mono">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
@@ -140,7 +140,7 @@ export default function FantasyLeaderboardPage() {
         </div>
 
         {/* Header Banner */}
-        <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
+        <div className="console-card bg-white border border-slate-200/60 p-4 sm:p-6 rounded-3xl shadow-sm">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-slate-800 border border-slate-900 rounded-2xl text-amber-400 shadow-sm shrink-0">
               <Trophy className="w-6 h-6" />
@@ -158,13 +158,13 @@ export default function FantasyLeaderboardPage() {
         <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm">
           {/* Podium Display (Top 3 Teams) */}
           {leaderboard.length >= 3 && (
-            <div className="bg-slate-50/50 border-b border-slate-100 p-6 sm:p-8">
-              <div className="grid grid-cols-3 gap-3 max-w-2xl mx-auto items-end pt-4">
+            <div className="bg-slate-50/50 border-b border-slate-100 p-4 sm:p-8">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-2xl mx-auto items-end pt-3 sm:pt-4">
                 {/* 2nd Place */}
                 <div className="text-center space-y-2">
-                  <div className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto bg-gradient-to-br ${getRankColor(2)} border-2 rounded-full flex items-center justify-center font-black text-lg shadow-sm shrink-0 relative`}>
+                  <div className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-gradient-to-br ${getRankColor(2)} border-2 rounded-full flex items-center justify-center font-black text-base sm:text-lg shadow-sm shrink-0 relative`}>
                     2
-                    <span className="absolute -bottom-1 -right-1 bg-slate-400 text-[8px] px-1 py-0.5 rounded uppercase font-black tracking-wider">SILVER</span>
+                    <span className="absolute -bottom-1 -right-1 bg-slate-400 text-[7px] sm:text-[8px] px-1 py-0.5 rounded uppercase font-black tracking-wider hidden sm:block">SILVER</span>
                   </div>
                   <div className="min-w-0">
                     <p className={`font-black text-[10px] sm:text-xs uppercase truncate px-1 ${leaderboard[1].fantasy_team_id === myTeamId ? 'text-amber-600' : 'text-slate-800'}`}>
@@ -176,12 +176,12 @@ export default function FantasyLeaderboardPage() {
 
                 {/* 1st Place */}
                 <div className="text-center space-y-2">
-                  <div className="w-5 h-5 mx-auto text-amber-500 flex items-center justify-center animate-bounce">
-                    <Trophy className="w-5 h-5 fill-amber-500" />
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 mx-auto text-amber-500 flex items-center justify-center animate-bounce">
+                    <Trophy className="w-4 h-4 sm:w-5 sm:h-5 fill-amber-500" />
                   </div>
-                  <div className={`w-18 h-18 sm:w-20 sm:h-20 mx-auto bg-gradient-to-br ${getRankColor(1)} border-2 rounded-full flex items-center justify-center font-black text-xl shadow-md shrink-0 relative`}>
+                  <div className={`w-14 h-14 sm:w-20 sm:h-20 mx-auto bg-gradient-to-br ${getRankColor(1)} border-2 rounded-full flex items-center justify-center font-black text-lg sm:text-xl shadow-md shrink-0 relative`}>
                     1
-                    <span className="absolute -bottom-1 -right-1 bg-amber-500 text-[8px] text-slate-900 px-1 py-0.5 rounded uppercase font-black tracking-wider">CHAMP</span>
+                    <span className="absolute -bottom-1 -right-1 bg-amber-500 text-[7px] sm:text-[8px] text-slate-900 px-1 py-0.5 rounded uppercase font-black tracking-wider hidden sm:block">CHAMP</span>
                   </div>
                   <div className="min-w-0">
                     <p className={`font-black text-xs sm:text-sm uppercase truncate px-1 ${leaderboard[0].fantasy_team_id === myTeamId ? 'text-amber-600 font-extrabold' : 'text-slate-850'}`}>
@@ -193,9 +193,9 @@ export default function FantasyLeaderboardPage() {
 
                 {/* 3rd Place */}
                 <div className="text-center space-y-2">
-                  <div className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto bg-gradient-to-br ${getRankColor(3)} border-2 rounded-full flex items-center justify-center font-black text-lg shadow-sm shrink-0 relative`}>
+                  <div className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-gradient-to-br ${getRankColor(3)} border-2 rounded-full flex items-center justify-center font-black text-base sm:text-lg shadow-sm shrink-0 relative`}>
                     3
-                    <span className="absolute -bottom-1 -right-1 bg-amber-800 text-[8px] text-white px-1 py-0.5 rounded uppercase font-black tracking-wider">BRONZE</span>
+                    <span className="absolute -bottom-1 -right-1 bg-amber-800 text-[7px] sm:text-[8px] text-white px-1 py-0.5 rounded uppercase font-black tracking-wider hidden sm:block">BRONZE</span>
                   </div>
                   <div className="min-w-0">
                     <p className={`font-black text-[10px] sm:text-xs uppercase truncate px-1 ${leaderboard[2].fantasy_team_id === myTeamId ? 'text-amber-600' : 'text-slate-800'}`}>
@@ -209,7 +209,7 @@ export default function FantasyLeaderboardPage() {
           )}
 
           {/* Full Rankings list */}
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-1.5">
               Standings Board
             </h3>
@@ -217,15 +217,15 @@ export default function FantasyLeaderboardPage() {
               {leaderboard.map((entry) => (
                 <div
                   key={entry.fantasy_team_id}
-                  className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                  className={`flex items-center justify-between p-3 sm:p-4 rounded-2xl border transition-all ${
                     entry.fantasy_team_id === myTeamId
                       ? 'bg-amber-50/20 border-amber-400 shadow-sm'
                       : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200'
                   }`}
                 >
-                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-2.5 sm:gap-3.5 flex-1 min-w-0">
                     {/* Rank Badge */}
-                    <div className={`w-8 h-8 rounded-lg border font-black text-xs flex items-center justify-center shrink-0 shadow-sm ${getRankBadgeClass(entry.rank)}`}>
+                    <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border font-black text-[10px] sm:text-xs flex items-center justify-center shrink-0 shadow-sm ${getRankBadgeClass(entry.rank)}`}>
                       {entry.rank}
                     </div>
 
@@ -234,7 +234,7 @@ export default function FantasyLeaderboardPage() {
                       <img 
                         src={entry.team_logo} 
                         alt={`${entry.team_name} logo`}
-                        className="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-250 bg-white"
+                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover shrink-0 border border-slate-250 bg-white"
                         style={{
                           objectPosition: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
                           transform: `scale(${(entry as any).logo_scale_circle ?? 1})`,
@@ -242,7 +242,7 @@ export default function FantasyLeaderboardPage() {
                         }}
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-900 text-amber-400 font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-800 border border-slate-900 text-amber-400 font-black text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-sm">
                         {entry.team_name.charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -260,22 +260,24 @@ export default function FantasyLeaderboardPage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-4 sm:gap-6 text-right shrink-0">
-                    <div>
+                  <div className="flex gap-3 sm:gap-6 text-right shrink-0">
+                    {/* Squad - hidden on very small screens */}
+                    <div className="hidden sm:block">
                       <p className="text-[8px] text-slate-400 uppercase font-black">Squad</p>
                       <p className="text-xs font-black text-slate-800 mt-0.5">{entry.player_count}</p>
                     </div>
-                    <div className="w-px bg-slate-200" />
-                    <div>
+                    <div className="hidden sm:block w-px bg-slate-200" />
+                    {/* Round - hidden on very small screens */}
+                    <div className="hidden sm:block">
                       <p className="text-[8px] text-slate-400 uppercase font-black">Round</p>
                       <p className={`text-xs font-black mt-0.5 ${entry.last_round_points > 0 ? 'text-emerald-650' : 'text-slate-500'}`}>
                         {entry.last_round_points || 0}
                       </p>
                     </div>
-                    <div className="w-px bg-slate-200" />
+                    <div className="hidden sm:block w-px bg-slate-200" />
                     <div>
                       <p className="text-[8px] text-slate-400 uppercase font-black">Total</p>
-                      <p className="text-sm font-black text-indigo-650 mt-0.5">{entry.total_points}</p>
+                      <p className="text-xs sm:text-sm font-black text-indigo-650 mt-0.5">{entry.total_points}</p>
                     </div>
                   </div>
                 </div>
