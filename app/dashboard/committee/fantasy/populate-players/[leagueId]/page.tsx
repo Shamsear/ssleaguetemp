@@ -1,5 +1,5 @@
 'use client';
-import { CheckCircle, XCircle, Users, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, Users, RefreshCw, Info } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -113,7 +113,7 @@ export default function PopulateFantasyPlayersPage() {
           </div>
 
           <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 mb-6 text-indigo-800">
-            <h3 className="font-bold text-indigo-900 text-sm mb-2">ℹ️ What does this do?</h3>
+            <h3 className="font-bold text-indigo-900 text-sm mb-2"><Info className="w-4 h-4 inline text-indigo-500 mr-1" /> What does this do?</h3>
             <ul className="text-xs space-y-1.5">
               <li>• Copies all players from the tournament's <code className="bg-indigo-100/60 px-1 py-0.5 rounded font-mono text-[10px]">player_seasons</code> table</li>
               <li>• Creates fantasy player entries with categories matching the stats database</li>

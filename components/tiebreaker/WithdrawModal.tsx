@@ -61,7 +61,7 @@ export default function WithdrawModal({
 
           {/* Warning Box */}
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-orange-900 mb-2">⚠️ Warning</h3>
+            <h3 className="font-semibold text-orange-900 mb-2"><AlertTriangle className="w-4 h-4 inline text-orange-500 mr-1" /> Warning</h3>
             <ul className="text-sm text-orange-800 space-y-1 list-disc list-inside">
               <li>This action cannot be undone</li>
               <li>You will lose your chance to win this player</li>

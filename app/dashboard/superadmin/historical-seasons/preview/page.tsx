@@ -1415,7 +1415,7 @@ export default function PreviewHistoricalSeason() {
                                           </option>
                                         ))}
                                       </optgroup>
-                                      <optgroup label="📋 All Other Teams">
+                                      <optgroup label="All Other Teams">
                                         {existingEntities.teams
                                           .filter(t => !suggested.some(s => s.teamId === t.teamId))
                                           .sort((a, b) => (a.name || '').localeCompare(b.name || ''))

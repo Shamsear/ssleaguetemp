@@ -470,7 +470,7 @@ export default function PlayerStatsBulkUpdate() {
 
             {previewData.summary.errors > 0 && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <p className="text-xs font-bold text-red-800 mb-2">⚠️ Errors Found:</p>
+                <p className="text-xs font-bold text-red-800 mb-2"><AlertCircle className="w-3 h-3 inline text-red-500 mr-1" /> Errors Found:</p>
                 <ul className="text-[11px] text-red-700 space-y-1">
                   {previewData.summary.errorMessages.map((error: string, idx: number) => (
                     <li key={idx}>• {error}</li>
@@ -527,7 +527,7 @@ export default function PlayerStatsBulkUpdate() {
           <div className="bg-amber-50 border border-amber-200/60 rounded-xl p-4 flex gap-3 text-xs text-amber-800">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-500" />
             <div>
-              <p className="font-bold mb-1">⚠️ Warning:</p>
+              <p className="font-bold mb-1"><AlertCircle className="w-3 h-3 inline text-amber-500 mr-1" /> Warning:</p>
               <p className="text-[11px]">
                 This will update {previewData.summary.playersToUpdate} players in the database. 
                 Only the selected stats fields will be modified. Make sure the preview looks correct before proceeding.

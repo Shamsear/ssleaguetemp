@@ -1304,7 +1304,7 @@ export default function PlayerCategorizationPage() {
                                   {player.excludedSeasons && player.excludedSeasons.length > 0 && player.weightedScore === null && (
                                     <div className="p-3 bg-amber-50/40 border border-amber-250/70 rounded-xl text-[10px] text-amber-800 leading-relaxed font-mono flex flex-col gap-1">
                                       <div className="flex items-start gap-2">
-                                        <span className="text-amber-600 font-bold">⚠️ Excluded Stats:</span>
+                                        <span className="text-amber-600 font-bold"><AlertTriangle className="w-3 h-3 inline text-amber-500 mr-1" /> Excluded Stats:</span>
                                         <span>
                                           Stats for <strong>{player.excludedSeasons.join(', ')}</strong> were fetched but ignored under your current settings (Max Seasons limit or unselected checkboxes).
                                         </span>

@@ -208,7 +208,7 @@ export default function CleanupPlayerUsersPage() {
         <div className="bg-rose-50 border border-rose-200 rounded-3xl p-5 flex gap-4 text-rose-700">
           <AlertTriangle className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
           <div className="space-y-2">
-            <h3 className="text-xs font-mono font-bold text-rose-800 uppercase tracking-wider">⚠️ Critical Warning: Irreversible Deletion</h3>
+            <h3 className="text-xs font-mono font-bold text-rose-800 uppercase tracking-wider"><AlertTriangle className="w-3 h-3 inline text-rose-500 mr-1" /> Critical Warning: Irreversible Deletion</h3>
             <ul className="text-[11px] text-rose-600/90 space-y-1 font-mono leading-relaxed">
               <li>• Purges records from Firebase Authentication registry and Firestore collection.</li>
               <li>• Real players do not require dashboard logins (handled by committee admins).</li>

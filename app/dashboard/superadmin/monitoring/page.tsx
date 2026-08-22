@@ -335,7 +335,7 @@ export default function MonitoringPage() {
             <div className="rounded-2xl p-4 bg-rose-50 border border-rose-250 text-rose-700 text-xs flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-rose-500 flex-shrink-0" />
               <div>
-                <h3 className="font-bold uppercase tracking-wider text-rose-800 mb-1">⚠️ High Read Usage</h3>
+                <h3 className="font-bold uppercase tracking-wider text-rose-800 mb-1"><AlertTriangle className="w-3 h-3 inline text-rose-500 mr-1" /> High Read Usage</h3>
                 <p className="text-rose-600/90 leading-relaxed mb-2 font-mono">Your read usage is very high. Consider:</p>
                 <ul className="text-rose-600/90 list-disc list-inside space-y-1 font-mono">
                   <li>Upgrading to Blaze plan for higher quota</li>

@@ -374,7 +374,7 @@ export default function SeasonCarryoverPage() {
 
               <div className="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
                 <p className="text-sm text-yellow-800">
-                  <strong>⚠️ Important:</strong> This operation cannot be undone. Please review all data carefully before executing.
+                  <strong><AlertTriangle className="w-3 h-3 inline text-amber-500 mr-1" /> Important:</strong> This operation cannot be undone. Please review all data carefully before executing.
                 </p>
               </div>
             </div>

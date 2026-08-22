@@ -1,5 +1,5 @@
 'use client'
-import { CheckCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle, RefreshCw, ClipboardList } from 'lucide-react';
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
@@ -638,7 +638,7 @@ export default function PlayerSelectionPage() {
             </div>
             
             <div className="bg-blue-100/50 rounded-lg p-4 mb-4">
-              <h4 className="text-sm font-medium text-blue-900 mb-2">📋 Position-Based Import/Export:</h4>
+              <h4 className="text-sm font-medium text-blue-900 mb-2"><ClipboardList className="w-4 h-4 inline text-blue-500 mr-1" /> Position-Based Import/Export:</h4>
               <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
                 <li>Select a position below to export only that position's players</li>
                 <li>Edit the CSV file - change "Yes"/"No" in the Eligible column (Excel dropdown recommended)</li>

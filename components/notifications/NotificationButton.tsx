@@ -307,7 +307,7 @@ export default function NotificationButton() {
   if (isEdgeBrowser) {
     return (
       <div className="px-4 py-3 rounded-xl bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
-        <p className="font-medium mb-1">⚠️ Microsoft Edge Not Supported</p>
+        <p className="font-medium mb-1"><AlertTriangle className="w-4 h-4 inline text-yellow-500 mr-1" /> Microsoft Edge Not Supported</p>
         <p className="text-xs mb-2">
           Microsoft Edge uses a different push service that is incompatible with Firebase Cloud Messaging.
         </p>

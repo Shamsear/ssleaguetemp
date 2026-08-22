@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { AlertTriangle } from 'lucide-react';
 
 interface Vote {
   vote_id: string;
@@ -158,7 +159,7 @@ export default function AdminPollPage() {
         {/* Duplicate Names Alert */}
         {stats && stats.duplicate_names.length > 0 && (
           <div className="bg-orange-50 border-l-4 border-orange-500 p-6 mb-8 rounded-lg">
-            <h3 className="font-bold text-orange-900 mb-3">⚠️ Duplicate Names Detected</h3>
+            <h3 className="font-bold text-orange-900 mb-3"><AlertTriangle className="w-4 h-4 inline text-orange-500 mr-1" /> Duplicate Names Detected</h3>
             <div className="space-y-2">
               {stats.duplicate_names.map((dup) => (
                 <div key={dup.voter_name} className="text-sm text-orange-800">

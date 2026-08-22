@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { AlertCircle, Tag, Users, Wallet } from 'lucide-react';
+import { AlertCircle, Tag, Users, Wallet, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
@@ -620,7 +620,7 @@ export default function RealPlayersPlannerPage() {
         {/* Warnings */}
         {players.filter((p) => p.player_id).length < requiredPlayers && (
           <div className="console-card bg-amber-50/60 border border-amber-200/60 p-4 rounded-xl flex gap-3 items-center">
-            <span className="text-lg flex-shrink-0">⚠️</span>
+            <AlertTriangle className="w-5 h-5 flex-shrink-0 text-amber-500" />
             <div>
               <span className="font-extrabold text-amber-800 text-[10px] uppercase tracking-wider block mb-0.5">Roster Incomplete</span>
               <p className="text-xs text-amber-900 font-semibold">

@@ -347,7 +347,7 @@ export default function CustomScoringRulesPage() {
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
                     >
                       <option value="">Select condition...</option>
-                      <option value="new_player">🆕 New Player Bonus (first X matches)</option>
+                      <option value="new_player"><Sparkles className="w-3 h-3 inline text-amber-400 mr-1" /> New Player Bonus (first X matches)</option>
                       <option value="streak"><Flame className="w-3 h-3 inline text-orange-500 mr-1" /> Streak Bonus (consecutive events)</option>
                       <option value="milestone"><Target className="w-3 h-3 inline text-rose-500 mr-1" /> Milestone Bonus (reach X goals/assists)</option>
                       <option value="match_result"><Trophy className="w-3 h-3 inline text-amber-500 mr-1" /> Match Result Bonus (win/draw/loss)</option>

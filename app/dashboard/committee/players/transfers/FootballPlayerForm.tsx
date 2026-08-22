@@ -326,7 +326,7 @@ export default function FootballPlayerForm() {
                   </div>
                   <div className="flex justify-between items-center mt-2 text-[10px] uppercase font-bold tracking-wider">
                     <span className="text-slate-500">Next Swap Fee:</span>
-                    <span className="text-emerald-650 font-black">FREE ✨</span>
+                    <span className="text-emerald-650 font-black">FREE <Sparkles className="w-3 h-3 inline text-amber-400" /></span>
                   </div>
                 </div>
               )}
@@ -368,7 +368,7 @@ export default function FootballPlayerForm() {
                   </div>
                   <div className="flex justify-between items-center mt-2 text-[10px] uppercase font-bold tracking-wider">
                     <span className="text-slate-500">Next Swap Fee:</span>
-                    <span className="text-emerald-650 font-black">FREE ✨</span>
+                    <span className="text-emerald-650 font-black">FREE <Sparkles className="w-3 h-3 inline text-amber-400" /></span>
                   </div>
                 </div>
               )}
@@ -378,7 +378,7 @@ export default function FootballPlayerForm() {
           {/* Free Swap Banner */}
           {selectedPlayerA && selectedPlayerB && (
             <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono text-xs text-center">
-              <h3 className="font-black text-emerald-600 uppercase tracking-wider mb-2.5">✨ Free Swap</h3>
+              <h3 className="font-black text-emerald-600 uppercase tracking-wider mb-2.5"><Sparkles className="w-4 h-4 inline text-amber-400 mr-1" /> Free Swap</h3>
               <p className="text-slate-500">
                 Football player swaps are completely free. No fees will be charged and available budgets will remain unchanged.
               </p>

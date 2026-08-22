@@ -1,6 +1,6 @@
 'use client';
 
-import { XCircle } from 'lucide-react';
+import { XCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
 import { useRouter } from 'next/navigation';
@@ -166,7 +166,7 @@ export default function TeamLeaderboardPage() {
           />
         ) : (
           <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 text-center shadow-sm font-mono">
-            <span className="text-4xl mb-3 block">⚠️</span>
+            <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-3" />
             <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-2">No Tournament Selected</h3>
             <p className="text-xs text-slate-500 uppercase font-semibold mb-4">Please select a tournament from the dropdown above to view standings</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">

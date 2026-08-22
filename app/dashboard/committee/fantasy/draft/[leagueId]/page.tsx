@@ -1,5 +1,5 @@
 'use client';
-import { Crown, Star, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Crown, Star, ArrowLeft, RefreshCw, Shield } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -560,7 +560,7 @@ export default function DraftResultsPage() {
                           )}
                           {passiveTeam && (
                             <div className="px-2.5 py-1 bg-slate-50 border border-slate-200 text-slate-700 text-[10px] font-bold uppercase rounded-lg">
-                              <span className="font-black text-slate-600">🏟️ Passive Team:</span>
+                              <span className="font-black text-slate-600"><Shield className="w-3 h-3 inline text-slate-500 mr-1" /> Passive Team:</span>
                               <span className="ml-1 text-slate-900 font-extrabold">{passiveTeam}</span>
                             </div>
                           )}

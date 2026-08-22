@@ -1,6 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -485,7 +486,7 @@ export default function TransactionsPage() {
         {/* Error Message */}
         {errorMessage && (
           <div className="console-card bg-amber-50/60 border border-amber-200/60 p-4 rounded-xl flex gap-3 items-center mb-6">
-            <span className="text-lg flex-shrink-0">⚠️</span>
+            <AlertTriangle className="w-5 h-5 flex-shrink-0 text-amber-500" />
             <div>
               <span className="font-extrabold text-amber-800 text-[10px] uppercase tracking-wider block mb-0.5">Unable to Load Transactions</span>
               <p className="text-xs sm:text-sm text-amber-900 leading-relaxed font-semibold">

@@ -1,5 +1,5 @@
 'use client';
-import { DollarSign, XCircle, CheckCircle, Trash2, AlertTriangle } from 'lucide-react';
+import { DollarSign, XCircle, CheckCircle, Trash2, AlertTriangle, Sparkles } from 'lucide-react';
 
 import { useState, useEffect, useMemo } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -345,7 +345,7 @@ export default function BulkReleaseFootballPlayerForm() {
 
       {success && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl font-mono text-xs uppercase tracking-wide">
-          <p className="font-extrabold">✨ Success</p>
+          <p className="font-extrabold"><Sparkles className="w-4 h-4 inline text-amber-400 mr-1" /> Success</p>
           <pre className="whitespace-pre-wrap text-[10px] mt-2 font-mono leading-relaxed">{success}</pre>
         </div>
       )}

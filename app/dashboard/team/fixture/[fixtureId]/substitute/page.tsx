@@ -1,6 +1,6 @@
 'use client';
 
-import { Star, RefreshCw } from 'lucide-react';
+import { Star, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -91,7 +91,7 @@ export default function FixtureSubstitutePage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="glass rounded-2xl p-8 max-w-md w-full text-center">
-          <div className="text-red-600 text-5xl mb-4">⚠️</div>
+          <div className="flex justify-center mb-4"><AlertTriangle className="w-14 h-14 text-red-500" /></div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Error</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <Link

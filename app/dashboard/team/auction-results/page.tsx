@@ -1,6 +1,6 @@
 'use client';
 
-import { Star, Trophy } from 'lucide-react';
+import { Star, Trophy, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -355,7 +355,7 @@ export default function AuctionResultsPage() {
                               {player.phase_note && (
                                 <div className="mt-2 p-2 rounded-lg bg-yellow-50 border border-yellow-200">
                                   <p className="text-xs text-yellow-800">
-                                    <span className="font-semibold">⚠️ Note:</span> {player.phase_note}
+                                    <span className="font-semibold"><AlertTriangle className="w-3 h-3 inline text-amber-500 mr-1" /> Note:</span> {player.phase_note}
                                   </p>
                                 </div>
                               )}

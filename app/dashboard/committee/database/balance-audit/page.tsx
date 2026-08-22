@@ -309,7 +309,7 @@ export default function BalanceAuditPage() {
                             <span className={squadMismatch ? 'text-rose-550' : 'text-slate-500'}>
                               {team.fb_count}
                             </span>
-                            {squadMismatch && <span className="ml-1 text-rose-550 animate-pulse" title="Mismatch detected">⚠️</span>}
+                            {squadMismatch && <span className="ml-1 text-rose-550 animate-pulse" title="Mismatch detected"><AlertTriangle className="w-3 h-3 inline text-rose-500" /></span>}
                           </td>
 
                           {/* Spent Balance */}
@@ -325,7 +325,7 @@ export default function BalanceAuditPage() {
                             <span className={spentMismatch ? 'text-rose-550' : 'text-slate-500'}>
                               £{team.fb_spent.toLocaleString()}
                             </span>
-                            {spentMismatch && <span className="ml-1 text-rose-550 animate-pulse" title="Mismatch detected">⚠️</span>}
+                            {spentMismatch && <span className="ml-1 text-rose-550 animate-pulse" title="Mismatch detected"><AlertTriangle className="w-3 h-3 inline text-rose-500" /></span>}
                           </td>
 
                           {/* Budget */}
@@ -341,7 +341,7 @@ export default function BalanceAuditPage() {
                             <span className={budgetMismatch ? 'text-rose-550' : 'text-slate-500'}>
                               £{team.fb_budget.toLocaleString()}
                             </span>
-                            {budgetMismatch && <span className="ml-1 text-rose-550 animate-pulse" title="Mismatch detected">⚠️</span>}
+                            {budgetMismatch && <span className="ml-1 text-rose-550 animate-pulse" title="Mismatch detected"><AlertTriangle className="w-3 h-3 inline text-rose-500" /></span>}
                           </td>
 
                           {/* Status */}

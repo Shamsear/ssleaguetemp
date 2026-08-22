@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useCachedTeams } from '@/hooks/useCachedData';
+import { Sparkles } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import SearchablePlayerSelect from '@/components/ui/SearchablePlayerSelect';
 import { X, Plus, ArrowLeftRight, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
@@ -339,7 +340,7 @@ export default function BulkSwapForm() {
 
       {success && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl font-mono text-xs uppercase tracking-wide">
-          <p className="font-extrabold">✨ Success</p>
+          <p className="font-extrabold"><Sparkles className="w-4 h-4 inline text-amber-400 mr-1" /> Success</p>
           <pre className="whitespace-pre-wrap text-[10px] mt-2 font-mono leading-relaxed">{success}</pre>
         </div>
       )}
@@ -433,7 +434,7 @@ export default function BulkSwapForm() {
                 <div key={swap.index} className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm">
                   <div className="flex justify-between items-center mb-2.5">
                     <span className="font-bold text-slate-800 uppercase tracking-wider">Swap Pair #{swap.index}</span>
-                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">FREE ✨</span>
+                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">FREE <Sparkles className="w-3 h-3 inline text-amber-400" /></span>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

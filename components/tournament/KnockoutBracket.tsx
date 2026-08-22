@@ -1,6 +1,6 @@
 'use client';
 
-import { Trophy, Info } from 'lucide-react';
+import { Trophy, Info, Award } from 'lucide-react';
 
 interface KnockoutMatch {
   id: string;
@@ -23,7 +23,7 @@ export default function KnockoutBracket({ knockoutFixtures }: KnockoutBracketPro
   if (!knockoutFixtures || Object.keys(knockoutFixtures).length === 0) {
     return (
       <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-8 text-center font-mono shadow-sm">
-        <span className="text-4xl mb-3 block">🥇</span>
+        <Award className="w-10 h-10 text-amber-500 mx-auto mb-3" />
         <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-2">No Knockout Stage Data</h3>
         <p className="text-xs text-slate-500 uppercase font-semibold">Knockout bracket will appear once set up</p>
       </div>
@@ -48,7 +48,7 @@ export default function KnockoutBracket({ knockoutFixtures }: KnockoutBracketPro
       <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 shadow-sm font-mono relative overflow-hidden">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center">
-            <span className="text-xl">🥇</span>
+            <Award className="w-5 h-5 text-amber-500" />
           </div>
           <div>
             <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Knockout Stage</h3>

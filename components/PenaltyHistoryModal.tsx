@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { ClipboardList, AlertTriangle } from 'lucide-react';
+import { ClipboardList, AlertTriangle, ScrollText } from 'lucide-react';
 
 interface Penalty {
     id: number;
@@ -267,7 +267,7 @@ export default function PenaltyHistoryModal({
                             {removedPenalties.length > 0 && (
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                        <span className="text-gray-400">📜</span>
+                                        <ScrollText className="w-5 h-5 text-gray-400" />
                                         Removed Penalties ({removedPenalties.length})
                                     </h3>
                                     <div className="space-y-4">

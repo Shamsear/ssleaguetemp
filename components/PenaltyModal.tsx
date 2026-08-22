@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { AlertTriangle } from 'lucide-react';
 
 interface PenaltyModalProps {
     isOpen: boolean;
@@ -110,7 +111,7 @@ export default function PenaltyModal({
                 <div className="bg-gradient-to-r from-red-600 to-orange-600 text-white p-6 rounded-t-2xl">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <span className="text-3xl">⚠️</span>
+                            <AlertTriangle className="w-8 h-8 text-white" />
                             <div>
                                 <h2 className="text-xl font-bold">Apply Points Penalty</h2>
                                 <p className="text-sm text-red-100">Deduct points from team</p>

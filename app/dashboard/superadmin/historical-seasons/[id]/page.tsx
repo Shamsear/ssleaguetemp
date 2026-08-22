@@ -1363,7 +1363,7 @@ export default function HistoricalSeasonDetailPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <span className="text-xs font-medium opacity-80">✅</span>
+                    <CheckCircle2 className="w-3 h-3 text-green-500" />
                   </div>
                   <div className="text-3xl font-extrabold text-slate-800">{activePlayers.length}</div>
                   <div className="text-xs text-slate-400 font-bold uppercase mt-1">Active Players</div>

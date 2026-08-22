@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { AlertCircle, ArrowRightLeft, BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Flame, Info, Settings, Star, TrendingUp, Trophy, User, UserMinus, Users, Coins, RefreshCw, Target, Award, Gem, Plus, RotateCcw } from 'lucide-react';
+import { AlertCircle, ArrowRightLeft, BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Flame, Info, Settings, Star, TrendingUp, Trophy, User, UserMinus, Users, Coins, RefreshCw, Target, Award, Gem, Plus, RotateCcw, AlertTriangle } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
@@ -948,7 +948,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                   href={`/dashboard/team/tiebreaker/${tiebreaker.id}`}
                   className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-all text-xs font-mono font-bold uppercase tracking-wider animate-pulse"
                 >
-                  <span>⚠️</span>
+                  <AlertTriangle className="w-4 h-4" />
                   <span>Tiebreaker - {tiebreaker.player.name}</span>
                 </Link>
               ))}

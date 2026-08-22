@@ -1,5 +1,5 @@
 'use client';
-import { Lock } from 'lucide-react';
+import { Lock, ArrowLeft, ArrowRight } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -325,10 +325,10 @@ export default function LineupHistoryPage() {
                         <div className="text-sm font-medium text-gray-900">{entry.team_name}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-red-600 font-medium">⬅️ {entry.player_out_name}</div>
+                        <div className="text-sm text-red-600 font-medium"><ArrowLeft className="w-3 h-3 inline text-red-500 mr-1" /> {entry.player_out_name}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-green-600 font-medium">➡️ {entry.player_in_name}</div>
+                        <div className="text-sm text-green-600 font-medium"><ArrowRight className="w-3 h-3 inline text-green-500 mr-1" /> {entry.player_in_name}</div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-700">{entry.made_by_name}</div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Handshake, Info, Pencil, Save, Search, Star, Trophy, XCircle } from 'lucide-react';
+import { BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Handshake, Info, Pencil, Save, Search, Star, Trophy, XCircle, AlertTriangle, Plane, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -1783,7 +1783,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       }`}>
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">✈️ {fixture.away_team_name}</span>
+                          <span className="text-[10px] font-bold text-slate-800 uppercase tracking-wider"><Plane className="w-3 h-3 inline text-slate-400 mr-1" /> {fixture.away_team_name}</span>
                         </div>
                         {awayLineupSubmitted && (
                           <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">SUBMITTED</span>
@@ -1836,7 +1836,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                               </svg>
                               <div className="flex-1">
-                                <p className="text-xs font-semibold text-orange-900">⚠️ Warning</p>
+                                <p className="text-xs font-semibold text-orange-900"><AlertTriangle className="w-3 h-3 inline text-orange-500 mr-1" /> Warning</p>
                                 <p className="text-xs text-orange-700 mt-1">
                                   Editing your lineup will delete the existing matchups. You'll need to recreate them after saving your changes.
                                 </p>
@@ -2467,10 +2467,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                                 <div className="flex-1 text-xs">
-                                  <p className="font-semibold text-orange-900 mb-1">⚠️ Substitution Penalties Applied</p>
+                                  <p className="font-semibold text-orange-900 mb-1"><AlertTriangle className="w-3 h-3 inline text-orange-500 mr-1" /> Substitution Penalties Applied</p>
                                   {matchup.home_substituted && (
                                     <p className="text-orange-700 mb-0.5">
-                                      🔁 Home: {matchup.home_original_player_name} {"->"} {matchup.home_player_name}
+                                      <RotateCcw className="w-3 h-3 inline text-orange-500 mr-1" /> Home: {matchup.home_original_player_name} {"->"} {matchup.home_player_name}
                                       <span className="font-bold ml-1">(+{matchup.home_sub_penalty || 0} goals to {fixture.away_team_name})</span>
                                     </p>
                                   )}
@@ -2559,7 +2559,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                     </svg>
                                   )}
-                                  <p className="text-xs font-medium text-gray-600">✈️ <span className="hidden sm:inline">{fixture.away_team_name}</span><span className="sm:hidden">Away</span></p>
+                                  <p className="text-xs font-medium text-gray-600"><Plane className="w-3 h-3 inline text-slate-400 mr-1" /> <span className="hidden sm:inline">{fixture.away_team_name}</span><span className="sm:hidden">Away</span></p>
                                 </div>
                                 <p className={`font-bold mb-1 sm:mb-2 text-xs sm:text-sm ${awayPOTD ? 'text-yellow-900 sm:text-base' : 'text-gray-900'
                                   }`}>{matchup.away_player_name}</p>
@@ -3238,7 +3238,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           }
                         })()}
                       </optgroup>
-                      <optgroup label="✈️ Away Team ({fixture.away_team_name})">
+                      <optgroup label={`Away Team (${fixture.away_team_name})`}>
                         {(() => {
                           // For round robin, combine stats for each unique player
                           const isRoundRobin = fixture.knockout_format === 'round_robin';
@@ -4101,7 +4101,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               {subNewPlayerId && (
                 <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-xl font-mono text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-orange-900 uppercase tracking-wider text-[10px]">⚠️ Sub Penalty</span>
+                    <span className="font-extrabold text-orange-900 uppercase tracking-wider text-[10px]"><AlertTriangle className="w-3 h-3 inline text-orange-500 mr-1" /> Sub Penalty</span>
                     <span className="text-sm font-black text-orange-600 bg-white border border-orange-200 px-2 py-0.5 rounded-lg">+{subPenaltyAmount} Goals</span>
                   </div>
                   <p className="text-[9px] text-orange-500 mt-1.5 font-bold uppercase tracking-wider leading-relaxed">

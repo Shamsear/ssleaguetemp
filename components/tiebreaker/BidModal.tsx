@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, TrendingUp, AlertCircle } from 'lucide-react';
+import { X, TrendingUp, AlertCircle, AlertTriangle } from 'lucide-react';
 import {
   formatCurrency,
   getMinimumBid,
@@ -160,7 +160,7 @@ export default function BidModal({
           {/* Warning */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
             <p className="text-sm text-yellow-800">
-              <strong>⚠️ Warning:</strong> If your bid is the highest, you will NOT be able to
+              <strong><AlertTriangle className="w-3 h-3 inline text-amber-500 mr-1" /> Warning:</strong> If your bid is the highest, you will NOT be able to
               withdraw until someone outbids you.
             </p>
           </div>
