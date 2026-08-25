@@ -39,12 +39,9 @@ export async function POST(request: NextRequest) {
 
     // Update draft settings
     // Use string literals with AT TIME ZONE 'UTC' to force UTC interpretation
-    const opensQuery = draft_opens_at ? `'${draft_opens_at}'::timestamp AT TIME ZONE 'UTC'` : 'NULL';
-    const closesQuery = draft_closes_at ? `'${draft_closes_at}'::timestamp AT TIME ZONE 'UTC'` : 'NULL';
-    
     // Get current category settings to preserve other slots (pre-fetch for transaction)
     const currentLeagues = await fantasySql`
-      SELECT category_settings FROM fantasy_leagues WHERE league_id = ${league_id}
+      SELECT category_settings, draft_status FROM fantasy_leagues WHERE league_id = ${league_id}
     `;
     
     const categorySettings = currentLeagues[0]?.category_settings || {};
@@ -56,14 +53,13 @@ export async function POST(request: NextRequest) {
     const currentStatus = currentLeagues[0]?.draft_status || 'pending';
     const isTransitioningToActive = draft_status === 'active' && currentStatus !== 'active';
 
-    // Build transaction queries array
+    // Build transaction queries array (draft_opens_at/draft_closes_at removed —
+    // timing is now managed per-slot via fantasy_draft_rounds)
     const queries: any[] = [
       fantasySql`
         UPDATE fantasy_leagues
         SET 
           draft_status = ${draft_status},
-          draft_opens_at = ${fantasySql.unsafe(opensQuery)},
-          draft_closes_at = ${fantasySql.unsafe(closesQuery)},
           category_settings = ${categorySettings},
           updated_at = CURRENT_TIMESTAMP
         WHERE league_id = ${league_id}
@@ -101,8 +97,7 @@ export async function POST(request: NextRequest) {
     const result = transactionResults[0];
 
     console.log('🟢 Stored in database:', {
-      draft_opens_at: result[0]?.draft_opens_at,
-      draft_closes_at: result[0]?.draft_closes_at
+      draft_status: result[0]?.draft_status,
     });
 
     if (result.length === 0) {
@@ -134,7 +129,7 @@ export async function POST(request: NextRequest) {
         await sendNotification(
           {
             title: '🎮 Fantasy Draft is Now Open!',
-            body: `Start building your squad for ${leagueData.league_name}! Draft closes at ${draft_closes_at ? new Date(draft_closes_at).toLocaleString() : 'TBD'}`,
+            body: `Start building your squad for ${leagueData.league_name}! The draft is now active.`,
             icon: '/fantasy-icon.png',
             url: '/dashboard/fantasy/draft',
           },

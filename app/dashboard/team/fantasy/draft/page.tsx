@@ -205,9 +205,11 @@ export default function TeamDraftPage() {
   // Normalize a timestamp string to ensure it's parsed as UTC
   const parseAsUTC = (ts: string): number => {
     if (!ts) return 0;
-    // If no timezone info, append Z to treat as UTC
-    const d = new Date(ts.includes('Z') || ts.includes('+') ? ts : ts + 'Z');
-    return d.getTime();
+    // If already has Z suffix or explicit offset, parse as-is
+    if (/[Zz]|[+-]\d{2}:\d{2}$/.test(ts)) return new Date(ts).getTime();
+    // Neon returns timestamps without tz info (e.g. "2026-08-25 09:15:00");
+    // Replace space with T and append Z to force UTC interpretation
+    return new Date(ts.replace(' ', 'T') + 'Z').getTime();
   };
 
   // Set up live countdown timer based on active slot's round

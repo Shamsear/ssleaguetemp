@@ -20,9 +20,17 @@ interface TeamSubmission {
 
 // --- IST helpers (exported for sub-component) ---
 const IST_TIMEZONE = 'Asia/Kolkata';
+const parseAsUTC = (isoOrLocal: string): Date => {
+  if (!isoOrLocal) return new Date(0);
+  // If already has a Z suffix or explicit offset, parse as-is
+  if (/Z$|[+-]\d{2}:\d{2}$/.test(isoOrLocal)) return new Date(isoOrLocal);
+  // Neon returns timestamps without tz info (e.g. "2026-08-25 09:15:00");
+  // Force UTC interpretation by replacing the space with 'T' and appending 'Z'
+  return new Date(isoOrLocal.replace(' ', 'T') + 'Z');
+};
 const formatISTForInput = (isoString?: string) => {
   if (!isoString) return '';
-  const d = new Date(isoString);
+  const d = parseAsUTC(isoString);
   if (isNaN(d.getTime())) return '';
   return new Intl.DateTimeFormat('sv-SE', {
     timeZone: IST_TIMEZONE,
@@ -39,7 +47,7 @@ const istToUTC = (istDateTimeLocal: string): string => {
 };
 const formatISTDisplay = (isoOrLocal: string): string => {
   if (!isoOrLocal) return '';
-  const d = new Date(isoOrLocal);
+  const d = parseAsUTC(isoOrLocal);
   if (isNaN(d.getTime())) return '';
   return d.toLocaleString('en-IN', { timeZone: IST_TIMEZONE });
 };

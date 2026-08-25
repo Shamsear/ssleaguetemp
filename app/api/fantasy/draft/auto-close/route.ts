@@ -42,60 +42,15 @@ export async function POST(request: NextRequest) {
       league_id,
       current_status: league.draft_status,
       current_time_utc: now.toISOString(),
-      opens_at_utc: league.draft_opens_at,
-      closes_at_utc: league.draft_closes_at,
     });
 
-    // Auto-open: Check if draft is pending/closed and opening time has passed
-    if ((league.draft_status === 'pending' || league.draft_status === 'closed') && league.draft_opens_at) {
-      const openingTime = new Date(league.draft_opens_at);
-      console.log('\n⏰ Checking auto-open:', {
-        opening_time: openingTime.toISOString(),
-        current_time: now.toISOString(),
-        should_open: now >= openingTime,
-        time_diff_seconds: Math.round((openingTime.getTime() - now.getTime()) / 1000),
-      });
-      
-      if (now >= openingTime) {
-        await fantasySql`
-          UPDATE fantasy_leagues
-          SET 
-            draft_status = 'active',
-            updated_at = CURRENT_TIMESTAMP
-          WHERE league_id = ${league_id}
-        `;
+    // NOTE: Global draft_opens_at/draft_closes_at have been removed from fantasy_leagues.
+    // Per-slot timing is now managed via fantasy_draft_rounds.
+    // This auto-close endpoint now only handles the legacy batch draft_status.
 
-        console.log(`✅ Draft auto-opened for league ${league_id} at ${now.toISOString()}`);
-
-        // Broadcast to Firebase Realtime DB
-        await broadcastFantasyDraftUpdate(league_id, {
-          draft_status: 'active',
-          auto_opened: true,
-        });
-        console.log(`📢 Broadcast auto-open to league:${league_id}:draft`);
-
-        return NextResponse.json({
-          success: true,
-          message: 'Draft automatically opened',
-          status: 'active',
-          opened: true,
-          opened_at: now.toISOString(),
-        });
-      }
-    }
-
-    // Auto-close: Check if draft is active and closing time has passed
-    if (league.draft_status === 'active' && league.draft_closes_at) {
-      const closingTime = new Date(league.draft_closes_at);
-      console.log('\n⏰ Checking auto-close:', {
-        closing_time: closingTime.toISOString(),
-        current_time: now.toISOString(),
-        should_close: now >= closingTime,
-        time_diff_seconds: Math.round((closingTime.getTime() - now.getTime()) / 1000),
-      });
-      
-      if (now >= closingTime) {
-        await fantasySql`
+    // Auto-close: Check if draft is active (no global close time — per-slot rounds handle timing)
+    if (false) { // Disabled: per-slot rounds handle auto-close via their own closes_at
+      await fantasySql`
           UPDATE fantasy_leagues
           SET 
             draft_status = 'closed',

@@ -21,14 +21,20 @@ export async function POST() {
         league_id       VARCHAR(50) NOT NULL,
         slot_index      INTEGER NOT NULL,
         slot_name       VARCHAR(100),
-        opens_at        TIMESTAMP,
-        closes_at       TIMESTAMP,
+        opens_at        TIMESTAMPTZ,
+        closes_at       TIMESTAMPTZ,
         status          VARCHAR(20) DEFAULT 'pending',
         created_at      TIMESTAMP DEFAULT NOW(),
-        updated_at      TIMESTAMP DEFAULT NOW(),
+        updated_at      TIMESTAMPTZ DEFAULT NOW(),
         UNIQUE(league_id, slot_index)
       )
     `;
+
+    // Upgrade TIMESTAMP columns to TIMESTAMPTZ if needed
+    try { await fantasySql`ALTER TABLE fantasy_draft_rounds ALTER COLUMN opens_at TYPE TIMESTAMPTZ USING opens_at AT TIME ZONE 'UTC'`; } catch {}
+    try { await fantasySql`ALTER TABLE fantasy_draft_rounds ALTER COLUMN closes_at TYPE TIMESTAMPTZ USING closes_at AT TIME ZONE 'UTC'`; } catch {}
+    try { await fantasySql`ALTER TABLE fantasy_draft_rounds ALTER COLUMN updated_at TYPE TIMESTAMPTZ USING updated_at AT TIME ZONE 'UTC'`; } catch {}
+    try { await fantasySql`ALTER TABLE fantasy_draft_rounds ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC'`; } catch {}
 
     await fantasySql`
       CREATE INDEX IF NOT EXISTS idx_fantasy_draft_rounds_league

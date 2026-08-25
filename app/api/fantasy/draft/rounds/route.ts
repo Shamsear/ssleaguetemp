@@ -3,6 +3,21 @@ import { fantasySql } from '@/lib/neon/fantasy-config';
 import { broadcastFantasyDraftUpdate } from '@/lib/realtime/broadcast';
 
 /**
+ * Ensure a timestamp value from Neon is returned as a proper ISO string with Z suffix.
+ * Neon's HTTP driver strips timezone info from timestamptz columns, so we normalize.
+ */
+function toISOZ(val: any): string {
+  if (!val) return '';
+  // Already a proper ISO string with Z or offset
+  if (typeof val === 'string' && (val.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(val))) {
+    return val;
+  }
+  // Parse and re-serialize as UTC ISO
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? String(val) : d.toISOString();
+}
+
+/**
  * GET /api/fantasy/draft/rounds?league_id=xxx
  * Fetch all draft rounds for a league.
  */
@@ -22,7 +37,18 @@ export async function GET(request: NextRequest) {
       ORDER BY slot_index ASC
     `;
 
-    return NextResponse.json({ success: true, rounds });
+    // Ensure timestamptz values are returned as proper ISO strings with Z suffix.
+    // Neon HTTP driver strips timezone info, causing client-side new Date() to
+    // interpret them as browser-local time instead of UTC.
+    // Ensure timestamptz values are returned as proper ISO strings with Z suffix
+    const safeRounds = rounds.map((r: any) => ({
+      ...r,
+      opens_at: r.opens_at ? toISOZ(r.opens_at) : r.opens_at,
+      closes_at: r.closes_at ? toISOZ(r.closes_at) : r.closes_at,
+      updated_at: r.updated_at ? toISOZ(r.updated_at) : r.updated_at,
+    }));
+
+    return NextResponse.json({ success: true, rounds: safeRounds });
   } catch (error) {
     console.error('Error fetching draft rounds:', error);
     return NextResponse.json(
@@ -103,13 +129,17 @@ export async function POST(request: NextRequest) {
     // Upsert the round row
     const queries: any[] = [];
 
+    // Pass ISO strings directly as parameters — PostgreSQL auto-casts to timestamptz
+    // using the column type. The Z suffix ensures UTC interpretation.
+    // Do NOT use fantasySql.unsafe() with AT TIME ZONE as it doesn't work
+    // correctly with Neon's HTTP driver (transactions run on separate connections).
     queries.push(fantasySql`
       INSERT INTO fantasy_draft_rounds (league_id, slot_index, slot_name, opens_at, closes_at, status)
       VALUES (
         ${league_id}, ${slotIdx},
         ${existing[0]?.slot_name || `Slot ${slotIdx}`},
-        ${fantasySql.unsafe(newOpensAt ? `'${newOpensAt}'::timestamp AT TIME ZONE 'UTC'` : 'NULL')},
-        ${fantasySql.unsafe(newClosesAt ? `'${newClosesAt}'::timestamp AT TIME ZONE 'UTC'` : 'NULL')},
+        ${newOpensAt || null},
+        ${newClosesAt || null},
         ${newStatus}
       )
       ON CONFLICT (league_id, slot_index) DO UPDATE SET

@@ -286,23 +286,13 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Successfully stored ${validatedBids.length} bids`);
 
-    // Get draft deadline (if available)
-    const leagues = await fantasySql`
-      SELECT draft_closes_at
-      FROM fantasy_leagues
-      WHERE league_id = ${league_id}
-      LIMIT 1
-    `;
-
-    const deadline = leagues[0]?.draft_closes_at || null;
-
     return NextResponse.json({
       success: true,
       message: `Successfully submitted ${validatedBids.length} bids`,
       total_bid_amount: totalBidAmount,
       tiers_skipped: tiersSkipped,
       bids_submitted: validatedBids.length,
-      deadline: deadline ? new Date(deadline).toISOString() : null
+      deadline: null
     });
 
   } catch (error) {

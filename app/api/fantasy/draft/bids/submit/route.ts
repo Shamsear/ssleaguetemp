@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Load league draft settings for validation
     const leagues = await fantasySql`
-      SELECT budget_per_team, draft_status, draft_opens_at, draft_closes_at, category_settings
+      SELECT budget_per_team, draft_status, category_settings
       FROM fantasy_leagues
       WHERE league_id = ${league_id}
       LIMIT 1
