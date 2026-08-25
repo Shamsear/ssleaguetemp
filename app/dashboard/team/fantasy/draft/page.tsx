@@ -396,8 +396,8 @@ export default function TeamDraftPage() {
 
     // 1. Max Bids Count validation
     if (maxBidsLimit > 0) {
-      const activeSlotBids = localBids.filter(b => activeSlot ? b.slot_index === activeSlot : true);
-      if (activeSlotBids.length > maxBidsLimit) {
+      const countCheckBids = localBids.filter(b => activeSlot ? b.slot_index === activeSlot : true);
+      if (countCheckBids.length > maxBidsLimit) {
         showAlert({
           type: 'error',
           title: 'Bid Limit Exceeded',

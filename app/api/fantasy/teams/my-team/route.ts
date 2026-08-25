@@ -21,14 +21,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's fantasy team from PostgreSQL
+    let resolvedTeam: any = null;
+
     const fantasyTeams = await fantasySql`
       SELECT * FROM fantasy_teams
       WHERE owner_uid = ${user_id} AND is_enabled = true
       LIMIT 1
     `;
 
-    if (fantasyTeams.length === 0) {
-      // Check if user has a team registered for the current season
+    if (fantasyTeams.length > 0) {
+      resolvedTeam = fantasyTeams[0];
+    } else {
+      // Fallback: look up by team_id using the user's Firebase team document
+      // This covers teams registered via enable-all where owner_uid was stored differently
       const userDoc = await adminDb.collection('users').doc(user_id).get();
       if (!userDoc.exists) {
         return NextResponse.json(
@@ -40,47 +45,96 @@ export async function GET(request: NextRequest) {
       const userData = userDoc.data()!;
       const teamName = userData.teamName || userData.username || 'Team';
 
-      // Get current season info
-      const tournamentSql = getTournamentDb();
-      const primaryTournaments = await tournamentSql`
-        SELECT season_id FROM tournaments
-        WHERE is_primary = true
-        AND status IN ('active', 'upcoming')
-        ORDER BY created_at DESC
-        LIMIT 1
-      `;
+      // Try to find their team document in Firebase
+      const teamsSnap = await adminDb.collection('teams')
+        .where('uid', '==', user_id)
+        .limit(1)
+        .get();
 
-      if (primaryTournaments.length === 0) {
+      if (!teamsSnap.empty) {
+        const firebaseTeamId = teamsSnap.docs[0].id;
+        // Try lookup by team_id directly (owner_uid may be blank or mismatched)
+        const byTeamId = await fantasySql`
+          SELECT * FROM fantasy_teams
+          WHERE team_id = ${firebaseTeamId} AND is_enabled = true
+          LIMIT 1
+        `;
+        if (byTeamId.length > 0) {
+          resolvedTeam = byTeamId[0];
+          // Self-heal: fix the owner_uid in DB for future lookups
+          await fantasySql`
+            UPDATE fantasy_teams
+            SET owner_uid = ${user_id}, updated_at = NOW()
+            WHERE team_id = ${firebaseTeamId} AND (owner_uid IS NULL OR owner_uid = '')
+          `;
+        }
+      }
+
+      // If still nothing found, offer registration
+      if (!resolvedTeam) {
+        // Get current season info
+        const tournamentSql = getTournamentDb();
+        const primaryTournaments = await tournamentSql`
+          SELECT season_id FROM tournaments
+          WHERE is_primary = true
+          AND status IN ('active', 'upcoming')
+          ORDER BY created_at DESC
+          LIMIT 1
+        `;
+
+        if (primaryTournaments.length === 0) {
+          return NextResponse.json(
+            { 
+              error: 'No fantasy league available',
+              message: 'No active season found. Fantasy leagues will be available when a new season starts.',
+              can_register: false
+            },
+            { status: 404 }
+          );
+        }
+
+        const seasonId = primaryTournaments[0].season_id;
+        const seasonNumber = seasonId.replace('SSPSLS', '');
+        const leagueId = `SSPSLFLS${seasonNumber}`;
+
+        // Check: is there a fantasy_teams row for this league that is disabled?
+        if (!teamsSnap?.empty) {
+          const firebaseTeamId = teamsSnap!.docs[0].id;
+          const disabledCheck = await fantasySql`
+            SELECT * FROM fantasy_teams
+            WHERE team_id = ${firebaseTeamId} AND league_id = ${leagueId}
+            LIMIT 1
+          `;
+          if (disabledCheck.length > 0) {
+            // Team IS registered but is_enabled = false — show pending message
+            return NextResponse.json(
+              { 
+                error: 'Fantasy team not yet enabled',
+                message: 'Your fantasy registration is pending committee approval.',
+                can_register: false
+              },
+              { status: 404 }
+            );
+          }
+        }
+
         return NextResponse.json(
           { 
-            error: 'No fantasy league available',
-            message: 'No active season found. Fantasy leagues will be available when a new season starts.',
-            can_register: false
+            error: 'No fantasy team found',
+            message: 'You have not registered for the fantasy league yet.',
+            can_register: true,
+            registration_info: {
+              season_id: seasonId,
+              league_id: leagueId,
+              team_name: teamName
+            }
           },
           { status: 404 }
         );
       }
-
-      const seasonId = primaryTournaments[0].season_id;
-      const seasonNumber = seasonId.replace('SSPSLS', '');
-      const leagueId = `SSPSLFLS${seasonNumber}`;
-
-      return NextResponse.json(
-        { 
-          error: 'No fantasy team found',
-          message: 'You have not registered for the fantasy league yet.',
-          can_register: true,
-          registration_info: {
-            season_id: seasonId,
-            league_id: leagueId,
-            team_name: teamName
-          }
-        },
-        { status: 404 }
-      );
     }
 
-    const teamData = fantasyTeams[0];
+    const teamData = resolvedTeam;
     const teamId = teamData.team_id;
     const leagueId = teamData.league_id;
 
