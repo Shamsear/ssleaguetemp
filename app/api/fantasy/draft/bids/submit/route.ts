@@ -136,22 +136,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check per-slot submission status (table may not exist yet)
-    if (lock && submitSlotIndex) {
-      try {
-        const existingSubmission = await fantasySql`
-          SELECT id FROM fantasy_slot_submissions
-          WHERE team_id = ${team_id} AND league_id = ${league_id} AND slot_index = ${submitSlotIndex}
-          LIMIT 1
-        `;
-        if (existingSubmission.length > 0) {
-          return NextResponse.json(
-            { error: 'Your bids for this slot are already locked and submitted' },
-            { status: 400 }
-          );
-        }
-      } catch {}
-    }
+    // Allow re-submission for active slots — the upsert below handles it
 
     // Parse category settings
     const categorySettings = typeof league.category_settings === 'string'
