@@ -16,6 +16,13 @@ interface TeamSubmission {
   draft_submitted: boolean;
   budget_remaining: number;
   total_bids: number;
+  bids?: Array<{
+    slot_index: number;
+    priority: number;
+    target_id: string;
+    bid_type: string;
+    bid_amount: number;
+  }>;
 }
 
 // --- IST helpers (exported for sub-component) ---
@@ -326,8 +333,39 @@ export default function ProcessDraftPage() {
   const [addTimeMinutes, setAddTimeMinutes] = useState<string>('10');
   const [draftRounds, setDraftRounds] = useState<any[]>([]);
   const [expandedSlotIndex, setExpandedSlotIndex] = useState<number | null>(null);
+  const [slotNames, setSlotNames] = useState<Record<number, string>>({});
 
   const { alertState, showAlert, closeAlert } = useModal();
+
+  const handleCopyAllSubmittedTeams = () => {
+    if (teams.length === 0) return;
+    // Prefer the currently active round, then most recently closed, then first slot
+    const activeRound = draftRounds.find((r: any) => r.status === 'active')
+      || draftRounds.filter((r: any) => r.status === 'closed').sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0]
+      || draftRounds[0];
+    const slotName = activeRound?.slot_name || `Slot ${activeRound?.slot_index || ''}`;
+    const roundNum = activeRound?.slot_index || '';
+    let msg = `Fantasy Season\n`;
+    msg += `Teams\n`;
+    msg += `Round ${roundNum}\n`;
+    msg += `${slotName}\n\n`;
+    teams.forEach((t, i) => {
+      msg += `${i + 1}. ${t.team_name} ${t.draft_submitted ? '✓' : ''}\n`;
+    });
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(msg)
+        .then(() => showAlert({ type: 'success', title: 'Copied!', message: 'Submission checklist copied to clipboard' }))
+        .catch(() => {
+          const ta = document.createElement('textarea');
+          ta.value = msg;
+          Object.assign(ta.style, { position: 'fixed', top: '0', left: '0', width: '2em', height: '2em', opacity: '0' });
+          document.body.appendChild(ta);
+          ta.focus(); ta.select();
+          try { document.execCommand('copy'); showAlert({ type: 'success', title: 'Copied!', message: 'Submission checklist copied' }); } catch { showAlert({ type: 'error', title: 'Copy Failed', message: 'Failed to copy' }); }
+          document.body.removeChild(ta);
+        });
+    }
+  };
 
   const loadSubmissions = async (silent = false) => {
     if (!leagueId) return;
@@ -340,6 +378,7 @@ export default function ProcessDraftPage() {
         setTeams(data.teams || []);
         setTotalTeams(data.total_teams || 0);
         setSubmittedCount(data.submitted_count || 0);
+        if (data.slot_names) setSlotNames(data.slot_names);
       }
       
       // 2. Fetch current draft status settings
@@ -649,9 +688,22 @@ export default function ProcessDraftPage() {
 
         {/* Team Checklist */}
         <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-            <h2 className="text-xs font-black text-slate-855 uppercase tracking-wider">Manager submissions tracking</h2>
-            <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Real-time status of all participating team draft wishlists</p>
+          <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <div>
+              <h2 className="text-xs font-black text-slate-855 uppercase tracking-wider">Manager submissions tracking</h2>
+              <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Real-time status of all participating team draft wishlists</p>
+            </div>
+            {submittedCount > 0 && (
+              <button
+                onClick={handleCopyAllSubmittedTeams}
+                className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-colors"
+                title="Copy all submitted team names"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </button>
+            )}
           </div>
 
           <div className="divide-y divide-slate-100">

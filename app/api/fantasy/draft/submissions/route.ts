@@ -40,6 +40,39 @@ export async function GET(request: NextRequest) {
 
     const bidCountsMap = new Map(bidCounts.map(b => [b.team_id, Number(b.count)]));
 
+    // 3. Fetch full bid details for submitted teams
+    const submittedTeamIds = teams.filter(t => t.draft_submitted).map(t => t.team_id);
+    const teamBidsMap = new Map<string, any[]>();
+
+    if (submittedTeamIds.length > 0) {
+      const allBids = await fantasySql`
+        SELECT team_id, slot_index, priority, target_id, bid_type, bid_amount
+        FROM fantasy_draft_bids
+        WHERE league_id = ${league_id} AND team_id = ANY(${submittedTeamIds})
+        ORDER BY team_id, slot_index ASC, priority ASC
+      `;
+      for (const b of allBids) {
+        if (!teamBidsMap.has(b.team_id)) teamBidsMap.set(b.team_id, []);
+        teamBidsMap.get(b.team_id)!.push({
+          slot_index: b.slot_index,
+          priority: b.priority,
+          target_id: b.target_id,
+          bid_type: b.bid_type,
+          bid_amount: Number(b.bid_amount)
+        });
+      }
+    }
+
+    // 4. Fetch slot names for formatting
+    const leagues = await fantasySql`
+      SELECT category_settings FROM fantasy_leagues WHERE league_id = ${league_id} LIMIT 1
+    `;
+    const categorySettings = leagues[0]
+      ? (typeof leagues[0].category_settings === 'string' ? JSON.parse(leagues[0].category_settings) : leagues[0].category_settings)
+      : {};
+    const slotNameMap = new Map<number, string>();
+    (categorySettings?.slots || []).forEach((s: any) => slotNameMap.set(s.slot_index, s.name));
+
     // Combine data
     const submissionStatuses = teams.map(t => ({
       team_id: t.team_id,
@@ -47,14 +80,16 @@ export async function GET(request: NextRequest) {
       owner_name: t.owner_name,
       draft_submitted: !!t.draft_submitted,
       budget_remaining: Number(t.budget_remaining),
-      total_bids: bidCountsMap.get(t.team_id) || 0
+      total_bids: bidCountsMap.get(t.team_id) || 0,
+      bids: teamBidsMap.get(t.team_id) || []
     }));
 
     return NextResponse.json({
       success: true,
       teams: submissionStatuses,
       total_teams: teams.length,
-      submitted_count: teams.filter(t => t.draft_submitted).length
+      submitted_count: teams.filter(t => t.draft_submitted).length,
+      slot_names: Object.fromEntries(slotNameMap)
     });
   } catch (error) {
     console.error('Error fetching submission statuses:', error);
