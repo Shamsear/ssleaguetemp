@@ -916,36 +916,36 @@ export default function TeamDraftPage() {
                                     required
                                   />
 
-                                {/* Priority controls */}
-                                {!isSlotDisabled(slot.slot_index) && (
-                                  <div className="flex flex-col gap-0.5">
-                                    <button
-                                      onClick={() => handlePriorityChange(slot.slot_index, bid.target_id, 'up')}
-                                      disabled={bIndex === 0}
-                                      className="p-0.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded disabled:opacity-30"
-                                    >
-                                      <ArrowUp className="w-3 h-3" />
-                                    </button>
-                                    <button
-                                      onClick={() => handlePriorityChange(slot.slot_index, bid.target_id, 'down')}
-                                      disabled={bIndex === slotBids.length - 1}
-                                      className="p-0.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded disabled:opacity-30"
-                                    >
-                                      <ArrowDown className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                )}
+                                  {/* Priority controls */}
+                                  {!isSlotDisabled(slot.slot_index) && (
+                                    <div className="flex flex-col gap-0.5">
+                                      <button
+                                        onClick={() => handlePriorityChange(slot.slot_index, bid.target_id, 'up')}
+                                        disabled={bIndex === 0}
+                                        className="p-0.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded disabled:opacity-30"
+                                      >
+                                        <ArrowUp className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        onClick={() => handlePriorityChange(slot.slot_index, bid.target_id, 'down')}
+                                        disabled={bIndex === slotBids.length - 1}
+                                        className="p-0.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded disabled:opacity-30"
+                                      >
+                                        <ArrowDown className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  )}
 
-                                {/* Delete button */}
-                                {!isSlotDisabled(slot.slot_index) && (
-                                  <button
-                                    onClick={() => removeBid(slot.slot_index, bid.target_id)}
-                                    className="p-1 text-slate-450 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
-                              </div>
+                                  {/* Delete button */}
+                                  {!isSlotDisabled(slot.slot_index) && (
+                                    <button
+                                      onClick={() => removeBid(slot.slot_index, bid.target_id)}
+                                      className="p-1 text-slate-450 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             );
                           })}
