@@ -255,9 +255,8 @@ export default function TeamDraftPage() {
   // Math for remaining budget: deduct the maximum bid amount placed in each slot
   const calculateRemainingBudget = () => {
     if (!draftSettings || !myTeam) return 0;
-    const activeSlot = draftSettings.category_settings?.active_slot_index 
-      ? Number(draftSettings.category_settings.active_slot_index) 
-      : null;
+    // Use the actual active round from draftRounds, not the old category_settings
+    const activeSlot = draftRounds.find((r: any) => r.status === 'active')?.slot_index ?? null;
 
     if (activeSlot) {
       // Slot-by-slot: Remaining budget is the team's current database budget minus the max bid in the active slot
@@ -375,9 +374,8 @@ export default function TeamDraftPage() {
 
   const saveBids = async (lockSubmit: boolean = false) => {
     if (!myTeam || !draftSettings) return;
-    const activeSlot = draftSettings.category_settings?.active_slot_index 
-      ? Number(draftSettings.category_settings.active_slot_index) 
-      : null;
+    // Use the actual active round from draftRounds, not the old category_settings
+    const activeSlot = draftRounds.find((r: any) => r.status === 'active')?.slot_index ?? null;
 
     const maxBidsLimit = draftSettings.category_settings?.max_bids_per_team || 0;
 
