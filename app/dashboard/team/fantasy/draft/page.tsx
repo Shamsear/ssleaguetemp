@@ -76,6 +76,7 @@ export default function TeamDraftPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [draftRounds, setDraftRounds] = useState<any[]>([]);
 
   const { alertState, showAlert, closeAlert } = useModal();
 
@@ -123,10 +124,19 @@ export default function TeamDraftPage() {
           category_settings: loadedCategorySettings
         };
         setDraftSettings(settingsObj);
+      }
 
-        const serverActiveSlot = Number(loadedCategorySettings?.active_slot_index);
-        if (serverActiveSlot) {
-          setActiveSlotIndex(serverActiveSlot);
+      // 2b. Fetch per-slot draft rounds
+      const roundsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/rounds?league_id=${leagueId}`);
+      if (roundsRes.ok) {
+        const roundsData = await roundsRes.json();
+        const rounds = roundsData.rounds || [];
+        setDraftRounds(rounds);
+
+        // Find the first active slot from rounds
+        const activeRound = rounds.find((r: any) => r.status === 'active');
+        if (activeRound) {
+          setActiveSlotIndex(activeRound.slot_index);
         }
       }
 
@@ -192,12 +202,16 @@ export default function TeamDraftPage() {
     }
   }, [user]);
 
-  // Set up live countdown timer
+  // Set up live countdown timer based on active slot's round
   useEffect(() => {
-    if (!draftSettings?.draft_closes_at) return;
+    const activeRound = draftRounds.find((r: any) => r.slot_index === activeSlotIndex && r.status === 'active');
+    if (!activeRound?.closes_at) {
+      setTimeRemaining(0);
+      return;
+    }
 
     const timer = setInterval(() => {
-      const closesAt = new Date(draftSettings.draft_closes_at).getTime();
+      const closesAt = new Date(activeRound.closes_at).getTime();
       const now = new Date().getTime();
       const diff = closesAt - now;
 
@@ -210,7 +224,7 @@ export default function TeamDraftPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [draftSettings]);
+  }, [draftRounds, activeSlotIndex]);
 
   useEffect(() => {
     if (user) {
@@ -602,9 +616,7 @@ export default function TeamDraftPage() {
     );
   }
 
-  const activeSlot = draftSettings?.category_settings?.active_slot_index 
-    ? Number(draftSettings.category_settings.active_slot_index) 
-    : null;
+  const activeSlot = draftRounds.find((r: any) => r.status === 'active')?.slot_index ?? null;
 
   if (draftSettings.draft_status === 'completed') {
     return (
@@ -632,7 +644,11 @@ export default function TeamDraftPage() {
     );
   }
 
-  if (activeSlot === null || draftSettings.draft_status === 'pending') {
+  // Check if ANY slot round is active
+  const hasActiveRound = draftRounds.some((r: any) => r.status === 'active');
+  const activeRound = draftRounds.find((r: any) => r.slot_index === activeSlot);
+
+  if (!hasActiveRound) {
     return (
       <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -648,9 +664,9 @@ export default function TeamDraftPage() {
             <div className="w-16 h-16 bg-slate-800 border border-slate-700 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow">
               <Clock className="w-8 h-8 text-amber-500 animate-pulse" />
             </div>
-            <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">Draft Round Not Started</h3>
+            <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">No Active Draft Round</h3>
             <p className="text-xs text-slate-455 font-bold uppercase leading-normal mb-6">
-              The fantasy draft is conducted round-by-round. Please wait for the committee admin to start the active bidding round.
+              No draft round is currently active. Please wait for the committee admin to start a bidding round.
             </p>
           </div>
         </div>
@@ -658,12 +674,17 @@ export default function TeamDraftPage() {
     );
   }
 
-  const isBiddingLocked = 
-    myTeam?.draft_submitted || 
-    (draftSettings?.draft_closes_at && timeRemaining <= 0);
+  // A slot is disabled if: bids locked, slot is not the active round, or active round has expired
+  const isBiddingLocked = myTeam?.draft_submitted || timeRemaining <= 0;
 
   const isSlotDisabled = (slotIdx: number) => {
-    return isBiddingLocked || slotIdx !== activeSlot;
+    if (isBiddingLocked) return true;
+    // Check per-slot round status
+    const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
+    if (!round || round.status !== 'active') return true;
+    // Check if round has expired
+    if (round.closes_at && new Date(round.closes_at) < new Date()) return true;
+    return false;
   };
 
   return (
@@ -703,7 +724,7 @@ export default function TeamDraftPage() {
               <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200/80 px-4 py-2.5 rounded-xl">
                 <Clock className="w-4.5 h-4.5 text-indigo-650" />
                 <div>
-                  <p className="text-[8px] text-slate-400 uppercase font-black">Draft Closes In</p>
+                  <p className="text-[8px] text-slate-400 uppercase font-black">{activeRound?.slot_name || 'Slot'} Closes In</p>
                   <h4 className="text-xs font-black text-slate-800 uppercase mt-0.5">{formatTime(timeRemaining)}</h4>
                 </div>
               </div>
@@ -802,12 +823,7 @@ export default function TeamDraftPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...(draftSettings.category_settings?.slots || [])]
                 .sort((a, b) => a.slot_index - b.slot_index)
-                .filter(slot => {
-                  if (activeSlot !== null) {
-                    return slot.slot_index === activeSlot;
-                  }
-                  return true;
-                })
+                .filter(slot => slot.slot_index === activeSlot)
                 .map(slot => {
                   const isActive = slot.slot_index === activeSlotIndex;
                   const slotBids = localBids.filter(b => b.slot_index === slot.slot_index).sort((a,b) => b.bid_amount - a.bid_amount);

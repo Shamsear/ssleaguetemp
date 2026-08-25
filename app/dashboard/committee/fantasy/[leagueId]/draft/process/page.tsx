@@ -2,7 +2,7 @@
 import { CheckCircle, Clock, AlertTriangle, Users, Play, ArrowLeft, Target, Timer, Flag } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AlertModal from '@/components/modals/AlertModal';
@@ -16,6 +16,114 @@ interface TeamSubmission {
   draft_submitted: boolean;
   budget_remaining: number;
   total_bids: number;
+}
+
+// --- IST helpers (exported for sub-component) ---
+const IST_TIMEZONE = 'Asia/Kolkata';
+const formatISTForInput = (isoString?: string) => {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: IST_TIMEZONE,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(d).replace(' ', 'T');
+};
+const istToUTC = (istDateTimeLocal: string): string => {
+  const [datePart, timePart] = istDateTimeLocal.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hours, minutes] = timePart.split(':').map(Number);
+  const utcMs = Date.UTC(year, month - 1, day, hours, minutes) - (5.5 * 60 * 60 * 1000);
+  return new Date(utcMs).toISOString();
+};
+const formatISTDisplay = (isoOrLocal: string): string => {
+  if (!isoOrLocal) return '';
+  const d = new Date(isoOrLocal);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString('en-IN', { timeZone: IST_TIMEZONE });
+};
+
+/** Per-slot round control card */
+function SlotRoundCard({ slot, round, onAction }: {
+  slot: any;
+  round: any;
+  onAction: (slotIndex: number, action: 'start' | 'close' | 'adjust' | 'reset', times?: { opens_at?: string; closes_at?: string }) => void;
+}) {
+  const status = round?.status || 'pending';
+  const [opensInput, setOpensInput] = useState(formatISTForInput(round?.opens_at));
+  const [closesInput, setClosesInput] = useState(formatISTForInput(round?.closes_at));
+
+  useEffect(() => {
+    setOpensInput(formatISTForInput(round?.opens_at));
+    setClosesInput(formatISTForInput(round?.closes_at));
+  }, [round?.opens_at, round?.closes_at]);
+
+  const statusColor =
+    status === 'active' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
+    status === 'closed' ? 'bg-rose-50 border-rose-200 text-rose-700' :
+    status === 'completed' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+    'bg-slate-100 border-slate-200 text-slate-600';
+
+  return (
+    <div className="border border-slate-200 rounded-2xl p-4 space-y-3 bg-slate-50/30">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="w-7 h-7 rounded-full bg-slate-800 text-amber-400 flex items-center justify-center text-[10px] font-black">
+            {slot.slot_index}
+          </span>
+          <div>
+            <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-wider">{slot.name}</h4>
+            <span className="text-[9px] text-slate-400 font-bold">Base: {slot.base_price} Cr</span>
+          </div>
+        </div>
+        <span className={`px-2 py-0.5 border text-[9px] font-black rounded-lg uppercase tracking-wider ${statusColor}`}>
+          {status}
+        </span>
+      </div>
+
+      {(status === 'pending' || status === 'active') && (
+        <div className="space-y-2">
+          <div className="space-y-1">
+            <label className="block text-[9px] text-slate-500 font-bold uppercase">Opens At (IST)</label>
+            <input type="datetime-local" value={opensInput} onChange={(e) => setOpensInput(e.target.value)}
+              className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold focus:outline-none focus:ring-1 focus:ring-amber-500" />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-[9px] text-slate-500 font-bold uppercase">Closes At (IST)</label>
+            <input type="datetime-local" value={closesInput} onChange={(e) => setClosesInput(e.target.value)}
+              className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold focus:outline-none focus:ring-1 focus:ring-amber-500" />
+          </div>
+        </div>
+      )}
+
+      {(status === 'closed' || status === 'completed') && round?.opens_at && (
+        <div className="space-y-1 text-[9px] font-bold uppercase text-slate-500">
+          <div>Opened: <span className="text-slate-700">{formatISTDisplay(round.opens_at)} IST</span></div>
+          {round?.closes_at && <div>Closed: <span className="text-rose-600">{formatISTDisplay(round.closes_at)} IST</span></div>}
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-2 pt-1">
+        {status === 'pending' && (
+          <button onClick={() => onAction(slot.slot_index, 'start', { opens_at: opensInput ? istToUTC(opensInput) : undefined, closes_at: closesInput ? istToUTC(closesInput) : undefined })}
+            className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-mono font-bold text-[9px] uppercase tracking-wider rounded-lg cursor-pointer transition-all">▶ Start</button>
+        )}
+        {status === 'active' && (
+          <>
+            <button onClick={() => onAction(slot.slot_index, 'close')}
+              className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-mono font-bold text-[9px] uppercase tracking-wider rounded-lg cursor-pointer transition-all">⏸ Close</button>
+            <button onClick={() => onAction(slot.slot_index, 'adjust', { opens_at: opensInput ? istToUTC(opensInput) : undefined, closes_at: closesInput ? istToUTC(closesInput) : undefined })}
+              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-[9px] uppercase tracking-wider rounded-lg cursor-pointer transition-all"><Clock className="w-3 h-3 inline mr-0.5" /> Adjust</button>
+          </>
+        )}
+        {(status === 'closed' || status === 'active') && (
+          <button onClick={() => onAction(slot.slot_index, 'reset')}
+            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-mono font-bold text-[9px] uppercase tracking-wider rounded-lg cursor-pointer transition-all">🔄 Reset</button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function ProcessDraftPage() {
@@ -40,40 +148,9 @@ export default function ProcessDraftPage() {
   const [previewResults, setPreviewResults] = useState<any>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [addTimeMinutes, setAddTimeMinutes] = useState<string>('10');
+  const [draftRounds, setDraftRounds] = useState<any[]>([]);
 
   const { alertState, showAlert, closeAlert } = useModal();
-
-  // --- IST helpers ---
-  const IST_TIMEZONE = 'Asia/Kolkata';
-
-  /** Convert a UTC ISO string to "YYYY-MM-DDTHH:MM" in IST for datetime-local inputs */
-  const formatISTForInput = (isoString?: string) => {
-    if (!isoString) return '';
-    const d = new Date(isoString);
-    if (isNaN(d.getTime())) return '';
-    return new Intl.DateTimeFormat('sv-SE', {
-      timeZone: IST_TIMEZONE,
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', hour12: false,
-    }).format(d).replace(' ', 'T');
-  };
-
-  /** Convert an IST datetime-local string ("YYYY-MM-DDTHH:MM") to a UTC ISO string */
-  const istToUTC = (istDateTimeLocal: string): string => {
-    const [datePart, timePart] = istDateTimeLocal.split('T');
-    const [year, month, day] = datePart.split('-').map(Number);
-    const [hours, minutes] = timePart.split(':').map(Number);
-    const utcMs = Date.UTC(year, month - 1, day, hours, minutes) - (5.5 * 60 * 60 * 1000);
-    return new Date(utcMs).toISOString();
-  };
-
-  /** Format a UTC ISO string for human-readable IST display */
-  const formatISTDisplay = (isoOrLocal: string): string => {
-    if (!isoOrLocal) return '';
-    const d = new Date(isoOrLocal);
-    if (isNaN(d.getTime())) return '';
-    return d.toLocaleString('en-IN', { timeZone: IST_TIMEZONE });
-  };
 
   const loadSubmissions = async () => {
     if (!leagueId) return;
@@ -101,9 +178,13 @@ export default function ProcessDraftPage() {
         } else if (loadedSlots.length > 0) {
           setSelectedSlotIndex(loadedSlots[0].slot_index);
         }
+      }
 
-        setOpensAt(formatISTForInput(settingsData.settings?.draft_opens_at));
-        setClosesAt(formatISTForInput(settingsData.settings?.draft_closes_at));
+      // 3. Fetch per-slot draft rounds
+      const roundsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/rounds?league_id=${leagueId}`);
+      if (roundsRes.ok) {
+        const roundsData = await roundsRes.json();
+        setDraftRounds(roundsData.rounds || []);
       }
 
       // 3. Fetch league settings to get finalization mode
@@ -125,45 +206,33 @@ export default function ProcessDraftPage() {
     }
   }, [user, leagueId]);
 
-  const handleUpdateStatus = async (status: string) => {
+  const handleRoundAction = async (slotIndex: number, action: 'start' | 'close' | 'adjust' | 'reset', times?: { opens_at?: string; closes_at?: string }) => {
     try {
       const body: any = {
         league_id: leagueId,
-        draft_status: status
+        slot_index: slotIndex,
+        action,
       };
+      if (times?.opens_at) body.opens_at = times.opens_at;
+      if (times?.closes_at) body.closes_at = times.closes_at;
 
-      if (status === 'active') {
-        body.active_slot_index = selectedSlotIndex;
-        body.draft_opens_at = opensAt ? istToUTC(opensAt) : null;
-        body.draft_closes_at = closesAt ? istToUTC(closesAt) : null;
-      }
-
-      const response = await fetchWithTokenRefresh('/api/fantasy/draft/control', {
+      const response = await fetchWithTokenRefresh('/api/fantasy/draft/rounds', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
-
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to update round');
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update draft status');
-      }
-
-      setDraftStatus(status);
       showAlert({
         type: 'success',
-        title: 'Draft Status Updated',
-        message: `Draft status successfully set to ${status.toUpperCase()}!`,
+        title: 'Round Updated',
+        message: `Slot ${slotIndex} ${action} successfully`,
       });
-      loadSubmissions();
+      loadSubmissions(); // re-fetch rounds
     } catch (err: any) {
-      console.error('Error updating draft status:', err);
-      showAlert({
-        type: 'error',
-        title: 'Update Failed',
-        message: err.message || 'An error occurred while updating draft status.',
-      });
+      console.error('Error updating round:', err);
+      showAlert({ type: 'error', title: 'Update Failed', message: err.message });
     }
   };
 
@@ -272,66 +341,6 @@ export default function ProcessDraftPage() {
     }
   };
 
-  const handleAddTime = async () => {
-    const minutes = parseInt(addTimeMinutes || '0');
-    
-    if (isNaN(minutes) || minutes === 0) {
-      showAlert({
-        type: 'warning',
-        title: 'Invalid Duration',
-        message: 'Please enter a valid number of minutes to add or subtract'
-      });
-      return;
-    }
-
-    try {
-      if (!closesAt) {
-        showAlert({
-          type: 'warning',
-          title: 'No Deadline Set',
-          message: 'Draft must have a deadline set before adjusting time'
-        });
-        return;
-      }
-
-      // Treat closesAt as IST, compute new end, send UTC to API
-      const currentEndUTC = istToUTC(closesAt);
-      const newEnd = new Date(new Date(currentEndUTC).getTime() + (minutes * 60 * 1000));
-
-      const response = await fetchWithTokenRefresh('/api/fantasy/draft/control', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          league_id: leagueId,
-          draft_status: draftStatus,
-          draft_closes_at: newEnd.toISOString(),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to adjust time');
-      }
-
-      // Store back as IST for the datetime-local input
-      setClosesAt(formatISTForInput(newEnd.toISOString()));
-      showAlert({
-        type: 'success',
-        title: minutes > 0 ? 'Time Added' : 'Time Reduced',
-        message: `${minutes > 0 ? 'Added' : 'Removed'} ${Math.abs(minutes)} minute${Math.abs(minutes) !== 1 ? 's' : ''} ${minutes > 0 ? 'to' : 'from'} the draft deadline`,
-      });
-      loadSubmissions();
-    } catch (err: any) {
-      console.error('Error adjusting time:', err);
-      showAlert({
-        type: 'error',
-        title: 'Adjustment Failed',
-        message: err.message || 'Failed to adjust time',
-      });
-    }
-  };
-
   if (loading || isLoading) {
     return (
       <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
@@ -407,138 +416,24 @@ export default function ProcessDraftPage() {
           </div>
         </div>
 
-        {/* Manual Draft Controls Card */}
+        {/* Per-Slot Draft Rounds */}
         <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-            <div>
-              <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-1">Draft Round Controls</h2>
-              <p className="text-[10px] text-slate-450 font-bold uppercase leading-normal">
-                Control the bidding window manually. Managers can only submit or edit bids when draft is active.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] text-slate-400 font-bold uppercase">Current Status:</span>
-              <span className={`px-2.5 py-0.5 border text-[9px] font-black rounded-lg uppercase tracking-wider ${
-                draftStatus === 'active' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
-                draftStatus === 'closed' ? 'bg-rose-50 border-rose-200 text-rose-700' :
-                draftStatus === 'completed' ? 'bg-blue-50 border-blue-200 text-blue-750' :
-                'bg-slate-100 border-slate-200 text-slate-650'
-              }`}>
-                {draftStatus}
-              </span>
-            </div>
+          <div>
+            <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-1">Draft Round Controls</h2>
+            <p className="text-[10px] text-slate-450 font-bold uppercase leading-normal">
+              Each slot runs as its own independent round. Start, close, and adjust timing per slot.
+            </p>
           </div>
 
-          {/* Active Slot Selector */}
-          {draftStatus !== 'active' && draftStatus !== 'completed' && slots.length > 0 && (
-            <div className="w-full max-w-xs space-y-1.5 pt-2">
-              <label className="block text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Select Draft Slot to Start</label>
-              <select
-                value={selectedSlotIndex}
-                onChange={(e) => setSelectedSlotIndex(Number(e.target.value))}
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800 rounded-xl text-xs font-bold uppercase cursor-pointer"
-              >
-                {slots.map(s => (
-                  <option key={s.slot_index} value={s.slot_index}>{s.name} (Slot {s.slot_index})</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Date-time window inputs for the round */}
-          {draftStatus !== 'active' && draftStatus !== 'completed' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="space-y-1.5">
-                <label className="block text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Draft Window Opens At</label>
-                <input
-                  type="datetime-local"
-                  value={opensAt}
-                  onChange={(e) => setOpensAt(e.target.value)}
-                  className="w-full max-w-xs px-3.5 py-2 bg-slate-50 border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800 rounded-xl text-xs font-bold uppercase cursor-pointer"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Draft Window Closes At (Deadline)</label>
-                <input
-                  type="datetime-local"
-                  value={closesAt}
-                  onChange={(e) => setClosesAt(e.target.value)}
-                  className="w-full max-w-xs px-3.5 py-2 bg-slate-50 border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800 rounded-xl text-xs font-bold uppercase cursor-pointer"
-                />
-              </div>
-            </div>
-          )}
-
-          {draftStatus === 'active' && slots.length > 0 && (
-            <div className="pt-2 text-xs font-bold text-slate-650 uppercase flex flex-col gap-2">
-              <div className="flex items-center gap-1.5">
-                <span><Target className="w-3 h-3 inline text-rose-500 mr-1" /> Active Draft Slot:</span>
-                <span className="text-amber-600 font-black">
-                  {slots.find(s => s.slot_index === selectedSlotIndex)?.name || `Slot ${selectedSlotIndex}`}
-                </span>
-              </div>
-              {opensAt && (
-                <div className="flex items-center gap-1.5 text-slate-500">
-                  <span><Timer className="w-3 h-3 inline text-slate-500 mr-1" /> Opened At:</span>
-                  <span className="text-slate-700 font-bold">{formatISTDisplay(istToUTC(opensAt))} IST</span>
-                </div>
-              )}
-              {closesAt && (
-                <div className="flex items-center gap-1.5 text-slate-500">
-                  <span><Flag className="w-3 h-3 inline text-rose-500 mr-1" /> Deadline (Closes):</span>
-                  <span className="text-rose-600 font-black">{formatISTDisplay(istToUTC(closesAt))} IST</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-3 pt-2">
-            {draftStatus !== 'active' && draftStatus !== 'completed' && (
-              <button
-                onClick={() => handleUpdateStatus('active')}
-                className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-mono font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer transition-all shadow-sm"
-              >
-                ▶ Start Round (Open Bids)
-              </button>
-            )}
-            {draftStatus === 'active' && (
-              <>
-                <button
-                  onClick={() => handleUpdateStatus('closed')}
-                  className="px-4 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-mono font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer transition-all shadow-sm"
-                >
-                  ⏸ Close Round (Lock Bids)
-                </button>
-                
-                {/* Add/Reduce Time Controls */}
-                <div className="flex items-center gap-3 ml-auto">
-                  <div className="relative flex-1 max-w-[120px]">
-                    <input
-                      type="number"
-                      value={addTimeMinutes}
-                      onChange={(e) => setAddTimeMinutes(e.target.value)}
-                      className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none text-xs font-bold font-mono shadow-sm text-slate-800"
-                      placeholder="e.g. 10 or -10"
-                    />
-                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[10px] text-slate-400 font-bold uppercase">min</span>
-                  </div>
-                  <button
-                    onClick={handleAddTime}
-                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1"
-                  >
-                    <Clock className="w-3 h-3 text-amber-400" /> Adjust Time
-                  </button>
-                </div>
-              </>
-            )}
-            {(draftStatus === 'closed' || draftStatus === 'active') && (
-              <button
-                onClick={() => handleUpdateStatus('pending')}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-mono font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer transition-all shadow-sm"
-              >
-                🔄 Reset to Pending
-              </button>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {slots.map((slot) => (
+              <SlotRoundCard
+                key={slot.slot_index}
+                slot={slot}
+                round={draftRounds.find((r: any) => r.slot_index === slot.slot_index)}
+                onAction={handleRoundAction}
+              />
+            ))}
           </div>
         </div>
 

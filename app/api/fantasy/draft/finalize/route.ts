@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { league_id } = body;
+    const { league_id, slot_index } = body;
 
     if (!league_id) {
       return NextResponse.json(
@@ -30,7 +30,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`⚡ Finalizing fantasy draft for league ${league_id}...`);
+    // Mark the round as completed in fantasy_draft_rounds if slot_index provided
+    if (slot_index !== undefined) {
+      const { fantasySql } = await import('@/lib/neon/fantasy-config');
+      await fantasySql`
+        UPDATE fantasy_draft_rounds
+        SET status = 'completed', updated_at = NOW()
+        WHERE league_id = ${league_id} AND slot_index = ${Number(slot_index)}
+      `;
+      console.log(`✅ Marked slot ${slot_index} round as completed`);
+    }
+
+    console.log(`⚡ Finalizing fantasy draft for league ${league_id}${slot_index !== undefined ? ` slot ${slot_index}` : ''}...`);
 
     // 2. Execute the slot-based blind bid resolution engine
     const result = await processSlotBids(league_id);
