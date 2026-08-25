@@ -18,7 +18,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Get fantasy team info
+    // 1. Get fantasy team info — primary lookup by owner_uid
+    let teamRow: any = null;
     const teams = await fantasySql`
       SELECT team_id, league_id, budget_remaining, draft_submitted 
       FROM fantasy_teams
@@ -26,14 +27,43 @@ export async function POST(request: NextRequest) {
       LIMIT 1
     `;
 
-    if (teams.length === 0) {
+    if (teams.length > 0) {
+      teamRow = teams[0];
+    } else {
+      // Fallback: look up by team_id via Firebase uid field
+      const { adminDb } = await import('@/lib/neon/admin-db-wrapper');
+      const teamsSnap = await adminDb.collection('teams')
+        .where('uid', '==', user_id)
+        .limit(1)
+        .get();
+
+      if (!teamsSnap.empty) {
+        const firebaseTeamId = teamsSnap.docs[0].id;
+        const byTeamId = await fantasySql`
+          SELECT team_id, league_id, budget_remaining, draft_submitted
+          FROM fantasy_teams
+          WHERE team_id = ${firebaseTeamId} AND is_enabled = true
+          LIMIT 1
+        `;
+        if (byTeamId.length > 0) {
+          teamRow = byTeamId[0];
+          // Self-heal owner_uid
+          await fantasySql`
+            UPDATE fantasy_teams SET owner_uid = ${user_id}, updated_at = NOW()
+            WHERE team_id = ${firebaseTeamId} AND (owner_uid IS NULL OR owner_uid = '')
+          `;
+        }
+      }
+    }
+
+    if (!teamRow) {
       return NextResponse.json(
         { error: 'Fantasy team not found or not enabled' },
         { status: 404 }
       );
     }
 
-    const { team_id, league_id, budget_remaining, draft_submitted } = teams[0];
+    const { team_id, league_id, budget_remaining, draft_submitted } = teamRow;
 
     // 2. Load league draft settings for validation
     const leagues = await fantasySql`
@@ -53,21 +83,32 @@ export async function POST(request: NextRequest) {
     const league = leagues[0];
     const draftStatus = league.draft_status || 'pending';
     
-    // Check if draft is active
-    const now = new Date();
-    const opensAt = league.draft_opens_at ? new Date(league.draft_opens_at) : null;
-    const closesAt = league.draft_closes_at ? new Date(league.draft_closes_at) : null;
-
-    const isWindowOpen = (!opensAt || now >= opensAt) && (!closesAt || now <= closesAt);
-    
-    if (draftStatus !== 'active' || !isWindowOpen) {
+    // Check if draft is active — only block if status is explicitly not active
+    if (draftStatus !== 'active') {
       return NextResponse.json(
         { error: 'Draft bidding is currently closed or inactive' },
         { status: 400 }
       );
     }
 
-    // If draft is already locked/submitted, prevent editing
+    // Check time window only if dates are actually set
+    const now = new Date();
+    const opensAt = league.draft_opens_at ? new Date(league.draft_opens_at) : null;
+    const closesAt = league.draft_closes_at ? new Date(league.draft_closes_at) : null;
+    if (opensAt && now < opensAt) {
+      return NextResponse.json(
+        { error: 'Draft bidding window has not opened yet' },
+        { status: 400 }
+      );
+    }
+    if (closesAt && now > closesAt) {
+      return NextResponse.json(
+        { error: 'Draft bidding window has closed' },
+        { status: 400 }
+      );
+    }
+
+    // If draft is already locked/submitted, prevent re-locking
     if (draft_submitted && lock) {
       return NextResponse.json(
         { error: 'Your bids are already locked and submitted' },
@@ -104,8 +145,8 @@ export async function POST(request: NextRequest) {
 
     // Validate max bids per team limit if configured
     if (maxBidsLimit > 0) {
-      const activeSlotBids = bids.filter(b => activeSlot ? b.slot_index === activeSlot : true);
-      if (activeSlotBids.length > maxBidsLimit) {
+      const countBids = bids.filter((b: any) => activeSlot ? b.slot_index === activeSlot : true);
+      if (countBids.length > maxBidsLimit) {
         return NextResponse.json(
           { error: `You cannot place more than ${maxBidsLimit} bids for this draft round.` },
           { status: 400 }
@@ -113,9 +154,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Validate unique bid amounts per team
-    const activeSlotBids = bids.filter(b => activeSlot ? b.slot_index === activeSlot : true);
-    const bidAmounts = activeSlotBids.map(b => Number(b.bid_amount));
+    // Validate unique bid amounts per team for the active slot
+    const activeSlotBids = bids.filter((b: any) => activeSlot ? b.slot_index === activeSlot : true);
+    const bidAmounts = activeSlotBids.map((b: any) => Number(b.bid_amount));
     const uniqueBidAmounts = new Set(bidAmounts);
     if (uniqueBidAmounts.size !== bidAmounts.length) {
       return NextResponse.json(
@@ -124,16 +165,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Validate budget constraint:
+    // 4. Validate budget constraint
     let maxSpend = 0;
     if (activeSlot) {
-      // Incremental mode: max spend is the highest bid in the active slot
-      const activeSlotBids = bids.filter(b => b.slot_index === activeSlot);
-      maxSpend = activeSlotBids.length > 0 ? Math.max(...activeSlotBids.map(b => Number(b.bid_amount))) : 0;
+      const slotBids = bids.filter((b: any) => b.slot_index === activeSlot);
+      maxSpend = slotBids.length > 0 ? Math.max(...slotBids.map((b: any) => Number(b.bid_amount))) : 0;
     } else {
-      // Legacy batch mode
       const slotMaxBids: Record<number, number> = {};
-      bids.forEach(bid => {
+      bids.forEach((bid: any) => {
         const slotIdx = bid.slot_index;
         const amt = Number(bid.bid_amount);
         if (!slotMaxBids[slotIdx] || amt > slotMaxBids[slotIdx]) {
@@ -144,7 +183,6 @@ export async function POST(request: NextRequest) {
     }
 
     const budgetLimit = Number(budget_remaining);
-
     if (maxSpend > budgetLimit) {
       return NextResponse.json(
         { error: `Insufficient budget. Your highest bid for this round is ${maxSpend}, which exceeds your remaining budget of ${budgetLimit}.` },
@@ -152,51 +190,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Transaction to replace bids and update submit status
-    const transactionQueries: any[] = [];
-
-    // Delete old bids for the active slot or all if batch
+    // 5. Execute queries sequentially (Neon tagged-template doesn't support .transaction())
+    // Delete old bids for the active slot (or all if no active slot)
     if (activeSlot) {
-      transactionQueries.push(fantasySql`
+      await fantasySql`
         DELETE FROM fantasy_draft_bids
         WHERE team_id = ${team_id} AND league_id = ${league_id} AND slot_index = ${activeSlot}
-      `);
+      `;
     } else {
-      transactionQueries.push(fantasySql`
+      await fantasySql`
         DELETE FROM fantasy_draft_bids
         WHERE team_id = ${team_id} AND league_id = ${league_id}
-      `);
+      `;
     }
 
-    // Insert new bids
-    if (bids.length > 0) {
-      const rows = bids.map(bid => ({
-        bid_id: `bid_${uuidv4().replace(/-/g, '')}`,
-        league_id,
-        team_id,
-        slot_index: Number(bid.slot_index),
-        priority: Number(bid.priority || 1),
-        target_id: bid.target_id,
-        bid_type: bid.bid_type,
-        bid_amount: Number(bid.bid_amount),
-        status: 'pending',
-        submitted_at: new Date()
-      }));
-
-      transactionQueries.push(fantasySql`
-        INSERT INTO fantasy_draft_bids ${fantasySql(rows, 'bid_id', 'league_id', 'team_id', 'slot_index', 'priority', 'target_id', 'bid_type', 'bid_amount', 'status', 'submitted_at')}
-      `);
+    // Insert new bids one by one to avoid bulk insert API issues
+    for (const bid of bids) {
+      const bid_id = `bid_${uuidv4().replace(/-/g, '')}`;
+      await fantasySql`
+        INSERT INTO fantasy_draft_bids
+          (bid_id, league_id, team_id, slot_index, priority, target_id, bid_type, bid_amount, status, submitted_at)
+        VALUES
+          (${bid_id}, ${league_id}, ${team_id}, ${Number(bid.slot_index)}, ${Number(bid.priority || 1)},
+           ${bid.target_id}, ${bid.bid_type}, ${Number(bid.bid_amount)}, 'pending', NOW())
+      `;
     }
 
-    // Update draft submission flag on the team
-    transactionQueries.push(fantasySql`
+    // Update draft submission flag
+    await fantasySql`
       UPDATE fantasy_teams
       SET draft_submitted = ${!!lock},
           updated_at = CURRENT_TIMESTAMP
       WHERE team_id = ${team_id} AND league_id = ${league_id}
-    `);
-
-    await fantasySql.transaction(transactionQueries);
+    `;
 
     return NextResponse.json({
       success: true,
@@ -211,6 +237,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
 
 /**
  * DELETE /api/fantasy/draft/bids/submit?user_id=xxx
