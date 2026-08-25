@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       // Fallback: look up by team_id via Firebase uid field
       const { adminDb } = await import('@/lib/neon/admin-db-wrapper');
       const teamsSnap = await adminDb.collection('teams')
-        .where('uid', '==', user_id)
+        .where('owner_uid', '==', user_id)
         .limit(1)
         .get();
 

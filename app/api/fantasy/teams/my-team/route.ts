@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
       // Try to find their team document in Firebase
       const teamsSnap = await adminDb.collection('teams')
-        .where('uid', '==', user_id)
+        .where('owner_uid', '==', user_id)
         .limit(1)
         .get();
 
@@ -351,7 +351,7 @@ export async function POST(request: NextRequest) {
 
     // Fallback: check by team_id via Firebase (handles blank owner_uid from enable-all)
     const teamsSnap = await adminDb.collection('teams')
-      .where('uid', '==', user_id)
+      .where('owner_uid', '==', user_id)
       .limit(1)
       .get();
 
@@ -398,7 +398,7 @@ export async function POST(request: NextRequest) {
     } else {
       // Fallback to teams collection
       const teamsQuery = await adminDb.collection('teams')
-        .where('uid', '==', user_id)
+        .where('owner_uid', '==', user_id)
         .limit(1)
         .get();
       
