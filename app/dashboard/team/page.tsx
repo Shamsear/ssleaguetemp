@@ -8,8 +8,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState, useMemo } from 'react';
 import RegisteredTeamDashboard from './RegisteredTeamDashboard';
-import { useCachedSeasons } from '@/hooks/useCachedFirebase';
-import { useTeamHistory } from '@/hooks/useTeamHistory';
+
 import { useDashboardWebSocket } from '@/hooks/useWebSocket';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import NotificationButton from '@/components/notifications/NotificationButton';
@@ -37,7 +36,6 @@ export default function TeamDashboard() {
   const [ownerName, setOwnerName] = useState<string>('');
   const [checkingRegistration, setCheckingRegistration] = useState(true);
   const [teamDocId, setTeamDocId] = useState<string>('');
-  const [loadingTeamDoc, setLoadingTeamDoc] = useState(true);
   const [logoPositionXSquare, setLogoPositionXSquare] = useState<number | undefined>(undefined);
   const [logoPositionYSquare, setLogoPositionYSquare] = useState<number | undefined>(undefined);
   const [logoScaleSquare, setLogoScaleSquare] = useState<number | undefined>(undefined);
@@ -57,79 +55,40 @@ export default function TeamDashboard() {
     }
   }, [seasonStatus?.seasonId, setSeasonId]);
 
-  const { data: teamHistory, isLoading: teamHistoryLoading } = useTeamHistory(
-    user?.role === 'team' ? (teamDocId || undefined) : undefined
-  );
-
-  // Fetch current active season from Firebase
-  const { data: activeSeasons, isLoading: activeSeasonsLoading } = useCachedSeasons(
-    user?.role === 'team' ? { isActive: 'true' } : undefined
-  );
-
-  // Fetch team logo and owner name from teams collection
+  // Single API call to check registration status + team data (no dependency chain)
   useEffect(() => {
-    const fetchTeamData = async () => {
-      if (!user?.uid) {
-        setLoadingTeamDoc(false);
-        return;
-      }
+    if (!user || user.role !== 'team') return;
 
+    const checkRegistration = async () => {
+      setCheckingRegistration(true);
       try {
-        // Try to find the team document by userId, uid, or owner_uid
-        const teamsRes = await fetch('/api/teams');
-        const teamsJson = await teamsRes.json();
-        const teamsList = teamsJson.teams || teamsJson.data || [];
-        
-        // Find team by userId, uid, or owner_uid
-        const teamData = teamsList.find((t: any) => t.userId === user.uid || t.uid === user.uid || t.owner_uid === user.uid);
-        
-        if (teamData) {
-          // Found team document
-          console.log('[SUCCESS] Team document found:', teamData.id);
-          const teamDocId = teamData.id;
-          console.log('Team data:', teamData);
+        const res = await fetchWithTokenRefresh('/api/team/registration-status');
+        const json = await res.json();
+
+        if (json.success && json.data) {
+          const { hasActiveSeason, isRegistered, seasonId, seasonName, teamDocId: tdId, teamLogo } = json.data;
           
-          // Store team document ID for registration check
-          setTeamDocId(teamData.id);
+          setSeasonStatus({ hasActiveSeason, isRegistered, seasonName, seasonId });
+          setIsRegistered(isRegistered);
           
-          // Set owner name from team document
-          const ownerNameValue = teamData.owner_name || teamData.ownerName || teamData.owner;
-          if (ownerNameValue) {
-            setOwnerName(ownerNameValue);
-            console.log('[SUCCESS] Owner name set to:', ownerNameValue);
-          }
+          if (tdId) setTeamDocId(tdId);
+          if (teamLogo) setTeamLogoUrl(teamLogo);
+          else if (user.teamLogoUrl) setTeamLogoUrl(user.teamLogoUrl);
           
-          // Set logo URL and adjustments from team document or user data
-          const logoUrl = teamData.team_logo || teamData.teamLogo || teamData.logo_url || teamData.logoUrl;
-          if (logoUrl) {
-            setTeamLogoUrl(logoUrl);
-            setLogoPositionXSquare(teamData.logo_position_x_square);
-            setLogoPositionYSquare(teamData.logo_position_y_square);
-            setLogoScaleSquare(teamData.logo_scale_square);
-            console.log('[SUCCESS] Team logo set from team document');
-          } else if (user.teamLogoUrl) {
-            setTeamLogoUrl(user.teamLogoUrl);
-            console.log('[SUCCESS] Team logo set from user data');
-          }
+          console.log('[RegistrationStatus]', { hasActiveSeason, isRegistered, seasonId, teamDocId: tdId });
         } else {
-          console.log('[WARNING] No team document found for userId:', user.uid);
-          // Fallback to user data if no team document
-          if (user.teamLogoUrl) {
-            setTeamLogoUrl(user.teamLogoUrl);
-          }
+          setSeasonStatus({ hasActiveSeason: false, isRegistered: false });
         }
-      } catch (error) {
-        console.error('[ERROR] Error fetching team data:', error);
-        // Fallback to user data
-        if (user.teamLogoUrl) {
-          setTeamLogoUrl(user.teamLogoUrl);
-        }
+      } catch (err) {
+        console.error('Error checking registration:', err);
+        // Default to registered=true to avoid hiding menu on error
+        setSeasonStatus({ hasActiveSeason: false, isRegistered: false });
       } finally {
-        setLoadingTeamDoc(false);
+        setCheckingRegistration(false);
       }
     };
 
-    fetchTeamData();
+    checkRegistration();
   }, [user]);
 
   // Handle logo upload using ImageKit
@@ -205,121 +164,7 @@ export default function TeamDashboard() {
     }
   };
 
-  // Process data to determine season status
-  useEffect(() => {
-    if (!user || user.role !== 'team' || teamHistoryLoading || activeSeasonsLoading || loadingTeamDoc) {
-      return;
-    }
 
-    const checkRegistrationStatus = async () => {
-      setCheckingRegistration(true);
-      try {
-        console.log('[DEBUG] Season Status Debug:', {
-          userId: user.uid,
-          teamHistory: teamHistory,
-          teamHistoryCount: teamHistory?.length || 0,
-          activeSeasons: activeSeasons,
-          activeSeasonsCount: activeSeasons?.length || 0
-        });
-        
-        // Get active season (only if it exists)
-        const activeSeason = activeSeasons && Array.isArray(activeSeasons) && activeSeasons.length > 0 
-          ? activeSeasons[0] 
-          : null;
-        
-        console.log('Active season:', activeSeason ? activeSeason.name : 'NONE');
-        
-        if (!activeSeason) {
-          // No active season available
-          setSeasonStatus({
-            hasActiveSeason: false,
-            isRegistered: false,
-          });
-          console.log('[INFO] Status: No active season');
-          setCheckingRegistration(false);
-          return;
-        }
-
-        // First check Neon teamstats (already loaded, fast)
-        const registeredInNeon = teamHistory?.find(
-          (ts: any) => ts.season_id === activeSeason.id
-        );
-        
-        console.log('[DEBUG] Neon check:', { registeredInNeon: !!registeredInNeon });
-        
-        let isRegistered = !!registeredInNeon;
-        
-        // If not found in Neon, check Firebase team_seasons as fallback
-        if (!isRegistered) {
-          const { db } = await import('@/lib/firebase/config');
-          const { doc, getDoc } = await import('firebase/firestore');
-          
-          // Try both possible team_season IDs in parallel (userId and team doc ID)
-          const teamSeasonId1 = `${user.uid}_${activeSeason.id}`;
-          const teamSeasonId2 = teamDocId 
-            ? `${teamDocId}_${activeSeason.id}` 
-            : (teamHistory && teamHistory.length > 0 
-                ? `${teamHistory[0].team_id}_${activeSeason.id}` 
-                : null);
-          
-          console.log('[DEBUG] Firebase fallback check:', { teamSeasonId1, teamSeasonId2, teamDocId });
-          
-          const tsRes = await fetch(`/api/team-seasons?season_id=${activeSeason.id}`);
-          const tsData = await tsRes.json();
-          const allTeamSeasons = tsData.data || [];
-          const teamSeasonDoc1 = allTeamSeasons.find((ts: any) => ts.id === teamSeasonId1);
-          const teamSeasonDoc2 = teamSeasonId2 && teamSeasonId2 !== teamSeasonId1 ? allTeamSeasons.find((ts: any) => ts.id === teamSeasonId2) : null;
-          const teamSeasonDoc = teamSeasonDoc1 || teamSeasonDoc2;
-          
-          if (teamSeasonDoc) {
-            isRegistered = teamSeasonDoc.status === 'registered';
-            console.log('[INFO] API result:', { exists: true, status: teamSeasonDoc.status });
-          } else {
-            console.log('[INFO] API result: No document found');
-          }
-        }
-        
-        console.log('[SUCCESS] Final registration status:', {
-          userId: user.uid,
-          seasonId: activeSeason.id,
-          registeredInNeon: !!registeredInNeon,
-          finalIsRegistered: isRegistered
-        });
-
-        if (isRegistered) {
-          // Registered in active season
-          setSeasonStatus({
-            hasActiveSeason: true,
-            isRegistered: true,
-            seasonName: activeSeason.name,
-            seasonId: activeSeason.id,
-          });
-          setIsRegistered(true); // Notify context
-          console.log('[SUCCESS] Status: Registered in active season');
-        } else {
-          // Active season exists but not registered
-          setSeasonStatus({
-            hasActiveSeason: true,
-            isRegistered: false,
-            seasonName: activeSeason.name,
-            seasonId: activeSeason.id,
-          });
-          setIsRegistered(false); // Notify context - HIDE NAVIGATION
-          console.log('[INFO] Status: Active season available, not registered');
-        }
-      } catch (err) {
-        console.error('Error processing season status:', err);
-        setSeasonStatus({
-          hasActiveSeason: false,
-          isRegistered: false,
-        });
-      } finally {
-        setCheckingRegistration(false);
-      }
-    };
-
-    checkRegistrationStatus();
-  }, [user, teamHistory, activeSeasons, teamHistoryLoading, activeSeasonsLoading, teamDocId, loadingTeamDoc]);
 
   // Fetch historical stats
   useEffect(() => {
@@ -378,7 +223,7 @@ export default function TeamDashboard() {
     });
   };
 
-  const isCheckingStatus = teamHistoryLoading || activeSeasonsLoading || checkingRegistration || loadingTeamDoc;
+  const isCheckingStatus = checkingRegistration;
 
   if (loading || isCheckingStatus) {
     return (
