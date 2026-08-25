@@ -8,6 +8,7 @@ import { DollarSign, Star, Save, Check } from 'lucide-react';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface StarPricing {
   stars: number;
@@ -35,16 +36,6 @@ export default function FantasyPricingPage() {
   ]);
 
   const { alertState, showAlert, closeAlert } = useModal();
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!authLoading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
 
   useEffect(() => {
     fetchPricing();
@@ -150,6 +141,7 @@ export default function FantasyPricingPage() {
   if (!user) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen bg-slate-50">
       <AlertModal {...alertState} onClose={closeAlert} />
 
@@ -264,5 +256,7 @@ export default function FantasyPricingPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

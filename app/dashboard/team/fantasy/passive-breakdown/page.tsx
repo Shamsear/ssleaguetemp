@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PassiveBreakdownData {
   team: {
@@ -47,15 +48,6 @@ export default function PassiveBreakdownPage() {
   const [data, setData] = useState<PassiveBreakdownData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     const loadBreakdown = async () => {
@@ -125,6 +117,7 @@ export default function PassiveBreakdownPage() {
   const adminBonusTotal = data.admin_bonuses.reduce((sum, b) => sum + b.points, 0);
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
@@ -250,6 +243,7 @@ export default function PassiveBreakdownPage() {
               const bonusTypes = Object.keys(breakdown);
               
               return (
+
                 <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-green-50 to-blue-50 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -281,7 +275,8 @@ export default function PassiveBreakdownPage() {
                     </div>
                   )}
                 </div>
-              );
+
+  );
             })}
           </div>
         )}
@@ -308,5 +303,7 @@ export default function PassiveBreakdownPage() {
       </div>
     </div>
     </div>
+  
+    </AuthGuard>
   );
 }

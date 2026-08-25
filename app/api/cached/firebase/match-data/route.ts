@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 /**
  * GET /api/cached/firebase/match-data

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { decryptBidData } from '@/lib/encryption';
 import { broadcastSquadUpdate, broadcastWalletUpdate, broadcastRoundUpdate } from '@/lib/realtime/broadcast';
 import { verifyAuth } from '@/lib/auth-helper';
@@ -617,13 +617,11 @@ export async function DELETE(
 
       // 6. Delete news articles related to this round
       try {
-        const newsSnapshot = await adminDb.collection('news')
-          .where('metadata.round_id', '==', roundId)
-          .get();
-        
-        const deleteNewsPromises = newsSnapshot.docs.map(doc => doc.ref.delete());
-        await Promise.all(deleteNewsPromises);
-        console.log(`✅ Deleted ${newsSnapshot.size} news article(s) for round ${roundId}`);
+        const { getTournamentDb } = await import('@/lib/neon/tournament-config');
+        const tsql = getTournamentDb();
+        const deleteResult = await tsql`DELETE FROM news WHERE metadata->>'round_id' = ${roundId}`;
+        const deletedCount = (deleteResult as any).rowCount || 0;
+        console.log(`✅ Deleted ${deletedCount} news article(s) for round ${roundId}`);
       } catch (error) {
         console.error(`❌ Error deleting news for round ${roundId}:`, error);
       }

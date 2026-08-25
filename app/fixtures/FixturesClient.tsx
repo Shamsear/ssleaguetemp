@@ -56,7 +56,7 @@ function FixturesContent() {
       setIsLoading(true);
 
       // Get active season
-      const seasonsRef = collection(db, 'seasons');
+      const seasonsRef = (await (await fetch('/api/seasons')).json()).data;
       const seasonsQuery = query(
         seasonsRef,
         where('isActive', '==', true),

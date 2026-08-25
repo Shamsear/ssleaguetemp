@@ -5,17 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { db } from '@/lib/firebase/config';
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  limit,
-} from 'firebase/firestore';
+
 import { getISTNow, parseISTDate, createISTDateTime } from '@/lib/utils/timezone';
 import { useRoundPhaseMonitor, calculatePhase } from '@/hooks/useRoundPhaseMonitor';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Match {
   id: string;
@@ -64,38 +58,22 @@ export default function TeamMatchesPage() {
   });
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchMatches = async () => {
       if (!user || user.role !== 'team') return;
 
       try {
         setIsLoading(true);
 
-        // Fetch team's registered season from team_seasons collection
-        const { db } = await import('@/lib/firebase/config');
-        const { collection, query, where, getDocs, limit, orderBy, doc, getDoc } = await import('firebase/firestore');
+        console.log('Fetching team registration...');
+        // Get team's registered season(s) from Neon via API
+        const teamSeasonsRes = await fetch(`/api/team-seasons?user_id=${user.uid}`);
+        const teamSeasonsJson = await teamSeasonsRes.json();
+        const allTeamSeasons = (teamSeasonsJson.data || teamSeasonsJson.teamSeasons || [])
+          .filter((ts: any) => ts.status === 'registered')
+          .sort((a: any, b: any) => (b.joined_at || '').localeCompare(a.joined_at || ''));
 
-        console.log('<Search className="w-4 h-4 text-slate-500" /> Fetching team registration...');
-        // Get team's registered season(s)
-        const teamSeasonsSnapshot = await getDocs(
-          query(
-            collection(db, 'team_seasons'),
-            where('user_id', '==', user.uid),
-            where('status', '==', 'registered'),
-            orderBy('joined_at', 'desc')
-          )
-        );
-
-        if (teamSeasonsSnapshot.empty) {
-          console.log('<XCircle className="w-4 h-4 text-rose-500" /> No registered season found for team');
+        if (allTeamSeasons.length === 0) {
+          console.log('No registered season found for team');
           setIsLoading(false);
           return;
         }
@@ -104,43 +82,40 @@ export default function TeamMatchesPage() {
         let currentSeasonId: string | null = null;
         let teamId: string | null = null;
 
-        console.log('<Search className="w-4 h-4 text-slate-500" /> Checking registered seasons status...');
+        console.log('Checking registered seasons status...');
         // Check each registered season and find one that's not completed
-        for (const teamSeasonDoc of teamSeasonsSnapshot.docs) {
-          const teamSeasonData = teamSeasonDoc.data();
+        for (const teamSeasonData of allTeamSeasons) {
           const seasonId = teamSeasonData.season_id;
 
           // Store team_id from the first registration
           if (!teamId) {
             teamId = teamSeasonData.team_id;
             setTeamId(teamId);
-            console.log('🎯 Team ID:', teamId);
+            console.log('Team ID:', teamId);
           }
 
-          // Get season details
-          const seasonRef = doc(db, 'seasons', seasonId);
-          const seasonDoc = await getDoc(seasonRef);
-
-          if (seasonDoc.exists()) {
-            const seasonData = seasonDoc.data();
-            const seasonStatus = seasonData.status || 'draft';
-
-            console.log(`  Season ${seasonId}: status = ${seasonStatus}`);
-
-            // Use this season if it's not completed (active, draft, ongoing, etc.)
-            if (seasonStatus !== 'completed') {
-              currentSeasonId = seasonId;
-              console.log('✅ Using ongoing season:', currentSeasonId, `(${seasonStatus})`);
-              break;
+          // Get season details via API
+          try {
+            const seasonRes = await fetch(`/api/seasons/${seasonId}`);
+            const seasonJson = await seasonRes.json();
+            if (seasonJson.success && seasonJson.data) {
+              const seasonStatus = seasonJson.data.status || 'draft';
+              console.log(`  Season ${seasonId}: status = ${seasonStatus}`);
+              if (seasonStatus !== 'completed') {
+                currentSeasonId = seasonId;
+                console.log('Using ongoing season:', currentSeasonId, `(${seasonStatus})`);
+                break;
+              }
             }
+          } catch (e) {
+            console.log(`  Error fetching season ${seasonId}:`, e);
           }
         }
 
         // Fallback: use most recent if all are completed
         if (!currentSeasonId) {
-          const latestTeamSeason = teamSeasonsSnapshot.docs[0].data();
-          currentSeasonId = latestTeamSeason.season_id;
-          console.log('⚠️ All seasons completed, using latest:', currentSeasonId);
+          currentSeasonId = allTeamSeasons[0].season_id;
+          console.log('All seasons completed, using latest:', currentSeasonId);
         }
 
         setSeasonId(currentSeasonId);
@@ -381,10 +356,6 @@ export default function TeamMatchesPage() {
     );
   }
 
-  if (!user || user.role !== 'team') {
-    return null;
-  }
-
   // Filter matches by selected tournament
   const filteredMatches = selectedTournamentId
     ? matches.filter(m => m.tournament_id === selectedTournamentId)
@@ -442,6 +413,7 @@ export default function TeamMatchesPage() {
   };
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
@@ -600,6 +572,7 @@ export default function TeamMatchesPage() {
                           const nextDeadline = getNextDeadline();
 
                           return (
+
                             <div key={match.id} className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-200 font-mono">
                               <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
                                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Round {match.round_number} • Match {match.match_number}</span>
@@ -647,7 +620,8 @@ export default function TeamMatchesPage() {
                                 </Link>
                               </div>
                             </div>
-                          );
+
+  );
                         })}
                       </div>
                     </div>
@@ -789,5 +763,7 @@ export default function TeamMatchesPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

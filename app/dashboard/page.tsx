@@ -3,37 +3,12 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-
-    // Route to role-specific dashboard
-    if (!loading && user) {
-      switch (user.role) {
-        case 'super_admin':
-          router.push('/dashboard/superadmin');
-          break;
-        case 'committee_admin':
-          router.push('/dashboard/committee');
-          break;
-        case 'team':
-          router.push('/dashboard/team');
-          break;
-        default:
-          // Stay on this page if role is unknown
-          break;
-      }
-    }
-  }, [user, loading, router]);
-
-  // Show loading while redirecting
   if (loading || user) {
     return (
       <div className="min-h-screen flex items-center justify-center">

@@ -4,6 +4,7 @@ import { Flame, TrendingDown, TrendingUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   real_player_id: string;
@@ -334,6 +335,7 @@ export default function WeeklyLineupSelector() {
   );
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header */}
       <div className="mb-6">
@@ -471,6 +473,7 @@ export default function WeeklyLineupSelector() {
                 if (!player) return null;
 
                 return (
+
                   <div
                     key={playerId}
                     className="border border-gray-200 rounded-lg p-4 bg-gray-50"
@@ -500,7 +503,8 @@ export default function WeeklyLineupSelector() {
                       )}
                     </div>
                   </div>
-                );
+
+  );
               })}
               {lineup.bench_players.length === 0 && (
                 <p className="text-gray-500 text-center py-8">
@@ -580,5 +584,7 @@ export default function WeeklyLineupSelector() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

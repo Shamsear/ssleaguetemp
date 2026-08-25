@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface FantasyLeague {
   id: string;
@@ -37,16 +38,6 @@ export default function FantasyLeagueDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   const { alertState, showAlert, closeAlert } = useModal();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     const loadLeagueData = async (retryCount = 0, maxRetries = 3) => {
@@ -257,6 +248,7 @@ export default function FantasyLeagueDashboard() {
   ];
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       <AlertModal {...alertState} onClose={closeAlert} />
       {/* Ambient Gold Glow */}
@@ -446,5 +438,7 @@ export default function FantasyLeagueDashboard() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

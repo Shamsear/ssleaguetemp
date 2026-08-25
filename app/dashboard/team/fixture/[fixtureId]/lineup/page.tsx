@@ -8,6 +8,7 @@ import Link from 'next/link';
 import LineupSubmission from '@/components/LineupSubmission';
 import { useAutoLockLineups } from '@/hooks/useAutoLockLineups';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function FixtureLineupPage() {
   const { user, loading } = useAuth();
@@ -23,12 +24,6 @@ export default function FixtureLineupPage() {
 
   // Auto-lock lineups when deadline passes
   useAutoLockLineups(fixtureId, deadline);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     if (user && fixtureId) {
@@ -169,6 +164,7 @@ export default function FixtureLineupPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 py-8 px-4">
       <div className="container mx-auto max-w-5xl">
         {/* Header */}
@@ -230,5 +226,7 @@ export default function FixtureLineupPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

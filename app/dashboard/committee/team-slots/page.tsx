@@ -4,8 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase/config'
+
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
 import {
   ArrowLeft,
@@ -25,7 +24,7 @@ import {
   DollarSign
 } from 'lucide-react'
 import { normalizeStr } from '@/lib/utils/normalizeStr';
-
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Team {
   id: string
@@ -65,15 +64,6 @@ export default function TeamSlotsManagementPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
-
-  useEffect(() => {
     const fetchData = async () => {
       if (!user || user.role !== 'committee_admin') return
 
@@ -81,21 +71,19 @@ export default function TeamSlotsManagementPage() {
         setLoading(true)
         
         // Get current season
-        const seasonsQuery = query(
-          collection(db, 'seasons'),
-          where('isActive', '==', true)
-        )
-        const seasonsSnapshot = await getDocs(seasonsQuery)
+        const seasonsRes = await fetch('/api/seasons')
+        const seasonsJson = await seasonsRes.json()
+        const seasonsList = (seasonsJson.data || seasonsJson.seasons || []).filter((s: any) => s.status === 'active' || s.is_active === true)
 
-        if (seasonsSnapshot.empty) {
+        if (seasonsList.length === 0) {
           setMessage({ type: 'error', text: 'No active season found' })
           setLoading(false)
           return
         }
 
-        const seasonDoc = seasonsSnapshot.docs[0]
+        const seasonDoc = seasonsList[0]
         const seasonId = seasonDoc.id
-        const seasonData = seasonDoc.data()
+        const seasonData = seasonDoc
         
         setCurrentSeasonId(seasonId)
         setSeasonName(seasonData.name || `Season ${seasonData.season_number || ''}`)
@@ -108,11 +96,9 @@ export default function TeamSlotsManagementPage() {
         })
 
         // Get all team_seasons for this season
-        const teamSeasonsQuery = query(
-          collection(db, 'team_seasons'),
-          where('season_id', '==', seasonId)
-        )
-        const teamSeasonsSnapshot = await getDocs(teamSeasonsQuery)
+        const teamSeasonsRes = await fetch(`/api/team-seasons?season_id=${seasonId}`)
+        const teamSeasonsJson = await teamSeasonsRes.json()
+        const teamSeasonsData = teamSeasonsJson.data || teamSeasonsJson.teamSeasons || []
 
         // Fetch current player counts from Neon database
         const response = await fetchWithTokenRefresh('/api/committee/team-slots', {
@@ -145,13 +131,13 @@ export default function TeamSlotsManagementPage() {
 
         const teamsData: Team[] = []
         
-        for (const tsDoc of teamSeasonsSnapshot.docs) {
-          const tsData = tsDoc.data()
+        for (const tsData of teamSeasonsData) {
           const teamId = tsData.team_id
           
           // Get team name
-          const teamDoc = await getDoc(doc(db, 'teams', teamId))
-          const teamData = teamDoc.data()
+          const teamRes = await fetch(`/api/teams/all-teams`)
+          const allTeamsJson = await teamRes.json()
+          const teamData = allTeamsJson.data?.find((t: any) => t.id === teamId)
           
           const baseSlots = tsData.football_base_slots || slotSettings.base_slots
           const purchasedSlots = tsData.football_purchased_slots || 0
@@ -312,11 +298,8 @@ export default function TeamSlotsManagementPage() {
     )
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null
-  }
-
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -540,6 +523,7 @@ export default function TeamSlotsManagementPage() {
                                   {team.purchase_history.map((purchase) => {
                                     const isPurchase = purchase.slots_purchased > 0;
                                     return (
+
                                       <div key={purchase.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3.5 bg-white rounded-xl border border-slate-200 shadow-sm gap-2">
                                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-650">
                                           <div className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black border uppercase ${
@@ -568,7 +552,8 @@ export default function TeamSlotsManagementPage() {
                                           </div>
                                         )}
                                       </div>
-                                    );
+
+  );
                                   })}
                                 </div>
                               </div>
@@ -585,5 +570,7 @@ export default function TeamSlotsManagementPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }

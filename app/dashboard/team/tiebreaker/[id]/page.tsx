@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { fetchWithTokenRetry } from '@/lib/fetch-with-retry';
 
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 interface TiebreakerDetail {
   id: string;
   round_id: string;
@@ -71,12 +72,6 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
   useEffect(() => {
     params.then(({ id }) => setTiebreakerId(id));
   }, [params]);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
 
   const fetchTiebreakerDetails = async () => {
     if (!tiebreakerId) return;
@@ -320,6 +315,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -672,6 +668,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
                     const config = statusConfig[bid.allocation_status];
                     
                     return (
+
                       <div
                         key={bid.bid_id}
                         className={`flex items-center justify-between p-3 rounded-2xl border ${config.bg} ${
@@ -700,7 +697,8 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
                           <p className="text-[9px] text-slate-400 uppercase font-bold">Your bid</p>
                         </div>
                       </div>
-                    );
+
+  );
                   })}
                 </div>
                 
@@ -746,5 +744,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

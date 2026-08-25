@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { getMainDb } from '@/lib/neon/main-config';
 import { calculateRealPlayerSalary } from '@/lib/salary-utils';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { logSalaryPayment } from '@/lib/transaction-logger';
 
 // Base points by star rating
@@ -51,51 +50,24 @@ function calculateCategory(points: number, currentCategory: string): string {
 // Top 50% by points = Legend, Bottom 50% = Classic
 async function recalculateAllPlayerCategories(season_id: string) {
   try {
-    // Get all realplayers for this specific season
-    const allPlayersQuery = query(
-      collection(db, 'realplayer'),
-      where('season_id', '==', season_id)
-    );
-    const allPlayersSnap = await getDocs(allPlayersQuery);
+    const mainSql = getMainDb();
+    const allPlayersRows = await mainSql`SELECT player_id, star_rating, points FROM realplayers WHERE season_id = ${season_id}`;
 
-    // Create array of players with their star ratings
-    const players: Array<{ docId: string; playerId: string; starRating: number; points: number }> = [];
+    const players = allPlayersRows.map((row: any) => ({
+      playerId: row.player_id,
+      starRating: row.star_rating || 3,
+      points: row.points || 100
+    }));
 
-    allPlayersSnap.forEach(doc => {
-      const data = doc.data();
-      players.push({
-        docId: doc.id,
-        playerId: data.player_id,
-        starRating: data.star_rating || 3,
-        points: data.points || 100
-      });
-    });
-
-    // Sort by points (most granular metric) - highest first
-    // Star rating is derived from points, so points is the source of truth
-    players.sort((a, b) => b.points - a.points);
-
-    // Calculate top 50% threshold
+    players.sort((a: any, b: any) => b.points - a.points);
     const legendThreshold = Math.ceil(players.length / 2);
 
-    // Update categories for all players
-    const updatePromises = players.map(async (player, index) => {
-      const isLegend = index < legendThreshold;
-      const category = isLegend
-        ? { id: 'legend', name: 'LEGEND' }
-        : { id: 'classic', name: 'CLASSIC' };
-
-      // Update realplayer document
-      const playerDoc = doc(db, 'realplayer', player.docId);
-      await updateDoc(playerDoc, {
-        category_id: category.id,
-        category_name: category.name
-      });
-
-      return { playerId: player.playerId, category: category.name, rank: index + 1 };
-    });
-
-    await Promise.all(updatePromises);
+    for (let i = 0; i < players.length; i++) {
+      const isLegend = i < legendThreshold;
+      const category = isLegend ? 'legend' : 'classic';
+      const categoryName = isLegend ? 'LEGEND' : 'CLASSIC';
+      await mainSql`UPDATE realplayers SET category_id = ${category}, category_name = ${categoryName} WHERE player_id = ${players[i].playerId}`;
+    }
 
     return { success: true, totalPlayers: players.length, legendCount: legendThreshold };
   } catch (error) {
@@ -317,26 +289,19 @@ export async function POST(request: NextRequest) {
           `;
         }
 
-        // Also update Firebase realplayer for backward compatibility (if exists)
+        // Update Neon realplayers table
         try {
-          const homePlayerQuery = query(
-            collection(db, 'realplayer'),
-            where('player_id', '==', home_player_id)
-          );
-          const homePlayerSnap = await getDocs(homePlayerQuery);
-          if (!homePlayerSnap.empty) {
-            const updateFields: any = {
-              points: newPoints,
-            };
-            if (!usesCategoryPoints) {
-              updateFields.star_rating = newStarRating;
-            } else {
-              updateFields.category_name = newCategory;
-            }
-            await updateDoc(homePlayerSnap.docs[0].ref, updateFields);
+          const updateFields: any = { points: newPoints };
+          if (!usesCategoryPoints) updateFields.star_rating = newStarRating;
+          else updateFields.category_name = newCategory;
+          const mainSql = getMainDb();
+          if (!usesCategoryPoints) {
+            await mainSql`UPDATE realplayers SET points = ${newPoints}, star_rating = ${newStarRating}, updated_at = NOW() WHERE player_id = ${home_player_id}`;
+          } else {
+            await mainSql`UPDATE realplayers SET points = ${newPoints}, category_name = ${newCategory}, updated_at = NOW() WHERE player_id = ${home_player_id}`;
           }
-        } catch (fbError) {
-          console.warn('Firebase update failed (non-critical):', fbError);
+        } catch (neonError) {
+          console.warn('Neon realplayers update failed (non-critical):', neonError);
         }
 
         updates.push({
@@ -441,26 +406,16 @@ export async function POST(request: NextRequest) {
           `;
         }
 
-        // Also update Firebase realplayer for backward compatibility (if exists)
+        // Update Neon realplayers table
         try {
-          const awayPlayerQuery = query(
-            collection(db, 'realplayer'),
-            where('player_id', '==', away_player_id)
-          );
-          const awayPlayerSnap = await getDocs(awayPlayerQuery);
-          if (!awayPlayerSnap.empty) {
-            const updateFields: any = {
-              points: newPoints,
-            };
-            if (!usesCategoryPoints) {
-              updateFields.star_rating = newStarRating;
-            } else {
-              updateFields.category_name = newCategory;
-            }
-            await updateDoc(awayPlayerSnap.docs[0].ref, updateFields);
+          const mainSql = getMainDb();
+          if (!usesCategoryPoints) {
+            await mainSql`UPDATE realplayers SET points = ${newPoints}, star_rating = ${newStarRating}, updated_at = NOW() WHERE player_id = ${away_player_id}`;
+          } else {
+            await mainSql`UPDATE realplayers SET points = ${newPoints}, category_name = ${newCategory}, updated_at = NOW() WHERE player_id = ${away_player_id}`;
           }
-        } catch (fbError) {
-          console.warn('Firebase update failed (non-critical):', fbError);
+        } catch (neonError) {
+          console.warn('Neon realplayers update failed (non-critical):', neonError);
         }
 
         updates.push({

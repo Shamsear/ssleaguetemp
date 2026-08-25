@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { ArrowLeft } from 'lucide-react';
-
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface ImportStep {
   name: string;
@@ -52,16 +52,6 @@ function ImportProgressContent() {
     ],
   });
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch real progress from API
   useEffect(() => {
     if (!importId) return;
 
@@ -241,10 +231,6 @@ function ImportProgressContent() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
-
   if (!importId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -262,6 +248,7 @@ function ImportProgressContent() {
   }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
@@ -500,11 +487,14 @@ function ImportProgressContent() {
           </div>
         )}
       </div>
+  
+    </AuthGuard>
   );
 }
 
 export default function HistoricalSeasonImportProgress() {
   return (
+
     <Suspense
       fallback={
         <div className="flex items-center justify-center pt-32">
@@ -520,5 +510,6 @@ export default function HistoricalSeasonImportProgress() {
     >
       <ImportProgressContent />
     </Suspense>
+
   );
 }

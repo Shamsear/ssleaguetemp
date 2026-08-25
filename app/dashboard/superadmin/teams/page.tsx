@@ -11,7 +11,7 @@ import {
   toggleTeamStatus,
   getTeamStatistics,
 } from '@/lib/firebase/teams';
-import { getAllSeasons } from '@/lib/firebase/seasons';
+
 import { useCachedTeams } from '@/hooks/useCachedData';
 import { 
   PlusCircle, 
@@ -34,6 +34,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function TeamsManagement() {
   const { user, loading } = useAuth();
@@ -71,30 +72,19 @@ export default function TeamsManagement() {
     season_id: '',
   });
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-    if (!loading && user && user.role === 'super_admin') {
-      loadData();
-    }
-  }, [user, loading, router]);
-
   const loadData = async () => {
     try {
       setLoadingData(true);
       setError(null);
       
-      const [statsData, seasonsData] = await Promise.all([
+      const [statsData, seasonsRes] = await Promise.all([
         getTeamStatistics(),
-        getAllSeasons(),
+        fetch('/api/seasons').then(r => r.json()),
       ]);
       
       setStats(statsData);
-      setSeasons(seasonsData.map(s => ({ id: s.id, name: s.name })));
+      const seasonsList = (seasonsRes.data || seasonsRes.seasons || []);
+      setSeasons(seasonsList.map((s: any) => ({ id: s.id, name: s.name || s.id })));
       
       await refetchTeams();
     } catch (err) {
@@ -258,11 +248,9 @@ export default function TeamsManagement() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       
       {/* Page Header */}
@@ -888,5 +876,7 @@ export default function TeamsManagement() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

@@ -9,6 +9,7 @@ import { Crown, Flame, Info, Star, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Challenge {
   challenge_id: string;
@@ -186,6 +187,7 @@ export default function ChallengesPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="p-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-6">
@@ -399,6 +401,7 @@ export default function ChallengesPage() {
                   const completionDate = getCompletionDate(challenge.challenge_id);
 
                   return (
+
                     <div
                       key={challenge.challenge_id}
                       className="bg-gray-50 border border-gray-200 rounded-lg p-4"
@@ -422,7 +425,8 @@ export default function ChallengesPage() {
                         </div>
                       )}
                     </div>
-                  );
+
+  );
                 })}
               </div>
             </div>
@@ -442,5 +446,7 @@ export default function ChallengesPage() {
         </ul>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

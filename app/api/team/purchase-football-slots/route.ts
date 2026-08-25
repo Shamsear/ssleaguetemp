@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { doc, getDoc, updateDoc, runTransaction, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getMainDb } from '@/lib/neon/main-config';
 import { auctionSql as sql } from '@/lib/neon/auction-config';
 
 export async function POST(request: NextRequest) {
@@ -22,18 +21,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get season settings
-    const seasonRef = doc(db, 'seasons', season_id);
-    const seasonDoc = await getDoc(seasonRef);
+    // Get season settings from Neon
+    const mainSql = getMainDb();
+    const seasonRows = await mainSql`SELECT * FROM seasons WHERE id = ${season_id} LIMIT 1`;
 
-    if (!seasonDoc.exists()) {
+    if (seasonRows.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Season not found' },
         { status: 404 }
       );
     }
 
-    const seasonData = seasonDoc.data();
+    const seasonData = seasonRows[0];
     const maxPurchasable = seasonData.football_max_purchasable_slots || 3;
     const slotPrice = seasonData.football_slot_price || 10;
     const purchaseEnabled = seasonData.football_slot_purchase_enabled !== false;
@@ -45,18 +44,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get team_season document
-    const teamSeasonRef = doc(db, 'team_seasons', `${team_id}_${season_id}`);
-    const teamSeasonDoc = await getDoc(teamSeasonRef);
+    // Get team_season from Neon
+    const tsRows = await mainSql`SELECT * FROM team_seasons WHERE id = ${`${team_id}_${season_id}`} LIMIT 1`;
 
-    if (!teamSeasonDoc.exists()) {
+    if (tsRows.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Team season not found' },
         { status: 404 }
       );
     }
 
-    const teamSeasonData = teamSeasonDoc.data();
+    const teamSeasonData = tsRows[0];
     const currentPurchased = teamSeasonData.football_purchased_slots || 0;
     const currentBudget = teamSeasonData.football_budget || 0;
 
@@ -85,50 +83,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Perform transaction in Firebase
-    await runTransaction(db, async (transaction) => {
-      // Re-read team_season to ensure consistency
-      const freshTeamSeasonDoc = await transaction.get(teamSeasonRef);
-      if (!freshTeamSeasonDoc.exists()) {
-        throw new Error('Team season not found');
-      }
-
-      const freshData = freshTeamSeasonDoc.data();
+    // Perform update in Neon
+    {
+      const freshRows = await mainSql`SELECT football_budget, football_purchased_slots, football_base_slots FROM team_seasons WHERE id = ${`${team_id}_${season_id}`} LIMIT 1`;
+      if (freshRows.length === 0) throw new Error('Team season not found');
+      const freshData = freshRows[0];
       const freshBudget = freshData.football_budget || 0;
       const freshPurchased = freshData.football_purchased_slots || 0;
       const baseSlots = freshData.football_base_slots || seasonData.football_base_slots || 25;
 
-      // Double-check budget
-      if (freshBudget < totalCost) {
-        throw new Error('Insufficient budget');
-      }
+      if (freshBudget < totalCost) throw new Error('Insufficient budget');
 
-      // Update team_season
       const newPurchased = freshPurchased + slots_to_purchase;
       const newTotalSlots = baseSlots + newPurchased;
       const newBudget = freshBudget - totalCost;
 
-      transaction.update(teamSeasonRef, {
-        football_purchased_slots: newPurchased,
-        football_total_slots: newTotalSlots,
-        football_budget: newBudget
-      });
+      await mainSql`UPDATE team_seasons SET football_purchased_slots = ${newPurchased}, football_total_slots = ${newTotalSlots}, football_budget = ${newBudget}, updated_at = NOW() WHERE id = ${`${team_id}_${season_id}`}`;
 
-      // Create transaction record
-      const transactionRef = doc(collection(db, 'transactions'));
-      transaction.set(transactionRef, {
-        team_id,
-        season_id,
-        type: 'slot_purchase',
-        amount: -totalCost,
-        currency: 'ecoin',
-        description: `Purchased ${slots_to_purchase} football player slot${slots_to_purchase > 1 ? 's' : ''}`,
-        slots_purchased: slots_to_purchase,
-        price_per_slot: slotPrice,
-        created_at: serverTimestamp(),
-        status: 'completed'
-      });
-    });
+      // Create transaction record in Neon
+      const txId = `tx_${Date.now().toString(36)}`;
+      await mainSql`
+        INSERT INTO transactions (id, team_id, season_id, type, amount, description, status, raw_data, created_at, updated_at)
+        VALUES (${txId}, ${team_id}, ${season_id}, 'slot_purchase', ${-totalCost},
+          ${`Purchased ${slots_to_purchase} football player slot${slots_to_purchase > 1 ? 's' : ''}`},
+          'completed', ${JSON.stringify({ slots_purchased: slots_to_purchase, price_per_slot: slotPrice })}, NOW(), NOW())
+      `;
+    }
 
     // Update Neon database
     try {

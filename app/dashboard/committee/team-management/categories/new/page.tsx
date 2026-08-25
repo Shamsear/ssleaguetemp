@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { AlertCircle, ArrowLeft, CheckCircle, ChevronRight, Info, Layers, Plus, X } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 const getRelativeLevels = (priority: number) => {
   if (priority === 1) {
@@ -65,15 +66,6 @@ export default function NewCategoryPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -121,13 +113,10 @@ export default function NewCategoryPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
-
   const priorityNum = parseInt(formData.priority) || 1;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -408,6 +397,7 @@ export default function NewCategoryPage() {
                   {getRelativeLevels(priorityNum).map(({ fieldSuffix, label }) => {
                     const name = `loss_${fieldSuffix}`;
                     return (
+
                       <div key={name}>
                         <label htmlFor={name} className="block text-[10px] font-black uppercase text-slate-550 tracking-wider mb-2">
                           {label}
@@ -423,7 +413,8 @@ export default function NewCategoryPage() {
                           className="w-full px-3 py-2 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 rounded-xl text-center text-sm font-extrabold font-mono"
                         />
                       </div>
-                    );
+
+  );
                   })}
                 </div>
               </div>
@@ -459,5 +450,7 @@ export default function NewCategoryPage() {
         </form>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

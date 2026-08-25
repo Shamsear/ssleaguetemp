@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeftRight, Calendar, Save, AlertCircle, Plus, Settings, CheckCircle, Lock } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface TransferWindow {
   window_id: string;
@@ -56,16 +57,6 @@ export default function TransfersManagementPage() {
   const [transfers, setTransfers] = useState<any[]>([]);
   const [isLoadingTransfers, setIsLoadingTransfers] = useState(false);
   const [filterWindowId, setFilterWindowId] = useState<string>('all');
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     if (user && leagueId) {
@@ -301,6 +292,7 @@ export default function TransfersManagementPage() {
   if (!user) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
@@ -796,5 +788,7 @@ export default function TransfersManagementPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

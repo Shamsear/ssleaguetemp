@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 // Vercel function timeout configuration
 export const maxDuration = 10; // 10 seconds max

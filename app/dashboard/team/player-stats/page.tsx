@@ -8,8 +8,9 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import { ArrowLeft, BarChart2, Calendar, ClipboardList, Search, User } from 'lucide-react';
 import { db } from '@/lib/firebase/client';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerStats {
   id: string;
@@ -78,39 +79,31 @@ export default function TeamPlayerStatsPage() {
   const [selectedSeason, setSelectedSeason] = useState<string>('');
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-      return;
-    }
-  }, [user, authLoading, router]);
-
-  // Load the team's current season
-  useEffect(() => {
     const loadTeamSeason = async () => {
       try {
         setLoading(true);
-        // Find team document where userId field matches user.uid
-        const teamsRef = collection(db, 'teams');
-        const q = query(teamsRef, where('userId', '==', user.uid), limit(1));
-        const querySnapshot = await getDocs(q);
+        // Find team where userId matches user.uid
+        const teamsRes = await fetch('/api/teams');
+        const teamsJson = await teamsRes.json();
+        const teamsList = teamsJson.teams || teamsJson.data || [];
+        const userTeam = teamsList.find((t: any) => t.userId === user.uid || t.user_id === user.uid);
         
         let activeSeasonId = '';
         let activeSeasonName = '';
 
-        if (!querySnapshot.empty) {
-          const teamData = querySnapshot.docs[0].data();
-          activeSeasonId = teamData.current_season_id;
+        if (userTeam) {
+          activeSeasonId = userTeam.current_season_id;
         }
 
         // If no season found on team, fallback to first active season
         if (!activeSeasonId) {
-          const seasonsQuery = query(collection(db, 'seasons'));
-          const seasonsSnapshot = await getDocs(seasonsQuery);
-          for (const docSnap of seasonsSnapshot.docs) {
-            const data = docSnap.data();
-            if (data.status === 'active' || data.status !== 'completed') {
-              activeSeasonId = docSnap.id;
-              activeSeasonName = data.name || `Season ${data.season_number || ''}`;
+          const seasonsRes = await fetch('/api/seasons');
+          const seasonsJson = await seasonsRes.json();
+          const seasonsList = seasonsJson.data || seasonsJson.seasons || [];
+          for (const s of seasonsList) {
+            if (s.status === 'active' || s.status !== 'completed') {
+              activeSeasonId = s.id;
+              activeSeasonName = s.name || `Season ${s.season_number || ''}`;
               break;
             }
           }
@@ -290,6 +283,7 @@ export default function TeamPlayerStatsPage() {
   if (!user) return null;
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -742,6 +736,7 @@ export default function TeamPlayerStatsPage() {
                 const change = player.base_points > 0 ? player.points - player.base_points : 0;
                 const totalPoints = playerTotalPoints.get(player.id) || 0;
                 return (
+
                   <div 
                     key={player.id} 
                     className="console-card bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm relative overflow-hidden"
@@ -895,7 +890,8 @@ export default function TeamPlayerStatsPage() {
                       </div>
                     )}
                   </div>
-                );
+
+  );
               })
             )}
           </div>
@@ -963,5 +959,7 @@ export default function TeamPlayerStatsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

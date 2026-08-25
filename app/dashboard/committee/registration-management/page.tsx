@@ -5,8 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
-import { getSeasonById } from '@/lib/firebase/seasons';
 import { Season } from '@/types/season';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface RegistrationStats {
   total_registrations: number;
@@ -33,21 +33,15 @@ export default function RegistrationManagementPage() {
   const [isToggling, setIsToggling] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && !isCommitteeAdmin) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router, isCommitteeAdmin]);
-
-  useEffect(() => {
     const fetchData = async () => {
       if (!userSeasonId) return;
 
       try {
-        const season = await getSeasonById(userSeasonId);
-        setCurrentSeason(season);
+        const seasonRes = await fetch(`/api/seasons/${userSeasonId}`);
+        const seasonJson = await seasonRes.json();
+        if (seasonJson.success && seasonJson.data) {
+          setCurrentSeason(seasonJson.data);
+        }
 
         // Fetch registration stats
         const statsResponse = await fetch(`/api/admin/registration-phases?season_id=${userSeasonId}`);
@@ -142,6 +136,7 @@ export default function RegistrationManagementPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen py-8 px-4 bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="container mx-auto max-w-7xl">
         {/* Header */}
@@ -273,5 +268,7 @@ export default function RegistrationManagementPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

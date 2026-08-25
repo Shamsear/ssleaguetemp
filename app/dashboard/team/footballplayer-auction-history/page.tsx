@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   player_id: string;
@@ -63,40 +63,32 @@ export default function FootballPlayerAuctionHistoryPage() {
   const PLAYERS_PER_PAGE = 10;
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchSeasons = async () => {
       if (!user) return;
 
       try {
         setIsLoadingSeasons(true);
         // Fetch all seasons ordered by name descending (latest first)
-        const seasonsQuery = query(
-          collection(db, 'seasons'),
-          orderBy('name', 'desc')
-        );
-        const seasonsSnapshot = await getDocs(seasonsQuery);
+        const seasonsRes = await fetch('/api/seasons');
+        const seasonsJson = await seasonsRes.json();
+        const rawSeasons = seasonsJson.data || seasonsJson.seasons || [];
+        rawSeasons.sort((a: any, b: any) => (b.name || '').localeCompare(a.name || ''));
 
         const seasonsList: Season[] = [];
 
-        seasonsSnapshot.forEach((doc) => {
-          const seasonData = doc.data();
-          const seasonName = seasonData.name || doc.id;
+        for (const s of rawSeasons) {
+          const seasonName = s.name || s.id;
           
           // Only include S16 and onwards (extract number from SSPSLS16, SSPSLS17, etc.)
           const seasonNumber = parseInt(seasonName.replace(/\D/g, ''));
           if (seasonNumber >= 16) {
             seasonsList.push({
-              id: doc.id,
+              id: s.id,
               name: seasonName,
-              isActive: seasonData.isActive || false
+              isActive: s.is_active || s.status === 'active' || false
             });
           }
-        });
+        }
 
         setSeasons(seasonsList);
 
@@ -400,6 +392,7 @@ export default function FootballPlayerAuctionHistoryPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -635,6 +628,7 @@ export default function FootballPlayerAuctionHistoryPage() {
                                   const hasBids = round.round_type !== 'bulk' && player.bids && player.bids.length > 0;
                                   
                                   return (
+
                                     <div
                                       key={player.player_id}
                                       className="bg-white border border-slate-200/60 rounded-xl p-3 sm:p-4 hover:shadow-sm transition-shadow"
@@ -719,7 +713,8 @@ export default function FootballPlayerAuctionHistoryPage() {
                                         </div>
                                       )}
                                     </div>
-                                  );
+
+  );
                                 })}
                               </div>
                             )}
@@ -761,5 +756,7 @@ export default function FootballPlayerAuctionHistoryPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

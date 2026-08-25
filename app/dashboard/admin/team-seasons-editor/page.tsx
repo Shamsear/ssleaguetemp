@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Edit2, Save, X, RefreshCw } from 'lucide-react';
-import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface TeamSeason {
   id: string;
@@ -38,16 +38,6 @@ export default function TeamSeasonsEditorPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     if (user && user.role === 'super_admin') {
       loadSeasons();
     }
@@ -62,10 +52,10 @@ export default function TeamSeasonsEditorPage() {
   const loadSeasons = async () => {
     try {
       // Get all team_seasons to find which seasons have data
-      const teamSeasonsSnapshot = await getDocs(collection(db, 'team_seasons'));
+      const teamSeasonsSnapshot = await (await (await fetch('/api/team/all')).json()).data;
       const seasonIdsSet = new Set<string>();
       
-      teamSeasonsSnapshot.forEach(doc => {
+      teamSeasonsSnapshot.forEach((doc) => {
         const data = doc.data();
         if (data.season_id) {
           seasonIdsSet.add(data.season_id);
@@ -73,15 +63,15 @@ export default function TeamSeasonsEditorPage() {
       });
 
       // Only fetch seasons that have team_seasons entries
-      const seasonsSnapshot = await getDocs(collection(db, 'seasons'));
+      const seasonsJson = await fetch('/api/seasons').then(r => r.json());
+      const allSeasons = seasonsJson.data || [];
       const seasonsList: any[] = [];
       
-      seasonsSnapshot.forEach(doc => {
-        // Only include seasons that exist in team_seasons
-        if (seasonIdsSet.has(doc.id)) {
+      allSeasons.forEach((season: any) => {
+        if (seasonIdsSet.has(season.id)) {
           seasonsList.push({
-            id: doc.id,
-            ...doc.data()
+            id: season.id,
+            ...season
           });
         }
       });
@@ -109,12 +99,9 @@ export default function TeamSeasonsEditorPage() {
 
     try {
       setIsLoading(true);
-      const q = query(
-        collection(db, 'team_seasons'),
-        where('season_id', '==', selectedSeasonId)
-      );
-
-      const snapshot = await getDocs(q);
+      const teamSeasonsRes = await fetch(`/api/team-seasons?season_id=${selectedSeasonId}`);
+      const teamSeasonsJson = await teamSeasonsRes.json();
+      const teamSeasonsData = teamSeasonsJson.data || teamSeasonsJson.teamSeasons || [];
       const teamSeasonsList: TeamSeason[] = [];
 
       // Fetch Neon data for all teams
@@ -134,8 +121,7 @@ export default function TeamSeasonsEditorPage() {
         console.log('Sample Neon team:', neonData.teams[0]);
       }
 
-      snapshot.forEach(doc => {
-        const data = doc.data();
+      for (const data of teamSeasonsData) {
         const neonBudget = neonBudgetMap.get(data.team_id);
         const neonSpent = neonSpentMap.get(data.team_id);
         
@@ -147,7 +133,7 @@ export default function TeamSeasonsEditorPage() {
         });
         
         teamSeasonsList.push({
-          id: doc.id,
+          id: data.id,
           team_id: data.team_id,
           team_name: data.team_name,
           season_id: data.season_id,
@@ -162,7 +148,7 @@ export default function TeamSeasonsEditorPage() {
           created_at: data.created_at,
           updated_at: data.updated_at
         } as TeamSeason);
-      });
+      }
 
       teamSeasonsList.sort((a, b) => a.team_name.localeCompare(b.team_name));
       setTeamSeasons(teamSeasonsList);
@@ -193,9 +179,9 @@ export default function TeamSeasonsEditorPage() {
   const saveEdit = async (teamSeasonId: string) => {
     try {
       setIsSaving(true);
-      const teamSeasonRef = doc(db, 'team_seasons', teamSeasonId);
+      // teamSeasonRef removed - using API
       
-      await updateDoc(teamSeasonRef, {
+      await fetch(`/api/team-seasons`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id: teamSeasonId,
         team_name: editForm.team_name,
         football_budget: Number(editForm.football_budget),
         football_spent: Number(editForm.football_spent),
@@ -203,7 +189,7 @@ export default function TeamSeasonsEditorPage() {
         real_player_spent: Number(editForm.real_player_spent),
         transfers_used: Number(editForm.transfers_used || 0),
         updated_at: new Date()
-      });
+      })});
 
       // Update local state
       setTeamSeasons(prev => prev.map(ts => 
@@ -242,6 +228,7 @@ export default function TeamSeasonsEditorPage() {
   if (!user) return null;
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -457,5 +444,7 @@ export default function TeamSeasonsEditorPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

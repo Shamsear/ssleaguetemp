@@ -6,6 +6,7 @@ import { ArrowRightLeft, UserMinus, Clock, CheckCircle2, XCircle, AlertCircle } 
 import { usePermissions } from '@/hooks/usePermissions';
 import { useCachedTeamSeasons } from '@/hooks/useCachedFirebase';
 import Link from 'next/link';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 // Custom UI Components replacing missing shadcn imports
 const Card = ({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -53,9 +54,12 @@ const Button = ({ className, children, variant, ...props }: React.ButtonHTMLAttr
   };
   const currentVariant = variants[variant || 'default'] || variant || variants.default;
   return (
+    <AuthGuard requiredRole="committee_admin">
     <button className={`${baseStyle} ${currentVariant} ${className || ''}`} {...props}>
       {children}
     </button>
+  
+    </AuthGuard>
   );
 };
 
@@ -74,8 +78,9 @@ const Badge = ({ className, children, variant, ...props }: React.HTMLAttributes<
 };
 
 export default function CommitteeRequestsPage() {
-  const { seasonId: selectedSeason } = useTournamentContext();
-  const { user } = usePermissions();
+  const { seasonId: contextSeason } = useTournamentContext();
+  const { user, userSeasonId } = usePermissions();
+  const selectedSeason = contextSeason || userSeasonId;
   
   const [releaseRequests, setReleaseRequests] = useState<any[]>([]);
   const [swapRequests, setSwapRequests] = useState<any[]>([]);
@@ -453,6 +458,7 @@ export default function CommitteeRequestsPage() {
 
 function DollarSign(props: any) {
   return (
+
     <svg
       {...props}
       xmlns="http://www.w3.org/2000/svg"
@@ -468,5 +474,6 @@ function DollarSign(props: any) {
       <line x1="12" x2="12" y1="2" y2="22" />
       <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
     </svg>
+
   )
 }

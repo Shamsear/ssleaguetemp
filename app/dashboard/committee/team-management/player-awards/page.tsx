@@ -1,4 +1,5 @@
 'use client';
+
 import { GloveIcon } from '@/components/ui/CustomIcons';
 import { Trophy, Crown, Star, Activity, Shield, Medal } from 'lucide-react';
 
@@ -7,12 +8,12 @@ import { useTournamentContext } from '@/contexts/TournamentContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { db } from '@/lib/firebase/config';
-import { collection, query, getDocs } from 'firebase/firestore';
+
 import { usePermissions } from '@/hooks/usePermissions';
 import { usePlayerStats } from '@/hooks';
 import { useTournament } from '@/hooks/useTournaments';
 import TournamentSelector from '@/components/TournamentSelector';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerAward {
   player_id: string;
@@ -51,35 +52,17 @@ export default function PlayerAwardsPage() {
   });
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchPlayerAwards = async () => {
       if (!user || user.role !== 'committee_admin' || !userSeasonId) return;
 
       try {
-        // Fetch all realplayer to get team and category assignments
-        const realPlayersQuery = query(collection(db, 'realplayer'));
-        const realPlayersSnapshot = await getDocs(realPlayersQuery);
+        // Fetch all realplayers from Neon API
+        const rpRes = await fetch('/api/realplayers');
+        const { data: rpRows } = await rpRes.json();
         const playersInfoMap = new Map();
-        
-        realPlayersSnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.player_id) {
-            playersInfoMap.set(data.player_id, {
-              team_name: data.team_name || 'Unassigned',
-              category_name: data.category_name || 'Unknown',
-              points: data.points || 0
-            });
-          }
+        (rpRows || []).forEach((row: any) => {
+          playersInfoMap.set(row.player_id, row);
         });
-
         // Store players info map for later use
         (window as any).playersInfoMap = playersInfoMap;
       } catch (error) {
@@ -131,9 +114,6 @@ export default function PlayerAwardsPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
 
   // Filter and sort players based on award type
   const getFilteredPlayers = (awardType: AwardType) => {
@@ -256,6 +236,7 @@ export default function PlayerAwardsPage() {
   };
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -408,5 +389,7 @@ export default function PlayerAwardsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

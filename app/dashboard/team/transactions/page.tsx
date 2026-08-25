@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Calendar, DollarSign, Download, Gavel, Gift, TrendingDown, TrendingUp, Trophy, User } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Transaction {
   id: string;
@@ -41,16 +42,6 @@ export default function TransactionsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     if (user) {
       loadSeasons();
     }
@@ -64,21 +55,16 @@ export default function TransactionsPage() {
 
   const loadSeasons = async () => {
     try {
-      const { collection, query, where, getDocs } = await import('firebase/firestore');
-      const { db } = await import('@/lib/firebase/config');
+      const seasonsRes = await fetch('/api/seasons');
+      const seasonsJson = await seasonsRes.json();
+      const rawSeasons = seasonsJson.data || seasonsJson.seasons || [];
       
-      const seasonsQuery = query(collection(db, 'seasons'));
-      const seasonsSnapshot = await getDocs(seasonsQuery);
-      
-      const seasonsList = seasonsSnapshot.docs
-        .map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name || `Season ${data.season_number || 'Unknown'}`,
-            season_number: data.season_number || 0,
-          };
-        })
+      const seasonsList = rawSeasons
+        .map((s: any) => ({
+          id: s.id,
+          name: s.name || `Season ${s.season_number || 'Unknown'}`,
+          season_number: s.season_number || 0,
+        }))
         .filter((season: any) => {
           // Only show SSPSLS16 and later
           const seasonNum = parseInt(season.id.replace('SSPSLS', ''));
@@ -425,6 +411,7 @@ export default function TransactionsPage() {
   if (!user) return null;
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -559,5 +546,7 @@ export default function TransactionsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

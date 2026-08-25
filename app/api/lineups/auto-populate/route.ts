@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 /**
  * POST /api/lineups/auto-populate
@@ -44,15 +44,13 @@ export async function POST(request: NextRequest) {
     const results = [];
 
     for (const fixture of fixtures) {
-      // Check home team lineup in Firebase
-      const homeLineupSnapshot = await adminDb
-        .collection('fixture_lineups')
-        .where('fixture_id', '==', fixture.id)
-        .where('team_id', '==', fixture.home_team_id)
-        .limit(1)
-        .get();
-      
-      const homeLineupExists = !homeLineupSnapshot.empty;
+      // Check home team lineup in Neon
+      const homeLineupRows = await sql`
+        SELECT id FROM fixture_lineups
+        WHERE fixture_id = ${fixture.id} AND team_id = ${fixture.home_team_id}
+        LIMIT 1
+      `;
+      const homeLineupExists = homeLineupRows.length > 0;
 
       if (!homeLineupExists) {
         const homeTeamPlayers = await getTeamPlayers(fixture.home_team_id, season_id);
@@ -62,19 +60,18 @@ export async function POST(request: NextRequest) {
           
           const lineup = createAutoLineup(homeTeamPlayers, 'system_auto');
           
-          // Save to Firebase fixture_lineups collection
-          await adminDb.collection('fixture_lineups').add({
-            fixture_id: fixture.id,
-            team_id: fixture.home_team_id,
-            season_id: season_id,
-            selected_players: lineup.players,
-            is_locked: false,
-            submitted_by: 'system_auto',
-            submitted_at: new Date(),
-            auto_populated: true,
-            created_at: new Date(),
-            updated_at: new Date(),
-          });
+          // Save to Neon fixture_lineups
+          const flId = `fl_${fixture.id}_${fixture.home_team_id}`;
+          await sql`
+            INSERT INTO fixture_lineups (
+              id, fixture_id, team_id, season_id, selected_players,
+              is_locked, submitted_by, submitted_at, auto_populated, created_at, updated_at
+            ) VALUES (
+              ${flId}, ${fixture.id}, ${fixture.home_team_id}, ${season_id},
+              ${JSON.stringify(lineup.players)}, false, 'system_auto', NOW(), true, NOW(), NOW()
+            )
+            ON CONFLICT (id) DO UPDATE SET selected_players = EXCLUDED.selected_players, updated_at = NOW()
+          `;
           
           autoPopulatedCount++;
           results.push({
@@ -96,15 +93,13 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Check away team lineup in Firebase
-      const awayLineupSnapshot = await adminDb
-        .collection('fixture_lineups')
-        .where('fixture_id', '==', fixture.id)
-        .where('team_id', '==', fixture.away_team_id)
-        .limit(1)
-        .get();
-      
-      const awayLineupExists = !awayLineupSnapshot.empty;
+      // Check away team lineup in Neon
+      const awayLineupRows = await sql`
+        SELECT id FROM fixture_lineups
+        WHERE fixture_id = ${fixture.id} AND team_id = ${fixture.away_team_id}
+        LIMIT 1
+      `;
+      const awayLineupExists = awayLineupRows.length > 0;
 
       if (!awayLineupExists) {
         const awayTeamPlayers = await getTeamPlayers(fixture.away_team_id, season_id);
@@ -114,19 +109,18 @@ export async function POST(request: NextRequest) {
           
           const lineup = createAutoLineup(awayTeamPlayers, 'system_auto');
           
-          // Save to Firebase fixture_lineups collection
-          await adminDb.collection('fixture_lineups').add({
-            fixture_id: fixture.id,
-            team_id: fixture.away_team_id,
-            season_id: season_id,
-            selected_players: lineup.players,
-            is_locked: false,
-            submitted_by: 'system_auto',
-            submitted_at: new Date(),
-            auto_populated: true,
-            created_at: new Date(),
-            updated_at: new Date(),
-          });
+          // Save to Neon fixture_lineups
+          const flId2 = `fl_${fixture.id}_${fixture.away_team_id}`;
+          await sql`
+            INSERT INTO fixture_lineups (
+              id, fixture_id, team_id, season_id, selected_players,
+              is_locked, submitted_by, submitted_at, auto_populated, created_at, updated_at
+            ) VALUES (
+              ${flId2}, ${fixture.id}, ${fixture.away_team_id}, ${season_id},
+              ${JSON.stringify(lineup.players)}, false, 'system_auto', NOW(), true, NOW(), NOW()
+            )
+            ON CONFLICT (id) DO UPDATE SET selected_players = EXCLUDED.selected_players, updated_at = NOW()
+          `;
           
           autoPopulatedCount++;
           results.push({

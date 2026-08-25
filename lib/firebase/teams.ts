@@ -1,685 +1,429 @@
-import {
-  collection,
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  serverTimestamp,
-  Timestamp,
-} from 'firebase/firestore';
-import { db } from './config';
+/**
+ * Teams — Neon is the ONLY source for reads AND writes.
+ * Firebase is completely removed for this collection.
+ * Auth stays on Firebase (separate concern).
+ */
+
 import { TeamData, CreateTeamData, UpdateTeamData, TeamStats, UpdateTeamStatsData } from '@/types/team';
-import { getSeasonById } from './seasons';
-import { getISTNow, timestampToIST } from '../utils/timezone';
-
-// Convert Firestore timestamp to IST Date
-const convertTimestamp = (timestamp: unknown): Date => {
-  if (timestamp instanceof Timestamp) {
-    return timestampToIST(timestamp);
-  }
-  if (timestamp && typeof timestamp === 'object' && 'toDate' in timestamp) {
-    return timestampToIST(timestamp as Timestamp);
-  }
-  return getISTNow();
-};
-
-// Generate custom team ID (team0001, team0002, etc.)
-const generateTeamId = async (): Promise<string> => {
-  const prefix = 'team';
-  
-  try {
-    // Get all teams to find the highest number
-    const teamsRef = collection(db, 'teams');
-    const querySnapshot = await getDocs(teamsRef);
-    
-    let maxNumber = 0;
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      if (data.team_id && data.team_id.startsWith(prefix)) {
-        const numberPart = parseInt(data.team_id.substring(prefix.length));
-        if (!isNaN(numberPart) && numberPart > maxNumber) {
-          maxNumber = numberPart;
-        }
-      }
-    });
-    
-    const nextNumber = maxNumber + 1;
-    const paddedNumber = nextNumber.toString().padStart(4, '0');
-    return `${prefix}${paddedNumber}`;
-  } catch (error) {
-    console.error('Error generating team ID:', error);
-    // Fallback to random number if query fails
-    const randomNumber = Math.floor(Math.random() * 10000);
-    return `${prefix}${randomNumber.toString().padStart(4, '0')}`;
-  }
-};
+import { getMainDb } from '../neon/main-config';
 
 // Initialize empty team stats
 const initializeTeamStats = (): TeamStats => ({
-  matches_played: 0,
-  matches_won: 0,
-  matches_lost: 0,
-  matches_drawn: 0,
-  points: 0,
-  goals_scored: 0,
-  goals_conceded: 0,
-  goal_difference: 0,
-  clean_sheets: 0,
-  win_rate: 0,
+  matches_played: 0, matches_won: 0, matches_lost: 0, matches_drawn: 0,
+  points: 0, goals_scored: 0, goals_conceded: 0, goal_difference: 0,
+  clean_sheets: 0, win_rate: 0,
 });
 
-// Get all teams
+// ============================
+// READ FUNCTIONS — Neon only
+// ============================
+
+// Get all teams (Neon: single SQL JOIN replaces 2 Firebase collections + 1 seasons query)
 export const getAllTeams = async (): Promise<TeamData[]> => {
   try {
-    const teamsMap = new Map<string, TeamData>();
-    
-    // Fetch all seasons once to avoid N+1 query overhead in loop
-    const seasonsSnapshot = await getDocs(collection(db, 'seasons'));
-    const seasonsMap = new Map<string, string>();
-    seasonsSnapshot.forEach(docSnap => {
-      seasonsMap.set(docSnap.id, docSnap.data().name || '');
-    });
-    
-    // 1. Query teams collection (base franchise documents)
-    const teamsRef = collection(db, 'teams');
-    const teamsSnapshot = await getDocs(teamsRef);
-    
-    for (const docSnap of teamsSnapshot.docs) {
-      const data = docSnap.data();
-      const baseId = docSnap.id;
-      const logoUrl = data.logo_url || data.team_logo || data.logo || null;
-      
-      teamsMap.set(baseId, {
-        id: baseId,
-        team_id: baseId,
-        team_name: data.team_name || 'Unknown Team',
-        team_code: data.team_code || data.team_name?.substring(0, 3).toUpperCase() || 'UNK',
-        owner_name: data.owner_name || '',
-        owner_email: data.owner_email || '',
-        balance: 0,
-        initial_balance: 0,
-        total_spent: 0,
-        currency_system: 'single',
-        football_budget: 0,
-        football_spent: 0,
-        real_player_budget: 0,
-        real_player_spent: 0,
-        season_id: '',
-        season_name: '',
-        real_players: [],
-        football_players: [],
-        real_players_count: 0,
-        football_players_count: 0,
-        players_count: 0,
-        stats: initializeTeamStats(),
-        is_active: data.is_active !== false,
-        logo: logoUrl,
-        logo_url: logoUrl,
-        team_color: data.team_color || null,
-        created_at: convertTimestamp(data.created_at),
-        updated_at: convertTimestamp(data.updated_at),
-      } as TeamData);
-    }
-    
-    // 2. Query team_seasons collection (current/active seasons)
-    const teamSeasonsRef = collection(db, 'team_seasons');
-    let teamSeasonsSnapshot;
-    try {
-      const q = query(teamSeasonsRef, orderBy('joined_at', 'desc'));
-      teamSeasonsSnapshot = await getDocs(q);
-    } catch (orderByError) {
-      teamSeasonsSnapshot = await getDocs(teamSeasonsRef);
-    }
-    
-    for (const docSnap of teamSeasonsSnapshot.docs) {
-      const data = docSnap.data();
-      const baseId = docSnap.id.split('_')[0];
-      
-      let seasonName = data.season_name || '';
-      if (!seasonName && data.season_id) {
-        seasonName = seasonsMap.get(data.season_id) || '';
-      }
-      
-      const initialBudget = data.initial_budget || 15000;
-      const currentBudget = data.budget || 0;
-      const totalSpent = initialBudget - currentBudget;
-      const logoUrl = data.logo_url || data.team_logo || data.logo || null;
-      
-      const existing = teamsMap.get(baseId);
-      if (existing) {
-        existing.balance = currentBudget;
-        existing.initial_balance = initialBudget;
-        existing.total_spent = totalSpent;
-        existing.season_id = data.season_id || '';
-        existing.season_name = seasonName;
-        existing.real_players = data.real_players || [];
-        existing.football_players = data.football_players || [];
-        existing.real_players_count = data.players_count || 0;
-        existing.football_players_count = data.football_players_count || 0;
-        existing.players_count = data.players_count || 0;
-        existing.stats = data.stats || existing.stats;
-        existing.is_active = data.status === 'registered' || existing.is_active;
-        if (logoUrl) {
-          existing.logo = logoUrl;
-          existing.logo_url = logoUrl;
-        }
-      } else {
-        teamsMap.set(baseId, {
-          id: baseId,
-          team_id: baseId,
-          team_name: data.team_name || 'Unknown Team',
-          team_code: data.team_code || data.team_name?.substring(0, 3).toUpperCase() || 'UNK',
-          owner_name: data.username || data.owner_name || '',
-          owner_email: data.team_email || data.owner_email || '',
-          balance: currentBudget,
-          initial_balance: initialBudget,
-          total_spent: totalSpent,
-          currency_system: data.currency_system || 'single',
-          football_budget: data.football_budget !== undefined ? data.football_budget : currentBudget,
-          football_spent: data.football_spent !== undefined ? data.football_spent : totalSpent,
-          real_player_budget: data.real_player_budget || 0,
-          real_player_spent: data.real_player_spent || 0,
-          season_id: data.season_id || '',
-          season_name: seasonName,
-          real_players: data.real_players || [],
-          football_players: data.football_players || [],
-          real_players_count: data.players_count || 0,
-          football_players_count: data.football_players_count || 0,
-          players_count: data.players_count || 0,
-          stats: data.stats || initializeTeamStats(),
-          is_active: data.status === 'registered' || data.is_active !== false,
-          logo: logoUrl,
-          logo_url: logoUrl,
-          team_color: data.team_color || null,
-          created_at: convertTimestamp(data.joined_at || data.created_at),
-          updated_at: convertTimestamp(data.updated_at || data.joined_at),
-        } as TeamData);
-      }
-    }
-    
-    return Array.from(teamsMap.values());
-  } catch (error) {
-    console.error('Error getting all teams:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to get all teams';
-    throw new Error(errorMessage);
+    const sql = getMainDb();
+    const result = await sql`
+      SELECT 
+        t.id, t.team_id, t.team_name, t.team_code, t.owner_uid, t.owner_name,
+        t.owner_email, t.logo_url, t.team_color, t.is_active, t.created_at, t.updated_at,
+        ts.id as ts_id, ts.team_name as ts_team_name, ts.team_code as ts_team_code,
+        ts.budget, ts.initial_budget, ts.season_id, ts.username, ts.team_email,
+        ts.currency_system, ts.players_count, ts.football_players_count,
+        ts.stats, ts.real_players, ts.football_players,
+        ts.football_budget, ts.football_spent, ts.real_player_budget, ts.real_player_spent,
+        ts.logo_url as ts_logo_url, ts.status, ts.joined_at,
+        s.name as season_name
+      FROM teams t
+      LEFT JOIN team_seasons ts ON t.id = ts.team_id
+      LEFT JOIN seasons s ON ts.season_id = s.id
+      ORDER BY t.team_name ASC, ts.joined_at DESC
+    `;
+    return mergeTeamsFromNeon(result);
+  } catch (error: any) {
+    console.error('Error getting all teams from Neon:', error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to get all teams');
   }
 };
+
+function mergeTeamsFromNeon(rows: any[]): TeamData[] {
+  const teamsMap = new Map<string, TeamData>();
+  const defaultStats = (): TeamStats => ({
+    matches_played: 0, matches_won: 0, matches_lost: 0, matches_drawn: 0,
+    points: 0, goals_scored: 0, goals_conceded: 0, goal_difference: 0,
+    clean_sheets: 0, win_rate: 0,
+  });
+  for (const row of rows) {
+    const baseId = row.id;
+    const logo = row.ts_logo_url || row.logo_url || null;
+    if (!teamsMap.has(baseId)) {
+      teamsMap.set(baseId, {
+        id: baseId, team_id: row.team_id || baseId,
+        team_name: row.team_name || 'Unknown Team',
+        team_code: row.team_code || null,
+        owner_name: row.owner_name || '', owner_email: row.owner_email || '',
+        balance: 0, initial_balance: 0, total_spent: 0, currency_system: 'single',
+        football_budget: 0, football_spent: 0, real_player_budget: 0, real_player_spent: 0,
+        season_id: '', season_name: '', real_players: [], football_players: [],
+        real_players_count: 0, football_players_count: 0, players_count: 0,
+        stats: defaultStats(), is_active: row.is_active !== false,
+        logo, logo_url: logo, team_color: row.team_color || null,
+        created_at: row.created_at ? new Date(row.created_at) : new Date(),
+        updated_at: row.updated_at ? new Date(row.updated_at) : new Date(),
+      } as TeamData);
+    }
+    if (row.ts_id) {
+      const t = teamsMap.get(baseId)!;
+      const budget = row.budget || 0;
+      const initBudget = row.initial_budget || 0;
+      t.balance = budget; t.initial_balance = initBudget; t.total_spent = initBudget - budget;
+      t.season_id = row.season_id || ''; t.season_name = row.season_name || '';
+      t.real_players = typeof row.real_players === 'string' ? JSON.parse(row.real_players) : (row.real_players || []);
+      t.football_players = typeof row.football_players === 'string' ? JSON.parse(row.football_players) : (row.football_players || []);
+      t.players_count = row.players_count || 0; t.football_players_count = row.football_players_count || 0;
+      t.real_players_count = row.players_count || 0;
+      t.stats = typeof row.stats === 'string' ? JSON.parse(row.stats) : (row.stats || defaultStats());
+      t.is_active = row.status === 'registered' || t.is_active;
+      t.currency_system = row.currency_system || 'single';
+      t.football_budget = row.football_budget || 0; t.football_spent = row.football_spent || 0;
+      t.real_player_budget = row.real_player_budget || 0; t.real_player_spent = row.real_player_spent || 0;
+      if (logo) { t.logo = logo; t.logo_url = logo; }
+    }
+  }
+  return Array.from(teamsMap.values());
+}
 
 // Get teams by season
 export const getTeamsBySeason = async (seasonId: string): Promise<TeamData[]> => {
   try {
-    const teamsRef = collection(db, 'team_seasons');
-    const q = query(
-      teamsRef,
-      where('season_id', '==', seasonId),
-      orderBy('joined_at', 'desc')
-    );
-    const querySnapshot = await getDocs(q);
-    
-    const teams: TeamData[] = [];
-    // Fetch season details once to avoid N+1 query overhead in loop
-    let fetchedSeasonName = '';
-    if (seasonId) {
-      try {
-        const season = await getSeasonById(seasonId);
-        fetchedSeasonName = season?.name || '';
-      } catch (error) {
-        console.error('Error fetching season:', error);
-      }
-    }
-
-    for (const docSnap of querySnapshot.docs) {
-      const data = docSnap.data();
-      
-      // Fallback to pre-fetched name or stored field
-      const seasonName = data.season_name || fetchedSeasonName;
-      
-      // Map team_seasons data structure to TeamData structure (same as getAllTeams)
-      // Calculate total spent: Initial Budget - Current Budget
-      // TODO: Get initial budget from season settings or team creation data  
-      const initialBudget = data.initial_budget || 15000;
-      const currentBudget = data.budget || 0;
-      const totalSpent = initialBudget - currentBudget;
-      
-      const logoUrl = data.logo_url || data.team_logo || data.logo || null;
-      const teamData = {
-        id: docSnap.id,
-        team_id: docSnap.id,
-        team_name: data.team_name || 'Unknown Team',
-        team_code: data.team_code || data.team_name?.substring(0, 3).toUpperCase() || 'UNK',
-        owner_name: data.username || data.owner_name || '',
-        owner_email: data.team_email || data.owner_email || '',
-        balance: currentBudget,
-        initial_balance: initialBudget,
-        total_spent: totalSpent,
-        currency_system: data.currency_system || 'single',
-        football_budget: data.football_budget !== undefined ? data.football_budget : currentBudget,
-        football_spent: data.football_spent !== undefined ? data.football_spent : totalSpent,
-        real_player_budget: data.real_player_budget || 0,
-        real_player_spent: data.real_player_spent || 0,
-        season_id: data.season_id || '',
-        season_name: seasonName,
-        real_players: data.real_players || [],
-        football_players: data.football_players || [],
-        real_players_count: data.players_count || 0,
-        football_players_count: data.football_players_count || 0,
-        players_count: data.players_count || 0,
-        stats: data.stats || {
-          matches_played: 0,
-          matches_won: 0,
-          matches_lost: 0,
-          matches_drawn: 0,
-          points: 0,
-          goals_scored: 0,
-          goals_conceded: 0,
-          goal_difference: 0,
-          clean_sheets: 0,
-          win_rate: 0,
-        },
-        is_active: data.status === 'registered' || data.is_active !== false,
-        logo: logoUrl,
-        logo_url: logoUrl,
-        team_color: data.team_color || null,
-        created_at: convertTimestamp(data.joined_at || data.created_at),
-        updated_at: convertTimestamp(data.updated_at || data.joined_at),
+    const sql = getMainDb();
+    const result = await sql`
+      SELECT ts.*, s.name as season_name,
+        t.team_name as base_team_name, t.team_code as base_team_code,
+        t.owner_uid as base_owner_uid, t.logo_url as base_logo_url
+      FROM team_seasons ts
+      LEFT JOIN teams t ON ts.team_id = t.id
+      LEFT JOIN seasons s ON ts.season_id = s.id
+      WHERE ts.season_id = ${seasonId}
+      ORDER BY ts.joined_at DESC
+    `;
+    return result.map((row: any) => {
+      const ib = row.initial_budget || 15000;
+      const cb = row.budget || 0;
+      const logoUrl = row.logo_url || row.base_logo_url || null;
+      return {
+        id: row.id, team_id: row.id,
+        team_name: row.team_name || row.base_team_name || 'Unknown Team',
+        team_code: row.team_code || row.base_team_code || null,
+        owner_name: row.username || row.owner_name || '',
+        owner_email: row.team_email || row.owner_email || '',
+        balance: cb, initial_balance: ib, total_spent: ib - cb,
+        currency_system: row.currency_system || 'single',
+        football_budget: row.football_budget ?? cb, football_spent: row.football_spent ?? (ib - cb),
+        real_player_budget: row.real_player_budget || 0, real_player_spent: row.real_player_spent || 0,
+        season_id: row.season_id || '', season_name: row.season_name || '',
+        real_players: typeof row.real_players === 'string' ? JSON.parse(row.real_players) : (row.real_players || []),
+        football_players: typeof row.football_players === 'string' ? JSON.parse(row.football_players) : (row.football_players || []),
+        real_players_count: row.players_count || 0, football_players_count: row.football_players_count || 0,
+        players_count: row.players_count || 0,
+        stats: typeof row.stats === 'string' ? JSON.parse(row.stats) : (row.stats || {}),
+        is_active: row.status === 'registered',
+        logo: logoUrl, logo_url: logoUrl, team_color: row.team_color || null,
+        created_at: row.joined_at ? new Date(row.joined_at) : new Date(),
+        updated_at: row.updated_at ? new Date(row.updated_at) : new Date(),
       } as TeamData;
-      
-      teams.push(teamData);
-    }
-    
-    return teams;
-  } catch (error) {
-    console.error('Error getting teams by season:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to get teams by season';
-    throw new Error(errorMessage);
+    });
+  } catch (error: any) {
+    console.error('Error getting teams by season from Neon:', error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to get teams by season');
   }
 };
 
 // Get team by ID
 export const getTeamById = async (teamId: string): Promise<TeamData | null> => {
   try {
-    // Try team_seasons collection first (current/active seasons)
-    const teamSeasonsRef = doc(db, 'team_seasons', teamId);
-    const teamSeasonsDoc = await getDoc(teamSeasonsRef);
-    
-    if (teamSeasonsDoc.exists()) {
-      const data = teamSeasonsDoc.data();
-      
-      let seasonName = data.season_name || '';
-      if (!seasonName && data.season_id) {
-        try {
-          const season = await getSeasonById(data.season_id);
-          seasonName = season?.name || '';
-        } catch (error) {
-          console.error('Error fetching season:', error);
-        }
-      }
-      
-      const initialBudget = data.initial_budget || 15000;
-      const currentBudget = data.budget || 0;
-      const totalSpent = initialBudget - currentBudget;
-      
-      const logoUrl = data.logo_url || data.team_logo || data.logo || null;
+    const sql = getMainDb();
+    // Try team_seasons first (same lookup order as before)
+    const tsResult = await sql`
+      SELECT ts.*, s.name as season_name,
+        t.team_name as base_team_name, t.team_code as base_team_code,
+        t.owner_name as base_owner_name, t.logo_url as base_logo_url,
+        t.is_active as base_is_active, t.performance_history
+      FROM team_seasons ts
+      LEFT JOIN teams t ON ts.team_id = t.id
+      LEFT JOIN seasons s ON ts.season_id = s.id
+      WHERE ts.id = ${teamId}
+      LIMIT 1
+    `;
+    if (tsResult.length > 0) {
+      const row = tsResult[0];
+      const ib = row.initial_budget || 15000;
+      const cb = row.budget || 0;
+      const logoUrl = row.logo_url || row.base_logo_url || null;
       return {
-        id: teamSeasonsDoc.id,
-        team_id: teamSeasonsDoc.id,
-        team_name: data.team_name || 'Unknown Team',
-        team_code: data.team_code || data.team_name?.substring(0, 3).toUpperCase() || 'UNK',
-        owner_name: data.username || data.owner_name || '',
-        owner_email: data.team_email || data.owner_email || '',
-        balance: currentBudget,
-        initial_balance: initialBudget,
-        total_spent: totalSpent,
-        currency_system: data.currency_system || 'single',
-        football_budget: data.football_budget !== undefined ? data.football_budget : currentBudget,
-        football_spent: data.football_spent !== undefined ? data.football_spent : totalSpent,
-        real_player_budget: data.real_player_budget || 0,
-        real_player_spent: data.real_player_spent || 0,
-        season_id: data.season_id || '',
-        season_name: seasonName,
-        real_players: data.real_players || [],
-        football_players: data.football_players || [],
-        real_players_count: data.players_count || 0,
-        football_players_count: data.football_players_count || 0,
-        players_count: data.players_count || 0,
-        stats: data.stats || initializeTeamStats(),
-        is_active: data.status === 'registered' || data.is_active !== false,
-        logo: logoUrl,
-        logo_url: logoUrl,
-        team_color: data.team_color || null,
-        created_at: convertTimestamp(data.joined_at || data.created_at),
-        updated_at: convertTimestamp(data.updated_at || data.joined_at),
+        id: row.id, team_id: row.id,
+        team_name: row.team_name || 'Unknown Team',
+        team_code: row.team_code || null,
+        owner_name: row.username || row.owner_name || '',
+        owner_email: row.team_email || row.owner_email || '',
+        balance: cb, initial_balance: ib, total_spent: ib - cb,
+        currency_system: row.currency_system || 'single',
+        football_budget: row.football_budget ?? cb, football_spent: row.football_spent ?? (ib - cb),
+        real_player_budget: row.real_player_budget || 0, real_player_spent: row.real_player_spent || 0,
+        season_id: row.season_id || '', season_name: row.season_name || '',
+        real_players: typeof row.real_players === 'string' ? JSON.parse(row.real_players) : (row.real_players || []),
+        football_players: typeof row.football_players === 'string' ? JSON.parse(row.football_players) : (row.football_players || []),
+        real_players_count: row.players_count || 0, football_players_count: row.football_players_count || 0,
+        players_count: row.players_count || 0,
+        stats: typeof row.stats === 'string' ? JSON.parse(row.stats) : (row.stats || {}),
+        is_active: row.status === 'registered',
+        logo: logoUrl, logo_url: logoUrl, team_color: row.team_color || null,
+        created_at: row.joined_at ? new Date(row.joined_at) : new Date(),
+        updated_at: row.updated_at ? new Date(row.updated_at) : new Date(),
+        performance_history: typeof row.performance_history === 'string' ? JSON.parse(row.performance_history) : (row.performance_history || {}),
       } as TeamData;
     }
-    
-    // If not found in team_seasons, try teams collection (historical teams)
-    const teamsRef = doc(db, 'teams', teamId);
-    const teamsDoc = await getDoc(teamsRef);
-    
-    if (!teamsDoc.exists()) {
-      return null;
-    }
-    
-    const data = teamsDoc.data();
-    
-    const logoUrl = data.logo_url || data.team_logo || data.logo || null;
+    // Not in team_seasons, try teams table
+    const teamResult = await sql`SELECT * FROM teams WHERE id = ${teamId} LIMIT 1`;
+    if (teamResult.length === 0) return null;
+    const t = teamResult[0];
+    const logoUrl = t.logo_url || null;
     return {
-      id: teamsDoc.id,
-      team_id: teamsDoc.id,
-      team_name: data.team_name || 'Unknown Team',
-      team_code: data.team_code || data.team_name?.substring(0, 3).toUpperCase() || 'UNK',
-      owner_name: data.owner_name || '',
-      owner_email: data.owner_email || '',
-      balance: 0,
-      initial_balance: 0,
-      total_spent: 0,
-      currency_system: 'single',
-      football_budget: 0,
-      football_spent: 0,
-      real_player_budget: 0,
-      real_player_spent: 0,
-      season_id: '',
-      season_name: '',
-      real_players: [],
-      football_players: [],
-      real_players_count: 0,
-      football_players_count: 0,
-      players_count: 0,
-      stats: initializeTeamStats(),
-      is_active: data.is_active !== false,
-      logo: logoUrl,
-      logo_url: logoUrl,
-      team_color: data.team_color || null,
-      created_at: convertTimestamp(data.created_at),
-      updated_at: convertTimestamp(data.updated_at),
-      performance_history: data.performance_history || {}, // Include historical stats
+      id: t.id, team_id: t.team_id || t.id,
+      team_name: t.team_name || 'Unknown Team', team_code: t.team_code || null,
+      owner_name: t.owner_name || '', owner_email: t.owner_email || '',
+      balance: 0, initial_balance: 0, total_spent: 0, currency_system: 'single',
+      football_budget: 0, football_spent: 0, real_player_budget: 0, real_player_spent: 0,
+      season_id: '', season_name: '', real_players: [], football_players: [],
+      real_players_count: 0, football_players_count: 0, players_count: 0,
+      stats: initializeTeamStats(), is_active: t.is_active !== false,
+      logo: logoUrl, logo_url: logoUrl, team_color: t.team_color || null,
+      created_at: t.created_at ? new Date(t.created_at) : new Date(),
+      updated_at: t.updated_at ? new Date(t.updated_at) : new Date(),
+      performance_history: typeof t.raw_data === 'object' ? (t.raw_data?.performance_history || {}) : {},
     } as TeamData;
-  } catch (error) {
-    console.error('Error getting team:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to get team';
-    throw new Error(errorMessage);
+  } catch (error: any) {
+    console.error('Error getting team from Neon:', error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to get team');
+  }
+};
+
+// Get team statistics (delegates to getAllTeams)
+export const getTeamStatistics = async (): Promise<{
+  totalTeams: number; activeTeams: number; inactiveTeams: number; totalPlayers: number;
+}> => {
+  const teams = await getAllTeams();
+  return {
+    totalTeams: teams.length,
+    activeTeams: teams.filter(t => t.is_active).length,
+    inactiveTeams: teams.filter(t => !t.is_active).length,
+    totalPlayers: teams.reduce((sum, t) => sum + (t.players_count || 0), 0),
+  };
+};
+
+// ============================
+// WRITE FUNCTIONS — Neon only
+// ============================
+
+// Generate custom team ID
+const generateTeamId = async (): Promise<string> => {
+  const prefix = 'team';
+  try {
+    const sql = getMainDb();
+    const result = await sql`SELECT team_id FROM teams WHERE team_id LIKE ${prefix + '%'} ORDER BY team_id DESC LIMIT 1`;
+    if (result.length === 0) return `${prefix}0001`;
+    const lastNum = parseInt(result[0].team_id?.substring(prefix.length) || '0');
+    return `${prefix}${(lastNum + 1).toString().padStart(4, '0')}`;
+  } catch {
+    return `${prefix}${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
   }
 };
 
 // Check if team code is available
-export const isTeamCodeAvailable = async (
-  teamCode: string,
-  excludeTeamId?: string
-): Promise<boolean> => {
+export const isTeamCodeAvailable = async (teamCode: string, excludeTeamId?: string): Promise<boolean> => {
   try {
-    const teamsRef = collection(db, 'teams');
-    const q = query(teamsRef, where('team_code', '==', teamCode.toUpperCase()));
-    const querySnapshot = await getDocs(q);
-    
-    // If excluding a team (for updates), check if any other team has this code
-    if (excludeTeamId) {
-      return querySnapshot.docs.every(doc => doc.id === excludeTeamId);
-    }
-    
-    return querySnapshot.empty;
-  } catch (error) {
-    console.error('Error checking team code availability:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to check team code availability';
-    throw new Error(errorMessage);
+    const sql = getMainDb();
+    const result = await sql`SELECT id FROM teams WHERE team_code = ${teamCode.toUpperCase()} LIMIT 5`;
+    if (excludeTeamId) return result.every((r: any) => r.id === excludeTeamId);
+    return result.length === 0;
+  } catch (error: any) {
+    console.error('Error checking team code:', error);
+    return true; // Fail open for availability checks
   }
 };
 
 // Create new team
 export const createTeam = async (teamData: CreateTeamData): Promise<TeamData> => {
   try {
-    // Check if team code is available
     const codeAvailable = await isTeamCodeAvailable(teamData.team_code);
-    if (!codeAvailable) {
-      throw new Error('Team code is already taken. Please choose another.');
-    }
-    
-    // Generate custom team ID
+    if (!codeAvailable) throw new Error('Team code is already taken.');
+
     const teamId = await generateTeamId();
-    
-    // Create document with team_id as the document ID
-    const teamRef = doc(db, 'teams', teamId);
-    
-    // Fetch season to check if it's multi-season type
-    const season = await getSeasonById(teamData.season_id);
-    const isMultiSeason = season?.type === 'multi';
-    
+    const sql = getMainDb();
+    const now = new Date().toISOString();
+    const stats = initializeTeamStats();
+
     const newTeam: any = {
-      team_id: teamId,
-      team_name: teamData.team_name,
+      team_id: teamId, team_name: teamData.team_name,
       team_code: teamData.team_code.toUpperCase(),
       owner_uid: teamData.owner_uid || null,
       owner_name: teamData.owner_name || null,
       owner_email: teamData.owner_email || null,
-      username: teamData.owner_name || null, // Store as username for consistency
-      balance: teamData.initial_balance,
-      initial_balance: teamData.initial_balance,
-      total_spent: 0,
-      season_id: teamData.season_id,
-      real_players: [],
-      football_players: [],
-      real_players_count: 0,
-      football_players_count: 0,
-      stats: initializeTeamStats(),
-      is_active: true,
-      logo: teamData.logo || null,
-      team_color: teamData.team_color || null,
-      created_at: serverTimestamp(),
-      updated_at: serverTimestamp(),
+      username: teamData.owner_name || null,
+      balance: teamData.initial_balance, initial_balance: teamData.initial_balance,
+      total_spent: 0, season_id: teamData.season_id,
+      real_players: [], football_players: [],
+      real_players_count: 0, football_players_count: 0,
+      stats, is_active: true,
+      logo: teamData.logo || null, team_color: teamData.team_color || null,
+      created_at: now, updated_at: now,
     };
-    
-    // Add multi-season specific fields if season is multi-season type
-    if (isMultiSeason && season) {
-      newTeam.dollarBalance = season.dollar_budget || 1000;
-      newTeam.euroBalance = season.euro_budget || 10000;
-    }
-    
-    await setDoc(teamRef, newTeam);
-    
-    // Update season's total teams count
+
+    // Insert into teams table
+    await sql`
+      INSERT INTO teams (
+        id, team_id, team_name, team_code, owner_uid, owner_name,
+        owner_email, username, balance, initial_balance, total_spent,
+        is_active, logo_url, team_color, players_count, stats,
+        real_players, football_players, raw_data, created_at, updated_at
+      ) VALUES (
+        ${teamId}, ${newTeam.team_id}, ${newTeam.team_name}, ${newTeam.team_code},
+        ${newTeam.owner_uid}, ${newTeam.owner_name}, ${newTeam.owner_email},
+        ${newTeam.username}, ${newTeam.balance}, ${newTeam.initial_balance},
+        ${newTeam.total_spent}, ${newTeam.is_active}, ${newTeam.logo},
+        ${newTeam.team_color}, ${0}, ${JSON.stringify(stats)},
+        ${'[]'}, ${'[]'}, ${JSON.stringify(newTeam)}, ${now}, ${now}
+      )
+      ON CONFLICT (id) DO NOTHING
+    `;
+
+    // Update season team count in Neon
     try {
-      const seasonRef = doc(db, 'seasons', teamData.season_id);
-      const seasonDoc = await getDoc(seasonRef);
-      if (seasonDoc.exists()) {
-        const currentTotal = seasonDoc.data().totalTeams || 0;
-        await updateDoc(seasonRef, {
-          totalTeams: currentTotal + 1,
-          updatedAt: serverTimestamp(),
-        });
-      }
-    } catch (error) {
-      console.error('Error updating season team count:', error);
-    }
-    
-    // Fetch and return the created team
+      await sql`UPDATE seasons SET total_teams = total_teams + 1, updated_at = ${now} WHERE id = ${teamData.season_id}`;
+    } catch {}
+
     const createdTeam = await getTeamById(teamId);
-    if (!createdTeam) {
-      throw new Error('Failed to fetch created team');
-    }
-    
+    if (!createdTeam) throw new Error('Failed to fetch created team');
     return createdTeam;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating team:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create team';
-    throw new Error(errorMessage);
+    throw new Error(error instanceof Error ? error.message : 'Failed to create team');
   }
 };
 
 // Update team
-export const updateTeam = async (
-  teamId: string,
-  updates: UpdateTeamData
-): Promise<void> => {
+export const updateTeam = async (teamId: string, updates: UpdateTeamData): Promise<void> => {
   try {
-    // If updating team code, check availability
+    const sql = getMainDb();
+    const now = new Date().toISOString();
+
     if (updates.team_code) {
       const codeAvailable = await isTeamCodeAvailable(updates.team_code, teamId);
-      if (!codeAvailable) {
-        throw new Error('Team code is already taken. Please choose another.');
-      }
+      if (!codeAvailable) throw new Error('Team code is already taken.');
       updates.team_code = updates.team_code.toUpperCase();
     }
-    
-    const teamRef = doc(db, 'teams', teamId);
-    await updateDoc(teamRef, {
-      ...updates,
-      updated_at: serverTimestamp(),
-    });
-  } catch (error) {
+
+    // Map camelCase to snake_case for Neon columns
+    const neonUpdates: Record<string, any> = { updated_at: now };
+    if (updates.team_name !== undefined) neonUpdates.team_name = updates.team_name;
+    if (updates.team_code !== undefined) neonUpdates.team_code = updates.team_code;
+    if (updates.owner_name !== undefined) neonUpdates.owner_name = updates.owner_name;
+    if (updates.owner_email !== undefined) neonUpdates.owner_email = updates.owner_email;
+    if (updates.logo !== undefined) neonUpdates.logo_url = updates.logo;
+    if (updates.team_color !== undefined) neonUpdates.team_color = updates.team_color;
+    if (updates.is_active !== undefined) neonUpdates.is_active = updates.is_active;
+
+    const setClauses: string[] = [];
+    const values: any[] = [];
+    let i = 1;
+    for (const [key, value] of Object.entries(neonUpdates)) {
+      setClauses.push(`${key} = $${i}`);
+      values.push(value);
+      i++;
+    }
+
+    if (setClauses.length > 1) { // More than just updated_at
+      await sql.query(
+        `UPDATE teams SET ${setClauses.join(', ')} WHERE id = $${i}`,
+        [...values, teamId]
+      );
+    }
+  } catch (error: any) {
     console.error('Error updating team:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update team';
-    throw new Error(errorMessage);
+    throw new Error(error instanceof Error ? error.message : 'Failed to update team');
   }
 };
 
 // Toggle team active status
-export const toggleTeamStatus = async (
-  teamId: string,
-  isActive: boolean
-): Promise<void> => {
+export const toggleTeamStatus = async (teamId: string, isActive: boolean): Promise<void> => {
   try {
-    const teamRef = doc(db, 'teams', teamId);
-    await updateDoc(teamRef, {
-      is_active: isActive,
-      updated_at: serverTimestamp(),
-    });
-  } catch (error) {
+    const sql = getMainDb();
+    const now = new Date().toISOString();
+    await sql`UPDATE teams SET is_active = ${isActive}, updated_at = ${now} WHERE id = ${teamId}`;
+  } catch (error: any) {
     console.error('Error toggling team status:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to toggle team status';
-    throw new Error(errorMessage);
+    throw new Error(error instanceof Error ? error.message : 'Failed to toggle team status');
   }
 };
 
 // Delete team
 export const deleteTeam = async (teamId: string): Promise<void> => {
   try {
-    // Get team data before deleting to update season count
+    const sql = getMainDb();
+    // Update season team count first
     const team = await getTeamById(teamId);
-    
-    const teamRef = doc(db, 'teams', teamId);
-    await deleteDoc(teamRef);
-    
-    // Update season's total teams count
-    if (team && team.season_id) {
+    if (team?.season_id) {
       try {
-        const seasonRef = doc(db, 'seasons', team.season_id);
-        const seasonDoc = await getDoc(seasonRef);
-        if (seasonDoc.exists()) {
-          const currentTotal = seasonDoc.data().totalTeams || 0;
-          await updateDoc(seasonRef, {
-            totalTeams: Math.max(0, currentTotal - 1),
-            updatedAt: serverTimestamp(),
-          });
-        }
-      } catch (error) {
-        console.error('Error updating season team count:', error);
-      }
+        await sql`UPDATE seasons SET total_teams = GREATEST(total_teams - 1, 0), updated_at = ${new Date().toISOString()} WHERE id = ${team.season_id}`;
+      } catch {}
     }
-  } catch (error) {
+    await sql`DELETE FROM teams WHERE id = ${teamId}`;
+  } catch (error: any) {
     console.error('Error deleting team:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to delete team';
-    throw new Error(errorMessage);
-  }
-};
-
-// Get team statistics
-export const getTeamStatistics = async (): Promise<{
-  totalTeams: number;
-  activeTeams: number;
-  inactiveTeams: number;
-  totalPlayers: number;
-}> => {
-  try {
-    const teams = await getAllTeams();
-    
-    const stats = {
-      totalTeams: teams.length,
-      activeTeams: teams.filter(t => t.is_active).length,
-      inactiveTeams: teams.filter(t => !t.is_active).length,
-      totalPlayers: teams.reduce((sum, t) => sum + (t.players_count || 0), 0),
-    };
-    
-    return stats;
-  } catch (error) {
-    console.error('Error getting team statistics:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to get team statistics';
-    throw new Error(errorMessage);
+    throw new Error(error instanceof Error ? error.message : 'Failed to delete team');
   }
 };
 
 // Update team player count
-export const updateTeamPlayerCount = async (
-  teamId: string,
-  playerCount: number
-): Promise<void> => {
+export const updateTeamPlayerCount = async (teamId: string, playerCount: number): Promise<void> => {
   try {
-    const teamRef = doc(db, 'teams', teamId);
-    await updateDoc(teamRef, {
-      players_count: playerCount,
-      updated_at: serverTimestamp(),
-    });
-  } catch (error) {
+    const sql = getMainDb();
+    const now = new Date().toISOString();
+    await sql`UPDATE teams SET players_count = ${playerCount}, updated_at = ${now} WHERE id = ${teamId}`;
+  } catch (error: any) {
     console.error('Error updating team player count:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update team player count';
-    throw new Error(errorMessage);
+    throw new Error(error instanceof Error ? error.message : 'Failed to update team player count');
   }
 };
 
 // Update team balance
-export const updateTeamBalance = async (
-  teamId: string,
-  balance: number
-): Promise<void> => {
+export const updateTeamBalance = async (teamId: string, balance: number): Promise<void> => {
   try {
-    const teamRef = doc(db, 'teams', teamId);
-    await updateDoc(teamRef, {
-      balance,
-      updated_at: serverTimestamp(),
-    });
-  } catch (error) {
+    const sql = getMainDb();
+    const now = new Date().toISOString();
+    await sql`UPDATE teams SET balance = ${balance}, updated_at = ${now} WHERE id = ${teamId}`;
+  } catch (error: any) {
     console.error('Error updating team balance:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update team balance';
-    throw new Error(errorMessage);
+    throw new Error(error instanceof Error ? error.message : 'Failed to update team balance');
   }
 };
 
 // Update team stats
-export const updateTeamStats = async (
-  teamId: string,
-  statsUpdates: UpdateTeamStatsData
-): Promise<void> => {
+export const updateTeamStats = async (teamId: string, statsUpdates: UpdateTeamStatsData): Promise<void> => {
   try {
     const team = await getTeamById(teamId);
-    if (!team) {
-      throw new Error('Team not found');
-    }
-    
-    const updatedStats = {
-      ...team.stats,
-      ...statsUpdates,
-    };
-    
-    // Auto-calculate derived fields
+    if (!team) throw new Error('Team not found');
+    const updatedStats = { ...team.stats, ...statsUpdates };
     if (updatedStats.goals_scored !== undefined && updatedStats.goals_conceded !== undefined) {
       updatedStats.goal_difference = updatedStats.goals_scored - updatedStats.goals_conceded;
     }
-    
     if (updatedStats.matches_played > 0) {
       updatedStats.win_rate = (updatedStats.matches_won / updatedStats.matches_played) * 100;
     }
-    
-    const teamRef = doc(db, 'teams', teamId);
-    await updateDoc(teamRef, {
-      stats: updatedStats,
-      updated_at: serverTimestamp(),
-    });
-  } catch (error) {
+    const sql = getMainDb();
+    const now = new Date().toISOString();
+    await sql`UPDATE teams SET stats = ${JSON.stringify(updatedStats)}, updated_at = ${now} WHERE id = ${teamId}`;
+  } catch (error: any) {
     console.error('Error updating team stats:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update team stats';
-    throw new Error(errorMessage);
+    throw new Error(error instanceof Error ? error.message : 'Failed to update team stats');
   }
 };

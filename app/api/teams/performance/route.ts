@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     if (teamId) {
       // Get team by ID
-      const teamsRef = collection(db, 'teams');
+      const teamsRef = adminDb.collection('teams');
       const q = query(teamsRef, where('id', '==', teamId));
       const querySnapshot = await getDocs(q);
       
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       }
     } else if (teamName) {
       // Get team by name
-      const teamsRef = collection(db, 'teams');
+      const teamsRef = adminDb.collection('teams');
       const q = query(teamsRef, where('team_name', '==', teamName));
       const querySnapshot = await getDocs(q);
       
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     const seasonDetails: any = {};
     for (const seasonId of teamData.seasons || []) {
       try {
-        const seasonDoc = await getDoc(doc(db, 'seasons', seasonId));
+        const sql = getMainDb(); const seasonRows = await sql`SELECT * FROM seasons WHERE id = ${seasonId} LIMIT 1`; const seasonDoc = { exists: () => seasonRows.length > 0, data: () => seasonRows[0] };
         if (seasonDoc.exists()) {
           seasonDetails[seasonId] = {
             name: seasonDoc.data().name,
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const teamsRef = collection(db, 'teams');
+    const teamsRef = adminDb.collection('teams');
     let q;
 
     if (teamIds && teamIds.length > 0) {

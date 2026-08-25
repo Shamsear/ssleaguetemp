@@ -22,6 +22,7 @@ import {
   RotateCw,
 } from 'lucide-react';
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerWithPoints {
   real_player_id: string;
@@ -152,12 +153,6 @@ export default function CommitteeAllPlayersPointsPage() {
     }
   };
 
-  useEffect(() => {
-    if (!loading && !user) router.push('/login');
-    if (!loading && user && user.role !== 'committee_admin') router.push('/dashboard');
-  }, [user, loading, router]);
-
-  // Auto-load the active league
   useEffect(() => {
     const loadActiveLeague = async () => {
       if (!user) return;
@@ -316,6 +311,7 @@ export default function CommitteeAllPlayersPointsPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
@@ -731,6 +727,7 @@ export default function CommitteeAllPlayersPointsPage() {
                           pageNum = pagination.page - 2 + i;
                         }
                         return (
+
                           <button
                             key={pageNum}
                             onClick={() => setCurrentPage(pageNum)}
@@ -743,7 +740,8 @@ export default function CommitteeAllPlayersPointsPage() {
                           >
                             {pageNum}
                           </button>
-                        );
+
+  );
                       })}
                     </div>
 
@@ -777,5 +775,7 @@ export default function CommitteeAllPlayersPointsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

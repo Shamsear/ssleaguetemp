@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface LineupStats {
   total_teams: number;
@@ -76,16 +77,6 @@ export default function WeeklyLineupsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     if (user && leagueId && selectedRound !== 'current') {
@@ -216,6 +207,7 @@ export default function WeeklyLineupsPage() {
   };
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen bg-slate-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
         <Link
@@ -570,5 +562,7 @@ export default function WeeklyLineupsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

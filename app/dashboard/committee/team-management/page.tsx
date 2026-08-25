@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { usePermissions } from '@/hooks/usePermissions';
 import TeamManagementClient from './team-management-client';
+import AuthGuard from '@/components/auth/AuthGuard';
 interface Team {
   team: {
     id: string;
@@ -50,16 +51,6 @@ export default function TeamManagementPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Redirect if not authenticated or not committee admin
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login?redirect=/dashboard/committee/team-management');
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch teams and season data
   useEffect(() => {
     const fetchData = async () => {
       if (!user || !userSeasonId) return;
@@ -108,15 +99,15 @@ export default function TeamManagementPage() {
     );
   }
 
-  if (!user) {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <TeamManagementClient
       teams={teams}
       seasonName={seasonName}
       recentMatches={recentMatches}
     />
+  
+    </AuthGuard>
   );
 }

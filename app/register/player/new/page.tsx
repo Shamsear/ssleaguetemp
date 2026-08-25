@@ -59,7 +59,7 @@ function PlayerRegistrationContent() {
 
       try {
         // Fetch season
-        const seasonDoc = await getDoc(doc(db, 'seasons', seasonId))
+        const seasonRes = await fetch(`/api/seasons/${seasonId}`); const seasonJson = await seasonRes.json(); const seasonDoc = { exists: () => seasonJson.success, data: () => seasonJson.data }
         if (!seasonDoc.exists()) {
           setError('Season not found')
           setLoading(false)
@@ -77,15 +77,12 @@ function PlayerRegistrationContent() {
         setSeason(seasonData)
 
         // Fetch teams for this season
-        const teamsQuery = query(
-          collection(db, 'teams'),
-          where('season_id', '==', seasonId),
-          where('is_active', '==', true)
-        )
-        const teamsSnapshot = await getDocs(teamsQuery)
-        const teamsData = teamsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+        const teamsRes = await fetch('/api/teams')
+        const teamsJson = await teamsRes.json()
+        const allTeams = (teamsJson.data || teamsJson.teams || []).filter((t: any) => t.season_id === seasonId && t.is_active !== false)
+        const teamsData = allTeams.map((row: any) => ({
+          id: row.id,
+          ...row
         })) as Team[]
 
         setTeams(teamsData)
@@ -114,7 +111,7 @@ function PlayerRegistrationContent() {
 
     try {
       // Re-check if registration is still open
-      const seasonDoc = await getDoc(doc(db, 'seasons', seasonId!))
+      const seasonRes = await fetch(`/api/seasons/${seasonId}`); const seasonJson = await seasonRes.json(); const seasonDoc = { exists: () => seasonJson.success, data: () => seasonJson.data }
       if (!seasonDoc.exists()) {
         setError('Season not found')
         setSubmitting(false)
@@ -129,12 +126,9 @@ function PlayerRegistrationContent() {
       }
 
       // Check if player already exists
-      const playersQuery = query(
-        collection(db, 'realplayer'),
-        where('season_id', '==', seasonId),
-        where('email', '==', formData.email)
-      )
-      const existingPlayers = await getDocs(playersQuery)
+      const rpRes = await fetch(`/api/realplayers?season_id=${seasonId}`)
+      const rpJson = await rpRes.json()
+      const existingPlayers = { empty: !(rpJson.data || []).some((r: any) => r.email === formData.email) }
 
       if (!existingPlayers.empty) {
         setError('A player with this email is already registered for this season')
@@ -142,34 +136,44 @@ function PlayerRegistrationContent() {
         return
       }
 
-      // Create player registration
-      await addDoc(collection(db, 'realplayer'), {
-        season_id: seasonId,
-        team_id: formData.team_id || null,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        date_of_birth: formData.date_of_birth,
-        email: formData.email,
-        phone: formData.phone,
-        parent_guardian: {
-          name: formData.parent_guardian_name,
-          email: formData.parent_guardian_email,
-          phone: formData.parent_guardian_phone
-        },
-        jersey_number: formData.jersey_number || null,
-        position: formData.position || null,
-        medical_conditions: formData.medical_conditions,
-        emergency_contact: {
-          name: formData.emergency_contact_name,
-          phone: formData.emergency_contact_phone,
-          relationship: formData.emergency_contact_relationship
-        },
-        is_active: true,
-        status: 'free_agent', // Default status is free_agent until assigned to team
-        registration_status: 'pending',
-        created_at: Timestamp.now(),
-        updated_at: Timestamp.now()
-      })
+      // Create player registration via Neon API
+      await fetch('/api/realplayers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          data: {
+            name: `${formData.first_name} ${formData.last_name}`,
+            season_id: seasonId,
+            team_id: formData.team_id || null,
+            email: formData.email,
+            phone: formData.phone,
+            is_registered: true,
+            role: 'player',
+            is_active: true,
+            notes: JSON.stringify({
+              first_name: formData.first_name,
+              last_name: formData.last_name,
+              date_of_birth: formData.date_of_birth,
+              parent_guardian: {
+                name: formData.parent_guardian_name,
+                email: formData.parent_guardian_email,
+                phone: formData.parent_guardian_phone
+              },
+              jersey_number: formData.jersey_number || null,
+              position: formData.position || null,
+              medical_conditions: formData.medical_conditions,
+              emergency_contact: {
+                name: formData.emergency_contact_name,
+                phone: formData.emergency_contact_phone,
+                relationship: formData.emergency_contact_relationship
+              },
+              status: 'free_agent',
+              registration_status: 'pending',
+            }),
+          }
+        })
+      });
 
       // Redirect to success page
       router.push('/register/player/success')

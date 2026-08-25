@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface H2HFixture {
   fixture_id: string;
@@ -24,16 +25,6 @@ export default function H2HFixturesPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fixtures, setFixtures] = useState<H2HFixture[]>([]);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     if (user && leagueId && selectedRound) {
@@ -115,6 +106,7 @@ export default function H2HFixturesPage() {
   if (!user) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen bg-slate-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-6xl">
         <Link
@@ -284,5 +276,7 @@ export default function H2HFixturesPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

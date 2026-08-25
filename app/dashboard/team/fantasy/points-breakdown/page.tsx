@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerRound {
     round: number;
@@ -67,13 +68,6 @@ export default function TeamPointsBreakdownPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [maxRounds, setMaxRounds] = useState(0);
     const [expandedRounds, setExpandedRounds] = useState<Set<number>>(new Set());
-
-    useEffect(() => {
-        if (!loading && !user) {
-            router.push('/dashboard');
-            return;
-        }
-    }, [user, loading, router]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -290,6 +284,7 @@ export default function TeamPointsBreakdownPage() {
                                                                 if (!roundData || roundData.points === 0) return null;
 
                                                                 return (
+    <AuthGuard requiredRole="team">
                                                                     <div
                                                                         key={player.player_id}
                                                                         className="bg-green-50 rounded px-3 py-2 border border-green-200"
@@ -301,7 +296,9 @@ export default function TeamPointsBreakdownPage() {
                                                                             {roundData.points} pts
                                                                         </div>
                                                                     </div>
-                                                                );
+                                                                
+    </AuthGuard>
+  );
                                                             })}
                                                     </div>
                                                     {team.players.filter(p => p.rounds.some(r => r.round === roundTotal.round && r.points > 0)).length === 0 && (

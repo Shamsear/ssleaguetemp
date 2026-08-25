@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface FantasyTeam {
   id: string;
@@ -88,15 +89,6 @@ export default function MyFantasyTeamPage() {
   const [otherTeams, setOtherTeams] = useState<OtherTeam[]>([]);
   const [showOtherTeams, setShowOtherTeams] = useState(false);
   const [loadingPlayerStats, setLoadingPlayerStats] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const [canRegister, setCanRegister] = useState(false);
   const [registrationInfo, setRegistrationInfo] = useState<any>(null);
@@ -298,6 +290,7 @@ export default function MyFantasyTeamPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -575,6 +568,7 @@ export default function MyFantasyTeamPage() {
                 const isLoaderActive = loadingPlayerStats[player.real_player_id];
 
                 return (
+
                   <div key={player.draft_id} className="transition-colors hover:bg-slate-50/40">
                     {/* Player Row Toggle */}
                     <button
@@ -742,7 +736,8 @@ export default function MyFantasyTeamPage() {
                       </div>
                     )}
                   </div>
-                );
+
+  );
               })}
             </div>
           )}
@@ -804,5 +799,7 @@ export default function MyFantasyTeamPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

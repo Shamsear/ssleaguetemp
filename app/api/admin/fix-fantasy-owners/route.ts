@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fantasySql } from '@/lib/neon/fantasy-config';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 export async function POST() {
   try {

@@ -138,7 +138,7 @@ export default function PlayerDetailPage() {
       }
 
       // Fetch from Firebase if no cache, expired, or bypassed
-      const seasonsRef = collection(db, 'seasons');
+      const seasonsRef = (await (await fetch('/api/seasons')).json()).data;
       const seasonsSnapshot = await getDocs(seasonsRef);
       const seasonsData = seasonsSnapshot.docs.map(doc => ({
         id: doc.id,
@@ -340,7 +340,7 @@ export default function PlayerDetailPage() {
 
   const fetchSeasonName = async (seasonId: string) => {
     try {
-      const seasonDoc = await getDoc(doc(db, 'seasons', seasonId));
+      const seasonRes = await fetch(`/api/seasons/${seasonId}`); const seasonJson = await seasonRes.json(); const seasonDoc = { exists: () => seasonJson.success, data: () => seasonJson.data };
       if (seasonDoc.exists()) {
         const seasonData = seasonDoc.data();
         setSeasonName(seasonData.name || seasonData.short_name || 'Season');
@@ -354,30 +354,28 @@ export default function PlayerDetailPage() {
     try {
       if (!teamId) return;
 
-      const matchupsRef = collection(db, 'match_matchups');
-      const q = query(
-        matchupsRef,
-        where('player_ids', 'array-contains', playerId),
-        orderBy('created_at', 'desc')
-      );
-
-      const querySnapshot = await getDocs(q);
+      const res = await fetch(`/api/matchups?player_id=${playerId}`);
+      const { data: matchups } = await res.json();
       const history: MatchHistory[] = [];
 
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
+      (matchups || []).forEach((m: any) => {
+        const isHome = m.home_player_id === playerId;
+        const playerGoals = isHome ? (m.home_goals || 0) : (m.away_goals || 0);
+        const opponentGoals = isHome ? (m.away_goals || 0) : (m.home_goals || 0);
+        const opponent = isHome ? m.away_player_name : m.home_player_name;
+        const result = playerGoals > opponentGoals ? "win" : playerGoals < opponentGoals ? "loss" : "draw";
+
         history.push({
-          match_number: data.match_number || 'N/A',
-          opponent: data.opponent_name,
-          result: data.result || 'draw',
-          player_goals: data.player_goals || 0,
-          opponent_goals: data.opponent_goals || 0,
-          is_potm: data.potm_player_id === playerId,
-          points: data.points || 0,
-          date: data.match_date?.toDate(),
+          match_number: m.position?.toString() || "N/A",
+          opponent,
+          result,
+          player_goals: playerGoals,
+          opponent_goals: opponentGoals,
+          is_potm: false,
+          points: 0,
+          date: m.created_at ? new Date(m.created_at) : undefined,
         });
       });
-
       setMatchHistory(history);
     } catch (err) {
       console.error('Error fetching match history:', err);

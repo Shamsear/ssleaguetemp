@@ -1,4 +1,5 @@
 'use client';
+
 import { Trophy, Star, Activity, BarChart2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,12 +7,12 @@ import { useTournamentContext } from '@/contexts/TournamentContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { db } from '@/lib/firebase/config';
-import { collection, query, getDocs } from 'firebase/firestore';
+
 import { usePermissions } from '@/hooks/usePermissions';
 import { usePlayerStats, useTeamStats } from '@/hooks';
 import { useTournament } from '@/hooks/useTournaments';
 import TournamentSelector from '@/components/TournamentSelector';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerStats {
   player_id: string;
@@ -69,31 +70,19 @@ export default function StatsLeaderboardPage() {
   });
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchStats = async () => {
       if (!user || user.role !== 'committee_admin' || !userSeasonId) return;
 
       try {
         setIsLoading(true);
 
-        // Fetch all realplayer to get team assignments
-        const realPlayersQuery = query(collection(db, 'realplayer'));
-        const realPlayersSnapshot = await getDocs(realPlayersQuery);
+        // Fetch all realplayers from Neon
+        const rpRes = await fetch('/api/realplayers');
+        const { data: rpRows } = await rpRes.json();
         const playersTeamMap = new Map();
-        realPlayersSnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.player_id) {
-            // Use team_name directly from realplayer collection
-            const teamName = data.team_name || 'Unassigned';
-            playersTeamMap.set(data.player_id, teamName);
+        (rpRows || []).forEach((row: any) => {
+          if (row.player_id) {
+            playersTeamMap.set(row.player_id, row.team_name || 'Unassigned');
           }
         });
         
@@ -102,13 +91,12 @@ export default function StatsLeaderboardPage() {
 
         // Team stats now come from React Query hook (Neon)
         
-        // Fetch all teams to get team names
-        const teamsQuery = query(collection(db, 'teams'));
-        const teamsSnapshot = await getDocs(teamsQuery);
+        // Fetch all teams from Neon
+        const teamsRes = await fetch('/api/teams');
+        const { data: teamRows } = await teamsRes.json();
         const teamsMap = new Map();
-        teamsSnapshot.forEach((doc) => {
-          const data = doc.data();
-          teamsMap.set(doc.id, data.name || data.team_name || 'Unknown Team');
+        (teamRows || []).forEach((row: any) => {
+          teamsMap.set(row.id, row.team_name || 'Unknown Team');
         });
         
         const teams: TeamStats[] = [];
@@ -221,11 +209,9 @@ export default function StatsLeaderboardPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -453,5 +439,7 @@ export default function StatsLeaderboardPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

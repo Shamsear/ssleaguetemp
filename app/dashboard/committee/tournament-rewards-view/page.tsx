@@ -8,6 +8,7 @@ import { Trophy, Users, Filter, Award, Target, DollarSign, BarChart2 } from 'luc
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { usePermissions } from '@/hooks/usePermissions';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface RewardTransaction {
   id: string;
@@ -53,16 +54,6 @@ export default function TournamentRewardsViewPage() {
   }[]>([]);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     if (user && user.role === 'committee_admin' && userSeasonId) {
       loadInitialData();
     }
@@ -85,18 +76,14 @@ export default function TournamentRewardsViewPage() {
       setIsLoading(true);
 
       // Load teams from team_seasons for the current season
-      const teamSeasonsQuery = query(
-        collection(db, 'team_seasons'),
-        where('season_id', '==', userSeasonId)
-      );
-      
-      const teamSeasonsSnapshot = await getDocs(teamSeasonsQuery);
+      const tsRes = await fetch(`/api/team/all?season_id=${userSeasonId}`);
+      const tsJson = await tsRes.json();
+      const teamsData = tsJson.data || tsJson.teams || [];
 
       const teamsList: any[] = [];
-      const teamsMap: Record<string, string> = {}; // Map of team_id to team_name
+      const teamsMap: Record<string, string> = {};
 
-      teamSeasonsSnapshot.forEach(doc => {
-        const data = doc.data();
+      teamsData.forEach((data: any) => {
         const teamId = data.team_id;
         const teamName = data.team_name || teamId;
         
@@ -131,26 +118,23 @@ export default function TournamentRewardsViewPage() {
       const rewardTypes = ['position_reward', 'completion_bonus', 'knockout_reward'];
       const allTransactions: RewardTransaction[] = [];
 
+      // Fetch all transactions from API and filter client-side
+      const txRes = await fetch('/api/players/transfer-history');
+      const txJson = await txRes.json();
+      const allTxData = txJson.transactions || [];
+
       for (const rewardType of rewardTypes) {
-        let q;
+        const filteredTx = allTxData.filter((data: any) => {
+          const txType = data.type || data.transaction_type;
+          if (txType !== rewardType) return false;
+          if (data.season_id !== userSeasonId) return false;
+          if (selectedTeamId !== 'all' && selectedTeamId !== 'ALL_SUMMARY') {
+            if (data.team_id !== selectedTeamId) return false;
+          }
+          return true;
+        });
 
-        if (selectedTeamId !== 'all' && selectedTeamId !== 'ALL_SUMMARY') {
-          q = query(
-            collection(db, 'transactions'),
-            where('transaction_type', '==', rewardType),
-            where('team_id', '==', selectedTeamId)
-          );
-        } else {
-          q = query(
-            collection(db, 'transactions'),
-            where('transaction_type', '==', rewardType)
-          );
-        }
-
-        const snapshot = await getDocs(q);
-
-        snapshot.forEach(doc => {
-          const data = doc.data();
+        filteredTx.forEach((data: any) => {
 
           // Apply season filter
           if (data.season_id !== userSeasonId) {
@@ -263,15 +247,10 @@ export default function TournamentRewardsViewPage() {
 
       // Fetch all reward transactions
       for (const rewardType of rewardTypes) {
-        const q = query(
-          collection(db, 'transactions'),
-          where('transaction_type', '==', rewardType)
-        );
+        // Already have allTxData from previous fetch, filter by type
+        const rewardTx = allTxData.filter((d: any) => (d.type || d.transaction_type) === rewardType);
 
-        const snapshot = await getDocs(q);
-
-        snapshot.forEach(doc => {
-          const data = doc.data();
+        rewardTx.forEach((data: any) => {
 
           // Apply season filter
           if (data.season_id !== userSeasonId) {
@@ -403,6 +382,7 @@ export default function TournamentRewardsViewPage() {
   if (!user) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -658,6 +638,7 @@ export default function TournamentRewardsViewPage() {
               const knockoutRewards = tournamentData.transactions.filter(t => t.transaction_type === 'knockout_reward');
 
               return (
+
                 <div key={tournamentId} className="glass rounded-2xl sm:rounded-3xl border border-white/30 shadow-xl overflow-hidden transition-all hover:shadow-2xl">
                   {/* Tournament Header */}
                   <div className="bg-gradient-to-r from-purple-500 to-blue-600 text-white px-4 sm:px-6 py-4 sm:py-5">
@@ -733,11 +714,14 @@ export default function TournamentRewardsViewPage() {
                     </div>
                   </div>
                 </div>
-              );
+
+  );
             })}
           </div>
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

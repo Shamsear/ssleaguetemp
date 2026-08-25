@@ -9,6 +9,7 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { Trophy as TrophyIcon, Settings, ArrowLeft, Info, Calendar, Clock, Lock, Plus, Trash2, CheckCircle, AlertCircle, Sparkles, X, ChevronRight, Award, Crown, Trophy, Star } from 'lucide-react';
 import { useModal } from '@/hooks/useModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Trophy {
   id: number;
@@ -60,16 +61,6 @@ export default function TrophyManagementPage() {
     notes: ''
   });
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-    if (!authLoading && user && !isCommitteeAdmin) {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router, isCommitteeAdmin]);
-
-  // Load data when season is set
   useEffect(() => {
     if (userSeasonId) {
       fetchTrophies();
@@ -320,6 +311,7 @@ export default function TrophyManagementPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -399,6 +391,7 @@ export default function TrophyManagementPage() {
                     const globalIndex = preview.findIndex(item => item === p);
                     const isSelected = selectedTrophies.has(`${globalIndex}`);
                     return (
+
                       <div 
                         key={`${p.team_name}-${p.trophy_name}`} 
                         onClick={() => !p.alreadyAwarded && toggleTrophySelection(globalIndex)}
@@ -424,7 +417,8 @@ export default function TrophyManagementPage() {
                           </span>
                         )}
                       </div>
-                    );
+
+  );
                   })}
                 </div>
               </div>
@@ -681,5 +675,7 @@ export default function TrophyManagementPage() {
         type={confirmState.type}
       />
     </div>
+  
+    </AuthGuard>
   );
 }

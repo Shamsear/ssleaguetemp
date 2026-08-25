@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { verifyAuth } from '@/lib/auth-helper';
 import { getCached, setCached } from '@/lib/firebase/cache';
 import { getTournamentDb } from '@/lib/neon/tournament-config';

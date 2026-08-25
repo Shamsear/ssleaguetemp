@@ -4,10 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   Clock,
   DollarSign,
@@ -56,29 +56,16 @@ export default function BulkRoundsPage() {
   });
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch current season
-  useEffect(() => {
     const fetchCurrentSeason = async () => {
       if (!user || user.role !== 'committee_admin') return;
 
       try {
-        const seasonsQuery = query(
-          collection(db, 'seasons'),
-          where('isActive', '==', true),
-          limit(1)
-        );
-        const seasonsSnapshot = await getDocs(seasonsQuery);
+        const seasonsJson = await fetch('/api/seasons').then(r => r.json());
+        const seasonsList = seasonsJson.data || [];
+        const activeSeason = seasonsList.find((s: any) => s.is_active === true || s.isActive === true);
 
-        if (!seasonsSnapshot.empty) {
-          const seasonId = seasonsSnapshot.docs[0].id;
+        if (activeSeason) {
+          const seasonId = activeSeason.id;
           setCurrentSeasonId(seasonId);
           
           // Fetch auction settings for this season
@@ -233,6 +220,7 @@ export default function BulkRoundsPage() {
   const activeRound = getActiveRound();
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -385,10 +373,12 @@ export default function BulkRoundsPage() {
                         .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
                         .join(' ');
                       return (
+
                         <option key={setting.id} value={setting.id}>
                           {windowLabel} (Max {setting.max_rounds} rounds, {setting.max_squad_size} players)
                         </option>
-                      );
+
+  );
                     })}
                   </select>
                   <p className="mt-1.5 text-xs text-slate-400 font-mono">
@@ -598,5 +588,7 @@ export default function BulkRoundsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

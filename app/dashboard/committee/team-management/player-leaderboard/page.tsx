@@ -11,6 +11,7 @@ import { usePlayerStats } from '@/hooks';
 import { usePermissions } from '@/hooks/usePermissions';
 import TournamentSelector from '@/components/TournamentSelector';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerStats {
   id: string;
@@ -72,15 +73,6 @@ export default function PlayerLeaderboardPage() {
   
   const [sortField, setSortField] = useState<SortField>('points');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -250,9 +242,6 @@ export default function PlayerLeaderboardPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
 
   const stats = {
     totalPlayers: players.length,
@@ -261,6 +250,7 @@ export default function PlayerLeaderboardPage() {
   };
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -552,5 +542,7 @@ export default function PlayerLeaderboardPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

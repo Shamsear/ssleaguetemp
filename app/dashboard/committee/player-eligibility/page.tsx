@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerEligibility {
     id: string;
@@ -50,18 +51,6 @@ export default function PlayerEligibilityPage() {
     const [initialLoad, setInitialLoad] = useState(true);
     const [teams, setTeams] = useState<Array<{ id: string; name: string }>>([]);
 
-    useEffect(() => {
-        if (!authLoading && !user) {
-            router.push('/login');
-            return;
-        }
-        if (!authLoading && user && user.role !== 'committee_admin') {
-            router.push('/dashboard');
-            return;
-        }
-    }, [user, authLoading, router]);
-
-    // Initial load
     useEffect(() => {
         if (user && user.role === 'committee_admin' && initialLoad && userSeasonId) {
             loadPlayers();
@@ -184,6 +173,7 @@ export default function PlayerEligibilityPage() {
     }
 
     return (
+    <AuthGuard requiredRole="committee_admin">
         <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
             {/* Decorative eSports glowing ambient overlay */}
             <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
@@ -458,5 +448,6 @@ export default function PlayerEligibilityPage() {
                 </div>
             </div>
         </div>
+    </AuthGuard>
     );
 }

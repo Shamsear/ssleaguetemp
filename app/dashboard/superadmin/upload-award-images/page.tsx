@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Upload, 
   Image as ImageIcon, 
@@ -73,16 +74,6 @@ export default function UploadAwardImagesPage() {
   const [seasons, setSeasons] = useState<string[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>('');
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-    if (!authLoading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
-
-  // Fetch awards on mount
   useEffect(() => {
     fetchAllData();
   }, []);
@@ -282,11 +273,9 @@ export default function UploadAwardImagesPage() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
@@ -629,5 +618,7 @@ export default function UploadAwardImagesPage() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

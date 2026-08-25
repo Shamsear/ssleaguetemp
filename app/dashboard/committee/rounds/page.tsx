@@ -39,7 +39,7 @@ import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { ArrowLeft, Trash2, RotateCcw, ShieldAlert, CheckCircle2, AlertTriangle, Info, Sparkles, Plus, Clock, Users, ChevronRight, ChevronDown, RefreshCw, Play, DollarSign, Check, FileText, Settings, Calendar, ArrowRight, Layers, HelpCircle, XCircle, CheckCircle, BarChart2 } from 'lucide-react';
-
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Round {
   id: string;
@@ -151,6 +151,7 @@ function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete, onU
   };
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <>
       <div className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1.5">
@@ -349,6 +350,8 @@ function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete, onU
         </div>
       )}
     </>
+  
+    </AuthGuard>
   );
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -413,16 +416,6 @@ export default function RoundsManagementPage() {
     setScheduledStartTime(localIso);
   }, []);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch all data in parallel
   const fetchAllData = useCallback(async () => {
     if (!user || user.role !== 'committee_admin') return;
 
@@ -2876,6 +2869,7 @@ export default function RoundsManagementPage() {
                               const wonBid = playerBids.find((b: any) => b.status === 'won');
                               
                               return (
+
                                 <div key={playerKey} className="text-xs">
                                   {/* Player Header */}
                                   <button
@@ -2960,7 +2954,8 @@ export default function RoundsManagementPage() {
                                     </div>
                                   )}
                                 </div>
-                              );
+
+  );
                             })}
                           </div>
                         )}

@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { CheckCircle2, XCircle } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function CheckRolePage() {
   const { user, loading, firebaseUser } = useAuth();
@@ -16,6 +17,7 @@ export default function CheckRolePage() {
   }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
@@ -189,5 +191,7 @@ export default function CheckRolePage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   Settings,
   Info,
@@ -65,16 +66,6 @@ export default function PollsManagementPage() {
   const [voters, setVoters] = useState<Record<string, any[]>>({});
   const [loadingVoters, setLoadingVoters] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && !isCommitteeAdmin) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router, isCommitteeAdmin]);
-
-  // Fetch available tournaments
   useEffect(() => {
     const fetchTournaments = async () => {
       if (!userSeasonId) return;
@@ -154,7 +145,6 @@ export default function PollsManagementPage() {
       const pollsData = await pollsRes.json();
       console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Polls response:', pollsData);
       setPolls(pollsData.success && pollsData.data ? pollsData.data : []);
-
 
       // Load eligible candidates (same as awards but skip award check for fan polls)
       const candidateParams = new URLSearchParams({
@@ -409,6 +399,7 @@ export default function PollsManagementPage() {
   const maxWeeks = Math.ceil(maxRounds / 7);
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -669,6 +660,7 @@ export default function PollsManagementPage() {
                     else if (index === 2 && option.votes > 0) rankEmoji = '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />';
 
                     return (
+
                       <div key={option.id} className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-sm transition-all duration-300">
                         <div 
                           className="p-4 cursor-pointer hover:bg-slate-50 transition-colors"
@@ -743,7 +735,8 @@ export default function PollsManagementPage() {
                           </div>
                         )}
                       </div>
-                    );
+
+  );
                   })}
               </div>
             </div>
@@ -830,5 +823,7 @@ export default function PollsManagementPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

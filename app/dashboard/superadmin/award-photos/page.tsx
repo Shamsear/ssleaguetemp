@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   AlertCircle, 
   CheckCircle, 
@@ -69,15 +70,6 @@ export default function AwardPhotosManagement() {
   // Edit states
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [editingLink, setEditingLink] = useState<string>('');
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-    if (!authLoading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
 
   useEffect(() => {
     fetchSeasons();
@@ -217,11 +209,9 @@ export default function AwardPhotosManagement() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       
       {/* Page Header */}
@@ -570,5 +560,7 @@ export default function AwardPhotosManagement() {
       </div>
 
     </div>
+  
+    </AuthGuard>
   );
 }

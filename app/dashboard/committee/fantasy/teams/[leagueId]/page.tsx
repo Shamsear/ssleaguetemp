@@ -9,6 +9,7 @@ import AlertModal from '@/components/modals/AlertModal';
 import { Activity, AlertTriangle, Award, BarChart2, CheckCircle, ChevronDown, Crown, Gift, Handshake, Shield as ShieldIcon, Star, Target, TrendingUp, Trophy, XCircle, ArrowLeft } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import ShareableTeamCard from '@/components/fantasy/ShareableTeamCard';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface FantasyTeam {
   id: string;
@@ -65,18 +66,6 @@ export default function FantasyTeamsPage() {
 
   const { alertState, showAlert, closeAlert } = useModal();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    // Allow committee_admin, super_admin, and team users
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin' && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch scoring rules from database
   useEffect(() => {
     const loadScoringRules = async () => {
       try {
@@ -270,6 +259,7 @@ export default function FantasyTeamsPage() {
   if (!user || !league) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -681,6 +671,7 @@ export default function FantasyTeamsPage() {
                                           const totalPoints = Math.round(basePoints * multiplier);
 
                                           return (
+
                                             <div key={idx} className="border border-slate-150 rounded-xl overflow-hidden font-mono">
                                               {/* Match Header */}
                                               <div className="flex items-center justify-between p-3 bg-slate-50">
@@ -812,7 +803,8 @@ export default function FantasyTeamsPage() {
                                                 </div>
                                               </div>
                                             </div>
-                                          );
+
+  );
                                         })}
                                       </div>
                                     )}
@@ -841,5 +833,7 @@ export default function FantasyTeamsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

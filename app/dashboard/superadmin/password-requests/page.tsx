@@ -12,6 +12,7 @@ import {
 import { PasswordResetRequest } from '@/types/passwordResetRequest';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   KeyRound, 
   Mail, 
   Calendar, 
@@ -43,15 +44,6 @@ export default function PasswordRequestsManagement() {
   const [generatedLink, setGeneratedLink] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     if (user && user.role === 'super_admin') {
@@ -195,11 +187,9 @@ export default function PasswordRequestsManagement() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       
       {/* Page Header */}
@@ -479,5 +469,7 @@ export default function PasswordRequestsManagement() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

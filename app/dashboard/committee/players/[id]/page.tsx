@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { PlayerCard } from '@/components/PlayerImage';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface FootballPlayer {
   id: string;
@@ -84,6 +85,7 @@ const StatsBar: React.FC<StatsBarProps> = ({ label, value }) => {
   };
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="bg-white/50 rounded-xl p-3 hover:bg-white/60 transition-all duration-300">
       <div className="flex justify-between items-center mb-2">
         <span className="text-sm text-gray-700 font-medium">{label}</span>
@@ -98,6 +100,8 @@ const StatsBar: React.FC<StatsBarProps> = ({ label, value }) => {
         />
       </div>
     </div>
+  
+    </AuthGuard>
   );
 };
 
@@ -130,15 +134,6 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
     winningBids: any[];
   } | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
 
   useEffect(() => {
     const fetchPlayer = async () => {
@@ -1106,6 +1101,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                       }
 
                       return (
+
                         <div key={index} className="relative">
                           {/* Dot */}
                           <div className="absolute left-2.5 sm:left-6 top-6 w-3.5 h-3.5 rounded-full bg-white border-4 border-slate-800 shadow-md hidden md:block z-10"></div>
@@ -1317,7 +1313,8 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                             </div>
                           </div>
                         </div>
-                      );
+
+  );
                     })}
                   </div>
                 </div>

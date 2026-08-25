@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerBid {
   team_id: string;
@@ -69,30 +69,21 @@ export default function AuctionResultsPage() {
   const [sortBy, setSortBy] = useState<'amount' | 'status' | 'name'>('amount');
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchSeasonAndResults = async () => {
       if (!user) return;
 
       try {
         // Get active season
-        const seasonsQuery = query(
-          collection(db, 'seasons'),
-          where('isActive', '==', true),
-          limit(1)
-        );
-        const seasonsSnapshot = await getDocs(seasonsQuery);
+        const seasonsRes = await fetch('/api/seasons');
+        const seasonsJson = await seasonsRes.json();
+        const seasonsList = (seasonsJson.data || seasonsJson.seasons || []).filter((s: any) => s.status === 'active' || s.is_active === true);
 
-        if (seasonsSnapshot.empty) {
+        if (seasonsList.length === 0) {
           setIsLoading(false);
           return;
         }
 
-        const activeSeason = seasonsSnapshot.docs[0].id;
+        const activeSeason = seasonsList[0].id;
         setSeasonId(activeSeason);
 
         // Fetch auction results
@@ -204,6 +195,7 @@ export default function AuctionResultsPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -311,6 +303,7 @@ export default function AuctionResultsPage() {
                     : 'border-l-slate-400 bg-slate-50/30 hover:bg-slate-50/50';
 
                   return (
+
                     <div key={player.player_id} className={`bg-white border border-slate-200/60 rounded-2xl border-l-4 ${statusColor} overflow-hidden transition-all duration-200 font-mono`}>
                       {/* Player Card Header */}
                       <div className="p-4">
@@ -467,7 +460,8 @@ export default function AuctionResultsPage() {
                         </div>
                       )}
                     </div>
-                  );
+
+  );
                 })}
               </div>
             </div>
@@ -475,5 +469,7 @@ export default function AuctionResultsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

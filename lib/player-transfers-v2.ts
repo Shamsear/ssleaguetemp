@@ -147,14 +147,14 @@ function getTableName(playerType: PlayerType): string {
  * Execute SQL query handling both Neon serverless function client and pg-like mock client
  */
 async function executeSql(sql: any, query: string, params: any[] = []): Promise<any[]> {
-  if (typeof sql === 'function') {
-    return await sql(query, params);
-  }
   if (sql && typeof sql.query === 'function') {
+    // neon() .query() returns rows directly as array; Pool.query() returns {rows: [...]}
     const res = await sql.query(query, params);
-    return res.rows || res;
+    return Array.isArray(res) ? res : (res?.rows || []);
   }
-  throw new Error('SQL client is not a function and does not have a query method');
+  // neon() can also be called as tagged template: sql`SELECT ...`
+  // For dynamic queries, use sql.query() above
+  throw new Error('SQL client does not have a query method — use sql.query() for dynamic queries');
 }
 
 /**
@@ -1168,7 +1168,7 @@ async function createTransferNews(
   calculation: TransferCalculation
 ): Promise<void> {
   try {
-    const newsRef = adminDb.collection('news').doc();
+    const sql = getTournamentDb();
     
     const categoryUpgradeText = calculation.newCategory !== playerData.category
       ? ` ${playerData.player_name}'s category has been upgraded from ${playerData.category} to ${calculation.newCategory}.`
@@ -1179,15 +1179,18 @@ async function createTransferNews(
       `${newTeamName} paid $${calculation.buyingTeamPays.toFixed(2)} (including $${calculation.committeeFee.toFixed(2)} committee fee), ` +
       `while ${oldTeamName} received $${calculation.sellingTeamReceives.toFixed(2)}.${categoryUpgradeText}`;
     
-    await newsRef.set({
-      title: `Transfer: ${playerData.player_name} Joins ${newTeamName}`,
-      content,
-      season_id: seasonId,
-      category: 'player_movement',
-      is_published: true,
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
-      updated_at: admin.firestore.FieldValue.serverTimestamp()
-    });
+    await sql`
+      INSERT INTO news (title, content, season_id, category, is_published, created_at, updated_at)
+      VALUES (
+        ${`Transfer: ${playerData.player_name} Joins ${newTeamName}`},
+        ${content},
+        ${seasonId},
+        ${'player_movement'},
+        true,
+        NOW(),
+        NOW()
+      )
+    `;
     
     console.log('✅ Transfer news created');
     
@@ -1885,7 +1888,7 @@ async function createSwapNews(
   calculation: SwapCalculation
 ): Promise<void> {
   try {
-    const newsRef = adminDb.collection('news').doc();
+    const sql = getTournamentDb();
     
     // Build upgrade text for both players
     const playerAUpgradeText = calculation.playerA.newCategory !== playerAData.category
@@ -1910,15 +1913,18 @@ async function createSwapNews(
       `${playerBData.player_name}'s new value: ${calculation.playerB.newValue.toFixed(2)} (from ${calculation.playerB.originalValue.toFixed(2)}).` +
       `${upgradesText}`;
     
-    await newsRef.set({
-      title: `Player Swap: ${playerAData.player_name} ↔ ${playerBData.player_name}`,
-      content,
-      season_id: seasonId,
-      category: 'player_movement',
-      is_published: true,
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
-      updated_at: admin.firestore.FieldValue.serverTimestamp()
-    });
+    await sql`
+      INSERT INTO news (title, content, season_id, category, is_published, created_at, updated_at)
+      VALUES (
+        ${`Player Swap: ${playerAData.player_name} ↔ ${playerBData.player_name}`},
+        ${content},
+        ${seasonId},
+        ${'player_movement'},
+        true,
+        NOW(),
+        NOW()
+      )
+    `;
     
     console.log('✅ Swap news created');
     

@@ -9,6 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCachedTeamSeasons, useCachedSeasons } from '@/hooks/useCachedFirebase';
 import type { Season } from '@/types/season';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Team {
   id: string;
@@ -54,6 +55,7 @@ function CopyBalanceToggle({ teamId, eCoin, ssCoin }: { teamId: string; eCoin: n
   };
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="flex items-center gap-1.5">
       {/* Toggle */}
       <div className="flex rounded-lg border border-slate-200 overflow-hidden text-[10px] font-mono font-bold uppercase tracking-wider shrink-0">
@@ -86,6 +88,8 @@ function CopyBalanceToggle({ teamId, eCoin, ssCoin }: { teamId: string; eCoin: n
         {copied ? <Check className="w-3 h-3 shrink-0" /> : <Copy className="w-3 h-3 shrink-0" />}
       </button>
     </div>
+  
+    </AuthGuard>
   );
 }
 
@@ -116,7 +120,6 @@ function CopyAllBalances({
   const currencyLabel = selected === 'ecoin' ? 'eCoin Balance' : selected === 'sscoin' ? 'SSCoin Balance' : 'Balance';
   const accentClass = selected === 'ecoin' ? 'text-indigo-600' : selected === 'sscoin' ? 'text-purple-600' : 'text-amber-600';
   const accentBg = selected === 'ecoin' ? 'bg-indigo-600' : selected === 'sscoin' ? 'bg-purple-600' : 'bg-amber-600';
-
 
   const handleCopyAll = () => {
     const header = `SS Super League — ${seasonName}\n${'='.repeat(36)}\n${currencyLabel} Sheet\n${'-'.repeat(36)}`;
@@ -246,49 +249,32 @@ export default function AllTeamsPage() {
   );
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Get active season (same approach as team-leaderboard)
-  useEffect(() => {
     const fetchActiveSeason = async () => {
       if (!user || user.role !== 'team') return;
 
       try {
-        const { collection, query, getDocs } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase/config');
-        
-        // Get all seasons
-        const seasonsQuery = query(collection(db, 'seasons'));
-        const seasonsSnapshot = await getDocs(seasonsQuery);
+        // Get all seasons from API
+        const seasonsJson = await fetch('/api/seasons').then(r => r.json());
+        const seasonsList: any[] = seasonsJson.data || [];
         const nonCompletedSeasonIds: string[] = [];
         const seasonsMap = new Map<string, { name: string; maxPlayers: number }>();
         
-        seasonsSnapshot.forEach((doc) => {
-          const data = doc.data() as Season;
-          seasonsMap.set(doc.id, {
-            name: data.name || `Season ${data.season_number || 'Unknown'}`,
-            maxPlayers: data.football_base_slots || data.max_football_players || 25
+        seasonsList.forEach((season: any) => {
+          seasonsMap.set(season.id, {
+            name: season.name || `Season ${season.season_number || 'Unknown'}`,
+            maxPlayers: season.football_base_slots || season.max_football_players || 25
           });
           
-          // Include seasons that are NOT completed
-          if (data.status !== 'completed') {
-            nonCompletedSeasonIds.push(doc.id);
+          if (season.status !== 'completed') {
+            nonCompletedSeasonIds.push(season.id);
           }
         });
         
-        // Store the season type for the target season
         const getSeasonType = (sid: string): 'single' | 'multi' => {
-          const season = seasonsSnapshot.docs.find(doc => doc.id === sid);
-          return (season?.data() as Season)?.type || 'single';
+          const season = seasonsList.find((s: any) => s.id === sid);
+          return season?.type || 'single';
         };
 
-        // Get active season
         let targetSeasonId = null;
         if (nonCompletedSeasonIds.length > 0) {
           targetSeasonId = nonCompletedSeasonIds[0];
@@ -296,9 +282,8 @@ export default function AllTeamsPage() {
           setSeasonName(seasonData?.name || 'Current Season');
           setMaxPlayers(seasonData?.maxPlayers || 25);
           setSeasonType(getSeasonType(targetSeasonId));
-        } else if (seasonsSnapshot.size > 0) {
-          // Fallback: use the first active season
-          const firstActiveSeason = seasonsSnapshot.docs.find(doc => doc.data().isActive === true);
+        } else if (seasonsList.length > 0) {
+          const firstActiveSeason = seasonsList.find((s: any) => s.is_active === true || s.isActive === true);
           if (firstActiveSeason) {
             targetSeasonId = firstActiveSeason.id;
             const seasonData = seasonsMap.get(targetSeasonId);
@@ -306,7 +291,7 @@ export default function AllTeamsPage() {
             setMaxPlayers(seasonData?.maxPlayers || 25);
             setSeasonType(getSeasonType(targetSeasonId));
           } else {
-            const firstSeason = seasonsSnapshot.docs[0];
+            const firstSeason = seasonsList[0];
             targetSeasonId = firstSeason.id;
             const seasonData = seasonsMap.get(targetSeasonId);
             setSeasonName(seasonData?.name || 'Season');
@@ -455,7 +440,6 @@ export default function AllTeamsPage() {
     return colors[position] || 'bg-slate-50 text-slate-700 border border-slate-200/40';
   };
 
-
   const isLoading = !seasonId || allTeamsLoading || isRefreshing;
 
   if (loading) {
@@ -468,10 +452,6 @@ export default function AllTeamsPage() {
         </div>
       </div>
     );
-  }
-
-  if (!user || user.role !== 'team') {
-    return null;
   }
 
   if (error) {
@@ -694,6 +674,7 @@ export default function AllTeamsPage() {
                       {POSITIONS.map((position) => {
                         const count = teamData.positionBreakdown[position] || 0;
                         return (
+
                           <div 
                             key={position} 
                             className={`rounded-lg py-1 px-1.5 flex justify-between items-center ${getPositionColor(position)} ${
@@ -703,7 +684,8 @@ export default function AllTeamsPage() {
                             <span>{position}</span>
                             <span className="font-extrabold">{count}</span>
                           </div>
-                        );
+
+  );
                       })}
                     </div>
                   </div>

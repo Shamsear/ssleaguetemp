@@ -1,5 +1,6 @@
 'use client';
 
+
 import { Check, ChevronDown, Pencil, Search, Tag, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
@@ -8,8 +9,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import OptimizedImage from '@/components/OptimizedImage';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   id: string;
@@ -61,22 +61,13 @@ export default function EditCategoriesPage() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!loading && !user) router.push('/login');
-    if (!loading && user && user.role !== 'committee_admin') router.push('/dashboard');
-  }, [user, loading, router]);
-
-  // Fetch categories from Firestore
-  useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const categoriesQuery = query(
-          collection(db, 'categories'),
-          orderBy('priority', 'asc')
-        );
-        const categoriesSnapshot = await getDocs(categoriesQuery);
-        const categoriesData = categoriesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+        const apiRes = await fetch('/api/categories');
+        const { data: apiRows } = await apiRes.json();
+        const categoriesData = (apiRows || []).map((row: any) => ({
+          id: row.id,
+          ...row
         })) as Category[];
         setCategories(categoriesData);
       } catch (error) {
@@ -239,6 +230,7 @@ export default function EditCategoriesPage() {
   if (!user || user.role !== 'committee_admin') return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-10 px-4 sm:px-6">
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
@@ -436,6 +428,7 @@ export default function EditCategoriesPage() {
                             const cs = getCatStyle(catName);
                             const isCurrent = effectiveCat?.toLowerCase() === catName.toLowerCase();
                             return (
+
                               <button
                                 key={category.id}
                                 onClick={() => setCategory(player.id, catName)}
@@ -446,7 +439,8 @@ export default function EditCategoriesPage() {
                                 </span>
                                 {isCurrent && <Check className="w-3 h-3 text-slate-400" />}
                               </button>
-                            );
+
+  );
                           })}
                           {/* Revert option if pending */}
                           {isPending && (
@@ -490,5 +484,7 @@ export default function EditCategoriesPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

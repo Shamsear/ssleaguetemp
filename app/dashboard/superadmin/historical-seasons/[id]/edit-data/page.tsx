@@ -9,6 +9,7 @@ import { getSmartCache, setSmartCache, CACHE_DURATIONS } from '@/utils/smartCach
 import { clearCache } from '@/utils/cache';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Team {
   id: string;
@@ -102,16 +103,6 @@ export default function EditSeasonDataPage() {
   const [selectedColumn, setSelectedColumn] = useState<{ field: string; startIndex: number } | null>(null);
 
   // Auth check
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Extract data processing logic
   const processData = (data: any) => {
     // Process teams data - ensure season_stats exists and map database fields to interface fields
     const processedTeams = (data.teams || []).map((team: any) => {
@@ -460,11 +451,9 @@ export default function EditSeasonDataPage() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-6 animate-fade-in font-mono">
       <div className="space-y-6">
         {/* Header */}
@@ -1082,5 +1071,7 @@ export default function EditSeasonDataPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

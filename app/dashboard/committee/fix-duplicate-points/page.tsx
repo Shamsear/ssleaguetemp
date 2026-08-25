@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface DuplicatePlayer {
   id: string;
@@ -29,16 +30,6 @@ export default function FixDuplicatePointsPage() {
   const [duplicates, setDuplicates] = useState<DuplicatePlayer[]>([]);
   const [fixed, setFixed] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!authLoading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
 
   const analyzeDuplicates = async () => {
     setAnalyzing(true);
@@ -94,6 +85,7 @@ export default function FixDuplicatePointsPage() {
   if (!user || (user.role !== 'committee_admin' && user.role !== 'super_admin')) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
@@ -225,5 +217,7 @@ export default function FixDuplicatePointsPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

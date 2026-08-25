@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
+import { normalizeStr } from '@/lib/utils/normalizeStr'
+import AuthGuard from '@/components/auth/AuthGuard'
 import { 
   ArrowLeft, 
   Search, 
@@ -40,15 +42,6 @@ export default function ScrapedPlayersViewPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
 
   const fetchScrapedPlayers = async () => {
     try {
@@ -222,6 +215,7 @@ export default function ScrapedPlayersViewPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="container mx-auto px-4 pt-5 lg:pt-24 pb-8 max-w-screen-2xl">
       {/* Top Banner Header */}
       <div className="glass rounded-3xl p-6 mb-8 shadow-lg bg-white border border-slate-200/60">
@@ -285,7 +279,6 @@ export default function ScrapedPlayersViewPage() {
           <h2 className="text-lg font-extrabold text-slate-700 font-mono">Scraped Registry is Empty</h2>
           <p className="text-slate-500 text-xs mt-2 leading-relaxed font-mono">
             No player stats have been crawled yet. Go back to the Database Scraper Console to select a position and trigger a live import job.
-import { normalizeStr } from '@/lib/utils/normalizeStr';
           </p>
           <Link
             href="/dashboard/committee/database"
@@ -580,5 +573,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   )
 }

@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import PlayerDetailPage from './PlayerDetailClient';
 
 export const dynamic = 'force-dynamic';

@@ -1,4 +1,4 @@
-import { adminDb as db } from '@/lib/firebase/admin';
+import { adminDb as db } from '@/lib/neon/admin-db-wrapper';
 
 interface LineupNotification {
   id: string;
@@ -41,18 +41,10 @@ export async function sendLineupWarning(
       created_at: new Date().toISOString()
     });
 
-    // Update lineup with warning flag
-    const lineupSnapshot = await db
-      .collection('lineups')
-      .where('fixture_id', '==', fixtureId)
-      .where('team_id', '==', teamId)
-      .get();
-
-    if (!lineupSnapshot.empty) {
-      await lineupSnapshot.docs[0].ref.update({
-        warning_given: true,
-        warning_at: new Date().toISOString()
-      });
+    // Update lineup with warning flag in Neon
+    const { getTournamentDb } = await import('@/lib/neon/tournament-config');
+    const sql = getTournamentDb();
+    await sql`UPDATE lineups SET warning_given = true, warning_at = ${new Date().toISOString()}, updated_at = NOW() WHERE fixture_id = ${fixtureId} AND team_id = ${teamId}`;
     }
 
     return { success: true, notification_id: notificationRef.id };

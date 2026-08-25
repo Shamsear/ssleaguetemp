@@ -3,9 +3,9 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   AlertCircle, 
   Calendar, 
@@ -51,15 +51,6 @@ export default function PlayerProfilePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchPlayer = async () => {
       if (!user || user.role !== 'super_admin' || !playerId) return;
 
@@ -67,19 +58,18 @@ export default function PlayerProfilePage() {
         setLoadingData(true);
         setError(null);
 
-        const playersRef = collection(db, 'realplayers');
-        const q = query(playersRef, where('player_id', '==', playerId));
-        const querySnapshot = await getDocs(q);
+        const apiRes = await fetch(`/api/realplayers?player_id=${playerId}`);
+        const { data: apiRows } = await apiRes.json();
 
-        if (querySnapshot.empty) {
+        if (!apiRows || apiRows.length === 0) {
           setError('Player not found');
           return;
         }
 
-        const playerDoc = querySnapshot.docs[0];
+        const row = apiRows[0];
         setPlayer({
-          ...playerDoc.data(),
-          player_id: playerDoc.data().player_id || playerDoc.id,
+          ...row,
+          player_id: row.player_id || row.id,
         } as PlayerData);
       } catch (error) {
         console.error('Error fetching player:', error);
@@ -148,9 +138,6 @@ export default function PlayerProfilePage() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   if (error || !player) {
     return (
@@ -176,6 +163,7 @@ export default function PlayerProfilePage() {
   }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       {/* Page Header */}
       <div className="flex items-center gap-4 pb-6 border-b border-slate-200/60">
@@ -407,5 +395,7 @@ export default function PlayerProfilePage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

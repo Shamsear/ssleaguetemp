@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AlertModal from '@/components/modals/AlertModal';
 import { useModal } from '@/hooks/useModal';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Slot {
   slot_index: number;
@@ -75,16 +76,6 @@ export default function TeamDraftPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const { alertState, showAlert, closeAlert } = useModal();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const loadDraftData = useCallback(async () => {
     if (!user) return;
@@ -612,6 +603,7 @@ export default function TeamDraftPage() {
   };
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -818,6 +810,7 @@ export default function TeamDraftPage() {
                     const slotBids = localBids.filter(b => b.slot_index === slot.slot_index).sort((a,b) => a.priority - b.priority);
 
                   return (
+
                     <div
                       key={slot.slot_index}
                       onClick={() => setActiveSlotIndex(slot.slot_index)}
@@ -912,7 +905,8 @@ export default function TeamDraftPage() {
                         <p className="text-[9px] text-slate-450 font-bold uppercase italic pl-8 mt-2.5">No bids placed for this slot yet. Select a target.</p>
                       )}
                     </div>
-                  );
+
+  );
                 })}
               </div>
             </div>
@@ -922,5 +916,7 @@ export default function TeamDraftPage() {
 
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

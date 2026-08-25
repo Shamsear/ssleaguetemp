@@ -5,6 +5,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
+import { normalizeStr } from '@/lib/utils/normalizeStr'
+import AuthGuard from '@/components/auth/AuthGuard'
 
 interface Player {
   name: string
@@ -29,15 +31,6 @@ export default function ImportPreviewPage() {
   const [showSummary, setShowSummary] = useState(true)
   const [showDebug, setShowDebug] = useState(false)
   const [availableColumns, setAvailableColumns] = useState<string[]>([])
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
 
   useEffect(() => {
     // Load parsed players from sessionStorage
@@ -242,6 +235,7 @@ export default function ImportPreviewPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="container mx-auto px-4 py-4 sm:py-8 max-w-screen-xl">
       {/* Page Header */}
       <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
@@ -470,6 +464,7 @@ export default function ImportPreviewPage() {
               {paginatedPlayers.map((player, index) => {
                 const actualIndex = (currentPage - 1) * ITEMS_PER_PAGE + index
                 return (
+
                   <tr key={actualIndex} className="hover:bg-white/30">
                     <td className="px-4 py-3">
                       <input
@@ -539,7 +534,8 @@ export default function ImportPreviewPage() {
                       </button>
                     </td>
                   </tr>
-                )
+
+  )
               })}
             </tbody>
           </table>
@@ -596,7 +592,6 @@ export default function ImportPreviewPage() {
           <div>
             <h3 className="text-lg font-semibold text-gray-800 mb-1">Ready to Import</h3>
             <p className="text-sm text-gray-600">Review your changes and start the import process</p>
-import { normalizeStr } from '@/lib/utils/normalizeStr';
           </div>
           <div className="flex gap-3">
             <button
@@ -622,5 +617,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }

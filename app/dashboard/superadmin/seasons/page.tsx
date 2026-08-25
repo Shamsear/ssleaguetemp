@@ -3,14 +3,10 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { 
-  activateSeason, 
-  completeSeason, 
-  deleteSeason,
-  toggleRegistration 
-} from '@/lib/firebase/seasons';
+
 import { useRealtimeSeasons } from '@/hooks/useRealtimeData';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   PlusCircle, 
   Calendar, 
   Users, 
@@ -42,20 +38,15 @@ export default function SeasonsManagement() {
     return numB - numA;
   });
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
   const handleActivateSeason = async (seasonId: string) => {
     if (!confirm('Are you sure you want to activate this season? This will deactivate the current active season.')) return;
     
     try {
-      await activateSeason(seasonId);
+      await fetch(`/api/seasons/${seasonId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: true, status: 'active' }),
+      });
     } catch (err: any) {
       alert(err.message || 'Failed to activate season');
     }
@@ -65,7 +56,11 @@ export default function SeasonsManagement() {
     if (!confirm('Are you sure you want to mark this season as completed? This action cannot be undone.')) return;
     
     try {
-      await completeSeason(seasonId);
+      await fetch(`/api/seasons/${seasonId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: false, status: 'completed' }),
+      });
     } catch (err: any) {
       alert(err.message || 'Failed to complete season');
     }
@@ -79,7 +74,7 @@ export default function SeasonsManagement() {
     if (!confirmed) return;
     
     try {
-      await deleteSeason(seasonId);
+      await fetch(`/api/seasons/${seasonId}`, { method: 'DELETE' });
     } catch (err: any) {
       alert(err.message || 'Failed to delete season');
     }
@@ -87,7 +82,11 @@ export default function SeasonsManagement() {
 
   const handleToggleRegistration = async (seasonId: string, currentStatus: boolean) => {
     try {
-      await toggleRegistration(seasonId, !currentStatus);
+      await fetch(`/api/seasons/${seasonId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registration_open: !currentStatus }),
+      });
     } catch (err: any) {
       alert(err.message || 'Failed to toggle registration');
     }
@@ -130,11 +129,9 @@ export default function SeasonsManagement() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       
       {/* Page Header */}
@@ -333,5 +330,7 @@ export default function SeasonsManagement() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

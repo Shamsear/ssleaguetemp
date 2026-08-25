@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFantasyDb } from '@/lib/neon/fantasy-config';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 /**
  * GET /api/fantasy/leaderboard/[leagueId]

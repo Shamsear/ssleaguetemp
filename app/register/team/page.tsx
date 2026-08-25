@@ -100,7 +100,7 @@ function SeasonRegistrationContent() {
           
           const teamSeasonId = `${user.uid}_${seasonId}`;
           try {
-            const existingDoc = await getDoc(doc(db, 'team_seasons', teamSeasonId));
+            const tsRes = await fetch('/api/team-seasons'); const tsJson = await tsRes.json(); const existingDoc = { exists: () => tsJson.data?.some((t: any) => t.id === teamSeasonId), data: () => tsJson.data?.find((t: any) => t.id === teamSeasonId) };
             if (existingDoc.exists()) {
               const docData = existingDoc.data();
               setRegistrationStatus(docData.status === 'registered' ? 'registered' : 'declined');
@@ -112,21 +112,16 @@ function SeasonRegistrationContent() {
 
           // Check if owner already registered
           try {
-            const { collection, query, where, getDocs } = await import('firebase/firestore');
-            const teamsRef = collection(db, 'teams');
+            const teamsRes = await fetch('/api/teams');
+            const teamsJson = await teamsRes.json();
+            const teamsList = teamsJson.teams || teamsJson.data || [];
             
-            // Try query by userId or uid or owner_uid
-            let querySnapshot = await getDocs(query(teamsRef, where('userId', '==', user.uid)));
-            if (querySnapshot.empty) {
-              querySnapshot = await getDocs(query(teamsRef, where('uid', '==', user.uid)));
-            }
-            if (querySnapshot.empty) {
-              querySnapshot = await getDocs(query(teamsRef, where('owner_uid', '==', user.uid)));
-            }
+            // Find team by userId, uid, or owner_uid
+            const teamData = teamsList.find((t: any) => t.userId === user.uid || t.uid === user.uid || t.owner_uid === user.uid);
             
             let teamIdParam = user.uid; // Fallback
-            if (!querySnapshot.empty) {
-              teamIdParam = querySnapshot.docs[0].id;
+            if (teamData) {
+              teamIdParam = teamData.id;
             }
             
             if (teamIdParam) {

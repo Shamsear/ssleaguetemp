@@ -13,6 +13,7 @@ import PromptModal from '@/components/modals/PromptModal';
 import FixtureShareButton from '@/components/FixtureShareButton';
 import CommitteeMatchupCreator from '@/components/CommitteeMatchupCreator';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Matchup {
   id: number;
@@ -83,15 +84,6 @@ export default function CommitteeFixtureDetailPage() {
     closePrompt,
     handlePromptConfirm,
   } = useModal();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     if (fixtureId && user?.role === 'committee_admin') {
@@ -372,9 +364,6 @@ export default function CommitteeFixtureDetailPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
 
   if (!fixture) {
     return (
@@ -390,6 +379,7 @@ export default function CommitteeFixtureDetailPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 px-4 sm:px-6">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -842,5 +832,7 @@ export default function CommitteeFixtureDetailPage() {
         cancelText={promptState.cancelText}
       />
     </div>
+  
+    </AuthGuard>
   );
 }

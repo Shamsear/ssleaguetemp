@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Search, 
   RefreshCw, 
@@ -295,6 +296,7 @@ export default function RetiredPlayersPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-purple-500/5 to-transparent pointer-events-none" />
@@ -650,5 +652,7 @@ export default function RetiredPlayersPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }

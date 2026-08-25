@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 import { verifyAuth } from '@/lib/auth-helper';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { decryptBidData } from '@/lib/encryption';
 
 const sql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);

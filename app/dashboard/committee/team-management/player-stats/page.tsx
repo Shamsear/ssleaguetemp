@@ -12,6 +12,7 @@ import { useTournament } from '@/hooks/useTournaments';
 import TournamentSelector from '@/components/TournamentSelector';
 import { ArrowLeft, TrendingUp, Activity, Trophy, Download, Search, Award, Shield, Star, Crown, ChevronRight, Info, CheckCircle, X, Flame, BarChart2 } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerStats {
   player_id: string;
@@ -60,16 +61,6 @@ export default function PlayerStatsPage() {
   const [sortField, setSortField] = useState<SortField>('matches_played');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Process player stats data from Neon when it arrives
   useEffect(() => {
     if (!playerStatsData || playerStatsData.length === 0) return;
     
@@ -245,9 +236,6 @@ export default function PlayerStatsPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
 
   // Top performers
   const topScorer = [...playerStats].sort((a, b) => b.goals - a.goals)[0];
@@ -256,6 +244,7 @@ export default function PlayerStatsPage() {
   const highestStars = [...playerStats].sort((a, b) => b.star_rating - a.star_rating)[0];
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -606,5 +595,7 @@ export default function PlayerStatsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

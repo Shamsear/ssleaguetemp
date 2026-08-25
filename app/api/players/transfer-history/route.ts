@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, query, where, orderBy, limit as fbLimit, getDocs, startAfter, Query, DocumentData } from 'firebase/firestore';
+import { getMainDb } from '@/lib/neon/main-config';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,50 +17,44 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build the query
-    const transactionsRef = collection(db, 'transactions');
-    let q: Query<DocumentData> = query(
-      transactionsRef,
-      where('season_id', '==', seasonId),
-      orderBy('created_at', 'desc')
-    );
-
-    // Add transaction type filter if provided
+    const sql = getMainDb();
+    let result;
     if (transactionType) {
-      q = query(
-        transactionsRef,
-        where('season_id', '==', seasonId),
-        where('transaction_type', '==', transactionType),
-        orderBy('created_at', 'desc')
-      );
+      result = await sql`
+        SELECT * FROM transactions
+        WHERE season_id = ${seasonId} AND type = ${transactionType}
+        ORDER BY created_at DESC
+      `;
+    } else {
+      result = await sql`
+        SELECT * FROM transactions
+        WHERE season_id = ${seasonId}
+        ORDER BY created_at DESC
+      `;
     }
 
-    // Fetch all matching documents (Firebase doesn't support offset directly)
-    const querySnapshot = await getDocs(q);
-    
-    let allTransactions: any[] = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      
-      // Apply team filter if provided (client-side filtering)
-      if (teamId) {
-        const matchesTeam = 
-          data.old_team_id === teamId ||
-          data.new_team_id === teamId ||
-          data.team_a_id === teamId ||
-          data.team_b_id === teamId ||
-          data.teams?.team_a_id === teamId ||
-          data.teams?.team_b_id === teamId;
-        
-        if (!matchesTeam) return;
-      }
-      
-      allTransactions.push({
-        id: doc.id,
-        ...data,
-        created_at: data.created_at?.toDate?.()?.toISOString() || new Date().toISOString()
+    let allTransactions: any[] = result.map((row: any) => ({
+      id: row.id,
+      ...row,
+      raw_data: typeof row.raw_data === 'string' ? JSON.parse(row.raw_data) : row.raw_data,
+      created_at: row.created_at?.toISOString?.() || row.created_at || new Date().toISOString()
+    }));
+
+    // Apply team filter if provided (client-side filtering)
+    if (teamId) {
+      allTransactions = allTransactions.filter((data: any) => {
+        const raw = data.raw_data || data;
+        return (
+          raw.old_team_id === teamId ||
+          raw.new_team_id === teamId ||
+          raw.team_a_id === teamId ||
+          raw.team_b_id === teamId ||
+          raw.teams?.team_a_id === teamId ||
+          raw.teams?.team_b_id === teamId ||
+          data.team_id === teamId
+        );
       });
-    });
+    }
 
     // Apply pagination
     const totalCount = allTransactions.length;

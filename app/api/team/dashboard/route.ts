@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { verifyAuth } from '@/lib/auth-helper';
 import { getCached, setCached } from '@/lib/firebase/cache';
 import { checkAndFinalizeExpiredRound } from '@/lib/lazy-finalize-round';

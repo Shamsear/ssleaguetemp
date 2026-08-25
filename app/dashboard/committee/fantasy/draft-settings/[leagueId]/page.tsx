@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Slot {
   slot_index: number;
@@ -76,6 +77,7 @@ function RedListPanel({ listId, label, players, otherListId, movePlayerBetweenLi
   };
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="border border-slate-200 rounded-xl overflow-hidden">
       <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -126,6 +128,8 @@ function RedListPanel({ listId, label, players, otherListId, movePlayerBetweenLi
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }
 
@@ -173,16 +177,6 @@ export default function DraftSettingsPage() {
   });
 
   const { alertState, showAlert, closeAlert } = useModal();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const loadAllData = async () => {
     if (!leagueId) return;
@@ -1044,6 +1038,7 @@ export default function DraftSettingsPage() {
                   .map(player => {
                     const currentList = getPlayerListAssignment(player.real_player_id);
                     return (
+
                       <div key={player.real_player_id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
                           <h4 className="font-black text-slate-800 text-xs uppercase">{player.player_name}</h4>
@@ -1064,7 +1059,8 @@ export default function DraftSettingsPage() {
                           </select>
                         </div>
                       </div>
-                    );
+
+  );
                   })}
 
                 {players.filter(p => (p.category || '').toUpperCase() === playerTab).length === 0 && (

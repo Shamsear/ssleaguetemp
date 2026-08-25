@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function FantasyRecalculatePage() {
   const { user, loading } = useAuth();
@@ -15,15 +16,6 @@ export default function FantasyRecalculatePage() {
   const [logs, setLogs] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee' && user.role !== 'superadmin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const startRecalculation = async () => {
     if (!confirm('Are you sure you want to recalculate all fantasy points? This will:\n\n1. Recalculate all player points\n2. Recalculate all passive team bonuses\n3. Update squad totals\n4. Update team totals and ranks\n\nThis may take a few minutes.')) {
@@ -73,6 +65,7 @@ export default function FantasyRecalculatePage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       {/* Header */}
       <div className="mb-6">
@@ -251,5 +244,7 @@ export default function FantasyRecalculatePage() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

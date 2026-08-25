@@ -9,6 +9,7 @@ import Link from 'next/link';
 import OptimizedImage from '@/components/OptimizedImage';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface RealPlayer {
   player_id: string;
@@ -74,11 +75,6 @@ export default function RealPlayersPage() {
   const itemsPerPage = 20;
 
   useEffect(() => {
-    if (!loading && !user) router.push('/login');
-    if (!loading && user && user.role !== 'team') router.push('/dashboard');
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
       const startTime = Date.now();
@@ -108,20 +104,14 @@ export default function RealPlayersPage() {
           // 2.5) Fetch team_seasons to build a map of team_id -> team_name
           const teamNameMap = new Map<string, string>();
           try {
-            const { collection, query, where, getDocs } = await import('firebase/firestore');
-            const { db } = await import('@/lib/firebase/config');
-            
-            const teamSeasonsQuery = query(
-              collection(db, 'team_seasons'),
-              where('season_id', '==', season.id)
-            );
-            const teamSeasonsSnapshot = await getDocs(teamSeasonsQuery);
-            teamSeasonsSnapshot.forEach(doc => {
-              const data = doc.data();
-              const teamId = doc.id.split('_')[0];
-              const name = data.team_name || data.team_code || 'Unknown Team';
+            const teamSeasonsRes = await fetch(`/api/team-seasons?season_id=${season.id}`);
+            const teamSeasonsJson = await teamSeasonsRes.json();
+            const allTeamSeasons = teamSeasonsJson.data || teamSeasonsJson.teamSeasons || [];
+            for (const ts of allTeamSeasons) {
+              const teamId = (ts.id || '').split('_')[0] || ts.team_id;
+              const name = ts.team_name || ts.team_code || 'Unknown Team';
               teamNameMap.set(teamId, name);
-            });
+            }
             
             // Apply team names to rawPlayers
             rawPlayers.forEach(p => {
@@ -275,6 +265,7 @@ export default function RealPlayersPage() {
   };
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
@@ -594,6 +585,7 @@ export default function RealPlayersPage() {
                 .map((page, idx, arr) => {
                   const showDots = idx > 0 && page - arr[idx - 1] > 1;
                   return (
+
                     <div key={page} className="flex items-center gap-1.5">
                       {showDots && <span className="text-slate-400">...</span>}
                       <button
@@ -607,7 +599,8 @@ export default function RealPlayersPage() {
                         {page}
                       </button>
                     </div>
-                  );
+
+  );
                 })}
             </div>
             <button
@@ -630,5 +623,7 @@ export default function RealPlayersPage() {
         <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
       </button>
     </div>
+  
+    </AuthGuard>
   );
 }

@@ -7,6 +7,7 @@ import { SoccerBallIcon } from '@/components/ui/CustomIcons';
 import { Trophy, BarChart2, Star, TrendingUp, Award, Crown, ClipboardList, CheckCircle2, Target, Info, XCircle } from 'lucide-react';
 import { getIdToken } from 'firebase/auth';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 // Types for the season data
 interface Season {
@@ -217,137 +218,6 @@ export default function HistoricalSeasonDetailPage() {
   const [isSubmittingAward, setIsSubmittingAward] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
-    console.log('🔄 UPDATED VERSION: HistoricalSeasonDetailPage useEffect called', { seasonId, loading, user: user ? `${user.role} (${user.uid})` : 'null' });
-    
-    // Don't fetch data until user is loaded and authenticated
-    if (!seasonId || loading || !user) return;
-    
-    // Only allow super admins
-    if (user.role !== 'super_admin') {
-      console.warn('Access denied: Super admin role required');
-      router.push('/dashboard');
-      return;
-    }
-
-    const fetchSeasonData = async (retryCount = 0) => {
-      const maxRetries = 3;
-      
-      try {
-        setIsLoading(true);
-        console.log(`\n🔍 Using API route to fetch season data for ID: ${seasonId} (attempt ${retryCount + 1})`);
-        console.log(`👤 Current user: ${user?.role} (${user?.uid})`);
-
-        // Use server-side API route to bypass client-side permission issues
-        console.log('📞 Making API call to /api/seasons/historical/${seasonId}...');
-        const url = `/api/seasons/historical/${seasonId}?loadAll=true`;
-        const response = await fetchWithTokenRefresh(url);
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const { success, data, pagination, error } = await response.json();
-        
-        if (!success) {
-          throw new Error(error || 'Failed to fetch season data');
-        }
-        
-        // Set all data from the API response
-        setSeason(data.season as Season);
-        
-        // Deduplicate teams by ID (in case API returns duplicates)
-        const uniqueTeamsMap = new Map();
-        (data.teams as Team[]).forEach(team => {
-          if (!uniqueTeamsMap.has(team.id)) {
-            uniqueTeamsMap.set(team.id, team);
-          }
-        });
-        const uniqueTeams = Array.from(uniqueTeamsMap.values());
-        console.log(`  - Teams: ${data.teams.length} raw, ${uniqueTeams.length} after dedup`);
-        setTeams(uniqueTeams);
-        
-        setPlayers(data.players as Player[]);
-        setAwards(data.awards as Award[]);
-        setMatches(data.matches as Match[]);
-        
-        // Fetch trophies from team_trophies table
-        try {
-          const trophiesResponse = await fetchWithTokenRefresh(`/api/trophies?season_id=${seasonId}`);
-          if (trophiesResponse.ok) {
-            const trophiesData = await trophiesResponse.json();
-            if (trophiesData.success) {
-              setTrophies(trophiesData.trophies || []);
-              console.log(`  - Trophies: ${trophiesData.trophies.length}`);
-            }
-          }
-        } catch (trophyError) {
-          console.error('Error fetching trophies:', trophyError);
-        }
-        
-        // Fetch player awards from player_awards table
-        try {
-          const awardsResponse = await fetchWithTokenRefresh(`/api/player-awards?season_id=${seasonId}`);
-          if (awardsResponse.ok) {
-            const awardsData = await awardsResponse.json();
-            if (awardsData.success) {
-              setPlayerAwards(awardsData.awards || []);
-              console.log(`  - Player Awards: ${awardsData.awards.length}`);
-            }
-          }
-        } catch (awardError) {
-          console.error('Error fetching player awards:', awardError);
-        }
-        
-        console.log('✅ All data loaded successfully via API!');
-        console.log(`  - Season: ${data.season.name}`);
-        console.log(`  - Teams: ${data.teams.length}`);
-        console.log(`  - Players: ${data.players.length} (ALL LOADED)`);
-        console.log(`  - Awards: ${data.awards.length}`);
-        console.log(`  - Matches: ${data.matches.length}`);
-        setIsLoading(false);
-
-      } catch (error: any) {
-        console.error(`❌ Error fetching season data (attempt ${retryCount + 1}):`, error);
-        
-        // Handle permission errors with retry logic
-        if (error.code === 'permission-denied' && retryCount < maxRetries) {
-          console.warn(`🔁 Permission denied, retrying in ${Math.pow(2, retryCount) * 1000}ms...`);
-          
-          // Wait before retrying with exponential backoff
-          setTimeout(() => {
-            fetchSeasonData(retryCount + 1);
-          }, Math.pow(2, retryCount) * 1000);
-          return; // Don't set loading to false - we're retrying
-        }
-        
-        // If not a permission error or retries exhausted, show error and redirect
-        console.error('❌ All retries exhausted or non-permission error:', error.message);
-        alert(`Failed to load season data: ${error.message}. Redirecting back to historical seasons.`);
-        router.push('/dashboard/superadmin/historical-seasons');
-        setIsLoading(false);
-      }
-    };
-
-    // Add a small delay to ensure Firebase Auth state has propagated to Firestore
-    console.log('✅ User authenticated as super admin, waiting 200ms for auth propagation...');
-    setTimeout(() => {
-      fetchSeasonData();
-    }, 200);
-  }, [seasonId, loading, router, user]); // Removed pagination dependencies
-
-  // Calculate statistics (no financial data for historical seasons)
-  // Category/Position distribution
   const categoryDistribution = players.reduce((acc, player) => {
     const category = player.category || 'Unknown';
     acc[category] = (acc[category] || 0) + 1;
@@ -708,10 +578,10 @@ export default function HistoricalSeasonDetailPage() {
       
       // Save preview data to Firestore (persists player linkings)
       try {
-        await updateDoc(doc(db, 'seasons', seasonId), {
+        await fetch(`/api/seasons/${seasonId}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({
           preview_data: result.data,
-          preview_saved_at: serverTimestamp()
-        });
+          preview_saved_at: new Date().toISOString()
+        })});
         console.log('✅ Preview data saved to Firestore');
       } catch (saveError) {
         console.warn('⚠️ Could not save preview data:', saveError);
@@ -1099,10 +969,6 @@ export default function HistoricalSeasonDetailPage() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
-
   if (!season) {
     return (
       <div className="flex items-center justify-center pt-32 p-4">
@@ -1128,6 +994,7 @@ export default function HistoricalSeasonDetailPage() {
   }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       <div className="space-y-6">
         {/* Enhanced Page Header */}
@@ -3314,11 +3181,13 @@ export default function HistoricalSeasonDetailPage() {
                               }
                               
                               return (
+
                                 <div key={index} className="flex items-start">
                                   <span className="text-red-500 mr-2 mt-0.5">•</span>
                                   <span className="text-xs text-red-700">{errorMessage}</span>
                                 </div>
-                              );
+
+  );
                             })}
                           </div>
                         </div>
@@ -4034,5 +3903,7 @@ export default function HistoricalSeasonDetailPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

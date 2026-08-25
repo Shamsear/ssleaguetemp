@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { 
   collection, 
   query, 
@@ -9,6 +9,7 @@ import {
   QueryConstraint 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { useSSE } from './useSSE';
 import { Season } from '@/types/season';
 import { AdminInvite } from '@/types/invite';
 import { User } from '@/types/user';
@@ -28,88 +29,42 @@ const convertTimestamp = (timestamp: any): Date => {
 };
 
 /**
- * Hook for real-time seasons data
+ * Hook for real-time seasons data — uses API polling instead of Firebase
  */
 export const useRealtimeSeasons = (user?: any, userLoading?: boolean) => {
-  const [seasons, setSeasons] = useState<Season[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const [enabled, setEnabled] = useState(false);
+  
   useEffect(() => {
-    console.log('useRealtimeSeasons effect called:', { userLoading, user: user ? `${user.role} (${user.uid})` : 'null' });
-    
-    // Don't start listening until user is loaded and authenticated
-    if (userLoading) {
-      console.log('⏳ User still loading, waiting...');
-      return;
-    }
-    
-    if (!user) {
-      console.log('⏳ No user authenticated, waiting...');
-      return;
-    }
-
-    // Only allow super admins to access seasons real-time data
-    if (user.role !== 'super_admin') {
-      console.warn('❌ Access denied: Super admin role required, user role:', user.role);
-      setError('Access denied: Super admin role required');
-      setLoading(false);
-      return;
-    }
-
-    console.log('✅ Starting real-time seasons listener for authenticated super admin...');
-    
-    const seasonsQuery = query(
-      collection(db, 'seasons'),
-      orderBy('created_at', 'desc') // Use created_at to match API
-    );
-
-    const unsubscribe = onSnapshot(
-      seasonsQuery,
-      (snapshot) => {
-        console.log(`✅ Received ${snapshot.size} seasons from real-time listener`);
-        const seasonsData: Season[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          seasonsData.push({
-            id: doc.id,
-            ...data,
-            // Generate name from season_number if name doesn't exist
-            name: data.name || (data.season_number ? `Season ${data.season_number}` : data.year || 'Unnamed Season'),
-            year: data.year || (data.season_number ? `${data.season_number}` : 'N/A'),
-            startDate: data.startDate ? convertTimestamp(data.startDate) : undefined,
-            endDate: data.endDate ? convertTimestamp(data.endDate) : undefined,
-            createdAt: convertTimestamp(data.created_at || data.createdAt),
-            updatedAt: convertTimestamp(data.updated_at || data.updatedAt),
-          } as Season);
-        });
-        setSeasons(seasonsData);
-        setLoading(false);
-        setError(null);
-      },
-      (err) => {
-        console.error('Error fetching real-time seasons:', err);
-        setError(err.message || 'Failed to fetch seasons');
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      console.log('Cleaning up real-time seasons listener...');
-      unsubscribe();
-    };
+    if (userLoading) return;
+    if (!user) return;
+    if (user.role !== 'super_admin') return;
+    setEnabled(true);
   }, [user, userLoading]);
 
-  return { seasons, loading, error };
+  const { data: rawSeasons, loading, error, connected } = useSSE<any>('seasons', {
+    interval: 5,
+    enabled,
+  });
+
+  const seasons: Season[] = rawSeasons.map((s: any) => ({
+    id: s.id,
+    ...s,
+    name: s.name || (s.season_number ? `Season ${s.season_number}` : s.year || 'Unnamed Season'),
+    year: s.year || (s.season_number ? `${s.season_number}` : 'N/A'),
+    startDate: s.startDate || s.start_date,
+    endDate: s.endDate || s.end_date,
+    createdAt: s.created_at || s.createdAt,
+    updatedAt: s.updated_at || s.updatedAt,
+  }));
+
+  return { seasons, loading, error: error || (!enabled ? 'Access denied' : null), refetch: () => {} };
 };
 
 /**
- * Hook for real-time invites data
+ * Hook for real-time invites data (stays on Firebase — not migrated)
  */
 export const useRealtimeInvites = () => {
   const [invites, setInvites] = useState<AdminInvite[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const invitesQuery = query(
@@ -131,23 +86,20 @@ export const useRealtimeInvites = () => {
           } as AdminInvite);
         });
         setInvites(invitesData);
-        setLoading(false);
       },
       (err) => {
         console.error('Error fetching real-time invites:', err);
-        setError(err.message);
-        setLoading(false);
       }
     );
 
     return () => unsubscribe();
   }, []);
 
-  return { invites, loading, error };
+  return { invites, loading: false, error: null };
 };
 
 /**
- * Hook for real-time users data with optional filtering
+ * Hook for real-time users data with optional filtering (stays on Firebase — not migrated)
  */
 export const useRealtimeUsers = (role?: string, user?: any, userLoading?: boolean) => {
   const [users, setUsers] = useState<User[]>([]);
@@ -155,22 +107,14 @@ export const useRealtimeUsers = (role?: string, user?: any, userLoading?: boolea
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Don't start listening until user is loaded and authenticated
-    if (userLoading || !user) {
-      return;
-    }
-
-    // Only allow authenticated users to access users data
+    if (userLoading || !user) return;
     if (!user.uid) {
       setError('Authentication required');
       setLoading(false);
       return;
     }
 
-    console.log('Starting real-time users listener for authenticated user...');
-    
     const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
-    
     if (role) {
       constraints.unshift(where('role', '==', role));
     }
@@ -180,7 +124,6 @@ export const useRealtimeUsers = (role?: string, user?: any, userLoading?: boolea
     const unsubscribe = onSnapshot(
       usersQuery,
       (snapshot) => {
-        console.log(`✅ Received ${snapshot.size} users from real-time listener`);
         const usersData: User[] = [];
         snapshot.forEach((doc) => {
           const data = doc.data();
@@ -195,23 +138,19 @@ export const useRealtimeUsers = (role?: string, user?: any, userLoading?: boolea
         setError(null);
       },
       (err) => {
-        console.error('Error fetching real-time users:', err);
         setError(err.message || 'Failed to fetch users');
         setLoading(false);
       }
     );
 
-    return () => {
-      console.log('Cleaning up real-time users listener...');
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, [role, user, userLoading]);
 
   return { users, loading, error };
 };
 
 /**
- * Hook for real-time committee admins by season
+ * Hook for real-time committee admins by season (stays on Firebase — not migrated)
  */
 export const useRealtimeCommitteeAdmins = (seasonId?: string) => {
   const [admins, setAdmins] = useState<User[]>([]);
@@ -227,7 +166,7 @@ export const useRealtimeCommitteeAdmins = (seasonId?: string) => {
     const adminsQuery = query(
       collection(db, 'users'),
       where('role', '==', 'committee_admin'),
-      where('seasonId', '==', seasonId)
+      where('seasonIds', 'array-contains', seasonId)
     );
 
     const unsubscribe = onSnapshot(
@@ -246,7 +185,6 @@ export const useRealtimeCommitteeAdmins = (seasonId?: string) => {
         setLoading(false);
       },
       (err) => {
-        console.error('Error fetching real-time committee admins:', err);
         setError(err.message);
         setLoading(false);
       }
@@ -259,99 +197,48 @@ export const useRealtimeCommitteeAdmins = (seasonId?: string) => {
 };
 
 /**
- * Hook for real-time teams data
+ * Hook for real-time football players data (stays on Firebase — not migrated)
  */
-export const useRealtimeTeams = (seasonId?: string) => {
-  const [teams, setTeams] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
-    
-    if (seasonId) {
-      constraints.unshift(where('seasonId', '==', seasonId));
-    }
-
-    const teamsQuery = query(collection(db, 'teams'), ...constraints);
-
-    const unsubscribe = onSnapshot(
-      teamsQuery,
-      (snapshot) => {
-        const teamsData: any[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          teamsData.push({
-            id: doc.id,
-            ...data,
-            createdAt: convertTimestamp(data.createdAt),
-            updatedAt: convertTimestamp(data.updatedAt),
-          });
-        });
-        setTeams(teamsData);
-        setLoading(false);
-      },
-      (err) => {
-        console.error('Error fetching real-time teams:', err);
-        setError(err.message);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [seasonId]);
-
-  return { teams, loading, error };
-};
-
-/**
- * Hook for real-time players data
- */
-export const useRealtimePlayers = (seasonId?: string) => {
+export const useRealtimeFootballPlayers = (teamId?: string) => {
   const [players, setPlayers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
-    
-    if (seasonId) {
-      constraints.unshift(where('seasonId', '==', seasonId));
+    const constraints: QueryConstraint[] = [];
+    if (teamId) {
+      constraints.push(where('team_id', '==', teamId));
     }
 
-    const playersQuery = query(collection(db, 'footballPlayers'), ...constraints);
+    const playersQuery = query(
+      collection(db, 'footballPlayers'),
+      ...constraints
+    );
 
     const unsubscribe = onSnapshot(
       playersQuery,
       (snapshot) => {
         const playersData: any[] = [];
         snapshot.forEach((doc) => {
-          const data = doc.data();
-          playersData.push({
-            id: doc.id,
-            ...data,
-            createdAt: convertTimestamp(data.createdAt),
-            updatedAt: convertTimestamp(data.updatedAt),
-          });
+          playersData.push({ id: doc.id, ...doc.data() });
         });
         setPlayers(playersData);
         setLoading(false);
       },
       (err) => {
-        console.error('Error fetching real-time players:', err);
         setError(err.message);
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [seasonId]);
+  }, [teamId]);
 
   return { players, loading, error };
 };
 
 /**
- * Generic hook for any Firestore collection with real-time updates
+ * Generic hook for any Firestore collection with real-time updates (stays on Firebase — not migrated)
  */
 export const useRealtimeCollection = <T = any>(
   collectionName: string,
@@ -370,28 +257,21 @@ export const useRealtimeCollection = <T = any>(
     const unsubscribe = onSnapshot(
       collectionQuery,
       (snapshot) => {
-        const items: T[] = [];
+        const data: T[] = [];
         snapshot.forEach((doc) => {
-          const docData = doc.data();
-          items.push({
-            id: doc.id,
-            ...docData,
-            createdAt: docData.createdAt ? convertTimestamp(docData.createdAt) : undefined,
-            updatedAt: docData.updatedAt ? convertTimestamp(docData.updatedAt) : undefined,
-          } as T);
+          data.push({ id: doc.id, ...doc.data() } as T);
         });
-        setData(items);
+        setData(data);
         setLoading(false);
       },
       (err) => {
-        console.error(`Error fetching real-time ${collectionName}:`, err);
         setError(err.message);
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [collectionName, JSON.stringify(constraints)]);
+  }, [collectionName, ...constraints]);
 
   return { data, loading, error };
 };

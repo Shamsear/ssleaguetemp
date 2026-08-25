@@ -9,6 +9,7 @@ import { Info, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface H2HStanding {
   standing_id: string;
@@ -175,6 +176,7 @@ export default function H2HPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="p-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-6">
@@ -444,6 +446,7 @@ export default function H2HPage() {
                 const opponentPoints = getOpponentPoints(fixture);
 
                 return (
+
                   <div
                     key={fixture.fixture_id}
                     className="px-6 py-4 hover:bg-gray-50"
@@ -476,7 +479,8 @@ export default function H2HPage() {
                       </div>
                     </div>
                   </div>
-                );
+
+  );
               })}
             </div>
           )}
@@ -495,5 +499,7 @@ export default function H2HPage() {
         </ul>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

@@ -18,9 +18,9 @@ export async function GET(
     let teamInfo = null;
     try {
       const { db } = await import('@/lib/firebase/config');
-      const { doc, getDoc } = await import('firebase/firestore');
       
-      const teamDoc = await getDoc(doc(db, 'teams', teamId));
+      
+      const sql = getMainDb(); const teamRows = await sql`SELECT * FROM teams WHERE id = ${teamId} LIMIT 1`; const teamDoc = { exists: () => teamRows.length > 0, data: () => teamRows[0] };
       if (teamDoc.exists()) {
         const teamData = teamDoc.data();
         teamInfo = {
@@ -214,10 +214,10 @@ async function getTournamentWiseStats(
   if (uniqueSeasonIds.length > 0) {
     try {
       const { db } = await import('@/lib/firebase/config');
-      const { doc, getDoc } = await import('firebase/firestore');
+      
       
       for (const sId of uniqueSeasonIds) {
-        const seasonDoc = await getDoc(doc(db, 'seasons', sId));
+        const sql = getMainDb(); const seasonRows = await sql`SELECT * FROM seasons WHERE id = ${sId} LIMIT 1`; const seasonDoc = { exists: () => seasonRows.length > 0, data: () => seasonRows[0] };
         if (seasonDoc.exists()) {
           const seasonData = seasonDoc.data();
           seasonNames[sId] = seasonData.season_name || seasonData.name || `Season ${seasonData.season_number || ''}`;
@@ -447,9 +447,9 @@ async function getSeasonSummary(sql: any, teamId: string, seasonId: string | nul
     let seasonName = 'Unknown Season';
     try {
       const { db } = await import('@/lib/firebase/config');
-      const { doc, getDoc } = await import('firebase/firestore');
       
-      const seasonDoc = await getDoc(doc(db, 'seasons', season.season_id));
+      
+      const sql = getMainDb(); const seasonRows = await sql`SELECT * FROM seasons WHERE id = ${season.season_id} LIMIT 1`; const seasonDoc = { exists: () => seasonRows.length > 0, data: () => seasonRows[0] };
       if (seasonDoc.exists()) {
         const seasonData = seasonDoc.data();
         seasonName = seasonData.season_name || seasonData.name || `Season ${seasonData.season_number || ''}`;

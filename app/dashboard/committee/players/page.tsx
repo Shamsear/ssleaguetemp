@@ -11,6 +11,7 @@ import { useModal } from '@/hooks/useModal'
 import AlertModal from '@/components/modals/AlertModal'
 import ConfirmModal from '@/components/modals/ConfirmModal'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface FootballPlayer {
   id: string
@@ -160,15 +161,6 @@ export default function CommitteePlayersPage() {
   } = useModal()
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
-
-  useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage])
 
@@ -195,9 +187,9 @@ export default function CommitteePlayersPage() {
       }
       if (searchTerm.trim()) params.append('search', searchTerm.trim())
 
-      // Fetch teams from Firestore (keep) and players from Neon (new)
-      const [teamsSnapshot, playersResponse] = await Promise.all([
-        getDocs(collection(db, 'teams')),
+      // Fetch teams from API and players from Neon
+      const [teamsJson, playersResponse] = await Promise.all([
+        fetch('/api/teams').then(r => r.json()),
         fetch(`/api/players?${params}`)
       ])
 
@@ -206,17 +198,18 @@ export default function CommitteePlayersPage() {
         throw new Error('Failed to fetch players')
       }
 
-      console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Fetched ${playersData.length} players from Neon, ${teamsSnapshot.size} teams from Firestore`)
+      const teamsList = teamsJson.teams || teamsJson.data || []
+      console.log(`Fetched ${playersData.length} players from Neon, ${teamsList.length} teams`)
 
       // Use the actual total count from API
       setTotalPlayers(totalCount || 0)
 
       // Build teams cache
       const teamsMap = new Map<string, { id: string; name: string }>()
-      teamsSnapshot.docs.forEach(teamDoc => {
-        teamsMap.set(teamDoc.id, {
-          id: teamDoc.id,
-          name: teamDoc.data().team_name || teamDoc.data().name
+      teamsList.forEach((team: any) => {
+        teamsMap.set(team.id, {
+          id: team.id,
+          name: team.team_name || team.name
         })
       })
       setTeamsCache(teamsMap)
@@ -794,11 +787,8 @@ export default function CommitteePlayersPage() {
     )
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null
-  }
-
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -1434,6 +1424,7 @@ export default function CommitteePlayersPage() {
                       const isAllCatChecked = catKeys.every(k => selectedExportColumns.includes(k));
                       
                       return (
+
                         <div key={catIdx} className="space-y-1.5">
                           <div className="flex justify-between items-center border-b border-slate-200/60 pb-1 mb-1">
                             <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
@@ -1473,7 +1464,8 @@ export default function CommitteePlayersPage() {
                             ))}
                           </div>
                         </div>
-                      );
+
+  );
                     })}
                   </div>
                 </div>
@@ -1503,5 +1495,7 @@ export default function CommitteePlayersPage() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   )
 }

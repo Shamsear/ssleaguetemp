@@ -4,7 +4,7 @@ import { verifyAuth } from '@/lib/auth-helper';
 import { encryptBidData } from '@/lib/encryption';
 import { broadcastRoundUpdate } from '@/lib/realtime/broadcast';
 import { generateBidId, generateTeamId } from '@/lib/id-generator';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { calculateReserve } from '@/lib/reserve-calculator';
 
 const sql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);

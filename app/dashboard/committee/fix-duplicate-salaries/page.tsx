@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function FixDuplicateSalariesPage() {
   const { user, loading } = useAuth();
@@ -13,16 +14,6 @@ export default function FixDuplicateSalariesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedIds, setProcessedIds] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     if (user && (user.role === 'committee_admin' || user.role === 'super_admin')) {
@@ -136,6 +127,7 @@ export default function FixDuplicateSalariesPage() {
   if (!user || (user.role !== 'committee_admin' && user.role !== 'super_admin')) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
@@ -251,5 +243,7 @@ export default function FixDuplicateSalariesPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

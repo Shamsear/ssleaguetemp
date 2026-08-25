@@ -3,8 +3,9 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { createSeason } from '@/lib/firebase/seasons';
+
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Calendar, 
   Settings, 
@@ -36,15 +37,6 @@ export default function CreateSeason() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -64,20 +56,28 @@ export default function CreateSeason() {
 
       const seasonNumber = parseInt(formData.seasonNumber);
       
-      await createSeason({
-        name: `Season ${seasonNumber}`,
-        season_number: seasonNumber,
-        year: formData.year.trim(),
-        type: formData.type,
-        ...(formData.type === 'multi' && {
-          dollar_budget: formData.dollar_budget,
-          euro_budget: formData.euro_budget,
-          required_real_players: formData.required_real_players,
-          max_football_players: formData.max_football_players,
-          category_fine_amount: formData.category_fine_amount,
-          category_fine_currency: formData.category_fine_currency,
+      const res = await fetch('/api/seasons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `Season ${seasonNumber}`,
+          season_number: seasonNumber,
+          year: formData.year.trim(),
+          type: formData.type,
+          ...(formData.type === 'multi' && {
+            dollar_budget: formData.dollar_budget,
+            euro_budget: formData.euro_budget,
+            required_real_players: formData.required_real_players,
+            max_football_players: formData.max_football_players,
+            category_fine_amount: formData.category_fine_amount,
+            category_fine_currency: formData.category_fine_currency,
+          }),
         }),
       });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to create season');
+      }
 
       // Redirect to seasons page after successful creation
       router.push('/dashboard/superadmin/seasons');
@@ -108,11 +108,9 @@ export default function CreateSeason() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       
       {/* Page Header */}
@@ -330,5 +328,7 @@ export default function CreateSeason() {
         </form>
 
       </div>
+  
+    </AuthGuard>
   );
 }

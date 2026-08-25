@@ -9,6 +9,7 @@ import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface FantasyTeam {
   id: string;
@@ -100,16 +101,6 @@ export default function DraftResultsPage() {
       }
     }, []),
   });
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const loadData = useCallback(async () => {
       if (!leagueId) return;
@@ -227,6 +218,7 @@ export default function DraftResultsPage() {
   if (!user || !league) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -480,6 +472,7 @@ export default function DraftResultsPage() {
                     const spent = players.reduce((sum, p) => sum + (p.draft_price || 0), 0);
                     
                     return (
+
                       <button
                         key={team.id}
                         onClick={() => setSelectedTeam(team.id)}
@@ -507,7 +500,8 @@ export default function DraftResultsPage() {
                           {players.length} players • {spent.toFixed(1)} credits
                         </div>
                       </button>
-                    );
+
+  );
                   })}
                 </div>
               </div>
@@ -636,5 +630,7 @@ export default function DraftResultsPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

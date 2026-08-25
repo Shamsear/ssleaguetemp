@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerRound {
     round: number;
@@ -93,13 +94,6 @@ export default function FantasyPointsBreakdownPage() {
     const [expandedRounds, setExpandedRounds] = useState<Set<string>>(new Set());
 
     useEffect(() => {
-        if (!loading && (!user || !isCommitteeAdmin)) {
-            router.push('/dashboard');
-            return;
-        }
-    }, [user, loading, isCommitteeAdmin, router]);
-
-    useEffect(() => {
         const fetchData = async () => {
             if (!user || !isCommitteeAdmin) return;
 
@@ -152,6 +146,7 @@ export default function FantasyPointsBreakdownPage() {
         : teams.filter(t => t.team_id === selectedTeam);
 
     return (
+    <AuthGuard requiredRole="committee_admin">
         <div className="min-h-screen py-6 px-4 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
             <div className="container mx-auto max-w-7xl">
                 {/* Header */}
@@ -698,7 +693,8 @@ export default function FantasyPointsBreakdownPage() {
                                                                     {type}: {count}
                                                                 </span>
                                                             </div>
-                                                        );
+
+  );
                                                     })}
                                                 </div>
                                             </div>
@@ -729,5 +725,6 @@ export default function FantasyPointsBreakdownPage() {
                 </div>
             </div>
         </div>
+    </AuthGuard>
     );
 }

@@ -9,9 +9,10 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import { BarChart2, ArrowLeft, Pencil, Check, Search, Calendar, Users, Trophy, ClipboardList, ShieldAlert, CheckCircle, Star, Activity } from 'lucide-react';
 import { db } from '@/lib/firebase/client';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+
 import PlayerPhoto from '@/components/PlayerPhoto';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerStats {
   id: string;
@@ -84,17 +85,6 @@ export default function PlayerStatsPage() {
   const [selectedSeason, setSelectedSeason] = useState<string>('');
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!authLoading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
-
-  // Load the active season
-  useEffect(() => {
     const loadActiveSeason = async () => {
       try {
         setLoading(true);
@@ -103,13 +93,13 @@ export default function PlayerStatsPage() {
 
         // If no userSeasonId, fallback to first active season
         if (!activeSeasonId) {
-          const seasonsQuery = query(collection(db, 'seasons'));
-          const seasonsSnapshot = await getDocs(seasonsQuery);
-          for (const docSnap of seasonsSnapshot.docs) {
-            const data = docSnap.data();
-            if (data.status === 'active' || data.status !== 'completed') {
-              activeSeasonId = docSnap.id;
-              activeSeasonName = data.name || `Season ${data.season_number || ''}`;
+          const seasonsRes = await fetch('/api/seasons');
+          const seasonsJson = await seasonsRes.json();
+          const seasonsList = seasonsJson.data || seasonsJson.seasons || [];
+          for (const s of seasonsList) {
+            if (s.status === 'active' || s.status !== 'completed') {
+              activeSeasonId = s.id;
+              activeSeasonName = s.name || `Season ${s.season_number || ''}`;
               break;
             }
           }
@@ -408,6 +398,7 @@ export default function PlayerStatsPage() {
   if (!user || (user.role !== 'committee_admin' && user.role !== 'super_admin')) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -1048,6 +1039,7 @@ export default function PlayerStatsPage() {
                 const predictions = getPredictedChanges(player);
 
                 return (
+
                   <div 
                     key={player.id} 
                     className={`console-card bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm relative overflow-hidden font-mono ${hasEdits ? 'bg-amber-50/50 border-amber-300' : ''}`}
@@ -1290,7 +1282,8 @@ export default function PlayerStatsPage() {
                       </div>
                     )}
                   </div>
-                );
+
+  );
               })
             )}
           </div>
@@ -1368,5 +1361,7 @@ export default function PlayerStatsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

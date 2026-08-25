@@ -159,22 +159,24 @@ function PlayerVerifyContent() {
 
       try {
         // Fetch season, player data, and registration stats in parallel
-        const seasonPromise = getDoc(doc(db, 'seasons', seasonId))
+        const seasonPromise = fetch(`/api/seasons/${seasonId}`)
         const playerPromise = playerId 
-          ? getDocs(query(collection(db, 'realplayers'), where('player_id', '==', playerId)))
-          : Promise.resolve(null)
+          ? fetch(`/api/realplayers?player_id=${playerId}`)
+          : Promise.resolve({ json: async () => ({ data: [] }) })
         const statsPromise = fetch(`/api/admin/registration-phases?season_id=${seasonId}`).catch(() => null)
 
-        const [seasonDoc, playerSnapshot, statsResponse] = await Promise.all([seasonPromise, playerPromise, statsPromise])
+        const [seasonRes, playerRes, statsResponse] = await Promise.all([seasonPromise, playerPromise, statsPromise])
+        const seasonDoc = await seasonRes.json()
+        const playerSnapshotJson = await playerRes.json()
 
         // Process season data
-        if (!seasonDoc.exists()) {
+        if (!seasonDoc.success || !seasonDoc.data) {
           setError('Season not found')
           setLoading(false)
           return
         }
 
-        const seasonData = { id: seasonDoc.id, ...seasonDoc.data() } as Season
+        const seasonData = { id: seasonDoc.data.id, ...seasonDoc.data } as Season
 
         if (!seasonData.is_player_registration_open) {
           setError('Player registration is currently closed for this season')
@@ -204,8 +206,9 @@ function PlayerVerifyContent() {
             email: user.email || '',
             phone: ''
           })
-        } else if (playerSnapshot && !playerSnapshot.empty) {
-          const playerData = { id: playerSnapshot.docs[0].id, ...playerSnapshot.docs[0].data() } as Player
+        } else if (playerSnapshotJson.data && playerSnapshotJson.data.length > 0) {
+          const row = playerSnapshotJson.data[0];
+          const playerData = { id: row.id, ...row } as Player
           setPlayer(playerData)
 
           // Pre-fill photo preview if player already has a photo
@@ -299,11 +302,11 @@ function PlayerVerifyContent() {
 
     setSearching(true)
     try {
-      const realPlayersRef = collection(db, 'realplayers')
-      const playersSnapshot = await getDocs(realPlayersRef)
-      const allPlayers = playersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
+      const rpRes = await fetch('/api/realplayers')
+      const rpJson = await rpRes.json()
+      const allPlayers = (rpJson.data || []).map((row: any) => ({
+        id: row.id,
+        ...row
       })) as Player[]
 
       // Filter by player_id or name
@@ -334,17 +337,16 @@ function PlayerVerifyContent() {
     // Fetch previous season team and category
     try {
       if (seasonId) {
-        const currentSeasonDoc = await getDoc(doc(db, 'seasons', seasonId))
-        if (currentSeasonDoc.exists()) {
-          const currentSeasonNumber = parseInt(currentSeasonDoc.data().name.replace(/\D/g, ''))
+        const seasonRes2 = await fetch(`/api/seasons/${seasonId}`)
+        const seasonJson2 = await seasonRes2.json()
+        if (seasonJson2.success && seasonJson2.data) {
+          const currentSeasonNumber = parseInt((seasonJson2.data.name || '').replace(/\D/g, ''))
           
           if (currentSeasonNumber > 1) {
-            // Query team_seasons for previous season
-            const previousSeasonQuery = query(
-              collection(db, 'team_seasons'),
-              where('season_number', '==', currentSeasonNumber - 1)
-            )
-            const teamSeasonsSnapshot = await getDocs(previousSeasonQuery)
+            // Query team_seasons via admin API
+            const tsRes = await fetch(`/api/team/all?season_id=SSPSLS${(currentSeasonNumber - 1).toString().padStart(2, '0')}`)
+            const tsJson = await tsRes.json()
+            const teamSeasonsSnapshot = { docs: (tsJson.data || tsJson.teams || []).map((t: any) => ({ data: () => t })) }
             
             // Find team that has this player
             for (const teamDoc of teamSeasonsSnapshot.docs) {
@@ -515,8 +517,9 @@ function PlayerVerifyContent() {
       
       if (isNewPlayer && !finalPlayerId) {
         // Generate new player ID by finding the max ID
-        const playersRef = collection(db, 'realplayers')
-        const playersSnapshot = await getDocs(query(playersRef))
+        const rpRes = await fetch('/api/realplayers')
+        const rpJson = await rpRes.json()
+        const playersSnapshot = { docs: (rpJson.data || []).map((r: any) => ({ data: () => r })) }
         const maxId = playersSnapshot.docs.reduce((max, doc) => {
           const id = (doc.data() as any).player_id as string
           if (id && id.startsWith('sspslpsl')) {

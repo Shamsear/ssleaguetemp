@@ -7,6 +7,7 @@ import Link from 'next/link'
 import BulkPhotoUpload from '@/components/BulkPhotoUpload'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
 import { ArrowLeft, Database, UploadCloud, FileSpreadsheet, DownloadCloud, CheckCircle2, Trash2, Filter, Sparkles, RefreshCw, AlertTriangle, Info, Users, Eye, ChevronDown, ChevronUp, Activity, PlusCircle, ShieldAlert, CheckCircle, BarChart2 } from 'lucide-react'
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerCount {
   total: number
@@ -377,15 +378,6 @@ export default function DatabaseManagementPage() {
   const [minRating, setMinRating] = useState('')
   const [maxRating, setMaxRating] = useState('')
   const [filteredCount, setFilteredCount] = useState('')
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
 
   useEffect(() => {
     if (user?.role === 'committee_admin') {
@@ -837,6 +829,7 @@ export default function DatabaseManagementPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -1648,5 +1641,7 @@ export default function DatabaseManagementPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }

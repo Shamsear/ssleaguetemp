@@ -11,6 +11,7 @@ import ConfirmModal from '@/components/modals/ConfirmModal';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import TiebreakerWinnerPage from '@/components/TiebreakerWinnerModal';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   id: string;
@@ -305,16 +306,6 @@ export default function TeamBulkTiebreakerPage() {
 
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch tiebreaker data on mount
-  useEffect(() => {
     fetchData();
   }, [fetchData]);
 
@@ -602,6 +593,7 @@ export default function TeamBulkTiebreakerPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -889,5 +881,7 @@ export default function TeamBulkTiebreakerPage() {
         type={confirmState.type}
       />
     </div>
+  
+    </AuthGuard>
   );
 }

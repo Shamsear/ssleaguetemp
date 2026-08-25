@@ -7,7 +7,7 @@
  * - Helper functions for common Firebase operations
  */
 
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { getCached, setCached, invalidateCache as baseInvalidateCache } from '@/lib/firebase/cache';
 
 // Cache durations for different data types

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Download, 
   Upload, 
@@ -26,15 +27,6 @@ export default function ImportHistoricalSeason() {
   const [uploading, setUploading] = useState(false);
   const [seasonNumber, setSeasonNumber] = useState('');
   const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -199,11 +191,9 @@ export default function ImportHistoricalSeason() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       {/* Page Header */}
       <div className="flex items-center gap-4 pb-6 border-b border-slate-200/60">
@@ -382,5 +372,7 @@ export default function ImportHistoricalSeason() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

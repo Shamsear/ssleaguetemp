@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb as firebaseDb } from '@/lib/firebase/admin';
+import { adminDb as firebaseDb } from '@/lib/neon/admin-db-wrapper';
 import { tournamentSql as sql } from '@/lib/neon/tournament-config';
 
 export const maxDuration = 60;

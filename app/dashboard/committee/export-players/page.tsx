@@ -8,6 +8,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { Download, FileSpreadsheet, AlertTriangle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface SeasonStats {
   season_id: string;
@@ -45,36 +46,19 @@ export default function ExportPlayersPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && !isCommitteeAdmin) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router, isCommitteeAdmin]);
-
-  // Fetch available seasons
-  useEffect(() => {
     const fetchSeasons = async () => {
       try {
-        const { collection, getDocs, orderBy, query } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase/config');
+        const seasonsRes = await fetch('/api/seasons');
+        const seasonsJson = await seasonsRes.json();
+        const seasonsList = seasonsJson.data || seasonsJson.seasons || [];
+        // Sort by created_at desc
+        seasonsList.sort((a: any, b: any) => (b.created_at || '').localeCompare(a.created_at || ''));
 
-        const seasonsQuery = query(
-          collection(db, 'seasons'),
-          orderBy('created_at', 'desc')
-        );
-
-        const seasonsSnapshot = await getDocs(seasonsQuery);
-        const seasonsData = seasonsSnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            // Use name if exists, otherwise format ID nicely (SSPSLS18 -> Season 18)
-            displayName: data.name || doc.id.replace('SSPSLS', 'Season '),
-          };
-        });
+        const seasonsData = seasonsList.map((s: any) => ({
+          id: s.id,
+          ...s,
+          displayName: s.name || s.id.replace('SSPSLS', 'Season '),
+        }));
 
         // Sort by season number (extract number from ID)
         seasonsData.sort((a, b) => {
@@ -377,6 +361,7 @@ export default function ExportPlayersPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 px-4 sm:px-6">
       {/* Decorative overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
@@ -563,6 +548,7 @@ export default function ExportPlayersPage() {
                       }).map(seasonId => {
                         const stats = player.seasons.get(seasonId);
                         return (
+
                           <React.Fragment key={`${player.player_id}-${seasonId}`}>
                             <td className="px-2 py-3 text-center font-bold text-slate-700 border-l-2 border-slate-200">
                               {stats ? stats.matches_played : '-'}
@@ -580,7 +566,8 @@ export default function ExportPlayersPage() {
                               {stats ? stats.losses : '-'}
                             </td>
                           </React.Fragment>
-                        );
+
+  );
                       })}
                     </tr>
                   ))}
@@ -612,5 +599,7 @@ export default function ExportPlayersPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

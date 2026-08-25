@@ -8,6 +8,7 @@ import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { ArrowLeft, Shuffle, RefreshCw, AlertTriangle, Info, Layers, Activity, Sparkles, CheckCircle, BarChart2 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 // Only these positions are used for position groups
 const POSITION_GROUP_POSITIONS = ['CB', 'DMF', 'CMF', 'AMF', 'CF'] as const;
@@ -68,15 +69,6 @@ export default function PositionGroupsPage() {
 
   // Modal system
   const { alertState, showAlert, closeAlert } = useModal();
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
 
   useEffect(() => {
     if (user?.role === 'committee_admin') {
@@ -320,7 +312,6 @@ export default function PositionGroupsPage() {
     }
   };
 
-
   const handleSwapGroup = async (player: Player) => {
     if (!selectedPosition || !player.position_group) return;
 
@@ -374,11 +365,8 @@ export default function PositionGroupsPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
-
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -436,6 +424,7 @@ export default function PositionGroupsPage() {
               const isSelected = selectedPosition === position;
               
               return (
+
                 <button
                   key={position}
                   onClick={() => handlePositionClick(position)}
@@ -459,7 +448,8 @@ export default function PositionGroupsPage() {
                     <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
                   )}
                 </button>
-              );
+
+  );
             })}
           </div>
         </div>
@@ -650,6 +640,8 @@ export default function PositionGroupsPage() {
         type={alertState.type}
       />
     </div>
+  
+    </AuthGuard>
   );
 }
 

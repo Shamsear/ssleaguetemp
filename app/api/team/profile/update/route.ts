@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { verifyAuth } from '@/lib/auth-helper';
 import { formatId, ID_PREFIXES, ID_PADDING } from '@/lib/id-utils';
 

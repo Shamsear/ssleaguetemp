@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Team {
   id: string;
@@ -43,15 +44,6 @@ export default function EditTeamMemberPage() {
     steam_id: '',
     notes: '',
   });
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -157,9 +149,6 @@ export default function EditTeamMemberPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
 
   if (playerNotFound) {
     return (
@@ -192,6 +181,7 @@ export default function EditTeamMemberPage() {
   };
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -534,5 +524,7 @@ export default function EditTeamMemberPage() {
         </form>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

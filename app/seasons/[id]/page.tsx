@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import SeasonDetailPage from './SeasonDetailClient';
 
 export const dynamic = 'force-dynamic';

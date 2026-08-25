@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import { db } from '@/lib/firebase/config';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { collection, getDocs } from 'firebase/firestore';
 
 export async function POST(request: NextRequest) {
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     console.log('🔄 Starting fixture ID migration...');
     
     // Get all team_seasons from Firebase to build a mapping
-    const teamSeasonsSnapshot = await getDocs(collection(db, 'team_seasons'));
+    const teamSeasonsSnapshot = await getDocs(adminDb.collection('team_seasons'));
     const teamMapping = new Map<string, { teamId: string, teamName: string, seasonId: string }>();
     
     teamSeasonsSnapshot.docs.forEach(doc => {

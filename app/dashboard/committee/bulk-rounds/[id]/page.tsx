@@ -10,6 +10,7 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { PlayerAvatar } from '@/components/PlayerImage';
 import { ArrowLeft, Clock, DollarSign, Users, Check, Calendar, ChevronRight, Info, Sparkles, Plus, Play, Layers, Settings, Download, RefreshCw, AlertTriangle, XCircle, CheckCircle, Trash2, Lock, Trophy, BarChart2 } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface BulkBid {
   player_id: string;
@@ -406,15 +407,6 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
   const isConnected = isRoundConnected;
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     if (resolvedParams.id) {
       fetchRound();
       fetchTeamSummary();
@@ -427,7 +419,6 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
       fetchTeamSummary();
     }
   }, [teamSummaryRefreshTrigger]);
-
 
   // Timer for active rounds
   useEffect(() => {
@@ -704,6 +695,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
   const shouldShowBids = round.status === 'completed' || timeRemaining === 0;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <>
       {/* Loading Overlay */}
       {isFinalizing && (
@@ -1121,6 +1113,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                     const hasStarted = team.players_selected > 0;
                     
                     return (
+
                       <div 
                         key={team.team_id} 
                         className={`border rounded-2xl p-4 transition-all hover:shadow-sm ${
@@ -1182,7 +1175,8 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                           </div>
                         </div>
                       </div>
-                    );
+
+  );
                   })}
               </div>
             )}
@@ -1896,5 +1890,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
         </div>
       </div>
     </>
+  
+    </AuthGuard>
   );
 }

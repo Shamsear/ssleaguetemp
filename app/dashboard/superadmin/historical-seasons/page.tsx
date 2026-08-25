@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Download, 
   Upload, 
@@ -72,15 +73,6 @@ export default function HistoricalSeasons() {
       fetchSeasons();
     }
   }, [user, loading]);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -174,11 +166,9 @@ export default function HistoricalSeasons() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       
       {/* Info Banner about new structure */}
@@ -380,5 +370,7 @@ export default function HistoricalSeasons() {
       </div>
 
     </div>
+  
+    </AuthGuard>
   );
 }

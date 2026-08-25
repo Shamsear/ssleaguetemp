@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs, or, orderBy, limit as firestoreLimit, startAt, endAt } from 'firebase/firestore';
+import { getMainDb } from '@/lib/neon/main-config';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 
 // In-memory cache for all players (cached for 5 minutes)
@@ -15,16 +14,14 @@ async function getAllPlayers() {
     return playersCache.data;
   }
 
-  // Fetch fresh data
-  const realPlayersRef = collection(db, 'realplayers');
-  const playersSnapshot = await getDocs(
-    query(realPlayersRef, orderBy('player_id'))
-  );
+  // Fetch fresh data from Neon
+  const sql = getMainDb();
+  const rows = await sql`SELECT id, player_id, name FROM realplayers ORDER BY player_id ASC`;
 
-  const players = playersSnapshot.docs.map(doc => ({
-    id: doc.id,
-    player_id: doc.data().player_id,
-    name: doc.data().name,
+  const players = rows.map((row: any) => ({
+    id: row.id,
+    player_id: row.player_id,
+    name: row.name,
   }));
 
   // Update cache

@@ -23,11 +23,11 @@ import {
   Trash2
 } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+
 import { createPortal } from 'react-dom';
 import { usePermissions } from '@/hooks/usePermissions';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface CashPayment {
   payment_id: string;
@@ -97,30 +97,19 @@ export default function CommitteeCashBalances() {
 
   // 1. Authenticate user
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // 2. Load all seasons from Firestore
-  useEffect(() => {
     if (!user || (user.role !== 'committee_admin' && user.role !== 'super_admin')) return;
 
     const loadSeasons = async () => {
       try {
-        const seasonsQuery = query(collection(db, 'seasons'), orderBy('created_at', 'desc'));
-        const seasonsSnapshot = await getDocs(seasonsQuery);
+        const seasonsJson = await fetch('/api/seasons').then(r => r.json());
+        const seasonsList = seasonsJson.data || [];
         
         const loadedSeasons: Season[] = [];
-        seasonsSnapshot.forEach(doc => {
-          const data = doc.data();
+        seasonsList.forEach((data: any) => {
           loadedSeasons.push({
-            id: doc.id,
-            name: data.name || doc.id,
-            isActive: data.isActive || false,
+            id: data.id,
+            name: data.name || data.id,
+            isActive: data.is_active || data.isActive || false,
             status: data.status || 'active',
           });
         });
@@ -517,6 +506,7 @@ export default function CommitteeCashBalances() {
   if (loading || !user || (user.role !== 'committee_admin' && user.role !== 'super_admin')) {
     return null;
   }  return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -1298,5 +1288,6 @@ export default function CommitteeCashBalances() {
         document.body
       )}
     </div>
+    </AuthGuard>
   );
 }

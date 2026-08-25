@@ -24,6 +24,7 @@ import {
   Check
 } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 // Helper to group sub-seasons (like 16.5 into 16, 17.5 into 17)
 function getBaseSeasonId(seasonId: string): string {
@@ -102,16 +103,6 @@ export default function PlayerCategorizationPage() {
   const [selectedHistoricalSeasons, setSelectedHistoricalSeasons] = useState<string[]>([]);
 
   // Redirect if unauthorized
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-    if (!authLoading && user && !isCommitteeAdmin) {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router, isCommitteeAdmin]);
-
-  // Update weights based on preset and maxSeasons
   useEffect(() => {
     if (weightPreset === 'custom') return;
 
@@ -343,7 +334,6 @@ export default function PlayerCategorizationPage() {
           });
         }
       });
-
 
       // Track any seasons this player has stats in, but were excluded by our settings
       const excludedSeasons: string[] = [];
@@ -631,7 +621,6 @@ export default function PlayerCategorizationPage() {
       return row;
     });
 
-
     const ExcelJS = (await import('exceljs')).default;
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Player Categories');
@@ -648,8 +637,6 @@ export default function PlayerCategorizationPage() {
     a.click();
     URL.revokeObjectURL(url);
   };
-
-
 
   // Filtered player list based on search term and advanced selectors
   const filteredPlayers = useMemo(() => {
@@ -716,6 +703,7 @@ export default function PlayerCategorizationPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
@@ -1415,6 +1403,7 @@ export default function PlayerCategorizationPage() {
                   };
 
                   return (
+
                     <div key={playerId} className="px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-slate-50">
                       <div className="flex flex-col min-w-0">
                         <span className="text-xs font-bold text-slate-800 font-mono truncate">{player.player_name}</span>
@@ -1447,7 +1436,8 @@ export default function PlayerCategorizationPage() {
                         ✕
                       </button>
                     </div>
-                  );
+
+  );
                 })}
               </div>
 
@@ -1468,5 +1458,7 @@ export default function PlayerCategorizationPage() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

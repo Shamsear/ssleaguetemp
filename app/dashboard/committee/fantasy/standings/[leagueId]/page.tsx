@@ -8,6 +8,7 @@ import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import ShareableFantasyLeaderboard from '@/components/fantasy/ShareableFantasyLeaderboard';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface LeaderboardEntry {
   rank: number;
@@ -33,16 +34,6 @@ export default function FantasyStandingsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const { alertState, showAlert, closeAlert } = useModal();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     const loadLeaderboard = async () => {
@@ -105,6 +96,7 @@ export default function FantasyStandingsPage() {
   };
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -175,6 +167,7 @@ export default function FantasyStandingsPage() {
                   {leaderboard.map((entry, index) => {
                     const badge = getRankBadge(entry.rank || index + 1);
                     return (
+
                       <tr 
                         key={entry.fantasy_team_id}
                         className="hover:bg-slate-50 transition-colors"
@@ -222,7 +215,8 @@ export default function FantasyStandingsPage() {
                           {entry.total_points}
                         </td>
                       </tr>
-                    );
+
+  );
                   })}
                 </tbody>
               </table>
@@ -253,5 +247,7 @@ export default function FantasyStandingsPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

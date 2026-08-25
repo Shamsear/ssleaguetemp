@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { Coins, Award, ArrowLeft, Info, HelpCircle, Save, Wallet, TrendingUp, Sparkles, TrendingDown, CheckCircle } from 'lucide-react'
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Team {
   teamId: string
@@ -25,15 +26,6 @@ export default function RefundsPage() {
   const [refundType, setRefundType] = useState<'football' | 'real_player'>('football')
   const [amount, setAmount] = useState('')
   const [reason, setReason] = useState('')
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
 
   const loadTeams = async () => {
     setLoading(true)
@@ -132,13 +124,11 @@ export default function RefundsPage() {
     )
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null
-  }
 
   const selectedTeamData = teams.find(t => t.teamId === selectedTeam)
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Ambient Gold Glow Overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -320,5 +310,7 @@ export default function RefundsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }

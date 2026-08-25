@@ -9,6 +9,7 @@ import { BarChart2, Calendar, Info, User, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerInfo {
   player_id: string;
@@ -136,6 +137,7 @@ export default function PlayerAnalysisPage() {
   const maxPoints = getMaxPoints();
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="p-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-6">
@@ -230,6 +232,7 @@ export default function PlayerAnalysisPage() {
               const isExcellent = perf.points >= 15;
               
               return (
+
                 <div key={perf.round_id} className="flex items-center gap-3">
                   <div className="w-16 text-sm text-gray-600 text-right">
                     R{perf.round_number}
@@ -252,7 +255,8 @@ export default function PlayerAnalysisPage() {
                     </div>
                   </div>
                 </div>
-              );
+
+  );
             })}
           </div>
         )}
@@ -331,5 +335,7 @@ export default function PlayerAnalysisPage() {
         </ul>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

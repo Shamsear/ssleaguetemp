@@ -7,10 +7,8 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { ArrowLeft, Users, DollarSign, Percent, CheckCircle, AlertCircle, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
-import { getSeasonById } from '@/lib/firebase/seasons';
 import { Season } from '@/types/season';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   id: string;
@@ -47,34 +45,22 @@ export default function RetainPlayersPage() {
   const [isRetaining, setIsRetaining] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchData = async () => {
       if (!userSeasonId) return;
 
       try {
-        // Fetch season
-        const season = await getSeasonById(userSeasonId);
-        setCurrentSeason(season);
+        // Fetch season from API
+        const seasonRes = await fetch(`/api/seasons/${userSeasonId}`);
+        const seasonJson = await seasonRes.json();
+        if (seasonJson.success && seasonJson.data) {
+          setCurrentSeason(seasonJson.data);
+        }
 
         // Fetch team_seasons to get budget data
-        const teamSeasonsQuery = query(
-          collection(db, 'team_seasons'),
-          where('season_id', '==', userSeasonId),
-          where('status', '==', 'registered')
-        );
-        const teamSeasonsSnapshot = await getDocs(teamSeasonsQuery);
-        const teamSeasonsData = teamSeasonsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const teamSeasonsRes = await fetch(`/api/team-seasons?season_id=${userSeasonId}`);
+        const teamSeasonsJson = await teamSeasonsRes.json();
+        const allTeamSeasons = teamSeasonsJson.data || teamSeasonsJson.teamSeasons || [];
+        const teamSeasonsData = allTeamSeasons.filter((ts: any) => ts.status === 'registered' || ts.status === 'active');
         setTeamSeasons(teamSeasonsData);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -317,11 +303,9 @@ export default function RetainPlayersPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
@@ -536,5 +520,7 @@ export default function RetainPlayersPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

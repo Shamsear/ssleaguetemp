@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCachedSeasons } from '@/hooks/useCachedFirebase';
 import NotificationButton from '@/components/notifications/NotificationButton';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'DMF', 'CMF', 'AMF', 'LMF', 'RMF', 'LWF', 'RWF', 'SS', 'CF'];
 const MAX_PLAYERS_PER_TEAM = 25;
@@ -70,16 +71,6 @@ export default function TeamProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch active season using the same hook as main dashboard
   const { data: activeSeasons, isLoading: seasonsLoading } = useCachedSeasons(
     user?.role === 'team' ? { isActive: 'true' } : undefined
   );
@@ -167,10 +158,6 @@ export default function TeamProfilePage() {
     );
   }
 
-  if (!user || user.role !== 'team') {
-    return null;
-  }
-
   if (!profileData) {
     return (
       <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
@@ -198,6 +185,7 @@ export default function TeamProfilePage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -368,6 +356,7 @@ export default function TeamProfilePage() {
             {POSITIONS.map((position) => {
               const count = profileData.positionCounts[position] || 0;
               return (
+
                 <div key={position} className="bg-slate-50/50 border border-slate-150 rounded-xl p-4 text-center hover:bg-slate-50 transition-all duration-200 shadow-sm">
                   <div
                     className={`w-12 h-12 mx-auto mb-2 rounded-xl flex items-center justify-center font-black text-lg shadow-sm border ${
@@ -382,7 +371,8 @@ export default function TeamProfilePage() {
                   </div>
                   <p className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider">{position}</p>
                 </div>
-              );
+
+  );
             })}
           </div>
         </div>
@@ -616,6 +606,8 @@ export default function TeamProfilePage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }
 

@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PreviewData {
   round_summary: {
@@ -66,16 +67,6 @@ export default function CalculatePointsPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [results, setResults] = useState<any>(null);
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const loadPreview = async () => {
     if (!selectedRound) {
@@ -171,6 +162,7 @@ export default function CalculatePointsPage() {
   };
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -605,5 +597,7 @@ export default function CalculatePointsPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

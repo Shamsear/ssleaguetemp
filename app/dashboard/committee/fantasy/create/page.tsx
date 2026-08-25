@@ -8,8 +8,8 @@ import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Season {
   id: string;
@@ -30,18 +30,6 @@ export default function CreateFantasyLeaguePage() {
   const [existingLeague, setExistingLeague] = useState<any>(null);
 
   const { alertState, showAlert, closeAlert } = useModal();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user) {
-      if (user.role !== 'committee_admin' && user.role !== 'super_admin') {
-        router.push('/dashboard');
-      }
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     const loadCurrentSeason = async () => {
@@ -69,20 +57,17 @@ export default function CreateFantasyLeaguePage() {
           }
         }
         
-        // Fetch seasons from Firestore instead of Postgres API to ensure availability
-        const seasonsQuery = query(collection(db, 'seasons'), orderBy('created_at', 'desc'));
-        const seasonsSnapshot = await getDocs(seasonsQuery);
+        // Fetch seasons from API
+        const seasonsRes = await fetch('/api/seasons');
+        const seasonsJson = await seasonsRes.json();
+        const rawSeasons = seasonsJson.data || seasonsJson.seasons || [];
         
-        const seasonsList: Season[] = [];
-        seasonsSnapshot.forEach(doc => {
-          const data = doc.data();
-          seasonsList.push({
-            id: doc.id,
-            season_id: doc.id,
-            name: data.name || doc.id.replace('SSPSLS', 'Season '),
-            status: data.status || (data.isActive ? 'active' : 'completed'),
-          });
-        });
+        const seasonsList: Season[] = rawSeasons.map((s: any) => ({
+          id: s.id,
+          season_id: s.id,
+          name: s.name || s.id.replace('SSPSLS', 'Season '),
+          status: s.status || (s.is_active ? 'active' : 'completed'),
+        }));
         
         // Sort seasons by ID number ascending
         const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
@@ -280,6 +265,7 @@ export default function CreateFantasyLeaguePage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       <AlertModal {...alertState} onClose={closeAlert} />
       {/* Ambient Gold Glow */}
@@ -427,5 +413,7 @@ export default function CreateFantasyLeaguePage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

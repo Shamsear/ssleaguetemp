@@ -10,6 +10,7 @@ import { useTournament } from '@/hooks/useTournaments';
 import TournamentSelector from '@/components/TournamentSelector';
 import TournamentStandings from '@/components/tournament/TournamentStandings';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function TeamLeaderboardPage() {
   const { user, loading } = useAuth();
@@ -25,40 +26,32 @@ export default function TeamLeaderboardPage() {
       if (!user || user.role !== 'team') return;
 
       try {
-        // Get active season from Firebase
-        const { db } = await import('@/lib/firebase/config');
-        const { collection, query, where, getDocs } = await import('firebase/firestore');
+        // Get active season
+        const seasonsRes = await fetch('/api/seasons');
+        const seasonsJson = await seasonsRes.json();
+        const seasonsList = (seasonsJson.data || seasonsJson.seasons || []).filter((s: any) => s.status === 'active' || s.is_active === true);
         
-        const seasonsRef = collection(db, 'seasons');
-        const activeSeasonQuery = query(seasonsRef, where('isActive', '==', true));
-        const snapshot = await getDocs(activeSeasonQuery);
-        
-        if (!snapshot.empty) {
-          const activeSeason = snapshot.docs[0];
-          const activeSeasonId = activeSeason.id;
+        if (seasonsList.length > 0) {
+          const activeSeasonId = seasonsList[0].id;
           
-          console.log('📝 [Leaderboard] Found active season:', activeSeasonId);
+          console.log('[Leaderboard] Found active season:', activeSeasonId);
           
           // Check if team is registered for this season
-          const teamSeasonsRef = collection(db, 'team_seasons');
-          const teamSeasonQuery = query(
-            teamSeasonsRef,
-            where('user_id', '==', user.uid),
-            where('season_id', '==', activeSeasonId),
-            where('status', '==', 'registered')
-          );
-          const teamSeasonSnapshot = await getDocs(teamSeasonQuery);
+          const teamSeasonsRes = await fetch(`/api/team-seasons?user_id=${user.uid}&season_id=${activeSeasonId}`);
+          const teamSeasonsJson = await teamSeasonsRes.json();
+          const allTeamSeasons = teamSeasonsJson.data || teamSeasonsJson.teamSeasons || [];
+          const teamSeasonSnapshot = allTeamSeasons.filter((ts: any) => ts.status === 'registered');
           
-          if (!teamSeasonSnapshot.empty) {
-            console.log('📝 [Leaderboard] Team is registered, setting season ID:', activeSeasonId);
+          if (teamSeasonSnapshot.length > 0) {
+            console.log('[Leaderboard] Team is registered, setting season ID:', activeSeasonId);
             setSeasonId(activeSeasonId);
           } else {
-            console.log('⚠️ [Leaderboard] Team not registered for active season, but setting it anyway for viewing');
+            console.log('[Leaderboard] Team not registered for active season, but setting it anyway for viewing');
             // Set it anyway so they can view the leaderboard
             setSeasonId(activeSeasonId);
           }
         } else {
-          console.log('⚠️ [Leaderboard] No active season found');
+          console.log('[Leaderboard] No active season found');
         }
       } catch (error) {
         console.error('<XCircle className="w-4 h-4 text-rose-500" /> [Leaderboard] Error fetching team season:', error);
@@ -67,15 +60,6 @@ export default function TeamLeaderboardPage() {
 
     fetchTeamSeason();
   }, [user, setSeasonId]);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   if (loading) {
     return (
@@ -89,11 +73,9 @@ export default function TeamLeaderboardPage() {
     );
   }
 
-  if (!user || user.role !== 'team') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -176,5 +158,7 @@ export default function TeamLeaderboardPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 import { verifyAuth } from '@/lib/auth-helper';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { logAuctionWin } from '@/lib/transaction-logger';
 import { triggerNews } from '@/lib/news/trigger';
 import { generateTiebreakerId } from '@/lib/id-generator';

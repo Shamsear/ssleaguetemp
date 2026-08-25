@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
 import { ClipboardList, Flame, Gem, Star } from 'lucide-react';
 import Link from 'next/link';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface TeamCarryover {
   team_id: string;
@@ -66,20 +67,6 @@ export default function SeasonCarryoverPage() {
   const [previewLoaded, setPreviewLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      console.log('No user, redirecting to login');
-      router.push('/login');
-    }
-    if (!authLoading && user) {
-      console.log('User role:', user.role);
-      if (user.role !== 'super_admin') {
-        console.log('Not super_admin, redirecting to dashboard');
-        router.push('/dashboard');
-      }
-    }
-  }, [user, authLoading, router]);
 
   useEffect(() => {
     if (user && user.role === 'super_admin') {
@@ -171,6 +158,7 @@ export default function SeasonCarryoverPage() {
   const playersWithPointsReset = playerCarryover.filter(p => p.current_points > 0).length;
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -582,5 +570,7 @@ export default function SeasonCarryoverPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

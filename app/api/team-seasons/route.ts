@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 /**
  * GET /api/team-seasons
@@ -14,6 +14,14 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('user_id');
     const seasonId = searchParams.get('season_id');
 
+    // If only season_id is provided, return ALL team seasons for that season
+    if (seasonId && !userId) {
+      const { getMainDb } = await import('@/lib/neon/main-config');
+      const sql = getMainDb();
+      const rows = await sql`SELECT * FROM team_seasons WHERE season_id = ${seasonId} ORDER BY team_name ASC`;
+      return NextResponse.json({ success: true, data: rows });
+    }
+
     if (!userId || !seasonId) {
       return NextResponse.json(
         { success: false, error: 'user_id and season_id are required' },
@@ -21,9 +29,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('🔍 Fetching team_season for:', { userId, seasonId });
-
-    // Query team_seasons collection in Firebase
+    // Single user lookup via wrapper
     const teamSeasonsQuery = await adminDb
       .collection('team_seasons')
       .where('user_id', '==', userId)
@@ -33,7 +39,6 @@ export async function GET(request: NextRequest) {
       .get();
 
     if (teamSeasonsQuery.empty) {
-      console.log('❌ No team_season found for user');
       return NextResponse.json(
         { success: false, error: 'No team registration found for this season' },
         { status: 404 }
@@ -42,8 +47,6 @@ export async function GET(request: NextRequest) {
 
     const teamSeasonDoc = teamSeasonsQuery.docs[0];
     const teamSeasonData = teamSeasonDoc.data();
-
-    console.log('✅ Found team_season:', teamSeasonData);
 
     return NextResponse.json({
       success: true,

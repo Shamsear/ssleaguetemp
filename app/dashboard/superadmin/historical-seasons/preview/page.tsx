@@ -7,7 +7,6 @@ import { findMatches, MatchResult } from '@/lib/utils/fuzzyMatch';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { ArrowLeft } from 'lucide-react';
 
-
 interface TeamData {
   rank: number;
   team: string;
@@ -114,16 +113,6 @@ export default function PreviewHistoricalSeason() {
   const [playerSearchQuery, setPlayerSearchQuery] = useState<Map<number, string>>(new Map());
   const [openPlayerDropdown, setOpenPlayerDropdown] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Sync player team names to match linked team names
   const syncPlayerTeamNames = useCallback((playersData: PlayerData[], oldTeams: TeamData[], newTeams: TeamData[], existingTeamsData: ExistingEntities['teams']) => {
     return playersData.map(player => {
       // Find which team this player belongs to based on the old team name
@@ -885,11 +874,8 @@ export default function PreviewHistoricalSeason() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
-
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
@@ -1725,6 +1711,7 @@ export default function PreviewHistoricalSeason() {
                                     .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                                   
                                   return (
+
                                     <>
                                       {/* Suggested Matches */}
                                       {filteredSuggested.length > 0 && (
@@ -1787,7 +1774,8 @@ export default function PreviewHistoricalSeason() {
                                         </div>
                                       )}
                                     </>
-                                  );
+
+  );
                                 })()}
                               </div>
                             </div>
@@ -2039,6 +2027,7 @@ export default function PreviewHistoricalSeason() {
               <h3 className="text-lg font-semibold text-gray-800 mb-1">Ready to Import</h3>
               <p className="text-sm text-gray-600">Review your changes and start the import process</p>
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
             </div>
             <div className="flex gap-3">
               <button
@@ -2076,5 +2065,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
           </div>
         </div>
     </div>
+  
+    </AuthGuard>
   );
 }

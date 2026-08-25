@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   CheckCircle,
   AlertCircle,
@@ -75,15 +76,6 @@ export default function EditCategoryPage() {
   });
   const [isLoadingCategory, setIsLoadingCategory] = useState(true);
   const [categoryNotFound, setCategoryNotFound] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     // Fetch category data from API
@@ -193,10 +185,6 @@ export default function EditCategoryPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
-
   if (categoryNotFound) {
     return (
       <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
@@ -219,6 +207,7 @@ export default function EditCategoryPage() {
   const priorityNum = parseInt(formData.priority) || 1;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -528,6 +517,7 @@ export default function EditCategoryPage() {
                   {getRelativeLevels(priorityNum).map(({ fieldSuffix, label }) => {
                     const name = `loss_${fieldSuffix}`;
                     return (
+
                       <div key={name}>
                         <label htmlFor={name} className="block text-[10px] font-black uppercase text-slate-555 tracking-wider mb-2">
                           {label}
@@ -543,7 +533,8 @@ export default function EditCategoryPage() {
                           className="w-full px-3 py-2 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 rounded-xl text-center text-sm font-extrabold font-mono"
                         />
                       </div>
-                    );
+
+  );
                   })}
                 </div>
               </div>
@@ -579,5 +570,7 @@ export default function EditCategoryPage() {
         </form>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

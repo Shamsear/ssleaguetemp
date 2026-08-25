@@ -141,13 +141,9 @@ function PlayerSearchContent() {
       if (!user?.email || !seasonId) return
 
       try {
-        const emailCheckQuery = query(
-          collection(db, 'realplayers'),
-          where('season_id', '==', seasonId),
-          where('email', '==', user.email),
-          where('is_registered', '==', true)
-        )
-        const emailCheckSnapshot = await getDocs(emailCheckQuery)
+        const apiRes = await fetch(`/api/realplayers?season_id=${seasonId}`)
+        const { data: apiRows } = await apiRes.json()
+        const emailCheckSnapshot = { empty: !(apiRows || []).some((r: any) => r.email === user.email && r.is_registered) }
 
         if (!emailCheckSnapshot.empty) {
           setError(`This email (${user.email}) has already been used to register for this season`)

@@ -23,6 +23,7 @@ import {
   RotateCw,
 } from 'lucide-react';
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 const PAGE_SIZE = 50;
 
@@ -156,16 +157,6 @@ export default function AllPlayersPointsPage() {
     }
   };
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Load league ID and rounds
   useEffect(() => {
     const loadLeagueData = async () => {
       if (!user) return;
@@ -373,6 +364,7 @@ export default function AllPlayersPointsPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -762,6 +754,7 @@ export default function AllPlayersPointsPage() {
                       else if (pagination.page >= pagination.total_pages - 2) pageNum = pagination.total_pages - 4 + i;
                       else pageNum = pagination.page - 2 + i;
                       return (
+
                         <button
                           key={pageNum}
                           onClick={() => setCurrentPage(pageNum)}
@@ -774,7 +767,8 @@ export default function AllPlayersPointsPage() {
                         >
                           {pageNum}
                         </button>
-                      );
+
+  );
                     })}
                   </div>
                   <button
@@ -807,5 +801,7 @@ export default function AllPlayersPointsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

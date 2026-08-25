@@ -18,10 +18,10 @@ import {
   Search
 } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+
 import { createPortal } from 'react-dom';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface CashPayment {
   payment_id: string;
@@ -80,33 +80,20 @@ export default function TeamCashBalances() {
 
   // 1. Authenticate user
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team' && user.role !== 'superadmin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // 2. Load all seasons from Firestore
-  useEffect(() => {
     if (!user || (user.role !== 'team' && user.role !== 'superadmin')) return;
 
     const loadSeasons = async () => {
       try {
-        const seasonsQuery = query(collection(db, 'seasons'), orderBy('created_at', 'desc'));
-        const seasonsSnapshot = await getDocs(seasonsQuery);
+        const seasonsRes = await fetch('/api/seasons');
+        const seasonsJson = await seasonsRes.json();
+        const rawSeasons = seasonsJson.data || seasonsJson.seasons || [];
         
-        const loadedSeasons: Season[] = [];
-        seasonsSnapshot.forEach(doc => {
-          const data = doc.data();
-          loadedSeasons.push({
-            id: doc.id,
-            name: data.name || doc.id,
-            isActive: data.isActive || false,
-            status: data.status || 'active',
-          });
-        });
+        const loadedSeasons: Season[] = rawSeasons.map((s: any) => ({
+          id: s.id,
+          name: s.name || s.id,
+          isActive: s.is_active || s.status === 'active' || false,
+          status: s.status || 'active',
+        }));
 
         const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
         loadedSeasons.sort((a, b) => getSeasonNum(a.id) - getSeasonNum(b.id));
@@ -199,6 +186,7 @@ export default function TeamCashBalances() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 pt-5 lg:pt-24 pb-12 px-4 sm:px-6 relative font-mono">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -400,6 +388,7 @@ export default function TeamCashBalances() {
                      const hasPaidThisSeason = hasPaymentLoggedThisSeason || isPrepaidCovered;
                     
                     return (
+
                       <tr key={team.team_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
                         {/* Team Name */}
                         <td className="py-3.5 pr-4 font-bold">
@@ -512,7 +501,8 @@ export default function TeamCashBalances() {
                           </button>
                         </td>
                       </tr>
-                    );
+
+  );
                   })}
                 </tbody>
               </table>
@@ -603,5 +593,7 @@ export default function TeamCashBalances() {
         document.body
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

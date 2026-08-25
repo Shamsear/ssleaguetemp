@@ -9,6 +9,7 @@ import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface FantasyTeam {
   id: string;
@@ -53,16 +54,6 @@ export default function ManagePlayersPage() {
   const [swapPlayer, setSwapPlayer] = useState<DraftedPlayer | null>(null);
 
   const { alertState, showAlert, closeAlert } = useModal();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -307,6 +298,7 @@ export default function ManagePlayersPage() {
   if (!user || !league) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen bg-slate-50">
       <AlertModal {...alertState} onClose={closeAlert} />
 
@@ -565,5 +557,7 @@ export default function ManagePlayersPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

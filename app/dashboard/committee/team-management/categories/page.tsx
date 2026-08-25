@@ -9,6 +9,7 @@ import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { ArrowLeft, Plus, CheckCircle, AlertCircle, Trash2, Edit2, Info, X, Layers } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 const getCategoryColor = (name: string) => {
   const normalized = name.trim().toLowerCase();
@@ -95,15 +96,6 @@ function CategoriesPageContent() {
   const { alertState, showAlert, closeAlert } = useModal();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await fetchWithTokenRefresh('/api/categories');
@@ -181,11 +173,8 @@ function CategoriesPageContent() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
-
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -393,11 +382,14 @@ function CategoriesPageContent() {
         type={alertState.type}
       />
     </div>
+  
+    </AuthGuard>
   );
 }
 
 export default function CategoriesPage() {
   return (
+
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center console-bg font-mono">
@@ -411,5 +403,6 @@ export default function CategoriesPage() {
     >
       <CategoriesPageContent />
     </Suspense>
+
   );
 }

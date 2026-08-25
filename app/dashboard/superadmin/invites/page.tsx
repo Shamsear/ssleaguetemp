@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getAllSeasons } from '@/lib/firebase/seasons';
+
 import { 
   createAdminInvite, 
   getAllAdminInvites, 
@@ -15,6 +15,7 @@ import { Season } from '@/types/season';
 import { collection, query, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   PlusCircle, 
   Link2, 
   Trash2, 
@@ -82,11 +83,16 @@ export default function AdminInvites() {
       setError(null);
       
       // Fetch seasons and invites
-      const [seasonsData, invitesData] = await Promise.all([
-        getAllSeasons(),
+      const [seasonsRes, invitesData] = await Promise.all([
+        fetch('/api/seasons').then(r => r.json()),
         getAllAdminInvites(),
       ]);
       
+      const seasonsData = (seasonsRes.data || seasonsRes.seasons || []).map((s: any) => ({
+        id: s.id,
+        name: s.name || s.id,
+        status: s.status || 'draft',
+      }));
       setSeasons(seasonsData);
       setInvites(invitesData);
       
@@ -132,25 +138,6 @@ export default function AdminInvites() {
     }
   };
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-      return;
-    }
-    if (!loading && user && user.role === 'super_admin') {
-      loadData();
-      const unsubscribe = setupRealTimeListeners();
-      return () => {
-        if (unsubscribe) unsubscribe();
-      };
-    }
-  }, [user, loading, router]);
-  
-  // Setup real-time listeners for live updates
   const setupRealTimeListeners = () => {
     let latestInvites: AdminInvite[] = [];
     
@@ -322,11 +309,9 @@ export default function AdminInvites() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       
       {/* Page Header */}
@@ -686,5 +671,7 @@ export default function AdminInvites() {
 
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

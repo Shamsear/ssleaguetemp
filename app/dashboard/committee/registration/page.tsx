@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
-import { getSeasonById, updateSeason } from '@/lib/firebase/seasons';
+// Season data fetched via API routes (client components can't use Neon directly)
 import { Season } from '@/types/season';
-import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+// Firebase imports removed - using SSE for real-time data
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function TeamRegistrationPage() {
   const { user, loading } = useAuth();
@@ -28,17 +28,6 @@ export default function TeamRegistrationPage() {
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
-
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && !isCommitteeAdmin) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router, isCommitteeAdmin]);
-
   useEffect(() => {
     if (!isCommitteeAdmin || !userSeasonId) {
       setLoadingData(false);
@@ -48,14 +37,20 @@ export default function TeamRegistrationPage() {
     const fetchInitialData = async () => {
       try {
         setLoadingData(true);
+        console.log('[Registration] Fetching data for season:', userSeasonId);
         
-        const season = await getSeasonById(userSeasonId);
+        const seasonRes = await fetch(`/api/seasons/${userSeasonId}`);
+        const seasonJson = await seasonRes.json();
+        console.log('[Registration] Season response:', seasonJson);
+        const season = seasonJson.data || seasonJson;
         setCurrentSeason(season);
         
-        const teamsSnapshot = await getDocs(collection(db, 'teams'));
-        const teamsList = teamsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+        const teamsRes = await fetch('/api/teams');
+        const teamsJson = await teamsRes.json();
+        console.log('[Registration] Teams response:', teamsJson);
+        const teamsList = (teamsJson.teams || teamsJson.data || []).map((t: any) => ({
+          id: t.id,
+          ...t
         }));
         
         // Sort teams alphabetically
@@ -65,10 +60,11 @@ export default function TeamRegistrationPage() {
           return nameA.localeCompare(nameB);
         });
         
+        console.log('[Registration] Teams loaded:', teamsList.length);
         setTeams(teamsList);
-        setTotalTeamsCount(teamsSnapshot.docs.length);
+        setTotalTeamsCount(teamsList.length);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('[Registration] Error fetching data:', error);
       } finally {
         setLoadingData(false);
       }
@@ -76,42 +72,28 @@ export default function TeamRegistrationPage() {
 
     fetchInitialData();
 
-    // Set up real-time listener for all team registration statuses in this season
-    console.log('🔴 Setting up real-time listener for season:', userSeasonId);
-    
-    const teamSeasonsQuery = query(
-      collection(db, 'team_seasons'),
-      where('season_id', '==', userSeasonId)
-    );
-
-    const unsubscribe = onSnapshot(
-      teamSeasonsQuery,
-      (snapshot) => {
-        console.log('🟢 Real-time update received! Team seasons count:', snapshot.docs.length);
+    // Fetch team registration statuses
+    const fetchTeamStatuses = async () => {
+      try {
+        const res = await fetch(`/api/team-seasons?season_id=${userSeasonId}`);
+        const json = await res.json();
+        const teamSeasons = json.data || [];
         const statuses: Record<string, string> = {};
         let regCount = 0;
-        
-        snapshot.docs.forEach(doc => {
-          const data = doc.data();
-          const teamId = data.team_id || doc.id.split('_')[0];
-          statuses[teamId] = data.status;
-          if (data.status === 'registered') {
-            regCount++;
-          }
+        teamSeasons.forEach((ts: any) => {
+          const teamId = ts.team_id || ts.id.split('_')[0];
+          statuses[teamId] = ts.status;
+          if (ts.status === 'registered') regCount++;
         });
-        
         setTeamRegistrationStatuses(statuses);
         setRegisteredTeamsCount(regCount);
-      },
-      (error) => {
-        console.error('Error listening to team registrations:', error);
+      } catch (err) {
+        console.error('[Registration] Error fetching team statuses:', err);
       }
-    );
-
-    return () => {
-      console.log('🔴 Cleaning up real-time listener');
-      unsubscribe();
     };
+    fetchTeamStatuses();
+
+    return () => {};
   }, [isCommitteeAdmin, userSeasonId]);
 
   const toggleTeamRegistration = async () => {
@@ -127,8 +109,10 @@ export default function TeamRegistrationPage() {
       setIsToggling(true);
       const newValue = !currentSeason.is_team_registration_open;
       
-      await updateSeason(currentSeason.id, {
-        is_team_registration_open: newValue
+      await fetch(`/api/seasons/${currentSeason.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_team_registration_open: newValue }),
       });
 
       setCurrentSeason({
@@ -202,8 +186,6 @@ export default function TeamRegistrationPage() {
     }
   };
 
-
-
   if (loading || loadingData) {
     return (
       <div className="console-bg min-h-screen flex items-center justify-center relative">
@@ -214,10 +196,6 @@ export default function TeamRegistrationPage() {
         </div>
       </div>
     );
-  }
-
-  if (!user || !isCommitteeAdmin) {
-    return null;
   }
 
   if (!currentSeason) {
@@ -249,6 +227,7 @@ export default function TeamRegistrationPage() {
   const availableTeams = totalTeamsCount - registeredTeamsCount;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -471,6 +450,7 @@ export default function TeamRegistrationPage() {
                     const status = teamRegistrationStatuses[team.id] || 'none';
                     const isRegistering = registeringTeamId === team.id;
                     return (
+
                       <tr key={team.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-4 py-3">
                           {team.logo_url || team.teamLogo ? (
@@ -547,7 +527,8 @@ export default function TeamRegistrationPage() {
                           )}
                         </td>
                       </tr>
-                    );
+
+  );
                   });
                 })()}
               </tbody>
@@ -576,8 +557,9 @@ export default function TeamRegistrationPage() {
           </div>
         </div>
 
-
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

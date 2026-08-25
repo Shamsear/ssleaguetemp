@@ -16,6 +16,7 @@ import ConfirmModal from '@/components/modals/ConfirmModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import LineupDeadlineMonitor from '@/components/LineupDeadlineMonitor';
 import BlindLineupSubmission from '@/components/BlindLineupSubmission';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Matchup {
   home_player_id: string;
@@ -486,16 +487,6 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
   };
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Poll lineup status AND matchups
-  useEffect(() => {
     if (!fixtureId || !fixture) return;
 
     // Don't poll when in edit mode or result mode to avoid overwriting user changes
@@ -554,585 +545,6 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
     return () => clearInterval(interval);
   }, [fixtureId, fixture, matchups, isEditMode, isResultMode]);
-
-  useEffect(() => {
-    const loadFixture = async () => {
-      if (!user || !fixtureId) return;
-
-      try {
-        setIsLoading(true);
-
-        // Get fixture from Neon
-        const fixtureResponse = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}`);
-
-        if (!fixtureResponse.ok) {
-          showAlert({
-            type: 'error',
-            title: 'Not Found',
-            message: 'Fixture not found'
-          });
-          router.push('/dashboard/team/matches');
-          return;
-        }
-
-        const { fixture: fixtureData } = await fixtureResponse.json();
-        setFixture(fixtureData as Fixture);
-        setMatchupMode(fixtureData.matchup_mode || 'manual');
-        
-        // Set scoring system from fixture (overrides tournament setting for knockout)
-        const fixtureScoring = fixtureData.scoring_system || 'goals';
-        setScoringSystem(fixtureScoring);
-        console.log('<SoccerBallIcon className="w-4 h-4" /> Fixture scoring system:', fixtureScoring);
-
-        // Fetch tournament settings to get scoring system
-        try {
-          const tournamentResponse = await fetchWithTokenRefresh(`/api/tournament-settings?tournament_id=${fixtureData.tournament_id}`);
-          if (tournamentResponse.ok) {
-            const tournamentData = await tournamentResponse.json();
-            // The API returns { settings: {...} }
-            const scoringType = tournamentData.settings?.scoring_type || 'goals';
-            setTournamentSystem(scoringType);
-            console.log('<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Tournament scoring type:', scoringType);
-          }
-        } catch (error) {
-          console.error('Error fetching tournament settings:', error);
-          // Default to goals if fetch fails
-          setTournamentSystem('goals');
-        }
-
-        // Initialize penalty goals
-        setHomePenaltyGoals(fixtureData.home_penalty_goals || 0);
-        setAwayPenaltyGoals(fixtureData.away_penalty_goals || 0);
-
-        // Get team_id from team_seasons
-        const teamSeasonsQuery = query(
-          collection(db, 'team_seasons'),
-          where('user_id', '==', user.uid),
-          where('season_id', '==', fixtureData.season_id),
-          where('status', '==', 'registered')
-        );
-
-        const teamSeasonsSnapshot = await getDocs(teamSeasonsQuery);
-        if (teamSeasonsSnapshot.empty) {
-          showAlert({
-            type: 'error',
-            title: 'Not Registered',
-            message: 'Team not registered for this season'
-          });
-          router.push('/dashboard/team/matches');
-          return;
-        }
-
-        const teamData = teamSeasonsSnapshot.docs[0].data();
-        const currentTeamId = teamData.team_id;
-        setTeamId(currentTeamId);
-
-        const isHome = fixtureData.home_team_id === currentTeamId;
-        const isAway = fixtureData.away_team_id === currentTeamId;
-        setIsHomeTeam(isHome);
-
-        if (!isHome && !isAway) {
-          showAlert({
-            type: 'error',
-            title: 'Access Denied',
-            message: 'You are not part of this fixture'
-          });
-          router.push('/dashboard/team/matches');
-          return;
-        }
-
-        // Fetch round deadlines, players, and matchups in parallel from Neon
-        console.log('<Search className="w-4 h-4 text-slate-500" /> Querying players from Neon:', {
-          home_team_id: fixtureData.home_team_id,
-          away_team_id: fixtureData.away_team_id,
-          season_id: fixtureData.season_id
-        });
-
-        // Construct round deadline API URL
-        const roundDeadlineUrl = `/api/round-deadlines?tournament_id=${fixtureData.tournament_id}&round_number=${fixtureData.round_number}&leg=${fixtureData.leg || 'first'}`;
-        console.log('🔗 Fetching Round Deadlines:', {
-          url: roundDeadlineUrl,
-          params: {
-            tournament_id: fixtureData.tournament_id,
-            round_number: fixtureData.round_number,
-            leg: fixtureData.leg || 'first'
-          }
-        });
-
-        const [roundResponse, homePlayersResponse, awayPlayersResponse, matchupsResponse, homeLineupResponse, awayLineupResponse] = await Promise.all([
-          fetch(roundDeadlineUrl),
-          fetch(`/api/player-seasons?team_id=${fixtureData.home_team_id}&season_id=${fixtureData.season_id}`),
-          fetch(`/api/player-seasons?team_id=${fixtureData.away_team_id}&season_id=${fixtureData.season_id}`),
-          fetch(`/api/fixtures/${fixtureId}/matchups`),
-          fetch(`/api/lineups?fixture_id=${fixtureId}&team_id=${fixtureData.home_team_id}`),
-          fetch(`/api/lineups?fixture_id=${fixtureId}&team_id=${fixtureData.away_team_id}`)
-        ]);
-
-        // Parse player responses
-        let homePlayersList: any[] = [];
-        let awayPlayersList: any[] = [];
-
-        // Track actual lineup submission status (used later for matchup permissions)
-        let actualHomeLineupSubmitted = false;
-        let actualAwayLineupSubmitted = false;
-
-        if (homePlayersResponse.ok) {
-          const homePlayersData = await homePlayersResponse.json();
-          homePlayersList = homePlayersData.players || [];
-        }
-
-        if (awayPlayersResponse.ok) {
-          const awayPlayersData = await awayPlayersResponse.json();
-          awayPlayersList = awayPlayersData.players || [];
-        }
-
-        // Debug: Log player data to check category field
-        if (homePlayersList.length > 0) {
-          console.log('Sample home player data:', homePlayersList[0]);
-        }
-        if (awayPlayersList.length > 0) {
-          console.log('Sample away player data:', awayPlayersList[0]);
-        }
-
-        setHomePlayers(homePlayersList);
-        setAwayPlayers(awayPlayersList);
-
-        // Process matchups first to determine if lineups should be visible
-        let matchupsList: any[] = [];
-        if (matchupsResponse.ok) {
-          const matchupsData = await matchupsResponse.json();
-          if (matchupsData.matchups && matchupsData.matchups.length > 0) {
-            matchupsList = matchupsData.matchups;
-            console.log('🎮 Matchups loaded:', matchupsList.length, 'First matchup:', matchupsList[0]);
-            setMatchups(matchupsList);
-
-            // Initialize null matchups
-            const nullPositions = new Set<number>();
-            matchupsList.forEach((m: Matchup) => {
-              if (m.is_null) {
-                nullPositions.add(m.position);
-              }
-            });
-            setNullMatchups(nullPositions);
-          }
-        }
-
-        // Process lineup submissions
-        // During fixture entry phase (after home deadline, before away deadline, no matchups),
-        // each team's lineup changes should be private until matchups are created
-        const matchupsExist = matchupsList.length > 0;
-        const isBlind = fixtureData.matchup_mode === 'blind_lineup';
-
-        if (!isBlind) {
-          actualHomeLineupSubmitted = true;
-          actualAwayLineupSubmitted = true;
-          setHomeStartingXI(homePlayersList);
-          setAwayStartingXI(awayPlayersList);
-          setHomeLineupSubmitted(true);
-          setAwayLineupSubmitted(true);
-        } else {
-          if (homeLineupResponse.ok) {
-            const homeLineupData = await homeLineupResponse.json();
-            if (homeLineupData.success && homeLineupData.lineups && homeLineupData.lineups.starting_xi && homeLineupData.lineups.starting_xi.length > 0) {
-              actualHomeLineupSubmitted = true;
-              const homeStartingPlayers = homeLineupData.lineups.starting_xi
-                .map((playerId: string) => homePlayersList.find((p: any) => p.player_id === playerId))
-                .filter(Boolean);
-              setHomeStartingXI(homeStartingPlayers);
-              if (isHome || matchupsExist) {
-                setHomeLineupSubmitted(true);
-              }
-            } else if (homePlayersList.length === 5) {
-              actualHomeLineupSubmitted = true;
-              setHomeStartingXI(homePlayersList);
-              setHomeLineupSubmitted(true);
-            }
-          } else if (homePlayersList.length === 5) {
-            actualHomeLineupSubmitted = true;
-            setHomeStartingXI(homePlayersList);
-            setHomeLineupSubmitted(true);
-          }
-
-          if (awayLineupResponse.ok) {
-            const awayLineupData = await awayLineupResponse.json();
-            if (awayLineupData.success && awayLineupData.lineups && awayLineupData.lineups.starting_xi && awayLineupData.lineups.starting_xi.length > 0) {
-              actualAwayLineupSubmitted = true;
-              const awayStartingPlayers = awayLineupData.lineups.starting_xi
-                .map((playerId: string) => awayPlayersList.find((p: any) => p.player_id === playerId))
-                .filter(Boolean);
-              setAwayStartingXI(awayStartingPlayers);
-              if (!isHome || matchupsExist) {
-                setAwayLineupSubmitted(true);
-              }
-            } else if (awayPlayersList.length === 5) {
-              actualAwayLineupSubmitted = true;
-              setAwayStartingXI(awayPlayersList);
-              setAwayLineupSubmitted(true);
-            }
-          } else if (awayPlayersList.length === 5) {
-            actualAwayLineupSubmitted = true;
-            setAwayStartingXI(awayPlayersList);
-            setAwayLineupSubmitted(true);
-          }
-        }
-
-        console.log('<ClipboardList className="w-4 h-4 text-slate-500" /> Lineup Status Check:', {
-          isHome,
-          matchupsExist,
-          homeLineupSubmitted: actualHomeLineupSubmitted,
-          awayLineupSubmitted: actualAwayLineupSubmitted,
-          bothSubmitted: actualHomeLineupSubmitted && actualAwayLineupSubmitted,
-          note: matchupsExist ? 'Showing both lineups' : 'Hiding opponent lineup'
-        });
-
-        // Process round deadlines and calculate phase
-        if (roundResponse.ok) {
-          const { roundDeadline } = await roundResponse.json();
-
-          console.log('<Calendar className="w-4 h-4 text-slate-500" /> Round Deadline Data Fetched:', {
-            tournament_id: fixtureData.tournament_id,
-            round_number: fixtureData.round_number,
-            leg: fixtureData.leg || 'first',
-            raw_data: roundDeadline,
-            has_data: !!roundDeadline,
-            fields: roundDeadline ? Object.keys(roundDeadline) : []
-          });
-
-          if (roundDeadline && roundDeadline.home_fixture_deadline_time && roundDeadline.away_fixture_deadline_time) {
-            const deadlines = roundDeadline as RoundDeadlines;
-
-            console.log('[SUCCESS] Round Deadline Details:', {
-              id: deadlines.id,
-              tournament_id: deadlines.tournament_id,
-              round_number: deadlines.round_number,
-              leg: deadlines.leg,
-              status: deadlines.status,
-              scheduled_date: deadlines.scheduled_date,
-              round_start_time: deadlines.round_start_time,
-              lineup_deadline_time: deadlines.lineup_deadline_time,
-              home_fixture_deadline_time: deadlines.home_fixture_deadline_time,
-              away_fixture_deadline_time: deadlines.away_fixture_deadline_time,
-              result_entry_deadline_time: deadlines.result_entry_deadline_time,
-              created_at: deadlines.created_at,
-              updated_at: deadlines.updated_at
-            });
-            setRoundDeadlines(deadlines);
-
-            // Skip deadline calculation if round hasn't been scheduled yet
-            if (!deadlines.scheduled_date) {
-              console.log('⏰ Round not scheduled yet - allowing draft lineup creation');
-              setPhase('draft'); // Draft state for unscheduled matches
-              setCanSubmitLineup(true); // Allow saving drafts
-              setCanCreateMatchups(false); // No matchups until scheduled
-              setCanEditMatchups(false);
-              return; // Skip rest of deadline logic
-            }
-
-            // Calculate current phase
-            // All times in database are IST (UTC+5:30)
-            const now = new Date();
-
-
-            // Use scheduled_date or default to today if null
-            // scheduled_date might be a full timestamp or just a date string
-            // IMPORTANT: Convert to IST date, not UTC date
-            let scheduledDateStr = deadlines.scheduled_date;
-            if (scheduledDateStr) {
-              // Parse the date and convert to IST
-              const scheduledDate = new Date(scheduledDateStr);
-              // Convert to IST by adding 5:30 hours
-              const istDate = new Date(scheduledDate.getTime() + (5.5 * 60 * 60 * 1000));
-              scheduledDateStr = istDate.toISOString().split('T')[0];
-            } else {
-              // Use current date in IST
-              const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-              scheduledDateStr = istNow.toISOString().split('T')[0];
-            }
-
-            // Validate and default time fields
-            const homeTime = deadlines.home_fixture_deadline_time || '17:00';
-            const awayTime = deadlines.away_fixture_deadline_time || '17:00';
-            const resultTime = deadlines.result_entry_deadline_time || '00:30';
-
-            // Parse scheduled_date and times as IST, then convert to Date objects
-            const [homeHour, homeMin] = homeTime.split(':').map(Number);
-            const homeDeadline = new Date(`${scheduledDateStr}T${homeTime}:00+05:30`);
-
-            const [awayHour, awayMin] = awayTime.split(':').map(Number);
-            const awayDeadline = new Date(`${scheduledDateStr}T${awayTime}:00+05:30`);
-
-            // Result deadline is offset by days
-            const resultDate = new Date(scheduledDateStr);
-            resultDate.setDate(resultDate.getDate() + (deadlines.result_entry_deadline_day_offset || 2));
-            const resultDateStr = resultDate.toISOString().split('T')[0];
-            const resultDeadline = new Date(`${resultDateStr}T${resultTime}:00+05:30`);
-
-            // Validate dates before logging
-            const isValidDate = (date: Date) => date instanceof Date && !isNaN(date.getTime());
-
-            console.log('🕐 Phase Debug:', {
-              now: now.toISOString(),
-              scheduled_date: scheduledDateStr,
-              homeDeadline: isValidDate(homeDeadline) ? homeDeadline.toISOString() : 'Invalid',
-              awayDeadline: isValidDate(awayDeadline) ? awayDeadline.toISOString() : 'Invalid',
-              resultDeadline: isValidDate(resultDeadline) ? resultDeadline.toISOString() : 'Invalid',
-              'now < awayDeadline': isValidDate(awayDeadline) && now < awayDeadline,
-              'now < resultDeadline': isValidDate(resultDeadline) && now < resultDeadline
-            });
-
-            // Calculate phase based on round status and deadlines
-            console.log('<Search className="w-4 h-4 text-slate-500" /> Round Status Check:', {
-              status: deadlines.status,
-              scheduled_date: deadlines.scheduled_date,
-              round_start_time: deadlines.round_start_time,
-              now: now.toISOString()
-            });
-
-            let currentPhase: typeof phase = 'closed';
-
-            // Check round status first
-            if (deadlines.status === 'pending' || deadlines.status === 'scheduled') {
-              // Round hasn't started yet - stay in draft mode
-              currentPhase = 'draft';
-              console.log('<ClipboardList className="w-4 h-4 text-slate-500" /> Round status is pending/scheduled - Draft mode');
-            } else if (deadlines.status === 'in_progress' || deadlines.status === 'started' || deadlines.status === 'active') {
-              // Round is in progress - determine phase by deadlines
-              console.log('🎮 Round is active/in progress - checking deadlines');
-              if (now < homeDeadline) {
-                currentPhase = 'home_fixture';     // Home team creates matchups
-              } else if (now < awayDeadline) {
-                currentPhase = 'fixture_entry';    // Away team reviews, both can finalize
-              } else if (now < resultDeadline) {
-                currentPhase = 'result_entry';     // Enter results
-              } else {
-                currentPhase = 'closed';           // Read-only
-              }
-            } else if (deadlines.status === 'completed' || deadlines.status === 'finalized') {
-              // Round is completed
-              currentPhase = 'closed';
-              console.log('[SUCCESS] Round status is completed/finalized - Closed');
-            } else {
-              // Unknown status - default to closed
-              currentPhase = 'closed';
-              console.warn('⚠️ Unknown round status:', deadlines.status);
-            }
-
-            console.log('<BarChart2 className="w-4 h-4 text-slate-500" /> Final Phase:', currentPhase);
-            setPhase(currentPhase);
-
-            // Calculate lineup deadline (round start time - no grace period)
-            // Use round_start_time if available (actual time round started/restarted)
-            // Otherwise fall back to home_fixture_deadline_time (scheduled start time)
-            const actualRoundStartTimeStr = deadlines.round_start_time || deadlines.home_fixture_deadline_time;
-            const roundStartTime = new Date(`${scheduledDateStr}T${actualRoundStartTimeStr}:00+05:30`);
-            const lineupDeadlineTime = roundStartTime; // Lineup deadline is exactly at round start
-            setLineupDeadline(lineupDeadlineTime);
-
-            console.log('⏰ Lineup Deadline Debug:', {
-              scheduled_date: deadlines.scheduled_date,
-              round_start_time: deadlines.round_start_time,
-              home_fixture_deadline_time: deadlines.home_fixture_deadline_time,
-              actualRoundStartTimeStr,
-              roundStartTime: isValidDate(roundStartTime) ? roundStartTime.toISOString() : 'Invalid',
-              roundStartLocal: isValidDate(roundStartTime) ? roundStartTime.toLocaleString() : 'Invalid',
-              lineupDeadlineTime: isValidDate(lineupDeadlineTime) ? lineupDeadlineTime.toISOString() : 'Invalid',
-              lineupDeadlineLocal: isValidDate(lineupDeadlineTime) ? lineupDeadlineTime.toLocaleString() : 'Invalid',
-              now: now.toISOString(),
-              nowLocal: now.toLocaleString(),
-              canSubmit: now < lineupDeadlineTime
-            });
-
-            // Calculate lineup submission permissions
-            // 1. Before round start: anyone can submit (if no matchups)
-            // 2. Home team: can submit until home deadline (even if matchups exist, they'll be deleted)
-            // 3. After home deadline: if no matchups, both teams can submit until away deadline
-
-            // Extract date part from scheduled_date (it might be a full timestamp)
-            const scheduledDateForDeadlines = deadlines.scheduled_date?.split('T')[0] || new Date().toISOString().split('T')[0];
-            const homeDeadlineTime = new Date(`${scheduledDateForDeadlines}T${deadlines.home_fixture_deadline_time}:00+05:30`);
-            const awayDeadlineTime = new Date(`${scheduledDateForDeadlines}T${deadlines.away_fixture_deadline_time}:00+05:30`);
-
-            let canSubmit = false;
-            let submitReason = '';
-
-            if (matchupsList.length > 0) {
-              // Matchups exist - only home team can edit before home deadline
-              if (isHome && now < homeDeadlineTime) {
-                canSubmit = true;
-                submitReason = 'Home team can edit until home deadline (will delete matchups)';
-              } else {
-                canSubmit = false;
-                submitReason = 'Matchups created - lineups locked';
-              }
-            } else {
-              // No matchups yet
-              if (now < homeDeadlineTime) {
-                // Before home deadline - anyone can submit
-                canSubmit = true;
-                submitReason = 'Before home deadline';
-              } else if (now < awayDeadlineTime) {
-                // After home deadline, before away deadline - both teams can submit
-                canSubmit = true;
-                submitReason = 'Fixture entry phase - both teams can submit';
-              } else {
-                // After away deadline
-                canSubmit = false;
-                submitReason = 'Deadline passed';
-              }
-            }
-
-            setCanSubmitLineup(canSubmit);
-
-            console.log('🔒 Lineup Edit Permission:', {
-              isHome,
-              now: now.toISOString(),
-              homeDeadline: homeDeadlineTime.toISOString(),
-              awayDeadline: awayDeadlineTime.toISOString(),
-              matchupsExist: matchupsList.length > 0,
-              canSubmitLineup: canSubmit,
-              reason: submitReason
-            });
-
-            // Calculate substitution deadline
-            // Home team: 21:00 on day after scheduled_date (day_offset = +1)
-            // Away team: 21:00 on round start day (day_offset = 0)
-
-            // Validate scheduled_date exists and is valid
-            if (!deadlines.scheduled_date) {
-              console.warn('⚠️ No scheduled_date available for substitution deadline calculation');
-              setSubstitutionDeadline(null);
-              setCanMakeSubstitution(false);
-            } else {
-              let subTime = isHome
-                ? (deadlines.home_substitution_deadline_time || '21:00')
-                : (deadlines.away_substitution_deadline_time || '21:00');
-
-              // Validate and sanitize time format (should be HH:MM)
-              const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-              if (!timeRegex.test(subTime)) {
-                console.warn(`⚠️ Invalid time format: ${subTime}, using default 21:00`);
-                subTime = '21:00';
-              }
-
-              const subDayOffset = isHome
-                ? (deadlines.home_substitution_deadline_day_offset !== undefined ? deadlines.home_substitution_deadline_day_offset : 1)
-                : (deadlines.away_substitution_deadline_day_offset !== undefined ? deadlines.away_substitution_deadline_day_offset : 0);
-
-              const subDate = new Date(deadlines.scheduled_date);
-
-              // Validate the base date
-              if (isNaN(subDate.getTime())) {
-                console.error('<XCircle className="w-4 h-4 text-rose-500" /> Invalid scheduled_date:', deadlines.scheduled_date);
-                setSubstitutionDeadline(null);
-                setCanMakeSubstitution(false);
-              } else {
-                subDate.setDate(subDate.getDate() + subDayOffset);
-                const subDateStr = subDate.toISOString().split('T')[0];
-                const substitutionDeadlineTime = new Date(`${subDateStr}T${subTime}:00+05:30`);
-
-                // Validate the final constructed date
-                if (isNaN(substitutionDeadlineTime.getTime())) {
-                  console.error('<XCircle className="w-4 h-4 text-rose-500" /> Invalid substitution deadline construction:', {
-                    scheduled_date: deadlines.scheduled_date,
-                    subTime,
-                    subDayOffset,
-                    subDateStr,
-                    constructedString: `${subDateStr}T${subTime}:00+05:30`,
-                    deadlines: deadlines
-                  });
-                  setSubstitutionDeadline(null);
-                  setCanMakeSubstitution(false);
-                } else {
-                  setSubstitutionDeadline(substitutionDeadlineTime);
-
-                  const canSub = now < substitutionDeadlineTime;
-                  setCanMakeSubstitution(canSub);
-
-                  console.log('🔄 Substitution Deadline Debug:', {
-                    isHome,
-                    subTime,
-                    subDayOffset,
-                    subDateStr,
-                    substitutionDeadline: substitutionDeadlineTime.toISOString(),
-                    substitutionDeadlineLocal: substitutionDeadlineTime.toLocaleString(),
-                    now: now.toISOString(),
-                    canMakeSubstitution: canSub
-                  });
-                }
-              }
-            }
-
-            // Determine matchup permissions with separate phases
-            const matchupsExist = matchupsList.length > 0;
-            const bothLineupsSubmitted = actualHomeLineupSubmitted && actualAwayLineupSubmitted;
-
-            // Check if round has actually started based on status
-            const roundHasStarted = deadlines.status === 'in_progress' ||
-              deadlines.status === 'started' ||
-              deadlines.status === 'active';
-
-            console.log('🎮 Matchup Permissions Check:', {
-              currentPhase,
-              bothLineupsSubmitted,
-              matchupsExist,
-              isHome,
-              roundHasStarted,
-              roundStatus: deadlines.status,
-              now: now.toISOString()
-            });
-
-            let canCreate = false;
-            let canEditMatch = false;
-
-            // Matchups can only be created/edited AFTER the round has started
-            if (roundHasStarted) {
-              if (currentPhase === 'home_fixture' && bothLineupsSubmitted) {
-                // Home fixture phase (before home deadline)
-                // Only home team can create/edit matchups
-                if (!matchupsExist) {
-                  canCreate = isHome;
-                } else {
-                  canEditMatch = isHome;
-                }
-              } else if (currentPhase === 'fixture_entry' && bothLineupsSubmitted) {
-                // Fixture entry phase (after home deadline, before away deadline)
-                // Both teams can create if not exist
-                // Whichever team creates first gets edit rights
-                if (!matchupsExist) {
-                  canCreate = true;  // Both teams can create
-                } else {
-                  // Check who created the matchups
-                  const firstMatchup = matchupsList[0];
-                  const createdByHome = firstMatchup?.home_player_id && homePlayersList.some(p => p.player_id === firstMatchup.home_player_id);
-                  const createdByThisTeam = (isHome && createdByHome) || (!isHome && !createdByHome);
-                  canEditMatch = createdByThisTeam;  // Team that created matchups can edit
-                }
-              }
-            } else {
-              // Round hasn't started yet - no matchup creation allowed
-              console.log('⏰ Round has not started yet - matchup creation disabled');
-            }
-
-            setCanCreateMatchups(canCreate);
-            setCanEditMatchups(canEditMatch);
-          }
-        }
-      } catch (error: any) {
-        console.error('Error loading fixture:', error);
-        console.error('Error stack:', error?.stack);
-        console.error('Error message:', error?.message);
-        showAlert({
-          type: 'error',
-          title: 'Load Failed',
-          message: `Failed to load fixture: ${error?.message || 'Unknown error'}`
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadFixture();
-  }, [user, fixtureId, router, lastCheck, phaseUpdateTrigger]); // Re-fetch when phase changes
 
   const handleCreateMatchups = async () => {
     // Validate lineups are submitted
@@ -1524,6 +936,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
   const phaseInfo = getPhaseInfo();
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
@@ -1663,7 +1076,6 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               </div>
             </div>
 
-
             {/* Phase Info & Deadlines - Only show for manual mode */}
             {matchupMode !== 'blind_lineup' && (
               <div className="console-card bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono relative overflow-hidden">
@@ -1689,7 +1101,6 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 </div>
               </div>
             )}
-
 
             {/* Lineup Submission Section - Only show for manual mode */}
             {matchupMode !== 'blind_lineup' && (
@@ -1935,7 +1346,6 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                   </p>
                 </div>
               </div>
-
 
               <div className="space-y-2 sm:space-y-3">
                 {homeStartingXI.map((homePlayer, idx) => (
@@ -4092,10 +3502,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     }
 
                     return (
+
                       <option key={player.player_id} value={player.player_id}>
                         {player.name || player.player_name} ({catDisplay})
                       </option>
-                    );
+
+  );
                   })}
               </select>
               {subNewPlayerId && (
@@ -4150,5 +3562,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         type={confirmState.type}
       />
     </div>
+  
+    </AuthGuard>
   );
 }

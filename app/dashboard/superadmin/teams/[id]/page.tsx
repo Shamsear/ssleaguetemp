@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { getTeamById } from '@/lib/firebase/teams';
 import { TeamData } from '@/types/team';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   Shield,
   Edit,
@@ -73,18 +74,6 @@ export default function TeamDetailsPage() {
   const [logoPosition, setLogoPosition] = useState({ x: 50, y: 50 });
   const [logoScale, setLogoScale] = useState(1);
   const [modalShape, setModalShape] = useState<'circle' | 'square'>('circle');
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-    if (!loading && user && user.role === 'super_admin') {
-      loadTeamData();
-    }
-  }, [user, loading, router]);
 
   const loadTeamData = async () => {
     try {
@@ -370,10 +359,6 @@ export default function TeamDetailsPage() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
-
   if (error) {
     return (
       <div className="flex items-center justify-center pt-32 px-4 text-slate-700 font-mono">
@@ -410,6 +395,7 @@ export default function TeamDetailsPage() {
   const balancePercentage = (team.balance / team.initial_balance) * 100;
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       
       {/* Page Header */}
@@ -663,6 +649,7 @@ export default function TeamDetailsPage() {
             ].map((tab) => {
               const IconComp = tab.icon;
               return (
+
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
@@ -675,7 +662,8 @@ export default function TeamDetailsPage() {
                   <IconComp className="w-3.5 h-3.5" />
                   {tab.label}
                 </button>
-              );
+
+  );
             })}
           </div>
 
@@ -1386,5 +1374,7 @@ export default function TeamDetailsPage() {
           </div>
         )}
       </div>
+  
+    </AuthGuard>
   );
 }

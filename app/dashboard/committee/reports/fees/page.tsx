@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { DollarSign, TrendingUp, Download } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { usePermissions } from '@/hooks/usePermissions';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface FeeReport {
   totalFees: number;
@@ -36,16 +37,6 @@ export default function CommitteeFeeReportsPage() {
   const [report, setReport] = useState<FeeReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     if (user && user.role === 'committee_admin' && userSeasonId) {
@@ -115,6 +106,7 @@ export default function CommitteeFeeReportsPage() {
   if (!user) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -296,5 +288,7 @@ export default function CommitteeFeeReportsPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

@@ -3,7 +3,7 @@ import { neon } from '@neondatabase/serverless';
 import { verifyAuth } from '@/lib/auth-helper';
 import { encryptBidData, decryptBidData } from '@/lib/encryption';
 import { broadcastRoundUpdate } from '@/lib/realtime/broadcast';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { calculateReserve } from '@/lib/reserve-calculator';
 
 const sql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getActiveSeason, getSeasonById } from '@/lib/firebase/seasons';
+
 import { usePermissions } from '@/hooks/usePermissions';
 import {
   getFixturesByRoundsWithDeadlines,
@@ -21,6 +21,7 @@ import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   Calendar,
   Clock,
@@ -64,15 +65,6 @@ export default function MatchDayManagementPage() {
   } = useModal();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     loadRounds();
   }, [user]);
 
@@ -96,10 +88,15 @@ export default function MatchDayManagementPage() {
       let season = null;
 
       if (seasonId) {
-        season = await getSeasonById(seasonId);
+        const res = await fetch(`/api/seasons/${seasonId}`);
+        const json = await res.json();
+        season = json.success ? json.data : null;
       } else {
         // Fallback to active season for super admins
-        season = await getActiveSeason();
+        const res = await fetch('/api/seasons');
+        const json = await res.json();
+        const list = (json.data || json.seasons || []).filter((s: any) => s.status === 'active' || s.is_active);
+        season = list.length > 0 ? list[0] : null;
         seasonId = season?.id || null;
       }
 
@@ -526,11 +523,8 @@ export default function MatchDayManagementPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
-
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -1113,6 +1107,7 @@ export default function MatchDayManagementPage() {
                     const phaseInfo = calculatePhase();
 
                     return (
+
                       <div
                         key={`${round.tournament_id}-${round.round_number}-${round.leg}`}
                         className={`console-card border rounded-3xl p-5 shadow-sm space-y-4 ${isActive
@@ -1280,7 +1275,8 @@ export default function MatchDayManagementPage() {
                           </Link>
                         </div>
                       </div>
-                    );
+
+  );
                   })}
                 </div>
               </>
@@ -1408,5 +1404,7 @@ export default function MatchDayManagementPage() {
         type={confirmState.type}
       />
     </div>
+  
+    </AuthGuard>
   );
 }

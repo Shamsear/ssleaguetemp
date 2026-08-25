@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 // Position constants
 const POSITIONS = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
@@ -30,15 +31,6 @@ export default function TeamPlayersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [positionFilter, setPositionFilter] = useState('all');
   const [positionGroupFilter, setPositionGroupFilter] = useState('all');
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -108,11 +100,9 @@ export default function TeamPlayersPage() {
     );
   }
 
-  if (!user || user.role !== 'team') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       {/* Mobile Header Section */}
       <div className="block sm:hidden glass rounded-3xl p-4 shadow-lg mb-4">
@@ -392,5 +382,7 @@ export default function TeamPlayersPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

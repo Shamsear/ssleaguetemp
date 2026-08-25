@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { formatId, ID_PREFIXES, ID_PADDING } from '@/lib/id-utils';
 
@@ -10,7 +10,7 @@ import { formatId, ID_PREFIXES, ID_PADDING } from '@/lib/id-utils';
 export async function POST() {
   try {
     // Query the teams collection to get the latest team ID
-    const teamsRef = collection(db, 'teams');
+    const teamsRef = adminDb.collection('teams');
     const q = query(teamsRef, orderBy('createdAt', 'desc'), limit(1));
     const snapshot = await getDocs(q);
     

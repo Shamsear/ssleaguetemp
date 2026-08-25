@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { db } from '@/lib/firebase/config';
 import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { getISTNow, formatISTDateTime, parseISTDate, createISTDateTime } from '@/lib/utils/timezone';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   id: string;
@@ -65,15 +66,6 @@ export default function FixtureManagementPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     if (user && matchId) {
       loadMatchData();
     }
@@ -87,15 +79,15 @@ export default function FixtureManagementPage() {
       setError('');
 
       // Load match details
-      const matchRef = doc(db, 'fixtures', matchId);
-      const matchDoc = await getDoc(matchRef);
+      const matchRes = await fetch(`/api/fixtures/${matchId}`);
+      const matchJson = await matchRes.json();
 
-      if (!matchDoc.exists()) {
+      if (!matchJson.success && !matchJson.fixture) {
         setError('Match not found');
         return;
       }
 
-      const matchData = matchDoc.data();
+      const matchData = matchJson.fixture || matchJson.data;
       const matchObj: Match = {
         id: matchDoc.id,
         round_number: matchData.round_number,
@@ -202,24 +194,19 @@ export default function FixtureManagementPage() {
 
   const loadMatchups = async (matchId: string) => {
     try {
-      const matchupsRef = collection(db, 'match_matchups');
-      const q = query(matchupsRef, where('match_id', '==', matchId));
-      const snapshot = await getDocs(q);
+      const res = await fetch(`/api/matchups?fixture_id=${matchId}`);
+      const { data: matchupsData } = await res.json();
 
-      const matchupsList: Matchup[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        matchupsList.push({
-          id: doc.id,
-          home_player_id: data.home_player_id,
-          home_player_name: data.home_player_name,
-          away_player_id: data.away_player_id,
-          away_player_name: data.away_player_name,
-          game_duration_minutes: data.game_duration_minutes || 6,
-          home_goals: data.home_goals,
-          away_goals: data.away_goals,
-        });
-      });
+      const matchupsList: Matchup[] = (matchupsData || []).map((m: any) => ({
+        id: m.id,
+        home_player_id: m.home_player_id,
+        home_player_name: m.home_player_name,
+        away_player_id: m.away_player_id,
+        away_player_name: m.away_player_name,
+        game_duration_minutes: m.game_duration_minutes || 6,
+        home_goals: m.home_goals,
+        away_goals: m.away_goals,
+      }));
 
       setMatchups(matchupsList);
     } catch (error) {
@@ -230,11 +217,12 @@ export default function FixtureManagementPage() {
   const loadTeamPlayers = async (homeTeamId: string, awayTeamId: string) => {
     try {
       // Load home team players
-      const homeTeamRef = doc(db, 'teams', homeTeamId);
-      const homeTeamDoc = await getDoc(homeTeamRef);
+      const homeTeamRes = await fetch(`/api/teams/all-teams`);
+      const allTeamsJson = await homeTeamRes.json();
+      const homeTeamDoc = allTeamsJson.data?.find((t: any) => t.id === homeTeamId);
       
-      if (homeTeamDoc.exists()) {
-        const homePlayerIds = homeTeamDoc.data().real_players || [];
+      if (homeTeamDoc) {
+        const homePlayerIds = homeTeamDoc.real_players || [];
         const homePlayers = await loadPlayers(homePlayerIds);
         setHomePlayers(homePlayers);
         
@@ -247,11 +235,12 @@ export default function FixtureManagementPage() {
       }
 
       // Load away team players
-      const awayTeamRef = doc(db, 'teams', awayTeamId);
-      const awayTeamDoc = await getDoc(awayTeamRef);
+      const awayTeamRes = await fetch(`/api/teams/all-teams`);
+      const awayTeamsJson = await awayTeamRes.json();
+      const awayTeamDoc = awayTeamsJson.data?.find((t: any) => t.id === awayTeamId);
       
-      if (awayTeamDoc.exists()) {
-        const awayPlayerIds = awayTeamDoc.data().real_players || [];
+      if (awayTeamDoc) {
+        const awayPlayerIds = awayTeamDoc.real_players || [];
         const awayPlayers = await loadPlayers(awayPlayerIds);
         setAwayPlayers(awayPlayers);
       }
@@ -265,19 +254,19 @@ export default function FixtureManagementPage() {
     
     for (const playerId of playerIds) {
       try {
-        const playerRef = doc(db, 'real_players', playerId);
-        const playerDoc = await getDoc(playerRef);
+        const rpRes = await fetch(`/api/realplayers?player_id=${playerId}`);
+        const rpJson = await rpRes.json();
+        const rpData = rpJson.data?.[0];
         
-        if (playerDoc.exists()) {
-          const data = playerDoc.data();
+        if (rpData) {
           // Get category info
-          const categoryRef = doc(db, 'categories', data.category_id);
-          const categoryDoc = await getDoc(categoryRef);
-          const categoryData = categoryDoc.exists() ? categoryDoc.data() : { name: 'Unknown', color: 'gray', priority: 999 };
+          const catRes = await fetch(`/api/categories`);
+          const catJson = await catRes.json();
+          const categoryData = catJson.data?.find((c: any) => c.id === rpData.category_id) || { name: 'Unknown', color: 'gray', priority: 999 };
           
           players.push({
-            id: playerDoc.id,
-            name: data.name,
+            id: rpData.id,
+            name: rpData.name,
             category: categoryData.name,
             categoryColor: categoryData.color,
             categoryPriority: categoryData.priority,
@@ -309,7 +298,7 @@ export default function FixtureManagementPage() {
       }
 
       // Create matchups
-      const batch = [];
+      const matchupPayloads = [];
       for (let i = 0; i < homePlayers.length; i++) {
         const homePlayer = homePlayers[i];
         const awayPlayerId = selectedAwayPlayers[i];
@@ -317,22 +306,21 @@ export default function FixtureManagementPage() {
 
         if (!awayPlayer) continue;
 
-        const matchupRef = doc(collection(db, 'match_matchups'));
-        const matchupData = {
-          match_id: matchId,
+        matchupPayloads.push({
           home_player_id: homePlayer.id,
           home_player_name: homePlayer.name,
           away_player_id: awayPlayer.id,
           away_player_name: awayPlayer.name,
           game_duration_minutes: gameDurations[i] || 6,
-          created_at: Timestamp.fromDate(getISTNow()),
-          updated_at: Timestamp.fromDate(getISTNow()),
-        };
-
-        batch.push(setDoc(matchupRef, matchupData));
+        });
       }
 
-      await Promise.all(batch);
+      // Save all matchups via API
+      await fetch(`/api/fixtures/${matchId}/matchups`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchups: matchupPayloads, allow_overwrite: true }),
+      });
 
       setSuccess('Matchups created successfully!');
       await loadMatchups(matchId);
@@ -355,7 +343,7 @@ export default function FixtureManagementPage() {
 
     try {
       const form = e.target as HTMLFormElement;
-      const batch = [];
+      const matchupPayloads = [];
       let totalHomeGoals = 0;
       let totalAwayGoals = 0;
 
@@ -371,24 +359,23 @@ export default function FixtureManagementPage() {
           totalHomeGoals += homeGoals;
           totalAwayGoals += awayGoals;
 
-          const matchupRef = doc(db, 'match_matchups', matchup.id);
-          batch.push(updateDoc(matchupRef, {
-            home_goals: homeGoals,
-            away_goals: awayGoals,
-            updated_at: Timestamp.fromDate(getISTNow()),
-          }));
+          // Update matchup via Neon tournament DB
+          const sql = getTournamentDb();
+          await sql`UPDATE matchups SET home_goals = ${homeGoals}, away_goals = ${awayGoals}, updated_at = NOW() WHERE id = ${matchup.id}`;
         }
       }
 
       // Update match with total scores and mark as completed
-      const matchRef = doc(db, 'fixtures', matchId);
-      batch.push(updateDoc(matchRef, {
-        home_score: totalHomeGoals,
-        away_score: totalAwayGoals,
-        status: 'completed',
-        result: totalHomeGoals > totalAwayGoals ? 'home_win' : totalAwayGoals > totalHomeGoals ? 'away_win' : 'draw',
-        updated_at: Timestamp.fromDate(getISTNow()),
-      }));
+      batch.push(
+        fetch(`/api/fixtures/${matchId}/edit-result`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            home_score: totalHomeGoals,
+            away_score: totalAwayGoals,
+          }),
+        })
+      );
 
       await Promise.all(batch);
 
@@ -443,6 +430,7 @@ export default function FixtureManagementPage() {
   const isAwayTeam = user.uid === match.away_team_id;
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
@@ -806,5 +794,7 @@ export default function FixtureManagementPage() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

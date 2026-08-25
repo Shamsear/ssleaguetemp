@@ -13,9 +13,8 @@
 
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { getAuctionDb } from '@/lib/neon/auction-config';
-import { db } from '@/lib/firebase/config';
-import { adminDb } from '@/lib/firebase/admin';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { syncTeamSeason } from '@/lib/neon/write-sync';
 import { 
   logReleaseRefund,
   logTransferPayment,
@@ -114,22 +113,8 @@ async function createNewsEntry(
   seasonId: string,
   category: 'player_movement' | 'contract' | 'announcement'
 ) {
-  try {
-    return; // News creation disabled
-    const newsId = `news_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    await setDoc(doc(db, 'news', newsId), {
-      title,
-      content,
-      season_id: seasonId,
-      category,
-      is_published: true,
-      created_at: serverTimestamp(),
-      updated_at: serverTimestamp()
-    });
-    console.log('✅ News entry created:', title);
-  } catch (error) {
-    console.error('Error creating news:', error);
-  }
+  // News creation disabled
+  return;
 }
 
 /**
@@ -233,6 +218,8 @@ export async function releasePlayerNeon(
     await teamSeasonRef.update({
       dollar_balance: newBalance,
       updated_at: new Date()
+    // Neon sync
+    syncTeamSeason(teamSeasonRef.id || `${playerData.team_id}_${currentSeasonId}`,{ dollar_balance: newBalance });
     });
     
     // Log transaction

@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface RecalculationLog {
     timestamp: string;
@@ -100,6 +101,7 @@ export default function RecalculateFantasyPointsPage() {
     }
 
     return (
+    <AuthGuard requiredRole="committee_admin">
         <div className="min-h-screen py-6 px-4 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
             <div className="container mx-auto max-w-5xl">
                 {/* Header */}
@@ -248,5 +250,7 @@ export default function RecalculateFantasyPointsPage() {
                 </div>
             </div>
         </div>
-    );
+    
+    </AuthGuard>
+  );
 }

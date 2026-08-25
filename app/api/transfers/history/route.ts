@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase/admin';
+import { getMainDb } from '@/lib/neon/main-config';
 
 /**
  * GET /api/transfers/history
- * Fetch transfer history combining player_transactions and financial transactions
- * 
- * Query params:
- * - season_id: Filter by season
- * - team_id: Filter by team
- * - type: Filter by transaction type (release, transfer, swap)
- * - player_type: Filter by player type (real, football)
- * - page: Page number (default 0)
- * - limit: Items per page (default 20)
+ * Fetch transfer history from Neon transactions + player_transactions tables
  */
 export async function GET(request: NextRequest) {
   try {
@@ -30,153 +22,148 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch player_transactions (swap tracking)
-    const playerTxnsSnapshot = await adminDb.collection('player_transactions').get();
-    const playerTxnsMap = new Map();
-    
-    playerTxnsSnapshot.forEach((doc) => {
-      playerTxnsMap.set(doc.id, { id: doc.id, ...doc.data() });
-    });
-
-    // Fetch financial transactions
-    const financialTxnsSnapshot = await adminDb.collection('transactions').get();
-    
+    const sql = getMainDb();
     const allTxns: any[] = [];
     const seasonsSet = new Set<string>();
-    const processedSwaps = new Set<string>();
 
-    // Process financial transactions
-    financialTxnsSnapshot.forEach((doc) => {
-      const data = doc.data();
-      
-      // Only include transfer-related transactions (exclude football_swap as it's handled by player_transactions)
-      const transferTypes = ['release', 'transfer', 'swap', 'player_transfer', 'player_swap'];
-      if (!transferTypes.includes(data.transaction_type)) {
-        return;
+    // === 1. Fetch financial transactions from Neon ===
+    try {
+      let txnQuery = `
+        SELECT * FROM transactions 
+        WHERE season_id = $1 
+        AND type IN ('release', 'transfer', 'swap', 'player_transfer', 'player_swap', 'football_swap_fee')
+      `;
+      const txnParams: any[] = [seasonId];
+      let paramIdx = 2;
+
+      if (type) {
+        txnQuery += ` AND type = $${paramIdx++}`;
+        txnParams.push(type);
       }
-
-      // Collect seasons
-      if (data.season_id) {
-        seasonsSet.add(data.season_id);
-      }
-
-      // Apply filters
-      if (data.season_id !== seasonId) return;
-      if (type && data.transaction_type !== type) return;
-      
       if (playerType) {
-        const txPlayerType = data.player_type || data.player?.type || data.player_a?.type;
-        if (txPlayerType !== playerType) return;
+        txnQuery += ` AND (player_type = $${paramIdx} OR player_type IS NULL)`;
+        txnParams.push(playerType);
       }
-
       if (teamId) {
-        const matchesTeam = 
-          data.team_id === teamId ||
-          data.old_team_id === teamId ||
-          data.new_team_id === teamId ||
-          data.teams?.team_a_id === teamId ||
-          data.teams?.team_b_id === teamId ||
-          data.related_team_id === teamId;
-        
-        if (!matchesTeam) return;
+        txnQuery += ` AND (team_id = $${paramIdx} OR old_team_id = $${paramIdx} OR new_team_id = $${paramIdx})`;
+        txnParams.push(teamId);
       }
 
-      allTxns.push({
-        id: doc.id,
-        transaction_type: data.transaction_type,
-        season_id: data.season_id,
-        processed_by: data.processed_by || '',
-        processed_by_name: data.processed_by_name || 'Unknown',
-        created_at: data.created_at?.toDate?.()?.toISOString() || new Date().toISOString(),
-        player_name: data.player_name,
-        player_type: data.player_type,
-        team_id: data.team_id,
-        team_name: data.team_name,
-        auction_value: data.auction_value,
-        refund_amount: data.refund_amount,
-        refund_percentage: data.refund_percentage,
-        release_timing: data.release_timing,
-        release_season: data.release_season,
-        original_contract_start: data.original_contract_start,
-        original_contract_end: data.original_contract_end,
-        player: data.player,
-        old_team_id: data.old_team_id,
-        new_team_id: data.new_team_id,
-        values: data.values,
-        star_rating: data.star_rating,
-        financial: data.financial,
-        new_salary: data.new_salary,
-        player_a: data.player_a,
-        player_b: data.player_b,
-        teams: data.teams,
-      });
-    });
+      txnQuery += ' ORDER BY created_at DESC';
 
-    // Process player_transactions for swaps (combine into single entries)
-    playerTxnsMap.forEach((playerTxn: any) => {
-      if (playerTxn.transaction_type !== 'swap') return;
-      if (processedSwaps.has(playerTxn.id)) return;
+      const txnResult: any = await sql.query(txnQuery, txnParams);
+      const txnRows: any[] = Array.isArray(txnResult) ? txnResult : (txnResult?.rows || []);
 
-      // Collect seasons
-      if (playerTxn.season_id) {
-        seasonsSet.add(playerTxn.season_id);
+      for (const row of txnRows) {
+        seasonsSet.add(row.season_id);
+        allTxns.push({
+          id: row.id,
+          transaction_type: row.type,
+          season_id: row.season_id,
+          processed_by: row.processed_by || '',
+          processed_by_name: row.processed_by_name || 'Unknown',
+          created_at: row.created_at?.toISOString?.() || row.created_at || new Date().toISOString(),
+          player_name: row.player_name,
+          player_type: row.player_type,
+          team_id: row.team_id,
+          team_name: row.team_name,
+          auction_value: row.auction_value,
+          refund_amount: row.refund_amount,
+          refund_percentage: row.refund_percentage,
+          release_timing: row.release_timing,
+          release_season: row.release_season,
+          original_contract_start: row.original_contract_start,
+          original_contract_end: row.original_contract_end,
+          player: row.player,
+          old_team_id: row.old_team_id,
+          new_team_id: row.new_team_id,
+          values: row.values,
+          star_rating: row.star_rating,
+          financial: row.financial,
+          new_salary: row.new_salary,
+          player_a: row.player_a,
+          player_b: row.player_b,
+          teams: row.teams,
+        });
       }
+    } catch (e: any) {
+      console.warn('[Transfers] Neon transactions query failed:', e.message);
+    }
 
-      // Apply filters
-      if (playerTxn.season_id !== seasonId) return;
-      if (type && type !== 'swap') return;
-      if (playerType && playerTxn.player_type !== playerType) return;
+    // === 2. Fetch player_transactions (swaps) from Neon ===
+    if (!type || type === 'swap') {
+      try {
+        let ptQuery = `
+          SELECT * FROM player_transactions 
+          WHERE season_id = $1 AND transaction_type = 'swap'
+        `;
+        const ptParams: any[] = [seasonId];
+        let ptIdx = 2;
 
-      if (teamId) {
-        const matchesTeam = 
-          playerTxn.team_a_id === teamId ||
-          playerTxn.team_b_id === teamId;
-        
-        if (!matchesTeam) return;
+        if (playerType) {
+          ptQuery += ` AND player_type = $${ptIdx++}`;
+          ptParams.push(playerType);
+        }
+        if (teamId) {
+          ptQuery += ` AND (team_a_id = $${ptIdx} OR team_b_id = $${ptIdx})`;
+          ptParams.push(teamId);
+        }
+
+        ptQuery += ' ORDER BY created_at DESC';
+
+        const ptResult: any = await sql.query(ptQuery, ptParams);
+        const ptRows: any[] = Array.isArray(ptResult) ? ptResult : (ptResult?.rows || []);
+
+        const processedSwaps = new Set<string>();
+        for (const row of ptRows) {
+          if (processedSwaps.has(row.id)) continue;
+          processedSwaps.add(row.id);
+          seasonsSet.add(row.season_id);
+
+          allTxns.push({
+            id: row.id,
+            transaction_type: 'swap',
+            season_id: row.season_id,
+            processed_by: row.processed_by || '',
+            processed_by_name: row.processed_by_name || 'System',
+            created_at: row.created_at?.toISOString?.() || row.created_at || new Date().toISOString(),
+            player_a: {
+              id: row.player_a_id,
+              name: row.player_a_name,
+              type: row.player_type || 'football',
+              old_value: 0,
+              new_value: 0,
+              old_star: 0,
+              new_star: 0,
+              points_added: 0,
+              new_salary: 0,
+            },
+            player_b: {
+              id: row.player_b_id,
+              name: row.player_b_name,
+              type: row.player_type || 'football',
+              old_value: 0,
+              new_value: 0,
+              old_star: 0,
+              new_star: 0,
+              points_added: 0,
+              new_salary: 0,
+            },
+            teams: {
+              team_a_id: row.team_a_id,
+              team_b_id: row.team_b_id,
+              team_a_pays: row.fee_team_a || 0,
+              team_b_pays: row.fee_team_b || 0,
+            },
+            financial: {
+              total_committee_fees: (row.fee_team_a || 0) + (row.fee_team_b || 0),
+            },
+          });
+        }
+      } catch (e: any) {
+        console.warn('[Transfers] Neon player_transactions query failed:', e.message);
       }
-
-      processedSwaps.add(playerTxn.id);
-
-      allTxns.push({
-        id: playerTxn.id,
-        transaction_type: 'swap',
-        season_id: playerTxn.season_id,
-        processed_by: playerTxn.processed_by || '',
-        processed_by_name: playerTxn.processed_by_name || 'System',
-        created_at: playerTxn.created_at?.toDate?.()?.toISOString() || new Date().toISOString(),
-        player_a: {
-          id: playerTxn.player_a_id,
-          name: playerTxn.player_a_name,
-          type: playerTxn.player_type || 'football',
-          old_value: 0,
-          new_value: 0,
-          old_star: 0,
-          new_star: 0,
-          points_added: 0,
-          new_salary: 0,
-        },
-        player_b: {
-          id: playerTxn.player_b_id,
-          name: playerTxn.player_b_name,
-          type: playerTxn.player_type || 'football',
-          old_value: 0,
-          new_value: 0,
-          old_star: 0,
-          new_star: 0,
-          points_added: 0,
-          new_salary: 0,
-        },
-        teams: {
-          team_a_id: playerTxn.team_a_id,
-          team_b_id: playerTxn.team_b_id,
-          team_a_pays: playerTxn.fee_team_a || 0,
-          team_b_pays: playerTxn.fee_team_b || 0,
-        },
-        financial: {
-          total_committee_fees: (playerTxn.fee_team_a || 0) + (playerTxn.fee_team_b || 0),
-        },
-      });
-    });
+    }
 
     // Sort by date (newest first)
     allTxns.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());

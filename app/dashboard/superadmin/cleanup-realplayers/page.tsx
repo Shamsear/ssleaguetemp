@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Database, 
   Search, 
@@ -33,15 +34,6 @@ export default function CleanupRealPlayersPage() {
   const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const handleScan = async () => {
     setScanning(true);
@@ -132,11 +124,9 @@ export default function CleanupRealPlayersPage() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-6 animate-fade-in font-mono text-slate-800">
       
       {/* Header */}
@@ -348,5 +338,7 @@ export default function CleanupRealPlayersPage() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

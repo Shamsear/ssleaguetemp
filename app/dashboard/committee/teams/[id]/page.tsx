@@ -9,6 +9,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import Image from 'next/image';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   id: string;
@@ -96,15 +97,6 @@ export default function TeamDetailPage() {
   const [maxPlayers, setMaxPlayers] = useState(25);
 
   const teamId = params?.id as string;
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && !isCommitteeAdmin) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router, isCommitteeAdmin]);
 
   useEffect(() => {
     const fetchTeamDetails = async () => {
@@ -239,10 +231,6 @@ export default function TeamDetailPage() {
     );
   }
 
-  if (!user || !isCommitteeAdmin) {
-    return null;
-  }
-
   if (error || !teamData) {
     return (
       <div className="console-bg min-h-screen flex items-center justify-center relative px-4">
@@ -271,6 +259,7 @@ export default function TeamDetailPage() {
   const footballPlayers = players.filter(p => !p.is_real_player);
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -451,6 +440,7 @@ export default function TeamDetailPage() {
                           : {};
                         
                         return (
+
                           <CardWrapper
                             key={player.id}
                             {...cardProps}
@@ -506,7 +496,8 @@ export default function TeamDetailPage() {
                               </div>
                             </div>
                           </CardWrapper>
-                        );
+
+  );
                       })}
                     </div>
                   ) : (
@@ -684,5 +675,7 @@ export default function TeamDetailPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

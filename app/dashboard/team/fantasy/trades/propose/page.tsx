@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { ArrowLeft, DollarSign, AlertCircle, CheckCircle, TrendingUp, Users } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   real_player_id: string;
@@ -238,6 +239,7 @@ export default function ProposeTradePagePage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="min-h-screen bg-slate-50 p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
@@ -530,5 +532,7 @@ export default function ProposeTradePagePage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

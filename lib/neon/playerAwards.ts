@@ -100,8 +100,9 @@ export async function getPlayerAwards(filters?: {
     }
     
     const query = `SELECT * FROM player_awards WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`;
-    const result = await sql(query, values);
-    return result as PlayerAward[];
+    const result = await sql.query(query, values);
+    const rows = result?.rows || result || [];
+    return rows as PlayerAward[];
   } catch (error) {
     console.error('Error fetching player awards:', error);
     throw error;
@@ -179,8 +180,9 @@ export async function updatePlayerAward(id: number, updates: Partial<PlayerAward
     RETURNING *
   `;
   
-  const result = await sql(query, params);
-  return result[0] as PlayerAward || null;
+  const result = await sql.query(query, params);
+  const rows = result?.rows || result || [];
+  return rows[0] as PlayerAward || null;
 }
 
 /**

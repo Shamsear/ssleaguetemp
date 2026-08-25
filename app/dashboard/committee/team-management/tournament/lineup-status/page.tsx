@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   Settings,
   Plus,
@@ -90,20 +91,6 @@ export default function LineupStatusPage() {
   const [viewLineupData, setViewLineupData] = useState<any>(null);
   const [isLoadingViewLineup, setIsLoadingViewLineup] = useState(false);
 
-  useEffect(() => {
-    if (loading) return; // Wait for auth to complete
-
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-
-    if (user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch tournaments
   useEffect(() => {
     const fetchTournaments = async () => {
       if (!user) return;
@@ -361,10 +348,6 @@ export default function LineupStatusPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
-
   const submittedCount = fixtures.filter(
     f => f.home_lineup_submitted && f.away_lineup_submitted
   ).length;
@@ -377,6 +360,7 @@ export default function LineupStatusPage() {
   ).length;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -513,6 +497,7 @@ export default function LineupStatusPage() {
                         const noneSubmitted = !fixture.home_lineup_submitted && !fixture.away_lineup_submitted;
 
                         return (
+
                           <tr key={fixture.fixture_id} className="hover:bg-white/50 transition-colors">
                             <td className="px-3 md:px-6 py-4 whitespace-nowrap">
                               <div className="text-sm font-medium text-gray-900">
@@ -610,7 +595,8 @@ export default function LineupStatusPage() {
                               </div>
                             </td>
                           </tr>
-                        );
+
+  );
                       })}
                     </tbody>
                   </table>
@@ -859,5 +845,7 @@ export default function LineupStatusPage() {
           </div>
         )}
     </div>
+  
+    </AuthGuard>
   );
 }

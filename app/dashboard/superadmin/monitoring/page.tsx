@@ -17,6 +17,7 @@ import Link from 'next/link'
 import { getReadStats, logReadStats, resetReadCount } from '@/utils/readCounter'
 import { getCacheStatistics, invalidateAllCaches, invalidatePlayerCaches, invalidateTeamCaches } from '@/utils/smartCache'
 import { getCacheInfo } from '@/utils/cache'
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function MonitoringPage() {
   const router = useRouter()
@@ -25,15 +26,6 @@ export default function MonitoringPage() {
   const [cacheStats, setCacheStats] = useState(getCacheStatistics())
   const [cacheInfo, setCacheInfo] = useState(getCacheInfo())
   const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null)
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'super_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
 
   useEffect(() => {
     // Refresh stats every 5 seconds
@@ -124,6 +116,7 @@ export default function MonitoringPage() {
   }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-6 animate-fade-in font-mono">
       {/* Header */}
       <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl">
@@ -385,5 +378,7 @@ export default function MonitoringPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }

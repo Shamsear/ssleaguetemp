@@ -7,6 +7,7 @@ import { getPendingUsers } from '@/lib/firebase/auth';
 import { getPendingResetRequests } from '@/lib/firebase/passwordResetRequests';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   Users, 
   Key, 
   Shield, 
@@ -38,15 +39,6 @@ export default function SuperAdminDashboard() {
   const [loadingPending, setLoadingPending] = useState(true);
   const [activeSeason, setActiveSeason] = useState<any>(null);
   const [teamsCount, setTeamsCount] = useState(0);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     const fetchPendingItems = async () => {
@@ -109,11 +101,9 @@ export default function SuperAdminDashboard() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in">
       
       {/* Header Section */}
@@ -586,5 +576,7 @@ export default function SuperAdminDashboard() {
         }
       `}</style>
     </div>
+  
+    </AuthGuard>
   );
 }

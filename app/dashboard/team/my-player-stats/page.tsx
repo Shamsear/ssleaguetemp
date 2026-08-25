@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerStats {
     id: string;
@@ -70,14 +71,6 @@ export default function MyPlayerStatsPage() {
 
     const [initialLoad, setInitialLoad] = useState(true);
 
-    useEffect(() => {
-        if (!authLoading && !user) {
-            router.push('/login');
-            return;
-        }
-    }, [user, authLoading, router]);
-
-    // Load available seasons
     useEffect(() => {
         const loadSeasons = async () => {
             try {
@@ -702,6 +695,7 @@ export default function MyPlayerStatsPage() {
                             filteredPlayers.map((player) => {
                                 const isExpanded = expandedPlayer === player.id;
                                 return (
+    <AuthGuard requiredRole="team">
                                     <div 
                                         key={player.id} 
                                         className="console-card bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm relative overflow-hidden"
@@ -813,7 +807,9 @@ export default function MyPlayerStatsPage() {
                                             </div>
                                         )}
                                     </div>
-                                );
+                                
+    </AuthGuard>
+  );
                             })
                         )}
                     </div>

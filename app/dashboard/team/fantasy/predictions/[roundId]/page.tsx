@@ -10,6 +10,7 @@ import { Clock, Info, Save, Gem } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface H2HFixture {
   fixture_id: string;
@@ -225,6 +226,7 @@ export default function PredictionsPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
@@ -343,6 +345,7 @@ export default function PredictionsPage() {
             const isDisabled = isLocked || isDeadlinePassed;
 
             return (
+
               <div
                 key={fixture.fixture_id}
                 className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
@@ -445,7 +448,8 @@ export default function PredictionsPage() {
                   </div>
                 </div>
               </div>
-            );
+
+  );
           })}
         </div>
       )}
@@ -489,5 +493,7 @@ export default function PredictionsPage() {
         </ul>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

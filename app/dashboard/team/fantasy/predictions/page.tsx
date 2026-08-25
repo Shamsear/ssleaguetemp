@@ -10,6 +10,7 @@ import { Info, Pencil, Gem } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PredictionHistory {
   prediction_id: string;
@@ -122,6 +123,7 @@ export default function PredictionsListPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
@@ -276,5 +278,7 @@ export default function PredictionsListPage() {
         </ul>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

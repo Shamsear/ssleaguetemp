@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
-import { getActiveSeason, getSeasonById } from '@/lib/firebase/seasons';
+
 import { getTournamentSettings, saveTournamentSettings } from '@/lib/firebase/tournamentSettings';
 import { generateSeasonFixtures, getFixturesByRounds, deleteSeasonFixtures, TournamentRound } from '@/lib/firebase/fixtures';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
@@ -16,6 +16,7 @@ import RoundFixturesShareButton from '@/components/RoundFixturesShareButton';
 import TournamentStandings from '@/components/tournament/TournamentStandings';
 import { Activity, AlertTriangle, ArrowLeft, Award, BarChart2, Bot, Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, ClipboardList, Clock, Download, Eye, FileText, HelpCircle, Info, Layers, Lightbulb, Pencil, Play, Plus, RefreshCw, Search, Settings, Share2, Shield, Shuffle, Sparkles, Star, Trash2, Trophy, Users, X, XCircle, Crown, Flame, Swords } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 const getCategoryColor = (name: string) => {
   const normalized = name.trim().toLowerCase();
@@ -216,7 +217,6 @@ export function TournamentDashboardPageContent() {
     handleConfirm,
   } = useModal();
 
-
   // Auto-generate tournament name and code
   useEffect(() => {
     if (!activeSeasonId || !newTournament.tournament_type) return;
@@ -299,15 +299,6 @@ export function TournamentDashboardPageContent() {
   }, [selectedTournamentForFixtures, tournamentFixtures]);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchData = async () => {
       if (!user || user.role !== 'committee_admin') return;
 
@@ -318,9 +309,14 @@ export function TournamentDashboardPageContent() {
         let season = null;
 
         if (seasonId) {
-          season = await getSeasonById(seasonId);
+          const res = await fetch(`/api/seasons/${seasonId}`);
+          const json = await res.json();
+          season = json.success ? json.data : null;
         } else {
-          season = await getActiveSeason();
+          const res = await fetch('/api/seasons');
+          const json = await res.json();
+          const list = (json.data || json.seasons || []).filter((s: any) => s.status === 'active' || s.is_active);
+          season = list.length > 0 ? list[0] : null;
           seasonId = season?.id || null;
         }
 
@@ -1472,10 +1468,6 @@ export function TournamentDashboardPageContent() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
-
   // Calculate stats
   const totalMatches = tournamentFixtures.length;
   const completedMatches = tournamentFixtures.filter(f => f.status === 'completed').length;
@@ -1514,6 +1506,7 @@ export function TournamentDashboardPageContent() {
     : fixturesForSelectedTournament.filter(f => f.round_number === selectedRound);
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -4105,11 +4098,14 @@ export function TournamentDashboardPageContent() {
         type={confirmState.type}
       />
     </div>
+  
+    </AuthGuard>
   );
 }
 
 export default function TournamentDashboardPage() {
   return (
+
     <Suspense
       fallback={
         <div className="console-bg min-h-screen flex items-center justify-center relative font-mono text-slate-800">
@@ -4123,5 +4119,6 @@ export default function TournamentDashboardPage() {
     >
       <TournamentDashboardPageContent />
     </Suspense>
+
   );
 }

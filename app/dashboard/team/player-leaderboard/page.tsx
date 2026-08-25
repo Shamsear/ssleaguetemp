@@ -12,6 +12,7 @@ import { usePlayerStats } from '@/hooks';
 import { useTournament } from '@/hooks/useTournaments';
 import TournamentSelector from '@/components/TournamentSelector';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerStats {
   id: string;
@@ -84,43 +85,25 @@ export default function PlayerLeaderboardPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch and set the team's season if not already set
-  useEffect(() => {
     const fetchTeamSeason = async () => {
       if (!user || user.role !== 'team' || seasonId) return;
 
       try {
-        // Get active season from Firebase
-        const { db } = await import('@/lib/firebase/config');
-        const { collection, query, where, getDocs } = await import('firebase/firestore');
+        // Get active season
+        const seasonsRes = await fetch('/api/seasons');
+        const seasonsJson = await seasonsRes.json();
+        const seasonsList = (seasonsJson.data || seasonsJson.seasons || []).filter((s: any) => s.status === 'active' || s.is_active === true);
         
-        const seasonsRef = collection(db, 'seasons');
-        const activeSeasonQuery = query(seasonsRef, where('isActive', '==', true));
-        const snapshot = await getDocs(activeSeasonQuery);
-        
-        if (!snapshot.empty) {
-          const activeSeason = snapshot.docs[0];
-          const activeSeasonId = activeSeason.id;
+        if (seasonsList.length > 0) {
+          const activeSeasonId = seasonsList[0].id;
           
           // Check if team is registered for this season
-          const teamSeasonsRef = collection(db, 'team_seasons');
-          const teamSeasonQuery = query(
-            teamSeasonsRef,
-            where('user_id', '==', user.uid),
-            where('season_id', '==', activeSeasonId),
-            where('status', '==', 'registered')
-          );
-          const teamSeasonSnapshot = await getDocs(teamSeasonQuery);
+          const teamSeasonsRes = await fetch(`/api/team-seasons?user_id=${user.uid}&season_id=${activeSeasonId}`);
+          const teamSeasonsJson = await teamSeasonsRes.json();
+          const allTeamSeasons = teamSeasonsJson.data || teamSeasonsJson.teamSeasons || [];
+          const teamSeasonSnapshot = allTeamSeasons.filter((ts: any) => ts.status === 'registered');
           
-          if (!teamSeasonSnapshot.empty) {
+          if (teamSeasonSnapshot.length > 0) {
             console.log('📝 [Player Leaderboard] Setting team season ID:', activeSeasonId);
             setSeasonId(activeSeasonId);
           } else {
@@ -333,10 +316,6 @@ export default function PlayerLeaderboardPage() {
     );
   }
 
-  if (!user || user.role !== 'team') {
-    return null;
-  }
-
   const stats = {
     totalPlayers: players.length,
     activePlayers: players.filter(p => p.matches_played > 0).length,
@@ -344,6 +323,7 @@ export default function PlayerLeaderboardPage() {
   };
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -789,6 +769,7 @@ export default function PlayerLeaderboardPage() {
                   : 'border-slate-200/60';
                 
                 return (
+
                   <div 
                     key={player.id || player.player_id || `player-${index}`}
                     className={`console-card bg-white border rounded-xl p-4 shadow-sm font-mono transition-all ${cardBorder}`}
@@ -862,7 +843,8 @@ export default function PlayerLeaderboardPage() {
                       </div>
                     </div>
                   </div>
-                );
+
+  );
               })
             )}
           </div>
@@ -919,6 +901,8 @@ export default function PlayerLeaderboardPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }
 

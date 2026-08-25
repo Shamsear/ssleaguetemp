@@ -7,6 +7,7 @@ import { useCachedTeamSeasons } from '@/hooks/useCachedFirebase';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import { ArrowLeft, RefreshCw, Search, ShieldAlert, CheckCircle, AlertTriangle, User, DollarSign, ListFilter } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function PlayerReplacementPage() {
   const { seasonId: selectedSeason } = useTournamentContext();
@@ -211,6 +212,7 @@ export default function PlayerReplacementPage() {
   };
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -526,6 +528,7 @@ export default function PlayerReplacementPage() {
                             const isOwned = candidate.is_sold && candidate.current_team_id !== selectedTeamId;
                             
                             return (
+
                               <div
                                 key={candidate.player_id}
                                 onClick={() => handleSelectCandidate(candidate)}
@@ -578,7 +581,8 @@ export default function PlayerReplacementPage() {
                                   )}
                                 </div>
                               </div>
-                            );
+
+  );
                           })}
                         </div>
                       )}
@@ -621,5 +625,7 @@ export default function PlayerReplacementPage() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { ArrowLeft, Database, RefreshCw, AlertTriangle, Info, Users, CheckCircle, ShieldAlert, ChevronDown, ChevronUp } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface AuditPlayer {
   name: string;
@@ -40,15 +41,6 @@ export default function BalanceAuditPage() {
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
 
   // Authenticate user
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-    if (!authLoading && user && user.role !== 'committee_admin' && user.role !== 'admin') {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
-
   const loadAudit = async () => {
     setLoading(true);
     try {
@@ -145,6 +137,7 @@ export default function BalanceAuditPage() {
   const mismatchCount = auditData.filter(t => t.mismatch).length;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -283,6 +276,7 @@ export default function BalanceAuditPage() {
                     const budgetMismatch = (team.expected_budget !== team.pg_budget) || (team.expected_budget !== team.fb_budget);
 
                     return (
+
                       <React.Fragment key={team.team_id}>
                         <tr className={`hover:bg-slate-55/50 transition-colors ${team.mismatch ? 'bg-rose-500/[0.02]' : ''}`}>
                           {/* Team Name */}
@@ -400,7 +394,8 @@ export default function BalanceAuditPage() {
                           </tr>
                         )}
                       </React.Fragment>
-                    );
+
+  );
                   })}
                 </tbody>
               </table>
@@ -424,5 +419,7 @@ export default function BalanceAuditPage() {
 
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

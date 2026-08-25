@@ -5,7 +5,7 @@
  * including auctions, salaries, fines, player registrations, etc.
  */
 
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 export type TransactionType = 
   | 'auction_win'           // Won player in auction

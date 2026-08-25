@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { adminAuth } from '@/lib/firebase/admin';
 
 /**
  * Register a committee admin by setting custom claims

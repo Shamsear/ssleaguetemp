@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { History, Download, Filter, Star, Activity } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { usePermissions } from '@/hooks/usePermissions';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface TransferTransaction {
   id: string;
@@ -106,16 +107,6 @@ export default function TransferHistoryPage() {
   const [limit] = useState(20);
   const [totalCount, setTotalCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     if (user && user.role === 'committee_admin' && userSeasonId) {
@@ -255,6 +246,7 @@ export default function TransferHistoryPage() {
   if (!user || user.role !== 'committee_admin') return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Decorative glowing overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
@@ -371,7 +363,7 @@ export default function TransferHistoryPage() {
               >
                 <option value="">All Player Types</option>
                 <option value="real">👤 Real Players</option>
-                <option value="football"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> eFootball Players</option>
+                <option value="football">⚽ eFootball Players</option>
               </select>
             </div>
           </div>
@@ -584,5 +576,7 @@ export default function TransferHistoryPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

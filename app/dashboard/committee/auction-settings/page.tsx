@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Save, 
   RefreshCw, 
@@ -141,15 +141,12 @@ export default function AuctionSettingsPage() {
 
   const fetchActiveSeason = async () => {
     try {
-      const seasonsQuery = query(
-        collection(db, 'seasons'),
-        where('isActive', '==', true)
-      );
-      const seasonsSnapshot = await getDocs(seasonsQuery);
+      const seasonsJson = await (await fetch('/api/seasons')).json();
+      const seasonsList = seasonsJson.data || [];
+      const activeSeason = seasonsList.find((s: any) => s.is_active === true || s.isActive === true);
 
-      if (!seasonsSnapshot.empty) {
-        const seasonDoc = seasonsSnapshot.docs[0];
-        const seasonId = seasonDoc.id;
+      if (activeSeason) {
+        const seasonId = activeSeason.id;
         setCurrentSeasonId(seasonId);
         fetchSettings(seasonId);
       } else {
@@ -161,15 +158,6 @@ export default function AuctionSettingsPage() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
 
   useEffect(() => {
     if (user?.role === 'committee_admin') {
@@ -267,11 +255,9 @@ export default function AuctionSettingsPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
@@ -642,5 +628,7 @@ export default function AuctionSettingsPage() {
         type={alertState.type}
       />
     </div>
+  
+    </AuthGuard>
   );
 }

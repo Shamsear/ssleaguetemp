@@ -18,6 +18,7 @@ import {
   Info
 } from 'lucide-react'
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function AddScrapedPlayersPage() {
   const router = useRouter()
@@ -66,15 +67,6 @@ export default function AddScrapedPlayersPage() {
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm, positionFilter, duplicateFilter])
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
 
   const fetchNewPlayers = async () => {
     try {
@@ -277,6 +269,7 @@ export default function AddScrapedPlayersPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none" />
@@ -474,6 +467,7 @@ export default function AddScrapedPlayersPage() {
                     const isChecked = selectedIds.has(player.player_id.toString())
                     const isExpanded = expandedPlayerIds.has(player.player_id.toString())
                     return (
+
                       <React.Fragment key={player.player_id}>
                         <tr className={`hover:bg-slate-50/50 transition-colors text-slate-700 ${isChecked ? 'bg-blue-50/10' : ''} ${isExpanded ? 'border-b-0 bg-slate-50/30' : ''}`}>
                           <td className="py-2.5 px-4 text-center">
@@ -591,7 +585,8 @@ export default function AddScrapedPlayersPage() {
                           </tr>
                         )}
                       </React.Fragment>
-                    )
+
+  )
                   })}
                 </tbody>
               </table>
@@ -643,5 +638,7 @@ export default function AddScrapedPlayersPage() {
       )}
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }

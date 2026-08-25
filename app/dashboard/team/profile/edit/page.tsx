@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { uploadImage } from '@/lib/imagekit/upload';
 import { useCachedSeasons } from '@/hooks/useCachedFirebase';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface RealPlayer {
   id: string | number;
@@ -74,16 +75,6 @@ export default function EditTeamProfilePage() {
     'Pathanamthitta', 'Thiruvananthapuram', 'Thrissur', 'Wayanad'
   ];
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch active season using the same hook as profile page
   const { data: activeSeasons, isLoading: seasonsLoading } = useCachedSeasons(
     user?.role === 'team' ? { isActive: 'true' } : undefined
   );
@@ -91,10 +82,6 @@ export default function EditTeamProfilePage() {
   useEffect(() => {
     console.log('🔄 useEffect triggered, user:', user?.uid, 'seasons:', activeSeasons?.length);
     const fetchData = async () => {
-      if (!user) {
-        console.log('⚠️ No user, skipping fetch');
-        return;
-      }
 
       if (!activeSeasons || activeSeasons.length === 0) {
         console.log('⚠️ No active seasons found yet');
@@ -387,11 +374,9 @@ export default function EditTeamProfilePage() {
     );
   }
 
-  if (!user || user.role !== 'team') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -912,5 +897,7 @@ export default function EditTeamProfilePage() {
         </form>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

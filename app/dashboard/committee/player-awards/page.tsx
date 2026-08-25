@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   Award, 
   ArrowLeft, 
   Trophy, 
@@ -100,16 +101,6 @@ export default function PlayerAwardsManagementPage() {
     notes: ''
   });
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-    if (!authLoading && user && !isCommitteeAdmin) {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router, isCommitteeAdmin]);
-
-  // Load data when season is set
   useEffect(() => {
     if (userSeasonId) {
       fetchAwards();
@@ -377,6 +368,7 @@ export default function PlayerAwardsManagementPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Ambient Gold Glow Overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -838,5 +830,7 @@ export default function PlayerAwardsManagementPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

@@ -5,6 +5,7 @@ import { useTournamentContext } from '@/contexts/TournamentContext';
 import { AlertTriangle, Plus, CalendarClock, Link as LinkIcon, Save } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import Link from 'next/link';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 // Custom UI Components replacing missing shadcn imports
 const Card = ({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -46,9 +47,12 @@ const Button = ({ className, children, variant, ...props }: React.ButtonHTMLAttr
   };
   const currentVariant = variants[variant || 'default'] || variant || variants.default;
   return (
+    <AuthGuard requiredRole="committee_admin">
     <button className={`${baseStyle} ${currentVariant} ${className || ''}`} {...props}>
       {children}
     </button>
+  
+    </AuthGuard>
   );
 };
 
@@ -67,8 +71,9 @@ const Badge = ({ className, children, variant, ...props }: React.HTMLAttributes<
 };
 
 export default function WindowsManagementPage() {
-  const { seasonId: selectedSeason } = useTournamentContext();
-  const { isCommitteeAdmin } = usePermissions();
+  const { seasonId: contextSeason } = useTournamentContext();
+  const { isCommitteeAdmin, userSeasonId } = usePermissions();
+  const selectedSeason = contextSeason || userSeasonId;
   
   const [windows, setWindows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -176,6 +181,7 @@ export default function WindowsManagementPage() {
   );
 
   return (
+
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -394,5 +400,6 @@ export default function WindowsManagementPage() {
         )}
       </div>
     </div>
+
   );
 }

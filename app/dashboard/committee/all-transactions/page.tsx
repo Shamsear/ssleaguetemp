@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { DollarSign, Users, Filter, TrendingUp, TrendingDown, Calendar, ArrowLeft, Trophy, ClipboardList, Download, Share2, Check, ChevronDown, Award, Gift, Wallet, UserCheck, Gavel, AlertTriangle, ArrowRightLeft, RefreshCw, Undo2, FileText, Settings, Info, CheckCircle, BarChart2 } from 'lucide-react';
-import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+
 import { usePermissions } from '@/hooks/usePermissions';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Transaction {
   id: string;
@@ -62,16 +62,6 @@ export default function AllTransactionsPage() {
   const EXPENSE_TYPES = ['salary_payment', 'salary', 'real_player_fee', 'auction_win', 'fine', 'transfer_payment', 'swap_fee_paid', 'slot_purchase'];
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
 
@@ -108,18 +98,14 @@ export default function AllTransactionsPage() {
 
   const loadTeamsForSeason = async (seasonId: string) => {
     try {
-      const teamSeasonsQuery = query(
-        collection(db, 'team_seasons'),
-        where('season_id', '==', seasonId)
-      );
-      
-      const teamSeasonsSnapshot = await getDocs(teamSeasonsQuery);
+      const tsRes = await fetch(`/api/team/all?season_id=${seasonId}`);
+      const tsJson = await tsRes.json();
+      const teamSeasonsData = tsJson.data || tsJson.teams || [];
 
       const teamsList: any[] = [];
       const teamsMap: Record<string, string> = {};
 
-      teamSeasonsSnapshot.forEach(doc => {
-        const data = doc.data();
+      teamSeasonsData.forEach((data: any) => {
         const teamId = data.team_id;
         const teamName = data.team_name || teamId;
         
@@ -152,22 +138,24 @@ export default function AllTransactionsPage() {
       await loadTeamsForSeason(userSeasonId);
 
       // Load seasons that have team_seasons records
-      const teamSeasonsSnapshot = await getDocs(collection(db, 'team_seasons'));
+      const allTsRes = await fetch('/api/team/all');
+      const allTsJson = await allTsRes.json();
+      const allTeamSeasons = allTsJson.data || allTsJson.teams || [];
       const seasonIdsSet = new Set<string>();
       
-      teamSeasonsSnapshot.forEach(doc => {
-        const data = doc.data();
+      allTeamSeasons.forEach((data: any) => {
         if (data.season_id) {
           seasonIdsSet.add(data.season_id);
         }
       });
 
       // Fetch season details from seasons collection
-      const seasonsSnapshot = await getDocs(collection(db, 'seasons'));
+      const allSeasonsRes = await fetch('/api/seasons');
+      const allSeasonsJson = await allSeasonsRes.json();
       const seasonsList: any[] = [];
       const foundSeasonIds = new Set<string>();
       
-      seasonsSnapshot.forEach(doc => {
+      (allSeasonsJson.data || []).forEach((data: any) => {
         if (seasonIdsSet.has(doc.id)) {
           foundSeasonIds.add(doc.id);
           seasonsList.push({
@@ -423,23 +411,15 @@ export default function AllTransactionsPage() {
       // Determine which season to filter by
       const filterSeasonId = selectedSeasonId === 'current' ? userSeasonId : selectedSeasonId;
       
-      let q;
-      if (selectedSeasonId === 'all') {
-        // Fetch all transactions (no season filter)
-        q = query(collection(db, 'transactions'));
-      } else {
-        // Query with season filter - SIGNIFICANTLY reduces reads
-        // Example: Instead of reading 3913 docs, only read ~100-200 for current season
-        q = query(
-          collection(db, 'transactions'),
-          where('season_id', '==', filterSeasonId)
-        );
-      }
-
-      const snapshot = await getDocs(q);
+      // Fetch transactions from API
+      const txUrl = selectedSeasonId === 'all' 
+        ? '/api/players/transfer-history' 
+        : `/api/players/transfer-history?season_id=${filterSeasonId}`;
+      const txRes = await fetch(txUrl);
+      const txJson = await txRes.json();
       const allTransactions: Transaction[] = [];
 
-      snapshot.forEach(doc => {
+      snapshot.forEach((doc) => {
         const data = doc.data();
 
         // Season filter already applied in query (unless 'all' selected)
@@ -617,8 +597,9 @@ export default function AllTransactionsPage() {
       setIsFetchingTransactions(true);
 
       // Fetch all transactions for the season
-      const q = query(collection(db, 'transactions'));
-      const snapshot = await getDocs(q);
+      const txRes2 = await fetch('/api/players/transfer-history');
+      const txJson2 = await txRes2.json();
+      const txData = txJson2.transactions || [];
 
       const teamTotals: Record<string, TeamSummary> = {};
 
@@ -641,7 +622,7 @@ export default function AllTransactionsPage() {
       // Determine which season to filter by
       const filterSeasonId = selectedSeasonId === 'current' ? userSeasonId : selectedSeasonId;
 
-      snapshot.forEach(doc => {
+      snapshot.forEach((doc) => {
         const data = doc.data();
 
         // Apply season filter
@@ -898,6 +879,7 @@ export default function AllTransactionsPage() {
   if (!user) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Ambient Gold Glow Overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -1370,6 +1352,7 @@ export default function AllTransactionsPage() {
                     {Object.entries(expenseByTypeCurrency).map(([key, data]) => {
                       const typeTotal = data.transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
                       return (
+
                         <div key={key} className="border border-slate-200/60 rounded-2xl overflow-hidden">
                           <div className="bg-slate-50 px-4 py-3 border-b border-slate-200/60 flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
@@ -1424,7 +1407,8 @@ export default function AllTransactionsPage() {
                             </table>
                           </div>
                         </div>
-                      );
+
+  );
                     })}
                   </div>
                 </div>
@@ -1504,5 +1488,7 @@ export default function AllTransactionsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

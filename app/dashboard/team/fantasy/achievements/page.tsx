@@ -10,6 +10,7 @@ import { ClipboardList, Handshake, TrendingUp, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Achievement, AchievementCategory } from '@/lib/fantasy/achievements';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface AchievementWithStatus extends Achievement {
   is_unlocked: boolean;
@@ -149,6 +150,7 @@ export default function AchievementsPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
@@ -309,5 +311,7 @@ export default function AchievementsPage() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

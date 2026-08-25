@@ -5,7 +5,7 @@
  * Logs committee admin actions like finalization previews, applications, and cancellations
  */
 
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 export type AuditActionType = 
   | 'preview_finalization'      // Committee previewed finalization results

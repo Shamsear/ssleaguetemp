@@ -8,6 +8,7 @@ import { useAuctionWebSocket } from '@/hooks/useWebSocket';
 import { useAutoFinalize } from '@/hooks/useAutoFinalize';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { ArrowLeft, Trash2, ShieldAlert, CheckCircle2, AlertTriangle, Info, Sparkles, Plus, Clock, Users, ChevronRight, ChevronDown, RefreshCw, Play, DollarSign, Check, FileText, Settings, Calendar, ArrowRight, Download, CheckCircle, XCircle } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Bid {
   id: string;
@@ -75,7 +76,6 @@ interface TeamBidCount {
   bid_count: number;
   required_bids: number;
 }
-
 
 export default function RoundDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { user, loading } = useAuth();
@@ -199,17 +199,6 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch round details on mount
   useEffect(() => {
     if (roundId) {
       fetchRound();
@@ -523,6 +512,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
   const isCompleted = round.status === 'completed';
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <>
       {/* Loading Overlay */}
       {showLoadingOverlay && (
@@ -887,6 +877,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
                   const wonCount = teamData.bids.filter((b) => b.won).length;
 
                   return (
+
                     <div
                       key={teamId}
                       className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/10"
@@ -979,7 +970,8 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       )}
                     </div>
-                  );
+
+  );
                 })
               ) : (
                 <div className="text-center py-12 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 font-mono text-xs">
@@ -993,6 +985,8 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
     </>
+  
+    </AuthGuard>
   );
 
 }

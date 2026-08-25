@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useTournament } from '@/hooks/useTournaments';
 import TournamentSelector from '@/components/TournamentSelector';
 import TeamStatistics from '@/components/team/TeamStatistics';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function TeamStatisticsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -16,12 +17,6 @@ export default function TeamStatisticsPage() {
   const [viewMode, setViewMode] = useState<'all' | 'season' | 'tournament'>('all');
   
   const { tournament: selectedTournament } = useTournament(selectedTournamentId);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, authLoading, router]);
 
   useEffect(() => {
     if (selectedTournament) {
@@ -43,11 +38,9 @@ export default function TeamStatisticsPage() {
     );
   }
 
-  if (!user) {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Page Header */}
@@ -157,5 +150,7 @@ export default function TeamStatisticsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

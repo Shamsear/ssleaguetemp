@@ -10,6 +10,7 @@ import { BookOpen, Clock, Crown, Dumbbell, Info, Lightbulb } from 'lucide-react'
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 type PowerUpType = 'triple_captain' | 'bench_boost' | 'free_hit' | 'wildcard';
 
@@ -249,6 +250,7 @@ export default function PowerUpsPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="p-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-6">
@@ -422,6 +424,7 @@ export default function PowerUpsPage() {
               {history.map((usage) => {
                 const powerUp = getPowerUpInfo(usage.power_up_type);
                 return (
+
                   <div
                     key={usage.usage_id}
                     className="px-6 py-4 flex items-center justify-between hover:bg-gray-50"
@@ -443,7 +446,8 @@ export default function PowerUpsPage() {
                       </div>
                     </div>
                   </div>
-                );
+
+  );
               })}
             </div>
           )}
@@ -489,5 +493,7 @@ export default function PowerUpsPage() {
         </ul>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

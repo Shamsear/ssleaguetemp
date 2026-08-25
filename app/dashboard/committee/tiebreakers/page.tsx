@@ -9,6 +9,7 @@ import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Tiebreaker {
   id: string;
@@ -57,15 +58,6 @@ export default function CommitteeTiebreakerPage() {
     closeConfirm,
     handleConfirm,
   } = useModal();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const fetchTiebreakers = async () => {
     try {
@@ -230,6 +222,7 @@ export default function CommitteeTiebreakerPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen py-8 px-4">
       <div className="container mx-auto max-w-screen-2xl">
         {/* Header */}
@@ -518,5 +511,7 @@ export default function CommitteeTiebreakerPage() {
         type={confirmState.type}
       />
     </div>
+  
+    </AuthGuard>
   );
 }

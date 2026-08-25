@@ -5,7 +5,7 @@
  */
 
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 export interface TeamAward {
   id: string;

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
 import { ArrowRightLeft, UserMinus, Clock, CheckCircle2, XCircle, AlertCircle, CalendarClock } from 'lucide-react';
 import Link from 'next/link';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 // Custom UI Components replacing missing shadcn imports
 const Card = ({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -46,9 +47,12 @@ const Button = ({ className, children, variant, ...props }: React.ButtonHTMLAttr
   };
   const currentVariant = variants[variant || 'default'] || variant || variants.default;
   return (
+    <AuthGuard requiredRole="team">
     <button className={`${baseStyle} ${currentVariant} ${className || ''}`} {...props}>
       {children}
     </button>
+  
+    </AuthGuard>
   );
 };
 
@@ -150,6 +154,7 @@ export default function RequestsOverviewPage() {
   if (!teamId) return <div className="p-8 text-center font-mono text-sm uppercase tracking-wider text-slate-500">Please log in to view requests.</div>;
 
   return (
+
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -388,5 +393,6 @@ export default function RequestsOverviewPage() {
         )}
       </div>
     </div>
+
   );
 }

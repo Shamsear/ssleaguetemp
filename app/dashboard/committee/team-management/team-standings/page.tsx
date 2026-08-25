@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useTournament } from '@/hooks/useTournaments';
 import TournamentSelector from '@/components/TournamentSelector';
 import TournamentStandings from '@/components/tournament/TournamentStandings';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function TeamStandingsPage() {
   const { user, loading } = useAuth();
@@ -24,22 +25,19 @@ export default function TeamStandingsPage() {
       if (!user || user.role !== 'committee_admin') return;
 
       try {
-        // Get active season from Firebase
-        const { db } = await import('@/lib/firebase/config');
-        const { collection, query, where, getDocs } = await import('firebase/firestore');
+        // Get active season
+        const seasonsRes = await fetch('/api/seasons');
+        const seasonsJson = await seasonsRes.json();
+        const seasonsList = (seasonsJson.data || seasonsJson.seasons || []).filter((s: any) => s.status === 'active' || s.is_active === true);
         
-        const seasonsRef = collection(db, 'seasons');
-        const activeSeasonQuery = query(seasonsRef, where('isActive', '==', true));
-        const snapshot = await getDocs(activeSeasonQuery);
-        
-        if (!snapshot.empty) {
-          const activeSeason = snapshot.docs[0];
+        if (seasonsList.length > 0) {
+          const activeSeason = seasonsList[0];
           const activeSeasonId = activeSeason.id;
           
           console.log('[INFO] [Committee Standings] Found active season:', activeSeasonId);
           setSeasonId(activeSeasonId);
         } else {
-          console.log('<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> [Committee Standings] No active season found');
+          console.log('[Committee Standings] No active season found');
         }
       } catch (error) {
         console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [Committee Standings] Error fetching active season:', error);
@@ -48,15 +46,6 @@ export default function TeamStandingsPage() {
 
     fetchActiveSeason();
   }, [user, setSeasonId]);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   if (loading) {
     return (
@@ -69,11 +58,9 @@ export default function TeamStandingsPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -117,5 +104,7 @@ export default function TeamStandingsPage() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

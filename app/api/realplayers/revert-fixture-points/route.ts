@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { getMainDb } from '@/lib/neon/main-config';
 import { calculateRealPlayerSalary } from '@/lib/salary-utils';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 // Base points by star rating
 const STAR_RATING_BASE_POINTS: { [key: number]: number } = {
@@ -167,20 +166,16 @@ export async function POST(request: NextRequest) {
 }
 
 async function revertPlayerPoints(playerId: string, pointsChange: number, seasonId: string, usesCategoryPoints: boolean) {
-  // Get player from realplayer collection
-  const playerQuery = query(
-    collection(db, 'realplayer'),
-    where('player_id', '==', playerId)
-  );
-  const playerSnap = await getDocs(playerQuery);
+  // Get player from Neon realplayers
+  const mainSql = getMainDb();
+  const playerRows = await mainSql`SELECT * FROM realplayers WHERE player_id = ${playerId} OR id = ${playerId} LIMIT 1`;
 
-  if (playerSnap.empty) {
-    console.warn(`Player ${playerId} not found in realplayer collection`);
+  if (playerRows.length === 0) {
+    console.warn(`Player ${playerId} not found in realplayers`);
     return null;
   }
 
-  const playerDoc = playerSnap.docs[0];
-  const playerData = playerDoc.data();
+  const playerData = playerRows[0];
   const currentPoints = playerData.points || (usesCategoryPoints ? 0 : STAR_RATING_BASE_POINTS[playerData.star_rating || 3]);
 
   // SUBTRACT the points that were added (reverse the change)
@@ -201,8 +196,9 @@ async function revertPlayerPoints(playerId: string, pointsChange: number, season
     updateData.salary_per_match = newSalary;
   }
 
-  // Update realplayer (LIFETIME data)
-  await updateDoc(playerDoc.ref, updateData);
+  // Update realplayers (LIFETIME data)
+  const now = new Date().toISOString();
+  await mainSql`UPDATE realplayers SET points = ${newPoints}, star_rating = ${newStarRating}, updated_at = ${now} WHERE player_id = ${playerId} OR id = ${playerId}`;
 
   // Update realplayerstats/player_seasons in Neon
   const sql = getTournamentDb();
@@ -243,46 +239,27 @@ async function revertPlayerPoints(playerId: string, pointsChange: number, season
 // Recalculate categories for ALL players
 async function recalculateAllPlayerCategories() {
   try {
-    const allPlayersQuery = query(collection(db, 'realplayer'));
-    const allPlayersSnap = await getDocs(allPlayersQuery);
+    const allPlayersRows = await mainSql`SELECT player_id, star_rating, points FROM realplayers`;
 
-    const players: Array<{ docId: string; playerId: string; starRating: number; points: number }> = [];
+    const players = allPlayersRows.map((row: any) => ({
+      player_id: row.player_id,
+      starRating: row.star_rating || 3,
+      points: row.points || 100
+    }));
 
-    allPlayersSnap.forEach(doc => {
-      const data = doc.data();
-      players.push({
-        docId: doc.id,
-        playerId: data.player_id,
-        starRating: data.star_rating || 3,
-        points: data.points || 100
-      });
-    });
-
-    players.sort((a, b) => {
-      if (b.starRating !== a.starRating) {
-        return b.starRating - a.starRating;
-      }
+    players.sort((a: any, b: any) => {
+      if (b.starRating !== a.starRating) return b.starRating - a.starRating;
       return b.points - a.points;
     });
 
     const legendThreshold = Math.ceil(players.length / 2);
 
-    const updatePromises = players.map(async (player, index) => {
-      const isLegend = index < legendThreshold;
-      const category = isLegend
-        ? { id: 'legend', name: 'Legend' }
-        : { id: 'classic', name: 'Classic' };
-
-      const playerDoc = doc(db, 'realplayer', player.docId);
-      await updateDoc(playerDoc, {
-        category_id: category.id,
-        category_name: category.name
-      });
-
-      return { playerId: player.playerId, category: category.name, rank: index + 1 };
-    });
-
-    await Promise.all(updatePromises);
+    for (let i = 0; i < players.length; i++) {
+      const isLegend = i < legendThreshold;
+      const category = isLegend ? 'legend' : 'classic';
+      const categoryName = isLegend ? 'Legend' : 'Classic';
+      await mainSql`UPDATE realplayers SET category_id = ${category}, category_name = ${categoryName} WHERE player_id = ${players[i].player_id}`;
+    }
 
     return { success: true, totalPlayers: players.length, legendCount: legendThreshold };
   } catch (error) {

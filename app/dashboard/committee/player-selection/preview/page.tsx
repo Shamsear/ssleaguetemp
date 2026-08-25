@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Change {
   player_id: string
@@ -29,15 +30,6 @@ export default function PlayerSelectionPreviewPage() {
   const [previewData, setPreviewData] = useState<PreviewData | null>(null)
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
 
   useEffect(() => {
     const loadPreview = async () => {
@@ -198,6 +190,7 @@ export default function PlayerSelectionPreviewPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
       <div className="glass rounded-3xl p-3 sm:p-6 mb-4 sm:mb-8">
         {/* Header */}
@@ -403,5 +396,7 @@ export default function PlayerSelectionPreviewPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }

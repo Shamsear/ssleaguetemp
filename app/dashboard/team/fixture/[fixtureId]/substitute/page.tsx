@@ -7,6 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import LineupSubstitution from '@/components/LineupSubstitution';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function FixtureSubstitutePage() {
   const { user, loading } = useAuth();
@@ -19,12 +20,6 @@ export default function FixtureSubstitutePage() {
   const [teamId, setTeamId] = useState<string>('');
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     if (user && fixtureId) {
@@ -110,6 +105,7 @@ export default function FixtureSubstitutePage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 py-8 px-4">
       <div className="container mx-auto max-w-5xl">
         {/* Header */}
@@ -203,5 +199,7 @@ export default function FixtureSubstitutePage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

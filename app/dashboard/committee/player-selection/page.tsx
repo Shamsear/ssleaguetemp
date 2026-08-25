@@ -10,6 +10,7 @@ import AlertModal from '@/components/modals/AlertModal'
 import ConfirmModal from '@/components/modals/ConfirmModal'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface FootballPlayer {
   id: string
@@ -52,15 +53,6 @@ export default function PlayerSelectionPage() {
     closeConfirm,
     handleConfirm,
   } = useModal()
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -579,11 +571,9 @@ export default function PlayerSelectionPage() {
     )
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null
-  }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
       <div className="glass rounded-3xl p-3 sm:p-6 mb-4 sm:mb-8">
         {/* Header */}
@@ -1014,5 +1004,7 @@ export default function PlayerSelectionPage() {
         type={confirmState.type}
       />
     </div>
+  
+    </AuthGuard>
   )
 }

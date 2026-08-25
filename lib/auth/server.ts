@@ -1,4 +1,4 @@
-import { adminAuth, adminDb } from '@/lib/firebase/admin';
+import { adminAuth } from '@/lib/firebase/admin';
 
 export interface User {
   id: string;

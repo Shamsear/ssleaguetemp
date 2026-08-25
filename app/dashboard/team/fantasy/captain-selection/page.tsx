@@ -8,6 +8,7 @@ import { ArrowLeft, Crown, Star, Clock, Lock, CheckCircle, AlertTriangle } from 
 import Link from 'next/link';
 import AlertModal from '@/components/modals/AlertModal';
 import { useModal } from '@/hooks/useModal';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   real_player_id: string;
@@ -49,13 +50,6 @@ export default function CaptainSelectionPage() {
   const [timeRemaining, setTimeRemaining] = useState<string>('');
 
   const { alertState, showAlert, closeAlert } = useModal();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     if (user) {
@@ -267,6 +261,7 @@ export default function CaptainSelectionPage() {
   const isWindowOpen = currentWindow?.is_open && currentWindow.window_status === 'open';
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       <AlertModal {...alertState} onClose={closeAlert} />
       
@@ -496,5 +491,7 @@ export default function CaptainSelectionPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

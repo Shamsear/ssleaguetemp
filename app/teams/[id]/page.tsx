@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { neon } from '@neondatabase/serverless';
 import TeamDetailPage from './TeamDetailClient';
 

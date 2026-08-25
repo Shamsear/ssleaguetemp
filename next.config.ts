@@ -54,7 +54,10 @@ const nextConfig: NextConfig = {
     ],
   },
   // Turbopack configuration (Next.js 16+)
-  turbopack: {},
+  turbopack: {
+    // Lock workspace root to this project so Turbopack doesn't scan parent dirs
+    root: process.cwd(),
+  },
   
   webpack: (config, { isServer, dev }) => {
     // Exclude sql.js from server-side bundling

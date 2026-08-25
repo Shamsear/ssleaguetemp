@@ -12,6 +12,7 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useCachedSeasons } from '@/hooks/useCachedFirebase';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 // Position constants
 const POSITIONS = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
@@ -82,20 +83,7 @@ export default function TeamPlayersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchAuctionPlayers = async () => {
-      if (!user) {
-        console.log('No user, skipping auction players fetch');
-        return;
-      }
 
       const effectiveSeasonId = userSeasonId || activeSeasonId;
 
@@ -140,10 +128,6 @@ export default function TeamPlayersPage() {
       // Use userSeasonId first, then activeSeasonId as fallback
       const effectiveSeasonId = userSeasonId || activeSeasonId;
       
-      if (!user) {
-        console.log('No user, skipping tournament players fetch');
-        return;
-      }
 
       if (activeSeasonsLoading) {
         console.log('Still loading active seasons, waiting...');
@@ -300,11 +284,9 @@ export default function TeamPlayersPage() {
     );
   }
 
-  if (!user || user.role !== 'team') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
@@ -861,5 +843,7 @@ export default function TeamPlayersPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

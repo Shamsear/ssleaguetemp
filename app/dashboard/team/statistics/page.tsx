@@ -8,6 +8,7 @@ import PlayerImage, { PlayerAvatar } from '@/components/PlayerImage';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 // Position constants
 const POSITIONS = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
@@ -54,15 +55,6 @@ export default function PlayerStatisticsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalPlayers, setTotalPlayers] = useState(0);
   const itemsPerPage = 50; // Show 50 players per page
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -290,11 +282,8 @@ export default function PlayerStatisticsPage() {
     );
   }
 
-  if (!user || user.role !== 'team') {
-    return null;
-  }
-
   return (
+    <AuthGuard requiredRole="team">
     <div className="container mx-auto space-y-6 px-4 py-4 sm:py-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -533,6 +522,7 @@ export default function PlayerStatisticsPage() {
               }
               
               return (
+
                 <button
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
@@ -544,7 +534,8 @@ export default function PlayerStatisticsPage() {
                 >
                   {pageNum}
                 </button>
-              );
+
+  );
             })}
           </div>
           
@@ -567,5 +558,7 @@ export default function PlayerStatisticsPage() {
         type={alertState.type}
       />
     </div>
+  
+    </AuthGuard>
   );
 }

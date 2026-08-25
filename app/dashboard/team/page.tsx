@@ -13,6 +13,7 @@ import { useTeamHistory } from '@/hooks/useTeamHistory';
 import { useDashboardWebSocket } from '@/hooks/useWebSocket';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import NotificationButton from '@/components/notifications/NotificationButton';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function TeamDashboard() {
   const { user, loading } = useAuth();
@@ -56,16 +57,6 @@ export default function TeamDashboard() {
     }
   }, [seasonStatus?.seasonId, setSeasonId]);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch team's historical stats from Neon (all seasons played)
   const { data: teamHistory, isLoading: teamHistoryLoading } = useTeamHistory(
     user?.role === 'team' ? user.uid : undefined
   );
@@ -84,34 +75,22 @@ export default function TeamDashboard() {
       }
 
       try {
-        const { db } = await import('@/lib/firebase/config');
-        const { doc, getDoc, collection, query, where, getDocs } = await import('firebase/firestore');
-        
         // Try to find the team document by userId, uid, or owner_uid
-        const teamsRef = collection(db, 'teams');
+        const teamsRes = await fetch('/api/teams');
+        const teamsJson = await teamsRes.json();
+        const teamsList = teamsJson.teams || teamsJson.data || [];
         
-        // Try userId first (primary field)
-        let querySnapshot = await getDocs(query(teamsRef, where('userId', '==', user.uid)));
+        // Find team by userId, uid, or owner_uid
+        const teamData = teamsList.find((t: any) => t.userId === user.uid || t.uid === user.uid || t.owner_uid === user.uid);
         
-        // Fallback to uid if userId query returned empty
-        if (querySnapshot.empty) {
-          querySnapshot = await getDocs(query(teamsRef, where('uid', '==', user.uid)));
-        }
-        
-        // Final fallback to owner_uid
-        if (querySnapshot.empty) {
-          querySnapshot = await getDocs(query(teamsRef, where('owner_uid', '==', user.uid)));
-        }
-        
-        if (!querySnapshot.empty) {
+        if (teamData) {
           // Found team document
-          const teamDoc = querySnapshot.docs[0];
-          const teamData = teamDoc.data();
-          console.log('[SUCCESS] Team document found:', teamDoc.id);
+          console.log('[SUCCESS] Team document found:', teamData.id);
+          const teamDocId = teamData.id;
           console.log('Team data:', teamData);
           
           // Store team document ID for registration check
-          setTeamDocId(teamDoc.id);
+          setTeamDocId(teamData.id);
           
           // Set owner name from team document
           const ownerNameValue = teamData.owner_name || teamData.ownerName || teamData.owner;
@@ -205,10 +184,10 @@ export default function TeamDashboard() {
         const teamId = userDocData.data()?.teamId;
         
         if (teamId) {
-          await updateDoc(doc(db, 'teams', teamId), {
+          await fetch(`/api/teams/${teamId}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({
             logo_url: result.url,
             updated_at: new Date()
-          });
+          })});
         } else {
           console.log('No team ID found in user document');
         }
@@ -285,19 +264,18 @@ export default function TeamDashboard() {
           
           console.log('[DEBUG] Firebase fallback check:', { teamSeasonId1, teamSeasonId2, teamDocId });
           
-          const queries = [getDoc(doc(db, 'team_seasons', teamSeasonId1))];
-          if (teamSeasonId2 && teamSeasonId2 !== teamSeasonId1) {
-            queries.push(getDoc(doc(db, 'team_seasons', teamSeasonId2)));
-          }
-          
-          const results = await Promise.all(queries);
-          const teamSeasonDoc = results.find(doc => doc.exists());
+          const tsRes = await fetch('/api/team-seasons');
+          const tsData = await tsRes.json();
+          const allTeamSeasons = tsData.data || [];
+          const teamSeasonDoc1 = allTeamSeasons.find((ts: any) => ts.id === teamSeasonId1);
+          const teamSeasonDoc2 = teamSeasonId2 && teamSeasonId2 !== teamSeasonId1 ? allTeamSeasons.find((ts: any) => ts.id === teamSeasonId2) : null;
+          const teamSeasonDoc = teamSeasonDoc1 || teamSeasonDoc2;
           
           if (teamSeasonDoc) {
-            isRegistered = teamSeasonDoc.data()?.status === 'registered';
-            console.log('[INFO] Firebase result:', { exists: true, status: teamSeasonDoc.data()?.status });
+            isRegistered = teamSeasonDoc.status === 'registered';
+            console.log('[INFO] API result:', { exists: true, status: teamSeasonDoc.status });
           } else {
-            console.log('[INFO] Firebase result: No document found');
+            console.log('[INFO] API result: No document found');
           }
         }
         
@@ -416,9 +394,6 @@ export default function TeamDashboard() {
     );
   }
 
-  if (!user || user.role !== 'team') {
-    return null;
-  }
 
   // Show unassigned dashboard if no active season or not registered
   if (!seasonStatus?.hasActiveSeason || !seasonStatus?.isRegistered) {
@@ -984,6 +959,7 @@ export default function TeamDashboard() {
                                   const trophyCardClass = isTrophyChampion ? 'fut-card-gold' : isTrophyRunnerUp ? 'fut-card-silver' : isTrophyThird ? 'fut-card-bronze' : 'fut-card-gold';
                                   const trophyIconColor = isTrophyChampion ? 'text-amber-500' : isTrophyRunnerUp ? 'text-slate-400' : isTrophyThird ? 'text-amber-700' : 'text-amber-500';
                                   return (
+    <AuthGuard requiredRole="team">
                                     <div key={trophy.id} className={`fut-card ${trophyCardClass} p-4 flex flex-col justify-between`}>
                                       <div className="flex justify-between items-start">
                                         <span className="text-[8px] font-mono text-slate-400 uppercase block">{trophyCardLabel}</span>
@@ -1000,7 +976,9 @@ export default function TeamDashboard() {
                                         </span>
                                       </div>
                                     </div>
-                                  );
+                                  
+    </AuthGuard>
+  );
                                 })}
                               </div>
                             </div>

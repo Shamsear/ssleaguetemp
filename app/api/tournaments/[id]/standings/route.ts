@@ -41,9 +41,9 @@ export async function GET(
     if (tournament.season_id) {
       try {
         const { db } = await import('@/lib/firebase/config');
-        const { doc, getDoc } = await import('firebase/firestore');
         
-        const seasonDoc = await getDoc(doc(db, 'seasons', tournament.season_id));
+        
+        const sql = getMainDb(); const seasonRows = await sql`SELECT * FROM seasons WHERE id = ${tournament.season_id} LIMIT 1`; const seasonDoc = { exists: () => seasonRows.length > 0, data: () => seasonRows[0] };
         if (seasonDoc.exists()) {
           const seasonData = seasonDoc.data();
           seasonName = seasonData.season_name || seasonData.name || `Season ${seasonData.season_number || ''}`;
@@ -279,10 +279,10 @@ async function calculateLeagueStandings(fixtures: any[], sql: any, tournamentId:
   if (teamIds.length > 0) {
     try {
       const { db } = await import('@/lib/firebase/config');
-      const { collection, getDocs } = await import('firebase/firestore');
       
-      const teamsRef = collection(db, 'teams');
-      const teamsSnapshot = await getDocs(teamsRef);
+      
+      const teamsRef = adminDb.collection('teams');
+      const teamsSnapshot = await teamsRef.get();
       
       teamsSnapshot.forEach((doc) => {
         const teamData = doc.data();
@@ -438,10 +438,10 @@ async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, 
   if (allTeamIds.size > 0) {
     try {
       const { db } = await import('@/lib/firebase/config');
-      const { collection, getDocs } = await import('firebase/firestore');
       
-      const teamsRef = collection(db, 'teams');
-      const teamsSnapshot = await getDocs(teamsRef);
+      
+      const teamsRef = adminDb.collection('teams');
+      const teamsSnapshot = await teamsRef.get();
       
       teamsSnapshot.forEach((doc) => {
         const teamData = doc.data();

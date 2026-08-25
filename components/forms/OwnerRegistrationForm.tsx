@@ -67,20 +67,17 @@ export default function OwnerRegistrationForm({
   }, [photoPreview]);
 
   useEffect(() => {
-    // Fetch owner_name from Firebase teams collection
+    // Fetch owner_name from teams via API
     const fetchOwnerName = async () => {
       if (!teamId) return;
       
       try {
-        const { doc, getDoc } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase/config');
+        const res = await fetch(`/api/teams/all-teams`);
+        const json = await res.json();
+        const team = json.data?.find((t: any) => t.id === teamId);
         
-        // Get team document by teamId
-        const teamDoc = await getDoc(doc(db, 'teams', teamId));
-        
-        if (teamDoc.exists()) {
-          const teamData = teamDoc.data();
-          const ownerName = teamData.owner_name;
+        if (team) {
+          const ownerName = team.owner_name;
           
           if (ownerName && !formData.name) {
             setFormData(prev => ({ ...prev, name: ownerName }));
@@ -215,13 +212,11 @@ export default function OwnerRegistrationForm({
       // Update Firebase teams owner_name if name was changed
       if (nameChanged && formData.name !== initialName) {
         try {
-          const { doc, updateDoc } = await import('firebase/firestore');
-          const { db } = await import('@/lib/firebase/config');
-          
-          // Update owner_name in teams collection
-          const teamRef = doc(db, 'teams', teamId);
-          await updateDoc(teamRef, {
-            owner_name: formData.name
+          // Update owner_name in teams via API
+          await fetch(`/api/teams/${teamId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ owner_name: formData.name }),
           });
         } catch (updateError) {
           console.error('Error updating Firebase teams owner_name:', updateError);

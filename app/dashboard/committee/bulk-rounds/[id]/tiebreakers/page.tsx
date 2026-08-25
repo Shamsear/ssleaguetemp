@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { ArrowLeft, Clock, DollarSign, Users, Check, Calendar, ChevronRight, Info, Sparkles, Plus, Play, Layers, Settings, RefreshCw, AlertTriangle, CheckCircle, XCircle, BarChart2 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Tiebreaker {
   id: string;
@@ -67,16 +68,6 @@ export default function BulkRoundTiebreakersPage() {
   const [copiedPlayerTiebreaker, setCopiedPlayerTiebreaker] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch round and tiebreakers in parallel
   const fetchData = useCallback(async () => {
     if (!roundId) return;
 
@@ -404,6 +395,7 @@ export default function BulkRoundTiebreakersPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -799,6 +791,7 @@ export default function BulkRoundTiebreakersPage() {
                             const isResolved = tiebreaker.status === 'resolved' || tiebreaker.status === 'finalized';
                             
                             return (
+
                               <>
                                 <button
                                   onClick={() => handleResolveTiebreaker(tiebreaker.id, tiebreaker.player_name)}
@@ -824,7 +817,8 @@ export default function BulkRoundTiebreakersPage() {
                                   </button>
                                 )}
                               </>
-                            );
+
+  );
                           })()}
                         </div>
                       </div>
@@ -837,5 +831,7 @@ export default function BulkRoundTiebreakersPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

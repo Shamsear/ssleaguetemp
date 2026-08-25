@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface TeamSeasonData {
   id: string;
@@ -57,10 +58,6 @@ export default function TeamDetailPage() {
   useEffect(() => {
     if (authLoading) return;
     
-    if (!user) {
-      router.push('/login');
-      return;
-    }
 
     fetchTeamData();
   }, [user, authLoading, teamId]);
@@ -139,9 +136,6 @@ export default function TeamDetailPage() {
     );
   }
 
-  if (!user) {
-    return null;
-  }
 
   if (error || !team) {
     return (

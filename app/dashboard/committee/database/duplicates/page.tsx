@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
 import { ArrowLeft, Trash2, ShieldAlert, CheckCircle2, AlertTriangle, Info, Sparkles, Users, Copy, ChevronRight, Database, RefreshCw, CheckCircle } from 'lucide-react'
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface DuplicateGroup {
   name: string
@@ -23,15 +24,6 @@ export default function DuplicateManagementPage() {
   const [selectedToDelete, setSelectedToDelete] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
   const [deleteStatus, setDeleteStatus] = useState('')
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
 
   useEffect(() => {
     if (user?.role === 'committee_admin') {
@@ -160,6 +152,7 @@ export default function DuplicateManagementPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -308,6 +301,7 @@ export default function DuplicateManagementPage() {
                     const isSelected = selectedToDelete.has(player.id)
                     
                     return (
+
                       <div
                         key={player.id}
                         className={`p-5 rounded-2xl border transition-all flex flex-col justify-between gap-4 ${
@@ -397,7 +391,8 @@ export default function DuplicateManagementPage() {
                           </button>
                         </div>
                       </div>
-                    )
+
+  )
                   })}
                 </div>
               </div>
@@ -406,6 +401,8 @@ export default function DuplicateManagementPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }
 

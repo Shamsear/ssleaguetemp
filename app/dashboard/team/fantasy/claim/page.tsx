@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function ClaimFantasyTeamPage() {
   const { user, loading } = useAuth();
@@ -12,15 +13,6 @@ export default function ClaimFantasyTeamPage() {
   const [claiming, setClaiming] = useState(false);
   const [message, setMessage] = useState('');
   const [teamId, setTeamId] = useState('');
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const handleClaim = async () => {
     if (!user || !teamId) {
@@ -70,6 +62,7 @@ export default function ClaimFantasyTeamPage() {
   if (!user) return null;
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white border border-slate-200 rounded-2xl shadow-sm p-8">
         <div className="text-center mb-6">
@@ -140,5 +133,7 @@ export default function ClaimFantasyTeamPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

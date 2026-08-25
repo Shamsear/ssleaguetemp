@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { signInWithEmailAndPassword, getAuth } from 'firebase/auth';
 
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Query teams collection for user with matching username (owner_name)
-    const teamsRef = collection(db, 'teams');
+    const teamsRef = adminDb.collection('teams');
     const q = query(teamsRef, where('username', '==', username), where('role', '==', 'team'));
     const querySnapshot = await getDocs(q);
 
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Query team by ID
-    const teamsRef = collection(db, 'teams');
+    const teamsRef = adminDb.collection('teams');
     const q = query(teamsRef, where('id', '==', teamId), where('role', '==', 'team'));
     const querySnapshot = await getDocs(q);
 

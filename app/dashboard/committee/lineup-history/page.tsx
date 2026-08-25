@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface LineupHistoryEntry {
   lineup_id: string;
@@ -47,15 +48,6 @@ export default function LineupHistoryPage() {
   const [substitutionHistory, setSubstitutionHistory] = useState<SubstitutionEntry[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     if (user && user.role === 'committee') {
@@ -139,11 +131,9 @@ export default function LineupHistoryPage() {
     );
   }
 
-  if (!user || user.role !== 'committee') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 py-8 px-4">
       <div className="container mx-auto max-w-7xl">
         {/* Header */}
@@ -350,5 +340,7 @@ export default function LineupHistoryPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

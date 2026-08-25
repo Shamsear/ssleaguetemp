@@ -4,7 +4,7 @@
 
 import { neon } from '@neondatabase/serverless';
 import { logAuctionWin } from './transaction-logger';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { triggerNews } from './news/trigger';
 import { broadcastSquadUpdate, broadcastWalletUpdate } from './realtime/broadcast';
 import { sendNotificationToSeason } from './notifications/send-notification';

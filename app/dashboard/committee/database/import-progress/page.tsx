@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Step {
   name: string
@@ -54,15 +55,6 @@ export default function ImportProgressPage() {
     existing_players_updated: 0,
     total_operations: 0
   })
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
 
   useEffect(() => {
     if (user?.role === 'committee_admin') {
@@ -307,6 +299,7 @@ export default function ImportProgressPage() {
     : { class: 'bg-red-100 text-red-800', text: 'Failed' }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="container mx-auto px-4 py-4 sm:py-8 max-w-screen-xl">
       {/* Page Header */}
       <div className="glass rounded-3xl p-6 mb-8 shadow-lg backdrop-blur-md border border-white/20">
@@ -367,6 +360,7 @@ export default function ImportProgressPage() {
             {steps.map((step, index) => {
               const statusClass = getStatusClass(step.status)
               return (
+
                 <div key={index} className={`flex items-center p-4 rounded-lg border ${statusClass.border} ${statusClass.bg}`}>
                   <div className="flex-shrink-0 mr-4">
                     {getStatusIcon(step.status)}
@@ -388,7 +382,8 @@ export default function ImportProgressPage() {
                     )}
                   </div>
                 </div>
-              )
+
+  )
             })}
           </div>
         </div>
@@ -458,5 +453,7 @@ export default function ImportProgressPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }

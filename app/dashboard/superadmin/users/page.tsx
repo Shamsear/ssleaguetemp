@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { getAllUsers, updateUserRole, toggleUserStatus, deleteUser, approveUser, rejectUser } from '@/lib/firebase/auth';
 import { User, UserRole } from '@/types/user';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   Users, 
   Shield, 
   Trash2, 
@@ -37,15 +38,6 @@ function UsersManagementContent() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     if (user && user.role === 'super_admin') {
@@ -210,11 +202,8 @@ function UsersManagementContent() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
-
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       
       {/* Page Header */}
@@ -434,11 +423,14 @@ function UsersManagementContent() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }
 
 export default function UsersManagement() {
   return (
+
     <Suspense fallback={
       <div className="console-bg min-h-screen flex items-center justify-center relative font-mono text-slate-800">
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -450,5 +442,6 @@ export default function UsersManagement() {
     }>
       <UsersManagementContent />
     </Suspense>
+
   );
 }

@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
-import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface RealPlayer {
   id: string;
@@ -82,15 +82,6 @@ export default function TeamMembersPage() {
   } = useModal();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchData = async () => {
       if (!userSeasonId) {
         console.log('No season assigned to committee admin');
@@ -99,63 +90,38 @@ export default function TeamMembersPage() {
       }
       
       try {
-        // Fetch registered players for this season from realplayer collection
-        const realplayerQuery = query(
-          collection(db, 'realplayer'),
-          where('season_id', '==', userSeasonId)
-        );
-        const realplayerSnapshot = await getDocs(realplayerQuery);
+        // Fetch registered players for this season from Neon
+        const rpRes = await fetch(`/api/realplayers?season_id=${userSeasonId}`);
+        const { data: rpRows } = await rpRes.json();
         
-        console.log(`[INFO] Fetched ${realplayerSnapshot.docs.length} registered players for season ${userSeasonId}`);
-        
-        const registeredPlayers = realplayerSnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            player_id: data.player_id || '',
-            name: data.name || '',
-            team_id: data.team_id || null,
-            team_name: data.team_name || '',
-            category_id: data.category_id || null,
-            category_name: data.category_name || '',
-            season_id: data.season_id || null,
-            season_name: data.season_name || '',
-          };
-        });
+        const registeredPlayers = (rpRows || []).map((row: any) => ({
+          id: row.id,
+          player_id: row.player_id || '',
+          name: row.name || '',
+          team_id: row.team_id || null,
+          team_name: row.team_name || '',
+          category_id: row.category_id || null,
+          category_name: row.category_name || '',
+          season_id: row.season_id || null,
+          season_name: row.season_name || '',
+        }));
         
         setRealPlayers(registeredPlayers);
         
-        // Fetch teams registered for this season from team_seasons collection
-        const teamSeasonsQuery = query(
-          collection(db, 'team_seasons'),
-          where('season_id', '==', userSeasonId),
-          where('status', '==', 'registered')
-        );
-        const teamSeasonsSnapshot = await getDocs(teamSeasonsQuery);
+        // Fetch teams from Neon API
+        const teamsRes = await fetchWithTokenRefresh('/api/teams');
+        const teamsJson = await teamsRes.json();
+        const allTeams = teamsJson.data || teamsJson.teams || [];
         
-        console.log(`[INFO] Fetched ${teamSeasonsSnapshot.docs.length} registered teams for season ${userSeasonId}`);
+        // Filter teams that have registered team_seasons for this season
+        const tsRes = await fetchWithTokenRefresh(`/api/team/all?season_id=${userSeasonId}`);
+        const tsJson = await tsRes.json();
+        const registeredTeamIds = new Set((tsJson.data || tsJson.teams || []).map((t: any) => t.team_id || t.id));
         
-        // Get team IDs from team_seasons
-        const teamIds = teamSeasonsSnapshot.docs.map(doc => doc.data().team_id).filter(Boolean);
+        const teamsData: Team[] = allTeams
+          .filter((t: any) => registeredTeamIds.has(t.id))
+          .map((t: any) => ({ id: t.id, team_name: t.team_name || 'Unknown Team' }));
         
-        // Fetch team details from teams collection
-        const teamsData: Team[] = [];
-        for (const teamId of teamIds) {
-          const teamQuery = query(
-            collection(db, 'teams'),
-            where('id', '==', teamId)
-          );
-          const teamSnapshot = await getDocs(teamQuery);
-          if (!teamSnapshot.empty) {
-            const teamDoc = teamSnapshot.docs[0];
-            teamsData.push({
-              id: teamDoc.id,
-              team_name: teamDoc.data().team_name || 'Unknown Team',
-            });
-          }
-        }
-        
-        console.log(`[INFO] Fetched ${teamsData.length} team details`);
         setTeams(teamsData);
         
         // Fetch categories
@@ -554,9 +520,6 @@ export default function TeamMembersPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
 
   const getColorClass = (color: string) => {
     const colorMap: { [key: string]: string } = {
@@ -576,6 +539,7 @@ export default function TeamMembersPage() {
   };
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -1261,5 +1225,7 @@ export default function TeamMembersPage() {
         type={alertState.type}
       />
     </div>
+  
+    </AuthGuard>
   );
 }

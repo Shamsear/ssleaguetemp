@@ -1,18 +1,3 @@
-import { db } from './config';
-import {
-  collection,
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  deleteDoc,
-  writeBatch,
-  serverTimestamp,
-  Timestamp,
-} from 'firebase/firestore';
 import { createMatchDaysFromFixtures } from './matchDays';
 import { getISTNow, createISTTimestamp, timestampToIST } from '../utils/timezone';
 
@@ -313,21 +298,10 @@ export async function getFixturesByRounds(seasonId: string): Promise<TournamentR
  */
 export async function getFixture(fixtureId: string): Promise<TournamentFixture | null> {
   try {
-    const fixtureRef = doc(db, 'fixtures', fixtureId);
-    const fixtureDoc = await getDoc(fixtureRef);
-
-    if (!fixtureDoc.exists()) {
-      return null;
-    }
-
-    const data = fixtureDoc.data();
-    return {
-      ...data,
-      id: fixtureDoc.id,
-      created_at: data.created_at?.toDate ? timestampToIST(data.created_at) : getISTNow(),
-      updated_at: data.updated_at?.toDate ? timestampToIST(data.updated_at) : getISTNow(),
-      scheduled_date: data.scheduled_date?.toDate ? timestampToIST(data.scheduled_date) : undefined,
-    } as TournamentFixture;
+    const response = await fetch(`/api/fixtures/${fixtureId}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return (data.fixture || data) as TournamentFixture;
   } catch (error) {
     console.error('Error fetching fixture:', error);
     return null;
@@ -343,30 +317,12 @@ export async function updateFixtureResult(
   awayScore: number
 ): Promise<boolean> {
   try {
-    const fixtureRef = doc(db, 'fixtures', fixtureId);
-
-    let result: 'home_win' | 'away_win' | 'draw';
-    if (homeScore > awayScore) {
-      result = 'home_win';
-    } else if (awayScore > homeScore) {
-      result = 'away_win';
-    } else {
-      result = 'draw';
-    }
-
-    await setDoc(
-      fixtureRef,
-      {
-        home_score: homeScore,
-        away_score: awayScore,
-        result,
-        status: 'completed',
-        updated_at: serverTimestamp(),
-      },
-      { merge: true }
-    );
-
-    return true;
+    const response = await fetch(`/api/fixtures/${fixtureId}/edit-result`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ home_score: homeScore, away_score: awayScore }),
+    });
+    return response.ok;
   } catch (error) {
     console.error('Error updating fixture result:', error);
     return false;
@@ -381,17 +337,12 @@ export async function updateFixtureStatus(
   status: TournamentFixture['status']
 ): Promise<boolean> {
   try {
-    const fixtureRef = doc(db, 'fixtures', fixtureId);
-    await setDoc(
-      fixtureRef,
-      {
-        status,
-        updated_at: serverTimestamp(),
-      },
-      { merge: true }
-    );
-
-    return true;
+    const response = await fetch(`/api/fixtures/${fixtureId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    return response.ok;
   } catch (error) {
     console.error('Error updating fixture status:', error);
     return false;

@@ -4,6 +4,7 @@ import { Star, Trophy } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   id: string;
@@ -26,16 +27,6 @@ export default function LineupPage() {
   const [viceCaptainId, setViceCaptainId] = useState<string | null>(null);
   const [isLineupLocked, setIsLineupLocked] = useState(false);
   const [leagueId, setLeagueId] = useState<string>('');
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (user) {
-      fetchSquad();
-    }
-  }, [user, authLoading, router]);
 
   const fetchSquad = async () => {
     if (!user) return;
@@ -163,6 +154,7 @@ export default function LineupPage() {
   const subs = squad.filter(p => !selectedStarters.has(p.real_player_id));
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-4 sm:mb-6">
@@ -304,5 +296,7 @@ export default function LineupPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

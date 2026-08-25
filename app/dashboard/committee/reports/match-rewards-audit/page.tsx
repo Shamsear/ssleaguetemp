@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, CheckCircle, XCircle, RefreshCw, BarChart2 } from 'lucide-react';
-import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+
 import { usePermissions } from '@/hooks/usePermissions';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface TeamAudit {
   teamId: string;
@@ -107,7 +107,7 @@ export default function MatchRewardsAuditPage() {
               // If the oldest transaction has wrong amount, update it to correct amount
               if (match.wrongECoinAmount !== undefined && oldestTxn.amount !== match.expectedECoin) {
                 try {
-                  await updateDoc(doc(db, 'transactions', oldestTxn.id), {
+                  await fetch(`/api/transactions/${oldestTxn.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
                     amount: match.expectedECoin,
                     updated_at: new Date()
                   });
@@ -122,7 +122,7 @@ export default function MatchRewardsAuditPage() {
               // Delete all duplicate transactions
               for (const txn of duplicatesToDelete) {
                 try {
-                  await deleteDoc(doc(db, 'transactions', txn.id));
+                  await fetch(`/api/transactions/${txn.id}`, { method: 'DELETE' });
                   deletedCount++;
                   console.log(`Deleted duplicate eCoin transaction: ${txn.id}`);
                 } catch (error) {
@@ -152,7 +152,7 @@ export default function MatchRewardsAuditPage() {
               // If the oldest transaction has wrong amount, update it to correct amount
               if (match.wrongSSCoinAmount !== undefined && oldestTxn.amount !== match.expectedSSCoin) {
                 try {
-                  await updateDoc(doc(db, 'transactions', oldestTxn.id), {
+                  await fetch(`/api/transactions/${oldestTxn.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
                     amount: match.expectedSSCoin,
                     updated_at: new Date()
                   });
@@ -167,7 +167,7 @@ export default function MatchRewardsAuditPage() {
               // Delete all duplicate transactions
               for (const txn of duplicatesToDelete) {
                 try {
-                  await deleteDoc(doc(db, 'transactions', txn.id));
+                  await fetch(`/api/transactions/${txn.id}`, { method: 'DELETE' });
                   deletedCount++;
                   console.log(`Deleted duplicate SSCoin transaction: ${txn.id}`);
                 } catch (error) {
@@ -214,7 +214,7 @@ export default function MatchRewardsAuditPage() {
             
             if (eCoinTxns.length === 1) {
               try {
-                await updateDoc(doc(db, 'transactions', eCoinTxns[0].id), {
+                await fetch(`/api/transactions/${eCoinTxns[0].id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
                   amount: match.expectedECoin,
                   updated_at: new Date()
                 });
@@ -261,7 +261,7 @@ export default function MatchRewardsAuditPage() {
             
             if (sSCoinTxns.length === 1) {
               try {
-                await updateDoc(doc(db, 'transactions', sSCoinTxns[0].id), {
+                await fetch(`/api/transactions/${sSCoinTxns[0].id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
                   amount: match.expectedSSCoin,
                   updated_at: new Date()
                 });
@@ -334,16 +334,6 @@ export default function MatchRewardsAuditPage() {
   };
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     if (user && user.role === 'committee_admin' && userSeasonId) {
       loadAuditData();
     }
@@ -356,16 +346,12 @@ export default function MatchRewardsAuditPage() {
       setIsLoading(true);
 
       // Load teams from team_seasons for current season
-      const teamSeasonsQuery = query(
-        collection(db, 'team_seasons'),
-        where('season_id', '==', userSeasonId)
-      );
-      
-      const teamSeasonsSnapshot = await getDocs(teamSeasonsQuery);
+      const tsRes = await fetch(`/api/team/all?season_id=${userSeasonId}`);
+      const tsJson = await tsRes.json();
+      const teamsData = tsJson.data || tsJson.teams || [];
 
       const teamsList: any[] = [];
-      teamSeasonsSnapshot.forEach(doc => {
-        const data = doc.data();
+      teamsData.forEach((data: any) => {
         teamsList.push({
           id: data.team_id,
           name: data.team_name || data.team_id
@@ -376,12 +362,10 @@ export default function MatchRewardsAuditPage() {
       console.log(`Loaded ${teamsList.length} teams for season ${userSeasonId}`);
 
       // Fetch all match reward transactions FIRST
-      const transactionsQuery = query(
-        collection(db, 'transactions'),
-        where('transaction_type', '==', 'match_reward')
-      );
-      const transactionsSnapshot = await getDocs(transactionsQuery);
-      console.log(`Loaded ${transactionsSnapshot.size} total match reward transactions`);
+      const txRes = await fetch('/api/players/transfer-history');
+      const txJson = await txRes.json();
+      const allTxData = (txJson.transactions || []).filter((t: any) => t.type === 'match_reward' || t.transaction_type === 'match_reward');
+      console.log(`Loaded ${allTxData.length} total match reward transactions`);
 
       // Group transactions by team and currency, filtering by season in code
       const teamTransactions: Record<string, { eCoin: number; sSCoin: number }> = {};
@@ -389,8 +373,7 @@ export default function MatchRewardsAuditPage() {
       const allTransactionsByFixtureTemp: Record<string, Array<{ id: string; teamId: string; fixtureId: string; currency: string; amount: number; createdAt: any }>> = {}; // Track all transactions for duplicate detection
       
       let seasonFilteredCount = 0;
-      transactionsSnapshot.forEach(doc => {
-        const data = doc.data();
+      allTxData.forEach((data: any) => {
         
         // Filter by season in code
         if (data.season_id !== userSeasonId) {
@@ -1107,7 +1090,7 @@ export default function MatchRewardsAuditPage() {
                                                         
                                                         // Update oldest if wrong amount
                                                         if (match.wrongECoinAmount !== undefined && oldestTxn.amount !== match.expectedECoin) {
-                                                          await updateDoc(doc(db, 'transactions', oldestTxn.id), {
+                                                          await fetch(`/api/transactions/${oldestTxn.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
                                                             amount: match.expectedECoin,
                                                             updated_at: new Date()
                                                           });
@@ -1116,7 +1099,7 @@ export default function MatchRewardsAuditPage() {
                                                         
                                                         // Delete duplicates
                                                         for (const txn of duplicatesToDelete) {
-                                                          await deleteDoc(doc(db, 'transactions', txn.id));
+                                                          await fetch(`/api/transactions/${txn.id}`, { method: 'DELETE' });
                                                           deleted++;
                                                         }
                                                         
@@ -1191,7 +1174,7 @@ export default function MatchRewardsAuditPage() {
                                                         
                                                         // Update oldest if wrong amount
                                                         if (match.wrongSSCoinAmount !== undefined && oldestTxn.amount !== match.expectedSSCoin) {
-                                                          await updateDoc(doc(db, 'transactions', oldestTxn.id), {
+                                                          await fetch(`/api/transactions/${oldestTxn.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
                                                             amount: match.expectedSSCoin,
                                                             updated_at: new Date()
                                                           });
@@ -1200,7 +1183,7 @@ export default function MatchRewardsAuditPage() {
                                                         
                                                         // Delete duplicates
                                                         for (const txn of duplicatesToDelete) {
-                                                          await deleteDoc(doc(db, 'transactions', txn.id));
+                                                          await fetch(`/api/transactions/${txn.id}`, { method: 'DELETE' });
                                                           deleted++;
                                                         }
                                                         

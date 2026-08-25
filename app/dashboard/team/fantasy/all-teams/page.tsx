@@ -13,6 +13,7 @@ import {
   Users, Activity, Clock, AlertTriangle, CheckCircle, ArrowLeft
 } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -72,11 +73,6 @@ export default function FantasyTeamsPage() {
   const { alertState, showAlert, closeAlert } = useModal();
 
   /* ── Auth ──────────────────────────────────────────────────────────────── */
-
-  useEffect(() => {
-    if (!loading && !user) { router.push('/login'); return; }
-    if (!loading && user && user.role !== 'team') router.push('/dashboard');
-  }, [user, loading, router]);
 
   /* ── Get league ID ─────────────────────────────────────────────────────── */
 
@@ -221,6 +217,7 @@ export default function FantasyTeamsPage() {
   /* ── Render ────────────────────────────────────────────────────────────── */
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="min-h-screen bg-slate-50 relative pb-12">
       <AlertModal {...alertState} onClose={closeAlert} />
 
@@ -324,6 +321,8 @@ export default function FantasyTeamsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }
 
@@ -796,11 +795,13 @@ function BreakdownBadge({ icon, label, pts, ptsColor = 'text-slate-800' }: {
   icon?: React.ReactNode; label: string; pts: string; ptsColor?: string;
 }) {
   return (
+
     <div className="flex items-center justify-between bg-slate-50 px-2 py-1 rounded border border-slate-100">
       <span className="flex items-center gap-1 truncate">
         {icon} {label}
       </span>
       <span className={`font-black shrink-0 ${ptsColor}`}>{pts}</span>
     </div>
+
   );
 }

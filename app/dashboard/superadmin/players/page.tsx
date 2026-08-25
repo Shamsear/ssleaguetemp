@@ -8,6 +8,7 @@ import { RealPlayerData } from '@/types/realPlayer';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function PlayersManagement() {
   const { user, loading } = useAuth();
@@ -41,16 +42,6 @@ export default function PlayersManagement() {
   const [playerName, setPlayerName] = useState('');
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch real players data
-  useEffect(() => {
     const fetchPlayersData = async () => {
       if (!user || user.role !== 'super_admin') return;
 
@@ -71,21 +62,22 @@ export default function PlayersManagement() {
         });
 
         // Calculate players by season from realplayer collection (actual registrations)
-        const [realPlayerRegistrations, seasonsSnapshot] = await Promise.all([
-          getDocs(collection(db, 'realplayer')),
-          getDocs(collection(db, 'seasons'))
+        const [rpRes, seasonsRes] = await Promise.all([
+          fetch('/api/realplayers'),
+          fetch('/api/seasons')
         ]);
+        const realPlayerRegistrations = { docs: (await rpRes.json()).data || [] };
+        const seasonsSnapshot = { docs: (await seasonsRes.json()).data || [] };
         
         // Create a map of season IDs to names
         const seasonNames = new Map<string, string>();
-        seasonsSnapshot.docs.forEach(doc => {
-          seasonNames.set(doc.id, doc.data().name || `Season ${doc.id.replace('SSPSLS', '')}`);
+        (seasonsSnapshot.docs || []).forEach((row: any) => {
+          seasonNames.set(row.id, row.name || `Season ${row.id.replace('SSPSLS', '')}`);
         });
         
         const seasonMap = new Map<string, { name: string; players: Set<string> }>();
         
-        realPlayerRegistrations.docs.forEach(doc => {
-          const data = doc.data();
+        (realPlayerRegistrations.docs || []).forEach((data: any) => {
           const seasonId = data.season_id;
           const playerId = data.player_id;
           
@@ -406,11 +398,9 @@ export default function PlayersManagement() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
@@ -883,5 +873,7 @@ export default function PlayersManagement() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

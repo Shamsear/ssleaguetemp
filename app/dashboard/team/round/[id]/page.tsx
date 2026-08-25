@@ -13,6 +13,7 @@ import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { PlayerAvatar } from '@/components/PlayerImage';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   id: string;
@@ -294,16 +295,6 @@ export default function TeamRoundPage() {
 
   // Auth guard
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Handle redirects from round data and errors
-  useEffect(() => {
     if (roundData && 'redirect' in roundData) {
       console.log('👉 Redirect from round data:', roundData.redirect);
       router.push(roundData.redirect as string);
@@ -484,8 +475,6 @@ export default function TeamRoundPage() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
-
-
 
   // Helper to dynamically check if the local draft bids state differs from the database state (rawMyBids)
   const checkHasChanges = (updatedBids: any[]) => {
@@ -901,6 +890,7 @@ export default function TeamRoundPage() {
   const bidProgress = (bidCount / round.max_bids_per_team) * 100;
 
   return (
+    <AuthGuard requiredRole="team">
     <>
       <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
@@ -1440,7 +1430,6 @@ export default function TeamRoundPage() {
               </div>
             )}
 
-
             {/* Unsaved Changes Inline Action Card */}
             {hasUnsavedChanges && !isLocked && (
               <div className="mt-4 p-4 bg-amber-50/60 border border-amber-200/60 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 font-mono">
@@ -1645,6 +1634,8 @@ export default function TeamRoundPage() {
       </div>
       </div>
     </>
+  
+    </AuthGuard>
   );
 }
 
@@ -1825,6 +1816,7 @@ function PlayerCard({
   };
 
   return (
+
     <div
       className={`bg-white rounded-2xl hover:shadow-xl transition-all duration-300 flex flex-col relative overflow-hidden ${cardBorderClass} ${isLocked ? 'opacity-90' : ''}`}
     >
@@ -2017,5 +2009,6 @@ function PlayerCard({
       )}
 
     </div>
+
   );
 }

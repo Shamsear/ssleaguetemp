@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface ComparisonData {
   toUpdate: any[]
@@ -43,15 +44,6 @@ export default function UpdatePreviewPage() {
   
   // Filter for showing only duplicates in create tab
   const [showOnlyDuplicates, setShowOnlyDuplicates] = useState(false)
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
 
   useEffect(() => {
     if (user?.role === 'committee_admin') {
@@ -168,6 +160,7 @@ Continue?`;
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="container mx-auto px-4 pt-5 lg:pt-24 pb-8 max-w-screen-2xl">
       {/* Header */}
       <div className="glass rounded-3xl p-6 mb-8 shadow-lg">
@@ -691,6 +684,7 @@ Continue?`;
                       const hasDuplicates = player.hasDuplicates;
                       
                       return (
+
                     <div 
                       key={idx} 
                       className={`glass rounded-lg p-3 border transition-all ${
@@ -793,7 +787,9 @@ Continue?`;
                         </div>
                       </div>
                     </div>
-                  )})}
+                  )}
+
+  )}
                 </div>
                 {/* Pagination for Create */}
                 {(() => {
@@ -1030,5 +1026,7 @@ Continue?`;
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }

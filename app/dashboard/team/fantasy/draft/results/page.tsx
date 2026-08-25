@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface SquadPlayer {
   real_player_id: string;
@@ -33,13 +34,6 @@ export default function DraftResultsPage() {
   const [bids, setBids] = useState<BidResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [draftStatus, setDraftStatus] = useState<string>('pending');
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-  }, [user, loading, router]);
 
   const loadResults = useCallback(async () => {
     if (!user) return;
@@ -143,6 +137,7 @@ export default function DraftResultsPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="min-h-screen bg-slate-950 text-slate-100 py-8 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto">
         
@@ -256,5 +251,7 @@ export default function DraftResultsPage() {
 
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

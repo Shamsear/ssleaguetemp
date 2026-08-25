@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface ImportStep {
   name: string;
@@ -45,16 +46,6 @@ function PlayersImportProgressContent() {
     ],
   });
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Simulate progress updates - Replace with actual Server-Sent Events or WebSocket
   useEffect(() => {
     if (!importId) return;
 
@@ -169,10 +160,6 @@ function PlayersImportProgressContent() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
-
   if (!importId) {
     return (
       <div className="flex items-center justify-center pt-32">
@@ -190,6 +177,7 @@ function PlayersImportProgressContent() {
   }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
@@ -373,11 +361,14 @@ function PlayersImportProgressContent() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }
 
 export default function PlayersImportProgress() {
   return (
+
     <Suspense fallback={
       <div className="flex items-center justify-center pt-32 animate-fade-in font-mono">
         <div className="text-center space-y-4">
@@ -391,5 +382,6 @@ export default function PlayersImportProgress() {
     }>
       <PlayersImportProgressContent />
     </Suspense>
+
   );
 }

@@ -21,6 +21,7 @@ import {
   Sparkles 
 } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerStats {
   id: string;
@@ -64,16 +65,6 @@ export default function SeasonPlayerStats() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Authentication check
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Load Seasons list
   useEffect(() => {
     async function loadSeasons() {
       try {
@@ -293,11 +284,9 @@ export default function SeasonPlayerStats() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       {/* Page Header */}
       <div className="flex items-center gap-4 pb-6 border-b border-slate-200/60">
@@ -709,5 +698,7 @@ export default function SeasonPlayerStats() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

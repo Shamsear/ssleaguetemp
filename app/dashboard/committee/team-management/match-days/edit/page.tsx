@@ -4,13 +4,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useMemo, Suspense } from 'react';
 import Link from 'next/link';
-import { getActiveSeason } from '@/lib/firebase/seasons';
+
 import { getRoundDeadlines, updateRoundDeadlines } from '@/lib/firebase/fixtures';
 import { getISTToday, parseISTDate, createISTDateTime, formatISTDateTime } from '@/lib/utils/timezone';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   Calendar,
   Clock,
@@ -48,15 +49,6 @@ function EditRoundDeadlinesContent() {
   } = useModal();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     loadDeadlines();
   }, [tournamentId, roundNumber, leg]);
 
@@ -66,9 +58,11 @@ function EditRoundDeadlinesContent() {
     try {
       setIsLoading(true);
 
-      const activeSeason = await getActiveSeason();
-      if (activeSeason) {
-        setSeasonName(activeSeason.name);
+      const activeSeasonRes = await fetch('/api/seasons');
+      const activeSeasonJson = await activeSeasonRes.json();
+      const activeSeasonsList = (activeSeasonJson.data || activeSeasonJson.seasons || []).filter((s: any) => s.status === 'active' || s.is_active);
+      if (activeSeasonsList.length > 0) {
+        setSeasonName(activeSeasonsList[0].name || 'Active Season');
       }
 
       // If tournament_id is not provided, fetch it from season
@@ -270,11 +264,8 @@ function EditRoundDeadlinesContent() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
-
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -554,11 +545,14 @@ function EditRoundDeadlinesContent() {
         type={alertState.type}
       />
     </div>
+  
+    </AuthGuard>
   );
 }
 
 export default function EditRoundDeadlinesPage() {
   return (
+
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
@@ -571,5 +565,6 @@ export default function EditRoundDeadlinesPage() {
     >
       <EditRoundDeadlinesContent />
     </Suspense>
+
   );
 }

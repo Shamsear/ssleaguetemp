@@ -3,13 +3,13 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getSeasonById } from '@/lib/firebase/seasons';
 import { getTeamsBySeason, getAllTeams } from '@/lib/firebase/teams';
 import { Season } from '@/types/season';
 import { usePlayerStats, useTeamStats } from '@/hooks';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { getIdToken } from 'firebase/auth';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Calendar, 
   Users, 
@@ -67,15 +67,6 @@ export default function SeasonDetails() {
   });
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     if (user && user.role === 'super_admin' && seasonId) {
       fetchSeasonData();
     }
@@ -127,11 +118,12 @@ export default function SeasonDetails() {
       setLoadingSeason(true);
       
       // Fetch season details
-      const seasonData = await getSeasonById(seasonId);
-      if (!seasonData) {
+      const seasonRes = await fetch(`/api/seasons/${seasonId}`);
+      const seasonJson = await seasonRes.json();
+      if (!seasonJson.success || !seasonJson.data) {
         throw new Error('Season not found');
       }
-      setSeason(seasonData);
+      setSeason(seasonJson.data);
       
       // Fetch teams from Firebase to get owner names
       try {
@@ -277,9 +269,6 @@ export default function SeasonDetails() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   if (error || !season) {
     return (
@@ -305,6 +294,7 @@ export default function SeasonDetails() {
   }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       
       {/* Page Header */}
@@ -534,5 +524,7 @@ export default function SeasonDetails() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

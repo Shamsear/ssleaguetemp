@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
+import AuthGuard from '@/components/auth/AuthGuard';
   Trophy,
   Settings,
   ArrowLeft,
@@ -71,16 +72,6 @@ export default function AwardsManagementPage() {
   const [tournamentId, setTournamentId] = useState<string>('');
   const [availableTournaments, setAvailableTournaments] = useState<Array<{ id: string, name: string }>>([]);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && !isCommitteeAdmin) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router, isCommitteeAdmin]);
-
-  // Fetch available tournaments for the season
   useEffect(() => {
     const fetchTournaments = async () => {
       if (!userSeasonId) return;
@@ -282,6 +273,7 @@ export default function AwardsManagementPage() {
   const maxWeeks = Math.ceil(maxRounds / 7);
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -518,6 +510,7 @@ export default function AwardsManagementPage() {
                   const isSelected = selectedCandidate === candidateId;
 
                   return (
+
                     <div
                       key={candidateId}
                       onClick={() => setSelectedCandidate(candidateId)}
@@ -550,7 +543,8 @@ export default function AwardsManagementPage() {
                         )}
                       </div>
                     </div>
-                  );
+
+  );
                 })}
               </div>
             ) : (
@@ -600,5 +594,7 @@ export default function AwardsManagementPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

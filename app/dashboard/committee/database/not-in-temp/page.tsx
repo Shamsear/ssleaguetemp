@@ -16,6 +16,7 @@ import {
   Info
 } from 'lucide-react'
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function NotInTempPlayersPage() {
   const router = useRouter()
@@ -51,15 +52,6 @@ export default function NotInTempPlayersPage() {
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm, positionFilter, statusFilter])
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
 
   const fetchPlayers = async () => {
     try {
@@ -362,6 +354,7 @@ export default function NotInTempPlayersPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none" />
@@ -714,5 +707,7 @@ export default function NotInTempPlayersPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }

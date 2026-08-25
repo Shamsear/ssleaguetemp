@@ -17,12 +17,13 @@ export async function GET(
     const { id } = await params;
 
     const db = getTournamentDb();
-    const result = await db.query(
+    const result: any = await db.query(
       'SELECT * FROM managers WHERE manager_id = $1',
       [id]
     );
+    const rows: any[] = Array.isArray(result) ? result : (result?.rows || []);
 
-    if (result.rows.length === 0) {
+    if (rows.length === 0) {
       return NextResponse.json(
         { success: false, message: 'Manager not found' },
         { status: 404 }
@@ -31,7 +32,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: result.rows[0],
+      data: rows[0],
     });
   } catch (error: any) {
     console.error('Error fetching manager:', error);
@@ -66,12 +67,13 @@ export async function PUT(
     const db = getTournamentDb();
 
     // Check if manager exists
-    const existing = await db.query(
+    const existing: any = await db.query(
       'SELECT * FROM managers WHERE manager_id = $1',
       [id]
     );
+    const existingRows: any[] = Array.isArray(existing) ? existing : (existing?.rows || []);
 
-    if (existing.rows.length === 0) {
+    if (existingRows.length === 0) {
       return NextResponse.json(
         { success: false, message: 'Manager not found' },
         { status: 404 }
@@ -163,12 +165,13 @@ export async function PUT(
       RETURNING *
     `;
 
-    const result = await db.query(query, values);
+    const result: any = await db.query(query, values);
+    const updateRows: any[] = Array.isArray(result) ? result : (result?.rows || []);
 
     return NextResponse.json({
       success: true,
       message: 'Manager updated successfully',
-      data: result.rows[0],
+      data: updateRows[0],
     });
   } catch (error: any) {
     console.error('Error updating manager:', error);
@@ -190,19 +193,20 @@ export async function DELETE(
     const db = getTournamentDb();
 
     // Get manager details before deleting
-    const managerResult = await db.query(
+    const managerResult: any = await db.query(
       'SELECT * FROM managers WHERE manager_id = $1',
       [id]
     );
+    const managerRows: any[] = Array.isArray(managerResult) ? managerResult : (managerResult?.rows || []);
 
-    if (managerResult.rows.length === 0) {
+    if (managerRows.length === 0) {
       return NextResponse.json(
         { success: false, message: 'Manager not found' },
         { status: 404 }
       );
     }
 
-    const manager = managerResult.rows[0];
+    const manager = managerRows[0];
 
     // Delete from database
     await db.query('DELETE FROM managers WHERE manager_id = $1', [id]);

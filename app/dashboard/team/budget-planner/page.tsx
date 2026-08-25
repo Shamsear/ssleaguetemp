@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 type PlayerType = 'football' | 'real';
 
@@ -60,11 +61,6 @@ export default function BudgetPlannerPage() {
 
   const [footballPlayers, setFootballPlayers] = useState<PlayerEstimate[]>([]);
   const [realPlayers, setRealPlayers] = useState<PlayerEstimate[]>([]);
-
-  useEffect(() => {
-    if (!loading && !user) router.push('/login');
-    if (!loading && user && user.role !== 'team') router.push('/dashboard');
-  }, [user, loading, router]);
 
   useEffect(() => {
     const fetchBudget = async () => {
@@ -167,6 +163,7 @@ export default function BudgetPlannerPage() {
   if (!user || user.role !== 'team') return null;
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
@@ -296,6 +293,7 @@ export default function BudgetPlannerPage() {
                 const remaining = budgetData.realPlayerBudget - realPlayerTotals.total;
                 const over = remaining < 0;
                 return (
+
                   <div className={`console-card bg-white border border-slate-200/60 border-l-4 rounded-2xl p-5 shadow-sm ${over ? 'border-l-rose-500' : 'border-l-emerald-500'}`}>
                     <div className="flex justify-between items-center mb-3">
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">After Estimates</p>
@@ -308,7 +306,8 @@ export default function BudgetPlannerPage() {
                       Must have exactly <span className="text-slate-700">{budgetData.requiredRealPlayers} SS Members</span>
                     </div>
                   </div>
-                );
+
+  );
               })()}
             </>
           )}
@@ -503,5 +502,7 @@ export default function BudgetPlannerPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

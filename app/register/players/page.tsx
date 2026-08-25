@@ -97,20 +97,21 @@ function PlayersRegistrationPageContent() {
     }
 
     try {
-      const [seasonDoc, statsResponse, masterPlayersSnapshot, playersResponse] = await Promise.all([
-        getDoc(doc(db, 'seasons', seasonId)),
+      const [seasonRes, statsResponse, rpRes, playersResponse] = await Promise.all([
+        fetch(`/api/seasons/${seasonId}`),
         fetch(`/api/admin/registration-phases?season_id=${seasonId}`, { cache: 'no-store' }),
-        getDocs(collection(db, 'realplayers')),
+        fetch('/api/realplayers'),
         fetch(`/api/stats/players?seasonId=${seasonId}&limit=1000`, { cache: 'no-store' })
       ])
+      const seasonJson = await seasonRes.json()
 
-      if (!seasonDoc.exists()) {
+      if (!seasonJson.success || !seasonJson.data) {
         setError('Season not found')
         setLoading(false)
         return
       }
 
-      const seasonData = { id: seasonDoc.id, ...seasonDoc.data() } as Season
+      const seasonData = { id: seasonJson.data.id, ...seasonJson.data } as Season
       setSeason(seasonData)
 
       const statsResult = await statsResponse.json()
@@ -118,10 +119,11 @@ function PlayersRegistrationPageContent() {
         setStats(statsResult.data)
       }
 
-      const masterPlayersData = masterPlayersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        player_id: doc.data().player_id,
-        name: doc.data().name
+      const rpJson = await rpRes.json()
+      const masterPlayersData = (rpJson.data || []).map((row: any) => ({
+        id: row.id,
+        player_id: row.player_id,
+        name: row.name
       })) as MasterPlayer[]
       setMasterPlayers(masterPlayersData)
       setTotalMasterPlayers(masterPlayersData.length)
@@ -159,24 +161,25 @@ function PlayersRegistrationPageContent() {
     fetchData()
   }, [seasonId])
 
-  // Set up real-time listener for stats updates
+  // Set up real-time listener for stats updates via SSE
   useEffect(() => {
     if (!seasonId) return
 
-    const unsubscribe = onSnapshot(
-      doc(db, 'seasons', seasonId),
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const seasonData = { id: snapshot.id, ...snapshot.data() } as Season
-          setSeason(seasonData)
-        }
-      },
-      (error) => {
-        console.error('Error listening to season updates:', error)
+    const es = new EventSource(`/api/realtime/stream?collection=seasons&interval=5&filters={"id":"${seasonId}"}`)
+    es.addEventListener('initial', (event) => {
+      const payload = JSON.parse(event.data)
+      if (payload.data?.[0]) {
+        setSeason({ id: payload.data[0].id, ...payload.data[0] } as Season)
       }
-    )
+    })
+    es.addEventListener('update', (event) => {
+      const payload = JSON.parse(event.data)
+      if (payload.data?.[0]) {
+        setSeason({ id: payload.data[0].id, ...payload.data[0] } as Season)
+      }
+    })
 
-    return () => unsubscribe()
+    return () => es.close()
   }, [seasonId])
 
   // Set up real-time listener for registration stats
@@ -408,20 +411,15 @@ function PlayersRegistrationPageContent() {
       const playerIds = filteredRegisteredPlayers.map(p => p.player_id)
       const playerDetailsMap = new Map()
       
-      for (let i = 0; i < playerIds.length; i += 30) {
-        const batch = playerIds.slice(i, i + 30)
-        const playersQuery = firestoreQuery(
-          collection(db, 'realplayers'),
-          where('player_id', 'in', batch)
-        )
-        const playersSnapshot = await getDocs(playersQuery)
-        playersSnapshot.docs.forEach(doc => {
-          const data = doc.data()
-          playerDetailsMap.set(data.player_id, {
-            email: data.email || '',
-            phone: data.phone || ''
+      const rpAllRes = await fetch('/api/realplayers')
+      const rpAllJson = await rpAllRes.json()
+      for (const row of (rpAllJson.data || [])) {
+        if (playerIds.includes(row.player_id)) {
+          playerDetailsMap.set(row.player_id, {
+            email: row.email || '',
+            phone: row.phone || ''
           })
-        })
+        }
       }
 
       const exportData = filteredRegisteredPlayers.map((player, index) => {

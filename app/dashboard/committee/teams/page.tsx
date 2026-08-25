@@ -12,6 +12,7 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import Image from 'next/image';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface TeamData {
   team: {
@@ -44,15 +45,6 @@ export default function CommitteeTeamsPage() {
   const [seasonName, setSeasonName] = useState('');
   const [seasonType, setSeasonType] = useState<'single' | 'multi'>('single');
   const [maxPlayers, setMaxPlayers] = useState(25);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && !isCommitteeAdmin) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router, isCommitteeAdmin]);
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -204,11 +196,9 @@ export default function CommitteeTeamsPage() {
     );
   }
 
-  if (!user || !isCommitteeAdmin) {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -536,5 +526,6 @@ export default function CommitteeTeamsPage() {
         type={alertState.type}
       />
     </div>
+    </AuthGuard>
   );
 }

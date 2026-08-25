@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   ShieldAlert, 
   Trash2, 
   Search, 
@@ -42,15 +43,6 @@ export default function CleanupPlayerUsersPage() {
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const handleScan = async () => {
     setScanning(true);
@@ -152,11 +144,9 @@ export default function CleanupPlayerUsersPage() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-6 animate-fade-in font-mono text-slate-800">
       
       {/* Page Header */}
@@ -412,5 +402,7 @@ export default function CleanupPlayerUsersPage() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

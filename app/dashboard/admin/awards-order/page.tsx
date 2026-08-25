@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface AwardItem {
   id: string;
@@ -30,15 +31,6 @@ export default function AwardsOrderPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [expandedSeasons, setExpandedSeasons] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-    if (!authLoading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
 
   useEffect(() => {
     if (user) {
@@ -244,6 +236,7 @@ export default function AwardsOrderPage() {
   }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="min-h-screen py-8 px-4 bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="container mx-auto max-w-4xl">
         {/* Header */}
@@ -368,6 +361,7 @@ export default function AwardsOrderPage() {
                         const isLast = relativeIndex === seasonItems.length - 1;
                         
                         return (
+
                           <div
                             key={`${item.type}-${item.id}`}
                             draggable
@@ -494,7 +488,8 @@ export default function AwardsOrderPage() {
                               </div>
                             </div>
                           </div>
-                        );
+
+  );
                       })}
                     </div>
                   )}
@@ -505,5 +500,7 @@ export default function AwardsOrderPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

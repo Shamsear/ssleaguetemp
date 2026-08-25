@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function PopulateFantasyPlayersPage() {
   const { user, loading } = useAuth();
@@ -16,16 +17,6 @@ export default function PopulateFantasyPlayersPage() {
   const [isPopulating, setIsPopulating] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string>('');
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     const loadLeague = async () => {
@@ -90,6 +81,7 @@ export default function PopulateFantasyPlayersPage() {
   if (!user) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <Link
@@ -163,5 +155,7 @@ export default function PopulateFantasyPlayersPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

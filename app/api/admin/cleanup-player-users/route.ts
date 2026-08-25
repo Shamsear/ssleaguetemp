@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { adminAuth } from '@/lib/firebase/admin';
 import { verifyAuth } from '@/lib/auth-helper';
 
 /**

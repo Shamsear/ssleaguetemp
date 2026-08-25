@@ -1,13 +1,15 @@
 'use client';
+import { db } from '@/lib/firebase/config';
+import { collection, getDocs, query, where, orderBy, doc, updateDoc, getDoc, getDocs as fbGetDocs } from 'firebase/firestore';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { usePlayerStats, usePlayerAwards, useTeamTrophies, useTeamSeasonStats, type PlayerAward, type TeamTrophy, type TeamStats } from '@/hooks';
 import PlayerPhoto from '@/components/PlayerPhoto';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerData {
   id: string;
@@ -143,25 +145,24 @@ export default function PlayerDetailPage() {
   useEffect(() => {
     const fetchFirebaseData = async () => {
       try {
-        // Fetch seasons
-        const seasonsRef = collection(db, 'seasons');
-        const seasonsSnapshot = await getDocs(seasonsRef);
-        const seasonsData = seasonsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+        // Fetch seasons from Neon
+        const seasonsRes = await fetch('/api/seasons');
+        const seasonsJson = await seasonsRes.json();
+        const seasonsData = (seasonsJson.data || []).map((row: any) => ({
+          id: row.id,
+          ...row
         }));
         setFirebaseSeasons(seasonsData);
         
-        // Fetch player from realplayers
-        const playersRef = collection(db, 'realplayers');
-        const q = query(playersRef, where('player_id', '==', playerId));
-        const playerSnapshot = await getDocs(q);
+        // Fetch player from Neon
+        const rpRes = await fetch(`/api/realplayers?player_id=${playerId}`);
+        const rpJson = await rpRes.json();
         
-        if (!playerSnapshot.empty) {
-          const playerDoc = playerSnapshot.docs[0];
+        if (rpJson.data && rpJson.data.length > 0) {
+          const row = rpJson.data[0];
           setFirebasePlayer({
-            id: playerDoc.id,
-            ...playerDoc.data()
+            id: row.id,
+            ...row
           });
         }
       } catch (error) {
@@ -195,10 +196,6 @@ export default function PlayerDetailPage() {
   useEffect(() => {
     if (authLoading) return;
     
-    if (!user) {
-      router.push('/login');
-      return;
-    }
 
     // Check if user has permission (super_admin, committee_admin, or team)
     if (!['super_admin', 'committee_admin', 'team'].includes(user.role)) {
@@ -343,7 +340,7 @@ export default function PlayerDetailPage() {
 
   const fetchSeasonName = async (seasonId: string) => {
     try {
-      const seasonDoc = await getDoc(doc(db, 'seasons', seasonId));
+      const seasonRes = await fetch(`/api/seasons/${seasonId}`); const seasonJson = await seasonRes.json(); const seasonDoc = { exists: () => seasonJson.success, data: () => seasonJson.data };
       if (seasonDoc.exists()) {
         const seasonData = seasonDoc.data();
         setSeasonName(seasonData.name || seasonData.short_name || 'Season');
@@ -355,33 +352,28 @@ export default function PlayerDetailPage() {
   
   const fetchMatchHistory = async (playerId: string, teamId?: string) => {
     try {
-      // This is a simplified version - adjust based on your actual data structure
-      // You may need to query match_matchups where this player was involved
       if (!teamId) return;
 
-      const matchupsRef = collection(db, 'match_matchups');
-      const q = query(
-        matchupsRef,
-        where('player_ids', 'array-contains', playerId),
-        orderBy('created_at', 'desc')
-      );
-
-      const querySnapshot = await getDocs(q);
+      const res = await fetch(`/api/matchups?player_id=${playerId}`);
+      const { data: matchups } = await res.json();
       const history: MatchHistory[] = [];
 
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        // Transform data to match history format
-        // This is a placeholder - adjust based on your actual data structure
+      (matchups || []).forEach((m: any) => {
+        const isHome = m.home_player_id === playerId;
+        const playerGoals = isHome ? (m.home_goals || 0) : (m.away_goals || 0);
+        const opponentGoals = isHome ? (m.away_goals || 0) : (m.home_goals || 0);
+        const opponent = isHome ? m.away_player_name : m.home_player_name;
+        const result = playerGoals > opponentGoals ? 'win' : playerGoals < opponentGoals ? 'loss' : 'draw';
+
         history.push({
-          match_number: data.match_number || 'N/A',
-          opponent: data.opponent_name,
-          result: data.result || 'draw',
-          player_goals: data.player_goals || 0,
-          opponent_goals: data.opponent_goals || 0,
-          is_potm: data.potm_player_id === playerId,
-          points: data.points || 0,
-          date: data.match_date?.toDate(),
+          match_number: m.position?.toString() || 'N/A',
+          opponent,
+          result,
+          player_goals: playerGoals,
+          opponent_goals: opponentGoals,
+          is_potm: false,
+          points: 0,
+          date: m.created_at ? new Date(m.created_at) : undefined,
         });
       });
 

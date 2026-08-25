@@ -8,6 +8,7 @@ import PlayerImage, { PlayerAvatar } from '@/components/PlayerImage';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 // Position constants
 // Dynamic positions and position groups will be generated from actual player data
@@ -116,16 +117,6 @@ export default function PlayerStatisticsPage() {
   const [totalPlayers, setTotalPlayers] = useState(0);
   const itemsPerPage = 25; // Show 25 players per page for faster loading
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Debounce search to avoid too many API calls
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   
   useEffect(() => {
@@ -481,11 +472,8 @@ export default function PlayerStatisticsPage() {
     );
   }
 
-  if (!user || user.role !== 'team') {
-    return null;
-  }
-
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
@@ -1274,6 +1262,7 @@ export default function PlayerStatisticsPage() {
                 }
                 
                 return (
+
                   <button
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
@@ -1285,7 +1274,8 @@ export default function PlayerStatisticsPage() {
                   >
                     {pageNum}
                   </button>
-                );
+
+  );
               })}
             </div>
             
@@ -1309,5 +1299,7 @@ export default function PlayerStatisticsPage() {
         type={alertState.type}
       />
     </div>
+  
+    </AuthGuard>
   );
 }

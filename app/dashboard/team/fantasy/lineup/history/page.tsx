@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface LineupHistory {
   lineup_id: string;
@@ -92,6 +93,7 @@ export default function LineupHistoryPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header */}
       <div className="mb-6">
@@ -119,10 +121,12 @@ export default function LineupHistoryPage() {
             {uniqueRounds.map(roundId => {
               const lineup = lineups.find(l => l.round_id === roundId);
               return (
+
                 <option key={roundId} value={roundId}>
                   Round {lineup?.round_number} - {lineup?.round_name}
                 </option>
-              );
+
+  );
             })}
           </select>
         </div>
@@ -279,5 +283,7 @@ export default function LineupHistoryPage() {
         </button>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

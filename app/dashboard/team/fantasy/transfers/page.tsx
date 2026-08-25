@@ -9,6 +9,7 @@ import { AlertCircle, ArrowLeftRight, Calendar, Check, DollarSign, Filter, Searc
 import { normalizeStr } from '@/lib/utils/normalizeStr';
 import AlertModal from '@/components/modals/AlertModal';
 import { useModal } from '@/hooks/useModal';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   squad_id?: string;
@@ -76,16 +77,6 @@ export default function TeamTransfersPage() {
   const [showCaptainModal, setShowCaptainModal] = useState(false);
 
   const { alertState, showAlert, closeAlert } = useModal();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const loadTransferData = useCallback(async () => {
     if (!user) return;
@@ -448,6 +439,7 @@ export default function TeamTransfersPage() {
   const transfersRemaining = transferWindow.max_transfers_per_window - transfersUsed;
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -902,5 +894,7 @@ export default function TeamTransfersPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

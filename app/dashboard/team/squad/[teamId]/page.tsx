@@ -8,8 +8,8 @@ import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import PlayerImage from '@/components/PlayerImage';
-import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface TeamProfile {
   id: string;
@@ -135,44 +135,33 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Get active season
-  useEffect(() => {
     const fetchActiveSeason = async () => {
       if (!user || user.role !== 'team') return;
 
       try {
-        const seasonsQuery = query(collection(db, 'seasons'));
-        const seasonsSnapshot = await getDocs(seasonsQuery);
+        const seasonsRes = await fetch('/api/seasons');
+        const seasonsJson = await seasonsRes.json();
+        const seasonsList = seasonsJson.data || seasonsJson.seasons || [];
         
         let targetSeasonId = null;
         let targetSeasonName = '';
         let targetSeasonType: 'single' | 'multi' = 'single';
         
         // Find first non-completed season
-        for (const docSnap of seasonsSnapshot.docs) {
-          const data = docSnap.data();
-          if (data.status !== 'completed') {
-            targetSeasonId = docSnap.id;
-            targetSeasonName = data.name || `Season ${data.season_number || 'Unknown'}`;
-            targetSeasonType = data.type || 'single';
+        for (const s of seasonsList) {
+          if (s.status !== 'completed') {
+            targetSeasonId = s.id;
+            targetSeasonName = s.name || `Season ${s.season_number || 'Unknown'}`;
+            targetSeasonType = s.type || 'single';
             break;
           }
         }
 
-        if (!targetSeasonId && seasonsSnapshot.size > 0) {
-          const firstDoc = seasonsSnapshot.docs[0];
-          targetSeasonId = firstDoc.id;
-          const data = firstDoc.data();
-          targetSeasonName = data.name || 'Season';
-          targetSeasonType = data.type || 'single';
+        if (!targetSeasonId && seasonsList.length > 0) {
+          const firstSeason = seasonsList[0];
+          targetSeasonId = firstSeason.id;
+          targetSeasonName = firstSeason.name || 'Season';
+          targetSeasonType = firstSeason.type || 'single';
         }
 
         if (!targetSeasonId) {
@@ -200,29 +189,26 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
       if (!seasonId || !teamId) return;
 
       try {
-        setIsLoading(true);
-
-        // Fetch team_season data
+        setIsLoading(true);        // Fetch team_season data from Neon API
         const teamSeasonId = `${teamId}_${seasonId}`;
-        const teamSeasonRef = doc(db, 'team_seasons', teamSeasonId);
-        const teamSeasonDoc = await getDoc(teamSeasonRef);
+        const tsRes = await fetch(`/api/team-seasons?user_id=${user?.uid}&season_id=${seasonId}`);
+        const tsJson = await tsRes.json();
+        const allTeamSeasons = tsJson.data || tsJson.teamSeasons || [];
+        const teamSeasonData = allTeamSeasons.find((ts: any) => ts.team_id === teamId) || null;
 
-        if (!teamSeasonDoc.exists()) {
+        if (!teamSeasonData) {
           setError('Team not found in this season');
           setIsLoading(false);
           return;
         }
 
-        const teamSeasonData = teamSeasonDoc.data();
-
         // Fetch base team data as the source of truth for logo positioning
         let baseTeamData: any = {};
         try {
-          const teamRef = doc(db, 'teams', teamId);
-          const teamDoc = await getDoc(teamRef);
-          if (teamDoc.exists()) {
-            baseTeamData = teamDoc.data();
-          }
+          const tmRes = await fetch('/api/teams/all-teams');
+          const tmJson = await tmRes.json();
+          const teamsArr = tmJson.data || tmJson.teams || [];
+          baseTeamData = teamsArr.find((t: any) => t.id === teamId) || {};
         } catch (err) {
           console.error('Error fetching base team:', err);
         }
@@ -340,10 +326,6 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
     );
   }
 
-  if (!user || user.role !== 'team') {
-    return null;
-  }
-
   if (error || !teamProfile) {
     return (
       <div className="console-bg min-h-screen flex items-center justify-center relative px-4">
@@ -368,6 +350,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -723,6 +706,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
                     : null;
 
                   return (
+
                     <div key={fixture.id} className="bg-slate-50/60 border border-slate-200/40 hover:bg-white hover:border-amber-400/20 p-4 rounded-2xl transition-all duration-200 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {fixture.round_number && (
@@ -751,7 +735,8 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
                         )}
                       </div>
                     </div>
-                  );
+
+  );
                 })}
               </div>
             ) : (
@@ -837,5 +822,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

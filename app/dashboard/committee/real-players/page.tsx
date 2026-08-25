@@ -5,8 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
-import { getSeasonById } from '@/lib/firebase/seasons';
 import { Season } from '@/types/season';
+import AuthGuard from '@/components/auth/AuthGuard';
+import { normalizeStr } from '@/lib/utils/normalizeStr';
 import { useCachedTeams } from '@/hooks/useCachedData';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
@@ -85,16 +86,6 @@ export default function RealPlayersPage() {
   const auctionInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && !isCommitteeAdmin) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router, isCommitteeAdmin]);
-
-  // Click outside handler for dropdowns
-  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownOpen) {
         const dropdownElement = dropdownRefs.current.get(dropdownOpen);
@@ -161,25 +152,18 @@ export default function RealPlayersPage() {
           console.log('Loaded categories:', sortedCats.map((c: any) => c.name));
         }
 
-        // Fetch season
-        const season = await getSeasonById(userSeasonId);
-        setCurrentSeason(season);
+        // Fetch season from API (not server-side Neon)
+        const seasonRes = await fetch(`/api/seasons/${userSeasonId}`);
+        const seasonJson = await seasonRes.json();
+        if (seasonJson.success && seasonJson.data) {
+          setCurrentSeason(seasonJson.data);
+        }
 
         // Fetch team_seasons to get budget data
-        const { collection, query, where, getDocs } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase/config');
-
-        const teamSeasonsQuery = query(
-          collection(db, 'team_seasons'),
-          where('season_id', '==', userSeasonId),
-          where('status', '==', 'registered')
-        );
-
-        const teamSeasonsSnapshot = await getDocs(teamSeasonsQuery);
-        const teamSeasonsData = teamSeasonsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        const teamSeasonsRes = await fetch(`/api/team-seasons?season_id=${userSeasonId}`);
+        const teamSeasonsJson = await teamSeasonsRes.json();
+        const allTeamSeasons = teamSeasonsJson.data || teamSeasonsJson.teamSeasons || [];
+        const teamSeasonsData = allTeamSeasons.filter((ts: any) => ts.status === 'registered' || ts.status === 'active');
 
         setTeamSeasons(teamSeasonsData);
         console.log(`Loaded ${teamSeasonsData.length} team seasons with budget data`);
@@ -627,10 +611,6 @@ export default function RealPlayersPage() {
     );
   }
 
-  if (!user || !isCommitteeAdmin) {
-    return null;
-  }
-
   // Helper calculations for searchable dropdowns
   const filteredPlayersForDropdown = availablePlayers
     .filter(p => categoryFilter === 'all' || p.category === categoryFilter)
@@ -853,6 +833,7 @@ export default function RealPlayersPage() {
   const maxPlayers = minPlayers; // Max equals min for exact count
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
@@ -1369,7 +1350,6 @@ export default function RealPlayersPage() {
                             <Link href="/dashboard/committee/player-categorization" className="text-amber-500 underline">
                               Categorize players
                             </Link> to import members
-import { normalizeStr } from '@/lib/utils/normalizeStr';
                           </>
                         )}
                       </p>
@@ -1529,6 +1509,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
                               const isFilled = current === target;
                               const isOver = current > target;
                               return (
+
                                 <div key={c.id || c.name} className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-all ${
                                   isFilled 
                                     ? 'bg-emerald-50 border-emerald-250 text-emerald-700 font-black' 
@@ -1539,7 +1520,8 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
                                   <span>{c.name}: {current}/{target}</span>
                                   <span>{isFilled ? '✓' : <AlertTriangle className="w-3 h-3 inline text-amber-500" />}</span>
                                 </div>
-                              );
+
+  );
                             })}
                           </div>
                         </div>
@@ -1744,5 +1726,7 @@ import { normalizeStr } from '@/lib/utils/normalizeStr';
         <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
       </button>
     </div>
+  
+    </AuthGuard>
   );
 }

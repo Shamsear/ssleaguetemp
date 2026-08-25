@@ -10,6 +10,7 @@ import AlertModal from '@/components/modals/AlertModal'
 import ConfirmModal from '@/components/modals/ConfirmModal'
 import Link from 'next/link'
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface RealPlayer {
   real_player_id: string
@@ -71,16 +72,6 @@ export default function BonusPointsPage() {
     closeConfirm,
   } = useModal()
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
-
-  // Fetch league data to get season_id and tournament_id
   useEffect(() => {
     const loadLeagueData = async () => {
       if (!leagueId || !user) return
@@ -325,6 +316,7 @@ export default function BonusPointsPage() {
   const filteredItems = getFilteredItems()
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <>
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
@@ -486,6 +478,7 @@ export default function BonusPointsPage() {
                   const isSelected = selectedTargets.includes(id)
 
                   return (
+
                     <div
                       key={id}
                       onClick={() => handleToggleTarget(id)}
@@ -530,7 +523,8 @@ export default function BonusPointsPage() {
                         </div>
                       </div>
                     </div>
-                  )
+
+  )
                 })}
               </div>
             )}
@@ -618,5 +612,7 @@ export default function BonusPointsPage() {
         onCancel={closeConfirm}
       />
     </>
+  
+    </AuthGuard>
   )
 }

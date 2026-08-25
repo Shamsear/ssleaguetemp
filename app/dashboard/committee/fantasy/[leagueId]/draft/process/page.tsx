@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AlertModal from '@/components/modals/AlertModal';
 import { useModal } from '@/hooks/useModal';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface TeamSubmission {
   team_id: string;
@@ -41,16 +42,6 @@ export default function ProcessDraftPage() {
   const [addTimeMinutes, setAddTimeMinutes] = useState<string>('10');
 
   const { alertState, showAlert, closeAlert } = useModal();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   const loadSubmissions = async () => {
     if (!leagueId) return;
@@ -326,6 +317,7 @@ export default function ProcessDraftPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       <AlertModal {...alertState} onClose={closeAlert} />
       {/* Ambient Gold Glow */}
@@ -801,5 +793,7 @@ export default function ProcessDraftPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

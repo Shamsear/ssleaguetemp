@@ -10,6 +10,7 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import OptimizedImage from '@/components/OptimizedImage';
 import { createPortal } from 'react-dom';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface RealPlayer {
   player_id: string;
@@ -80,12 +81,6 @@ export default function RealPlayersPlannerPage() {
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
 
-  useEffect(() => {
-    if (!loading && !user) router.push('/login');
-    if (!loading && user && user.role !== 'team') router.push('/dashboard');
-  }, [user, loading, router]);
-
-  // Update dropdown position when opened
   useEffect(() => {
     if (openDropdownIndex !== null && buttonRefs.current[openDropdownIndex]) {
       const button = buttonRefs.current[openDropdownIndex];
@@ -298,6 +293,7 @@ export default function RealPlayersPlannerPage() {
   if (!user || user.role !== 'team') return null;
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
@@ -657,5 +653,7 @@ export default function RealPlayersPlannerPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

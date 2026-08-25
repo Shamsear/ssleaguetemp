@@ -3,11 +3,12 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+// Firebase replaced with Neon API
+
 import Link from 'next/link';
 import PlayerPhoto from '@/components/PlayerPhoto';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface RealPlayer {
   player_id: string;
@@ -37,15 +38,6 @@ export default function RealPlayersPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchPlayers = async () => {
       if (!user || user.role !== 'super_admin') return;
 
@@ -53,17 +45,13 @@ export default function RealPlayersPage() {
         setLoadingData(true);
         setError(null);
 
-        const playersRef = collection(db, 'realplayers');
-        const q = query(playersRef, orderBy('created_at', 'desc'));
-        const querySnapshot = await getDocs(q);
+        const apiRes = await fetch('/api/realplayers');
+        const { data: apiRows } = await apiRes.json();
 
-        const playersData: RealPlayer[] = [];
-        querySnapshot.forEach((doc) => {
-          playersData.push({
-            ...doc.data(),
-            player_id: doc.data().player_id || doc.id,
-          } as RealPlayer);
-        });
+        const playersData: RealPlayer[] = (apiRows || []).map((row: any) => ({
+          ...row,
+          player_id: row.player_id || row.id,
+        } as RealPlayer));
 
         setPlayers(playersData);
         setFilteredPlayers(playersData);
@@ -239,11 +227,8 @@ export default function RealPlayersPage() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
-
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
@@ -533,11 +518,13 @@ export default function RealPlayersPage() {
                     const dobValue = player.dob || player.date_of_birth;
                     if (dobValue) {
                       return (
+
                         <div className="flex items-center gap-2">
                           <span className="text-slate-400">DOB:</span>
                           <span className="font-semibold text-slate-700">{formatDOB(dobValue)}</span>
                         </div>
-                      );
+
+  );
                     }
                     return null;
                   })()}
@@ -565,5 +552,7 @@ export default function RealPlayersPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

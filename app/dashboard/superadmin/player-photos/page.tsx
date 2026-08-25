@@ -1,10 +1,10 @@
 'use client';
 
+import { db } from '@/lib/firebase/config';
+import { collection, getDocs, query, where, orderBy, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { db } from '@/lib/firebase/config';
-import { collection, query, getDocs, doc, updateDoc, orderBy } from 'firebase/firestore';
 import Image from 'next/image';
 import { 
   ArrowLeft, 
@@ -21,6 +21,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   id: string;
@@ -62,27 +63,18 @@ export default function PlayerPhotosManagement() {
   const [overlayScale, setOverlayScale] = useState(1);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     const fetchPlayers = async () => {
       if (!user || user.role !== 'super_admin') return;
 
-      try {
-        setLoadingData(true);
-        const playersQuery = query(collection(db, 'realplayers'), orderBy('name'));
-        const snapshot = await getDocs(playersQuery);
-        
-        const playersList = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Player));
+        try {
+          setLoadingData(true);
+          const apiRes = await fetch("/api/realplayers");
+          const { data: apiRows } = await apiRes.json();
+          
+          const playersList = (apiRows || []).map((row: any) => ({
+            id: row.id,
+            ...row
+          } as Player));
         
         setPlayers(playersList);
         setFilteredPlayers(playersList);
@@ -144,10 +136,10 @@ export default function PlayerPhotosManagement() {
       // Update Firestore
       const playerDoc = players.find(p => p.player_id === playerId);
       if (playerDoc) {
-        await updateDoc(doc(db, 'realplayers', playerDoc.id), {
-          photo_url: result.url,
-          photo_file_id: result.fileId,
-          updated_at: new Date(),
+        await fetch(`/api/realplayers/${playerDoc.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photo_url: result.url, photo_file_id: result.fileId }),
         });
 
         // Update local state
@@ -207,7 +199,11 @@ export default function PlayerPhotosManagement() {
       if (posX !== undefined) updateData[fieldPosX] = posX;
       if (posY !== undefined) updateData[fieldPosY] = posY;
 
-      await updateDoc(doc(db, 'realplayers', playerDoc.id), updateData);
+      await fetch(`/api/realplayers/${playerDoc.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData),
+      });
 
       // Update local state
       setPlayers(players.map(p => {
@@ -284,10 +280,10 @@ export default function PlayerPhotosManagement() {
         }
 
         // Update Firestore
-        await updateDoc(doc(db, 'realplayers', player.id), {
-          photo_url: result.url,
-          photo_file_id: result.fileId,
-          updated_at: new Date(),
+        await fetch(`/api/realplayers/${player.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photo_url: result.url, photo_file_id: result.fileId }),
         });
 
         // Update local state
@@ -334,11 +330,8 @@ export default function PlayerPhotosManagement() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
-
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       
       {/* Page Header */}
@@ -517,6 +510,7 @@ export default function PlayerPhotosManagement() {
               : (player.photo_position_y_square ?? 50);
             
             return (
+
               <div key={player.id} className="console-card bg-white border border-slate-200/60 p-4 shadow-sm rounded-2xl hover:shadow-md transition-all flex flex-col justify-between space-y-4">
                 
                 {/* Photo Aspect Frame */}
@@ -606,7 +600,8 @@ export default function PlayerPhotosManagement() {
                   </div>
                 </label>
               </div>
-            );
+
+  );
           })}
         </div>
       ) : (
@@ -858,5 +853,7 @@ export default function PlayerPhotosManagement() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }

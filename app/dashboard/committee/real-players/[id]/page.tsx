@@ -8,6 +8,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import Link from 'next/link';
 import Image from 'next/image';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface RealPlayerDetails {
   id: string;
@@ -44,15 +45,6 @@ export default function RealPlayerDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const playerId = params?.id as string;
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && !isCommitteeAdmin) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router, isCommitteeAdmin]);
 
   useEffect(() => {
     const fetchPlayerDetails = async () => {
@@ -98,9 +90,6 @@ export default function RealPlayerDetailPage() {
     );
   }
 
-  if (!user || !isCommitteeAdmin) {
-    return null;
-  }
 
   if (error || !playerData) {
     return (
@@ -138,6 +127,7 @@ export default function RealPlayerDetailPage() {
   };
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
@@ -321,5 +311,7 @@ export default function RealPlayerDetailPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

@@ -316,14 +316,17 @@ export const uploadTeamLogo = async (
       if (userSnap.exists()) {
         const userData = userSnap.data();
         if (userData.teamId) {
-          await updateDoc(doc(db, 'teams', userData.teamId), {
-            logo_url: base64String,
-            teamLogo: base64String,
-            logoUrl: base64String,
-            updated_at: serverTimestamp(),
-            updatedAt: serverTimestamp(),
+          // Update team via Neon API
+          await fetch(`/api/teams/${userData.teamId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              logo_url: base64String,
+              teamLogo: base64String,
+              logoUrl: base64String,
+            }),
           });
-          console.log(`✅ Updated team logo in teams collection for team ID: ${userData.teamId}`);
+          console.log(`✅ Updated team logo via API for team ID: ${userData.teamId}`);
         }
       }
     } catch (teamLogoError) {
@@ -541,19 +544,16 @@ export const approveUser = async (uid: string, approvedBy: string): Promise<void
     }
     
     // Also update team document if it exists (teams use snake_case is_approved)
-    const teamsRef = collection(db, 'teams');
-    const q = query(teamsRef, where('owner_uid', '==', uid));
-    const teamSnapshot = await getDocs(q);
-    
-    if (!teamSnapshot.empty) {
-      const teamDoc = teamSnapshot.docs[0];
-      await updateDoc(teamDoc.ref, {
-        is_approved: true,
-        approvedBy,
-        approvedAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+    try {
+      await fetch('/api/admin/approve-team', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, approvedBy }),
       });
-      console.log(`✅ Also updated team document approval status for uid: ${uid}`);
+      console.log(`✅ Updated team approval status via API for uid: ${uid}`);
+    } catch (teamError) {
+      console.error('Error updating team approval:', teamError);
+      // Don't throw - approval should succeed even if team update fails
     }
   } catch (error: any) {
     console.error('Error approving user:', error);

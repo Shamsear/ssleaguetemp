@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Award, ChevronDown, Star, Target, TrendingUp, Trophy, Users } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   real_player_id: string;
@@ -61,15 +62,6 @@ export default function FantasyPlayersPage() {
   const [loadingBreakdown, setLoadingBreakdown] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'points' | 'name' | 'matches'>('points');
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     const loadPlayers = async () => {
@@ -167,6 +159,7 @@ export default function FantasyPlayersPage() {
   if (!user) return null;
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="min-h-screen bg-slate-50">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
@@ -432,5 +425,7 @@ export default function FantasyPlayersPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

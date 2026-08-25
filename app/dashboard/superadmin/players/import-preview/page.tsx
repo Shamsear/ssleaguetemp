@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerData {
   player_id?: string;
@@ -27,84 +28,6 @@ export default function PlayersImportPreview() {
   const [validationErrors, setValidationErrors] = useState<Set<string>>(new Set());
   const [importing, setImporting] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
-
-  useEffect(() => {
-    if (authLoading) return;
-    
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    if (user.role !== 'super_admin') {
-      router.push('/dashboard');
-      return;
-    }
-    
-    // Load player names from sessionStorage
-    const storedPlayers = sessionStorage.getItem('importPlayers');
-    if (!storedPlayers) {
-      alert('No import data found. Please upload a file first.');
-      router.push('/dashboard/superadmin/players');
-      return;
-    }
-    
-    // Wrap async logic in an async function
-    const loadPlayers = async () => {
-      try {
-        const players: Array<{ player_id?: string; name: string }> = JSON.parse(storedPlayers);
-        
-        // Separate new players (no player_id) from updates (has player_id)
-        const newPlayersList: PlayerData[] = [];
-        const updatedPlayersList: PlayerData[] = [];
-        
-        // Fetch current player data for updates
-        const { db } = await import('@/lib/firebase/config');
-        const { doc, getDoc } = await import('firebase/firestore');
-        
-        for (const player of players) {
-          if (player.player_id && player.player_id.trim()) {
-            // Existing player - this is an update, fetch current name
-            try {
-              const playerDoc = await getDoc(doc(db, 'realplayers', player.player_id));
-              const oldName = playerDoc.exists() ? playerDoc.data().name : 'Unknown';
-              
-              updatedPlayersList.push({
-                player_id: player.player_id,
-                name: player.name,
-                oldName: oldName,
-                isNew: false
-              });
-            } catch (error) {
-              console.error(`Error fetching player ${player.player_id}:`, error);
-              updatedPlayersList.push({
-                player_id: player.player_id,
-                name: player.name,
-                oldName: 'Error loading',
-                isNew: false
-              });
-            }
-          } else {
-            // No player_id - this is a new player
-            newPlayersList.push({
-              name: player.name,
-              isNew: true
-            });
-          }
-        }
-        
-        setNewPlayers(newPlayersList);
-        setUpdatedPlayers(updatedPlayersList);
-        setDataLoading(false);
-      } catch (error) {
-        console.error('Error parsing player data:', error);
-        alert('Failed to load player data');
-        router.push('/dashboard/superadmin/players');
-      }
-    };
-    
-    // Execute the async function
-    loadPlayers();
-  }, [user, authLoading, router]);
 
   const validateCell = (value: any, field: string, required: boolean): string | null => {
     if (required && (!value || value.toString().trim() === '')) {
@@ -200,13 +123,13 @@ export default function PlayersImportPreview() {
         try {
           // Generate player_id
           // Get the last player ID to determine the next ID
-          const playersRef = collection(db, 'realplayers');
-          const q = query(playersRef, orderBy('player_id', 'desc'), limit(1));
-          const snapshot = await getDocs(q);
+          const rpRes = await fetch('/api/realplayers');
+          const rpJson = await rpRes.json();
+          const allRp = rpJson.data || [];
           
           let nextIdNumber = 1;
-          if (!snapshot.empty) {
-            const lastPlayerId = snapshot.docs[0].data().player_id;
+          if (allRp.length > 0) {
+            const lastPlayerId = allRp[allRp.length - 1].player_id || '';
             // Extract number from format sspslpsl001
             const match = lastPlayerId.match(/\d+$/);
             if (match) {
@@ -217,13 +140,19 @@ export default function PlayersImportPreview() {
           const newPlayerId = `sspslpsl${nextIdNumber.toString().padStart(3, '0')}`;
           
           // Create new player document
-          await setDoc(doc(db, 'realplayers', newPlayerId), {
-            player_id: newPlayerId,
-            name: player.name.trim(),
-            is_registered: false,
-            created_at: serverTimestamp(),
-            updated_at: serverTimestamp(),
-            created_by: user?.uid || 'system',
+          await fetch('/api/realplayers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'create',
+              data: {
+                id: newPlayerId,
+                player_id: newPlayerId,
+                name: player.name.trim(),
+                is_registered: false,
+                created_by: user?.uid || 'system',
+              },
+            }),
           });
           
           successCount++;
@@ -240,10 +169,12 @@ export default function PlayersImportPreview() {
           if (!player.player_id) continue;
           
           // Update existing player document
-          await updateDoc(doc(db, 'realplayers', player.player_id), {
-            name: player.name.trim(),
-            updated_at: serverTimestamp(),
-            updated_by: user?.uid || 'system',
+          await fetch(`/api/realplayers/${player.player_id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: player.name.trim(),
+            }),
           });
           
           successCount++;
@@ -280,18 +211,18 @@ export default function PlayersImportPreview() {
 
   if (authLoading || dataLoading) {
     return (
+    <AuthGuard requiredRole="super_admin">
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
-    );
+    
+    </AuthGuard>
+  );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }  return (
     <div className="space-y-8 animate-fade-in font-mono">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">

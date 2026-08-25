@@ -8,6 +8,7 @@ import { Target, Crown, Sparkles } from 'lucide-react';
 import { getIdToken } from 'firebase/auth';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { 
+import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Calendar, 
   Trophy, 
@@ -66,16 +67,6 @@ export default function EditHistoricalSeasonPage() {
   });
 
   // Auth check
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch season data
   useEffect(() => {
     if (!seasonId || loading || !user) return;
     
@@ -218,9 +209,6 @@ export default function EditHistoricalSeasonPage() {
     );
   }
 
-  if (!user || user.role !== 'super_admin') {
-    return null;
-  }
 
   if (!season) {
     return (
@@ -239,6 +227,7 @@ export default function EditHistoricalSeasonPage() {
   }
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in font-mono">
       {/* Header */}
       <div className="console-card bg-white border border-slate-200/60 p-6 shadow-sm rounded-2xl">
@@ -579,6 +568,8 @@ export default function EditHistoricalSeasonPage() {
         </div>
       </form>
     </div>
+  
+    </AuthGuard>
   );
 }
 

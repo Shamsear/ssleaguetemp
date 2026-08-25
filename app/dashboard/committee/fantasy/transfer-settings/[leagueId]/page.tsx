@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeftRight, Calendar, Save, AlertCircle } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface TransferSettings {
   max_transfers_per_window: number;
@@ -29,16 +30,6 @@ export default function TransferSettingsPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    if (!loading && user && user.role !== 'committee_admin' && user.role !== 'super_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   useEffect(() => {
     fetchSettings();
@@ -121,6 +112,7 @@ export default function TransferSettingsPage() {
   if (!user) return null;
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -283,5 +275,7 @@ export default function TransferSettingsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

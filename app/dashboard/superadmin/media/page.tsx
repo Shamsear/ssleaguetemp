@@ -35,6 +35,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -180,13 +181,6 @@ export default function ImageKitMediaPage() {
   const [hoveredImage, setHoveredImage] = useState<string | null>(null); // image url for popover preview
 
   // ─── Auth guard ─────────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (!loading && !user) router.push('/login');
-    if (!loading && user && user.role !== 'super_admin') router.push('/dashboard');
-  }, [user, loading, router]);
-
-  // ─── Fetch files ─────────────────────────────────────────────────────────────
 
   const fetchFiles = useCallback(async (path: string, searchQ: string, skipN: number, replace = false) => {
     setFetching(true);
@@ -438,6 +432,7 @@ export default function ImageKitMediaPage() {
   // ─── Render ───────────────────────────────────────────────────────────────────
 
   return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-6">
 
       {/* Header */}
@@ -1047,14 +1042,18 @@ export default function ImageKitMediaPage() {
         </div>
       )}
     </div>
+  
+    </AuthGuard>
   );
 }
 
 function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
+
     <div>
       <p className="text-slate-400 mb-0.5">{label}</p>
       <p className={`text-slate-700 break-all ${mono ? 'font-mono text-xs' : ''}`}>{value}</p>
     </div>
+
   );
 }

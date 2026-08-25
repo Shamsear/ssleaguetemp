@@ -13,6 +13,7 @@ import { getSmartCache, setSmartCache, CACHE_DURATIONS } from '@/utils/smartCach
 import { POSITION_GROUPS } from '@/lib/constants/positions';
 import { usePermissions } from '@/hooks/usePermissions';
 import Image from 'next/image';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function CommitteeDashboard() {
   const { user, loading } = useAuth();
@@ -78,16 +79,6 @@ export default function CommitteeDashboard() {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch all initial data in parallel
   const fetchAllStats = useCallback(async () => {
     if (!user || user.role !== 'committee_admin' || !userSeasonId) return;
 
@@ -107,11 +98,11 @@ export default function CommitteeDashboard() {
               return;
             }
 
-            const seasonRef = doc(db, 'seasons', userSeasonId);
-            const seasonSnapshot = await getDoc(seasonRef);
+            const seasonRes = await fetch(`/api/seasons/${userSeasonId}`); const seasonJson = await seasonRes.json();
+            const seasonSnapshot = { exists: () => seasonJson.success, data: () => seasonJson.data };
 
-            if (seasonSnapshot.exists()) {
-              const seasonData = { id: seasonSnapshot.id, ...seasonSnapshot.data() };
+            if (seasonJson.success) {
+              const seasonData = { id: userSeasonId, ...seasonJson.data };
               setSmartCache(cacheKey, seasonData, CACHE_DURATIONS.MEDIUM);
               setCurrentSeason(seasonData);
             }
@@ -239,11 +230,8 @@ export default function CommitteeDashboard() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null;
-  }
-
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -1136,6 +1124,7 @@ export default function CommitteeDashboard() {
                   const tiebreakers = roundTiebreakers[round.id] || [];
 
                   return (
+
                     <div key={round.id} className="bg-slate-50 border border-slate-150 p-4 rounded-xl">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
@@ -1166,7 +1155,8 @@ export default function CommitteeDashboard() {
                         </div>
                       </div>
                     </div>
-                  );
+
+  );
                 })}
               </div>
             )}
@@ -1226,5 +1216,7 @@ export default function CommitteeDashboard() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

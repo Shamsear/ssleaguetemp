@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { Coins, RefreshCw, RotateCcw, Save, ArrowLeft, Info, Pencil, HelpCircle, CheckCircle } from 'lucide-react'
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface TeamBudget {
   teamId: string
@@ -31,15 +32,6 @@ export default function BudgetSyncPage() {
   const [editedTeams, setEditedTeams] = useState<Map<string, Record<string, number>>>(new Map())
   const [seasonName, setSeasonName] = useState('')
   const [lastChecked, setLastChecked] = useState<Date | null>(null)
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
 
   const loadTeams = async () => {
     setLoading(true)
@@ -143,13 +135,11 @@ export default function BudgetSyncPage() {
     )
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null
-  }
 
   const hasAnyChanges = editedTeams.size > 0
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Ambient Gold Glow Overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -360,5 +350,7 @@ export default function BudgetSyncPage() {
         )}
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }

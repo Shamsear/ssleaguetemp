@@ -41,7 +41,7 @@ export default function RegisteredPlayersPage() {
         setLoading(true)
         
         // Fetch season info
-        const seasonDoc = await getDoc(doc(db, 'seasons', seasonId))
+        const seasonRes = await fetch(`/api/seasons/${seasonId}`); const seasonJson = await seasonRes.json(); const seasonDoc = { exists: () => seasonJson.success, data: () => seasonJson.data }
         if (!seasonDoc.exists()) {
           setError('Season not found')
           setLoading(false)

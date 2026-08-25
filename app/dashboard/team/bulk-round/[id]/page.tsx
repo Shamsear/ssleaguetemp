@@ -12,6 +12,7 @@ import { useAuctionWebSocket } from '@/hooks/useWebSocket';
 import { fetchWithTokenRetry } from '@/lib/fetch-with-retry';
 import { PlayerAvatar } from '@/components/PlayerImage';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   id: string;
@@ -47,6 +48,7 @@ interface PlayerCardProps {
 
 const PlayerCard = React.memo(({ player, isBidded, basePrice, onToggle }: PlayerCardProps) => {
   return (
+    <AuthGuard requiredRole="team">
     <button
       onClick={() => onToggle(player.id)}
       className={`bg-white border border-slate-200/60 rounded-2xl p-3 sm:p-4 transition-colors text-left active:scale-98 touch-manipulation font-mono border-l-4 w-full flex items-center gap-3 ${
@@ -121,6 +123,8 @@ const PlayerCard = React.memo(({ player, isBidded, basePrice, onToggle }: Player
         </div>
       </div>
     </button>
+  
+    </AuthGuard>
   );
 }, (prevProps, nextProps) => {
   return (
@@ -184,89 +188,6 @@ export default function TeamBulkRoundPage() {
   const { isConnected, lastMessage } = useAuctionWebSocket(roundId, true);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch round and players
-  useEffect(() => {
-    const fetchData = async () => {
-      // Wait for auth to be ready and user to be loaded
-      if (!roundId || loading || !user) {
-        console.log('[PENDING] Waiting for auth...', { roundId: !!roundId, loading, user: !!user });
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        console.log(`[LAUNCH] Fetching bulk round ${roundId}...`);
-        
-        // Fetch round details and players
-        const response = await fetchWithTokenRetry(`/api/team/bulk-rounds/${roundId}`);
-        const { success, data, error } = await response.json();
-
-        if (!success) {
-          throw new Error(error || 'Failed to fetch round data');
-        }
-
-        console.log('[SUCCESS] Round data fetched successfully');
-        
-        // Check if round is completed/finalized - redirect immediately
-        if (data.round.status === 'completed' || data.round.status === 'cancelled' || data.round.status === 'pending_tiebreakers') {
-          console.log(`[WARNING] Round is ${data.round.status} - redirecting to dashboard`);
-          const statusMessage = data.round.status === 'pending_tiebreakers' 
-            ? 'has been finalized and tiebreakers have been created'
-            : `has been ${data.round.status}`;
-          showAlert({
-            type: 'info',
-            title: 'Round Ended',
-            message: `This bulk round ${statusMessage}. Redirecting to dashboard...`
-          });
-          setTimeout(() => {
-            router.push('/dashboard');
-          }, 2000);
-          return;
-        }
-        
-        setBulkRound(data.round);
-        setPlayers(data.players || []);
-        setTeamBalance(data.balance || 1000);
-        if (data.squad) {
-          setSquadInfo(data.squad);
-        }
-
-
-        // Fetch team's existing bids
-        const bidsResponse = await fetchWithTokenRetry(`/api/team/bulk-rounds/${roundId}/bids`);
-        const bidsData = await bidsResponse.json();
-        
-        if (bidsData.success && bidsData.data.bids) {
-          const bidPlayerIds = new Set(bidsData.data.bids.map((b: any) => b.player_id) as string[]);
-          setDbBids(new Set(bidPlayerIds));
-          setBiddedPlayers(bidPlayerIds);
-          setBidsCount(bidsData.data.count || 0);
-        }
-      } catch (err: any) {
-        console.error('Error fetching data:', err);
-        showAlert({
-          type: 'error',
-          title: 'Error',
-          message: err.message || 'Failed to load round data'
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [roundId, loading, user]);
-
-  // Listen for WebSocket updates (round metadata changes)
-  useEffect(() => {
     if (!lastMessage) return;
 
     try {
@@ -328,10 +249,6 @@ export default function TeamBulkRoundPage() {
       console.error('Error parsing WebSocket message:', err);
     }
   }, [lastMessage, roundId]);
-
-
-
-
 
   // Timer countdown
   useEffect(() => {
@@ -594,6 +511,7 @@ export default function TeamBulkRoundPage() {
   }
 
   return (
+
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -691,7 +609,6 @@ export default function TeamBulkRoundPage() {
             </div>
           </div>
         </div>
-
 
         {/* Info Card - Collapsible on mobile */}
         <details className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-sm group font-mono" open>
@@ -1012,8 +929,6 @@ export default function TeamBulkRoundPage() {
         </div>
       </div>
 
-
-
       {/* Modal Components */}
       <AlertModal
         isOpen={alertState.isOpen}
@@ -1034,5 +949,6 @@ export default function TeamBulkRoundPage() {
         type={confirmState.type}
       />
     </div>
+
   );
 }

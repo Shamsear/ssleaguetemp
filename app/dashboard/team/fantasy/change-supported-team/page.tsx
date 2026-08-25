@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import SupportedTeamChanger from '@/components/fantasy/SupportedTeamChanger';
 import Link from 'next/link';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function ChangeSupportedTeamPage() {
     const { user } = useAuth();
@@ -67,6 +68,7 @@ export default function ChangeSupportedTeamPage() {
     }
 
     return (
+    <AuthGuard requiredRole="team">
         <div className="min-h-screen bg-slate-50">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
@@ -161,5 +163,7 @@ export default function ChangeSupportedTeamPage() {
                 </div>
             </div>
         </div>
-    );
+    
+    </AuthGuard>
+  );
 }

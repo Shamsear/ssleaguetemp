@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
-import { collection, query, where, getDocs, limit } from 'firebase/firestore'
-import { db } from '@/lib/firebase/config'
+
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
 import { ArrowLeft, Settings, Info, Layers, DollarSign, CheckCircle, AlertCircle, Sparkles, HelpCircle, BarChart2 } from 'lucide-react'
+import AuthGuard from '@/components/auth/AuthGuard';
 
 
 export default function FootballSlotSettingsPage() {
@@ -28,15 +28,6 @@ export default function FootballSlotSettingsPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard')
-    }
-  }, [user, authLoading, router])
-
-  useEffect(() => {
     const fetchData = async () => {
       if (!user || user.role !== 'committee_admin') return
 
@@ -44,22 +35,19 @@ export default function FootballSlotSettingsPage() {
         setLoading(true)
         
         // Get current season
-        const seasonsQuery = query(
-          collection(db, 'seasons'),
-          where('isActive', '==', true),
-          limit(1)
-        )
-        const seasonsSnapshot = await getDocs(seasonsQuery)
+        const seasonsRes = await fetch('/api/seasons')
+        const seasonsJson = await seasonsRes.json()
+        const seasonsList = (seasonsJson.data || seasonsJson.seasons || []).filter((s: any) => s.status === 'active' || s.is_active === true)
 
-        if (seasonsSnapshot.empty) {
+        if (seasonsList.length === 0) {
           setMessage({ type: 'error', text: 'No active season found' })
           setLoading(false)
           return
         }
 
-        const seasonDoc = seasonsSnapshot.docs[0]
+        const seasonDoc = seasonsList[0]
         const seasonId = seasonDoc.id
-        const seasonData = seasonDoc.data()
+        const seasonData = seasonDoc
         
         setCurrentSeasonId(seasonId)
         setSeasonName(seasonData.name || `Season ${seasonData.season_number || ''}`)
@@ -125,11 +113,9 @@ export default function FootballSlotSettingsPage() {
     )
   }
 
-  if (!user || user.role !== 'committee_admin') {
-    return null
-  }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -348,5 +334,7 @@ export default function FootballSlotSettingsPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   )
 }

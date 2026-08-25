@@ -8,6 +8,7 @@ import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import Link from 'next/link';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PendingAllocation {
   id: number;
@@ -64,16 +65,6 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
   } = useModal();
 
   // Auth check
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-    if (!authLoading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
-
-  // Fetch data
   useEffect(() => {
     if (!roundId || !user || user.role !== 'committee_admin') return;
 
@@ -475,6 +466,7 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
   const sortedAllocations = [...pendingData.allocations].sort((a, b) => b.amount - a.amount);
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <>
       <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
         {/* Ambient glow */}
@@ -708,6 +700,7 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
                 const hasIncomplete = teamData.allocations.some(a => a.phase === 'incomplete');
 
                 return (
+
                   <div
                     key={teamData.team_id}
                     className="border border-slate-100 rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-sm"
@@ -775,7 +768,8 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
                       </div>
                     )}
                   </div>
-                );
+
+  );
               })}
             </div>
           </div>
@@ -863,6 +857,8 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
         type={confirmState.type}
       />
     </>
+  
+    </AuthGuard>
   );
 }
 

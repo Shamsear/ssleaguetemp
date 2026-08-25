@@ -39,7 +39,7 @@ export function TeamRegistrationProvider({ children }: { children: ReactNode }) 
     const fetchTeamData = async () => {
       if (user && user.role === 'team') {
         try {
-          const teamsRef = collection(db, 'teams');
+          const teamsRef = (await (await fetch('/api/teams')).json()).data;
           const q = query(teamsRef, where('userId', '==', user.uid));
           const querySnapshot = await getDocs(q);
           

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuctionDb } from '@/lib/neon/auction-config';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import admin from 'firebase-admin';
 import { closePlayerHistory, createPlayerHistory } from '@/lib/player-history';
 import { sendNotification } from '@/lib/notifications/send-notification';

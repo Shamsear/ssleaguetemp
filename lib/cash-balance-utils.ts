@@ -1,4 +1,4 @@
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export interface CashPayment {

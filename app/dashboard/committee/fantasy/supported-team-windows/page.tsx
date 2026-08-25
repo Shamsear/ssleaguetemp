@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'next/navigation';
 import SupportedTeamWindowManager from '@/components/fantasy/admin/SupportedTeamWindowManager';
 import Link from 'next/link';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function SupportedTeamWindowsPage() {
     const { user } = useAuth();
@@ -56,6 +57,7 @@ export default function SupportedTeamWindowsPage() {
     }
 
     return (
+    <AuthGuard requiredRole="committee_admin">
         <div className="min-h-screen bg-slate-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
@@ -122,5 +124,7 @@ export default function SupportedTeamWindowsPage() {
                 </div>
             </div>
         </div>
-    );
+    
+    </AuthGuard>
+  );
 }

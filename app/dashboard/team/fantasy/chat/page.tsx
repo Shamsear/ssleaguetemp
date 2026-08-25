@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { subscribeToNewMessages, ChatMessage, updateMessageReactions } from '@/lib/fantasy/chat-realtime';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface FantasyTeam {
   id: string;
@@ -31,16 +32,6 @@ export default function FantasyChatPage() {
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Redirect if not authenticated or not a team
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'team') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Load fantasy team and messages
   useEffect(() => {
     const loadData = async () => {
       if (!user) return;
@@ -244,6 +235,7 @@ export default function FantasyChatPage() {
   }
 
   return (
+    <AuthGuard requiredRole="team">
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-4xl mx-auto p-4">
         {/* Header */}
@@ -269,6 +261,7 @@ export default function FantasyChatPage() {
                 const hasReactions = Object.keys(reactions).length > 0;
                 
                 return (
+
                   <div
                     key={message.message_id}
                     className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
@@ -355,7 +348,8 @@ export default function FantasyChatPage() {
                       </div>
                     </div>
                   </div>
-                );
+
+  );
               })
             )}
             <div ref={messagesEndRef} />
@@ -397,5 +391,7 @@ export default function FantasyChatPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }

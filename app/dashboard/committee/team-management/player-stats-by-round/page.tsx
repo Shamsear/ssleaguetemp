@@ -12,6 +12,7 @@ import PosterStudio from '@/components/PosterStudio';
 import { ArrowLeft, Award, BarChart2, Calendar, ClipboardList, Download, FileSpreadsheet, Search, Trophy, User, Users } from 'lucide-react';
 import PlayerPhoto from '@/components/PlayerPhoto';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerStats {
   player_id: string;
@@ -85,16 +86,6 @@ export default function PlayerStatsByRoundPage() {
     { week: 4, start: 21, end: 26 },
   ];
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    if (!loading && user && user.role !== 'committee_admin') {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
-  // Fetch max rounds
   useEffect(() => {
     const fetchMaxRounds = async () => {
       if (!selectedTournamentId) return;
@@ -381,6 +372,7 @@ export default function PlayerStatsByRoundPage() {
   }
 
   return (
+    <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -983,5 +975,7 @@ export default function PlayerStatsByRoundPage() {
         </div>
       </div>
     </div>
+  
+    </AuthGuard>
   );
 }
