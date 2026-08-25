@@ -34,10 +34,38 @@ export async function POST(request: NextRequest) {
 
     const league = leagues[0];
 
-    // No automatic actions — per-slot rounds handle timing via their own closes_at
+    // Trigger auto-finalize for rounds past their closes_at in auto mode
+    const autoRounds = await fantasySql`
+      SELECT r.slot_index, r.slot_name, r.closes_at
+      FROM fantasy_draft_rounds r
+      WHERE r.league_id = ${league_id}
+        AND r.status = 'active'
+        AND r.closes_at IS NOT NULL
+        AND r.closes_at < NOW()
+        AND r.finalization_mode = 'auto'
+    `;
+
+    if (autoRounds.length > 0) {
+      // Forward to auto-finalize endpoint
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const resp = await fetch(`${baseUrl}/api/fantasy/draft/auto-finalize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ league_id }),
+      });
+      const data = await resp.json();
+      return NextResponse.json({
+        success: true,
+        message: `Auto-finalized ${data.processed} round(s)`,
+        status: league.draft_status,
+        changed: true,
+        auto_finalized: data.results,
+      });
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'No automatic status change needed (per-slot rounds handle timing)',
+      message: 'No rounds ready for auto-finalization',
       status: league.draft_status,
       changed: false,
     });

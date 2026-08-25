@@ -1140,10 +1140,12 @@ export async function processSlotBidPreview(
 
     // Build awarded targets from OTHER slots (players/teams already won elsewhere)
     const awardedTargets = new Set<string>();
+    // Find players in squad that are NOT in this slot's player list (i.e., won in other slots)
     const otherAwarded = await fantasySql`
       SELECT real_player_id FROM fantasy_squad
-      WHERE league_id = ${leagueId} AND real_player_id = ANY(${slotPlayerIds})
+      WHERE league_id = ${leagueId} AND NOT (real_player_id = ANY(${slotPlayerIds}))
     `;
+    otherAwarded.forEach((p: any) => awardedTargets.add(p.real_player_id));
     // For real teams in other slots
     if (slotIndex !== 6) {
       const otherTeams = await fantasySql`

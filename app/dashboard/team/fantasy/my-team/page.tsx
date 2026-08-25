@@ -175,23 +175,20 @@ export default function MyFantasyTeamPage() {
     }
   };
 
+  // Countdown timer — derives activeRound from state (before early returns)
   useEffect(() => {
-    const closesAt = activeRound?.closes_at;
-    if (!closesAt) { setTimeRemaining(0); return; }
+    const activeR = draftRounds.find((r: any) => r.status === 'active');
+    if (!activeR?.closes_at) return;
 
-    const closesMs = new Date(closesAt).getTime();
-    const timer = setInterval(() => {
-      const diff = closesMs - Date.now();
-      if (diff <= 0) {
-        setTimeRemaining(0);
-        clearInterval(timer);
-      } else {
-        setTimeRemaining(diff);
-      }
-    }, 1000);
-
+    const tick = () => {
+      const closeTime = new Date(activeR.closes_at).getTime();
+      const diff = closeTime - Date.now();
+      setTimeRemaining(diff);
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [activeRound?.closes_at]);
+  }, [draftRounds]);
 
   const formatTime = (ms: number) => {
     if (ms <= 0) return 'Closed';

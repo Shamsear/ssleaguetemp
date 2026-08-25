@@ -272,9 +272,9 @@ export default function ProcessDraftPage() {
 
   const { alertState, showAlert, closeAlert } = useModal();
 
-  const loadSubmissions = async () => {
+  const loadSubmissions = async (silent = false) => {
     if (!leagueId) return;
-    setIsLoading(true);
+    if (!silent) setIsLoading(true);
     try {
       // 1. Fetch Wishlist submission counts
       const res = await fetchWithTokenRefresh(`/api/fantasy/draft/submissions?league_id=${leagueId}`);
@@ -311,7 +311,7 @@ export default function ProcessDraftPage() {
     } catch (err) {
       console.error('Failed to load submissions:', err);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
@@ -320,6 +320,34 @@ export default function ProcessDraftPage() {
       loadSubmissions();
     }
   }, [user, leagueId]);
+
+  // Auto-refresh: poll every 10s while a round is active or pending
+  // Also triggers auto-finalize for rounds past their closes_at in auto mode
+  useEffect(() => {
+    if (!user || !leagueId) return;
+    const hasActiveOrPending = draftRounds.some((r: any) => r.status === 'active' || r.status === 'pending' || r.status === 'closed');
+    if (!hasActiveOrPending) return;
+    const timer = setInterval(async () => {
+      // Check if any active round is past its closes_at in auto mode
+      const needsAutoFinalize = draftRounds.some((r: any) =>
+        r.status === 'active' && r.finalization_mode === 'auto' &&
+        r.closes_at && new Date(r.closes_at).getTime() < Date.now()
+      );
+      if (needsAutoFinalize) {
+        try {
+          await fetchWithTokenRefresh('/api/fantasy/draft/auto-finalize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ league_id: leagueId }),
+          });
+        } catch (err) {
+          console.error('Auto-finalize check failed:', err);
+        }
+      }
+      loadSubmissions(true);
+    }, 10000);
+    return () => clearInterval(timer);
+  }, [user, leagueId, draftRounds.length]);
 
   const handleRoundAction = async (slotIndex: number, action: 'start' | 'close' | 'adjust' | 'reset', times?: { opens_at?: string; closes_at?: string }) => {
     try {
