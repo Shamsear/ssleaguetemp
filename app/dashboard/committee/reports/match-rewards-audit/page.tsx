@@ -110,7 +110,7 @@ export default function MatchRewardsAuditPage() {
                   await fetch(`/api/transactions/${oldestTxn.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
                     amount: match.expectedECoin,
                     updated_at: new Date()
-                  });
+                  })});
                   console.log(`Updated eCoin transaction ${oldestTxn.id} from ${oldestTxn.amount} to ${match.expectedECoin}`);
                   successCount++;
                 } catch (error) {
@@ -155,7 +155,7 @@ export default function MatchRewardsAuditPage() {
                   await fetch(`/api/transactions/${oldestTxn.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
                     amount: match.expectedSSCoin,
                     updated_at: new Date()
-                  });
+                  })});
                   console.log(`Updated SSCoin transaction ${oldestTxn.id} from ${oldestTxn.amount} to ${match.expectedSSCoin}`);
                   successCount++;
                 } catch (error) {
@@ -217,7 +217,7 @@ export default function MatchRewardsAuditPage() {
                 await fetch(`/api/transactions/${eCoinTxns[0].id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
                   amount: match.expectedECoin,
                   updated_at: new Date()
-                });
+                })});
                 console.log(`Updated eCoin transaction ${eCoinTxns[0].id} from ${eCoinTxns[0].amount} to ${match.expectedECoin}`);
                 successCount++;
               } catch (error) {
@@ -264,7 +264,7 @@ export default function MatchRewardsAuditPage() {
                 await fetch(`/api/transactions/${sSCoinTxns[0].id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
                   amount: match.expectedSSCoin,
                   updated_at: new Date()
-                });
+                })});
                 console.log(`Updated SSCoin transaction ${sSCoinTxns[0].id} from ${sSCoinTxns[0].amount} to ${match.expectedSSCoin}`);
                 successCount++;
               } catch (error) {
@@ -1093,7 +1093,7 @@ export default function MatchRewardsAuditPage() {
                                                           await fetch(`/api/transactions/${oldestTxn.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
                                                             amount: match.expectedECoin,
                                                             updated_at: new Date()
-                                                          });
+                                                          })});
                                                           updated++;
                                                         }
                                                         
@@ -1177,7 +1177,7 @@ export default function MatchRewardsAuditPage() {
                                                           await fetch(`/api/transactions/${oldestTxn.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
                                                             amount: match.expectedSSCoin,
                                                             updated_at: new Date()
-                                                          });
+                                                          })});
                                                           updated++;
                                                         }
                                                         
