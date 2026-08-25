@@ -89,12 +89,21 @@ export async function GET(request: NextRequest) {
         fs.player_name,
         fs.position,
         fs.real_team_name,
-        fs.purchase_price,
-        fs.acquisition_slot
+        fs.purchase_price
       FROM fantasy_squad fs
       WHERE fs.league_id = ${league_id}
-      ORDER BY fs.acquisition_slot ASC, fs.purchase_price DESC
+      ORDER BY fs.purchase_price DESC
     `;
+
+    // Build player-to-slot mapping from category_settings lists
+    const slotLists = categorySettings?.lists || {};
+    const playerToSlot = new Map<string, number>();
+    for (const slot of slots) {
+      const playerIds = slotLists[slot.list_id] || [];
+      for (const pid of playerIds) {
+        if (!playerToSlot.has(pid)) playerToSlot.set(pid, slot.slot_index);
+      }
+    }
 
     // 7. Get supported teams (real teams won)
     const supportedTeams = await fantasySql`
@@ -191,7 +200,7 @@ export async function GET(request: NextRequest) {
 
       // Final awarded for this slot
       const finalAwarded = finalSquad
-        .filter((s: any) => s.acquisition_slot === slotIdx)
+        .filter((s: any) => playerToSlot.get(s.real_player_id) === slotIdx)
         .map((s: any) => ({
           team_id: s.team_id,
           team_name: teamMap.get(s.team_id)?.team_name || s.team_id,

@@ -34,18 +34,17 @@ export async function GET(request: NextRequest) {
         result[s.slot_index] = { submitted: true, submitted_at: s.submitted_at };
       }
     } catch {
-      // Table may not exist yet — fall back to legacy draft_submitted
-      if (teams[0]) {
-        const teamRow = await fantasySql`
-          SELECT draft_submitted FROM fantasy_teams WHERE team_id = ${team_id} LIMIT 1
+      // Table may not exist yet — fall back: only mark slots where team has bids AND draft_submitted is true
+      const teamRow = await fantasySql`
+        SELECT draft_submitted FROM fantasy_teams WHERE team_id = ${team_id} LIMIT 1
+      `;
+      if (teamRow[0]?.draft_submitted) {
+        const bidSlots = await fantasySql`
+          SELECT DISTINCT slot_index FROM fantasy_draft_bids
+          WHERE team_id = ${team_id} AND league_id = ${league_id}
         `;
-        if (teamRow[0]?.draft_submitted) {
-          const rounds = await fantasySql`
-            SELECT slot_index FROM fantasy_draft_rounds WHERE league_id = ${league_id}
-          `;
-          for (const r of rounds) {
-            result[r.slot_index] = { submitted: true, submitted_at: '' };
-          }
+        for (const b of bidSlots) {
+          result[b.slot_index] = { submitted: true, submitted_at: '' };
         }
       }
     }
