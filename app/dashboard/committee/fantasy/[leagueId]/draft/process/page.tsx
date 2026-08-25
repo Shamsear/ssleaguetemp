@@ -387,8 +387,9 @@ export default function ProcessDraftPage() {
         const data = await res.json();
         setTeams(data.teams || []);
         setTotalTeams(data.total_teams || 0);
-        setSubmittedCount(data.submitted_count || 0);
         if (data.slot_names) setSlotNames(data.slot_names);
+        // Per-slot: calculate submitted count from slot_submissions after rounds load
+        setSubmittedCount(data.submitted_count || 0);
       }
       
       // 2. Fetch current draft status settings
@@ -426,6 +427,16 @@ export default function ProcessDraftPage() {
       loadSubmissions();
     }
   }, [user, leagueId]);
+
+  // Recalculate submittedCount per active slot
+  useEffect(() => {
+    const activeRound = draftRounds.find((r: any) => r.status === 'active');
+    if (activeRound && teams.length > 0) {
+      const activeSlotIdx = activeRound.slot_index;
+      const count = teams.filter(t => !!t.slot_submissions?.[activeSlotIdx]).length;
+      setSubmittedCount(count);
+    }
+  }, [draftRounds, teams]);
 
   // Auto-refresh: poll every 10s while a round is active or pending
   // Also triggers auto-finalize for rounds past their closes_at in auto mode
@@ -736,15 +747,21 @@ export default function ProcessDraftPage() {
                     </span>
                     <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">Budget: {t.budget_remaining} Left</p>
                   </div>
-                  {t.draft_submitted ? (
-                    <span className="px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[9px] font-black rounded-lg uppercase tracking-wider">
-                      ✓ Submitted
-                    </span>
-                  ) : (
-                    <span className="px-2.5 py-0.5 bg-amber-50 border border-amber-250 text-amber-700 text-[9px] font-black rounded-lg uppercase tracking-wider">
-                      ⏳ Pending
-                    </span>
-                  )}
+                  {(() => {
+                    // Check per-slot submission for the active round
+                    const activeRound = draftRounds.find((r: any) => r.status === 'active');
+                    const activeSlotIdx = activeRound?.slot_index;
+                    const submittedForActive = activeSlotIdx ? !!t.slot_submissions?.[activeSlotIdx] : !!t.draft_submitted;
+                    return submittedForActive ? (
+                      <span className="px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[9px] font-black rounded-lg uppercase tracking-wider">
+                        ✓ Submitted
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 bg-amber-50 border border-amber-250 text-amber-700 text-[9px] font-black rounded-lg uppercase tracking-wider">
+                        ⏳ Pending
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
             ))}

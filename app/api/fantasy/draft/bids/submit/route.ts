@@ -362,6 +362,7 @@ export async function DELETE(request: NextRequest) {
       if (round[0].closes_at && new Date() > new Date(round[0].closes_at)) {
         return NextResponse.json({ error: 'This round has already closed' }, { status: 400 });
       }
+      // Delete from per-slot table (may not exist)
       try {
         await fantasySql`
           DELETE FROM fantasy_slot_submissions
@@ -377,7 +378,15 @@ export async function DELETE(request: NextRequest) {
               updated_at = CURRENT_TIMESTAMP
           WHERE team_id = ${team_id} AND league_id = ${league_id}
         `;
-      } catch {}
+      } catch {
+        // Table may not exist — fall back: set draft_submitted = false
+        await fantasySql`
+          UPDATE fantasy_teams
+          SET draft_submitted = false,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE team_id = ${team_id} AND league_id = ${league_id}
+        `;
+      }
       return NextResponse.json({ success: true, message: `Slot ${unlockSlotIndex} unlocked` });
     }
 

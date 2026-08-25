@@ -1,5 +1,5 @@
 'use client';
-import { ArrowLeft, Eye, Trophy, Users, DollarSign, Clock, CheckCircle, XCircle, Minus, Download } from 'lucide-react';
+import { ArrowLeft, Eye, Trophy, Users, DollarSign, Clock, CheckCircle, XCircle, Minus, Download, FileSpreadsheet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useParams } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
@@ -36,6 +36,8 @@ export default function DraftDetailedResultsPage() {
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'won' | 'lost'>('all');
+  const [isFinalizing, setIsFinalizing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { alertState, showAlert, closeAlert } = useModal();
 
@@ -186,6 +188,200 @@ export default function DraftDetailedResultsPage() {
     }
   };
 
+  const handleFinalizeSlot = async (slotIdx: number) => {
+    if (!confirm(`Finalize Slot ${slotIdx}? This will award players/teams and deduct budgets. This cannot be undone.`)) return;
+    setIsFinalizing(true);
+    try {
+      const res = await fetchWithTokenRefresh('/api/fantasy/draft/finalize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ league_id: leagueId, slot_index: slotIdx, action: 'apply' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Finalize failed');
+      showAlert({ type: 'success', title: 'Slot Finalized!', message: `Slot ${slotIdx} bids have been applied successfully.` });
+      loadData();
+    } catch (err: any) {
+      showAlert({ type: 'error', title: 'Finalize Failed', message: err.message });
+    } finally {
+      setIsFinalizing(false);
+    }
+  };
+
+  const exportToExcel = async () => {
+    setIsExporting(true);
+    try {
+      const ExcelJS = (await import('exceljs')).default;
+      const workbook = new ExcelJS.Workbook();
+
+      // Sheet 1: All Winners Summary
+      const summarySheet = workbook.addWorksheet('All Winners');
+      summarySheet.columns = [
+        { header: 'Slot', key: 'slot', width: 10 },
+        { header: 'Slot Name', key: 'slotName', width: 20 },
+        { header: 'Player/Team', key: 'target', width: 25 },
+        { header: 'Type', key: 'type', width: 12 },
+        { header: 'Awarded To', key: 'team', width: 25 },
+        { header: 'Price (Cr)', key: 'price', width: 12 },
+        { header: 'Status', key: 'status', width: 12 },
+      ];
+      summarySheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      summarySheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+
+      for (const slot of slots) {
+        // From final awarded
+        for (const a of slot.final_awarded) {
+          summarySheet.addRow({
+            slot: slot.slot_index, slotName: slot.slot_name,
+            target: a.player_name, type: 'Player',
+            team: a.team_name, price: a.purchase_price, status: 'Finalized',
+          });
+        }
+        // From preview (if not yet finalized)
+        if (slot.preview && slot.final_awarded.length === 0) {
+          for (const w of slot.preview.winning_bids) {
+            summarySheet.addRow({
+              slot: slot.slot_index, slotName: slot.slot_name,
+              target: w.target_name, type: w.bid_type,
+              team: w.team_name, price: w.bid_amount, status: 'Preview',
+            });
+          }
+        }
+        // Real teams awarded
+        for (const a of slot.final_team_awarded) {
+          summarySheet.addRow({
+            slot: slot.slot_index, slotName: slot.slot_name,
+            target: a.supported_team_name, type: 'Real Team',
+            team: a.team_name, price: 0, status: 'Finalized',
+          });
+        }
+      }
+      summarySheet.eachRow((row, rowNumber) => {
+        row.eachCell((cell) => {
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            right: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          };
+        });
+      });
+
+      // Per-slot sheets with all bids
+      for (const slot of slots) {
+        const sheetName = slot.slot_name.replace(/[\\/?*:[\]]/g, '').slice(0, 31);
+        const ws = workbook.addWorksheet(sheetName);
+        ws.columns = [
+          { header: 'Target', key: 'target', width: 25 },
+          { header: 'Type', key: 'type', width: 12 },
+          { header: 'Team', key: 'team', width: 25 },
+          { header: 'Owner', key: 'owner', width: 20 },
+          { header: 'Bid (Cr)', key: 'bid', width: 12 },
+          { header: 'Priority', key: 'priority', width: 10 },
+          { header: 'Status', key: 'status', width: 12 },
+        ];
+        ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
+
+        for (const target of slot.targets) {
+          for (const bid of target.bids) {
+            const isWinner = slot.preview?.winning_bids?.some((w: any) => w.target_id === target.target_id && w.team_name === bid.team_name);
+            ws.addRow({
+              target: target.target_name, type: target.bid_type,
+              team: bid.team_name, owner: bid.owner_name,
+              bid: bid.bid_amount, priority: bid.priority,
+              status: isWinner ? 'WON' : bid.status === 'lost' ? 'LOST' : 'PENDING',
+            });
+          }
+        }
+        ws.eachRow((row, rowNumber) => {
+          row.eachCell((cell) => {
+            cell.border = {
+              top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              right: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            };
+          });
+          // Color code status
+          if (rowNumber > 1) {
+            const statusCell = ws.getRow(rowNumber).getCell('status');
+            if (statusCell.value === 'WON') {
+              statusCell.font = { bold: true, color: { argb: 'FF059669' } };
+            } else if (statusCell.value === 'LOST') {
+              statusCell.font = { bold: true, color: { argb: 'FFDC2626' } };
+            }
+          }
+        });
+      }
+
+      // Per-team sheets
+      for (const team of teams) {
+        const sheetName = team.team_name.replace(/[\\/?*:[\]]/g, '').slice(0, 31);
+        const ws = workbook.addWorksheet(sheetName);
+        ws.columns = [
+          { header: 'Slot', key: 'slot', width: 10 },
+          { header: 'Target', key: 'target', width: 25 },
+          { header: 'Type', key: 'type', width: 12 },
+          { header: 'Bid (Cr)', key: 'bid', width: 12 },
+          { header: 'Priority', key: 'priority', width: 10 },
+          { header: 'Status', key: 'status', width: 12 },
+        ];
+        ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } };
+
+        for (const bid of team.bids) {
+          ws.addRow({
+            slot: bid.slot_index, target: bid.target_id, type: bid.bid_type,
+            bid: bid.bid_amount, priority: bid.priority,
+            status: bid.status === 'won' ? 'WON' : bid.status === 'lost' ? 'LOST' : 'PENDING',
+          });
+        }
+        ws.addRow({});
+        ws.addRow({ target: 'Budget Remaining', bid: team.budget_remaining });
+        ws.addRow({ target: 'Budget Spent', bid: team.budget_spent });
+        ws.getRow(ws.lastRow.number - 1).font = { bold: true };
+        ws.getRow(ws.lastRow.number).font = { bold: true };
+        ws.eachRow((row, rowNumber) => {
+          row.eachCell((cell) => {
+            cell.border = {
+              top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              right: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            };
+          });
+        });
+      }
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Fantasy_Draft_Results_${leagueId}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      showAlert({ type: 'success', title: 'Exported!', message: 'Excel file downloaded with all results' });
+    } catch (err: any) {
+      showAlert({ type: 'error', title: 'Export Failed', message: err.message });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const copyWinnerText = (name: string, teamName: string, price: number) => {
+    const text = `${name} sold to ${teamName} for ${price} Cr`;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => showAlert({ type: 'success', title: 'Copied!', message: text }))
+        .catch(() => {});
+    }
+  };
+
   const downloadAllSlotCards = async (withLogo: boolean = false) => {
     if (!currentSlot || currentSlot.final_awarded.length === 0) return;
     for (const a of currentSlot.final_awarded) {
@@ -241,8 +437,27 @@ export default function DraftDetailedResultsPage() {
               Full bid breakdown — preview & final results per slot
             </p>
           </div>
-          <div className="w-16 h-16 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center text-amber-400 shadow-sm shrink-0">
-            <Trophy className="w-8 h-8" />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={exportToExcel}
+              disabled={isExporting}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer disabled:cursor-not-allowed"
+            >
+              {isExporting ? (
+                <>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  Export to Excel
+                </>
+              )}
+            </button>
+            <div className="w-16 h-16 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center text-amber-400 shadow-sm shrink-0">
+              <Trophy className="w-8 h-8" />
+            </div>
           </div>
         </div>
 
@@ -285,6 +500,74 @@ export default function DraftDetailedResultsPage() {
                 <h3 className="text-xl font-black text-slate-900">{totals.total_teams}</h3>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ═══════════ BALANCE CHECKER ═══════════ */}
+        {teams.some((t: any) => t.budget_check && t.budget_check.commitments.length > 0) && (
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+              <DollarSign className="w-4 h-4 text-amber-600" />
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Budget Checker</h3>
+              <span className="text-[9px] text-slate-400 font-bold ml-1">Pending slots only</span>
+              {teams.some((t: any) => t.budget_check?.is_overdrawn) && (
+                <span className="ml-auto px-2 py-0.5 bg-rose-100 text-rose-700 text-[9px] font-black rounded-lg uppercase tracking-wider border border-rose-200">
+                  ⚠ Budget Overdrawn
+                </span>
+              )}
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100">
+                    <th className="text-left py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-wider">Team</th>
+                    <th className="text-right py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-wider">Remaining</th>
+                    <th className="text-right py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-wider">Pending</th>
+                    <th className="text-right py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-wider">Projected</th>
+                    <th className="text-left py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-wider">Pending Slots</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {teams
+                    .filter((t: any) => t.budget_check && t.budget_check.commitments.length > 0)
+                    .sort((a: any, b: any) => (a.budget_check?.projected_remaining ?? 0) - (b.budget_check?.projected_remaining ?? 0))
+                    .map((t: any) => {
+                      const bc = t.budget_check;
+                      return (
+                        <tr key={t.team_id} className={`border-b border-slate-50 ${bc.is_overdrawn ? 'bg-rose-50' : ''}`}>
+                          <td className="py-2 px-3">
+                            <span className="font-bold text-slate-800">{t.team_name}</span>
+                          </td>
+                          <td className="py-2 px-3 text-right font-bold text-slate-600">{bc.projected_remaining + bc.total_pending_spend} Cr</td>
+                          <td className="py-2 px-3 text-right font-bold text-amber-600">-{bc.total_pending_spend} Cr</td>
+                          <td className="py-2 px-3 text-right">
+                            <span className={`font-black ${bc.is_overdrawn ? 'text-rose-600' : bc.projected_remaining < 20 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                              {bc.projected_remaining} Cr
+                            </span>
+                            {bc.is_overdrawn && <span className="ml-1 text-rose-500">⚠</span>}
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="flex flex-wrap gap-1">
+                              {bc.commitments.map((c: any, i: number) => (
+                                <span key={i} className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 rounded text-[8px] font-bold text-slate-600 border border-slate-200">
+                                  S{c.slot_index} {c.slot_name}: <span className="text-amber-600">{c.bid_amount} Cr</span>
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+            {teams.filter((t: any) => t.budget_check?.is_overdrawn).length > 0 && (
+              <div className="mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl">
+                <p className="text-[10px] font-black text-rose-700 uppercase tracking-wider">
+                  ⚠ {teams.filter((t: any) => t.budget_check?.is_overdrawn).length} team(s) will exceed their budget if these previews are finalized!
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -465,19 +748,23 @@ export default function DraftDetailedResultsPage() {
                                     Awarded to: <span className="text-amber-600">{t.winning_bid.team_name}</span> for <span className="text-emerald-600">{t.winning_bid.bid_amount} Cr</span>
                                   </p>
                                 )}
-                              </div>
-                              {t.winning_bid && (
+                              </div>                              {t.winning_bid && (
                                 <div className="flex items-center gap-2 shrink-0">
                                   <span className="font-black text-emerald-600 text-sm">{t.winning_bid.bid_amount} Cr</span>
+                                  <button
+                                    onClick={() => copyWinnerText(t.target_name, t.winning_bid.team_name, t.winning_bid.bid_amount)}
+                                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
+                                    title="Copy sale text"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                  </button>
                                   {t.bid_type === 'player' && (
                                     <button
                                       onClick={() => downloadPlayerCard({
-                                        player_image: `/images/players/${t.target_id}.webp`,
+                                        player_image: t.player_photo || t.winning_bid?.player_photo || `/images/players/${t.target_id}.webp`,
                                         player_name: t.target_name,
-                                        position: '',
-                                        real_team_name: '',
-                                        team_name: t.winning_bid.team_name,
-                                        team_logo: null,
+                                        position: '', real_team_name: '',
+                                        team_name: t.winning_bid.team_name, team_logo: null,
                                         purchase_price: t.winning_bid.bid_amount,
                                       }, false)}
                                       className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
@@ -508,7 +795,7 @@ export default function DraftDetailedResultsPage() {
                                 const winners = currentSlot.preview.all_targets.filter((t: any) => t.status === 'won' && t.bid_type === 'player');
                                 winners.forEach((t: any, i: number) => {
                                   setTimeout(() => downloadPlayerCard({
-                                    player_image: `/images/players/${t.target_id}.webp`,
+                                    player_image: t.player_photo || t.winning_bid?.player_photo || `/images/players/${t.target_id}.webp`,
                                     player_name: t.target_name,
                                     position: '', real_team_name: '',
                                     team_name: t.winning_bid.team_name, team_logo: null,
@@ -525,7 +812,7 @@ export default function DraftDetailedResultsPage() {
                                 const winners = currentSlot.preview.all_targets.filter((t: any) => t.status === 'won' && t.bid_type === 'player');
                                 winners.forEach((t: any, i: number) => {
                                   setTimeout(() => downloadPlayerCard({
-                                    player_image: `/images/players/${t.target_id}.webp`,
+                                    player_image: t.player_photo || t.winning_bid?.player_photo || `/images/players/${t.target_id}.webp`,
                                     player_name: t.target_name,
                                     position: '', real_team_name: '',
                                     team_name: t.winning_bid.team_name, team_logo: null,
@@ -536,6 +823,13 @@ export default function DraftDetailedResultsPage() {
                               className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-black rounded-lg uppercase tracking-wider transition-colors"
                             >
                               <Download className="w-3 h-3 inline mr-1" /> With Logo
+                            </button>
+                            <button
+                              onClick={() => handleFinalizeSlot(selectedSlot!)}
+                              disabled={isFinalizing}
+                              className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-[9px] font-black rounded-lg uppercase tracking-wider transition-colors"
+                            >
+                              {isFinalizing ? 'Finalizing...' : '✓ Finalize'}
                             </button>
                           </div>
                         )}
@@ -600,8 +894,15 @@ export default function DraftDetailedResultsPage() {
                                 Sold to: {a.team_name} for {a.purchase_price} Cr
                               </p>
                             </div>
-                            {/* Download buttons */}
+                            {/* Copy + Download buttons */}
                             <div className="flex gap-1.5 shrink-0">
+                              <button
+                                onClick={() => copyWinnerText(a.player_name, a.team_name, a.purchase_price)}
+                                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
+                                title="Copy sale text"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                              </button>
                               <button
                                 onClick={() => downloadPlayerCard(a, false)}
                                 className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"

@@ -163,16 +163,29 @@ export async function GET(request: NextRequest) {
       console.log('Could not fetch team logos:', e);
     }
 
-    // 9. Fetch all player names for resolving target_ids
+    // 9. Fetch all player names and photo URLs for resolving target_ids
     const allPlayerIds = allBids.filter((b: any) => b.bid_type === 'player').map((b: any) => b.target_id);
     const uniquePlayerIds = [...new Set(allPlayerIds)];
     const playerNameMap = new Map<string, string>();
+    const playerPhotoMap = new Map<string, string>();
     if (uniquePlayerIds.length > 0) {
       const players = await fantasySql`
         SELECT real_player_id, player_name FROM fantasy_players
         WHERE league_id = ${league_id} AND real_player_id = ANY(${uniquePlayerIds})
       `;
       for (const p of players) playerNameMap.set(p.real_player_id, p.player_name);
+      // Fetch profile_image from Neon main DB realplayers table
+      try {
+        const { getMainDb } = await import('@/lib/neon/main-config');
+        const mainSql = getMainDb();
+        const realPlayers = await mainSql`
+          SELECT player_id, profile_image FROM realplayers
+          WHERE player_id = ANY(${uniquePlayerIds})
+        `;
+        for (const rp of realPlayers) {
+          if (rp.profile_image) playerPhotoMap.set(rp.player_id, rp.profile_image);
+        }
+      } catch {}
     }
 
     // Also fetch team names for real_team bids
@@ -226,11 +239,12 @@ export async function GET(request: NextRequest) {
         })).sort((a: any, b: any) => b.bid_amount - a.bid_amount),
       }));
 
-      // Winning bids from preview — resolve target names
+      // Winning bids from preview — resolve target names and photos
       const rawWinningBids = preview?.results_by_slot?.[0]?.winning_bids || [];
       const winningBids = rawWinningBids.map((w: any) => ({
         ...w,
         target_name: resolveTargetName(w.target_id, w.bid_type),
+        player_photo: w.bid_type === 'player' ? (playerPhotoMap.get(w.target_id) || null) : null,
       }));
 
       // Build all targets with win/loss status for preview
@@ -257,7 +271,7 @@ export async function GET(request: NextRequest) {
           team_logo: teamLogos.get(s.team_id) || null,
           player_name: s.player_name,
           player_id: s.real_player_id,
-          player_image: `/images/players/${s.real_player_id}.webp`,
+          player_image: playerPhotoMap.get(s.real_player_id) || `/images/players/${s.real_player_id}.webp`,
           position: s.position,
           real_team_name: s.real_team_name,
           purchase_price: Number(s.purchase_price),
@@ -300,23 +314,60 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Build per-team summary
+    // Build per-team summary with budget checker
+    // Find non-finalized slots (active/closed with preview, not yet applied)
+    const nonFinalizedSlots = slotResults.filter((s: any) =>
+      s.round && s.round.status !== 'completed' && s.preview
+    );
+
     const teamSummaries = teams.map((t: any) => {
       const bids = teamBids.get(t.team_id) || [];
       const squad = squadByTeam.get(t.team_id) || [];
       const supportedTeam = supportedTeamMap.get(t.team_id);
 
+      // Budget checker: sum winning bids from non-finalized slot previews
+      const pendingCommitments: Array<{
+        slot_index: number;
+        slot_name: string;
+        target_name: string;
+        bid_type: string;
+        bid_amount: number;
+      }> = [];
+
+      for (const ns of nonFinalizedSlots) {
+        const winBid = ns.preview?.winning_bids?.find((w: any) => w.team_id === t.team_id);
+        if (winBid) {
+          pendingCommitments.push({
+            slot_index: ns.slot_index,
+            slot_name: ns.slot_name,
+            target_name: winBid.target_name || winBid.target_id,
+            bid_type: winBid.bid_type || 'player',
+            bid_amount: Number(winBid.bid_amount),
+          });
+        }
+      }
+
+      const totalPendingSpend = pendingCommitments.reduce((sum, c) => sum + c.bid_amount, 0);
+      const budgetRemaining = Number(t.budget_remaining);
+      const projectedRemaining = budgetRemaining - totalPendingSpend;
+
       return {
         team_id: t.team_id,
         team_name: t.team_name,
         owner_name: t.owner_name,
-        budget_remaining: Number(t.budget_remaining),
+        budget_remaining: budgetRemaining,
         draft_submitted: !!t.draft_submitted,
         total_bids: bids.length,
         won_bids: bids.filter((b: any) => b.status === 'won').length,
         lost_bids: bids.filter((b: any) => b.status === 'lost').length,
         squad_size: squad.length,
-        budget_spent: Number(league.budget_per_team) - Number(t.budget_remaining),
+        budget_spent: Number(league.budget_per_team) - budgetRemaining,
+        budget_check: {
+          total_pending_spend: totalPendingSpend,
+          projected_remaining: projectedRemaining,
+          is_overdrawn: projectedRemaining < 0,
+          commitments: pendingCommitments,
+        },
         supported_team: supportedTeam ? {
           id: supportedTeam.supported_team_id,
           name: supportedTeam.supported_team_name,

@@ -75,6 +75,60 @@ export async function POST(request: NextRequest) {
       const previewData = typeof previews[0].preview_data === 'string'
         ? JSON.parse(previews[0].preview_data) : previews[0].preview_data;
 
+      // ── BUDGET GUARD: Check if applying this preview would overdraw any team ──
+      const teamBudgets = await fantasySql`
+        SELECT team_id, team_name, budget_remaining FROM fantasy_teams
+        WHERE league_id = ${league_id} AND is_enabled = true
+      `;
+      const budgetMap = new Map<string, { name: string; remaining: number }>();
+      teamBudgets.forEach((tb: any) => budgetMap.set(tb.team_id, { name: tb.team_name, remaining: Number(tb.budget_remaining) }));
+
+      // Sum winning bids from ALL non-finalized previews (including this one)
+      const otherPreviews = await fantasySql`
+        SELECT slot_index, preview_data FROM fantasy_draft_preview
+        WHERE league_id = ${league_id} AND slot_index != ${Number(slot_index)}
+      `;
+      const allWinningBids: Array<{ team_id: string; bid_amount: number; slot_index: number }> = [];
+      // Add current preview winning bids
+      const currentWins = previewData?.results_by_slot?.[0]?.winning_bids || [];
+      currentWins.forEach((w: any) => {
+        allWinningBids.push({ team_id: w.team_id, bid_amount: Number(w.bid_amount), slot_index: Number(slot_index) });
+      });
+      // Add other non-finalized previews
+      for (const op of otherPreviews) {
+        const opRound = await fantasySql`
+          SELECT status FROM fantasy_draft_rounds
+          WHERE league_id = ${league_id} AND slot_index = ${op.slot_index} LIMIT 1
+        `;
+        if (opRound.length > 0 && opRound[0].status !== 'completed') {
+          const opData = typeof op.preview_data === 'string' ? JSON.parse(op.preview_data) : op.preview_data;
+          const opWins = opData?.results_by_slot?.[0]?.winning_bids || [];
+          opWins.forEach((w: any) => {
+            allWinningBids.push({ team_id: w.team_id, bid_amount: Number(w.bid_amount), slot_index: op.slot_index });
+          });
+        }
+      }
+
+      // Check each team's total commitments vs budget
+      const overdraftTeams: string[] = [];
+      const teamSpend = new Map<string, number>();
+      allWinningBids.forEach(w => {
+        teamSpend.set(w.team_id, (teamSpend.get(w.team_id) || 0) + w.bid_amount);
+      });
+      teamSpend.forEach((totalSpend, teamId) => {
+        const budget = budgetMap.get(teamId);
+        if (budget && totalSpend > budget.remaining) {
+          overdraftTeams.push(`${budget.name} (needs ${totalSpend} Cr, has ${budget.remaining} Cr)`);
+        }
+      });
+
+      if (overdraftTeams.length > 0) {
+        return NextResponse.json({
+          success: false,
+          error: `Cannot finalize: the following teams would exceed their budget:\n${overdraftTeams.join('\n')}`,
+        }, { status: 400 });
+      }
+
       console.log(`⚡ [APPLY] Slot ${slot_index} for league ${league_id}`);
       const result = await applySlotBidResults(league_id, previewData);
 
