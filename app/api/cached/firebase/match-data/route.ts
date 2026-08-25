@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { getMainDb } from '@/lib/neon/main-config';
 
 /**
  * GET /api/cached/firebase/match-data
  * Returns match_days and round_deadlines data with ISR caching
- * 
- * Query params:
- * - seasonId: Filter by season (required)
- * - type: 'match_days' | 'round_deadlines' | 'both' (default: 'both')
- * 
- * Cache: 120 seconds (only changes when admin activates rounds)
  */
 export async function GET(request: Request) {
   try {
@@ -24,33 +18,29 @@ export async function GET(request: Request) {
       );
     }
     
+    const sql = getMainDb();
     const result: any = {};
     
     // Fetch match_days if requested
     if (type === 'match_days' || type === 'both') {
-      const matchDaysQuery = adminDb
-        .collection('match_days')
-        .where('season_id', '==', seasonId);
-      
-      const matchDaysSnapshot = await matchDaysQuery.get();
-      result.match_days = matchDaysSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      try {
+        const matchDays: any[] = await sql`SELECT * FROM match_days WHERE season_id = ${seasonId}`;
+        result.match_days = matchDays;
+      } catch (e: any) {
+        console.warn('[match-data] match_days query failed:', e.message);
+        result.match_days = [];
+      }
     }
     
     // Fetch round_deadlines if requested
     if (type === 'round_deadlines' || type === 'both') {
-      // round_deadlines use composite IDs like: {seasonId}_r{roundNumber}_{leg}
-      // We need to fetch all and filter by seasonId prefix
-      const roundDeadlinesSnapshot = await adminDb.collection('round_deadlines').get();
-      
-      result.round_deadlines = roundDeadlinesSnapshot.docs
-        .filter(doc => doc.id.startsWith(seasonId))
-        .map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+      try {
+        const roundDeadlines: any[] = await sql`SELECT * FROM round_deadlines WHERE id LIKE ${seasonId + '%'} OR season_id = ${seasonId}`;
+        result.round_deadlines = roundDeadlines;
+      } catch (e: any) {
+        console.warn('[match-data] round_deadlines query failed:', e.message);
+        result.round_deadlines = [];
+      }
     }
     
     return NextResponse.json(

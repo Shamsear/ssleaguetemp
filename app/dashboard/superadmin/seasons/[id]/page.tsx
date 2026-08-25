@@ -3,13 +3,12 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getTeamsBySeason, getAllTeams } from '@/lib/firebase/teams';
+
 import { Season } from '@/types/season';
 import { usePlayerStats, useTeamStats } from '@/hooks';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { getIdToken } from 'firebase/auth';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Calendar, 
   Users, 
@@ -27,6 +26,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   AlertCircle,
   Download
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function SeasonDetails() {
   const { user, firebaseUser, loading } = useAuth();
@@ -125,20 +125,18 @@ export default function SeasonDetails() {
       }
       setSeason(seasonJson.data);
       
-      // Fetch teams from Firebase to get owner names
+      // Fetch teams via API
       try {
-        const fbTeams = await getTeamsBySeason(seasonId);
-        setFirebaseTeams(fbTeams || []);
-      } catch (fbError) {
-        console.error('Error fetching firebase teams:', fbError);
-      }
-
-      // Fetch all teams from Firebase for fallback owner names resolution
-      try {
-        const allFbTeams = await getAllTeams();
-        setAllTeams(allFbTeams || []);
-      } catch (allError) {
-        console.error('Error fetching all firebase teams:', allError);
+        const [teamSeasonsRes, allTeamsRes] = await Promise.all([
+          fetch(`/api/team-seasons?season_id=${seasonId}`),
+          fetch('/api/teams'),
+        ]);
+        const teamSeasonsJson = await teamSeasonsRes.json();
+        const allTeamsJson = await allTeamsRes.json();
+        setFirebaseTeams(teamSeasonsJson.data || teamSeasonsJson.teamSeasons || []);
+        setAllTeams(allTeamsJson.teams || allTeamsJson.data || []);
+      } catch (fetchError) {
+        console.error('Error fetching teams:', fetchError);
       }
       
       // For multi-season types (season 16+), fetch auction data from Neon

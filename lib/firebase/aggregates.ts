@@ -239,19 +239,20 @@ export async function buildTeamsSummary(seasonId?: string): Promise<TeamSummary[
  */
 export async function buildPlayersSummary(seasonId?: string): Promise<PlayerSummary[]> {
   try {
-    let query = adminDb.collection('footballplayers');
+    const { getTournamentDb } = await import('@/lib/neon/tournament-config');
+    const sql = getTournamentDb();
     
+    let rows: any[];
     if (seasonId) {
-      query = query.where('season_id', '==', seasonId) as any;
+      rows = await sql`SELECT * FROM footballplayers WHERE season_id = ${seasonId}`;
+    } else {
+      rows = await sql`SELECT * FROM footballplayers`;
     }
     
-    const snapshot = await query.get();
-    
     const players: PlayerSummary[] = [];
-    snapshot.forEach((doc) => {
-      const data = doc.data();
+    for (const data of rows) {
       players.push({
-        id: doc.id,
+        id: data.id || data.player_id,
         name: data.name || 'Unknown',
         primary_position: data.primary_position || 'Unknown',
         team_id: data.team_id || null,
@@ -271,7 +272,7 @@ export async function buildPlayersSummary(seasonId?: string): Promise<PlayerSumm
         player_image: data.player_image || null,
         card_type: data.card_type || 'Gold',
       });
-    });
+    }
     
     return players;
   } catch (error) {

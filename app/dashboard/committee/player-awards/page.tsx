@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   Award, 
   ArrowLeft, 
   Trophy, 
@@ -24,6 +23,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Info,
   ChevronDown
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerAward {
   id: number;

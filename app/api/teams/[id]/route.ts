@@ -20,6 +20,8 @@ export async function PATCH(
       logoUrl: 'logo_url',
       team_color: 'team_color',
       team_name: 'team_name',
+      is_active: 'is_active',
+      isActive: 'is_active',
     };
 
     const updates: string[] = [];
@@ -49,6 +51,23 @@ export async function PATCH(
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Error updating team:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+/**
+ * DELETE /api/teams/[id]
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const sql = getMainDb();
+    await sql`DELETE FROM teams WHERE id = ${id}`;
+    return NextResponse.json({ success: true, message: 'Team deleted' });
+  } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

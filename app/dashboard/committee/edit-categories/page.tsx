@@ -4,6 +4,7 @@
 import { Check, ChevronDown, Pencil, Search, Tag, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -46,7 +47,9 @@ const getCatStyle = (cat?: string) =>
 
 export default function EditCategoriesPage() {
   const { user, loading } = useAuth();
-  const { seasonId: userSeasonId } = useTournamentContext();
+  const { seasonId: contextSeason } = useTournamentContext();
+  const { userSeasonId: permSeasonId } = usePermissions();
+  const userSeasonId = contextSeason || permSeasonId;
   const router = useRouter();
 
   const [players, setPlayers] = useState<Player[]>([]);

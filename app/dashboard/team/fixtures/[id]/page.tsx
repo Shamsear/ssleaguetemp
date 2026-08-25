@@ -4,8 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { db } from '@/lib/firebase/config';
-import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
+
 import { getISTNow, formatISTDateTime, parseISTDate, createISTDateTime } from '@/lib/utils/timezone';
 import AuthGuard from '@/components/auth/AuthGuard';
 
@@ -127,15 +126,15 @@ export default function FixtureManagementPage() {
 
     // Get round deadlines and status
     const roundId = `${match.season_id}_r${match.round_number}_${match.leg}`;
-    const roundRef = doc(db, 'round_deadlines', roundId);
-    const roundDoc = await getDoc(roundRef);
+    const roundRes = await fetch(`/api/round-deadlines?season_id=${match.season_id}&round_number=${match.round_number}`);
+    const roundJson = await roundRes.json();
+    const roundData = (roundJson.data || []).find((r: any) => r.id === roundId);
 
-    if (!roundDoc.exists()) {
+    if (!roundData) {
       setCurrentPhase('Round not configured');
       return;
     }
 
-    const roundData = roundDoc.data();
     const roundStatus = roundData.status || 'pending';
     const scheduledDate = roundData.scheduled_date;
 

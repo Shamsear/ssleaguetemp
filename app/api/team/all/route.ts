@@ -119,36 +119,16 @@ export async function GET(request: NextRequest) {
     
     console.time('⚡ Batch fetch all football players');
     
-    // Step 3a: Batch fetch all football players for all teams
-    const allFootballPlayersSnapshot = await adminDb
-      .collection('footballplayers')
-      .where('season_id', '==', seasonId)
-      .where('team_id', 'in', teamIds.slice(0, 10)) // Firebase 'in' query limit is 10
-      .get();
-    
-    // If there are more than 10 teams, fetch additional batches
-    const additionalFootballPlayersBatches = [];
-    for (let i = 10; i < teamIds.length; i += 10) {
-      const batch = teamIds.slice(i, i + 10);
-      additionalFootballPlayersBatches.push(
-        adminDb
-          .collection('footballplayers')
-          .where('season_id', '==', seasonId)
-          .where('team_id', 'in', batch)
-          .get()
-      );
-    }
-    
-    const additionalFootballPlayersSnapshots = await Promise.all(additionalFootballPlayersBatches);
-    
-    // Combine all football player documents
-    const allFootballPlayerDocs = [
-      ...allFootballPlayersSnapshot.docs,
-      ...additionalFootballPlayersSnapshots.flatMap(snapshot => snapshot.docs)
-    ];
+    // Step 3a: Fetch all football players for all teams from Neon
+    const fpSql = getTournamentDb();
+    const allFootballPlayers: any[] = await fpSql`
+      SELECT * FROM footballplayers 
+      WHERE season_id = ${seasonId} 
+      AND team_id = ANY(${teamIds})
+    `;
     
     console.timeEnd('⚡ Batch fetch all football players');
-    console.log('📋 Total football players fetched:', allFootballPlayerDocs.length);
+    console.log('📋 Total football players fetched:', allFootballPlayers.length);
     
     console.time('⚡ Batch fetch all real players');
     
@@ -188,8 +168,7 @@ export async function GET(request: NextRequest) {
     
     // Step 4: Group players by team_id
     const footballPlayersByTeam = new Map<string, any[]>();
-    allFootballPlayerDocs.forEach(doc => {
-      const player = doc.data();
+    allFootballPlayers.forEach(player => {
       const teamId = player.team_id;
       if (!footballPlayersByTeam.has(teamId)) {
         footballPlayersByTeam.set(teamId, []);

@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getTeamById } from '@/lib/firebase/teams';
+
 import { TeamData } from '@/types/team';
 
 export default function TeamDetailsPage() {
@@ -33,7 +33,10 @@ export default function TeamDetailsPage() {
       setLoadingData(true);
       setError(null);
       
-      const teamData = await getTeamById(teamId);
+      const teamRes = await fetch('/api/teams');
+      const teamJson = await teamRes.json();
+      const allTeams = teamJson.teams || teamJson.data || [];
+      const teamData = allTeams.find((t: any) => t.id === teamId);
       if (!teamData) {
         setError('Team not found');
         return;

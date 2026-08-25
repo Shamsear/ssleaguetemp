@@ -7,10 +7,7 @@ import { TeamData } from '@/types/team';
 import {
   createTeam,
   updateTeam,
-  deleteTeam,
-  toggleTeamStatus,
-  getTeamStatistics,
-} from '@/lib/firebase/teams';
+
 
 import { useCachedTeams } from '@/hooks/useCachedData';
 import { 
@@ -78,7 +75,17 @@ export default function TeamsManagement() {
       setError(null);
       
       const [statsData, seasonsRes] = await Promise.all([
-        getTeamStatistics(),
+        (async () => {
+          const res = await fetch('/api/teams');
+          const json = await res.json();
+          const allTeams = json.teams || json.data || [];
+          return {
+            totalTeams: allTeams.length,
+            activeTeams: allTeams.filter((t: any) => t.is_active).length,
+            inactiveTeams: allTeams.filter((t: any) => !t.is_active).length,
+            totalPlayers: allTeams.reduce((sum: number, t: any) => sum + (t.players_count || 0), 0),
+          };
+        })(),
         fetch('/api/seasons').then(r => r.json()),
       ]);
       
@@ -182,7 +189,7 @@ export default function TeamsManagement() {
     
     try {
       setError(null);
-      await deleteTeam(team.id);
+      await fetch(`/api/teams/${team.id}`, { method: 'DELETE' });
       await loadData();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete team';
@@ -194,7 +201,11 @@ export default function TeamsManagement() {
   const handleToggleStatus = async (team: TeamData) => {
     try {
       setError(null);
-      await toggleTeamStatus(team.id, !team.is_active);
+      await fetch(`/api/teams/${team.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: !team.is_active }),
+      });
       await loadData();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to toggle team status';
