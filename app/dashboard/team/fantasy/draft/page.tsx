@@ -392,6 +392,35 @@ export default function TeamDraftPage() {
       ? Number(draftSettings.category_settings.active_slot_index) 
       : null;
 
+    const maxBidsLimit = draftSettings.category_settings?.max_bids_per_team || 0;
+
+    // 1. Max Bids Count validation
+    if (maxBidsLimit > 0) {
+      const activeSlotBids = localBids.filter(b => activeSlot ? b.slot_index === activeSlot : true);
+      if (activeSlotBids.length > maxBidsLimit) {
+        showAlert({
+          type: 'error',
+          title: 'Bid Limit Exceeded',
+          message: `You cannot place more than ${maxBidsLimit} bids for this draft round.`
+        });
+        return;
+      }
+    }
+
+    // 2. Duplicate Bid Amounts validation
+    const activeSlotBids = localBids.filter(b => activeSlot ? b.slot_index === activeSlot : true);
+    const bidAmounts = activeSlotBids.map(b => b.bid_amount);
+    const uniqueBidAmounts = new Set(bidAmounts);
+    if (uniqueBidAmounts.size !== bidAmounts.length) {
+      const duplicates = bidAmounts.filter((item, index) => bidAmounts.indexOf(item) !== index);
+      showAlert({
+        type: 'error',
+        title: 'Duplicate Bid Amounts',
+        message: `Each player in your bidding list must have a different bid amount. You have duplicate bids of: ${Array.from(new Set(duplicates)).join(', ')} credits.`
+      });
+      return;
+    }
+
     if (lockSubmit) {
       if (activeSlot) {
         const slotBids = localBids.filter(b => b.slot_index === activeSlot);
@@ -700,16 +729,18 @@ export default function TeamDraftPage() {
           
           {/* LEFT AREA: Player Pool & Real Teams (Columns 1-7) */}
           <div className="lg:col-span-7 flex flex-col space-y-4">
-            {/* Active Slot Context Card */}
             {(() => {
               const slot = getActiveSlot();
               if (!slot) return null;
+              const maxBidsLimit = draftSettings?.category_settings?.max_bids_per_team || 0;
               return (
                 <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl flex items-center justify-between gap-4">
                   <div>
                     <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Active Slot Selection Pool</span>
                     <h3 className="text-base font-black text-slate-900 mt-0.5 uppercase">{slot.name}</h3>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">List ID: <code className="text-indigo-600 font-extrabold">{slot.list_id}</code> | Base Price: {slot.base_price} Credits</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">
+                      List ID: <code className="text-indigo-600 font-extrabold">{slot.list_id}</code> | Base Price: {slot.base_price} Credits | Max Bids Limit: <span className="text-amber-650 font-extrabold">{maxBidsLimit > 0 ? maxBidsLimit : 'No Limit'}</span>
+                    </p>
                   </div>
                   <div className="bg-slate-800 border border-slate-900 w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg text-amber-400 shadow-sm shrink-0">
                     {slot.slot_index}
@@ -844,31 +875,46 @@ export default function TeamDraftPage() {
                       {/* Wishlist/fallback bids in this slot */}
                       {slotBids.length > 0 ? (
                         <div className="space-y-2 mt-3 pl-8">
-                          {slotBids.map((bid, bIndex) => (
-                            <div 
-                              key={bid.target_id} 
-                              className="bg-white border border-slate-200 p-2.5 rounded-xl flex items-center justify-between gap-3 shadow-sm"
-                              onClick={(e) => e.stopPropagation()} // Prevent clicking container from switching slots
-                            >
-                              <div className="min-w-0 flex-1">
-                                <span className="text-[8px] uppercase font-black text-amber-650">
-                                  Priority {bid.priority}
-                                </span>
-                                <h5 className="font-bold text-slate-800 text-xs truncate mt-0.5 uppercase">{bid.target_name}</h5>
-                                <p className="text-[9px] text-slate-450 truncate uppercase">{bid.team_name || 'Roster Target'}</p>
-                              </div>
+                          {slotBids.map((bid, bIndex) => {
+                            const isDuplicateAmount = slotBids.filter(b => b.bid_amount === bid.bid_amount).length > 1;
+                            return (
+                              <div 
+                                key={bid.target_id} 
+                                className={`bg-white border p-2.5 rounded-xl flex items-center justify-between gap-3 shadow-sm transition-colors ${
+                                  isDuplicateAmount ? 'border-rose-250 bg-rose-50/10' : 'border-slate-200'
+                                }`}
+                                onClick={(e) => e.stopPropagation()} // Prevent clicking container from switching slots
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-[8px] uppercase font-black text-amber-650">
+                                      Priority {bid.priority}
+                                    </span>
+                                    {isDuplicateAmount && (
+                                      <span className="text-[8px] text-rose-500 font-extrabold uppercase px-1.5 py-0.2 bg-rose-50 border border-rose-100 rounded">
+                                        Duplicate Bid
+                                      </span>
+                                    )}
+                                  </div>
+                                  <h5 className="font-bold text-slate-800 text-xs truncate mt-0.5 uppercase">{bid.target_name}</h5>
+                                  <p className="text-[9px] text-slate-450 truncate uppercase">{bid.team_name || 'Roster Target'}</p>
+                                </div>
 
-                              <div className="flex items-center gap-2">
-                                {/* Bid Amount input */}
-                                <input
-                                  type="number"
-                                  value={bid.bid_amount}
-                                  disabled={isSlotDisabled(slot.slot_index)}
-                                  onChange={(e) => updateBidAmount(slot.slot_index, bid.target_id, parseInt(e.target.value) || 0)}
-                                  className="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-center text-xs font-bold text-emerald-600 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-50"
-                                  min={slot.base_price}
-                                  required
-                                />
+                                <div className="flex items-center gap-2">
+                                  {/* Bid Amount input */}
+                                  <input
+                                    type="number"
+                                    value={bid.bid_amount}
+                                    disabled={isSlotDisabled(slot.slot_index)}
+                                    onChange={(e) => updateBidAmount(slot.slot_index, bid.target_id, parseInt(e.target.value) || 0)}
+                                    className={`w-16 px-2 py-1 bg-slate-50 border rounded text-center text-xs font-bold focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-50 ${
+                                      isDuplicateAmount 
+                                        ? 'border-rose-300 text-rose-600 focus:border-rose-500 font-black' 
+                                        : 'border-slate-200 text-emerald-600'
+                                    }`}
+                                    min={slot.base_price}
+                                    required
+                                  />
 
                                 {/* Priority controls */}
                                 {!isSlotDisabled(slot.slot_index) && (
@@ -900,8 +946,9 @@ export default function TeamDraftPage() {
                                   </button>
                                 )}
                               </div>
-                            </div>
-                          ))}
+                              </div>
+                            );
+                          })}
                         </div>
                       ) : (
                         <p className="text-[9px] text-slate-450 font-bold uppercase italic pl-8 mt-2.5">No bids placed for this slot yet. Select a target.</p>

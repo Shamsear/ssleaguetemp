@@ -113,6 +113,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate unique bid amounts per team
+    const activeSlotBids = bids.filter(b => activeSlot ? b.slot_index === activeSlot : true);
+    const bidAmounts = activeSlotBids.map(b => Number(b.bid_amount));
+    const uniqueBidAmounts = new Set(bidAmounts);
+    if (uniqueBidAmounts.size !== bidAmounts.length) {
+      return NextResponse.json(
+        { error: 'Each bid in your list for this draft round must have a unique bid amount. Duplicate bid amounts are not allowed.' },
+        { status: 400 }
+      );
+    }
+
     // 4. Validate budget constraint:
     let maxSpend = 0;
     if (activeSlot) {
