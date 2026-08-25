@@ -201,22 +201,34 @@ export default function TeamDetailPage() {
   }, [isCommitteeAdmin, userSeasonId, teamId, activeTab]);
 
   const getPositionColor = (position: string) => {
+    const pos = (position || '').toLowerCase();
     const colors: { [key: string]: string } = {
-      GK: 'bg-amber-50 text-amber-700 border border-amber-200/40',
-      CB: 'bg-rose-50 text-rose-700 border border-rose-200/40',
-      LB: 'bg-rose-50/60 text-rose-700 border border-rose-200/30',
-      RB: 'bg-rose-50/60 text-rose-700 border border-rose-200/30',
-      DMF: 'bg-indigo-50 text-indigo-700 border border-indigo-200/40',
-      CMF: 'bg-sky-50 text-sky-700 border border-sky-200/40',
-      AMF: 'bg-violet-50 text-violet-700 border border-violet-200/40',
-      LMF: 'bg-sky-50/60 text-sky-700 border border-sky-200/30',
-      RMF: 'bg-sky-50/60 text-sky-700 border border-sky-200/30',
-      LWF: 'bg-emerald-50/60 text-emerald-700 border border-emerald-200/30',
-      RWF: 'bg-emerald-50/60 text-emerald-700 border border-emerald-200/30',
-      SS: 'bg-emerald-50 text-emerald-700 border border-emerald-200/40',
-      CF: 'bg-emerald-50 text-emerald-700 border border-emerald-200/40',
+      // Football positions
+      gk: 'bg-amber-50 text-amber-700 border border-amber-200/40',
+      cb: 'bg-rose-50 text-rose-700 border border-rose-200/40',
+      lb: 'bg-rose-50/60 text-rose-700 border border-rose-200/30',
+      rb: 'bg-rose-50/60 text-rose-700 border border-rose-200/30',
+      dmf: 'bg-indigo-50 text-indigo-700 border border-indigo-200/40',
+      cmf: 'bg-sky-50 text-sky-700 border border-sky-200/40',
+      amf: 'bg-violet-50 text-violet-700 border border-violet-200/40',
+      lmf: 'bg-sky-50/60 text-sky-700 border border-sky-200/30',
+      rmf: 'bg-sky-50/60 text-sky-700 border border-sky-200/30',
+      lwf: 'bg-emerald-50/60 text-emerald-700 border border-emerald-200/30',
+      rwf: 'bg-emerald-50/60 text-emerald-700 border border-emerald-200/30',
+      ss: 'bg-emerald-50 text-emerald-700 border border-emerald-200/40',
+      cf: 'bg-emerald-50 text-emerald-700 border border-emerald-200/40',
+      // Real player categories
+      red: 'bg-red-50 text-red-700 border border-red-200/40',
+      blue: 'bg-blue-50 text-blue-700 border border-blue-200/40',
+      white: 'bg-slate-50 text-slate-700 border border-slate-200/40',
+      black: 'bg-gray-800 text-white border border-gray-700/40',
+      gold: 'bg-amber-50 text-amber-700 border border-amber-200/40',
+      green: 'bg-emerald-50 text-emerald-700 border border-emerald-200/40',
+      orange: 'bg-orange-50 text-orange-700 border border-orange-200/40',
+      purple: 'bg-purple-50 text-purple-700 border border-purple-200/40',
+      yellow: 'bg-yellow-50 text-yellow-700 border border-yellow-200/40',
     };
-    return colors[position] || 'bg-slate-50 text-slate-700 border border-slate-200/40';
+    return colors[pos] || 'bg-slate-50 text-slate-700 border border-slate-200/40';
   };
 
   if (loading || loadingTeam) {

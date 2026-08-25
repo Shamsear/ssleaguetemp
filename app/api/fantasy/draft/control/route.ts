@@ -53,41 +53,27 @@ export async function POST(request: NextRequest) {
     const currentStatus = currentLeagues[0]?.draft_status || 'pending';
     const isTransitioningToActive = draft_status === 'active' && currentStatus !== 'active';
 
-    // Build transaction queries array (draft_opens_at/draft_closes_at removed —
-    // timing is now managed per-slot via fantasy_draft_rounds)
-    const queries: any[] = [
-      fantasySql`
-        UPDATE fantasy_leagues
-        SET 
-          draft_status = ${draft_status},
-          category_settings = ${categorySettings},
-          updated_at = CURRENT_TIMESTAMP
-        WHERE league_id = ${league_id}
-        RETURNING *
-      `
-    ];
+    // Execute queries sequentially (transaction method may not be available on tagged template)
+    const updateResult = await fantasySql`
+      UPDATE fantasy_leagues
+      SET 
+        draft_status = ${draft_status},
+        category_settings = ${categorySettings},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE league_id = ${league_id}
+      RETURNING *
+    `;
 
-    // Only reset bids/locks when STARTING a new round (transitioning TO active)
-    // Not when just updating the close time on an already-active round
+    // Run the bid cleanup if transitioning to active
     if (isTransitioningToActive) {
-      // If we are open for a specific slot, delete draft bids and submissions for that slot only
-      // Do NOT reset draft_submitted globally — other rounds may be active
       const targetSlot = Number(categorySettings.active_slot_index);
       if (targetSlot) {
-        queries.push(fantasySql`
-          DELETE FROM fantasy_draft_bids
-          WHERE league_id = ${league_id} AND slot_index = ${targetSlot}
-        `);
+        await fantasySql`DELETE FROM fantasy_draft_bids WHERE league_id = ${league_id} AND slot_index = ${targetSlot}`;
         console.log(`🔄 Cleared previous bids for slot ${targetSlot} for league ${league_id}`);
       } else {
-        queries.push(fantasySql`
-          DELETE FROM fantasy_draft_bids
-          WHERE league_id = ${league_id}
-        `);
+        await fantasySql`DELETE FROM fantasy_draft_bids WHERE league_id = ${league_id}`;
       }
     }
-
-    const transactionResults = await fantasySql.transaction(queries);
 
     // Clean up per-slot submissions (separate — table may not exist yet)
     if (isTransitioningToActive) {
@@ -100,7 +86,7 @@ export async function POST(request: NextRequest) {
         }
       } catch {}
     }
-    const result = transactionResults[0];
+    const result = updateResult;
 
     console.log('🟢 Stored in database:', {
       draft_status: result[0]?.draft_status,

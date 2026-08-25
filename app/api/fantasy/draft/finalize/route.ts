@@ -147,6 +147,23 @@ export async function POST(request: NextRequest) {
         await broadcastFantasyDraftUpdate(league_id, { draft_status: 'active', slot_index: Number(slot_index), finalized: true });
       } catch {}
 
+      // Send push notification for per-slot finalize
+      try {
+        const slotRound = await fantasySql`
+          SELECT slot_name FROM fantasy_draft_rounds
+          WHERE league_id = ${league_id} AND slot_index = ${Number(slot_index)} LIMIT 1
+        `;
+        const slotName = slotRound[0]?.slot_name || `Slot ${slot_index}`;
+        await sendNotification({
+          title: '⚡ Draft Round Finalized!',
+          body: `${slotName} has been finalized. Check your squad for new players!`,
+          icon: '/fantasy-icon.png',
+          url: '/dashboard/team/fantasy/draft/results',
+        }, { allUsers: true });
+      } catch (err) {
+        console.error('Failed to send finalize notification:', err);
+      }
+
       return NextResponse.json({ success: true, result });
     }
 

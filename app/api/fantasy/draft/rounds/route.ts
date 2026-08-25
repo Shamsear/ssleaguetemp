@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fantasySql } from '@/lib/neon/fantasy-config';
 import { broadcastFantasyDraftUpdate } from '@/lib/realtime/broadcast';
+import { sendNotification } from '@/lib/notifications/send-notification';
 
 /**
  * Ensure a timestamp value from Neon is returned as a proper ISO string with Z suffix.
@@ -186,6 +187,21 @@ export async function POST(request: NextRequest) {
       opens_at: newOpensAt,
       closes_at: newClosesAt,
     });
+
+    // Send push notification for round start
+    if (action === 'start' && newStatus === 'active') {
+      try {
+        const slotName = existing[0]?.slot_name || `Slot ${slotIdx}`;
+        await sendNotification({
+          title: '🔔 Draft Round Started!',
+          body: `${slotName} is now open for bids. Place your bids before the deadline!`,
+          icon: '/fantasy-icon.png',
+          url: '/dashboard/team/fantasy/draft',
+        }, { allUsers: true });
+      } catch (err) {
+        console.error('Failed to send round start notification:', err);
+      }
+    }
 
     return NextResponse.json({
       success: true,

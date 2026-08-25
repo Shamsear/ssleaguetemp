@@ -130,9 +130,9 @@ export async function GET(
     const realPlayers = realPlayersData.map((player: any) => ({
       id: player.player_id || player.id, // Use player_id field (without season suffix) for linking
       name: player.player_name || 'Unknown',
-      position: player.position || 'Unknown',
-      rating: player.star_rating ? player.star_rating * 20 : 0, // Convert 1-5 stars to 20-100 scale
-      category: 'Real Player',
+      position: player.category || player.position || 'Unknown',
+      rating: player.star_rating || 0,
+      category: player.category || 'Real Player',
       value: player.auction_value || 0,
       is_real_player: true,
     }));

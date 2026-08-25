@@ -223,10 +223,30 @@ export async function GET(request: NextRequest) {
     let logo_position_x_square = null;
     let logo_position_y_square = null;
     let logo_scale_square = null;
-    if (teamData.supported_team_id) {
-      const baseTeamId = teamData.supported_team_id.split('_')[0];
-      try {
-        const mainSql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
+    let resolvedSupportedTeamId = teamData.supported_team_id || null;
+    let resolvedSupportedTeamName = teamData.supported_team_name || null;
+    try {
+      const mainSql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
+
+      // If no supported team set, auto-detect from user's real team
+      if (!resolvedSupportedTeamId) {
+        const userTeamRows = await mainSql`SELECT id, team_name, logo_url, logo_position_x_circle, logo_position_y_circle, logo_scale_circle, logo_position_x_square, logo_position_y_square, logo_scale_square FROM teams WHERE owner_uid = ${user_id} OR firebase_uid = ${user_id} LIMIT 1`;
+        if (userTeamRows && userTeamRows.length > 0) {
+          const userTeam = userTeamRows[0] as any;
+          resolvedSupportedTeamId = userTeam.id;
+          resolvedSupportedTeamName = userTeam.team_name;
+          await fantasySql`UPDATE fantasy_teams SET supported_team_id = ${userTeam.id}, supported_team_name = ${userTeam.team_name}, updated_at = NOW() WHERE team_id = ${teamId}`;
+          teamLogo = userTeam.logo_url || null;
+          logo_position_x_circle = userTeam.logo_position_x_circle || null;
+          logo_position_y_circle = userTeam.logo_position_y_circle || null;
+          logo_scale_circle = userTeam.logo_scale_circle || null;
+          logo_position_x_square = userTeam.logo_position_x_square || null;
+          logo_position_y_square = userTeam.logo_position_y_square || null;
+          logo_scale_square = userTeam.logo_scale_square || null;
+        }
+      } else {
+        // Fetch logo from explicitly set supported team
+        const baseTeamId = resolvedSupportedTeamId.split('_')[0];
         const teamRows = await mainSql`SELECT logo_url, logo_position_x_circle, logo_position_y_circle, logo_scale_circle, logo_position_x_square, logo_position_y_square, logo_scale_square FROM teams WHERE id = ${baseTeamId} LIMIT 1`;
         if (teamRows && teamRows.length > 0) {
           const teamRow = teamRows[0] as any;
@@ -238,9 +258,9 @@ export async function GET(request: NextRequest) {
           logo_position_y_square = teamRow.logo_position_y_square || null;
           logo_scale_square = teamRow.logo_scale_square || null;
         }
-      } catch (error) {
-        console.error('Error fetching team logo:', error);
       }
+    } catch (error) {
+      console.error('Error fetching team logo:', error);
     }
 
     return NextResponse.json({
@@ -252,8 +272,8 @@ export async function GET(request: NextRequest) {
         total_points: Number(teamData.total_points) || 0,
         rank: teamData.rank,
         player_count: draftedPlayers.length,
-        supported_team_id: teamData.supported_team_id || null,
-        supported_team_name: teamData.supported_team_name || null,
+        supported_team_id: resolvedSupportedTeamId,
+        supported_team_name: resolvedSupportedTeamName,
         supported_team_logo: teamLogo,
         logo_position_x_circle,
         logo_position_y_circle,

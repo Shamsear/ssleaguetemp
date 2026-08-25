@@ -121,12 +121,17 @@ export async function GET(request: NextRequest) {
     console.time('⚡ Batch fetch all football players');
     
     // Step 3a: Fetch all football players for all teams from Neon
-    const fpSql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
-    const allFootballPlayers: any[] = await fpSql`
-      SELECT * FROM footballplayers 
-      WHERE season_id = ${seasonId} 
-      AND team_id = ANY(${teamIds})
-    `;
+    let allFootballPlayers: any[] = [];
+    try {
+      const fpSql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
+      allFootballPlayers = await fpSql`
+        SELECT * FROM footballplayers 
+        WHERE season_id = ${seasonId} 
+        AND team_id = ANY(${teamIds})
+      `;
+    } catch (fpError: any) {
+      console.warn('⚠️ Could not fetch footballplayers:', fpError.message);
+    }
     
     console.timeEnd('⚡ Batch fetch all football players');
     console.log('📋 Total football players fetched for teams:', allFootballPlayers.length);

@@ -165,7 +165,9 @@ export async function GET(request: NextRequest) {
 
     // 9. Fetch all player names and photo URLs for resolving target_ids
     const allPlayerIds = allBids.filter((b: any) => b.bid_type === 'player').map((b: any) => b.target_id);
-    const uniquePlayerIds = [...new Set(allPlayerIds)];
+    // Also include player IDs from finalSquad so their photos are always resolved
+    const squadPlayerIds = finalSquad.map((s: any) => s.real_player_id);
+    const uniquePlayerIds = [...new Set([...allPlayerIds, ...squadPlayerIds])];
     const playerNameMap = new Map<string, string>();
     const playerPhotoMap = new Map<string, string>();
     if (uniquePlayerIds.length > 0) {
