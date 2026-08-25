@@ -40,6 +40,23 @@ export async function POST() {
     // Add finalization_mode column if missing
     try { await fantasySql`ALTER TABLE fantasy_draft_rounds ADD COLUMN IF NOT EXISTS finalization_mode VARCHAR(20) DEFAULT 'auto'`; } catch {}
 
+    // 6. Create preview results table for manual finalization
+    await fantasySql`
+      CREATE TABLE IF NOT EXISTS fantasy_draft_preview (
+        id              SERIAL PRIMARY KEY,
+        league_id       VARCHAR(50) NOT NULL,
+        slot_index      INTEGER NOT NULL,
+        preview_data    JSONB NOT NULL,
+        created_at      TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(league_id, slot_index)
+      )
+    `;
+
+    await fantasySql`
+      CREATE INDEX IF NOT EXISTS idx_fantasy_draft_preview_league
+        ON fantasy_draft_preview(league_id)
+    `;
+
     await fantasySql`
       CREATE INDEX IF NOT EXISTS idx_fantasy_draft_rounds_league
         ON fantasy_draft_rounds(league_id)

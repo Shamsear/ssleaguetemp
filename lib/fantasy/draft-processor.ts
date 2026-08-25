@@ -1097,3 +1097,311 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
     };
   }
 }
+
+// ====================================================
+// PREVIEW: Calculate results for a single slot without writing to DB
+// ====================================================
+
+export async function processSlotBidPreview(
+  leagueId: string,
+  slotIndex: number
+): Promise<SlotDraftProcessingResult> {
+  const startTime = Date.now();
+  console.log(`🔍 [PREVIEW] Calculating slot ${slotIndex} for league: ${leagueId}`);
+
+  try {
+    const leagues = await fantasySql`
+      SELECT category_settings, budget_per_team
+      FROM fantasy_leagues WHERE league_id = ${leagueId} LIMIT 1
+    `;
+    if (leagues.length === 0) throw new Error('League not found');
+
+    const league = leagues[0];
+    const categorySettings = typeof league.category_settings === 'string'
+      ? JSON.parse(league.category_settings) : league.category_settings;
+    const slot = categorySettings?.slots?.find((s: any) => s.slot_index === slotIndex);
+    if (!slot) throw new Error(`Slot ${slotIndex} not found`);
+
+    const teams = await fantasySql`
+      SELECT team_id, team_name, budget_remaining
+      FROM fantasy_teams WHERE league_id = ${leagueId} AND is_enabled = true
+    `;
+    const slotLists = categorySettings?.lists || {};
+    const slotPlayerIds = slotLists[slot.list_id] || [];
+
+    const teamBudgets = new Map<string, number>();
+    const teamNames = new Map<string, string>();
+    const teamFilledSlots = new Map<string, Set<number>>();
+    for (const t of teams) {
+      teamBudgets.set(t.team_id, Number(t.budget_remaining));
+      teamNames.set(t.team_id, t.team_name);
+      teamFilledSlots.set(t.team_id, new Set<number>());
+    }
+
+    // Build awarded targets from OTHER slots (players/teams already won elsewhere)
+    const awardedTargets = new Set<string>();
+    const otherAwarded = await fantasySql`
+      SELECT real_player_id FROM fantasy_squad
+      WHERE league_id = ${leagueId} AND real_player_id = ANY(${slotPlayerIds})
+    `;
+    // For real teams in other slots
+    if (slotIndex !== 6) {
+      const otherTeams = await fantasySql`
+        SELECT supported_team_id FROM fantasy_teams
+        WHERE league_id = ${leagueId} AND supported_team_id IS NOT NULL
+      `;
+      otherTeams.forEach((t: any) => awardedTargets.add(t.supported_team_id));
+    }
+
+    // Mark filled slots from existing squad (except this slot)
+    const existingSquad = await fantasySql`
+      SELECT team_id, real_player_id, purchase_price FROM fantasy_squad
+      WHERE league_id = ${leagueId} AND acquisition_type = 'draft'
+    `;
+    const playerToSlotMap = new Map<string, number>();
+    for (const [listId, playerIds] of Object.entries(slotLists)) {
+      const slotConfig = categorySettings.slots.find((s: any) => s.list_id === listId);
+      if (slotConfig) (playerIds as string[]).forEach((pId: string) => playerToSlotMap.set(pId, slotConfig.slot_index));
+    }
+    for (const item of existingSquad) {
+      const slotOfPlayer = playerToSlotMap.get(item.real_player_id);
+      if (slotOfPlayer && slotOfPlayer !== slotIndex) {
+        teamFilledSlots.get(item.team_id)?.add(slotOfPlayer);
+      }
+    }
+
+    // Fetch bids for this slot only
+    const slotBids = await fantasySql`
+      SELECT id, bid_id, team_id, slot_index, priority, target_id, bid_type, bid_amount, submitted_at
+      FROM fantasy_draft_bids
+      WHERE league_id = ${leagueId} AND slot_index = ${slotIndex}
+      ORDER BY bid_amount DESC, submitted_at ASC
+    `;
+
+    // Group by target, resolve winners
+    const bidsByTarget = new Map<string, any[]>();
+    slotBids.forEach((bid: any) => {
+      if (!bidsByTarget.has(bid.target_id)) bidsByTarget.set(bid.target_id, []);
+      bidsByTarget.get(bid.target_id)!.push(bid);
+    });
+
+    const slotWinners: any[] = [];
+    const losingBids: string[] = [];
+    let skippedCount = 0;
+    let failedCount = 0;
+
+    for (const [targetId, targetBids] of bidsByTarget.entries()) {
+      if (awardedTargets.has(targetId)) {
+        targetBids.forEach((b: any) => losingBids.push(b.bid_id));
+        continue;
+      }
+
+      const sorted = [...targetBids].sort((a: any, b: any) => {
+        if (Number(b.bid_amount) !== Number(a.bid_amount)) return Number(b.bid_amount) - Number(a.bid_amount);
+        return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
+      });
+
+      let wonBid = null;
+      for (const bid of sorted) {
+        if (teamFilledSlots.get(bid.team_id)?.has(slotIndex)) { skippedCount++; continue; }
+        if (teamBudgets.get(bid.team_id)! < Number(bid.bid_amount)) { failedCount++; continue; }
+        wonBid = bid;
+        break;
+      }
+
+      if (wonBid) {
+        const bidAmt = Number(wonBid.bid_amount);
+        teamBudgets.set(wonBid.team_id, teamBudgets.get(wonBid.team_id)! - bidAmt);
+        teamFilledSlots.get(wonBid.team_id)!.add(slotIndex);
+        awardedTargets.add(targetId);
+
+        // Lookup target name
+        let targetName = targetId;
+        if (wonBid.bid_type === 'player') {
+          const p = await fantasySql`SELECT player_name FROM fantasy_players WHERE real_player_id = ${targetId} AND league_id = ${leagueId} LIMIT 1`;
+          targetName = p[0]?.player_name || targetId;
+        } else {
+          const t = await fantasySql`SELECT team_name FROM teams WHERE team_uid = ${targetId} LIMIT 1`;
+          targetName = t[0]?.team_name || targetId;
+        }
+
+        slotWinners.push({
+          team_id: wonBid.team_id, team_name: teamNames.get(wonBid.team_id) || wonBid.team_id,
+          target_id: targetId, target_name: targetName,
+          bid_type: wonBid.bid_type, bid_amount: bidAmt
+        });
+        sorted.forEach((b: any) => { if (b.bid_id !== wonBid.bid_id) losingBids.push(b.bid_id); });
+      } else {
+        sorted.forEach((b: any) => losingBids.push(b.bid_id));
+      }
+    }
+
+    const teamPreviews = teams.map((t: any) => {
+      const spent = Number(t.budget_remaining) - (teamBudgets.get(t.team_id) || 0);
+      const playersWon = slotWinners.filter((w: any) => w.team_id === t.team_id && w.bid_type === 'player').length;
+      const teamsWon = slotWinners.filter((w: any) => w.team_id === t.team_id && w.bid_type === 'real_team').length;
+      return {
+        team_id: t.team_id, team_name: t.team_name,
+        current_budget: Number(t.budget_remaining),
+        projected_budget: teamBudgets.get(t.team_id) || 0,
+        budget_spent: spent, players_won: playersWon, teams_won: teamsWon
+      };
+    });
+
+    const totalPlayers = slotWinners.filter((w: any) => w.bid_type === 'player').length;
+    const totalTeams = slotWinners.filter((w: any) => w.bid_type === 'real_team').length;
+    const totalSpent = slotWinners.reduce((s: number, w: any) => s + w.bid_amount, 0);
+
+    const result: SlotDraftProcessingResult = {
+      success: true, league_id: leagueId,
+      results_by_slot: [{
+        slot_index: slotIndex, slot_name: slot.name,
+        total_bids: slotBids.length, winners: slotWinners.length,
+        skipped: skippedCount, failed: failedCount,
+        winning_bids: slotWinners
+      }],
+      total_players_drafted: totalPlayers, total_teams_drafted: totalTeams,
+      total_budget_spent: totalSpent,
+      average_squad_size: teams.length > 0 ? totalPlayers / teams.length : 0,
+      processing_time_ms: Date.now() - startTime
+    };
+
+    // Attach extra data for preview storage
+    (result as any).losing_bid_ids = losingBids;
+    (result as any).team_previews = teamPreviews;
+    (result as any).slot_index = slotIndex;
+    (result as any).player_bid_ids = slotWinners.filter((w: any) => w.bid_type === 'player').map((w: any) => {
+      const original = slotBids.find((b: any) => b.bid_id && b.target_id === w.target_id && b.team_id === w.team_id);
+      return { bid_id: original?.bid_id, target_id: w.target_id, team_id: w.team_id };
+    });
+    (result as any).team_link_bid = slotWinners.find((w: any) => w.bid_type === 'real_team') || null;
+
+    console.log(`✅ [PREVIEW] Slot ${slotIndex}: ${totalPlayers} players, ${totalTeams} teams, ${totalSpent} Cr spent`);
+    return result;
+
+  } catch (error) {
+    console.error('❌ [PREVIEW] Error:', error);
+    return {
+      success: false, league_id: leagueId, results_by_slot: [],
+      total_players_drafted: 0, total_teams_drafted: 0, total_budget_spent: 0,
+      average_squad_size: 0, processing_time_ms: Date.now() - startTime,
+      errors: [error instanceof Error ? error.message : 'Unknown']
+    };
+  }
+}
+
+// ====================================================
+// APPLY: Commit a saved preview to the database
+// ====================================================
+
+export async function applySlotBidResults(
+  leagueId: string,
+  previewData: any
+): Promise<SlotDraftProcessingResult> {
+  const startTime = Date.now();
+  console.log(`⚡ [APPLY] Applying slot ${previewData.slot_index} results for league: ${leagueId}`);
+
+  try {
+    const slotIndex = previewData.slot_index;
+    const resultsBySlot = previewData.results_by_slot;
+    const losingBidIds: string[] = previewData.losing_bid_ids || [];
+    const teamPreviews: any[] = previewData.team_previews || [];
+    const playerBids: any[] = previewData.player_bid_ids || [];
+    const teamLinkBid = previewData.team_link_bid || null;
+
+    const { v4: uuidv4 } = require('uuid');
+    const writeQueries: any[] = [];
+
+    // 1. Update team budgets
+    for (const tp of teamPreviews) {
+      writeQueries.push(fantasySql`
+        UPDATE fantasy_teams SET budget_remaining = ${tp.projected_budget}, updated_at = CURRENT_TIMESTAMP
+        WHERE team_id = ${tp.team_id} AND league_id = ${leagueId}
+      `);
+    }
+
+    // 2. Handle real team link (slot 6)
+    if (teamLinkBid && slotIndex === 6) {
+      const realTeams = await fantasySql`SELECT team_name FROM teams WHERE team_uid = ${teamLinkBid.target_id} LIMIT 1`;
+      writeQueries.push(fantasySql`
+        UPDATE fantasy_teams SET supported_team_id = ${teamLinkBid.target_id},
+        supported_team_name = ${realTeams[0]?.team_name || teamLinkBid.target_id}
+        WHERE team_id = ${teamLinkBid.team_id} AND league_id = ${leagueId}
+      `);
+    }
+
+    // 3. Add winning players to squad
+    for (const pb of playerBids) {
+      if (!pb.target_id || !pb.team_id) continue;
+      const players = await fantasySql`
+        SELECT player_name, position, real_team_name FROM fantasy_players
+        WHERE real_player_id = ${pb.target_id} AND league_id = ${leagueId} LIMIT 1
+      `;
+      if (players.length > 0) {
+        const p = players[0];
+        const bid = resultsBySlot[0]?.winning_bids?.find((w: any) => w.target_id === pb.target_id);
+        const squadId = `sq_${uuidv4().replace(/-/g, '')}`;
+        writeQueries.push(fantasySql`
+          INSERT INTO fantasy_squad (squad_id, team_id, league_id, real_player_id, player_name,
+            position, real_team_name, purchase_price, current_value, total_points,
+            is_captain, is_vice_captain, acquisition_type, acquired_at)
+          VALUES (${squadId}, ${pb.team_id}, ${leagueId}, ${pb.target_id}, ${p.player_name},
+            ${p.position}, ${p.real_team_name}, ${bid?.bid_amount || 0}, ${bid?.bid_amount || 0},
+            0, false, false, 'draft', CURRENT_TIMESTAMP)
+        `);
+        writeQueries.push(fantasySql`
+          UPDATE fantasy_players SET drafted_by_team_id = ${pb.team_id},
+          current_price = ${bid?.bid_amount || 0}, is_available = false
+          WHERE real_player_id = ${pb.target_id} AND league_id = ${leagueId}
+        `);
+      }
+    }
+
+    // 4. Mark bid statuses
+    // Mark losing bids
+    if (losingBidIds.length > 0) {
+      writeQueries.push(fantasySql`
+        UPDATE fantasy_draft_bids SET status = 'lost', processed_at = CURRENT_TIMESTAMP
+        WHERE bid_id = ANY(${losingBidIds})
+      `);
+    }
+
+    // Mark winning bids by target_id (highest bid per target = winner)
+    const winningTargets = resultsBySlot[0]?.winning_bids?.map((w: any) => w.target_id) || [];
+    if (winningTargets.length > 0) {
+      writeQueries.push(fantasySql`
+        UPDATE fantasy_draft_bids SET status = 'won', processed_at = CURRENT_TIMESTAMP
+        WHERE league_id = ${leagueId} AND slot_index = ${slotIndex}
+          AND target_id = ANY(${winningTargets}) AND status = 'pending'
+      `);
+    }
+
+    if (writeQueries.length > 0) {
+      await fantasySql.transaction(writeQueries);
+    }
+
+    // Delete the preview after successful apply
+    await fantasySql`DELETE FROM fantasy_draft_preview WHERE league_id = ${leagueId} AND slot_index = ${slotIndex}`;
+
+    const totalPlayers = resultsBySlot[0]?.winning_bids?.filter((w: any) => w.bid_type === 'player').length || 0;
+    const totalTeams = resultsBySlot[0]?.winning_bids?.filter((w: any) => w.bid_type === 'real_team').length || 0;
+
+    console.log(`✅ [APPLY] Slot ${slotIndex} finalized: ${totalPlayers} players, ${totalTeams} teams`);
+    return {
+      success: true, league_id: leagueId, results_by_slot: resultsBySlot,
+      total_players_drafted: totalPlayers, total_teams_drafted: totalTeams,
+      total_budget_spent: previewData.total_budget_spent || 0,
+      average_squad_size: previewData.average_squad_size || 0,
+      processing_time_ms: Date.now() - startTime
+    };
+
+  } catch (error) {
+    console.error('❌ [APPLY] Error:', error);
+    return {
+      success: false, league_id: leagueId, results_by_slot: [],
+      total_players_drafted: 0, total_teams_drafted: 0, total_budget_spent: 0,
+      average_squad_size: 0, processing_time_ms: Date.now() - startTime,
+      errors: [error instanceof Error ? error.message : 'Unknown']
+    };
+  }
+}

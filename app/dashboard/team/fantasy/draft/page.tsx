@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, DollarSign, Clock, CheckCircle, AlertTriangle, User, Shield, Info, Trash2, Save, Lock, ArrowLeft } from 'lucide-react';
+import { Search, DollarSign, Clock, CheckCircle, AlertTriangle, User, Shield, Info, Trash2, Save, Lock, ArrowLeft, Target } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
@@ -787,157 +787,140 @@ export default function TeamDraftPage() {
         <div className="flex flex-col space-y-6">
 
           {/* ── ROSTER SLOTS BIDDING ── */}
-          <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-4">
-              <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider">Roster Slots Bidding</h2>
-              {localBids.length > 0 && (
-                <div className="flex items-center gap-2">
-                  {/* WhatsApp share */}
-                  <a
-                    href={`https://wa.me/?text=${encodeURIComponent(generateBidsMessage())}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-8 h-8 rounded-xl bg-green-600 hover:bg-green-700 text-white flex items-center justify-center transition-colors"
-                    title="Share to WhatsApp"
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                    </svg>
-                  </a>
-                  {/* Copy to clipboard */}
-                  <button
-                    onClick={handleCopyToClipboard}
-                    className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-colors"
-                    title="Copy bids to clipboard"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-            </div>
+          {(() => {
+            const activeRoundSlot = draftSettings?.category_settings?.slots.find((s: any) => s.slot_index === activeSlot);
+            const slotBids = localBids
+              .filter(b => b.slot_index === activeSlot)
+              .sort((a, b) => b.bid_amount - a.bid_amount);
+            if (!activeRoundSlot) return null;
 
-            {activeSlot !== null && activeSlotIndex !== activeSlot && (
-              <div className="mb-4 bg-amber-50 border border-amber-200 p-3.5 rounded-xl text-[10px] text-amber-700 font-bold uppercase flex items-center gap-2 leading-relaxed">
-                <Lock className="w-4 h-4 text-amber-500 shrink-0" />
-                This slot is locked. Bidding is currently active for Slot {activeSlot}: {draftSettings.category_settings?.slots.find(s => s.slot_index === activeSlot)?.name || `Slot ${activeSlot}`}.
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...(draftSettings.category_settings?.slots || [])]
-                .sort((a, b) => a.slot_index - b.slot_index)
-                .filter(slot => slot.slot_index === activeSlot)
-                .map(slot => {
-                  const isActive = slot.slot_index === activeSlotIndex;
-                  const slotBids = localBids.filter(b => b.slot_index === slot.slot_index).sort((a,b) => b.bid_amount - a.bid_amount);
-
-                  return (
-
-                    <div
-                      key={slot.slot_index}
-                      onClick={() => setActiveSlotIndex(slot.slot_index)}
-                      className={`border rounded-2xl p-4 transition-all cursor-pointer ${
-                        isActive 
-                          ? 'border-amber-500 bg-amber-50/20 shadow-sm' 
-                          : 'border-slate-200 bg-slate-50/50 hover:border-slate-350'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${
-                            isActive ? 'bg-amber-500 text-slate-900' : 'bg-slate-200 text-slate-600'
-                          }`}>
-                            {slot.slot_index}
-                          </span>
-                          <h4 className={`text-xs font-black uppercase tracking-wider ${isActive ? 'text-amber-600' : 'text-slate-700'} flex items-center gap-1.5`}>
-                            {slot.name}
-                            {activeSlot !== null && slot.slot_index !== activeSlot && (
-                              <Lock className="w-3 h-3 text-slate-400 shrink-0" />
-                            )}
-                          </h4>
-                        </div>
-                        <span className="text-[9px] text-slate-550 font-bold bg-white px-2 py-0.5 rounded border border-slate-200">
-                          Base: {slot.base_price} Cr
-                        </span>
+            return (
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-sm overflow-hidden">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-sm font-black text-slate-900 shadow-sm">
+                      {activeRoundSlot.slot_index}
+                    </span>
+                    <div>
+                      <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider">{activeRoundSlot.name}</h2>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <span className="text-[9px] text-slate-400 font-bold">Base: {activeRoundSlot.base_price} Cr</span>
+                        <span className="text-[9px] font-bold text-amber-600">{slotBids.length} bid{slotBids.length !== 1 ? 's' : ''}</span>
                       </div>
-
-                      {/* Bid count badge */}
-                      <p className="text-[9px] text-slate-450 font-bold uppercase mb-2">
-                        {slotBids.length > 0 ? `${slotBids.length} bid${slotBids.length > 1 ? 's' : ''} placed` : 'No bids yet'}
-                      </p>
-
-                      {/* Wishlist/fallback bids in this slot */}
-                      {slotBids.length > 0 ? (
-                        <div className="space-y-2 mt-3 pl-8">
-                          {slotBids.map((bid, bIndex) => {
-                            const isDuplicateAmount = slotBids.filter(b => b.bid_amount === bid.bid_amount).length > 1;
-                            return (
-                              <div 
-                                key={bid.target_id} 
-                                className={`bg-white border p-2.5 rounded-xl flex items-center justify-between gap-3 shadow-sm transition-colors ${
-                                  isDuplicateAmount ? 'border-rose-250 bg-rose-50/10' : 'border-slate-200'
-                                }`}
-                                onClick={(e) => e.stopPropagation()} // Prevent clicking container from switching slots
-                              >
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="text-[8px] uppercase font-black text-amber-650">
-                                      Priority {(() => {
-                                        const slotBidsAll = localBids.filter(b => b.slot_index === slot.slot_index);
-                                        const sorted = [...slotBidsAll].sort((a, b) => b.bid_amount - a.bid_amount);
-                                        return sorted.findIndex(x => x.target_id === bid.target_id) + 1;
-                                      })()}
-                                    </span>
-                                    {isDuplicateAmount && (
-                                      <span className="text-[8px] text-rose-500 font-extrabold uppercase px-1.5 py-0.2 bg-rose-50 border border-rose-100 rounded">
-                                        Duplicate Bid
-                                      </span>
-                                    )}
-                                  </div>
-                                  <h5 className="font-bold text-slate-800 text-xs truncate mt-0.5 uppercase">{bid.target_name}</h5>
-                                  <p className="text-[9px] text-slate-450 truncate uppercase">{bid.team_name || 'Roster Target'}</p>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                  {/* Bid Amount input */}
-                                  <input
-                                    type="number"
-                                    value={bid.bid_amount}
-                                    disabled={isSlotDisabled(slot.slot_index)}
-                                    onChange={(e) => updateBidAmount(slot.slot_index, bid.target_id, parseInt(e.target.value) || 0)}
-                                    className={`w-16 px-2 py-1 bg-slate-50 border rounded text-center text-xs font-bold focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-50 ${
-                                      isDuplicateAmount 
-                                        ? 'border-rose-300 text-rose-600 focus:border-rose-500 font-black' 
-                                        : 'border-slate-200 text-emerald-600'
-                                    }`}
-                                    min={slot.base_price}
-                                    required
-                                  />
-
-                                  {/* Delete button */}
-                                  {!isSlotDisabled(slot.slot_index) && (
-                                    <button
-                                      onClick={() => removeBid(slot.slot_index, bid.target_id)}
-                                      className="p-1 text-slate-450 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-[9px] text-slate-450 font-bold uppercase italic pl-8 mt-2.5">No bids placed for this slot yet. Select a target.</p>
-                      )}
                     </div>
-                  );
-                })}
-            </div>
-          </div>
+                  </div>
+                  {localBids.length > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <a
+                        href={`https://wa.me/?text=${encodeURIComponent(generateBidsMessage())}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-8 h-8 rounded-lg bg-green-600 hover:bg-green-700 text-white flex items-center justify-center transition-colors"
+                        title="Share to WhatsApp"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                        </svg>
+                      </a>
+                      <button
+                        onClick={handleCopyToClipboard}
+                        className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-colors"
+                        title="Copy bids to clipboard"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bid list */}
+                <div className="divide-y divide-slate-100">
+                  {slotBids.length > 0 ? slotBids.map((bid, bIndex) => {
+                    const globalPriority = slotBids.findIndex(x => x.target_id === bid.target_id) + 1;
+                    const isDuplicateAmount = slotBids.filter(b => b.bid_amount === bid.bid_amount).length > 1;
+                    const isTopBid = globalPriority === 1;
+                    return (
+                      <div
+                        key={bid.target_id}
+                        className={`px-5 py-3.5 flex items-center gap-4 transition-colors ${
+                          isDuplicateAmount ? 'bg-rose-50/40' : isTopBid ? 'bg-amber-50/30' : 'hover:bg-slate-50/50'
+                        }`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {/* Priority badge */}
+                        <div className="shrink-0">
+                          <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-black ${
+                            isTopBid ? 'bg-amber-500 text-slate-900' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                            {globalPriority}
+                          </span>
+                        </div>
+
+                        {/* Player info */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <h5 className="font-bold text-slate-800 text-xs truncate uppercase">{bid.target_name}</h5>
+                            {isDuplicateAmount && (
+                              <span className="text-[7px] text-rose-500 font-black uppercase px-1.5 py-0.5 bg-rose-100 rounded shrink-0">
+                                DUP
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[9px] text-slate-450 truncate uppercase mt-0.5">{bid.team_name || 'Roster Target'}</p>
+                        </div>
+
+                        {/* Bid amount + actions */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="relative">
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-bold">Cr</span>
+                            <input
+                              type="number"
+                              value={bid.bid_amount}
+                              disabled={isSlotDisabled(activeSlot)}
+                              onChange={(e) => updateBidAmount(activeSlot, bid.target_id, parseInt(e.target.value) || 0)}
+                              className={`w-20 pl-2 pr-6 py-1.5 bg-white border rounded-lg text-center text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:opacity-40 disabled:bg-slate-50 ${
+                                isDuplicateAmount
+                                  ? 'border-rose-300 text-rose-600 focus:border-rose-400'
+                                  : 'border-slate-200 text-slate-800 focus:border-amber-400'
+                              }`}
+                              min={activeRoundSlot.base_price}
+                              required
+                            />
+                          </div>
+                          {!isSlotDisabled(activeSlot) && (
+                            <button
+                              onClick={() => removeBid(activeSlot, bid.target_id)}
+                              className="w-8 h-8 rounded-lg border border-slate-200 text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-200 flex items-center justify-center transition-all"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }) : (
+                    <div className="px-6 py-12 text-center">
+                      <Target className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                      <p className="text-xs text-slate-400 font-bold uppercase">No bids placed yet</p>
+                      <p className="text-[10px] text-slate-400 mt-1">Select a player or team from the pool below</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Budget summary footer */}
+                {slotBids.length > 0 && (
+                  <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase">Max bid in this slot</span>
+                    <span className="text-xs font-black text-amber-600">{slotBids[0]?.bid_amount || 0} Cr</span>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* ── PLAYER POOL ── */}
           <div className="flex flex-col space-y-4">

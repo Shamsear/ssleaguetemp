@@ -97,6 +97,7 @@ export default function MyFantasyTeamPage() {
   const [notEnabledMessage, setNotEnabledMessage] = useState<string | null>(null);
 
   const [draftSettings, setDraftSettings] = useState<any | null>(null);
+  const [draftRounds, setDraftRounds] = useState<any[]>([]);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
 
   useEffect(() => {
@@ -163,19 +164,24 @@ export default function MyFantasyTeamPage() {
         const data = await response.json();
         setDraftSettings(data.settings);
       }
+      // Also fetch per-slot rounds
+      const roundsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/rounds?league_id=${leagueId}`);
+      if (roundsRes.ok) {
+        const roundsData = await roundsRes.json();
+        setDraftRounds(roundsData.rounds || []);
+      }
     } catch (error) {
       console.error('Error loading draft settings:', error);
     }
   };
 
   useEffect(() => {
-    if (!draftSettings?.draft_closes_at) return;
+    const closesAt = activeRound?.closes_at;
+    if (!closesAt) { setTimeRemaining(0); return; }
 
+    const closesMs = new Date(closesAt).getTime();
     const timer = setInterval(() => {
-      const closesAt = new Date(draftSettings.draft_closes_at).getTime();
-      const now = new Date().getTime();
-      const diff = closesAt - now;
-
+      const diff = closesMs - Date.now();
       if (diff <= 0) {
         setTimeRemaining(0);
         clearInterval(timer);
@@ -185,7 +191,7 @@ export default function MyFantasyTeamPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [draftSettings]);
+  }, [activeRound?.closes_at]);
 
   const formatTime = (ms: number) => {
     if (ms <= 0) return 'Closed';
@@ -345,9 +351,17 @@ export default function MyFantasyTeamPage() {
     );
   }
 
-  const activeSlotIndex = draftSettings?.category_settings?.active_slot_index 
-    ? Number(draftSettings.category_settings.active_slot_index) 
-    : null;
+  // Derive effective draft status from per-slot rounds (not the league table)
+  const activeRound = draftRounds.find((r: any) => r.status === 'active');
+  const hasAnyRound = draftRounds.length > 0;
+  const hasCompletedRound = draftRounds.some((r: any) => r.status === 'completed');
+  const effectiveDraftStatus = activeRound ? 'active'
+    : hasCompletedRound ? 'completed'
+    : hasAnyRound ? 'pending'
+    : draftSettings?.draft_status || 'pending';
+
+  const activeSlotIndex = activeRound?.slot_index
+    ?? (draftSettings?.category_settings?.active_slot_index ? Number(draftSettings.category_settings.active_slot_index) : null);
   const activeSlot = draftSettings?.category_settings?.slots?.find((s: any) => s.slot_index === activeSlotIndex);
 
   return (
@@ -508,43 +522,43 @@ export default function MyFantasyTeamPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-[9px] uppercase px-2.5 py-0.5 rounded-lg font-black tracking-wider border ${
-                    draftSettings.draft_status === 'active' 
+                    effectiveDraftStatus === 'active' 
                       ? 'bg-emerald-50 border-emerald-250 text-emerald-700' 
-                      : draftSettings.draft_status === 'pending'
+                      : effectiveDraftStatus === 'pending'
                       ? 'bg-amber-50 border-amber-250 text-amber-700 animate-pulse'
                       : 'bg-slate-100 border-slate-200 text-slate-650'
                   }`}>
-                    Draft Status: {draftSettings.draft_status.toUpperCase()}
+                    Draft Status: {effectiveDraftStatus.toUpperCase()}
                   </span>
-                  {draftSettings.draft_status === 'active' && activeSlot && (
+                  {effectiveDraftStatus === 'active' && activeSlot && (
                     <span className="text-[9px] uppercase bg-indigo-50 border border-indigo-200 text-indigo-700 px-2.5 py-0.5 rounded-lg font-black tracking-wider">
                       Active Category: {activeSlot.name}
                     </span>
                   )}
-                  {fantasyTeam.draft_submitted && draftSettings.draft_status === 'active' && (
+                  {fantasyTeam.draft_submitted && effectiveDraftStatus === 'active' && (
                     <span className="text-[9px] uppercase bg-green-50 border border-green-200 text-green-700 px-2.5 py-0.5 rounded-lg font-black tracking-wider">
                       Bids Locked & Submitted
                     </span>
                   )}
                 </div>
                 <h2 className="text-base font-black text-slate-900 uppercase tracking-tight mt-1">
-                  {draftSettings.draft_status === 'active' 
+                  {effectiveDraftStatus === 'active' 
                     ? 'Live Blind Bid Draft in Progress' 
-                    : draftSettings.draft_status === 'pending'
+                    : effectiveDraftStatus === 'pending'
                     ? 'Upcoming Draft / Bidding Round'
                     : 'Draft Completed & Rosters Locked'}
                 </h2>
                 <p className="text-[10px] text-slate-500 font-bold uppercase leading-normal">
-                  {draftSettings.draft_status === 'active' && activeSlot
+                  {effectiveDraftStatus === 'active' && activeSlot
                     ? `Currently accepting bids for ${activeSlot.name} (Base price: ${activeSlot.base_price} credits). Click "Enter Draft & Place Bids" to manage your roster wishlist.`
-                    : draftSettings.draft_status === 'pending'
+                    : effectiveDraftStatus === 'pending'
                     ? 'Bidding is currently closed. Please wait for the tournament administrators to open the next round.'
                     : 'The bidding phase has finished. All squads have been finalized based on the blind bids.'}
                 </p>
               </div>
 
               {/* Countdown / Status Display */}
-              {draftSettings.draft_status === 'active' && (
+              {effectiveDraftStatus === 'active' && (
                 <div className="flex items-center gap-3 bg-slate-50 border border-slate-200/80 px-5 py-3 rounded-2xl shrink-0 self-start md:self-auto w-full md:w-auto">
                   <Clock className="w-5 h-5 text-indigo-650 shrink-0" />
                   <div>
@@ -557,47 +571,18 @@ export default function MyFantasyTeamPage() {
               )}
             </div>
 
-            {/* Bidding Categories Overview */}
-            {draftSettings.category_settings?.slots && (
+            {/* Active Round Info — only show when a round is active */}
+            {effectiveDraftStatus === 'active' && activeSlot && (
               <div className="border-t border-slate-100 pt-4">
-                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-3">Bidding Categories Overview</span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-                  {[...(draftSettings.category_settings.slots)].sort((a: any, b: any) => a.slot_index - b.slot_index).map((slot: any) => {
-                    const isActive = draftSettings.draft_status === 'active' && activeSlotIndex !== null && slot.slot_index === activeSlotIndex;
-                    const isCompleted = draftSettings.draft_status === 'completed' || (draftSettings.draft_status === 'active' && activeSlotIndex !== null && slot.slot_index < activeSlotIndex);
-                    const isUpcoming = draftSettings.draft_status === 'pending' || (draftSettings.draft_status === 'active' && (activeSlotIndex === null || slot.slot_index > activeSlotIndex));
-
-                    let statusText = 'Upcoming';
-                    let statusColorClass = 'text-slate-400 bg-slate-50 border-slate-100';
-                    if (isActive) {
-                      statusText = 'Active';
-                      statusColorClass = 'text-indigo-700 bg-indigo-50 border-indigo-200 font-black animate-pulse';
-                    } else if (isCompleted) {
-                      statusText = 'Finalized';
-                      statusColorClass = 'text-emerald-700 bg-emerald-50 border-emerald-150';
-                    }
-
-                    return (
-                      <div 
-                        key={slot.slot_index} 
-                        className={`p-3 border rounded-xl font-mono text-center flex flex-col justify-between min-h-[85px] transition-all ${
-                          isActive 
-                            ? 'border-indigo-400 ring-2 ring-indigo-50/80 bg-white shadow-sm' 
-                            : isCompleted 
-                            ? 'border-slate-200 bg-slate-50/30' 
-                            : 'border-slate-150 bg-white/50'
-                        }`}
-                      >
-                        <div>
-                          <p className="text-[9px] font-black text-slate-800 uppercase tracking-tight truncate">{slot.name}</p>
-                          <p className="text-[8px] text-slate-400 font-bold uppercase mt-0.5">Base: {slot.base_price}</p>
-                        </div>
-                        <div className={`mt-2 py-0.5 text-[8px] uppercase tracking-wider font-extrabold rounded-md border ${statusColorClass}`}>
-                          {statusText}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-xl">
+                  <span className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center text-[11px] font-black text-white shrink-0 animate-pulse">
+                    {activeSlot.slot_index}
+                  </span>
+                  <div>
+                    <p className="text-[9px] font-black text-indigo-700 uppercase tracking-wider">Active Round</p>
+                    <p className="text-xs font-black text-slate-800 uppercase">{activeSlot.name}</p>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase">Base: {activeSlot.base_price} Cr</p>
+                  </div>
                 </div>
               </div>
             )}

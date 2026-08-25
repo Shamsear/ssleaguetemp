@@ -53,11 +53,14 @@ const formatISTDisplay = (isoOrLocal: string): string => {
 };
 
 /** Per-slot round control card — compact by default, expands on click */
-function SlotRoundCard({ slot, round, onAction, onToggleFinalization, expanded, onToggle }: {
+function SlotRoundCard({ slot, round, onAction, onToggleFinalization, onPreview, onApply, preview, expanded, onToggle }: {
   slot: any;
   round: any;
   onAction: (slotIndex: number, action: 'start' | 'close' | 'adjust' | 'reset', times?: { opens_at?: string; closes_at?: string }) => void;
   onToggleFinalization: (slotIndex: number) => void;
+  onPreview: (slotIndex: number) => void;
+  onApply: (slotIndex: number) => void;
+  preview: any;
   expanded: boolean;
   onToggle: () => void;
 }) {
@@ -173,6 +176,70 @@ function SlotRoundCard({ slot, round, onAction, onToggleFinalization, expanded, 
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all">🔄 Reset to Pending</button>
             )}
           </div>
+
+          {/* Finalization controls for closed rounds */}
+          {status === 'closed' && (
+            <div className="mt-3 pt-3 border-t border-slate-100">
+              {(round?.finalization_mode || 'auto') === 'auto' ? (
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg">
+                    ⚡ Auto-finalized on close
+                  </span>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {preview ? (
+                    <>
+                      {/* Preview results table */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[9px] font-black text-blue-700 uppercase">Preview Results — Slot {slot.slot_index}</span>
+                        </div>
+                        {preview.results_by_slot?.[0]?.winning_bids?.length > 0 ? (
+                          <table className="w-full text-[9px]">
+                            <thead>
+                              <tr className="text-blue-600 font-black uppercase">
+                                <th className="text-left py-1">Target</th>
+                                <th className="text-left py-1">Awarded To</th>
+                                <th className="text-right py-1">Bid</th>
+                                <th className="text-left py-1 pl-2">Type</th>
+                              </tr>
+                            </thead>
+                            <tbody className="text-blue-900 font-bold">
+                              {preview.results_by_slot[0].winning_bids.map((w: any, i: number) => (
+                                <tr key={i} className="border-t border-blue-100">
+                                  <td className="py-1.5 uppercase">{w.target_name}</td>
+                                  <td className="py-1.5 uppercase">{w.team_name}</td>
+                                  <td className="py-1.5 text-right font-black">{w.bid_amount} Cr</td>
+                                  <td className="py-1.5 pl-2"><span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${w.bid_type === 'player' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>{w.bid_type === 'player' ? 'Player' : 'Team'}</span></td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <p className="text-[9px] text-blue-500 font-bold">No winning bids in this slot.</p>
+                        )}
+                        <div className="flex gap-4 mt-2 pt-2 border-t border-blue-100 text-[9px] font-bold text-blue-600">
+                          <span>Players: {preview.total_players_drafted}</span>
+                          <span>Teams: {preview.total_teams_drafted}</span>
+                          <span>Total: {preview.total_budget_spent} Cr</span>
+                        </div>
+                      </div>
+                      <button onClick={() => onApply(slot.slot_index)}
+                        className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm">
+                        ✓ Close & Finalize Slot {slot.slot_index}
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => onPreview(slot.slot_index)}
+                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm">
+                      👁 Preview Results
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -282,6 +349,45 @@ export default function ProcessDraftPage() {
     } catch (err: any) {
       console.error('Error updating round:', err);
       showAlert({ type: 'error', title: 'Update Failed', message: err.message });
+    }
+  };
+
+  const [slotPreview, setSlotPreview] = useState<any>(null);
+  const [previewSlotIndex, setPreviewSlotIndex] = useState<number | null>(null);
+
+  const handlePreviewSlot = async (slotIndex: number) => {
+    try {
+      const res = await fetchWithTokenRefresh('/api/fantasy/draft/finalize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ league_id: leagueId, slot_index: slotIndex, action: 'preview' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Preview failed');
+      setSlotPreview(data.preview);
+      setPreviewSlotIndex(slotIndex);
+      showAlert({ type: 'success', title: 'Preview Generated', message: `Slot ${slotIndex} preview saved. Review and click Close to finalize.` });
+    } catch (err: any) {
+      showAlert({ type: 'error', title: 'Preview Failed', message: err.message });
+    }
+  };
+
+  const handleApplySlot = async (slotIndex: number) => {
+    if (!confirm(`Finalize Slot ${slotIndex}? This will award players/teams and deduct budgets. This cannot be undone.`)) return;
+    try {
+      const res = await fetchWithTokenRefresh('/api/fantasy/draft/finalize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ league_id: leagueId, slot_index: slotIndex, action: 'apply' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Apply failed');
+      setSlotPreview(null);
+      setPreviewSlotIndex(null);
+      showAlert({ type: 'success', title: 'Slot Finalized!', message: `Slot ${slotIndex} bids have been applied successfully.` });
+      loadSubmissions();
+    } catch (err: any) {
+      showAlert({ type: 'error', title: 'Finalize Failed', message: err.message });
     }
   };
 
@@ -455,6 +561,9 @@ export default function ProcessDraftPage() {
                 round={draftRounds.find((r: any) => r.slot_index === slot.slot_index)}
                 onAction={handleRoundAction}
                 onToggleFinalization={handleToggleRoundFinalization}
+                onPreview={handlePreviewSlot}
+                onApply={handleApplySlot}
+                preview={previewSlotIndex === slot.slot_index ? slotPreview : null}
                 expanded={expandedSlotIndex === slot.slot_index}
                 onToggle={() => setExpandedSlotIndex(expandedSlotIndex === slot.slot_index ? null : slot.slot_index)}
               />
