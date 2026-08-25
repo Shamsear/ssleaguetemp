@@ -340,6 +340,7 @@ export default function ProcessDraftPage() {
   const [draftRounds, setDraftRounds] = useState<any[]>([]);
   const [expandedSlotIndex, setExpandedSlotIndex] = useState<number | null>(null);
   const [slotNames, setSlotNames] = useState<Record<number, string>>({});
+  const [trackingTab, setTrackingTab] = useState<number | 'all'>(0);
 
   const { alertState, showAlert, closeAlert } = useModal();
 
@@ -411,8 +412,16 @@ export default function ProcessDraftPage() {
       const roundsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/rounds?league_id=${leagueId}`);
       if (roundsRes.ok) {
         const roundsData = await roundsRes.json();
-        setDraftRounds(roundsData.rounds || []);
+      setDraftRounds(roundsData.rounds || []);
+
+      // Auto-select the active or first non-pending round for tracking tab
+      const activeRound = (roundsData.rounds || []).find((r: any) => r.status === 'active');
+      if (activeRound) setTrackingTab(activeRound.slot_index);
+      else {
+        const firstNonPending = (roundsData.rounds || []).find((r: any) => r.status !== 'pending');
+        if (firstNonPending) setTrackingTab(firstNonPending.slot_index);
       }
+    }
 
 
     } catch (err) {
@@ -666,40 +675,121 @@ export default function ProcessDraftPage() {
           </div>
         </div>
 
-        {/* Submissions Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-slate-800 text-amber-400 border border-slate-900 rounded-xl">
-              <Users className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Total Managers</p>
-              <h3 className="text-xl font-black text-slate-900 leading-tight">{totalTeams}</h3>
-            </div>
+        {/* ═══════════ SUBMISSION TRACKING ═══════════ */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-sm overflow-hidden">
+          {/* Per-slot tab buttons */}
+          <div className="flex gap-0 border-b border-slate-200 overflow-x-auto">
+            {draftRounds.filter((r: any) => r.status !== 'pending').map((r: any) => {
+              const slot = slots.find((s: any) => s.slot_index === r.slot_index);
+              const subCount = teams.filter((t: any) => !!t.slot_submissions?.[r.slot_index]).length;
+              return (
+                <button
+                  key={r.slot_index}
+                  onClick={() => setTrackingTab(r.slot_index)}
+                  className={`px-4 py-3 text-[10px] font-black uppercase tracking-wider whitespace-nowrap border-b-2 transition-all cursor-pointer ${
+                    trackingTab === r.slot_index
+                      ? 'border-amber-500 text-amber-600 bg-amber-50/50'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {slot?.name || `Slot ${r.slot_index}`}
+                  <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[8px] ${
+                    subCount === totalTeams ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {subCount}/{totalTeams}
+                  </span>
+                  <span className={`ml-1 px-1 py-0.5 rounded-full text-[7px] uppercase ${
+                    r.status === 'active' ? 'bg-emerald-100 text-emerald-600' :
+                    r.status === 'completed' ? 'bg-blue-100 text-blue-600' :
+                    r.status === 'closed' ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    {r.status}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-slate-800 text-emerald-400 border border-slate-900 rounded-xl">
-              <CheckCircle className="w-6 h-6" />
-            </div>
+          {/* Stats for selected tab */}
+          {(() => {
+            const activeSlotR = draftRounds.find((r: any) => r.slot_index === trackingTab);
+            const subCount = teams.filter((t: any) => !!t.slot_submissions?.[trackingTab]).length;
+            const pendingCount = totalTeams - subCount;
+            return (
+              <div className="grid grid-cols-3 gap-0 border-b border-slate-100">
+                <div className="p-4 text-center border-r border-slate-100">
+                  <p className="text-[9px] text-slate-400 font-bold uppercase">Total Managers</p>
+                  <h3 className="text-xl font-black text-slate-900 mt-0.5">{totalTeams}</h3>
+                </div>
+                <div className="p-4 text-center border-r border-slate-100">
+                  <p className="text-[9px] text-emerald-600 font-bold uppercase">Submitted</p>
+                  <h3 className="text-xl font-black text-emerald-600 mt-0.5">{subCount} <span className="text-xs text-slate-400">/ {totalTeams}</span></h3>
+                </div>
+                <div className="p-4 text-center">
+                  <p className="text-[9px] text-amber-600 font-bold uppercase">Pending</p>
+                  <h3 className="text-xl font-black text-amber-600 mt-0.5">{pendingCount}</h3>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Header + Copy */}
+          <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
             <div>
-              <p className="text-[9px] text-slate-455 font-bold uppercase tracking-wider">Submitted & Locked</p>
-              <h3 className="text-xl font-black text-slate-900 leading-tight">
-                {submittedCount} <span className="text-slate-400 text-xs">/ {totalTeams}</span>
-              </h3>
+              <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">Manager submissions</h2>
+              <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">
+                {slots.find((s: any) => s.slot_index === trackingTab)?.name || `Slot ${trackingTab}`} — per-slot status
+              </p>
             </div>
+            <button
+              onClick={handleCopyAllSubmittedTeams}
+              className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-colors"
+              title="Copy submission checklist"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </button>
           </div>
 
-          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-slate-800 text-amber-450 border border-slate-900 rounded-xl">
-              <Clock className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-[9px] text-slate-455 font-bold uppercase tracking-wider">Pending Submissions</p>
-              <h3 className="text-xl font-black text-slate-900 leading-tight">
-                {totalTeams - submittedCount}
-              </h3>
-            </div>
+          {/* Team rows for selected tab */}
+          <div className="divide-y divide-slate-100">
+            {teams
+              .sort((a: any, b: any) => {
+                const aSub = !!a.slot_submissions?.[trackingTab];
+                const bSub = !!b.slot_submissions?.[trackingTab];
+                if (aSub !== bSub) return aSub ? 1 : -1;
+                return a.team_name.localeCompare(b.team_name);
+              })
+              .map(t => {
+                const submittedForSlot = !!t.slot_submissions?.[trackingTab];
+                const slotBids = (t.bids || []).filter((b: any) => b.slot_index === trackingTab);
+                return (
+                  <div key={t.team_id} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                    <div>
+                      <h4 className="font-bold text-slate-800 text-xs uppercase">{t.team_name}</h4>
+                      <p className="text-[10px] text-slate-450 font-bold uppercase mt-0.5">Owner: {t.owner_name || 'N/A'}</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right font-mono">
+                        <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 rounded-lg text-[9px] font-black uppercase">
+                          {slotBids.length} bids
+                        </span>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">Budget: {t.budget_remaining} Left</p>
+                      </div>
+                      {submittedForSlot ? (
+                        <span className="px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[9px] font-black rounded-lg uppercase tracking-wider">
+                          ✓ Submitted
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 bg-amber-50 border border-amber-250 text-amber-700 text-[9px] font-black rounded-lg uppercase tracking-wider">
+                          ⏳ Pending
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </div>
 
@@ -712,61 +802,6 @@ export default function ProcessDraftPage() {
             </p>
           </div>
         )}
-
-        {/* Team Checklist */}
-        <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-            <div>
-              <h2 className="text-xs font-black text-slate-855 uppercase tracking-wider">Manager submissions tracking</h2>
-              <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Real-time status of all participating team draft wishlists</p>
-            </div>
-            {submittedCount > 0 && (
-              <button
-                onClick={handleCopyAllSubmittedTeams}
-                className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-colors"
-                title="Copy all submitted team names"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </button>
-            )}
-          </div>
-
-          <div className="divide-y divide-slate-100">
-            {teams.map(t => (
-              <div key={t.team_id} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
-                <div>
-                  <h4 className="font-bold text-slate-800 text-xs uppercase">{t.team_name}</h4>
-                  <p className="text-[10px] text-slate-455 font-bold uppercase mt-0.5">Owner: {t.owner_name || 'N/A'}</p>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="text-right font-mono">
-                    <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 rounded-lg text-[9px] font-black uppercase">
-                      {t.total_bids} bids
-                    </span>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">Budget: {t.budget_remaining} Left</p>
-                  </div>
-                  {(() => {
-                    // Check per-slot submission for the active round
-                    const activeRound = draftRounds.find((r: any) => r.status === 'active');
-                    const activeSlotIdx = activeRound?.slot_index;
-                    const submittedForActive = activeSlotIdx ? !!t.slot_submissions?.[activeSlotIdx] : !!t.draft_submitted;
-                    return submittedForActive ? (
-                      <span className="px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[9px] font-black rounded-lg uppercase tracking-wider">
-                        ✓ Submitted
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-0.5 bg-amber-50 border border-amber-250 text-amber-700 text-[9px] font-black rounded-lg uppercase tracking-wider">
-                        ⏳ Pending
-                      </span>
-                    );
-                  })()}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Results display */}
         {results && results.success && (
