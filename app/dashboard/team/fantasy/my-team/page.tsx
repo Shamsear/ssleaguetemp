@@ -94,6 +94,7 @@ export default function MyFantasyTeamPage() {
   const [canRegister, setCanRegister] = useState(false);
   const [registrationInfo, setRegistrationInfo] = useState<any>(null);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [notEnabledMessage, setNotEnabledMessage] = useState<string | null>(null);
 
   const [draftSettings, setDraftSettings] = useState<any | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
@@ -110,6 +111,7 @@ export default function MyFantasyTeamPage() {
           const errorData = await response.json();
           setCanRegister(errorData.can_register || false);
           setRegistrationInfo(errorData.registration_info || null);
+          if (errorData.message) setNotEnabledMessage(errorData.message);
           setIsLoading(false);
           return;
         }
@@ -265,9 +267,16 @@ export default function MyFantasyTeamPage() {
         })
       });
 
+      const data = await response.json();
+
+      // If already registered (team found via fallback), just reload to show dashboard
+      if (data.already_registered || data.success) {
+        window.location.reload();
+        return;
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || 'Failed to register');
+        throw new Error(data.error || data.message || 'Failed to register');
       }
 
       // Reload the page to show the newly created team
@@ -291,11 +300,13 @@ export default function MyFantasyTeamPage() {
             <Trophy className="w-8 h-8" />
           </div>
           <h2 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">
-            {canRegister ? 'Join Fantasy League' : 'No Fantasy League Yet'}
+            {canRegister ? 'Join Fantasy League' : notEnabledMessage ? 'Registration Pending' : 'No Fantasy League Yet'}
           </h2>
           <p className="text-xs text-slate-455 font-bold uppercase leading-normal mb-6">
             {canRegister
               ? `Register your squad for the season and compete for the championship!`
+              : notEnabledMessage
+              ? notEnabledMessage
               : 'The league administrator has not opened the fantasy league for registrations yet.'}
           </p>
           {canRegister ? (

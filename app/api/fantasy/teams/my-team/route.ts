@@ -330,7 +330,7 @@ export async function POST(request: NextRequest) {
       finalLeagueId = `SSPSLFLS${seasonNumber}`;
     }
 
-    // Check if fantasy team already exists
+    // Check if fantasy team already exists (by owner_uid)
     const existingTeams = await fantasySql`
       SELECT * FROM fantasy_teams
       WHERE owner_uid = ${user_id} AND league_id = ${finalLeagueId}
@@ -340,12 +340,45 @@ export async function POST(request: NextRequest) {
     if (existingTeams.length > 0) {
       return NextResponse.json(
         { 
-          error: 'Fantasy team already exists',
+          success: true,
+          already_registered: true,
           message: 'You are already registered for this fantasy league',
           team_id: existingTeams[0].team_id
         },
-        { status: 400 }
+        { status: 200 }
       );
+    }
+
+    // Fallback: check by team_id via Firebase (handles blank owner_uid from enable-all)
+    const teamsSnap = await adminDb.collection('teams')
+      .where('uid', '==', user_id)
+      .limit(1)
+      .get();
+
+    if (!teamsSnap.empty) {
+      const firebaseTeamId = teamsSnap.docs[0].id;
+      const existingByTeamId = await fantasySql`
+        SELECT * FROM fantasy_teams
+        WHERE team_id = ${firebaseTeamId} AND league_id = ${finalLeagueId}
+        LIMIT 1
+      `;
+      if (existingByTeamId.length > 0) {
+        // Self-heal owner_uid and return success
+        await fantasySql`
+          UPDATE fantasy_teams
+          SET owner_uid = ${user_id}, updated_at = NOW()
+          WHERE team_id = ${firebaseTeamId}
+        `;
+        return NextResponse.json(
+          { 
+            success: true,
+            already_registered: true,
+            message: 'You are already registered for this fantasy league',
+            team_id: existingByTeamId[0].team_id
+          },
+          { status: 200 }
+        );
+      }
     }
 
     // Get team ID from Firebase team_seasons or teams collection
