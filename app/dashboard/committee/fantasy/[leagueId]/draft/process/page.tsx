@@ -44,11 +44,13 @@ const formatISTDisplay = (isoOrLocal: string): string => {
   return d.toLocaleString('en-IN', { timeZone: IST_TIMEZONE });
 };
 
-/** Per-slot round control card */
-function SlotRoundCard({ slot, round, onAction }: {
+/** Per-slot round control card — compact by default, expands on click */
+function SlotRoundCard({ slot, round, onAction, expanded, onToggle }: {
   slot: any;
   round: any;
   onAction: (slotIndex: number, action: 'start' | 'close' | 'adjust' | 'reset', times?: { opens_at?: string; closes_at?: string }) => void;
+  expanded: boolean;
+  onToggle: () => void;
 }) {
   const status = round?.status || 'pending';
   const [opensInput, setOpensInput] = useState(formatISTForInput(round?.opens_at));
@@ -65,63 +67,87 @@ function SlotRoundCard({ slot, round, onAction }: {
     status === 'completed' ? 'bg-blue-50 border-blue-200 text-blue-700' :
     'bg-slate-100 border-slate-200 text-slate-600';
 
+  const isActive = status === 'active';
+
   return (
-    <div className="border border-slate-200 rounded-2xl p-4 space-y-3 bg-slate-50/30">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="w-7 h-7 rounded-full bg-slate-800 text-amber-400 flex items-center justify-center text-[10px] font-black">
+    <div className={`border rounded-2xl transition-all ${isActive ? 'border-emerald-300 bg-emerald-50/30 shadow-sm' : expanded ? 'border-amber-300 bg-amber-50/20 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+      {/* Compact header — always visible, clickable */}
+      <button
+        onClick={onToggle}
+        className="w-full px-4 py-3 flex items-center justify-between cursor-pointer text-left"
+      >
+        <div className="flex items-center gap-3">
+          <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black ${isActive ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-amber-400'}`}>
             {slot.slot_index}
           </span>
           <div>
-            <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-wider">{slot.name}</h4>
-            <span className="text-[9px] text-slate-400 font-bold">Base: {slot.base_price} Cr</span>
+            <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">{slot.name}</h4>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[9px] text-slate-400 font-bold">Base: {slot.base_price} Cr</span>
+              {round?.closes_at && (status === 'active' || status === 'pending') && (
+                <span className="text-[9px] text-slate-500 font-bold">• Closes: {formatISTDisplay(round.closes_at)} IST</span>
+              )}
+            </div>
           </div>
         </div>
-        <span className={`px-2 py-0.5 border text-[9px] font-black rounded-lg uppercase tracking-wider ${statusColor}`}>
-          {status}
-        </span>
-      </div>
+        <div className="flex items-center gap-2">
+          <span className={`px-2.5 py-1 border text-[9px] font-black rounded-lg uppercase tracking-wider ${statusColor}`}>
+            {status}
+          </span>
+          <svg className={`w-4 h-4 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </button>
 
-      {(status === 'pending' || status === 'active') && (
-        <div className="space-y-2">
-          <div className="space-y-1">
-            <label className="block text-[9px] text-slate-500 font-bold uppercase">Opens At (IST)</label>
-            <input type="datetime-local" value={opensInput} onChange={(e) => setOpensInput(e.target.value)}
-              className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold focus:outline-none focus:ring-1 focus:ring-amber-500" />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-[9px] text-slate-500 font-bold uppercase">Closes At (IST)</label>
-            <input type="datetime-local" value={closesInput} onChange={(e) => setClosesInput(e.target.value)}
-              className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold focus:outline-none focus:ring-1 focus:ring-amber-500" />
+      {/* Expanded details */}
+      {expanded && (
+        <div className="px-4 pb-4 space-y-3 border-t border-slate-100 pt-3">
+          {/* Timing inputs for pending/active */}
+          {(status === 'pending' || status === 'active') && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="block text-[9px] text-slate-500 font-bold uppercase">Opens At (IST)</label>
+                <input type="datetime-local" value={opensInput} onChange={(e) => setOpensInput(e.target.value)}
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold focus:outline-none focus:ring-1 focus:ring-amber-500" />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[9px] text-slate-500 font-bold uppercase">Closes At (IST)</label>
+                <input type="datetime-local" value={closesInput} onChange={(e) => setClosesInput(e.target.value)}
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold focus:outline-none focus:ring-1 focus:ring-amber-500" />
+              </div>
+            </div>
+          )}
+
+          {/* Display times for closed/completed */}
+          {(status === 'closed' || status === 'completed') && round?.opens_at && (
+            <div className="flex gap-6 text-[9px] font-bold uppercase text-slate-500">
+              <div>Opened: <span className="text-slate-700">{formatISTDisplay(round.opens_at)} IST</span></div>
+              {round?.closes_at && <div>Closed: <span className="text-rose-600">{formatISTDisplay(round.closes_at)} IST</span></div>}
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex flex-wrap gap-2">
+            {status === 'pending' && (
+              <button onClick={() => onAction(slot.slot_index, 'start', { opens_at: opensInput ? istToUTC(opensInput) : undefined, closes_at: closesInput ? istToUTC(closesInput) : undefined })}
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm">▶ Start Round</button>
+            )}
+            {status === 'active' && (
+              <>
+                <button onClick={() => onAction(slot.slot_index, 'close')}
+                  className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm">⏸ Close Round</button>
+                <button onClick={() => onAction(slot.slot_index, 'adjust', { opens_at: opensInput ? istToUTC(opensInput) : undefined, closes_at: closesInput ? istToUTC(closesInput) : undefined })}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm"><Clock className="w-3 h-3 inline mr-0.5" /> Adjust Time</button>
+              </>
+            )}
+            {(status === 'closed' || status === 'active') && (
+              <button onClick={() => onAction(slot.slot_index, 'reset')}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all">🔄 Reset to Pending</button>
+            )}
           </div>
         </div>
       )}
-
-      {(status === 'closed' || status === 'completed') && round?.opens_at && (
-        <div className="space-y-1 text-[9px] font-bold uppercase text-slate-500">
-          <div>Opened: <span className="text-slate-700">{formatISTDisplay(round.opens_at)} IST</span></div>
-          {round?.closes_at && <div>Closed: <span className="text-rose-600">{formatISTDisplay(round.closes_at)} IST</span></div>}
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2 pt-1">
-        {status === 'pending' && (
-          <button onClick={() => onAction(slot.slot_index, 'start', { opens_at: opensInput ? istToUTC(opensInput) : undefined, closes_at: closesInput ? istToUTC(closesInput) : undefined })}
-            className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-mono font-bold text-[9px] uppercase tracking-wider rounded-lg cursor-pointer transition-all">▶ Start</button>
-        )}
-        {status === 'active' && (
-          <>
-            <button onClick={() => onAction(slot.slot_index, 'close')}
-              className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-mono font-bold text-[9px] uppercase tracking-wider rounded-lg cursor-pointer transition-all">⏸ Close</button>
-            <button onClick={() => onAction(slot.slot_index, 'adjust', { opens_at: opensInput ? istToUTC(opensInput) : undefined, closes_at: closesInput ? istToUTC(closesInput) : undefined })}
-              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-[9px] uppercase tracking-wider rounded-lg cursor-pointer transition-all"><Clock className="w-3 h-3 inline mr-0.5" /> Adjust</button>
-          </>
-        )}
-        {(status === 'closed' || status === 'active') && (
-          <button onClick={() => onAction(slot.slot_index, 'reset')}
-            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-mono font-bold text-[9px] uppercase tracking-wider rounded-lg cursor-pointer transition-all">🔄 Reset</button>
-        )}
-      </div>
     </div>
   );
 }
@@ -149,6 +175,7 @@ export default function ProcessDraftPage() {
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [addTimeMinutes, setAddTimeMinutes] = useState<string>('10');
   const [draftRounds, setDraftRounds] = useState<any[]>([]);
+  const [expandedSlotIndex, setExpandedSlotIndex] = useState<number | null>(null);
 
   const { alertState, showAlert, closeAlert } = useModal();
 
@@ -229,6 +256,7 @@ export default function ProcessDraftPage() {
         title: 'Round Updated',
         message: `Slot ${slotIndex} ${action} successfully`,
       });
+      setExpandedSlotIndex(slotIndex);
       loadSubmissions(); // re-fetch rounds
     } catch (err: any) {
       console.error('Error updating round:', err);
@@ -425,13 +453,15 @@ export default function ProcessDraftPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-3">
             {slots.map((slot) => (
               <SlotRoundCard
                 key={slot.slot_index}
                 slot={slot}
                 round={draftRounds.find((r: any) => r.slot_index === slot.slot_index)}
                 onAction={handleRoundAction}
+                expanded={expandedSlotIndex === slot.slot_index}
+                onToggle={() => setExpandedSlotIndex(expandedSlotIndex === slot.slot_index ? null : slot.slot_index)}
               />
             ))}
           </div>

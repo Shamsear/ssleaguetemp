@@ -47,8 +47,17 @@ export async function POST(request: NextRequest) {
       const batch = teamIds.slice(i, i + 10);
       try {
         const snap = await adminDb.collection('teams')
-          .where('__name__', 'in', batch)
+          .where('team_id', 'in', batch)
           .get();
+        // Also fetch by document ID
+        const docs = await Promise.all(
+          batch.map(id => adminDb.collection('teams').doc(id).get())
+        );
+        docs.forEach(doc => {
+          if (doc.exists) {
+            firebaseTeamsMap.set(doc.id, doc.data());
+          }
+        });
         snap.docs.forEach(doc => {
           firebaseTeamsMap.set(doc.id, doc.data());
         });

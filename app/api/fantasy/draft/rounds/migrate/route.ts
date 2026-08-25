@@ -8,6 +8,12 @@ import { fantasySql } from '@/lib/neon/fantasy-config';
  */
 export async function POST() {
   try {
+    // 0. Ensure columns exist (safe to run repeatedly)
+    await fantasySql`ALTER TABLE fantasy_leagues ADD COLUMN IF NOT EXISTS category_settings JSONB`;
+    await fantasySql`ALTER TABLE fantasy_leagues ADD COLUMN IF NOT EXISTS draft_opens_at TIMESTAMP`;
+    await fantasySql`ALTER TABLE fantasy_leagues ADD COLUMN IF NOT EXISTS draft_closes_at TIMESTAMP`;
+    await fantasySql`ALTER TABLE fantasy_leagues ADD COLUMN IF NOT EXISTS draft_status VARCHAR(20) DEFAULT 'pending'`;
+
     // 1. Create table
     await fantasySql`
       CREATE TABLE IF NOT EXISTS fantasy_draft_rounds (
@@ -37,6 +43,8 @@ export async function POST() {
 
     let migrated = 0;
     for (const league of leagues) {
+      if (!league.category_settings) continue;
+
       const cs = typeof league.category_settings === 'string'
         ? JSON.parse(league.category_settings)
         : league.category_settings;
@@ -53,7 +61,7 @@ export async function POST() {
         await fantasySql`
           INSERT INTO fantasy_draft_rounds (league_id, slot_index, slot_name, opens_at, closes_at, status)
           VALUES (
-            ${league.league_id}, ${slotIdx}, ${slot.name},
+            ${league.league_id}, ${slotIdx}, ${slot.name || 'Slot ' + slotIdx},
             ${league.draft_opens_at}, ${league.draft_closes_at}, ${slotStatus}
           )
           ON CONFLICT (league_id, slot_index) DO NOTHING
@@ -65,7 +73,7 @@ export async function POST() {
     // 3. Add round_id column to fantasy_draft_bids if missing
     await fantasySql`
       ALTER TABLE fantasy_draft_bids
-      ADD COLUMN IF NOT EXISTS round_id INTEGER REFERENCES fantasy_draft_rounds(id)
+      ADD COLUMN IF NOT EXISTS round_id INTEGER
     `;
 
     // 4. Backfill round_id on existing bids by matching league_id + slot_index
@@ -78,9 +86,13 @@ export async function POST() {
         AND b.round_id IS NULL
     `;
 
+    // 5. Drop old timing columns from fantasy_leagues
+    try { await fantasySql`ALTER TABLE fantasy_leagues DROP COLUMN IF EXISTS draft_opens_at`; } catch {}
+    try { await fantasySql`ALTER TABLE fantasy_leagues DROP COLUMN IF EXISTS draft_closes_at`; } catch {}
+
     return NextResponse.json({
       success: true,
-      message: `Migration complete. ${migrated} draft rounds created. Bids linked to rounds.`,
+      message: `Migration complete. ${migrated} draft rounds created. Bids linked to rounds. Old columns dropped.`,
     });
   } catch (error) {
     console.error('Migration error:', error);
