@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Calendar, 
   Settings, 
@@ -18,6 +17,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Shield,
   FileText
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function CreateSeason() {
   const { user, loading } = useAuth();

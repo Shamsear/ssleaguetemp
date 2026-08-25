@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   Settings,
   Info,
@@ -26,6 +25,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Lock,
   Plus
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 type PollType = 'POTD' | 'POTW' | 'TOD' | 'TOW';
 

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   AlertCircle, 
   CheckCircle, 
@@ -18,6 +17,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   HelpCircle,
   Clock
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface TrophyData {
   id: number;

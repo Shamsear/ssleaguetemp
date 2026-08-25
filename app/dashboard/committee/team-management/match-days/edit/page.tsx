@@ -11,7 +11,6 @@ import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   Calendar,
   Clock,
@@ -20,6 +19,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Save,
   Check
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 function EditRoundDeadlinesContent() {
   const { user, loading } = useAuth();

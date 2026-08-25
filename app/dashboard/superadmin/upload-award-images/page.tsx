@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Upload, 
   Image as ImageIcon, 
@@ -19,6 +18,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Award as AwardIcon,
   Layers
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Award {
   id: string;

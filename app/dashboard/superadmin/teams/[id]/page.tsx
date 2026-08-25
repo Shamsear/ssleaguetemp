@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 
 import { TeamData } from '@/types/team';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   Shield,
   Edit,
@@ -31,6 +30,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Circle,
   Square
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
   id: string;

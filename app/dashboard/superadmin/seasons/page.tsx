@@ -6,7 +6,6 @@ import { useEffect } from 'react';
 
 import { useRealtimeSeasons } from '@/hooks/useRealtimeData';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   PlusCircle, 
   Calendar, 
   Users, 
@@ -23,6 +22,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Sparkles,
   AlertCircle
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function SeasonsManagement() {
   const { user, loading } = useAuth();

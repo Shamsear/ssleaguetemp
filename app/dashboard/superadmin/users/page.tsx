@@ -6,7 +6,6 @@ import { Suspense, useEffect, useState } from 'react';
 import { getAllUsers, updateUserRole, toggleUserStatus, deleteUser, approveUser, rejectUser } from '@/lib/firebase/auth';
 import { User, UserRole } from '@/types/user';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   Users, 
   Shield, 
   Trash2, 
@@ -26,6 +25,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Check,
   UserX
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 function UsersManagementContent() {
   const { user, loading } = useAuth();

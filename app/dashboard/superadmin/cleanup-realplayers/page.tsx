@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Database, 
   Search, 
@@ -17,6 +16,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   AlertTriangle, 
   FileCode 
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerIssue {
   player_id: string;

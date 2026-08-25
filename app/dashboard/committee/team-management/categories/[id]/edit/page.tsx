@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   CheckCircle,
   AlertCircle,
@@ -16,6 +15,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   ChevronRight,
   Plus
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 const getRelativeLevels = (priority: number) => {
   if (priority === 1) {

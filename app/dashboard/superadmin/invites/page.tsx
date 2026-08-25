@@ -15,7 +15,6 @@ import { Season } from '@/types/season';
 import { collection, query, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   PlusCircle, 
   Link2, 
   Trash2, 
@@ -36,6 +35,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Send,
   AlertCircle
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface SeasonAdmin {
   seasonId: string;

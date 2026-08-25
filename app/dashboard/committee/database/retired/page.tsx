@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { fetchWithTokenRefresh } from '@/lib/token-refresh'
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Search, 
   RefreshCw, 
@@ -18,6 +17,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   HelpCircle,
   ExternalLink
 } from 'lucide-react'
+import AuthGuard from '@/components/auth/AuthGuard';
 
 const PLAYERS_PER_PAGE = 50
 

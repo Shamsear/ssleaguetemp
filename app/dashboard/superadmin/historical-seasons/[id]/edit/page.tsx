@@ -8,7 +8,6 @@ import { Target, Crown, Sparkles } from 'lucide-react';
 import { getIdToken } from 'firebase/auth';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Calendar, 
   Trophy, 
@@ -18,6 +17,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   CheckCircle2,
   FileText
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Season {
   id: string;

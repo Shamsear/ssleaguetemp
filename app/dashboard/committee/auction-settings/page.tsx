@@ -9,7 +9,6 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Save, 
   RefreshCw, 
@@ -24,6 +23,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Settings,
   AlertCircle
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface AuctionSettings {
   id: number;

@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   Settings,
   Plus,
@@ -37,6 +36,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Check,
   RefreshCw
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface FixtureLineupStatus {
   fixture_id: string;

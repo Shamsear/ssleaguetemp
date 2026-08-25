@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
-import AuthGuard from '@/components/auth/AuthGuard';
   Trophy,
   Settings,
   ArrowLeft,
@@ -24,6 +23,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 type AwardTab = 'POTD' | 'POTW' | 'TOD' | 'TOW' | 'POTS' | 'TOTS';
 

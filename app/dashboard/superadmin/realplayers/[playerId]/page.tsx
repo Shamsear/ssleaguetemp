@@ -5,7 +5,6 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   AlertCircle, 
   Calendar, 
@@ -21,6 +20,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Layers,
   FileText
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface PlayerData {
   player_id: string;

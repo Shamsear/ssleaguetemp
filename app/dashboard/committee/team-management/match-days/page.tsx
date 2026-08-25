@@ -21,7 +21,6 @@ import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   Calendar,
   Clock,
@@ -38,6 +37,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   HelpCircle,
   ChevronRight
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function MatchDayManagementPage() {
   const { user, loading } = useAuth();

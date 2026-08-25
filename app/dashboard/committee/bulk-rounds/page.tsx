@@ -7,7 +7,6 @@ import Link from 'next/link';
 
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import {
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft,
   Clock,
   DollarSign,
@@ -21,6 +20,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Play,
   Layers
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface BulkRound {
   id: number;

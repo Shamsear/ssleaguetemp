@@ -7,7 +7,6 @@ import { getPendingUsers } from '@/lib/firebase/auth';
 import { getPendingResetRequests } from '@/lib/firebase/passwordResetRequests';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   Users, 
   Key, 
   Shield, 
@@ -30,6 +29,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   DollarSign,
   RefreshCw
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function SuperAdminDashboard() {
   const { user, loading } = useAuth();

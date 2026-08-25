@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   ArrowLeft, 
   Download, 
   Upload, 
@@ -22,6 +21,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   Layers,
   Database
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Season {
   id: string;

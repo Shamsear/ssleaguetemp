@@ -12,7 +12,6 @@ import {
 import { PasswordResetRequest } from '@/types/passwordResetRequest';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
 import { 
-import AuthGuard from '@/components/auth/AuthGuard';
   KeyRound, 
   Mail, 
   Calendar, 
@@ -32,6 +31,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
   UserX,
   FileText
 } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function PasswordRequestsManagement() {
   const { user, loading } = useAuth();
