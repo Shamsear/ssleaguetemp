@@ -45,14 +45,19 @@ export async function GET(request: NextRequest) {
       const userData = userDoc.data()!;
       const teamName = userData.teamName || userData.username || 'Team';
 
-      // Try to find their team document in Firebase
-      const teamsSnap = await adminDb.collection('teams')
-        .where('owner_uid', '==', user_id)
-        .limit(1)
-        .get();
-
+      // Try to find their team document in Firebase (try owner_uid then uid field)
+      let firebaseTeamId: string | null = null;
+      let teamsSnap = await adminDb.collection('teams').where('owner_uid', '==', user_id).limit(1).get();
       if (!teamsSnap.empty) {
-        const firebaseTeamId = teamsSnap.docs[0].id;
+        firebaseTeamId = teamsSnap.docs[0].id;
+      } else {
+        teamsSnap = await adminDb.collection('teams').where('uid', '==', user_id).limit(1).get();
+        if (!teamsSnap.empty) {
+          firebaseTeamId = teamsSnap.docs[0].id;
+        }
+      }
+
+      if (firebaseTeamId) {
         // Try lookup by team_id directly (owner_uid may be blank or mismatched)
         const byTeamId = await fantasySql`
           SELECT * FROM fantasy_teams

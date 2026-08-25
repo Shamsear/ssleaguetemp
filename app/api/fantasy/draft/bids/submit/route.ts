@@ -30,15 +30,20 @@ export async function POST(request: NextRequest) {
     if (teams.length > 0) {
       teamRow = teams[0];
     } else {
-      // Fallback: look up by team_id via Firebase uid field
+      // Fallback: look up by team_id via Firebase (try owner_uid then uid field)
       const { adminDb } = await import('@/lib/neon/admin-db-wrapper');
-      const teamsSnap = await adminDb.collection('teams')
-        .where('owner_uid', '==', user_id)
-        .limit(1)
-        .get();
-
+      let firebaseTeamId: string | null = null;
+      let teamsSnap = await adminDb.collection('teams').where('owner_uid', '==', user_id).limit(1).get();
       if (!teamsSnap.empty) {
-        const firebaseTeamId = teamsSnap.docs[0].id;
+        firebaseTeamId = teamsSnap.docs[0].id;
+      } else {
+        teamsSnap = await adminDb.collection('teams').where('uid', '==', user_id).limit(1).get();
+        if (!teamsSnap.empty) {
+          firebaseTeamId = teamsSnap.docs[0].id;
+        }
+      }
+
+      if (firebaseTeamId) {
         const byTeamId = await fantasySql`
           SELECT team_id, league_id, budget_remaining, draft_submitted
           FROM fantasy_teams
@@ -265,12 +270,17 @@ export async function DELETE(request: NextRequest) {
 
     if (teams.length === 0) {
       const { adminDb } = await import('@/lib/neon/admin-db-wrapper');
-      const teamsSnap = await adminDb.collection('teams')
-        .where('owner_uid', '==', userId)
-        .limit(1)
-        .get();
-      if (!teamsSnap.empty) {
-        const firebaseTeamId = teamsSnap.docs[0].id;
+      let firebaseTeamId: string | null = null;
+      let fbTeams = await adminDb.collection('teams').where('owner_uid', '==', userId).limit(1).get();
+      if (!fbTeams.empty) {
+        firebaseTeamId = fbTeams.docs[0].id;
+      } else {
+        fbTeams = await adminDb.collection('teams').where('uid', '==', userId).limit(1).get();
+        if (!fbTeams.empty) {
+          firebaseTeamId = fbTeams.docs[0].id;
+        }
+      }
+      if (firebaseTeamId) {
         teams = await fantasySql`
           SELECT team_id, league_id 
           FROM fantasy_teams
