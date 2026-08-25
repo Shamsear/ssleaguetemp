@@ -4,7 +4,6 @@ import { collection, getDocs, query, where, orderBy, doc, updateDoc, getDoc, get
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { usePlayerStats, usePlayerAwards, useTeamTrophies, useTeamSeasonStats, type PlayerAward, type TeamTrophy, type TeamStats } from '@/hooks';
