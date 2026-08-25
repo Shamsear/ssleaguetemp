@@ -4,6 +4,7 @@ import { verifyAuth } from '@/lib/auth-helper';
 import { batchGetFirebaseFields } from '@/lib/firebase/batch';
 import { getCached, setCached } from '@/lib/firebase/cache';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { getAuctionDb } from '@/lib/neon/auction-config';
 
 export async function GET(request: NextRequest) {
   try {
@@ -120,7 +121,7 @@ export async function GET(request: NextRequest) {
     console.time('⚡ Batch fetch all football players');
     
     // Step 3a: Fetch all football players for all teams from Neon
-    const fpSql = getTournamentDb();
+    const fpSql = getAuctionDb();
     const allFootballPlayers: any[] = await fpSql`
       SELECT * FROM footballplayers 
       WHERE season_id = ${seasonId} 

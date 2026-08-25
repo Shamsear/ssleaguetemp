@@ -168,6 +168,8 @@ export async function GET(request: NextRequest) {
         logo_url: logoUrlMap.get(teamId) || null,
         balance: teamData.balance || 0,
         created_at: teamData.created_at,
+        userId: teamData.userId || teamData.user_id || teamData.owner_id || null,
+        owner_name: teamData.owner_name || teamData.ownerName || teamData.owner || null,
         ...stats
       };
     });

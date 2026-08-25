@@ -239,8 +239,8 @@ export async function buildTeamsSummary(seasonId?: string): Promise<TeamSummary[
  */
 export async function buildPlayersSummary(seasonId?: string): Promise<PlayerSummary[]> {
   try {
-    const { getTournamentDb } = await import('@/lib/neon/tournament-config');
-    const sql = getTournamentDb();
+    const { getAuctionDb } = await import('@/lib/neon/auction-config');
+    const sql = getAuctionDb();
     
     let rows: any[];
     if (seasonId) {

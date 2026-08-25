@@ -2,8 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+
 
 interface TeamRegistrationContextType {
   isRegistered: boolean;
@@ -39,22 +38,19 @@ export function TeamRegistrationProvider({ children }: { children: ReactNode }) 
     const fetchTeamData = async () => {
       if (user && user.role === 'team') {
         try {
-          const teamsRef = (await (await fetch('/api/teams')).json()).data;
-          const q = query(teamsRef, where('userId', '==', user.uid));
-          const querySnapshot = await getDocs(q);
+          const teamsJson = await (await fetch('/api/teams')).json();
+          const teamsList = teamsJson.teams || teamsJson.data || [];
+          const teamDoc = teamsList.find((t: any) => t.userId === user.uid || t.uid === user.uid || t.owner_uid === user.uid);
           
-          if (!querySnapshot.empty) {
-            const teamDoc = querySnapshot.docs[0];
-            const teamData = teamDoc.data();
-            
+          if (teamDoc) {
             // Set team ID
             setTeamId(teamDoc.id);
             
             // Set team logo
-            if (teamData.logo_url) {
-              setTeamLogo(teamData.logo_url);
-            } else if (teamData.team_logo) {
-              setTeamLogo(teamData.team_logo);
+            if (teamDoc.logo_url) {
+              setTeamLogo(teamDoc.logo_url);
+            } else if (teamDoc.team_logo) {
+              setTeamLogo(teamDoc.team_logo);
             }
           }
         } catch (error) {
