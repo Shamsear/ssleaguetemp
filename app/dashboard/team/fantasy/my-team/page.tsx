@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { Crown, Gift, Star, Trophy, User, Users, ArrowLeft, ArrowUp, ArrowDown, Info, ShieldAlert, Award, Plus, RefreshCw, Shield, Activity, Target } from 'lucide-react';
+import { Crown, Gift, Star, Trophy, User, Users, ArrowLeft, ArrowUp, ArrowDown, Info, ShieldAlert, Award, Plus, RefreshCw, Shield, Activity, Target, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -94,6 +94,9 @@ export default function MyFantasyTeamPage() {
   const [registrationInfo, setRegistrationInfo] = useState<any>(null);
   const [isRegistering, setIsRegistering] = useState(false);
 
+  const [draftSettings, setDraftSettings] = useState<any | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+
   useEffect(() => {
     const loadFantasyTeam = async () => {
       if (!user) return;
@@ -120,9 +123,10 @@ export default function MyFantasyTeamPage() {
         setRecentRounds(data.recent_rounds || []);
         setLeagueId(data.team.fantasy_league_id);
 
-        // Load other teams
+        // Load other teams and draft settings
         if (data.team.fantasy_league_id) {
           loadOtherTeams(data.team.fantasy_league_id, data.team.id);
+          loadDraftSettings(data.team.fantasy_league_id);
         }
       } catch (error) {
         console.error('Error loading fantasy team:', error);
@@ -147,6 +151,46 @@ export default function MyFantasyTeamPage() {
     } catch (error) {
       console.error('Error loading other teams:', error);
     }
+  };
+
+  const loadDraftSettings = async (leagueId: string) => {
+    try {
+      const response = await fetchWithTokenRefresh(`/api/fantasy/draft/settings?league_id=${leagueId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setDraftSettings(data.settings);
+      }
+    } catch (error) {
+      console.error('Error loading draft settings:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (!draftSettings?.draft_closes_at) return;
+
+    const timer = setInterval(() => {
+      const closesAt = new Date(draftSettings.draft_closes_at).getTime();
+      const now = new Date().getTime();
+      const diff = closesAt - now;
+
+      if (diff <= 0) {
+        setTimeRemaining(0);
+        clearInterval(timer);
+      } else {
+        setTimeRemaining(diff);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [draftSettings]);
+
+  const formatTime = (ms: number) => {
+    if (ms <= 0) return 'Closed';
+    const totalSecs = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
+    return `${hours}h ${mins}m ${secs}s`;
   };
 
   const loadPlayerMatchStats = async (playerId: string) => {
@@ -289,6 +333,11 @@ export default function MyFantasyTeamPage() {
     );
   }
 
+  const activeSlotIndex = draftSettings?.category_settings?.active_slot_index 
+    ? Number(draftSettings.category_settings.active_slot_index) 
+    : null;
+  const activeSlot = draftSettings?.category_settings?.slots?.find((s: any) => s.slot_index === activeSlotIndex);
+
   return (
     <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
@@ -335,9 +384,9 @@ export default function MyFantasyTeamPage() {
             </div>
             <Link
               href="/dashboard/team/fantasy/draft"
-              className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-amber-500 hover:bg-amber-450 border border-amber-600 text-slate-900 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer sm:shrink-0 w-full sm:w-auto"
+              className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-amber-500 hover:bg-amber-450 border border-amber-600 text-slate-900 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer sm:shrink-0 w-full sm:w-auto font-black"
             >
-              <Plus className="w-3.5 h-3.5" /> Manage Squad
+              <Plus className="w-3.5 h-3.5" /> Enter Draft & Place Bids
             </Link>
           </div>
         </div>
@@ -439,6 +488,109 @@ export default function MyFantasyTeamPage() {
             </h4>
           </div>
         </div>
+
+        {/* Auction Details & Live Timer Card */}
+        {draftSettings && (
+          <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`text-[9px] uppercase px-2.5 py-0.5 rounded-lg font-black tracking-wider border ${
+                    draftSettings.draft_status === 'active' 
+                      ? 'bg-emerald-50 border-emerald-250 text-emerald-700' 
+                      : draftSettings.draft_status === 'pending'
+                      ? 'bg-amber-50 border-amber-250 text-amber-700 animate-pulse'
+                      : 'bg-slate-100 border-slate-200 text-slate-650'
+                  }`}>
+                    Draft Status: {draftSettings.draft_status.toUpperCase()}
+                  </span>
+                  {draftSettings.draft_status === 'active' && activeSlot && (
+                    <span className="text-[9px] uppercase bg-indigo-50 border border-indigo-200 text-indigo-700 px-2.5 py-0.5 rounded-lg font-black tracking-wider">
+                      Active Category: {activeSlot.name}
+                    </span>
+                  )}
+                  {fantasyTeam.draft_submitted && draftSettings.draft_status === 'active' && (
+                    <span className="text-[9px] uppercase bg-green-50 border border-green-200 text-green-700 px-2.5 py-0.5 rounded-lg font-black tracking-wider">
+                      Bids Locked & Submitted
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-base font-black text-slate-900 uppercase tracking-tight mt-1">
+                  {draftSettings.draft_status === 'active' 
+                    ? 'Live Blind Bid Draft in Progress' 
+                    : draftSettings.draft_status === 'pending'
+                    ? 'Upcoming Draft / Bidding Round'
+                    : 'Draft Completed & Rosters Locked'}
+                </h2>
+                <p className="text-[10px] text-slate-500 font-bold uppercase leading-normal">
+                  {draftSettings.draft_status === 'active' && activeSlot
+                    ? `Currently accepting bids for ${activeSlot.name} (Base price: ${activeSlot.base_price} credits). Click "Enter Draft & Place Bids" to manage your roster wishlist.`
+                    : draftSettings.draft_status === 'pending'
+                    ? 'Bidding is currently closed. Please wait for the tournament administrators to open the next round.'
+                    : 'The bidding phase has finished. All squads have been finalized based on the blind bids.'}
+                </p>
+              </div>
+
+              {/* Countdown / Status Display */}
+              {draftSettings.draft_status === 'active' && (
+                <div className="flex items-center gap-3 bg-slate-50 border border-slate-200/80 px-5 py-3 rounded-2xl shrink-0 self-start md:self-auto w-full md:w-auto">
+                  <Clock className="w-5 h-5 text-indigo-650 shrink-0" />
+                  <div>
+                    <span className="text-[8px] text-slate-400 uppercase font-black block">Time Remaining</span>
+                    <span className="text-sm font-black text-slate-800 uppercase mt-0.5 block">
+                      {formatTime(timeRemaining)}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Bidding Categories Overview */}
+            {draftSettings.category_settings?.slots && (
+              <div className="border-t border-slate-100 pt-4">
+                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-3">Bidding Categories Overview</span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                  {draftSettings.category_settings.slots.map((slot: any) => {
+                    const isActive = draftSettings.draft_status === 'active' && slot.slot_index === activeSlotIndex;
+                    const isCompleted = draftSettings.draft_status === 'completed' || (draftSettings.draft_status === 'active' && slot.slot_index < activeSlotIndex);
+                    const isUpcoming = draftSettings.draft_status === 'pending' || (draftSettings.draft_status === 'active' && slot.slot_index > activeSlotIndex);
+
+                    let statusText = 'Upcoming';
+                    let statusColorClass = 'text-slate-400 bg-slate-50 border-slate-100';
+                    if (isActive) {
+                      statusText = 'Active';
+                      statusColorClass = 'text-indigo-700 bg-indigo-50 border-indigo-200 font-black animate-pulse';
+                    } else if (isCompleted) {
+                      statusText = 'Finalized';
+                      statusColorClass = 'text-emerald-700 bg-emerald-50 border-emerald-150';
+                    }
+
+                    return (
+                      <div 
+                        key={slot.slot_index} 
+                        className={`p-3 border rounded-xl font-mono text-center flex flex-col justify-between min-h-[85px] transition-all ${
+                          isActive 
+                            ? 'border-indigo-400 ring-2 ring-indigo-50/80 bg-white shadow-sm' 
+                            : isCompleted 
+                            ? 'border-slate-200 bg-slate-50/30' 
+                            : 'border-slate-150 bg-white/50'
+                        }`}
+                      >
+                        <div>
+                          <p className="text-[9px] font-black text-slate-800 uppercase tracking-tight truncate">{slot.name}</p>
+                          <p className="text-[8px] text-slate-400 font-bold uppercase mt-0.5">Base: {slot.base_price}</p>
+                        </div>
+                        <div className={`mt-2 py-0.5 text-[8px] uppercase tracking-wider font-extrabold rounded-md border ${statusColorClass}`}>
+                          {statusText}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Supported Team (Passive Points) */}
         {fantasyTeam.supported_team_name && (

@@ -35,6 +35,7 @@ interface Player {
   real_player_id: string;
   player_name: string;
   real_team_name: string;
+  position: string;
   category: string;
   star_rating: number;
 }

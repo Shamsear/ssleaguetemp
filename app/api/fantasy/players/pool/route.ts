@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
         real_player_id,
         player_name,
         real_team_name,
+        position,
         category,
         star_rating,
         is_available
