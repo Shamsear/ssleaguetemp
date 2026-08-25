@@ -27,11 +27,6 @@ export async function GET(request: NextRequest) {
       LIMIT 1
     `;
 
-    console.log('🟡 Fetched from database:', {
-      draft_opens_at: leagues[0]?.draft_opens_at,
-      draft_closes_at: leagues[0]?.draft_closes_at
-    });
-
     if (leagues.length === 0) {
       return NextResponse.json({
         settings: null,
@@ -61,8 +56,8 @@ export async function GET(request: NextRequest) {
         season_name: league.season_name,
         season_id: league.season_id,
         draft_status: league.draft_status || 'pending',
-        draft_opens_at: leagues[0].draft_opens_at,
-        draft_closes_at: leagues[0].draft_closes_at,
+        draft_opens_at: null,
+        draft_closes_at: null,
         is_draft_active: league.draft_status === 'active',
         category_settings: categorySettings,
       },
@@ -88,8 +83,6 @@ export async function POST(request: NextRequest) {
       budget_per_team,
       min_squad_size,
       max_squad_size,
-      draft_opens_at,
-      draft_closes_at,
       category_settings,
     } = body;
 
@@ -108,8 +101,6 @@ export async function POST(request: NextRequest) {
         budget_per_team = ${budget_per_team || 500},
         min_squad_size = ${min_squad_size || 5},
         max_squad_size = ${max_squad_size || 7},
-        draft_opens_at = ${draft_opens_at || null},
-        draft_closes_at = ${draft_closes_at || null},
         category_settings = ${category_settings ? JSON.stringify(category_settings) : null},
         updated_at = NOW()
       WHERE league_id = ${fantasy_league_id}
@@ -130,8 +121,8 @@ export async function POST(request: NextRequest) {
         budget_per_team: Number(result[0].budget_per_team),
         min_squad_size: Number(result[0].min_squad_size),
         max_squad_size: Number(result[0].max_squad_size),
-        draft_opens_at: result[0].draft_opens_at,
-        draft_closes_at: result[0].draft_closes_at,
+        draft_opens_at: null,
+        draft_closes_at: null,
         category_settings: result[0].category_settings,
       },
     });

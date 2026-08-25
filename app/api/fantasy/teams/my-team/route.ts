@@ -354,14 +354,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fallback: check by team_id via Firebase (handles blank owner_uid from enable-all)
-    const teamsSnap = await adminDb.collection('teams')
-      .where('owner_uid', '==', user_id)
-      .limit(1)
-      .get();
-
+    // Fallback: check by team_id via Firebase (handles blank/wrong owner_uid from enable-all)
+    let firebaseTeamId: string | null = null;
+    let teamsSnap = await adminDb.collection('teams').where('owner_uid', '==', user_id).limit(1).get();
     if (!teamsSnap.empty) {
-      const firebaseTeamId = teamsSnap.docs[0].id;
+      firebaseTeamId = teamsSnap.docs[0].id;
+    } else {
+      teamsSnap = await adminDb.collection('teams').where('uid', '==', user_id).limit(1).get();
+      if (!teamsSnap.empty) {
+        firebaseTeamId = teamsSnap.docs[0].id;
+      }
+    }
+
+    if (firebaseTeamId) {
       const existingByTeamId = await fantasySql`
         SELECT * FROM fantasy_teams
         WHERE team_id = ${firebaseTeamId} AND league_id = ${finalLeagueId}
@@ -401,14 +406,22 @@ export async function POST(request: NextRequest) {
     if (!teamSeasonsQuery.empty) {
       teamDocId = teamSeasonsQuery.docs[0].data().team_id;
     } else {
-      // Fallback to teams collection
-      const teamsQuery = await adminDb.collection('teams')
+      // Fallback to teams collection (try owner_uid then uid field)
+      let teamsQuery = await adminDb.collection('teams')
         .where('owner_uid', '==', user_id)
         .limit(1)
         .get();
       
       if (!teamsQuery.empty) {
         teamDocId = teamsQuery.docs[0].id;
+      } else {
+        teamsQuery = await adminDb.collection('teams')
+          .where('uid', '==', user_id)
+          .limit(1)
+          .get();
+        if (!teamsQuery.empty) {
+          teamDocId = teamsQuery.docs[0].id;
+        }
       }
     }
     
