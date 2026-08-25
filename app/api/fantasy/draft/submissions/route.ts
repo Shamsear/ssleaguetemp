@@ -85,11 +85,13 @@ export async function GET(request: NextRequest) {
         slotSubMap.set(`${ss.team_id}_${ss.slot_index}`, { submitted_at: ss.submitted_at });
       }
     } catch {
-      // Table may not exist yet — fall back to draft_submitted
+      // Table may not exist yet — only mark slots where team has bids AND draft_submitted is true
       for (const t of teams) {
         if (t.draft_submitted) {
-          for (const [idx] of slotNameMap) {
-            slotSubMap.set(`${t.team_id}_${idx}`, { submitted_at: null });
+          const teamBids = teamBidsMap.get(t.team_id) || [];
+          const bidSlots = new Set(teamBids.map((b: any) => b.slot_index));
+          for (const slotIdx of bidSlots) {
+            slotSubMap.set(`${t.team_id}_${slotIdx}`, { submitted_at: null });
           }
         }
       }

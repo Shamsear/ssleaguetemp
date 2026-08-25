@@ -156,70 +156,48 @@ export async function POST(request: NextRequest) {
       const slotIdx = slot.slot_index;
       const slotBids = allBids.filter((b: any) => b.slot_index === slotIdx);
 
-      const bidsByTarget = new Map<string, any[]>();
-      slotBids.forEach((bid: any) => {
-        if (!bidsByTarget.has(bid.target_id)) {
-          bidsByTarget.set(bid.target_id, []);
+      // Correct algorithm: sort ALL bids highest-to-lowest, allocate greedily
+      const allBidsSorted = [...slotBids].sort((a: any, b: any) => {
+        if (Number(b.bid_amount) !== Number(a.bid_amount)) {
+          return Number(b.bid_amount) - Number(a.bid_amount);
         }
-        bidsByTarget.get(bid.target_id)!.push(bid);
+        return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
       });
 
       const slotWinners: any[] = [];
+      const teamsWithWin = new Set<string>();
 
-      for (const [targetId, targetBids] of bidsByTarget.entries()) {
-        if (awardedTargets.has(targetId)) {
-          continue;
-        }
+      for (const bid of allBidsSorted) {
+        const targetId = bid.target_id;
+        const teamId = bid.team_id;
+        const bidAmt = Number(bid.bid_amount);
 
-        const sortedBids = [...targetBids].sort((a: any, b: any) => {
-          if (Number(b.bid_amount) !== Number(a.bid_amount)) {
-            return Number(b.bid_amount) - Number(a.bid_amount);
-          }
-          return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
+        if (awardedTargets.has(targetId)) continue;
+        if (teamsWithWin.has(teamId)) continue;
+        if ((teamBudgets.get(teamId) || 0) < bidAmt) continue;
+        if (teamFilledSlots.get(teamId)?.has(slotIdx)) continue;
+
+        // This bid wins!
+        teamBudgets.set(teamId, teamBudgets.get(teamId)! - bidAmt);
+        teamFilledSlots.get(teamId)!.add(slotIdx);
+        awardedTargets.add(targetId);
+        teamsWithWin.add(teamId);
+
+        slotWinners.push({
+          team_id: teamId,
+          team_name: teamNames.get(teamId) || teamId,
+          target_id: targetId,
+          target_name: targetId,
+          bid_type: bid.bid_type,
+          bid_amount: bidAmt
         });
 
-        let wonBid = null;
-        for (const bid of sortedBids) {
-          const teamId = bid.team_id;
-          const bidAmt = Number(bid.bid_amount);
-
-          if (teamFilledSlots.get(teamId)!.has(slotIdx)) {
-            continue;
-          }
-
-          const currentBudget = teamBudgets.get(teamId)!;
-          if (currentBudget < bidAmt) {
-            continue;
-          }
-
-          wonBid = bid;
-          break;
+        if (bid.bid_type === 'player') {
+          totalPlayersDrafted++;
+        } else {
+          totalTeamsDrafted++;
         }
-
-        if (wonBid) {
-          const teamId = wonBid.team_id;
-          const bidAmt = Number(wonBid.bid_amount);
-
-          teamBudgets.set(teamId, teamBudgets.get(teamId)! - bidAmt);
-          teamFilledSlots.get(teamId)!.add(slotIdx);
-          awardedTargets.add(targetId);
-
-          slotWinners.push({
-            team_id: teamId,
-            team_name: teamNames.get(teamId) || teamId,
-            target_id: targetId,
-            target_name: targetId,
-            bid_type: wonBid.bid_type,
-            bid_amount: bidAmt
-          });
-
-          if (wonBid.bid_type === 'player') {
-            totalPlayersDrafted++;
-          } else {
-            totalTeamsDrafted++;
-          }
-          totalBudgetSpent += bidAmt;
-        }
+        totalBudgetSpent += bidAmt;
       }
 
       resultsBySlot.push({

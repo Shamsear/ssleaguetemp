@@ -163,6 +163,37 @@ export async function GET(request: NextRequest) {
       console.log('Could not fetch team logos:', e);
     }
 
+    // 9. Fetch all player names for resolving target_ids
+    const allPlayerIds = allBids.filter((b: any) => b.bid_type === 'player').map((b: any) => b.target_id);
+    const uniquePlayerIds = [...new Set(allPlayerIds)];
+    const playerNameMap = new Map<string, string>();
+    if (uniquePlayerIds.length > 0) {
+      const players = await fantasySql`
+        SELECT real_player_id, player_name FROM fantasy_players
+        WHERE league_id = ${league_id} AND real_player_id = ANY(${uniquePlayerIds})
+      `;
+      for (const p of players) playerNameMap.set(p.real_player_id, p.player_name);
+    }
+
+    // Also fetch team names for real_team bids
+    const allTeamIds = allBids.filter((b: any) => b.bid_type === 'real_team').map((b: any) => b.target_id);
+    const uniqueTeamIds = [...new Set(allTeamIds)];
+    const realTeamNameMap = new Map<string, string>();
+    if (uniqueTeamIds.length > 0) {
+      try {
+        const { adminDb } = await import('@/lib/neon/admin-db-wrapper');
+        for (const tid of uniqueTeamIds) {
+          const doc = await adminDb.collection('teams').doc(tid).get();
+          if (doc.exists) realTeamNameMap.set(tid, doc.data()?.team_name || tid);
+        }
+      } catch {}
+    }
+
+    const resolveTargetName = (targetId: string, bidType: string) => {
+      if (bidType === 'player') return playerNameMap.get(targetId) || targetId;
+      return realTeamNameMap.get(targetId) || targetId;
+    };
+
     // Build per-slot detailed data
     const slotResults = slots.map((slot: any) => {
       const slotIdx = slot.slot_index;
@@ -180,7 +211,7 @@ export async function GET(request: NextRequest) {
       // Build targets with their bids
       const targets = Array.from(bidsByTarget.entries()).map(([targetId, targetBids]) => ({
         target_id: targetId,
-        target_name: targetId,
+        target_name: resolveTargetName(targetId, targetBids[0]?.bid_type || 'player'),
         bid_type: targetBids[0]?.bid_type || 'player',
         total_bids: targetBids.length,
         bids: targetBids.map((b: any) => ({
@@ -195,8 +226,27 @@ export async function GET(request: NextRequest) {
         })).sort((a: any, b: any) => b.bid_amount - a.bid_amount),
       }));
 
-      // Winning bids from preview
-      const winningBids = preview?.results_by_slot?.[0]?.winning_bids || [];
+      // Winning bids from preview — resolve target names
+      const rawWinningBids = preview?.results_by_slot?.[0]?.winning_bids || [];
+      const winningBids = rawWinningBids.map((w: any) => ({
+        ...w,
+        target_name: resolveTargetName(w.target_id, w.bid_type),
+      }));
+
+      // Build all targets with win/loss status for preview
+      const allTargetResults = targets.map(t => {
+        const isWinner = winningBids.some((w: any) => w.target_id === t.target_id);
+        const winnerBid = winningBids.find((w: any) => w.target_id === t.target_id);
+        return {
+          target_id: t.target_id,
+          target_name: t.target_name,
+          bid_type: t.bid_type,
+          total_bids: t.total_bids,
+          status: isWinner ? 'won' : (t.bids.some((b: any) => b.status === 'lost') ? 'lost' : 'pending'),
+          winning_bid: winnerBid || null,
+          bids: t.bids,
+        };
+      });
 
       // Final awarded for this slot
       const finalAwarded = finalSquad
@@ -239,6 +289,7 @@ export async function GET(request: NextRequest) {
         targets,
         preview: preview ? {
           winning_bids: winningBids,
+          all_targets: allTargetResults,
           total_players_drafted: preview.total_players_drafted || 0,
           total_teams_drafted: preview.total_teams_drafted || 0,
           total_budget_spent: preview.total_budget_spent || 0,

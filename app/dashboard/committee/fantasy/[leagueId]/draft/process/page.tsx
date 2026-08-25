@@ -291,10 +291,16 @@ function SlotRoundCard({ slot, round, onAction, onToggleFinalization, onPreview,
                           <span>Total: {preview.total_budget_spent} Cr</span>
                         </div>
                       </div>
-                      <button onClick={() => onApply(slot.slot_index)}
-                        className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm">
-                        ✓ Close & Finalize Slot {slot.slot_index}
-                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={() => onPreview(slot.slot_index)}
+                          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm">
+                          🔄 Re-Preview
+                        </button>
+                        <button onClick={() => onApply(slot.slot_index)}
+                          className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm">
+                          ✓ Close & Finalize Slot {slot.slot_index}
+                        </button>
+                      </div>
                     </>
                   ) : (
                     <button onClick={() => onPreview(slot.slot_index)}

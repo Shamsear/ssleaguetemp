@@ -415,35 +415,130 @@ export default function DraftDetailedResultsPage() {
                         <span className="text-[9px] text-blue-500 font-bold ml-auto">
                           {formatISTDisplay(currentSlot.preview.created_at)}
                         </span>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const res = await fetchWithTokenRefresh('/api/fantasy/draft/finalize', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ league_id: leagueId, slot_index: selectedSlot, action: 'preview' }),
+                              });
+                              const data = await res.json();
+                              if (!res.ok || !data.success) throw new Error(data.error || 'Preview failed');
+                              showAlert({ type: 'success', title: 'Preview Refreshed', message: `Slot ${selectedSlot} preview updated` });
+                              loadData();
+                            } catch (err: any) {
+                              showAlert({ type: 'error', title: 'Preview Failed', message: err.message });
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-[9px] font-black rounded-lg uppercase tracking-wider transition-colors"
+                        >
+                          🔄 Re-Preview
+                        </button>
                       </div>
 
-                      {currentSlot.preview.winning_bids.length > 0 ? (
+                      {/* All targets with win/loss status */}
+                      {currentSlot.preview.all_targets && currentSlot.preview.all_targets.length > 0 ? (
                         <div className="space-y-3">
-                          {currentSlot.preview.winning_bids.map((w: any, i: number) => (
-                            <div key={i} className="bg-white border border-blue-100 rounded-xl p-4 flex items-center justify-between">
+                          {currentSlot.preview.all_targets.map((t: any, i: number) => (
+                            <div key={i} className={`bg-white border rounded-xl p-4 flex items-center justify-between ${
+                              t.status === 'won' ? 'border-emerald-200' : t.status === 'lost' ? 'border-rose-200' : 'border-slate-200'
+                            }`}>
                               <div>
-                                <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
-                                  w.bid_type === 'player' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
-                                }`}>
-                                  {w.bid_type}
-                                </span>
-                                <h4 className="font-bold text-slate-800 text-xs uppercase mt-1">{w.target_name}</h4>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">
-                                  Awarded to: <span className="text-amber-600">{w.team_name}</span>
-                                </p>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
+                                    t.bid_type === 'player' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                                  }`}>
+                                    {t.bid_type}
+                                  </span>
+                                  <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
+                                    t.status === 'won' ? 'bg-emerald-100 text-emerald-700' :
+                                    t.status === 'lost' ? 'bg-rose-100 text-rose-700' :
+                                    'bg-slate-100 text-slate-600'
+                                  }`}>
+                                    {t.status === 'won' ? '✓ Won' : t.status === 'lost' ? '✗ Lost' : 'Pending'}
+                                  </span>
+                                </div>
+                                <h4 className="font-bold text-slate-800 text-xs uppercase mt-1">{t.target_name}</h4>
+                                {t.winning_bid && (
+                                  <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">
+                                    Awarded to: <span className="text-amber-600">{t.winning_bid.team_name}</span> for <span className="text-emerald-600">{t.winning_bid.bid_amount} Cr</span>
+                                  </p>
+                                )}
                               </div>
-                              <span className="font-black text-emerald-600 text-sm">{w.bid_amount} Cr</span>
+                              {t.winning_bid && (
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="font-black text-emerald-600 text-sm">{t.winning_bid.bid_amount} Cr</span>
+                                  {t.bid_type === 'player' && (
+                                    <button
+                                      onClick={() => downloadPlayerCard({
+                                        player_image: `/images/players/${t.target_id}.webp`,
+                                        player_name: t.target_name,
+                                        position: '',
+                                        real_team_name: '',
+                                        team_name: t.winning_bid.team_name,
+                                        team_logo: null,
+                                        purchase_price: t.winning_bid.bid_amount,
+                                      }, false)}
+                                      className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
+                                      title="Download card"
+                                    >
+                                      <Download className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-[10px] text-blue-500 font-bold uppercase text-center py-4">No winning bids in preview</p>
+                        <p className="text-[10px] text-blue-500 font-bold uppercase text-center py-4">No bids in preview</p>
                       )}
 
-                      <div className="flex gap-4 mt-4 pt-3 border-t border-blue-100 text-[10px] font-bold text-blue-600">
-                        <span>Players: {currentSlot.preview.total_players_drafted}</span>
-                        <span>Teams: {currentSlot.preview.total_teams_drafted}</span>
-                        <span>Budget: {currentSlot.preview.total_budget_spent} Cr</span>
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-blue-100">
+                        <div className="flex gap-4 text-[10px] font-bold text-blue-600">
+                          <span>Players: {currentSlot.preview.total_players_drafted}</span>
+                          <span>Teams: {currentSlot.preview.total_teams_drafted}</span>
+                          <span>Budget: {currentSlot.preview.total_budget_spent} Cr</span>
+                        </div>
+                        {currentSlot.preview.winning_bids.length > 0 && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                const winners = currentSlot.preview.all_targets.filter((t: any) => t.status === 'won' && t.bid_type === 'player');
+                                winners.forEach((t: any, i: number) => {
+                                  setTimeout(() => downloadPlayerCard({
+                                    player_image: `/images/players/${t.target_id}.webp`,
+                                    player_name: t.target_name,
+                                    position: '', real_team_name: '',
+                                    team_name: t.winning_bid.team_name, team_logo: null,
+                                    purchase_price: t.winning_bid.bid_amount,
+                                  }, false), i * 500);
+                                });
+                              }}
+                              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[9px] font-black rounded-lg uppercase tracking-wider transition-colors"
+                            >
+                              <Download className="w-3 h-3 inline mr-1" /> Download All
+                            </button>
+                            <button
+                              onClick={() => {
+                                const winners = currentSlot.preview.all_targets.filter((t: any) => t.status === 'won' && t.bid_type === 'player');
+                                winners.forEach((t: any, i: number) => {
+                                  setTimeout(() => downloadPlayerCard({
+                                    player_image: `/images/players/${t.target_id}.webp`,
+                                    player_name: t.target_name,
+                                    position: '', real_team_name: '',
+                                    team_name: t.winning_bid.team_name, team_logo: null,
+                                    purchase_price: t.winning_bid.bid_amount,
+                                  }, true), i * 500);
+                                });
+                              }}
+                              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-black rounded-lg uppercase tracking-wider transition-colors"
+                            >
+                              <Download className="w-3 h-3 inline mr-1" /> With Logo
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
