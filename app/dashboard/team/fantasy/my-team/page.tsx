@@ -303,7 +303,7 @@ export default function MyFantasyTeamPage() {
             <Trophy className="w-8 h-8" />
           </div>
           <h2 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">
-            {canRegister ? 'Join Fantasy League' : notEnabledMessage ? 'Registration Pending' : 'No Fantasy League Yet'}
+            {canRegister ? 'Join Fantasy League' : notEnabledMessage?.includes('disabled') ? 'Not Participating' : notEnabledMessage ? 'Registration Pending' : 'No Fantasy League Yet'}
           </h2>
           <p className="text-xs text-slate-455 font-bold uppercase leading-normal mb-6">
             {canRegister

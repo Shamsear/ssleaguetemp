@@ -109,16 +109,14 @@ export async function GET(request: NextRequest) {
             SELECT * FROM fantasy_teams
             WHERE team_id = ${firebaseTeamId} AND league_id = ${leagueId}
             LIMIT 1
-          `;
-          if (disabledCheck.length > 0) {
-            // Team IS registered but is_enabled = false — show pending message
+          `;          if (disabledCheck.length > 0) {
+            // Team IS registered but is_enabled = false — disabled by admin
             return NextResponse.json(
               { 
-                error: 'Fantasy team not yet enabled',
-                message: 'Your fantasy registration is pending committee approval.',
+                error: 'Fantasy team disabled',
+                message: 'Your fantasy participation has been disabled by the committee administrator. Contact them for details.',
                 can_register: false
-              },
-              { status: 404 }
+              }, { status: 404 }
             );
           }
         }

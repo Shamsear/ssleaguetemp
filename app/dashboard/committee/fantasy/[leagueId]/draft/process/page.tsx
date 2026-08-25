@@ -67,11 +67,36 @@ function SlotRoundCard({ slot, round, onAction, onToggleFinalization, onPreview,
   const status = round?.status || 'pending';
   const [opensInput, setOpensInput] = useState(formatISTForInput(round?.opens_at));
   const [closesInput, setClosesInput] = useState(formatISTForInput(round?.closes_at));
+  const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
     setOpensInput(formatISTForInput(round?.opens_at));
     setClosesInput(formatISTForInput(round?.closes_at));
   }, [round?.opens_at, round?.closes_at]);
+
+  // Live countdown for active rounds
+  useEffect(() => {
+    if (status !== 'active' || !round?.closes_at) {
+      setCountdown('');
+      return;
+    }
+    const tick = () => {
+      const closeTime = new Date(round.closes_at).getTime();
+      const diff = closeTime - Date.now();
+      if (diff <= 0) {
+        setCountdown('Closed');
+        return;
+      }
+      const totalSecs = Math.floor(diff / 1000);
+      const h = Math.floor(totalSecs / 3600);
+      const m = Math.floor((totalSecs % 3600) / 60);
+      const s = totalSecs % 60;
+      setCountdown(`${h}h ${m}m ${s}s`);
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [status, round?.closes_at]);
 
   const statusColor =
     status === 'active' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
@@ -80,6 +105,8 @@ function SlotRoundCard({ slot, round, onAction, onToggleFinalization, onPreview,
     'bg-slate-100 border-slate-200 text-slate-600';
 
   const isActive = status === 'active';
+  const isExpiredActiveManual = isActive && (round?.finalization_mode || 'auto') === 'manual' &&
+    round?.closes_at && new Date(round.closes_at).getTime() < Date.now();
 
   return (
     <div className={`border rounded-2xl transition-all ${isActive ? 'border-emerald-300 bg-emerald-50/30 shadow-sm' : expanded ? 'border-amber-300 bg-amber-50/20 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
@@ -89,14 +116,17 @@ function SlotRoundCard({ slot, round, onAction, onToggleFinalization, onPreview,
         className="w-full px-4 py-3 flex items-center justify-between cursor-pointer text-left"
       >
         <div className="flex items-center gap-3">
-          <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black ${isActive ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-amber-400'}`}>
+          <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black ${isActive ? 'bg-emerald-500 text-white animate-pulse' : 'bg-slate-800 text-amber-400'}`}>
             {slot.slot_index}
           </span>
           <div>
             <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">{slot.name}</h4>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-[9px] text-slate-400 font-bold">Base: {slot.base_price} Cr</span>
-              {round?.closes_at && (status === 'active' || status === 'pending') && (
+              {status === 'active' && countdown && (
+                <span className="text-[9px] font-black text-emerald-600">• ⏱ {countdown}</span>
+              )}
+              {status === 'pending' && round?.closes_at && (
                 <span className="text-[9px] text-slate-500 font-bold">• Closes: {formatISTDisplay(round.closes_at)} IST</span>
               )}
             </div>
@@ -115,6 +145,30 @@ function SlotRoundCard({ slot, round, onAction, onToggleFinalization, onPreview,
       {/* Expanded details */}
       {expanded && (
         <div className="px-4 pb-4 space-y-3 border-t border-slate-100 pt-3">
+          {/* Live countdown for active rounds */}
+          {status === 'active' && countdown && (
+            <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+              <span className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white shrink-0 animate-pulse">
+                <Clock className="w-4 h-4" />
+              </span>
+              <div>
+                <span className="text-[9px] font-black text-emerald-700 uppercase tracking-wider">Time Remaining</span>
+                <p className="text-lg font-black text-emerald-800 mt-0.5 font-mono">{countdown}</p>
+                <p className="text-[9px] text-emerald-600 font-bold uppercase">Closes at {formatISTDisplay(round.closes_at)} IST</p>
+              </div>
+            </div>
+          )}
+
+          {/* Auto-mode warning for active rounds */}
+          {status === 'active' && (round?.finalization_mode || 'auto') === 'auto' && (
+            <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span className="text-[9px] text-amber-700 font-bold uppercase">
+                ⚡ Auto mode — This round will finalize automatically when the timer expires. Switch to Manual to preview first.
+              </span>
+            </div>
+          )}
+
           {/* Timing inputs for pending/active */}
           {(status === 'pending' || status === 'active') && (
             <div className="grid grid-cols-2 gap-3">
@@ -165,7 +219,12 @@ function SlotRoundCard({ slot, round, onAction, onToggleFinalization, onPreview,
             )}
             {status === 'active' && (
               <>
-                <button onClick={() => onAction(slot.slot_index, 'close')}
+                <button onClick={() => {
+                  if ((round?.finalization_mode || 'auto') === 'auto') {
+                    if (!confirm('This round is in AUTO mode — it will be finalized immediately on close. Switch to Manual mode first if you want to preview results.')) return;
+                  }
+                  onAction(slot.slot_index, 'close');
+                }}
                   className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm">⏸ Close Round</button>
                 <button onClick={() => onAction(slot.slot_index, 'adjust', { opens_at: opensInput ? istToUTC(opensInput) : undefined, closes_at: closesInput ? istToUTC(closesInput) : undefined })}
                   className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm"><Clock className="w-3 h-3 inline mr-0.5" /> Adjust Time</button>
@@ -177,8 +236,8 @@ function SlotRoundCard({ slot, round, onAction, onToggleFinalization, onPreview,
             )}
           </div>
 
-          {/* Finalization controls for closed rounds */}
-          {status === 'closed' && (
+          {/* Finalization controls for closed rounds or expired active manual rounds */}
+          {(status === 'closed' || isExpiredActiveManual) && (
             <div className="mt-3 pt-3 border-t border-slate-100">
               {(round?.finalization_mode || 'auto') === 'auto' ? (
                 <div className="flex items-center gap-2">
@@ -256,7 +315,6 @@ export default function ProcessDraftPage() {
   const [totalTeams, setTotalTeams] = useState(0);
   const [submittedCount, setSubmittedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [draftStatus, setDraftStatus] = useState<string>('pending');
   const [slots, setSlots] = useState<any[]>([]);
@@ -264,8 +322,7 @@ export default function ProcessDraftPage() {
   const [opensAt, setOpensAt] = useState('');
   const [closesAt, setClosesAt] = useState('');
 
-  const [previewResults, setPreviewResults] = useState<any>(null);
-  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+
   const [addTimeMinutes, setAddTimeMinutes] = useState<string>('10');
   const [draftRounds, setDraftRounds] = useState<any[]>([]);
   const [expandedSlotIndex, setExpandedSlotIndex] = useState<number | null>(null);
@@ -323,6 +380,7 @@ export default function ProcessDraftPage() {
 
   // Auto-refresh: poll every 10s while a round is active or pending
   // Also triggers auto-finalize for rounds past their closes_at in auto mode
+  // And auto-closes manual rounds past their closes_at
   useEffect(() => {
     if (!user || !leagueId) return;
     const hasActiveOrPending = draftRounds.some((r: any) => r.status === 'active' || r.status === 'pending' || r.status === 'closed');
@@ -336,12 +394,27 @@ export default function ProcessDraftPage() {
       if (needsAutoFinalize) {
         try {
           await fetchWithTokenRefresh('/api/fantasy/draft/auto-finalize', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST',            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ league_id: leagueId }),
           });
         } catch (err) {
           console.error('Auto-finalize check failed:', err);
+        }
+      }
+      // Auto-close manual rounds past their closes_at so admin can preview & finalize
+      const expiredManualRounds = draftRounds.filter((r: any) =>
+        r.status === 'active' && (r.finalization_mode || 'auto') === 'manual' &&
+        r.closes_at && new Date(r.closes_at).getTime() < Date.now()
+      );
+      for (const r of expiredManualRounds) {
+        try {
+          await fetchWithTokenRefresh('/api/fantasy/draft/rounds', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ league_id: leagueId, slot_index: r.slot_index, action: 'close' }),
+          });
+        } catch (err) {
+          console.error('Auto-close manual round failed:', err);
         }
       }
       loadSubmissions(true);
@@ -419,45 +492,7 @@ export default function ProcessDraftPage() {
     }
   };
 
-  const handleFinalize = async () => {
-    if (!confirm('Are you sure you want to finalize the fantasy draft round? All submissions will be locked, bids will be processed sequentially, and squads will be awarded. This action CANNOT be undone!')) {
-      return;
-    }
 
-    setIsProcessing(true);
-    setResults(null);
-
-    try {
-      const response = await fetchWithTokenRefresh('/api/fantasy/draft/finalize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ league_id: leagueId })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to finalize draft');
-      }
-
-      setResults(data);
-      showAlert({
-        type: 'success',
-        title: 'Draft Finalized!',
-        message: `Successfully processed draft. Assigned ${data.total_players_drafted} players and ${data.total_teams_drafted} real teams!`,
-      });
-      loadSubmissions();
-    } catch (err: any) {
-      console.error('Error finalising draft:', err);
-      showAlert({
-        type: 'error',
-        title: 'Finalization Failed',
-        message: err.message || 'An error occurred during draft finalization.',
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const handleToggleRoundFinalization = async (slotIndex: number) => {
     const round = draftRounds.find((r: any) => r.slot_index === slotIndex);
@@ -487,40 +522,6 @@ export default function ProcessDraftPage() {
       }
     } catch (err: any) {
       showAlert({ type: 'error', title: 'Update Failed', message: err.message });
-    }
-  };
-
-  const handlePreview = async () => {
-    setIsLoadingPreview(true);
-    setPreviewResults(null);
-    try {
-      const response = await fetchWithTokenRefresh('/api/fantasy/draft/preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ league_id: leagueId })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to generate preview');
-      }
-
-      setPreviewResults(data);
-      showAlert({
-        type: 'success',
-        title: 'Preview Generated!',
-        message: `Preview shows ${data.total_players_drafted} players and ${data.total_teams_drafted} teams would be awarded.`,
-      });
-    } catch (err: any) {
-      console.error('Error generating preview:', err);
-      showAlert({
-        type: 'error',
-        title: 'Preview Failed',
-        message: err.message || 'An error occurred while generating preview.',
-      });
-    } finally {
-      setIsLoadingPreview(false);
     }
   };
 
@@ -636,42 +637,15 @@ export default function ProcessDraftPage() {
           </div>
         </div>
 
-        {/* Actions panel */}
-        <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-4">
-          <div>
-            <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-1">Resolve Draft Bids</h2>
-            <p className="text-[10px] text-slate-450 font-bold uppercase leading-normal">
-              Each slot round has its own finalization mode (Auto/Manual). When a slot is closed in Auto mode, bids are processed immediately. In Manual mode, use Preview + Finalize below.
+        {/* Submission warning */}
+        {submittedCount < totalTeams && draftStatus !== 'pending' && (
+          <div className="console-card bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <p className="text-[10px] text-amber-700 font-bold uppercase">
+              {totalTeams - submittedCount} team(s) have not submitted their bids yet. They can still submit until the round closes.
             </p>
           </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 items-center pt-2">
-            <button
-              onClick={handlePreview}
-              disabled={isLoadingPreview}
-              className="w-full sm:w-auto px-6 py-3.5 bg-blue-600 border border-blue-700 hover:bg-blue-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-            >
-              <Play className="w-4 h-4" />
-              {isLoadingPreview ? 'Generating Preview...' : 'Preview Results'}
-            </button>
-            
-            <button
-              onClick={handleFinalize}
-              disabled={isProcessing}
-              className="w-full sm:w-auto px-6 py-3.5 bg-slate-800 border border-slate-900 hover:bg-slate-700 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-            >
-              <Play className="w-4 h-4 text-amber-400" />
-              {isProcessing ? 'Processing Draft Engine...' : 'Finalize Draft (Apply Changes)'}
-            </button>
-
-            {submittedCount < totalTeams && draftStatus !== 'pending' && (
-              <span className="text-[10px] text-amber-600 font-bold uppercase flex items-center gap-1.5 leading-tight">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                Warning: {totalTeams - submittedCount} teams have not submitted/locked their draft lists yet.
-              </span>
-            )}
-          </div>
-        </div>
+        )}
 
         {/* Team Checklist */}
         <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-sm overflow-hidden">
@@ -708,100 +682,6 @@ export default function ProcessDraftPage() {
             ))}
           </div>
         </div>
-
-        {/* Preview Results display (shows when preview is generated, not applied) */}
-        {previewResults && previewResults.is_preview && (
-          <div className="console-card bg-blue-50 border-2 border-blue-200 rounded-3xl p-6 shadow-lg space-y-6">
-            <div className="flex items-center justify-between border-b border-blue-200 pb-3">
-              <div>
-                <h2 className="text-xs font-black text-blue-900 uppercase tracking-wider flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-blue-600 text-white rounded text-[8px]">PREVIEW</span>
-                  Draft Resolution Preview
-                </h2>
-                <p className="text-[9px] text-blue-700 font-bold uppercase mt-1">⚠️ No changes have been applied - this is a preview only</p>
-              </div>
-              <button
-                onClick={() => setPreviewResults(null)}
-                className="text-blue-600 hover:text-blue-800 font-bold text-xs"
-              >
-                ✕ Close
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="bg-white border border-blue-200 p-4 rounded-2xl text-center">
-                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider">Players to Award</span>
-                <h4 className="text-lg font-black text-blue-900 mt-1">{previewResults.total_players_drafted}</h4>
-              </div>
-              <div className="bg-white border border-blue-200 p-4 rounded-2xl text-center">
-                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider">Teams to Award</span>
-                <h4 className="text-lg font-black text-blue-900 mt-1">{previewResults.total_teams_drafted}</h4>
-              </div>
-              <div className="bg-white border border-blue-200 p-4 rounded-2xl text-center">
-                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider">Budget to Spend</span>
-                <h4 className="text-lg font-black text-blue-900 mt-1">{previewResults.total_budget_spent} Cr</h4>
-              </div>
-              <div className="bg-white border border-blue-200 p-4 rounded-2xl text-center">
-                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider">Avg Squad Size</span>
-                <h4 className="text-lg font-black text-blue-900 mt-1">{previewResults.average_squad_size.toFixed(1)}</h4>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {previewResults.results_by_slot.map((slot: any) => (
-                <div key={slot.slot_index} className="border border-blue-200 bg-white rounded-2xl p-5 shadow-sm space-y-4">
-                  <h3 className="font-black text-blue-900 border-b border-blue-150 pb-2 mb-3 text-[11px] uppercase flex justify-between">
-                    <span>{slot.slot_name}</span>
-                    <span className="text-[9px] text-blue-700 font-black">{slot.winners} would win / {slot.total_bids} bids</span>
-                  </h3>
-                  {slot.winning_bids.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {slot.winning_bids.map((win: any) => (
-                        <div key={win.target_id} className="bg-blue-50 border border-blue-150 p-3.5 rounded-xl flex items-center justify-between shadow-sm">
-                          <div>
-                            <span className="text-[9px] font-black text-blue-600 uppercase tracking-wider">{win.bid_type === 'player' ? 'Player' : 'Real Team'}</span>
-                            <h4 className="font-bold text-blue-900 text-xs mt-0.5 uppercase">{win.target_id}</h4>
-                            <p className="text-[9px] text-blue-700 font-bold uppercase mt-1">Would go to: {win.team_name}</p>
-                          </div>
-                          <span className="font-black text-blue-700 text-xs">{win.bid_amount} Credits</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-[10px] text-blue-600 font-bold uppercase italic">No bids would be resolved for this slot.</p>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="bg-white border border-blue-200 rounded-xl p-4">
-              <h3 className="text-xs font-black text-blue-900 uppercase mb-3">Team Impact Preview</h3>
-              <div className="space-y-2">
-                {previewResults.team_previews?.map((team: any) => (
-                  <div key={team.team_id} className="flex items-center justify-between p-2 bg-blue-50 rounded-lg">
-                    <span className="text-xs font-bold text-blue-900">{team.team_name}</span>
-                    <div className="flex items-center gap-4 text-[10px] font-bold">
-                      <span className="text-emerald-700">+{team.players_won} players</span>
-                      <span className="text-rose-700">-{team.budget_spent} Cr</span>
-                      <span className="text-blue-700">{team.projected_budget} Cr left</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-black text-amber-900 uppercase">Preview Mode</h4>
-                <p className="text-[10px] text-amber-800 font-bold mt-1">
-                  This is a preview calculation only. No changes have been saved to the database. 
-                  Click "Finalize Draft" to apply these changes permanently.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Results display */}
         {results && results.success && (

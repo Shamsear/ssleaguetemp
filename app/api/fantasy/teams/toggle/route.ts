@@ -62,17 +62,21 @@ export async function POST(request: NextRequest) {
       `;
       
       if (existingTeams.length > 0) {
-        // Update existing team
+        // Re-enable: reset to fresh state (clean budget, no old data)
         await fantasySql`
           UPDATE fantasy_teams
           SET is_enabled = true,
               owner_uid = ${ownerUid},
               owner_name = ${ownerName},
               league_id = ${league_id},
+              budget_remaining = ${budgetPerTeam},
+              draft_submitted = false,
+              supported_team_id = NULL,
+              supported_team_name = NULL,
               updated_at = CURRENT_TIMESTAMP
           WHERE team_id = ${team_id}
         `;
-        console.log(`✅ ${teamName} - fantasy re-enabled (existing record updated)`);
+        console.log(`✅ ${teamName} - fantasy re-enabled (fresh start with ${budgetPerTeam} Cr budget)`);
       } else {
         // Create new fantasy team in PostgreSQL
         await fantasySql`
@@ -101,15 +105,41 @@ export async function POST(request: NextRequest) {
         console.log(`✅ ${teamName} - fantasy enabled (new record created)`);
       }
     } else {
-      // Disable fantasy team
+      // Disable fantasy team — clean up ALL their draft data
+      // 1. Delete their bids
+      await fantasySql`
+        DELETE FROM fantasy_draft_bids
+        WHERE team_id = ${team_id} AND league_id = ${league_id}
+      `;
+      console.log(`  🗑️ Deleted bids for ${teamName}`);
+
+      // 2. Delete their squad entries
+      await fantasySql`
+        DELETE FROM fantasy_squad
+        WHERE team_id = ${team_id} AND league_id = ${league_id}
+      `;
+      console.log(`  🗑️ Deleted squad entries for ${teamName}`);
+
+      // 3. Un-draft any players they had won (make them available again)
+      await fantasySql`
+        UPDATE fantasy_players
+        SET drafted_by_team_id = NULL, current_price = 0, is_available = true
+        WHERE drafted_by_team_id = ${team_id} AND league_id = ${league_id}
+      `;
+      console.log(`  🔄 Released drafted players for ${teamName}`);
+
+      // 4. Reset their budget and clear supported team
       await fantasySql`
         UPDATE fantasy_teams
         SET is_enabled = false,
+            budget_remaining = ${budgetPerTeam},
+            draft_submitted = false,
+            supported_team_id = NULL,
+            supported_team_name = NULL,
             updated_at = CURRENT_TIMESTAMP
         WHERE team_id = ${team_id}
       `;
-
-      console.log(`❌ ${teamName} - fantasy disabled`);
+      console.log(`❌ ${teamName} - fantasy disabled and all data cleaned up`);
     }
 
     return NextResponse.json({
