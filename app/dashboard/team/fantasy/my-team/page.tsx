@@ -562,7 +562,7 @@ export default function MyFantasyTeamPage() {
               <div className="border-t border-slate-100 pt-4">
                 <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-3">Bidding Categories Overview</span>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-                  {draftSettings.category_settings.slots.map((slot: any) => {
+                  {[...(draftSettings.category_settings.slots)].sort((a: any, b: any) => a.slot_index - b.slot_index).map((slot: any) => {
                     const isActive = draftSettings.draft_status === 'active' && activeSlotIndex !== null && slot.slot_index === activeSlotIndex;
                     const isCompleted = draftSettings.draft_status === 'completed' || (draftSettings.draft_status === 'active' && activeSlotIndex !== null && slot.slot_index < activeSlotIndex);
                     const isUpcoming = draftSettings.draft_status === 'pending' || (draftSettings.draft_status === 'active' && (activeSlotIndex === null || slot.slot_index > activeSlotIndex));

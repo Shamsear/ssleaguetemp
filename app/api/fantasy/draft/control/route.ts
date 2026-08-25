@@ -52,6 +52,10 @@ export async function POST(request: NextRequest) {
       categorySettings.active_slot_index = Number(active_slot_index);
     }
 
+    // Get current draft status to detect status transitions
+    const currentStatus = currentLeagues[0]?.draft_status || 'pending';
+    const isTransitioningToActive = draft_status === 'active' && currentStatus !== 'active';
+
     // Build transaction queries array
     const queries: any[] = [
       fantasySql`
@@ -67,7 +71,9 @@ export async function POST(request: NextRequest) {
       `
     ];
 
-    if (draft_status === 'active') {
+    // Only reset bids/locks when STARTING a new round (transitioning TO active)
+    // Not when just updating the close time on an already-active round
+    if (isTransitioningToActive) {
       // Reset team submission lock for the current round
       queries.push(fantasySql`
         UPDATE fantasy_teams
@@ -112,7 +118,8 @@ export async function POST(request: NextRequest) {
     try {
       const leagueData = result[0];
       
-      if (draft_status === 'active') {
+      // Only trigger news/notifications on actual status transitions
+      if (draft_status === 'active' && currentStatus !== 'active') {
         // Trigger news
         await triggerNews('fantasy_opened', {
           season_id: leagueData.season_id,
@@ -134,7 +141,7 @@ export async function POST(request: NextRequest) {
           { allUsers: true }
         );
         console.log('📬 Fantasy draft opening notification sent');
-      } else if (draft_status === 'closed') {
+      } else if (draft_status === 'closed' && currentStatus !== 'closed') {
         // Trigger news
         await triggerNews('fantasy_draft_complete', {
           season_id: leagueData.season_id,

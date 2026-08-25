@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
           // Self-heal owner_uid
           await fantasySql`
             UPDATE fantasy_teams SET owner_uid = ${user_id}, updated_at = NOW()
-            WHERE team_id = ${firebaseTeamId} AND (owner_uid IS NULL OR owner_uid = '')
+            WHERE team_id = ${firebaseTeamId} AND owner_uid != ${user_id}
           `;
         }
       }
@@ -255,13 +255,36 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Get team
-    const teams = await fantasySql`
+    // Get team (with fallback for mismatched owner_uid)
+    let teams = await fantasySql`
       SELECT team_id, league_id 
       FROM fantasy_teams
       WHERE owner_uid = ${userId} AND is_enabled = true
       LIMIT 1
     `;
+
+    if (teams.length === 0) {
+      const { adminDb } = await import('@/lib/neon/admin-db-wrapper');
+      const teamsSnap = await adminDb.collection('teams')
+        .where('owner_uid', '==', userId)
+        .limit(1)
+        .get();
+      if (!teamsSnap.empty) {
+        const firebaseTeamId = teamsSnap.docs[0].id;
+        teams = await fantasySql`
+          SELECT team_id, league_id 
+          FROM fantasy_teams
+          WHERE team_id = ${firebaseTeamId} AND is_enabled = true
+          LIMIT 1
+        `;
+        if (teams.length > 0) {
+          await fantasySql`
+            UPDATE fantasy_teams SET owner_uid = ${userId}, updated_at = NOW()
+            WHERE team_id = ${firebaseTeamId} AND owner_uid != ${userId}
+          `;
+        }
+      }
+    }
 
     if (teams.length === 0) {
       return NextResponse.json(

@@ -43,6 +43,38 @@ export default function ProcessDraftPage() {
 
   const { alertState, showAlert, closeAlert } = useModal();
 
+  // --- IST helpers ---
+  const IST_TIMEZONE = 'Asia/Kolkata';
+
+  /** Convert a UTC ISO string to "YYYY-MM-DDTHH:MM" in IST for datetime-local inputs */
+  const formatISTForInput = (isoString?: string) => {
+    if (!isoString) return '';
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return '';
+    return new Intl.DateTimeFormat('sv-SE', {
+      timeZone: IST_TIMEZONE,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    }).format(d).replace(' ', 'T');
+  };
+
+  /** Convert an IST datetime-local string ("YYYY-MM-DDTHH:MM") to a UTC ISO string */
+  const istToUTC = (istDateTimeLocal: string): string => {
+    const [datePart, timePart] = istDateTimeLocal.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes] = timePart.split(':').map(Number);
+    const utcMs = Date.UTC(year, month - 1, day, hours, minutes) - (5.5 * 60 * 60 * 1000);
+    return new Date(utcMs).toISOString();
+  };
+
+  /** Format a UTC ISO string for human-readable IST display */
+  const formatISTDisplay = (isoOrLocal: string): string => {
+    if (!isoOrLocal) return '';
+    const d = new Date(isoOrLocal);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('en-IN', { timeZone: IST_TIMEZONE });
+  };
+
   const loadSubmissions = async () => {
     if (!leagueId) return;
     setIsLoading(true);
@@ -70,15 +102,8 @@ export default function ProcessDraftPage() {
           setSelectedSlotIndex(loadedSlots[0].slot_index);
         }
 
-        const formatForInput = (isoString?: string) => {
-          if (!isoString) return '';
-          const d = new Date(isoString);
-          if (isNaN(d.getTime())) return '';
-          const pad = (n: number) => n.toString().padStart(2, '0');
-          return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        };
-        setOpensAt(formatForInput(settingsData.settings?.draft_opens_at));
-        setClosesAt(formatForInput(settingsData.settings?.draft_closes_at));
+        setOpensAt(formatISTForInput(settingsData.settings?.draft_opens_at));
+        setClosesAt(formatISTForInput(settingsData.settings?.draft_closes_at));
       }
 
       // 3. Fetch league settings to get finalization mode
@@ -109,8 +134,8 @@ export default function ProcessDraftPage() {
 
       if (status === 'active') {
         body.active_slot_index = selectedSlotIndex;
-        body.draft_opens_at = opensAt ? new Date(opensAt).toISOString() : null;
-        body.draft_closes_at = closesAt ? new Date(closesAt).toISOString() : null;
+        body.draft_opens_at = opensAt ? istToUTC(opensAt) : null;
+        body.draft_closes_at = closesAt ? istToUTC(closesAt) : null;
       }
 
       const response = await fetchWithTokenRefresh('/api/fantasy/draft/control', {
@@ -269,14 +294,16 @@ export default function ProcessDraftPage() {
         return;
       }
 
-      const currentEnd = new Date(closesAt);
-      const newEnd = new Date(currentEnd.getTime() + (minutes * 60 * 1000));
+      // Treat closesAt as IST, compute new end, send UTC to API
+      const currentEndUTC = istToUTC(closesAt);
+      const newEnd = new Date(new Date(currentEndUTC).getTime() + (minutes * 60 * 1000));
 
       const response = await fetchWithTokenRefresh('/api/fantasy/draft/control', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           league_id: leagueId,
+          draft_status: draftStatus,
           draft_closes_at: newEnd.toISOString(),
         }),
       });
@@ -287,7 +314,8 @@ export default function ProcessDraftPage() {
         throw new Error(data.error || 'Failed to adjust time');
       }
 
-      setClosesAt(newEnd.toISOString().slice(0, 16)); // Format for datetime-local input
+      // Store back as IST for the datetime-local input
+      setClosesAt(formatISTForInput(newEnd.toISOString()));
       showAlert({
         type: 'success',
         title: minutes > 0 ? 'Time Added' : 'Time Reduced',
@@ -452,13 +480,13 @@ export default function ProcessDraftPage() {
               {opensAt && (
                 <div className="flex items-center gap-1.5 text-slate-500">
                   <span><Timer className="w-3 h-3 inline text-slate-500 mr-1" /> Opened At:</span>
-                  <span className="text-slate-700 font-bold">{new Date(opensAt).toLocaleString()}</span>
+                  <span className="text-slate-700 font-bold">{formatISTDisplay(istToUTC(opensAt))} IST</span>
                 </div>
               )}
               {closesAt && (
                 <div className="flex items-center gap-1.5 text-slate-500">
                   <span><Flag className="w-3 h-3 inline text-rose-500 mr-1" /> Deadline (Closes):</span>
-                  <span className="text-rose-600 font-black">{new Date(closesAt).toLocaleString()}</span>
+                  <span className="text-rose-600 font-black">{formatISTDisplay(istToUTC(closesAt))} IST</span>
                 </div>
               )}
             </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fantasySql } from '@/lib/neon/fantasy-config';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 /**
  * GET /api/fantasy/draft/bids/my-bids?user_id=xxx
@@ -17,13 +18,41 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 1. Get the fantasy team for this owner
-    const teams = await fantasySql`
+    // 1. Get the fantasy team for this owner (with fallback for mismatched owner_uid)
+    let teams = await fantasySql`
       SELECT team_id, league_id, budget_remaining, draft_submitted 
       FROM fantasy_teams
       WHERE owner_uid = ${userId} AND is_enabled = true
       LIMIT 1
     `;
+
+    // Fallback: if not found by owner_uid, try via Firebase team lookup (self-heal)
+    if (teams.length === 0) {
+      const userDoc = await adminDb.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        const teamsSnap = await adminDb.collection('teams')
+          .where('owner_uid', '==', userId)
+          .limit(1)
+          .get();
+
+        if (!teamsSnap.empty) {
+          const firebaseTeamId = teamsSnap.docs[0].id;
+          teams = await fantasySql`
+            SELECT team_id, league_id, budget_remaining, draft_submitted 
+            FROM fantasy_teams
+            WHERE team_id = ${firebaseTeamId} AND is_enabled = true
+            LIMIT 1
+          `;
+          if (teams.length > 0) {
+            await fantasySql`
+              UPDATE fantasy_teams
+              SET owner_uid = ${userId}, updated_at = NOW()
+              WHERE team_id = ${firebaseTeamId} AND owner_uid != ${userId}
+            `;
+          }
+        }
+      }
+    }
 
     if (teams.length === 0) {
       return NextResponse.json(

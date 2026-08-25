@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, DollarSign, Clock, CheckCircle, AlertTriangle, User, Shield, Info, Trash2, ArrowUp, ArrowDown, Save, Lock, ArrowLeft } from 'lucide-react';
+import { Search, DollarSign, Clock, CheckCircle, AlertTriangle, User, Shield, Info, Trash2, Save, Lock, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
@@ -318,11 +318,9 @@ export default function TeamDraftPage() {
       return;
     }
 
-    const nextPriority = slotBids.length + 1;
-
     const newBid: LocalBid = {
       slot_index: activeSlotIndex,
-      priority: nextPriority,
+      priority: 0, // Computed from bid amount on save
       target_id: targetId,
       target_name: name,
       bid_type: isPlayer ? 'player' : 'real_team',
@@ -335,18 +333,7 @@ export default function TeamDraftPage() {
   };
 
   const removeBid = (slotIndex: number, targetId: string) => {
-    const updatedBids = localBids
-      .filter(b => !(b.slot_index === slotIndex && b.target_id === targetId))
-      .map((b) => {
-        // Re-calculate priority for the remaining bids in this slot
-        if (b.slot_index === slotIndex) {
-          const slotBids = localBids.filter(x => x.slot_index === slotIndex && x.target_id !== targetId);
-          const index = slotBids.findIndex(x => x.target_id === b.target_id);
-          return { ...b, priority: index + 1 };
-        }
-        return b;
-      });
-
+    const updatedBids = localBids.filter(b => !(b.slot_index === slotIndex && b.target_id === targetId));
     setLocalBids(updatedBids);
     setHasUnsavedChanges(true);
   };
@@ -359,30 +346,6 @@ export default function TeamDraftPage() {
       return b;
     });
     setLocalBids(updatedBids);
-    setHasUnsavedChanges(true);
-  };
-
-  const handlePriorityChange = (slotIndex: number, targetId: string, direction: 'up' | 'down') => {
-    const slotBids = [...localBids.filter(b => b.slot_index === slotIndex)].sort((a, b) => a.priority - b.priority);
-    const index = slotBids.findIndex(b => b.target_id === targetId);
-
-    if (direction === 'up' && index > 0) {
-      // Swap with previous
-      const temp = slotBids[index].priority;
-      slotBids[index].priority = slotBids[index - 1].priority;
-      slotBids[index - 1].priority = temp;
-    } else if (direction === 'down' && index < slotBids.length - 1) {
-      // Swap with next
-      const temp = slotBids[index].priority;
-      slotBids[index].priority = slotBids[index + 1].priority;
-      slotBids[index + 1].priority = temp;
-    } else {
-      return; // No-op
-    }
-
-    // Merge back into main list
-    const otherBids = localBids.filter(b => b.slot_index !== slotIndex);
-    setLocalBids([...otherBids, ...slotBids].sort((a, b) => a.slot_index - b.slot_index || a.priority - b.priority));
     setHasUnsavedChanges(true);
   };
 
@@ -468,13 +431,28 @@ export default function TeamDraftPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: user!.uid,
-          bids: localBids.map(b => ({
-            slot_index: b.slot_index,
-            priority: b.priority,
-            target_id: b.target_id,
-            bid_type: b.bid_type,
-            bid_amount: b.bid_amount
-          })),
+          bids: (() => {
+            // Auto-assign priority based on bid amount (highest amount = priority 1)
+            const bySlot: Record<number, typeof localBids> = {};
+            localBids.forEach(b => {
+              if (!bySlot[b.slot_index]) bySlot[b.slot_index] = [];
+              bySlot[b.slot_index].push(b);
+            });
+            const result: any[] = [];
+            Object.values(bySlot).forEach(slotBids => {
+              const sorted = [...slotBids].sort((a, b) => b.bid_amount - a.bid_amount);
+              sorted.forEach((b, i) => {
+                result.push({
+                  slot_index: b.slot_index,
+                  priority: i + 1,
+                  target_id: b.target_id,
+                  bid_type: b.bid_type,
+                  bid_amount: b.bid_amount
+                });
+              });
+            });
+            return result;
+          })(),
           lock: lockSubmit
         })
       });
@@ -512,10 +490,9 @@ export default function TeamDraftPage() {
     if (localBids.length === 0 || !myTeam) return '';
     const slots = draftSettings?.category_settings?.slots || [];
     let msg = `*Fantasy Draft Bids*\n*Team:* ${myTeam.team_name}\n\n`;
-    slots.forEach((slot: Slot) => {
-      const slotBids = localBids
+    slots.forEach((slot: Slot) => {                  const slotBids = localBids
         .filter(b => b.slot_index === slot.slot_index)
-        .sort((a, b) => a.priority - b.priority);
+        .sort((a, b) => b.bid_amount - a.bid_amount);
       if (slotBids.length === 0) return;
       msg += `*${slot.name}*\n`;
       slotBids.forEach((bid, i) => {
@@ -823,7 +800,8 @@ export default function TeamDraftPage() {
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(draftSettings.category_settings?.slots || [])
+              {[...(draftSettings.category_settings?.slots || [])]
+                .sort((a, b) => a.slot_index - b.slot_index)
                 .filter(slot => {
                   if (activeSlot !== null) {
                     return slot.slot_index === activeSlot;
@@ -832,7 +810,7 @@ export default function TeamDraftPage() {
                 })
                 .map(slot => {
                   const isActive = slot.slot_index === activeSlotIndex;
-                  const slotBids = localBids.filter(b => b.slot_index === slot.slot_index).sort((a,b) => a.priority - b.priority);
+                  const slotBids = localBids.filter(b => b.slot_index === slot.slot_index).sort((a,b) => b.bid_amount - a.bid_amount);
 
                   return (
 
@@ -885,7 +863,11 @@ export default function TeamDraftPage() {
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-1.5 flex-wrap">
                                     <span className="text-[8px] uppercase font-black text-amber-650">
-                                      Priority {bid.priority}
+                                      Priority {(() => {
+                                        const slotBidsAll = localBids.filter(b => b.slot_index === slot.slot_index);
+                                        const sorted = [...slotBidsAll].sort((a, b) => b.bid_amount - a.bid_amount);
+                                        return sorted.findIndex(x => x.target_id === bid.target_id) + 1;
+                                      })()}
                                     </span>
                                     {isDuplicateAmount && (
                                       <span className="text-[8px] text-rose-500 font-extrabold uppercase px-1.5 py-0.2 bg-rose-50 border border-rose-100 rounded">
@@ -912,26 +894,6 @@ export default function TeamDraftPage() {
                                     min={slot.base_price}
                                     required
                                   />
-
-                                  {/* Priority controls */}
-                                  {!isSlotDisabled(slot.slot_index) && (
-                                    <div className="flex flex-col gap-0.5">
-                                      <button
-                                        onClick={() => handlePriorityChange(slot.slot_index, bid.target_id, 'up')}
-                                        disabled={bIndex === 0}
-                                        className="p-0.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded disabled:opacity-30"
-                                      >
-                                        <ArrowUp className="w-3 h-3" />
-                                      </button>
-                                      <button
-                                        onClick={() => handlePriorityChange(slot.slot_index, bid.target_id, 'down')}
-                                        disabled={bIndex === slotBids.length - 1}
-                                        className="p-0.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded disabled:opacity-30"
-                                      >
-                                        <ArrowDown className="w-3 h-3" />
-                                      </button>
-                                    </div>
-                                  )}
 
                                   {/* Delete button */}
                                   {!isSlotDisabled(slot.slot_index) && (

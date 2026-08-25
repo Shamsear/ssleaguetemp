@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
           await fantasySql`
             UPDATE fantasy_teams
             SET owner_uid = ${user_id}, updated_at = NOW()
-            WHERE team_id = ${firebaseTeamId} AND (owner_uid IS NULL OR owner_uid = '')
+            WHERE team_id = ${firebaseTeamId} AND owner_uid != ${user_id}
           `;
         }
       }

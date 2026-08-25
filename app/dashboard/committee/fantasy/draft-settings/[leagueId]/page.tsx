@@ -1,5 +1,5 @@
 'use client';
-import { DollarSign, Users, Calendar, Plus, Trash2, ListFilter, ShieldCheck, ArrowLeft, AlertCircle, RefreshCw, ArrowLeftRight, Settings, ClipboardList, Smartphone, AlertTriangle, X } from 'lucide-react';
+import { DollarSign, Users, Plus, Trash2, ListFilter, ShieldCheck, ArrowLeft, AlertCircle, RefreshCw, ArrowLeftRight, Settings, ClipboardList, Smartphone, AlertTriangle, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -188,14 +188,6 @@ export default function DraftSettingsPage() {
         const data = await settingsResponse.json();
         if (data.settings) {
           // Format ISO string dates to YYYY-MM-DDTHH:MM for datetime-local inputs
-          const formatForInput = (isoString?: string) => {
-            if (!isoString) return '';
-            const d = new Date(isoString);
-            if (isNaN(d.getTime())) return '';
-            const pad = (n: number) => n.toString().padStart(2, '0');
-            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-          };
-
           const defaultCategorySettings = {
             slots: [
               { slot_index: 1, name: 'Red Slot 1', list_id: 'red_list_1', base_price: 20 },
@@ -234,8 +226,8 @@ export default function DraftSettingsPage() {
             min_squad_size: data.settings.min_squad_size || 5,
             max_squad_size: data.settings.max_squad_size || 7,
             draft_status: data.settings.draft_status || 'pending',
-            draft_opens_at: formatForInput(data.settings.draft_opens_at),
-            draft_closes_at: formatForInput(data.settings.draft_closes_at),
+            draft_opens_at: '',
+            draft_closes_at: '',
             category_settings: categorySettings
           });
         }
@@ -314,23 +306,6 @@ export default function DraftSettingsPage() {
     setIsSaving(true);
 
     try {
-      // Validate dates
-      let opensAtIso = null;
-      let closesAtIso = null;
-
-      if (settings.draft_opens_at) {
-        const openDate = new Date(settings.draft_opens_at);
-        if (!isNaN(openDate.getTime())) {
-          opensAtIso = openDate.toISOString();
-        }
-      }
-      if (settings.draft_closes_at) {
-        const closeDate = new Date(settings.draft_closes_at);
-        if (!isNaN(closeDate.getTime())) {
-          closesAtIso = closeDate.toISOString();
-        }
-      }
-
       const response = await fetchWithTokenRefresh('/api/fantasy/draft/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -339,8 +314,6 @@ export default function DraftSettingsPage() {
           budget_per_team: settings.budget_per_team,
           min_squad_size: settings.min_squad_size,
           max_squad_size: settings.max_squad_size,
-          draft_opens_at: opensAtIso,
-          draft_closes_at: closesAtIso,
           category_settings: settings.category_settings
         }),
       });
@@ -771,34 +744,7 @@ export default function DraftSettingsPage() {
               </div>
             </div>
 
-            {/* Time Window */}
-            <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
-              <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-amber-500" />
-                Draft timeline (Bidding Window)
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-700 uppercase">Draft Window Opens At</label>
-                  <input
-                    type="datetime-local"
-                    value={settings.draft_opens_at}
-                    onChange={(e) => setSettings({ ...settings, draft_opens_at: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 bg-white shadow-sm text-xs font-bold uppercase"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-700 uppercase">Draft Window Closes At</label>
-                  <input
-                    type="datetime-local"
-                    value={settings.draft_closes_at}
-                    onChange={(e) => setSettings({ ...settings, draft_closes_at: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 bg-white shadow-sm text-xs font-bold uppercase"
-                  />
-                </div>
-              </div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase mt-3">Teams can only place, modify or lock bids while the current time is between these boundaries.</p>
-            </div>
+
           </div>
         )}
 
