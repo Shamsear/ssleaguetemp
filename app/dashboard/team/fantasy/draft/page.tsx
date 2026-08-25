@@ -28,6 +28,7 @@ interface DraftSettings {
     slots: Slot[];
     lists: Record<string, string[]>;
     max_bids_per_team?: number;
+    active_slot_index?: number | string;
   };
 }
 
