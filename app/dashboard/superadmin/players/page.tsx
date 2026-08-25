@@ -3,10 +3,8 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getAllRealPlayers, getRealPlayerStatistics, createRealPlayer } from '@/lib/firebase/realPlayers';
+
 import { RealPlayerData } from '@/types/realPlayer';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs } from 'firebase/firestore';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
 import AuthGuard from '@/components/auth/AuthGuard';
 
@@ -50,34 +48,31 @@ export default function PlayersManagement() {
         setError(null);
         
         // Fetch all players
-        const allPlayers = await getAllRealPlayers();
-        setPlayers(allPlayers);
-
-        // Calculate statistics
-        const playerStats = await getRealPlayerStatistics();
-        setStats({
-          totalPlayers: playerStats.totalPlayers,
-          registeredPlayers: allPlayers.filter(p => p.is_registered).length,
-          unregisteredPlayers: allPlayers.filter(p => !p.is_registered).length,
-        });
-
-        // Calculate players by season from realplayer collection (actual registrations)
         const [rpRes, seasonsRes] = await Promise.all([
           fetch('/api/realplayers'),
           fetch('/api/seasons')
         ]);
-        const realPlayerRegistrations = { docs: (await rpRes.json()).data || [] };
-        const seasonsSnapshot = { docs: (await seasonsRes.json()).data || [] };
+        const rpJson = await rpRes.json();
+        const allPlayers = rpJson.data || [];
+        setPlayers(allPlayers);
+        setStats({
+          totalPlayers: allPlayers.length,
+          registeredPlayers: allPlayers.filter((p: any) => p.is_registered).length,
+          unregisteredPlayers: allPlayers.filter((p: any) => !p.is_registered).length,
+        });
+
+        const seasonsJson = await seasonsRes.json();
+        const seasonsData = seasonsJson.data || [];
         
         // Create a map of season IDs to names
         const seasonNames = new Map<string, string>();
-        (seasonsSnapshot.docs || []).forEach((row: any) => {
+        (seasonsData || []).forEach((row: any) => {
           seasonNames.set(row.id, row.name || `Season ${row.id.replace('SSPSLS', '')}`);
         });
         
         const seasonMap = new Map<string, { name: string; players: Set<string> }>();
         
-        (realPlayerRegistrations.docs || []).forEach((data: any) => {
+        allPlayers.forEach((data: any) => {
           const seasonId = data.season_id;
           const playerId = data.player_id;
           
@@ -256,24 +251,27 @@ export default function PlayersManagement() {
     try {
       setAddingPlayer(true);
       
-      // Create player with only name (other fields will be assigned later)
-      await createRealPlayer({
-        name: playerName.trim(),
-      }, user?.uid);
+      // Create player via API
+      await fetch('/api/realplayers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: playerName.trim() }),
+      });
       
       // Clear form
       setPlayerName('');
       
       // Refresh players list
-      const allPlayers = await getAllRealPlayers();
+      const rpRes = await fetch('/api/realplayers');
+      const rpJson = await rpRes.json();
+      const allPlayers = rpJson.data || [];
       setPlayers(allPlayers);
       
       // Update statistics
-      const playerStats = await getRealPlayerStatistics();
       setStats({
-        totalPlayers: playerStats.totalPlayers,
-        registeredPlayers: allPlayers.filter(p => p.is_registered).length,
-        unregisteredPlayers: allPlayers.filter(p => !p.is_registered).length,
+        totalPlayers: allPlayers.length,
+        registeredPlayers: allPlayers.filter((p: any) => p.is_registered).length,
+        unregisteredPlayers: allPlayers.filter((p: any) => !p.is_registered).length,
       });
       
       // Recalculate seasons with players
@@ -311,8 +309,10 @@ export default function PlayersManagement() {
 
   const handleDownloadTemplate = async () => {
     try {
-      // Fetch all real players from Firestore
-      const allPlayers = await getAllRealPlayers();
+      // Fetch all real players from API
+      const rpRes = await fetch('/api/realplayers');
+      const rpJson = await rpRes.json();
+      const allPlayers = rpJson.data || [];
       
       let csvRows: string[];
       let filename: string;
@@ -633,14 +633,15 @@ export default function PlayersManagement() {
             onClick={async () => {
               setLoadingData(true);
               try {
-                const allPlayers = await getAllRealPlayers();
+                const rpRes = await fetch('/api/realplayers');
+                const rpJson = await rpRes.json();
+                const allPlayers = rpJson.data || [];
                 setPlayers(allPlayers);
                 
-                const playerStats = await getRealPlayerStatistics();
                 setStats({
-                  totalPlayers: playerStats.totalPlayers,
-                  registeredPlayers: allPlayers.filter(p => p.is_registered).length,
-                  unregisteredPlayers: allPlayers.filter(p => !p.is_registered).length,
+                  totalPlayers: allPlayers.length,
+                  registeredPlayers: allPlayers.filter((p: any) => p.is_registered).length,
+                  unregisteredPlayers: allPlayers.filter((p: any) => !p.is_registered).length,
                 });
                 
                 const seasonMap = new Map<string, { name: string; count: number }>();
