@@ -724,123 +724,31 @@ export default function TeamDraftPage() {
           </div>
         </div>
 
-        {/* Content split grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          
-          {/* LEFT AREA: Player Pool & Real Teams (Columns 1-7) */}
-          <div className="lg:col-span-7 flex flex-col space-y-4">
-            {(() => {
-              const slot = getActiveSlot();
-              if (!slot) return null;
-              const maxBidsLimit = draftSettings?.category_settings?.max_bids_per_team || 0;
-              return (
-                <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl flex items-center justify-between gap-4">
-                  <div>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Active Slot Selection Pool</span>
-                    <h3 className="text-base font-black text-slate-900 mt-0.5 uppercase">{slot.name}</h3>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">
-                      List ID: <code className="text-indigo-600 font-extrabold">{slot.list_id}</code> | Base Price: {slot.base_price} Credits | Max Bids Limit: <span className="text-amber-650 font-extrabold">{maxBidsLimit > 0 ? maxBidsLimit : 'No Limit'}</span>
-                    </p>
-                  </div>
-                  <div className="bg-slate-800 border border-slate-900 w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg text-amber-400 shadow-sm shrink-0">
-                    {slot.slot_index}
-                  </div>
-                </div>
-              );
-            })()}
+        {/* Content: single column — Slots first, then player pool below */}
+        <div className="flex flex-col space-y-6">
 
-            {/* Search bar */}
-            <div className="relative">
-              <span className="absolute left-4 top-3.5 text-slate-400">
-                <Search className="w-4.5 h-4.5" />
-              </span>
-              <input
-                type="text"
-                placeholder="Search by name, team, category..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-white border border-slate-250 rounded-xl text-xs font-bold uppercase text-slate-850 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
-              />
-            </div>
+          {/* ── ROSTER SLOTS BIDDING ── */}
+          <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
+            <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Roster Slots Bidding</h2>
 
-            {/* Available Targets Pool Card */}
-            <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden flex flex-col shadow-sm">
-              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 className="font-black text-slate-800 text-xs uppercase tracking-wider">Available Targets Pool</h3>
-                <span className="text-[9px] text-slate-500 font-bold uppercase">{getFilteredPool().length} items found</span>
+            {activeSlot !== null && activeSlotIndex !== activeSlot && (
+              <div className="mb-4 bg-amber-50 border border-amber-200 p-3.5 rounded-xl text-[10px] text-amber-700 font-bold uppercase flex items-center gap-2 leading-relaxed">
+                <Lock className="w-4 h-4 text-amber-500 shrink-0" />
+                This slot is locked. Bidding is currently active for Slot {activeSlot}: {draftSettings.category_settings?.slots.find(s => s.slot_index === activeSlot)?.name || `Slot ${activeSlot}`}.
               </div>
+            )}
 
-              <div className="overflow-y-auto max-h-[500px] divide-y divide-slate-100">
-                {getFilteredPool().map((item: any) => {
-                  const isRealTeam = !('real_player_id' in item);
-                  const itemId = isRealTeam ? item.team_uid : item.real_player_id;
-                  const name = isRealTeam ? item.team_name : item.player_name;
-                  const desc = isRealTeam ? 'Real Team' : `${item.real_team_name} | ${item.position}`;
-
-                  return (
-                    <div key={itemId} className="p-4 flex items-center justify-between hover:bg-slate-50/40 transition-colors gap-3">
-                      <div>
-                        <h4 className="font-bold text-slate-800 text-xs uppercase">{name}</h4>
-                        <p className="text-[9px] text-slate-450 font-bold uppercase mt-1">{desc}</p>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        {!isRealTeam && (
-                          <span className={`px-2 py-0.5 text-[8px] font-black rounded-lg border uppercase tracking-wider ${
-                            item.category === 'RED' ? 'bg-red-50 border-red-200 text-red-700' :
-                            item.category === 'BLUE' ? 'bg-blue-50 border-blue-200 text-blue-700' :
-                            item.category === 'BLACK' ? 'bg-zinc-100 border-zinc-200 text-zinc-700' :
-                            'bg-slate-50 border-slate-200 text-slate-650'
-                          }`}>
-                            {item.category}
-                          </span>
-                        )}
-                        
-                        <button
-                          onClick={() => addBidToSlot(itemId, name, !isRealTeam, item.real_team_name)}
-                          disabled={isBiddingLocked || isSlotDisabled(activeSlotIndex)}
-                          className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-750 disabled:opacity-40 text-amber-400 font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer border border-slate-900"
-                        >
-                          Select
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {getFilteredPool().length === 0 && (
-                  <div className="p-12 text-center text-slate-400 text-xs uppercase font-bold">
-                    <Info className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                    No matching targets in this slot's configuration list.
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT PANEL: Roster Slots & Bids Wishlist (Columns 8-12) */}
-          <div className="lg:col-span-5 flex flex-col space-y-4">
-            <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
-              <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Roster Slots Bidding</h2>
-
-              {activeSlot !== null && activeSlotIndex !== activeSlot && (
-                <div className="mb-4 bg-amber-50 border border-amber-200 p-3.5 rounded-xl text-[10px] text-amber-700 font-bold uppercase flex items-center gap-2 leading-relaxed">
-                  <Lock className="w-4 h-4 text-amber-500 shrink-0" />
-                  This slot is locked. Bidding is currently active for Slot {activeSlot}: {draftSettings.category_settings?.slots.find(s => s.slot_index === activeSlot)?.name || `Slot ${activeSlot}`}.
-                </div>
-              )}
-
-              <div className="space-y-4">
-                {(draftSettings.category_settings?.slots || [])
-                  .filter(slot => {
-                    if (activeSlot !== null) {
-                      return slot.slot_index === activeSlot;
-                    }
-                    return true;
-                  })
-                  .map(slot => {
-                    const isActive = slot.slot_index === activeSlotIndex;
-                    const slotBids = localBids.filter(b => b.slot_index === slot.slot_index).sort((a,b) => a.priority - b.priority);
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(draftSettings.category_settings?.slots || [])
+                .filter(slot => {
+                  if (activeSlot !== null) {
+                    return slot.slot_index === activeSlot;
+                  }
+                  return true;
+                })
+                .map(slot => {
+                  const isActive = slot.slot_index === activeSlotIndex;
+                  const slotBids = localBids.filter(b => b.slot_index === slot.slot_index).sort((a,b) => a.priority - b.priority);
 
                   return (
 
@@ -871,6 +779,11 @@ export default function TeamDraftPage() {
                           Base: {slot.base_price} Cr
                         </span>
                       </div>
+
+                      {/* Bid count badge */}
+                      <p className="text-[9px] text-slate-450 font-bold uppercase mb-2">
+                        {slotBids.length > 0 ? `${slotBids.length} bid${slotBids.length > 1 ? 's' : ''} placed` : 'No bids yet'}
+                      </p>
 
                       {/* Wishlist/fallback bids in this slot */}
                       {slotBids.length > 0 ? (
@@ -956,11 +869,108 @@ export default function TeamDraftPage() {
                     </div>
                   );
                 })}
-              </div>
             </div>
           </div>
 
+          {/* ── PLAYER POOL ── */}
+          <div className="flex flex-col space-y-4">
+            {(() => {
+              const slot = getActiveSlot();
+              if (!slot) return null;
+              const maxBidsLimit = draftSettings?.category_settings?.max_bids_per_team || 0;
+              return (
+                <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl flex items-center justify-between gap-4">
+                  <div>
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Active Slot Selection Pool</span>
+                    <h3 className="text-base font-black text-slate-900 mt-0.5 uppercase">{slot.name}</h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">
+                      List ID: <code className="text-indigo-600 font-extrabold">{slot.list_id}</code> | Base Price: {slot.base_price} Credits | Max Bids Limit: <span className="text-amber-650 font-extrabold">{maxBidsLimit > 0 ? maxBidsLimit : 'No Limit'}</span>
+                    </p>
+                  </div>
+                  <div className="bg-slate-800 border border-slate-900 w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg text-amber-400 shadow-sm shrink-0">
+                    {slot.slot_index}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Search bar */}
+            <div className="relative">
+              <span className="absolute left-4 top-3.5 text-slate-400">
+                <Search className="w-4.5 h-4.5" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search by name, team, category..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-white border border-slate-250 rounded-xl text-xs font-bold uppercase text-slate-850 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+              />
+            </div>
+
+            {/* Available Targets Pool Card */}
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden flex flex-col shadow-sm">
+              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 className="font-black text-slate-800 text-xs uppercase tracking-wider">Available Targets Pool</h3>
+                <span className="text-[9px] text-slate-500 font-bold uppercase">{getFilteredPool().length} items found</span>
+              </div>
+
+              <div className="overflow-y-auto max-h-[500px] divide-y divide-slate-100">
+                {getFilteredPool().map((item: any) => {
+                  const isRealTeam = !('real_player_id' in item);
+                  const itemId = isRealTeam ? item.team_uid : item.real_player_id;
+                  const name = isRealTeam ? item.team_name : item.player_name;
+                  const desc = isRealTeam ? 'Real Team' : `${item.real_team_name} | ${item.position}`;
+                  const isAlreadyBid = localBids.some(b => b.slot_index === activeSlotIndex && b.target_id === itemId);
+
+                  return (
+                    <div key={itemId} className={`p-4 flex items-center justify-between transition-colors gap-3 ${isAlreadyBid ? 'bg-emerald-50/40' : 'hover:bg-slate-50/40'}`}>
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-xs uppercase">{name}</h4>
+                        <p className="text-[9px] text-slate-450 font-bold uppercase mt-1">{desc}</p>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        {!isRealTeam && (
+                          <span className={`px-2 py-0.5 text-[8px] font-black rounded-lg border uppercase tracking-wider ${
+                            item.category === 'RED' ? 'bg-red-50 border-red-200 text-red-700' :
+                            item.category === 'BLUE' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                            item.category === 'BLACK' ? 'bg-zinc-100 border-zinc-200 text-zinc-700' :
+                            'bg-slate-50 border-slate-200 text-slate-650'
+                          }`}>
+                            {item.category}
+                          </span>
+                        )}
+                        
+                        <button
+                          onClick={() => addBidToSlot(itemId, name, !isRealTeam, item.real_team_name)}
+                          disabled={isBiddingLocked || isSlotDisabled(activeSlotIndex) || isAlreadyBid}
+                          className={`px-3.5 py-1.5 font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-sm border ${
+                            isAlreadyBid
+                              ? 'bg-emerald-600 border-emerald-700 text-white cursor-default opacity-90'
+                              : 'bg-slate-800 hover:bg-slate-750 disabled:opacity-40 text-amber-400 cursor-pointer border-slate-900'
+                          }`}
+                        >
+                          {isAlreadyBid ? '✓ Selected' : 'Select'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {getFilteredPool().length === 0 && (
+                  <div className="p-12 text-center text-slate-400 text-xs uppercase font-bold">
+                    <Info className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                    No matching targets in this slot's configuration list.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
+
+
+
 
       </div>
     </div>
