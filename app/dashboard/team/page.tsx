@@ -58,7 +58,7 @@ export default function TeamDashboard() {
   }, [seasonStatus?.seasonId, setSeasonId]);
 
   const { data: teamHistory, isLoading: teamHistoryLoading } = useTeamHistory(
-    user?.role === 'team' ? user.uid : undefined
+    user?.role === 'team' ? (teamDocId || undefined) : undefined
   );
 
   // Fetch current active season from Firebase
@@ -264,7 +264,7 @@ export default function TeamDashboard() {
           
           console.log('[DEBUG] Firebase fallback check:', { teamSeasonId1, teamSeasonId2, teamDocId });
           
-          const tsRes = await fetch('/api/team-seasons');
+          const tsRes = await fetch(`/api/team-seasons?season_id=${activeSeason.id}`);
           const tsData = await tsRes.json();
           const allTeamSeasons = tsData.data || [];
           const teamSeasonDoc1 = allTeamSeasons.find((ts: any) => ts.id === teamSeasonId1);
