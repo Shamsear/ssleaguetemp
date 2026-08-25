@@ -86,8 +86,8 @@ export async function POST(request: NextRequest) {
       for (const doc of teamsSnap.docs) {
         const teamData = doc.data();
         const teamName = teamData.team_name || teamData.id;
-        const teamId = teamData.id;
-        const ownerUid = teamData.uid || '';
+        const teamId = teamData.team_id || teamData.id;
+        const ownerUid = teamData.owner_uid || teamData.uid || '';
         const ownerName = teamData.owner_name || '';
 
         try {

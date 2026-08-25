@@ -41,8 +41,9 @@ export async function POST(request: NextRequest) {
 
     const teamData = teamDoc.data()!;
     
-    // Verify team ownership (check uid field or if they're the owner)
-    if (teamData.uid && teamData.uid !== user_id) {
+    // Verify team ownership (check owner_uid field or if they're the owner)
+    const teamOwnerUid = teamData.owner_uid || teamData.uid;
+    if (teamOwnerUid && teamOwnerUid !== user_id) {
       return NextResponse.json(
         { error: 'You do not own this team' },
         { status: 403 }
