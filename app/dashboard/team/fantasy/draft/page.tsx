@@ -954,8 +954,7 @@ export default function TeamDraftPage() {
                         <p className="text-[9px] text-slate-450 font-bold uppercase italic pl-8 mt-2.5">No bids placed for this slot yet. Select a target.</p>
                       )}
                     </div>
-
-  );
+                  );
                 })}
               </div>
             </div>
