@@ -753,61 +753,64 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
     }
 
     // 4. Perform database resets for active slot inside transaction
-    await fantasySql.begin(async sql => {
-      if (activeSlotIdx) {
-        // Delete squad players for this active slot
-        if (playersToDelete.length > 0) {
-          await sql`
-            DELETE FROM fantasy_squad 
-            WHERE league_id = ${leagueId} AND real_player_id = ANY(${playersToDelete})
-          `;
-          await sql`
-            UPDATE fantasy_players 
-            SET drafted_by_team_id = NULL, current_price = NULL, is_available = true 
-            WHERE league_id = ${leagueId} AND real_player_id = ANY(${playersToDelete})
-          `;
-        }
-
-        // If active slot is real team (Slot 6), clear links
-        if (activeSlotIdx === 6) {
-          await sql`
-            UPDATE fantasy_teams
-            SET supported_team_id = NULL, supported_team_name = NULL
-            WHERE league_id = ${leagueId}
-          `;
-        }
-
-        // Refund budgets in DB
-        for (const [tId, refund] of refundedBudgets.entries()) {
-          if (refund > 0) {
-            await sql`
-              UPDATE fantasy_teams
-              SET budget_remaining = budget_remaining + ${refund}
-              WHERE team_id = ${tId} AND league_id = ${leagueId}
-            `;
-          }
-        }
-      } else {
-        // legacy batch clear: delete everything
-        await sql`
+    const resetQueries: any[] = [];
+    if (activeSlotIdx) {
+      // Delete squad players for this active slot
+      if (playersToDelete.length > 0) {
+        resetQueries.push(fantasySql`
           DELETE FROM fantasy_squad 
-          WHERE league_id = ${leagueId} AND acquisition_type = 'draft'
-        `;
-        await sql`
+          WHERE league_id = ${leagueId} AND real_player_id = ANY(${playersToDelete})
+        `);
+        resetQueries.push(fantasySql`
           UPDATE fantasy_players 
           SET drafted_by_team_id = NULL, current_price = NULL, is_available = true 
-          WHERE league_id = ${leagueId}
-        `;
-        await sql`
-          UPDATE fantasy_teams 
-          SET budget_remaining = ${budgetPerTeam}, 
-              supported_team_id = NULL, 
-              supported_team_name = NULL,
-              draft_submitted = true
-          WHERE league_id = ${leagueId}
-        `;
+          WHERE league_id = ${leagueId} AND real_player_id = ANY(${playersToDelete})
+        `);
       }
-    });
+
+      // If active slot is real team (Slot 6), clear links
+      if (activeSlotIdx === 6) {
+        resetQueries.push(fantasySql`
+          UPDATE fantasy_teams
+          SET supported_team_id = NULL, supported_team_name = NULL
+          WHERE league_id = ${leagueId}
+        `);
+      }
+
+      // Refund budgets in DB
+      for (const [tId, refund] of refundedBudgets.entries()) {
+        if (refund > 0) {
+          resetQueries.push(fantasySql`
+            UPDATE fantasy_teams
+            SET budget_remaining = budget_remaining + ${refund}
+            WHERE team_id = ${tId} AND league_id = ${leagueId}
+          `);
+        }
+      }
+    } else {
+      // legacy batch clear: delete everything
+      resetQueries.push(fantasySql`
+        DELETE FROM fantasy_squad 
+        WHERE league_id = ${leagueId} AND acquisition_type = 'draft'
+      `);
+      resetQueries.push(fantasySql`
+        UPDATE fantasy_players 
+        SET drafted_by_team_id = NULL, current_price = NULL, is_available = true 
+        WHERE league_id = ${leagueId}
+      `);
+      resetQueries.push(fantasySql`
+        UPDATE fantasy_teams 
+        SET budget_remaining = ${budgetPerTeam}, 
+            supported_team_id = NULL, 
+            supported_team_name = NULL,
+            draft_submitted = true
+        WHERE league_id = ${leagueId}
+      `);
+    }
+
+    if (resetQueries.length > 0) {
+      await fantasySql.transaction(resetQueries);
+    }
 
     // 5. Fetch all bids submitted
     const allBids = await fantasySql`
@@ -943,107 +946,125 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
 
     // 7. Write results to database
     const { v4: uuidv4 } = require('uuid');
-    await fantasySql.begin(async sql => {
-      // 7.1 Update team budgets and real team links
-      for (const [teamId, budget] of teamBudgets.entries()) {
-        if (!activeSlotIdx || activeSlotIdx === 6) {
-          const winningTeamBid = winningBidsList.find(b => b.team_id === teamId && b.bid_type === 'real_team');
-          
-          let supportedTeamId = null;
-          let supportedTeamName = null;
 
-          if (winningTeamBid) {
-            const realTeams = await sql`
-              SELECT team_name FROM teams WHERE team_uid = ${winningTeamBid.target_id} LIMIT 1
-            `;
-            supportedTeamId = winningTeamBid.target_id;
-            supportedTeamName = realTeams[0]?.team_name || winningTeamBid.target_id;
-          }
-
-          await sql`
-            UPDATE fantasy_teams
-            SET budget_remaining = ${budget},
-                supported_team_id = ${supportedTeamId},
-                supported_team_name = ${supportedTeamName},
-                updated_at = CURRENT_TIMESTAMP
-            WHERE team_id = ${teamId} AND league_id = ${leagueId}
-          `;
-        } else {
-          await sql`
-            UPDATE fantasy_teams
-            SET budget_remaining = ${budget},
-                updated_at = CURRENT_TIMESTAMP
-            WHERE team_id = ${teamId} AND league_id = ${leagueId}
-          `;
-        }
-      }
-
-      // 7.2 Write winning player roster entries to fantasy_squad and fantasy_players
-      for (const bid of winningBidsList) {
-        if (bid.bid_type === 'player') {
-          // Get player details
-          const players = await sql`
-            SELECT player_name, position, real_team_name 
-            FROM fantasy_players
-            WHERE real_player_id = ${bid.target_id} AND league_id = ${leagueId}
-            LIMIT 1
-          `;
-          
-          if (players.length > 0) {
-            const p = players[0];
-            const squadId = `sq_${uuidv4().replace(/-/g, '')}`;
-
-            // Insert into squad
-            await sql`
-              INSERT INTO fantasy_squad (
-                squad_id, team_id, league_id, real_player_id, player_name, 
-                position, real_team_name, purchase_price, current_value, 
-                total_points, is_captain, is_vice_captain, acquisition_type, acquired_at
-              ) VALUES (
-                ${squadId}, ${bid.team_id}, ${leagueId}, ${bid.target_id}, ${p.player_name},
-                ${p.position}, ${p.real_team_name}, ${bid.bid_amount}, ${bid.bid_amount},
-                0, false, false, 'draft', CURRENT_TIMESTAMP
-              )
-            `;
-
-            // Update player's owner
-            await sql`
-              UPDATE fantasy_players
-              SET drafted_by_team_id = ${bid.team_id},
-                  current_price = ${bid.bid_amount},
-                  is_available = false
-              WHERE real_player_id = ${bid.target_id} AND league_id = ${leagueId}
-            `;
-          }
-        }
-      }
-
-      // 6.3 Update bid statuses in fantasy_draft_bids
-      if (winningBidsList.length > 0) {
-        const winningBidIds = winningBidsList.map(b => b.bid_id);
-        await sql`
-          UPDATE fantasy_draft_bids
-          SET status = 'won', processed_at = CURRENT_TIMESTAMP
-          WHERE bid_id = ANY(${winningBidIds})
-        `;
-      }
-
-      if (lostBidsList.length > 0) {
-        await sql`
-          UPDATE fantasy_draft_bids
-          SET status = 'lost', processed_at = CURRENT_TIMESTAMP
-          WHERE bid_id = ANY(${lostBidsList})
-        `;
-      }
-
-      // 6.4 Mark league draft status as completed
-      await sql`
-        UPDATE fantasy_leagues
-        SET draft_status = 'completed',
-            updated_at = CURRENT_TIMESTAMP
-        WHERE league_id = ${leagueId}
+    // Pre-fetch real team names for winning real_team bids
+    const realTeamBids = winningBidsList.filter((b: any) => b.bid_type === 'real_team' && (!activeSlotIdx || activeSlotIdx === 6));
+    const realTeamNames = new Map<string, string>();
+    for (const bid of realTeamBids) {
+      const realTeams = await fantasySql`
+        SELECT team_name FROM teams WHERE team_uid = ${bid.target_id} LIMIT 1
       `;
-    });
+      realTeamNames.set(bid.target_id, realTeams[0]?.team_name || bid.target_id);
+    }
+
+    // Pre-fetch player details for winning player bids
+    const playerBids = winningBidsList.filter((b: any) => b.bid_type === 'player');
+    const playerDetailsMap = new Map<string, any>();
+    for (const bid of playerBids) {
+      const players = await fantasySql`
+        SELECT player_name, position, real_team_name 
+        FROM fantasy_players
+        WHERE real_player_id = ${bid.target_id} AND league_id = ${leagueId}
+        LIMIT 1
+      `;
+      if (players.length > 0) {
+        playerDetailsMap.set(bid.target_id, players[0]);
+      }
+    }
+
+    // Build transaction queries
+    const writeQueries: any[] = [];
+
+    // 7.1 Update team budgets and real team links
+    for (const [teamId, budget] of teamBudgets.entries()) {
+      if (!activeSlotIdx || activeSlotIdx === 6) {
+        const winningTeamBid = winningBidsList.find((b: any) => b.team_id === teamId && b.bid_type === 'real_team');
+        
+        let supportedTeamId = null;
+        let supportedTeamName = null;
+
+        if (winningTeamBid) {
+          supportedTeamId = winningTeamBid.target_id;
+          supportedTeamName = realTeamNames.get(winningTeamBid.target_id) || winningTeamBid.target_id;
+        }
+
+        writeQueries.push(fantasySql`
+          UPDATE fantasy_teams
+          SET budget_remaining = ${budget},
+              supported_team_id = ${supportedTeamId},
+              supported_team_name = ${supportedTeamName},
+              updated_at = CURRENT_TIMESTAMP
+          WHERE team_id = ${teamId} AND league_id = ${leagueId}
+        `);
+      } else {
+        writeQueries.push(fantasySql`
+          UPDATE fantasy_teams
+          SET budget_remaining = ${budget},
+              updated_at = CURRENT_TIMESTAMP
+          WHERE team_id = ${teamId} AND league_id = ${leagueId}
+        `);
+      }
+    }
+
+    // 7.2 Write winning player roster entries to fantasy_squad and fantasy_players
+    for (const bid of playerBids) {
+      const p = playerDetailsMap.get(bid.target_id);
+      if (p) {
+        const squadId = `sq_${uuidv4().replace(/-/g, '')}`;
+
+        // Insert into squad
+        writeQueries.push(fantasySql`
+          INSERT INTO fantasy_squad (
+            squad_id, team_id, league_id, real_player_id, player_name, 
+            position, real_team_name, purchase_price, current_value, 
+            total_points, is_captain, is_vice_captain, acquisition_type, acquired_at
+          ) VALUES (
+            ${squadId}, ${bid.team_id}, ${leagueId}, ${bid.target_id}, ${p.player_name},
+            ${p.position}, ${p.real_team_name}, ${bid.bid_amount}, ${bid.bid_amount},
+            0, false, false, 'draft', CURRENT_TIMESTAMP
+          )
+        `);
+
+        // Update player's owner
+        writeQueries.push(fantasySql`
+          UPDATE fantasy_players
+          SET drafted_by_team_id = ${bid.team_id},
+              current_price = ${bid.bid_amount},
+              is_available = false
+          WHERE real_player_id = ${bid.target_id} AND league_id = ${leagueId}
+        `);
+      }
+    }
+
+    // 6.3 Update bid statuses in fantasy_draft_bids
+    if (winningBidsList.length > 0) {
+      const winningBidIds = winningBidsList.map((b: any) => b.bid_id);
+      writeQueries.push(fantasySql`
+        UPDATE fantasy_draft_bids
+        SET status = 'won', processed_at = CURRENT_TIMESTAMP
+        WHERE bid_id = ANY(${winningBidIds})
+      `);
+    }
+
+    if (lostBidsList.length > 0) {
+      writeQueries.push(fantasySql`
+        UPDATE fantasy_draft_bids
+        SET status = 'lost', processed_at = CURRENT_TIMESTAMP
+        WHERE bid_id = ANY(${lostBidsList})
+      `);
+    }
+
+    // 6.4 Mark league draft status as completed
+    writeQueries.push(fantasySql`
+      UPDATE fantasy_leagues
+      SET draft_status = 'completed',
+          updated_at = CURRENT_TIMESTAMP
+      WHERE league_id = ${leagueId}
+    `);
+
+    if (writeQueries.length > 0) {
+      await fantasySql.transaction(writeQueries);
+    }
 
     const averageSquadSize = totalPlayersDrafted / teams.length;
     const processingTime = Date.now() - startTime;

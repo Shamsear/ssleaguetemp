@@ -4,7 +4,7 @@ import { verifyAuth } from '@/lib/auth-helper';
 import { batchGetFirebaseFields } from '@/lib/firebase/batch';
 import { getCached, setCached } from '@/lib/firebase/cache';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import { getAuctionDb } from '@/lib/neon/auction-config';
+import { neon } from '@neondatabase/serverless';
 
 export async function GET(request: NextRequest) {
   try {
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
     console.time('⚡ Batch fetch all football players');
     
     // Step 3a: Fetch all football players for all teams from Neon
-    const fpSql = getAuctionDb();
+    const fpSql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
     const allFootballPlayers: any[] = await fpSql`
       SELECT * FROM footballplayers 
       WHERE season_id = ${seasonId} 
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
     `;
     
     console.timeEnd('⚡ Batch fetch all football players');
-    console.log('📋 Total football players fetched:', allFootballPlayers.length);
+    console.log('📋 Total football players fetched for teams:', allFootballPlayers.length);
     
     console.time('⚡ Batch fetch all real players');
     

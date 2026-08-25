@@ -142,48 +142,50 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Transaction to replace bids and update submit status
-    await fantasySql.begin(async sql => {
-      // Delete old bids for the active slot or all if batch
-      if (activeSlot) {
-        await sql`
-          DELETE FROM fantasy_draft_bids
-          WHERE team_id = ${team_id} AND league_id = ${league_id} AND slot_index = ${activeSlot}
-        `;
-      } else {
-        await sql`
-          DELETE FROM fantasy_draft_bids
-          WHERE team_id = ${team_id} AND league_id = ${league_id}
-        `;
-      }
+    const transactionQueries: any[] = [];
 
-      // Insert new bids
-      if (bids.length > 0) {
-        const rows = bids.map(bid => ({
-          bid_id: `bid_${uuidv4().replace(/-/g, '')}`,
-          league_id,
-          team_id,
-          slot_index: Number(bid.slot_index),
-          priority: Number(bid.priority || 1),
-          target_id: bid.target_id,
-          bid_type: bid.bid_type,
-          bid_amount: Number(bid.bid_amount),
-          status: 'pending',
-          submitted_at: new Date()
-        }));
-
-        await sql`
-          INSERT INTO fantasy_draft_bids ${sql(rows, 'bid_id', 'league_id', 'team_id', 'slot_index', 'priority', 'target_id', 'bid_type', 'bid_amount', 'status', 'submitted_at')}
-        `;
-      }
-
-      // Update draft submission flag on the team
-      await sql`
-        UPDATE fantasy_teams
-        SET draft_submitted = ${!!lock},
-            updated_at = CURRENT_TIMESTAMP
+    // Delete old bids for the active slot or all if batch
+    if (activeSlot) {
+      transactionQueries.push(fantasySql`
+        DELETE FROM fantasy_draft_bids
+        WHERE team_id = ${team_id} AND league_id = ${league_id} AND slot_index = ${activeSlot}
+      `);
+    } else {
+      transactionQueries.push(fantasySql`
+        DELETE FROM fantasy_draft_bids
         WHERE team_id = ${team_id} AND league_id = ${league_id}
-      `;
-    });
+      `);
+    }
+
+    // Insert new bids
+    if (bids.length > 0) {
+      const rows = bids.map(bid => ({
+        bid_id: `bid_${uuidv4().replace(/-/g, '')}`,
+        league_id,
+        team_id,
+        slot_index: Number(bid.slot_index),
+        priority: Number(bid.priority || 1),
+        target_id: bid.target_id,
+        bid_type: bid.bid_type,
+        bid_amount: Number(bid.bid_amount),
+        status: 'pending',
+        submitted_at: new Date()
+      }));
+
+      transactionQueries.push(fantasySql`
+        INSERT INTO fantasy_draft_bids ${fantasySql(rows, 'bid_id', 'league_id', 'team_id', 'slot_index', 'priority', 'target_id', 'bid_type', 'bid_amount', 'status', 'submitted_at')}
+      `);
+    }
+
+    // Update draft submission flag on the team
+    transactionQueries.push(fantasySql`
+      UPDATE fantasy_teams
+      SET draft_submitted = ${!!lock},
+          updated_at = CURRENT_TIMESTAMP
+      WHERE team_id = ${team_id} AND league_id = ${league_id}
+    `);
+
+    await fantasySql.transaction(transactionQueries);
 
     return NextResponse.json({
       success: true,

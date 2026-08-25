@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { fantasySql } from '@/lib/neon/fantasy-config';
+import { neon } from '@neondatabase/serverless';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 
 /**
@@ -168,16 +169,17 @@ export async function GET(request: NextRequest) {
     if (teamData.supported_team_id) {
       const baseTeamId = teamData.supported_team_id.split('_')[0];
       try {
-        const teamDoc = await adminDb.collection('teams').doc(baseTeamId).get();
-        if (teamDoc.exists) {
-          const firebaseTeamData = teamDoc.data();
-          teamLogo = firebaseTeamData?.logo_url || firebaseTeamData?.team_logo || firebaseTeamData?.logo || null;
-          logo_position_x_circle = firebaseTeamData?.logo_position_x_circle || null;
-          logo_position_y_circle = firebaseTeamData?.logo_position_y_circle || null;
-          logo_scale_circle = firebaseTeamData?.logo_scale_circle || null;
-          logo_position_x_square = firebaseTeamData?.logo_position_x_square || null;
-          logo_position_y_square = firebaseTeamData?.logo_position_y_square || null;
-          logo_scale_square = firebaseTeamData?.logo_scale_square || null;
+        const mainSql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
+        const teamRows = await mainSql`SELECT logo_url, logo_position_x_circle, logo_position_y_circle, logo_scale_circle, logo_position_x_square, logo_position_y_square, logo_scale_square FROM teams WHERE id = ${baseTeamId} LIMIT 1`;
+        if (teamRows && teamRows.length > 0) {
+          const teamRow = teamRows[0] as any;
+          teamLogo = teamRow.logo_url || null;
+          logo_position_x_circle = teamRow.logo_position_x_circle || null;
+          logo_position_y_circle = teamRow.logo_position_y_circle || null;
+          logo_scale_circle = teamRow.logo_scale_circle || null;
+          logo_position_x_square = teamRow.logo_position_x_square || null;
+          logo_position_y_square = teamRow.logo_position_y_square || null;
+          logo_scale_square = teamRow.logo_scale_square || null;
         }
       } catch (error) {
         console.error('Error fetching team logo:', error);

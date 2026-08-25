@@ -106,32 +106,27 @@ export class FantasyDraftService {
     const refundPrice = Number(player.purchase_price);
 
     // Execute removal in transaction
-    await this.fantasySql.begin(async (tx: any) => {
-      // Remove from fantasy_squad
-      await tx`
+    await this.fantasySql.transaction([
+      this.fantasySql`
         DELETE FROM fantasy_squad
         WHERE team_id = ${team.team_id}
           AND real_player_id = ${params.real_player_id}
-      `;
-
-      // Make player available again
-      await tx`
+      `,
+      this.fantasySql`
         UPDATE fantasy_players
         SET is_available = true,
             drafted_by_team_id = NULL,
             updated_at = NOW()
         WHERE league_id = ${league.league_id}
           AND real_player_id = ${params.real_player_id}
-      `;
-
-      // Refund the budget
-      await tx`
+      `,
+      this.fantasySql`
         UPDATE fantasy_teams
         SET budget_remaining = budget_remaining + ${refundPrice},
             updated_at = CURRENT_TIMESTAMP
         WHERE team_id = ${team.team_id}
-      `;
-    });
+      `,
+    ]);
 
     return {
       success: true,
@@ -204,46 +199,52 @@ export class FantasyDraftService {
     const { team, league, currentSquad, playerCategory } = context;
 
     try {
-      const result = await this.fantasySql.begin(async (tx: any) => {
-        // Lock player row to prevent race conditions
-        const playerCheck = await tx`
-          SELECT drafted_by_team_id, is_available
-          FROM fantasy_players
-          WHERE league_id = ${league.league_id}
-            AND real_player_id = ${params.real_player_id}
-          FOR UPDATE
-        `;
+      // Check player availability before transaction
+      const playerCheck = await this.fantasySql`
+        SELECT drafted_by_team_id, is_available
+        FROM fantasy_players
+        WHERE league_id = ${league.league_id}
+          AND real_player_id = ${params.real_player_id}
+      `;
 
-        // Check if player is available
-        if (playerCheck.length > 0) {
-          const playerData = playerCheck[0];
-          if (!playerData.is_available || playerData.drafted_by_team_id) {
-            // Get team info for better error message
-            const draftedByTeam = await tx`
-              SELECT team_id, team_name, updated_at
-              FROM fantasy_teams
-              WHERE team_id = ${playerData.drafted_by_team_id}
-              LIMIT 1
-            `;
+      // Check if player is available
+      if (playerCheck.length > 0) {
+        const playerData = playerCheck[0];
+        if (!playerData.is_available || playerData.drafted_by_team_id) {
+          // Get team info for better error message
+          const draftedByTeam = await this.fantasySql`
+            SELECT team_id, team_name, updated_at
+            FROM fantasy_teams
+            WHERE team_id = ${playerData.drafted_by_team_id}
+            LIMIT 1
+          `;
 
-            throw new PlayerAlreadyDraftedError(
-              params.player_name,
-              {
-                team_id: draftedByTeam[0]?.team_id || 'unknown',
-                team_name: draftedByTeam[0]?.team_name || 'Another Team',
-                drafted_at: draftedByTeam[0]?.updated_at || new Date(),
-              },
-              await this.getSuggestedAlternatives(playerCategory, league.league_id, league.season_id, tx)
-            );
-          }
+          throw new PlayerAlreadyDraftedError(
+            params.player_name,
+            {
+              team_id: draftedByTeam[0]?.team_id || 'unknown',
+              team_name: draftedByTeam[0]?.team_name || 'Another Team',
+              drafted_at: draftedByTeam[0]?.updated_at || new Date(),
+            },
+            await this.getSuggestedAlternatives(playerCategory, league.league_id, league.season_id)
+          );
         }
+      }
 
-        // Generate IDs
-        const squad_id = `squad_${team.team_id}_${params.real_player_id}_${Date.now()}`;
-        const draft_id = `draft_${team.team_id}_${params.real_player_id}_${Date.now()}`;
+      // Generate IDs
+      const squad_id = `squad_${team.team_id}_${params.real_player_id}_${Date.now()}`;
+      const draft_id = `draft_${team.team_id}_${params.real_player_id}_${Date.now()}`;
 
-        // Insert into fantasy_squad
-        await tx`
+      // Calculate budget
+      const currentBudgetSpent = currentSquad.reduce(
+        (sum: number, p: any) => sum + Number(p.purchase_price),
+        0
+      );
+      const newBudgetRemaining = Number(league.budget_per_team) - currentBudgetSpent - params.draft_price;
+
+      // Build transaction queries
+      const draftQueries: any[] = [
+        this.fantasySql`
           INSERT INTO fantasy_squad (
             squad_id, team_id, league_id, real_player_id,
             player_name, position, real_team_name, category,
@@ -254,36 +255,8 @@ export class FantasyDraftService {
             ${params.team_name || 'Unknown'}, ${playerCategory},
             ${params.draft_price}, ${params.draft_price}, 'draft'
           )
-        `;
-
-        // Update or insert fantasy_players
-        if (playerCheck.length > 0) {
-          await tx`
-            UPDATE fantasy_players
-            SET 
-              times_drafted = COALESCE(times_drafted, 0) + 1,
-              is_available = false,
-              drafted_by_team_id = ${team.team_id},
-              category = ${playerCategory},
-              updated_at = NOW()
-            WHERE league_id = ${league.league_id}
-              AND real_player_id = ${params.real_player_id}
-          `;
-        } else {
-          await tx`
-            INSERT INTO fantasy_players (
-              league_id, real_player_id, draft_price,
-              times_drafted, total_points, is_available,
-              drafted_by_team_id, category
-            ) VALUES (
-              ${league.league_id}, ${params.real_player_id}, ${params.draft_price},
-              1, 0, false, ${team.team_id}, ${playerCategory}
-            )
-          `;
-        }
-
-        // Insert into fantasy_drafts
-        await tx`
+        `,
+        this.fantasySql`
           INSERT INTO fantasy_drafts (
             draft_id, league_id, team_id, real_player_id,
             player_name, position, real_team_name, draft_price,
@@ -294,37 +267,51 @@ export class FantasyDraftService {
             ${params.team_name || 'Unknown'}, ${params.draft_price}, 
             ${currentSquad.length + 1}, ${playerCategory}
           )
-        `;
-
-        // Calculate and update budget
-        const currentBudgetSpent = currentSquad.reduce(
-          (sum: number, p: any) => sum + Number(p.purchase_price),
-          0
-        );
-        const newBudgetRemaining = Number(league.budget_per_team) - currentBudgetSpent - params.draft_price;
-
-        await tx`
+        `,
+        this.fantasySql`
           UPDATE fantasy_teams
           SET budget_remaining = ${newBudgetRemaining},
               updated_at = CURRENT_TIMESTAMP
           WHERE team_id = ${team.team_id}
-        `;
+        `,
+      ];
 
-        return {
-          squad_id,
-          newBudgetRemaining,
-          squadSize: currentSquad.length + 1,
-        };
-      });
+      // Update or insert fantasy_players
+      if (playerCheck.length > 0) {
+        draftQueries.splice(1, 0, this.fantasySql`
+          UPDATE fantasy_players
+          SET 
+            times_drafted = COALESCE(times_drafted, 0) + 1,
+            is_available = false,
+            drafted_by_team_id = ${team.team_id},
+            category = ${playerCategory},
+            updated_at = NOW()
+          WHERE league_id = ${league.league_id}
+            AND real_player_id = ${params.real_player_id}
+        `);
+      } else {
+        draftQueries.splice(1, 0, this.fantasySql`
+          INSERT INTO fantasy_players (
+            league_id, real_player_id, draft_price,
+            times_drafted, total_points, is_available,
+            drafted_by_team_id, category
+          ) VALUES (
+            ${league.league_id}, ${params.real_player_id}, ${params.draft_price},
+            1, 0, false, ${team.team_id}, ${playerCategory}
+          )
+        `);
+      }
+
+      await this.fantasySql.transaction(draftQueries);
 
       return {
         success: true,
-        squad_id: result.squad_id,
+        squad_id,
         player_name: params.player_name,
         position: params.position || 'Unknown',
         purchase_price: params.draft_price,
-        remaining_budget: result.newBudgetRemaining,
-        squad_size: result.squadSize,
+        remaining_budget: newBudgetRemaining,
+        squad_size: currentSquad.length + 1,
         max_squad_size: Number(league.max_squad_size),
         player_category: playerCategory,
       };
@@ -502,7 +489,7 @@ export class FantasyDraftService {
     category: string,
     leagueId: string,
     seasonId: string,
-    tx: any
+    _tx?: any
   ): Promise<Array<{ player_id: string; player_name: string; category: string; draft_price: number }>> {
     try {
       const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
