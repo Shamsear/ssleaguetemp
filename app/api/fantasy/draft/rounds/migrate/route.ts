@@ -25,6 +25,7 @@ export async function POST() {
         closes_at       TIMESTAMPTZ,
         status          VARCHAR(20) DEFAULT 'pending',
         created_at      TIMESTAMP DEFAULT NOW(),
+        finalization_mode VARCHAR(20) DEFAULT 'auto',
         updated_at      TIMESTAMPTZ DEFAULT NOW(),
         UNIQUE(league_id, slot_index)
       )
@@ -35,6 +36,9 @@ export async function POST() {
     try { await fantasySql`ALTER TABLE fantasy_draft_rounds ALTER COLUMN closes_at TYPE TIMESTAMPTZ USING closes_at AT TIME ZONE 'UTC'`; } catch {}
     try { await fantasySql`ALTER TABLE fantasy_draft_rounds ALTER COLUMN updated_at TYPE TIMESTAMPTZ USING updated_at AT TIME ZONE 'UTC'`; } catch {}
     try { await fantasySql`ALTER TABLE fantasy_draft_rounds ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC'`; } catch {}
+
+    // Add finalization_mode column if missing
+    try { await fantasySql`ALTER TABLE fantasy_draft_rounds ADD COLUMN IF NOT EXISTS finalization_mode VARCHAR(20) DEFAULT 'auto'`; } catch {}
 
     await fantasySql`
       CREATE INDEX IF NOT EXISTS idx_fantasy_draft_rounds_league

@@ -441,7 +441,7 @@ export default function TeamDraftPage() {
         }
       }
 
-      if (!confirm('Are you sure you want to lock your draft submissions? Once locked, you cannot modify your bids unless unlocked by the committee admin.')) {
+      if (!confirm('Submit your bids for this round? You can still edit and resubmit until the round closes.')) {
         return;
       }
       setIsSubmitting(true);
@@ -565,7 +565,7 @@ export default function TeamDraftPage() {
   // ────────────────────────────────────────────────────────────────────────
 
   const handleUnlock = async () => {
-    if (!confirm('Unlock your draft list to make edits?')) {
+    if (!confirm('Unlock to edit your bids? You can resubmit before the round closes.')) {
       return;
     }
     setIsSubmitting(true);
@@ -684,15 +684,17 @@ export default function TeamDraftPage() {
     );
   }
 
-  // A slot is disabled if: bids locked, slot is not the active round, or active round has expired
-  const isBiddingLocked = myTeam?.draft_submitted || timeRemaining <= 0;
+  // Round expired = truly locked, no more edits possible
+  const isRoundExpired = timeRemaining <= 0;
+  // Submitted = bids locked until user self-unlocks ("Edit Bids" button)
+  const isSubmitted = !!myTeam?.draft_submitted;
+  // Bidding is locked when submitted OR when round expired
+  const isBiddingLocked = isSubmitted || isRoundExpired;
 
   const isSlotDisabled = (slotIdx: number) => {
     if (isBiddingLocked) return true;
-    // Check per-slot round status
     const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
     if (!round || round.status !== 'active') return true;
-    // Check if round has expired (compare as UTC)
     if (round.closes_at && parseAsUTC(round.closes_at) < Date.now()) return true;
     return false;
   };
@@ -748,40 +750,33 @@ export default function TeamDraftPage() {
                 </div>
               </div>
 
-              {/* Submit Button */}
+              {/* Submit / Edit Button */}
               <div>
-                {isBiddingLocked ? (
+                {isRoundExpired ? (
+                  <span className="px-4 py-2.5 bg-slate-100 text-slate-500 border border-slate-200 text-xs font-black rounded-xl uppercase flex items-center gap-1.5 shadow-sm">
+                    <Clock className="w-4 h-4" /> Round Closed
+                  </span>
+                ) : isSubmitted ? (
                   <div className="flex items-center gap-2">
                     <span className="px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-250 text-xs font-black rounded-xl uppercase flex items-center gap-1.5 shadow-sm">
-                      <CheckCircle className="w-4 h-4 text-emerald-600" /> Locked & Submitted
+                      <CheckCircle className="w-4 h-4 text-emerald-600" /> Submitted
                     </span>
-                    {myTeam.draft_submitted && draftSettings.draft_status === 'active' && timeRemaining > 0 && (
-                      <button
-                        onClick={handleUnlock}
-                        disabled={isSubmitting}
-                        className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-900 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer"
-                      >
-                        Unlock
-                      </button>
-                    )}
+                    <button
+                      onClick={handleUnlock}
+                      disabled={isSubmitting}
+                      className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 border border-amber-600 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Save className="w-3.5 h-3.5" /> Edit Bids
+                    </button>
                   </div>
                 ) : (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => saveBids(false)}
-                      disabled={isSaving || isSubmitting}
-                      className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-black rounded-xl border border-slate-300 transition-all uppercase flex items-center gap-1.5 shadow-sm cursor-pointer"
-                    >
-                      <Save className="w-3.5 h-3.5" /> Save Draft
-                    </button>
-                    <button
-                      onClick={() => saveBids(true)}
-                      disabled={isSaving || isSubmitting}
-                      className="px-5 py-2.5 bg-slate-800 hover:bg-slate-750 text-white text-xs font-black rounded-xl transition-all uppercase flex items-center gap-1.5 shadow-sm cursor-pointer border border-slate-900"
-                    >
-                      <Lock className="w-3.5 h-3.5" /> Submit & Lock
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => saveBids(true)}
+                    disabled={isSaving || isSubmitting}
+                    className="px-5 py-2.5 bg-slate-800 hover:bg-slate-750 text-white text-xs font-black rounded-xl transition-all uppercase flex items-center gap-1.5 shadow-sm cursor-pointer border border-slate-900"
+                  >
+                    <Lock className="w-3.5 h-3.5" /> Submit
+                  </button>
                 )}
               </div>
             </div>

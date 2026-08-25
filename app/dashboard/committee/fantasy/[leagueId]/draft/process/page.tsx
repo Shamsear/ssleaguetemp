@@ -53,10 +53,11 @@ const formatISTDisplay = (isoOrLocal: string): string => {
 };
 
 /** Per-slot round control card — compact by default, expands on click */
-function SlotRoundCard({ slot, round, onAction, expanded, onToggle }: {
+function SlotRoundCard({ slot, round, onAction, onToggleFinalization, expanded, onToggle }: {
   slot: any;
   round: any;
   onAction: (slotIndex: number, action: 'start' | 'close' | 'adjust' | 'reset', times?: { opens_at?: string; closes_at?: string }) => void;
+  onToggleFinalization: (slotIndex: number) => void;
   expanded: boolean;
   onToggle: () => void;
 }) {
@@ -135,6 +136,24 @@ function SlotRoundCard({ slot, round, onAction, expanded, onToggle }: {
             </div>
           )}
 
+          {/* Finalization mode toggle */}
+          {status !== 'pending' && (
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] text-slate-400 font-bold uppercase">Finalization:</span>
+              <button
+                onClick={() => onToggleFinalization(slot.slot_index)}
+                title={`Click to switch to ${round?.finalization_mode === 'auto' ? 'Manual' : 'Auto'} mode`}
+                className={`px-2.5 py-1 border text-[9px] font-black rounded-lg uppercase tracking-wider transition-all cursor-pointer ${
+                  (round?.finalization_mode || 'auto') === 'manual'
+                    ? 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                }`}
+              >
+                {(round?.finalization_mode || 'auto') === 'manual' ? '⚙️ Manual' : '⚡ Auto'}
+              </button>
+            </div>
+          )}
+
           {/* Action buttons */}
           <div className="flex flex-wrap gap-2">
             {status === 'pending' && (
@@ -177,8 +196,7 @@ export default function ProcessDraftPage() {
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number>(1);
   const [opensAt, setOpensAt] = useState('');
   const [closesAt, setClosesAt] = useState('');
-  const [finalizationMode, setFinalizationMode] = useState<'auto' | 'manual'>('auto');
-  const [isUpdatingFinalizationMode, setIsUpdatingFinalizationMode] = useState(false);
+
   const [previewResults, setPreviewResults] = useState<any>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [addTimeMinutes, setAddTimeMinutes] = useState<string>('10');
@@ -222,12 +240,7 @@ export default function ProcessDraftPage() {
         setDraftRounds(roundsData.rounds || []);
       }
 
-      // 3. Fetch league settings to get finalization mode
-      const leagueRes = await fetchWithTokenRefresh(`/api/fantasy/leagues/${leagueId}`);
-      if (leagueRes.ok) {
-        const leagueData = await leagueRes.json();
-        setFinalizationMode(leagueData.league?.draft_finalization_mode || 'auto');
-      }
+
     } catch (err) {
       console.error('Failed to load submissions:', err);
     } finally {
@@ -312,34 +325,34 @@ export default function ProcessDraftPage() {
     }
   };
 
-  const handleToggleFinalizationMode = async () => {
-    const newMode = finalizationMode === 'auto' ? 'manual' : 'auto';
-    setIsUpdatingFinalizationMode(true);
+  const handleToggleRoundFinalization = async (slotIndex: number) => {
+    const round = draftRounds.find((r: any) => r.slot_index === slotIndex);
+    const currentMode = round?.finalization_mode || 'auto';
+    const newMode = currentMode === 'auto' ? 'manual' : 'auto';
     try {
-      const response = await fetchWithTokenRefresh(`/api/fantasy/leagues/${leagueId}`, {
-        method: 'PATCH',
+      const response = await fetchWithTokenRefresh('/api/fantasy/draft/rounds', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft_finalization_mode: newMode }),
+        body: JSON.stringify({
+          league_id: leagueId,
+          slot_index: slotIndex,
+          action: 'adjust',
+          finalization_mode: newMode,
+        }),
       });
       const data = await response.json();
       if (data.success) {
-        setFinalizationMode(newMode);
         showAlert({
           type: 'success',
           title: 'Mode Updated',
-          message: `Draft finalization mode changed to ${newMode.toUpperCase()}`,
+          message: `Slot ${slotIndex} finalization: ${newMode.toUpperCase()}`,
         });
+        loadSubmissions();
       } else {
-        throw new Error(data.error || 'Failed to update finalization mode');
+        throw new Error(data.error || 'Failed to update');
       }
     } catch (err: any) {
-      showAlert({
-        type: 'error',
-        title: 'Update Failed',
-        message: err.message || 'Failed to update finalization mode',
-      });
-    } finally {
-      setIsUpdatingFinalizationMode(false);
+      showAlert({ type: 'error', title: 'Update Failed', message: err.message });
     }
   };
 
@@ -423,34 +436,7 @@ export default function ProcessDraftPage() {
           </div>
         </div>
 
-        {/* Finalization Mode Toggle Card */}
-        <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-            <div>
-              <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-1">Draft Finalization Mode</h2>
-              <p className="text-[10px] text-slate-450 font-bold uppercase leading-normal">
-                {finalizationMode === 'auto' 
-                  ? 'Automatic mode: Draft will finalize automatically when closed' 
-                  : 'Manual mode: Requires admin to manually trigger finalization after draft closes'}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] text-slate-400 font-bold uppercase">Current Mode:</span>
-              <button
-                onClick={handleToggleFinalizationMode}
-                disabled={isUpdatingFinalizationMode || draftStatus === 'completed'}
-                title={draftStatus === 'completed' ? 'Cannot change mode after finalization' : `Click to switch to ${finalizationMode === 'auto' ? 'Manual' : 'Auto'} mode`}
-                className={`px-3 py-1.5 border text-[9px] font-black rounded-lg uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                  finalizationMode === 'manual'
-                    ? 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
-                    : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
-                }`}
-              >
-                {isUpdatingFinalizationMode ? '...' : finalizationMode === 'manual' ? '⚙️ Manual' : '⚡ Auto'}
-              </button>
-            </div>
-          </div>
-        </div>
+
 
         {/* Per-Slot Draft Rounds */}
         <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-4">
@@ -468,6 +454,7 @@ export default function ProcessDraftPage() {
                 slot={slot}
                 round={draftRounds.find((r: any) => r.slot_index === slot.slot_index)}
                 onAction={handleRoundAction}
+                onToggleFinalization={handleToggleRoundFinalization}
                 expanded={expandedSlotIndex === slot.slot_index}
                 onToggle={() => setExpandedSlotIndex(expandedSlotIndex === slot.slot_index ? null : slot.slot_index)}
               />
@@ -517,47 +504,28 @@ export default function ProcessDraftPage() {
           <div>
             <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-1">Resolve Draft Bids</h2>
             <p className="text-[10px] text-slate-450 font-bold uppercase leading-normal">
-              {finalizationMode === 'auto' 
-                ? 'When you close the draft, the system will automatically process all blind bids slot-by-slot, resolve priority fallbacks, and assign players/teams exclusively.'
-                : 'Preview the results before finalizing, then manually trigger finalization when ready. The system will process all blind bids slot-by-slot, resolve priority fallbacks, and assign players/teams exclusively.'}
+              Each slot round has its own finalization mode (Auto/Manual). When a slot is closed in Auto mode, bids are processed immediately. In Manual mode, use Preview + Finalize below.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 items-center pt-2">
-            {finalizationMode === 'manual' && draftStatus === 'closed' && (
-              <>
-                <button
-                  onClick={handlePreview}
-                  disabled={isLoadingPreview}
-                  className="w-full sm:w-auto px-6 py-3.5 bg-blue-600 border border-blue-700 hover:bg-blue-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                >
-                  <Play className="w-4 h-4" />
-                  {isLoadingPreview ? 'Generating Preview...' : 'Preview Results'}
-                </button>
-                
-                <button
-                  onClick={handleFinalize}
-                  disabled={isProcessing}
-                  className="w-full sm:w-auto px-6 py-3.5 bg-slate-800 border border-slate-900 hover:bg-slate-700 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                >
-                  <Play className="w-4 h-4 text-amber-400" />
-                  {isProcessing ? 'Processing Draft Engine...' : 'Finalize Draft (Apply Changes)'}
-                </button>
-              </>
-            )}
-
-            {finalizationMode === 'auto' && (
-              <div className="w-full sm:w-auto px-4 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl flex items-center justify-center gap-2">
-                ⚡ Auto-finalization enabled: Draft will finalize automatically when closed
-              </div>
-            )}
-
-            {draftStatus === 'pending' && (
-              <span className="text-[10px] text-slate-500 font-bold uppercase flex items-center gap-1.5 leading-tight">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                Draft must be opened and closed before finalization
-              </span>
-            )}
+            <button
+              onClick={handlePreview}
+              disabled={isLoadingPreview}
+              className="w-full sm:w-auto px-6 py-3.5 bg-blue-600 border border-blue-700 hover:bg-blue-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              <Play className="w-4 h-4" />
+              {isLoadingPreview ? 'Generating Preview...' : 'Preview Results'}
+            </button>
+            
+            <button
+              onClick={handleFinalize}
+              disabled={isProcessing}
+              className="w-full sm:w-auto px-6 py-3.5 bg-slate-800 border border-slate-900 hover:bg-slate-700 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              <Play className="w-4 h-4 text-amber-400" />
+              {isProcessing ? 'Processing Draft Engine...' : 'Finalize Draft (Apply Changes)'}
+            </button>
 
             {submittedCount < totalTeams && draftStatus !== 'pending' && (
               <span className="text-[10px] text-amber-600 font-bold uppercase flex items-center gap-1.5 leading-tight">
