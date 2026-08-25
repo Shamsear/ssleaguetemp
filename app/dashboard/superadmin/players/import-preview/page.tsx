@@ -223,6 +223,8 @@ export default function PlayersImportPreview() {
   );
   }
 
+  return (
+    <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/60">
@@ -463,5 +465,6 @@ export default function PlayersImportPreview() {
         </div>
       </div>
     </div>
+    </AuthGuard>
   );
 }

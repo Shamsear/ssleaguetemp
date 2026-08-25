@@ -45,7 +45,6 @@ export async function sendLineupWarning(
     const { getTournamentDb } = await import('@/lib/neon/tournament-config');
     const sql = getTournamentDb();
     await sql`UPDATE lineups SET warning_given = true, warning_at = ${new Date().toISOString()}, updated_at = NOW() WHERE fixture_id = ${fixtureId} AND team_id = ${teamId}`;
-    }
 
     return { success: true, notification_id: notificationRef.id };
   } catch (error: any) {

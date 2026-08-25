@@ -218,9 +218,9 @@ export async function releasePlayerNeon(
     await teamSeasonRef.update({
       dollar_balance: newBalance,
       updated_at: new Date()
+    });
     // Neon sync
     syncTeamSeason(teamSeasonRef.id || `${playerData.team_id}_${currentSeasonId}`,{ dollar_balance: newBalance });
-    });
     
     // Log transaction
     await logReleaseRefund(
