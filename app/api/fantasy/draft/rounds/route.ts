@@ -13,6 +13,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing league_id' }, { status: 400 });
     }
 
+    await fantasySql`SET timezone = 'UTC'`;
+
     const rounds = await fantasySql`
       SELECT id, league_id, slot_index, slot_name, opens_at, closes_at, status, updated_at
       FROM fantasy_draft_rounds

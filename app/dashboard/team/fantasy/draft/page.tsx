@@ -202,6 +202,14 @@ export default function TeamDraftPage() {
     }
   }, [user]);
 
+  // Normalize a timestamp string to ensure it's parsed as UTC
+  const parseAsUTC = (ts: string): number => {
+    if (!ts) return 0;
+    // If no timezone info, append Z to treat as UTC
+    const d = new Date(ts.includes('Z') || ts.includes('+') ? ts : ts + 'Z');
+    return d.getTime();
+  };
+
   // Set up live countdown timer based on active slot's round
   useEffect(() => {
     const activeRound = draftRounds.find((r: any) => r.slot_index === activeSlotIndex && r.status === 'active');
@@ -211,8 +219,8 @@ export default function TeamDraftPage() {
     }
 
     const timer = setInterval(() => {
-      const closesAt = new Date(activeRound.closes_at).getTime();
-      const now = new Date().getTime();
+      const closesAt = parseAsUTC(activeRound.closes_at);
+      const now = Date.now();
       const diff = closesAt - now;
 
       if (diff <= 0) {
@@ -682,8 +690,8 @@ export default function TeamDraftPage() {
     // Check per-slot round status
     const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
     if (!round || round.status !== 'active') return true;
-    // Check if round has expired
-    if (round.closes_at && new Date(round.closes_at) < new Date()) return true;
+    // Check if round has expired (compare as UTC)
+    if (round.closes_at && parseAsUTC(round.closes_at) < Date.now()) return true;
     return false;
   };
 
