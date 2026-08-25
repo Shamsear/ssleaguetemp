@@ -77,6 +77,7 @@ export default function TeamDraftPage() {
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [draftRounds, setDraftRounds] = useState<any[]>([]);
+  const [slotSubmissions, setSlotSubmissions] = useState<Record<number, boolean>>({});
 
   const { alertState, showAlert, closeAlert } = useModal();
 
@@ -138,6 +139,17 @@ export default function TeamDraftPage() {
         if (activeRound) {
           setActiveSlotIndex(activeRound.slot_index);
         }
+      }
+
+      // 2c. Fetch per-slot submission status
+      const subsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/bids/slot-status?user_id=${user.uid}`);
+      if (subsRes.ok) {
+        const subsData = await subsRes.json();
+        const slotSubs: Record<number, boolean> = {};
+        for (const [idx, val] of Object.entries(subsData.slot_submissions || {})) {
+          slotSubs[Number(idx)] = (val as any).submitted;
+        }
+        setSlotSubmissions(slotSubs);
       }
 
       // 3. Fetch all players in the pool
@@ -256,11 +268,11 @@ export default function TeamDraftPage() {
   const calculateRemainingBudget = () => {
     if (!draftSettings || !myTeam) return 0;
     // Use the actual active round from draftRounds, not the old category_settings
-    const activeSlot = draftRounds.find((r: any) => r.status === 'active')?.slot_index ?? null;
+    const activeSlotIndex = draftRounds.find((r: any) => r.status === 'active')?.slot_index ?? null;
 
-    if (activeSlot) {
+    if (activeSlotIndex) {
       // Slot-by-slot: Remaining budget is the team's current database budget minus the max bid in the active slot
-      const slotBids = localBids.filter(b => b.slot_index === activeSlot);
+      const slotBids = localBids.filter(b => b.slot_index === activeSlotIndex);
       const maxBidInSlot = slotBids.length > 0 ? Math.max(...slotBids.map(b => b.bid_amount)) : 0;
       return Math.max(0, Number(myTeam.budget_remaining || 0) - maxBidInSlot);
     } else {
@@ -374,14 +386,11 @@ export default function TeamDraftPage() {
 
   const saveBids = async (lockSubmit: boolean = false) => {
     if (!myTeam || !draftSettings) return;
-    // Use the actual active round from draftRounds, not the old category_settings
-    const activeSlot = draftRounds.find((r: any) => r.status === 'active')?.slot_index ?? null;
-
     const maxBidsLimit = draftSettings.category_settings?.max_bids_per_team || 0;
 
     // 1. Max Bids Count validation
     if (maxBidsLimit > 0) {
-      const countCheckBids = localBids.filter(b => activeSlot ? b.slot_index === activeSlot : true);
+      const countCheckBids = localBids.filter(b => activeSlotIndex ? b.slot_index === activeSlotIndex : true);
       if (countCheckBids.length > maxBidsLimit) {
         showAlert({
           type: 'error',
@@ -393,7 +402,7 @@ export default function TeamDraftPage() {
     }
 
     // 2. Duplicate Bid Amounts validation
-    const activeSlotBids = localBids.filter(b => activeSlot ? b.slot_index === activeSlot : true);
+    const activeSlotBids = localBids.filter(b => activeSlotIndex ? b.slot_index === activeSlotIndex : true);
     const bidAmounts = activeSlotBids.map(b => b.bid_amount);
     const uniqueBidAmounts = new Set(bidAmounts);
     if (uniqueBidAmounts.size !== bidAmounts.length) {
@@ -407,14 +416,14 @@ export default function TeamDraftPage() {
     }
 
     if (lockSubmit) {
-      if (activeSlot) {
-        const slotBids = localBids.filter(b => b.slot_index === activeSlot);
+      if (activeSlotIndex) {
+        const slotBids = localBids.filter(b => b.slot_index === activeSlotIndex);
         if (slotBids.length === 0) {
           showAlert({
             type: 'error',
             title: 'No Bids Placed',
             message: `You must place at least one bid for the active slot (${
-              draftSettings.category_settings?.slots.find(s => s.slot_index === activeSlot)?.name || `Slot ${activeSlot}`
+              draftSettings.category_settings?.slots.find(s => s.slot_index === activeSlotIndex)?.name || `Slot ${activeSlotIndex}`
             }) before submitting.`
           });
           return;
@@ -454,9 +463,11 @@ export default function TeamDraftPage() {
         body: JSON.stringify({
           user_id: user!.uid,
           bids: (() => {
+            // Always only send the current slot's bids to avoid overwriting other slots
+            const bidsToSend = localBids.filter(b => b.slot_index === activeSlotIndex);
             // Auto-assign priority based on bid amount (highest amount = priority 1)
             const bySlot: Record<number, typeof localBids> = {};
-            localBids.forEach(b => {
+            bidsToSend.forEach(b => {
               if (!bySlot[b.slot_index]) bySlot[b.slot_index] = [];
               bySlot[b.slot_index].push(b);
             });
@@ -562,13 +573,14 @@ export default function TeamDraftPage() {
   };
   // ────────────────────────────────────────────────────────────────────────
 
-  const handleUnlock = async () => {
+  const handleUnlock = async (slotIdx?: number) => {
     if (!confirm('Unlock to edit your bids? You can resubmit before the round closes.')) {
       return;
     }
     setIsSubmitting(true);
     try {
-      const res = await fetchWithTokenRefresh(`/api/fantasy/draft/bids/submit?user_id=${user!.uid}`, {
+      const slotParam = slotIdx ? `&slot_index=${slotIdx}` : '';
+      const res = await fetchWithTokenRefresh(`/api/fantasy/draft/bids/submit?user_id=${user!.uid}${slotParam}`, {
         method: 'DELETE'
       });
       const data = await res.json();
@@ -578,7 +590,7 @@ export default function TeamDraftPage() {
       showAlert({
         type: 'success',
         title: 'Draft Unlocked',
-        message: 'You can now edit your wishlist and resubmit.'
+        message: slotIdx ? `Slot ${slotIdx} unlocked` : 'All slots unlocked'
       });
       loadDraftData();
     } catch (err: any) {
@@ -624,8 +636,6 @@ export default function TeamDraftPage() {
     );
   }
 
-  const activeSlot = draftRounds.find((r: any) => r.status === 'active')?.slot_index ?? null;
-
   if (draftSettings.draft_status === 'completed') {
     return (
       <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
@@ -654,7 +664,7 @@ export default function TeamDraftPage() {
 
   // Check if ANY slot round is active
   const hasActiveRound = draftRounds.some((r: any) => r.status === 'active');
-  const activeRound = draftRounds.find((r: any) => r.slot_index === activeSlot);
+  const activeRound = draftRounds.find((r: any) => r.slot_index === activeSlotIndex);
 
   if (!hasActiveRound) {
     return (
@@ -682,20 +692,21 @@ export default function TeamDraftPage() {
     );
   }
 
-  // Round expired = truly locked, no more edits possible
-  const isRoundExpired = timeRemaining <= 0;
-  // Submitted = bids locked until user self-unlocks ("Edit Bids" button)
-  const isSubmitted = !!myTeam?.draft_submitted;
-  // Bidding is locked when submitted OR when round expired
-  const isBiddingLocked = isSubmitted || isRoundExpired;
-
+  // Per-slot locking
+  const isSlotSubmitted = (slotIdx: number) => !!slotSubmissions[slotIdx];
+  const isSlotRoundExpired = (slotIdx: number) => {
+    const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
+    return round?.closes_at && parseAsUTC(round.closes_at) < Date.now();
+  };
   const isSlotDisabled = (slotIdx: number) => {
-    if (isBiddingLocked) return true;
+    if (isSlotSubmitted(slotIdx) || isSlotRoundExpired(slotIdx)) return true;
     const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
     if (!round || round.status !== 'active') return true;
-    if (round.closes_at && parseAsUTC(round.closes_at) < Date.now()) return true;
     return false;
   };
+  // For the top banner - use active slot
+  const isRoundExpired = isSlotRoundExpired(activeSlotIndex);
+  const isSubmitted = isSlotSubmitted(activeSlotIndex);
 
   return (
     <AuthGuard requiredRole="team">
@@ -760,7 +771,7 @@ export default function TeamDraftPage() {
                       <CheckCircle className="w-4 h-4 text-emerald-600" /> Submitted
                     </span>
                     <button
-                      onClick={handleUnlock}
+                      onClick={() => handleUnlock(activeSlotIndex)}
                       disabled={isSubmitting}
                       className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 border border-amber-600 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
                     >
@@ -781,14 +792,42 @@ export default function TeamDraftPage() {
           </div>
         </div>
 
+        {/* Slot Tabs - show all non-pending rounds */}
+        {draftRounds.filter((r: any) => r.status !== 'pending').length > 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {draftRounds.filter((r: any) => r.status !== 'pending').map((r: any) => {
+              const slot = draftSettings?.category_settings?.slots.find((s: any) => s.slot_index === r.slot_index);
+              const isActiveTab = activeSlotIndex === r.slot_index;
+              const submitted = isSlotSubmitted(r.slot_index);
+              const expired = isSlotRoundExpired(r.slot_index);
+              return (
+                <button
+                  key={r.slot_index}
+                  onClick={() => setActiveSlotIndex(r.slot_index)}
+                  className={`px-4 py-2 rounded-xl font-bold font-mono text-[10px] uppercase tracking-wider transition-all border whitespace-nowrap cursor-pointer ${
+                    isActiveTab
+                      ? 'bg-slate-800 text-amber-400 border-slate-900 shadow-sm'
+                      : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200/60'
+                  }`}
+                >
+                  <span className="font-black">{slot?.name || `Slot ${r.slot_index}`}</span>
+                  {submitted && <span className="ml-1.5 text-emerald-500">✓</span>}
+                  {expired && !submitted && <span className="ml-1.5 text-rose-400">⏱</span>}
+                  {r.status === 'active' && !submitted && !expired && <span className="ml-1.5 text-emerald-400 animate-pulse">●</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Content: single column — Slots first, then player pool below */}
         <div className="flex flex-col space-y-6">
 
           {/* ── ROSTER SLOTS BIDDING ── */}
           {(() => {
-            const activeRoundSlot = draftSettings?.category_settings?.slots.find((s: any) => s.slot_index === activeSlot);
+            const activeRoundSlot = draftSettings?.category_settings?.slots.find((s: any) => s.slot_index === activeSlotIndex);
             const slotBids = localBids
-              .filter(b => b.slot_index === activeSlot)
+              .filter(b => b.slot_index === activeSlotIndex)
               .sort((a, b) => b.bid_amount - a.bid_amount);
             if (!activeRoundSlot) return null;
 
@@ -878,8 +917,8 @@ export default function TeamDraftPage() {
                             <input
                               type="number"
                               value={bid.bid_amount}
-                              disabled={isSlotDisabled(activeSlot)}
-                              onChange={(e) => updateBidAmount(activeSlot, bid.target_id, parseInt(e.target.value) || 0)}
+                              disabled={isSlotDisabled(activeSlotIndex)}
+                              onChange={(e) => updateBidAmount(activeSlotIndex, bid.target_id, parseInt(e.target.value) || 0)}
                               className={`w-20 pl-2 pr-6 py-1.5 bg-white border rounded-lg text-center text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:opacity-40 disabled:bg-slate-50 ${
                                 isDuplicateAmount
                                   ? 'border-rose-300 text-rose-600 focus:border-rose-400'
@@ -889,9 +928,9 @@ export default function TeamDraftPage() {
                               required
                             />
                           </div>
-                          {!isSlotDisabled(activeSlot) && (
+                          {!isSlotDisabled(activeSlotIndex) && (
                             <button
-                              onClick={() => removeBid(activeSlot, bid.target_id)}
+                              onClick={() => removeBid(activeSlotIndex, bid.target_id)}
                               className="w-8 h-8 rounded-lg border border-slate-200 text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-200 flex items-center justify-center transition-all"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -992,7 +1031,7 @@ export default function TeamDraftPage() {
                         
                         <button
                           onClick={() => addBidToSlot(itemId, name, !isRealTeam, item.real_team_name)}
-                          disabled={isBiddingLocked || isSlotDisabled(activeSlotIndex) || isAlreadyBid}
+                          disabled={isSlotDisabled(activeSlotIndex) || isAlreadyBid}
                           className={`px-3.5 py-1.5 font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-sm border ${
                             isAlreadyBid
                               ? 'bg-emerald-600 border-emerald-700 text-white cursor-default opacity-90'

@@ -155,13 +155,9 @@ export async function POST(request: NextRequest) {
       RETURNING *
     `);
 
-    // If starting a round: reset team submissions and clear bids for this slot
+    // If starting a round: clear bids for this slot and remove per-slot submission tracking
+    // Do NOT reset draft_submitted globally — other rounds may be active
     if (action === 'start' && currentStatus !== 'active') {
-      queries.push(fantasySql`
-        UPDATE fantasy_teams
-        SET draft_submitted = false
-        WHERE league_id = ${league_id}
-      `);
       queries.push(fantasySql`
         DELETE FROM fantasy_draft_bids
         WHERE league_id = ${league_id} AND slot_index = ${slotIdx}
@@ -169,6 +165,16 @@ export async function POST(request: NextRequest) {
     }
 
     const results = await fantasySql.transaction(queries);
+
+    // Clean up per-slot submissions (separate from transaction — table may not exist yet)
+    if (action === 'start' && currentStatus !== 'active') {
+      try {
+        await fantasySql`
+          DELETE FROM fantasy_slot_submissions
+          WHERE league_id = ${league_id} AND slot_index = ${slotIdx}
+        `;
+      } catch {}
+    }
     const round = results[0]?.[0];
 
     console.log(`✅ Slot ${slotIdx} round ${action} → ${newStatus} for league ${league_id}`);

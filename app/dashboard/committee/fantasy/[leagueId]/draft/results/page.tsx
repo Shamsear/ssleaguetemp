@@ -1,5 +1,5 @@
 'use client';
-import { ArrowLeft, Eye, Trophy, Users, DollarSign, Clock, CheckCircle, XCircle, Minus } from 'lucide-react';
+import { ArrowLeft, Eye, Trophy, Users, DollarSign, Clock, CheckCircle, XCircle, Minus, Download } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useParams } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
@@ -84,6 +84,116 @@ export default function DraftDetailedResultsPage() {
 
   const currentSlot = slots.find(s => s.slot_index === selectedSlot);
   const currentTeam = teams.find(t => t.team_id === selectedTeam);
+
+  const downloadPlayerCard = async (player: any, withLogo: boolean = false) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1080;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Background gradient
+    const grad = ctx.createLinearGradient(0, 0, 0, 1080);
+    grad.addColorStop(0, '#0f172a');
+    grad.addColorStop(1, '#1e293b');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1080, 1080);
+
+    // Gold accent bar at top
+    ctx.fillStyle = '#D4AF37';
+    ctx.fillRect(0, 0, 1080, 6);
+
+    // Load images
+    const loadImage = (url: string): Promise<HTMLImageElement> =>
+      new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(`Failed to load: ${url}`));
+        img.src = url;
+      });
+
+    try {
+      // Draw player image (center, large)
+      const playerImg = await loadImage(player.player_image);
+      const imgSize = 500;
+      const imgX = (1080 - imgSize) / 2;
+      const imgY = 80;
+
+      // Circle clip for player image
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(imgX + imgSize / 2, imgY + imgSize / 2, imgSize / 2, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(playerImg, imgX, imgY, imgSize, imgSize);
+      ctx.restore();
+
+      // Gold ring around player image
+      ctx.strokeStyle = '#D4AF37';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(imgX + imgSize / 2, imgY + imgSize / 2, imgSize / 2 + 3, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Player name
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 48px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(player.player_name.toUpperCase(), 1080 / 2, 650);
+
+      // Position + Real Team
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.fillText(`${player.position} • ${player.real_team_name}`, 1080 / 2, 700);
+
+      // "SOLD TO" caption
+      ctx.fillStyle = '#D4AF37';
+      ctx.font = 'bold 32px sans-serif';
+      ctx.fillText('SOLD TO', 1080 / 2, 790);
+
+      // Fantasy team name
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 44px sans-serif';
+      ctx.fillText(player.team_name.toUpperCase(), 1080 / 2, 850);
+
+      // Bid amount
+      ctx.fillStyle = '#34d399';
+      ctx.font = 'bold 56px sans-serif';
+      ctx.fillText(`${player.purchase_price} Cr`, 1080 / 2, 940);
+
+      // Team logo (optional)
+      if (withLogo && player.team_logo) {
+        try {
+          const logoImg = await loadImage(player.team_logo);
+          const logoSize = 120;
+          ctx.drawImage(logoImg, 1080 - logoSize - 40, 40, logoSize, logoSize);
+        } catch {}
+      }
+
+      // Watermark
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('FREEBUFF FANTASY', 1080 / 2, 1040);
+
+      // Download
+      const link = document.createElement('a');
+      link.download = `${player.player_name.replace(/\s+/g, '_')}_sold.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Download failed:', err);
+      showAlert({ type: 'error', title: 'Download Failed', message: 'Could not generate player card' });
+    }
+  };
+
+  const downloadAllSlotCards = async (withLogo: boolean = false) => {
+    if (!currentSlot || currentSlot.final_awarded.length === 0) return;
+    for (const a of currentSlot.final_awarded) {
+      await downloadPlayerCard(a, withLogo);
+      await new Promise(r => setTimeout(r, 500));
+    }
+    showAlert({ type: 'success', title: 'Downloaded!', message: `${currentSlot.final_awarded.length} player card(s) downloaded` });
+  };
 
   const statusColor = (status: string) => {
     switch (status) {
@@ -341,23 +451,77 @@ export default function DraftDetailedResultsPage() {
                   {/* Final Awarded */}
                   {currentSlot.final_awarded.length > 0 && (
                     <div className="console-card bg-emerald-50/50 border border-emerald-200/60 p-6 rounded-3xl shadow-sm">
-                      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-emerald-100">
-                        <Trophy className="w-4 h-4 text-emerald-600" />
-                        <h3 className="text-xs font-black text-emerald-800 uppercase tracking-wider">Final Awarded</h3>
+                      <div className="flex items-center justify-between mb-4 pb-3 border-b border-emerald-100">
+                        <div className="flex items-center gap-2">
+                          <Trophy className="w-4 h-4 text-emerald-600" />
+                          <h3 className="text-xs font-black text-emerald-800 uppercase tracking-wider">Final Awarded</h3>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => downloadAllSlotCards(false)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[9px] font-black rounded-lg uppercase tracking-wider transition-colors"
+                          >
+                            <Download className="w-3 h-3" /> Download All
+                          </button>
+                          <button
+                            onClick={() => downloadAllSlotCards(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-black rounded-lg uppercase tracking-wider transition-colors"
+                          >
+                            <Download className="w-3 h-3" /> With Logo
+                          </button>
+                        </div>
                       </div>
                       <div className="space-y-3">
                         {currentSlot.final_awarded.map((a: any, i: number) => (
-                          <div key={i} className="bg-white border border-emerald-100 rounded-xl p-4 flex items-center justify-between">
-                            <div>
+                          <div key={i} className="bg-white border border-emerald-100 rounded-xl p-4 flex items-center gap-4">
+                            {/* Player Image */}
+                            <div className="relative shrink-0">
+                              <img
+                                src={a.player_image}
+                                alt={a.player_name}
+                                className="w-16 h-16 rounded-full object-cover border-2 border-emerald-300"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = '/images/player-placeholder.png';
+                                }}
+                              />
+                              {a.team_logo && (
+                                <img
+                                  src={a.team_logo}
+                                  alt="Team Logo"
+                                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full border-2 border-white object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                              )}
+                            </div>
+                            {/* Player Info */}
+                            <div className="flex-1 min-w-0">
                               <h4 className="font-bold text-slate-800 text-xs uppercase">{a.player_name}</h4>
                               <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">
                                 {a.position} • {a.real_team_name}
                               </p>
                               <p className="text-[10px] text-amber-600 font-bold uppercase mt-0.5">
-                                → {a.team_name}
+                                Sold to: {a.team_name} for {a.purchase_price} Cr
                               </p>
                             </div>
-                            <span className="font-black text-emerald-600 text-sm">{a.purchase_price} Cr</span>
+                            {/* Download buttons */}
+                            <div className="flex gap-1.5 shrink-0">
+                              <button
+                                onClick={() => downloadPlayerCard(a, false)}
+                                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
+                                title="Download card"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => downloadPlayerCard(a, true)}
+                                className="w-8 h-8 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 flex items-center justify-center transition-colors"
+                                title="Download card with team logo"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>

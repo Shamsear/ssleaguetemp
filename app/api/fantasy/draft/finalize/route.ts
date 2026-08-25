@@ -97,11 +97,24 @@ export async function POST(request: NextRequest) {
     }
 
     // ── LEGACY FINALIZE: Process all pending slots ──
+    // In multi-round mode, only allow single-slot finalization
     if (slot_index !== undefined) {
       await fantasySql`
         UPDATE fantasy_draft_rounds SET status = 'completed', updated_at = NOW()
         WHERE league_id = ${league_id} AND slot_index = ${Number(slot_index)}
       `;
+    }
+
+    // Check if any other round is still active — if so, block legacy full finalize
+    const activeRounds = await fantasySql`
+      SELECT slot_index FROM fantasy_draft_rounds
+      WHERE league_id = ${league_id} AND status = 'active' AND slot_index != ${Number(slot_index || 0)}
+    `;
+    if (activeRounds.length > 0) {
+      return NextResponse.json(
+        { success: false, error: 'Cannot finalize all slots while other rounds are active. Use per-slot preview/apply instead.' },
+        { status: 400 }
+      );
     }
 
     console.log(`⚡ Finalizing fantasy draft for league ${league_id}...`);

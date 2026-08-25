@@ -339,19 +339,23 @@ export default function ProcessDraftPage() {
 
   const handleCopyAllSubmittedTeams = () => {
     if (teams.length === 0) return;
-    // Prefer the currently active round, then most recently closed, then first slot
-    const activeRound = draftRounds.find((r: any) => r.status === 'active')
-      || draftRounds.filter((r: any) => r.status === 'closed').sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0]
-      || draftRounds[0];
-    const slotName = activeRound?.slot_name || `Slot ${activeRound?.slot_index || ''}`;
-    const roundNum = activeRound?.slot_index || '';
-    let msg = `Fantasy Season\n`;
-    msg += `Teams\n`;
-    msg += `Round ${roundNum}\n`;
-    msg += `${slotName}\n\n`;
-    teams.forEach((t, i) => {
-      msg += `${i + 1}. ${t.team_name} ${t.draft_submitted ? '✓' : ''}\n`;
+    // Get all active or recently closed rounds
+    const activeRounds = draftRounds.filter((r: any) => r.status === 'active' || r.status === 'closed')
+      .sort((a: any, b: any) => a.slot_index - b.slot_index);
+    if (activeRounds.length === 0) return;
+
+    let msg = `Fantasy Season\nTeams\n\n`;
+    activeRounds.forEach((r: any) => {
+      const roundNum = r.slot_index;
+      const slotName = r.slot_name || `Slot ${roundNum}`;
+      msg += `Round ${roundNum} - ${slotName}\n`;
+      teams.forEach((t, i) => {
+        const submitted = t.slot_submissions?.[r.slot_index] || false;
+        msg += `${i + 1}. ${t.team_name} ${submitted ? '✓' : ''}\n`;
+      });
+      msg += '\n';
     });
+
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(msg)
         .then(() => showAlert({ type: 'success', title: 'Copied!', message: 'Submission checklist copied to clipboard' }))
@@ -585,12 +589,18 @@ export default function ProcessDraftPage() {
 
       <div className="max-w-5xl mx-auto relative z-10 space-y-6 font-mono">
         {/* Navigation */}
-        <div>
+        <div className="flex items-center gap-3">
           <Link
             href={`/dashboard/committee/fantasy/${leagueId}`}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
+          <Link
+            href={`/dashboard/committee/fantasy/${leagueId}/draft/results`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+          >
+            View Results
           </Link>
         </div>
 

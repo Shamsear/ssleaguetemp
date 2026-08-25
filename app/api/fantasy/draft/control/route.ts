@@ -70,14 +70,8 @@ export async function POST(request: NextRequest) {
     // Only reset bids/locks when STARTING a new round (transitioning TO active)
     // Not when just updating the close time on an already-active round
     if (isTransitioningToActive) {
-      // Reset team submission lock for the current round
-      queries.push(fantasySql`
-        UPDATE fantasy_teams
-        SET draft_submitted = false
-        WHERE league_id = ${league_id}
-      `);
-
-      // If we are open for a specific slot, delete draft bids for that slot only
+      // If we are open for a specific slot, delete draft bids and submissions for that slot only
+      // Do NOT reset draft_submitted globally — other rounds may be active
       const targetSlot = Number(categorySettings.active_slot_index);
       if (targetSlot) {
         queries.push(fantasySql`
@@ -94,6 +88,18 @@ export async function POST(request: NextRequest) {
     }
 
     const transactionResults = await fantasySql.transaction(queries);
+
+    // Clean up per-slot submissions (separate — table may not exist yet)
+    if (isTransitioningToActive) {
+      try {
+        const targetSlot = Number(categorySettings.active_slot_index);
+        if (targetSlot) {
+          await fantasySql`DELETE FROM fantasy_slot_submissions WHERE league_id = ${league_id} AND slot_index = ${targetSlot}`;
+        } else {
+          await fantasySql`DELETE FROM fantasy_slot_submissions WHERE league_id = ${league_id}`;
+        }
+      } catch {}
+    }
     const result = transactionResults[0];
 
     console.log('🟢 Stored in database:', {

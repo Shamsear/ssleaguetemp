@@ -73,6 +73,28 @@ export async function GET(request: NextRequest) {
     const slotNameMap = new Map<number, string>();
     (categorySettings?.slots || []).forEach((s: any) => slotNameMap.set(s.slot_index, s.name));
 
+    // 4. Fetch per-slot submission status (gracefully handle missing table)
+    const slotSubMap = new Map<string, any>();
+    try {
+      const slotSubmissions = await fantasySql`
+        SELECT team_id, slot_index, submitted_at
+        FROM fantasy_slot_submissions
+        WHERE league_id = ${league_id}
+      `;
+      for (const ss of slotSubmissions) {
+        slotSubMap.set(`${ss.team_id}_${ss.slot_index}`, { submitted_at: ss.submitted_at });
+      }
+    } catch {
+      // Table may not exist yet — fall back to draft_submitted
+      for (const t of teams) {
+        if (t.draft_submitted) {
+          for (const [idx] of slotNameMap) {
+            slotSubMap.set(`${t.team_id}_${idx}`, { submitted_at: null });
+          }
+        }
+      }
+    }
+
     // Combine data
     const submissionStatuses = teams.map(t => ({
       team_id: t.team_id,
@@ -81,7 +103,13 @@ export async function GET(request: NextRequest) {
       draft_submitted: !!t.draft_submitted,
       budget_remaining: Number(t.budget_remaining),
       total_bids: bidCountsMap.get(t.team_id) || 0,
-      bids: teamBidsMap.get(t.team_id) || []
+      bids: teamBidsMap.get(t.team_id) || [],
+      slot_submissions: Object.fromEntries(
+        [...slotNameMap.entries()].map(([idx]) => [
+          idx,
+          !!slotSubMap.get(`${t.team_id}_${idx}`)
+        ])
+      )
     }));
 
     return NextResponse.json({

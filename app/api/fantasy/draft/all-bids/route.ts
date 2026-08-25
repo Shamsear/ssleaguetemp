@@ -137,6 +137,23 @@ export async function GET(request: NextRequest) {
     const supportedTeamMap = new Map<string, any>();
     supportedTeams.forEach((st: any) => supportedTeamMap.set(st.team_id, st));
 
+    // 8. Get team logos from main DB
+    const teamIds = teams.map((t: any) => t.team_id);
+    const teamLogos = new Map<string, string>();
+    try {
+      // Try to get logos from main DB teams collection
+      const { adminDb } = await import('@/lib/neon/admin-db-wrapper');
+      for (const tid of teamIds) {
+        const doc = await adminDb.collection('teams').doc(tid).get();
+        if (doc.exists) {
+          const data = doc.data();
+          if (data?.logo_url) teamLogos.set(tid, data.logo_url);
+        }
+      }
+    } catch (e) {
+      console.log('Could not fetch team logos:', e);
+    }
+
     // Build per-slot detailed data
     const slotResults = slots.map((slot: any) => {
       const slotIdx = slot.slot_index;
@@ -178,8 +195,10 @@ export async function GET(request: NextRequest) {
         .map((s: any) => ({
           team_id: s.team_id,
           team_name: teamMap.get(s.team_id)?.team_name || s.team_id,
+          team_logo: teamLogos.get(s.team_id) || null,
           player_name: s.player_name,
           player_id: s.real_player_id,
+          player_image: `/images/players/${s.real_player_id}.webp`,
           position: s.position,
           real_team_name: s.real_team_name,
           purchase_price: Number(s.purchase_price),

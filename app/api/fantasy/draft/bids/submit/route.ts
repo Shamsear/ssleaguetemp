@@ -124,12 +124,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // If draft is already locked/submitted, prevent re-locking
-    if (draft_submitted && lock) {
-      return NextResponse.json(
-        { error: 'Your bids are already locked and submitted' },
-        { status: 400 }
-      );
+    // Determine which slot is being submitted — all bids must be for the same slot
+    const submitSlotIndex = bids.length > 0 ? Number(bids[0].slot_index) : null;
+    if (submitSlotIndex) {
+      const allSameSlot = bids.every((b: any) => Number(b.slot_index) === submitSlotIndex);
+      if (!allSameSlot) {
+        return NextResponse.json(
+          { error: 'All bids must be for the same slot. Submit one slot at a time.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Check per-slot submission status (table may not exist yet)
+    if (lock && submitSlotIndex) {
+      try {
+        const existingSubmission = await fantasySql`
+          SELECT id FROM fantasy_slot_submissions
+          WHERE team_id = ${team_id} AND league_id = ${league_id} AND slot_index = ${submitSlotIndex}
+          LIMIT 1
+        `;
+        if (existingSubmission.length > 0) {
+          return NextResponse.json(
+            { error: 'Your bids for this slot are already locked and submitted' },
+            { status: 400 }
+          );
+        }
+      } catch {}
     }
 
     // Parse category settings
@@ -226,10 +247,27 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update draft submission flag
+    // Track per-slot submission (table may not exist yet)
+    let globalSubmitted = !!lock;
+    if (lock && submitSlotIndex) {
+      try {
+        await fantasySql`
+          INSERT INTO fantasy_slot_submissions (team_id, league_id, slot_index, submitted_at)
+          VALUES (${team_id}, ${league_id}, ${submitSlotIndex}, NOW())
+          ON CONFLICT (team_id, league_id, slot_index) DO UPDATE SET submitted_at = NOW()
+        `;
+        const anySubmitted = await fantasySql`
+          SELECT COUNT(*)::int as cnt FROM fantasy_slot_submissions
+          WHERE team_id = ${team_id} AND league_id = ${league_id}
+        `;
+        globalSubmitted = (anySubmitted[0]?.cnt || 0) > 0;
+      } catch {}
+    }
+
+    // Also update legacy draft_submitted flag for backward compatibility
     await fantasySql`
       UPDATE fantasy_teams
-      SET draft_submitted = ${!!lock},
+      SET draft_submitted = ${globalSubmitted},
           updated_at = CURRENT_TIMESTAMP
       WHERE team_id = ${team_id} AND league_id = ${league_id}
     `;
@@ -237,7 +275,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: lock ? 'Bids submitted and locked successfully' : 'Draft bids saved successfully',
-      draft_submitted: !!lock
+      draft_submitted: globalSubmitted
     });
   } catch (error) {
     console.error('Error submitting bids:', error);
@@ -309,31 +347,47 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { team_id, league_id } = teams[0];
+    const unlockSlotIndex = searchParams.get('slot_index') ? Number(searchParams.get('slot_index')) : null;
 
-    // Check if any round for this team's league is still active/open
-    const activeRounds = await fantasySql`
-      SELECT slot_index, status, closes_at FROM fantasy_draft_rounds
-      WHERE league_id = ${league_id} AND status = 'active'
-    `;
-
-    if (activeRounds.length === 0) {
-      return NextResponse.json(
-        { error: 'No active draft round — cannot unlock bids' },
-        { status: 400 }
-      );
-    }
-
-    const now = new Date();
-    for (const r of activeRounds) {
-      if (r.closes_at && now > new Date(r.closes_at)) {
-        return NextResponse.json(
-          { error: `Draft round for slot ${r.slot_index} has already closed` },
-          { status: 400 }
-        );
+    if (unlockSlotIndex) {
+      // Per-slot unlock: remove submission for this specific slot
+      const round = await fantasySql`
+        SELECT status, closes_at FROM fantasy_draft_rounds
+        WHERE league_id = ${league_id} AND slot_index = ${unlockSlotIndex}
+        LIMIT 1
+      `;
+      if (round.length === 0) {
+        return NextResponse.json({ error: 'Round not found' }, { status: 400 });
       }
+      if (round[0].closes_at && new Date() > new Date(round[0].closes_at)) {
+        return NextResponse.json({ error: 'This round has already closed' }, { status: 400 });
+      }
+      try {
+        await fantasySql`
+          DELETE FROM fantasy_slot_submissions
+          WHERE team_id = ${team_id} AND league_id = ${league_id} AND slot_index = ${unlockSlotIndex}
+        `;
+        const remaining = await fantasySql`
+          SELECT COUNT(*)::int as cnt FROM fantasy_slot_submissions
+          WHERE team_id = ${team_id} AND league_id = ${league_id}
+        `;
+        await fantasySql`
+          UPDATE fantasy_teams
+          SET draft_submitted = ${(remaining[0]?.cnt || 0) > 0},
+              updated_at = CURRENT_TIMESTAMP
+          WHERE team_id = ${team_id} AND league_id = ${league_id}
+        `;
+      } catch {}
+      return NextResponse.json({ success: true, message: `Slot ${unlockSlotIndex} unlocked` });
     }
 
-    // Unlock
+    // Full unlock: remove all slot submissions
+    try {
+      await fantasySql`
+        DELETE FROM fantasy_slot_submissions
+        WHERE team_id = ${team_id} AND league_id = ${league_id}
+      `;
+    } catch {}
     await fantasySql`
       UPDATE fantasy_teams
       SET draft_submitted = false,
