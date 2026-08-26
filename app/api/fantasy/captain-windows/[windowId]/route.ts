@@ -7,10 +7,10 @@ import { getFantasyDb } from '@/lib/neon/fantasy-config';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { windowId: string } }
+  { params }: { params: Promise<{ windowId: string }> }
 ) {
   try {
-    const { windowId } = params;
+    const { windowId } = await params;
 
     const sql = getFantasyDb();
 
@@ -68,10 +68,10 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { windowId: string } }
+  { params }: { params: Promise<{ windowId: string }> }
 ) {
   try {
-    const { windowId } = params;
+    const { windowId } = await params;
     const body = await request.json();
     const { window_status, opens_at, closes_at, notes } = body;
 
@@ -162,10 +162,10 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { windowId: string } }
+  { params }: { params: Promise<{ windowId: string }> }
 ) {
   try {
-    const { windowId } = params;
+    const { windowId } = await params;
 
     const sql = getFantasyDb();
 
