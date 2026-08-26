@@ -1321,13 +1321,16 @@ export async function applySlotBidResults(
     }
 
     // 2. Handle real team link (slot 6)
-    if (teamLinkBid && slotIndex === 6) {
-      const realTeams = await fantasySql`SELECT team_name FROM teams WHERE team_uid = ${teamLinkBid.target_id} LIMIT 1`;
-      writeQueries.push(fantasySql`
-        UPDATE fantasy_teams SET supported_team_id = ${teamLinkBid.target_id},
-        supported_team_name = ${realTeams[0]?.team_name || teamLinkBid.target_id}
-        WHERE team_id = ${teamLinkBid.team_id} AND league_id = ${leagueId}
-      `);
+    if (slotIndex === 6) {
+      const realTeamWins = resultsBySlot[0]?.winning_bids?.filter((w: any) => w.bid_type === 'real_team') || [];
+      for (const w of realTeamWins) {
+        const realTeams = await fantasySql`SELECT team_name FROM teams WHERE team_uid = ${w.target_id} LIMIT 1`;
+        writeQueries.push(fantasySql`
+          UPDATE fantasy_teams SET supported_team_id = ${w.target_id},
+          supported_team_name = ${realTeams[0]?.team_name || w.target_id}
+          WHERE team_id = ${w.team_id} AND league_id = ${leagueId}
+        `);
+      }
     }
 
     // 3. Add winning players to squad

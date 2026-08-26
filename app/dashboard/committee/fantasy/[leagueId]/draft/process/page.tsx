@@ -60,13 +60,14 @@ const formatISTDisplay = (isoOrLocal: string): string => {
 };
 
 /** Per-slot round control card — compact by default, expands on click */
-function SlotRoundCard({ slot, round, onAction, onToggleFinalization, onPreview, onApply, preview, expanded, onToggle }: {
+function SlotRoundCard({ slot, round, onAction, onToggleFinalization, onPreview, onApply, onAssignRandom, preview, expanded, onToggle }: {
   slot: any;
   round: any;
   onAction: (slotIndex: number, action: 'start' | 'close' | 'adjust' | 'reset', times?: { opens_at?: string; closes_at?: string }) => void;
   onToggleFinalization: (slotIndex: number) => void;
   onPreview: (slotIndex: number) => void;
   onApply: (slotIndex: number) => void;
+  onAssignRandom: (slotIndex: number) => void;
   preview: any;
   expanded: boolean;
   onToggle: () => void;
@@ -241,6 +242,12 @@ function SlotRoundCard({ slot, round, onAction, onToggleFinalization, onPreview,
               <button onClick={() => onAction(slot.slot_index, 'reset')}
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all">🔄 Reset to Pending</button>
             )}
+            {status === 'completed' && (
+              <button onClick={() => onAssignRandom(slot.slot_index)}
+                className="px-4 py-2 bg-indigo-650 hover:bg-indigo-700 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm">
+                🎲 Assign Random Remaining (Avg Price)
+              </button>
+            )}
           </div>
 
           {/* Finalization controls for closed rounds or expired active manual rounds */}
@@ -295,6 +302,10 @@ function SlotRoundCard({ slot, round, onAction, onToggleFinalization, onPreview,
                         <button onClick={() => onPreview(slot.slot_index)}
                           className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm">
                           🔄 Re-Preview
+                        </button>
+                        <button onClick={() => onAssignRandom(slot.slot_index)}
+                          className="px-4 py-2 bg-indigo-650 hover:bg-indigo-700 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm">
+                          🎲 Assign Random Remaining (Avg Price)
                         </button>
                         <button onClick={() => onApply(slot.slot_index)}
                           className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-pointer transition-all shadow-sm">
@@ -561,6 +572,32 @@ export default function ProcessDraftPage() {
     }
   };
 
+  const handleAssignRandomSlot = async (slotIndex: number) => {
+    if (!confirm(`Assign random remaining targets at average price to teams without wins in Slot ${slotIndex}?`)) return;
+    try {
+      const res = await fetchWithTokenRefresh('/api/fantasy/draft/finalize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ league_id: leagueId, slot_index: slotIndex, action: 'assign_random' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Assign random failed');
+      
+      if (data.preview) {
+        setSlotPreview(data.preview);
+        setPreviewSlotIndex(slotIndex);
+      } else {
+        setSlotPreview(null);
+        setPreviewSlotIndex(null);
+      }
+      
+      showAlert({ type: 'success', title: 'Random Targets Assigned', message: data.message || `Random assignments added to Slot ${slotIndex} preview.` });
+      loadSubmissions();
+    } catch (err: any) {
+      showAlert({ type: 'error', title: 'Random Assignment Failed', message: err.message });
+    }
+  };
+
 
 
   const handleToggleRoundFinalization = async (slotIndex: number) => {
@@ -667,6 +704,7 @@ export default function ProcessDraftPage() {
                 onToggleFinalization={handleToggleRoundFinalization}
                 onPreview={handlePreviewSlot}
                 onApply={handleApplySlot}
+                onAssignRandom={handleAssignRandomSlot}
                 preview={previewSlotIndex === slot.slot_index ? slotPreview : null}
                 expanded={expandedSlotIndex === slot.slot_index}
                 onToggle={() => setExpandedSlotIndex(expandedSlotIndex === slot.slot_index ? null : slot.slot_index)}
