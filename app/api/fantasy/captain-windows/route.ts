@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFantasyDb } from '@/lib/neon/fantasy-config';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/fantasy/captain-windows
  * List all captain windows for a league

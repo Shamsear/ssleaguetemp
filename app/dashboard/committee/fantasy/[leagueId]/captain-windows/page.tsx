@@ -4,11 +4,39 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { ArrowLeft, Plus, Clock, Users, CheckCircle, XCircle, Lock, Play, Pause, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Clock, Users, CheckCircle, XCircle, Lock, Play, Pause, Trash2, Pencil, Crown, Star } from 'lucide-react';
 import Link from 'next/link';
 import AlertModal from '@/components/modals/AlertModal';
 import { useModal } from '@/hooks/useModal';
 import AuthGuard from '@/components/auth/AuthGuard';
+
+const formatToIST = (dateStr: string) => {
+  if (!dateStr) return '—';
+  try {
+    return new Date(dateStr).toLocaleString('en-US', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }) + ' IST';
+  } catch (e) {
+    return new Date(dateStr).toLocaleString();
+  }
+};
+
+const formatToLocalISTInput = (dateStr: string) => {
+  if (!dateStr) return '';
+  try {
+    const date = new Date(dateStr);
+    const istTime = new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
+    return istTime.toISOString().substring(0, 16);
+  } catch (e) {
+    return '';
+  }
+};
 
 interface CaptainWindow {
   window_id: string;
@@ -51,6 +79,52 @@ export default function CaptainWindowsPage() {
     end_round: ''
   });
 
+  // Edit form state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editingWindow, setEditingWindow] = useState<CaptainWindow | null>(null);
+  const [editForm, setEditForm] = useState({
+    round_id: '',
+    round_number: '',
+    round_name: '',
+    opens_at: '',
+    closes_at: '',
+    notes: '',
+    start_round: '',
+    end_round: ''
+  });
+
+  // Expandable list selections state
+  const [expandedWindowId, setExpandedWindowId] = useState<string | null>(null);
+  const [windowSelections, setWindowSelections] = useState<Record<string, any[]>>({});
+  const [loadingSelections, setLoadingSelections] = useState<Record<string, boolean>>({});
+
+  const toggleExpandWindow = async (windowId: string) => {
+    if (expandedWindowId === windowId) {
+      setExpandedWindowId(null);
+      return;
+    }
+    
+    setExpandedWindowId(windowId);
+    
+    if (windowSelections[windowId]) {
+      return; // Already loaded
+    }
+    
+    setLoadingSelections(prev => ({ ...prev, [windowId]: true }));
+    try {
+      const res = await fetchWithTokenRefresh(`/api/fantasy/captain-windows/${windowId}?_t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setWindowSelections(prev => ({ ...prev, [windowId]: data.selections || [] }));
+      }
+    } catch (e) {
+      console.error('Error loading window selections:', e);
+    } finally {
+      setLoadingSelections(prev => ({ ...prev, [windowId]: false }));
+    }
+  };
+
   const { alertState, showAlert, closeAlert } = useModal();
 
   useEffect(() => {
@@ -62,7 +136,7 @@ export default function CaptainWindowsPage() {
   const loadWindows = async () => {
     setIsLoading(true);
     try {
-      const response = await fetchWithTokenRefresh(`/api/fantasy/captain-windows?league_id=${leagueId}`);
+      const response = await fetchWithTokenRefresh(`/api/fantasy/captain-windows?league_id=${leagueId}&_t=${Date.now()}`);
       if (!response.ok) throw new Error('Failed to fetch captain windows');
       const data = await response.json();
       setWindows(data.windows || []);
@@ -98,8 +172,8 @@ export default function CaptainWindowsPage() {
           round_id: createForm.round_id,
           round_number: createForm.round_number ? parseInt(createForm.round_number) : null,
           round_name: createForm.round_name || null,
-          opens_at: new Date(createForm.opens_at).toISOString(),
-          closes_at: new Date(createForm.closes_at).toISOString(),
+          opens_at: new Date(createForm.opens_at + '+05:30').toISOString(),
+          closes_at: new Date(createForm.closes_at + '+05:30').toISOString(),
           notes: createForm.notes || null,
           created_by_user_id: user?.uid,
           start_round: parseInt(createForm.start_round),
@@ -139,6 +213,75 @@ export default function CaptainWindowsPage() {
       });
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const startEditWindow = (window: CaptainWindow) => {
+    setEditingWindow(window);
+    setEditForm({
+      round_id: window.round_id,
+      round_number: window.round_number !== null ? String(window.round_number) : '',
+      round_name: window.round_name || '',
+      opens_at: formatToLocalISTInput(window.opens_at),
+      closes_at: formatToLocalISTInput(window.closes_at),
+      notes: window.notes || '',
+      start_round: window.start_round !== null ? String(window.start_round) : '',
+      end_round: window.end_round !== null ? String(window.end_round) : ''
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditWindow = async () => {
+    if (!editingWindow) return;
+    if (!editForm.round_id || !editForm.opens_at || !editForm.closes_at || !editForm.start_round || !editForm.end_round) {
+      showAlert({
+        type: 'warning',
+        title: 'Missing Fields',
+        message: 'Please fill in round ID, start round, end round, opens at, and closes at fields'
+      });
+      return;
+    }
+
+    setIsSavingEdit(true);
+    try {
+      const response = await fetchWithTokenRefresh(`/api/fantasy/captain-windows/${editingWindow.window_id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          round_id: editForm.round_id,
+          round_number: editForm.round_number ? parseInt(editForm.round_number) : null,
+          round_name: editForm.round_name || null,
+          opens_at: new Date(editForm.opens_at + '+05:30').toISOString(),
+          closes_at: new Date(editForm.closes_at + '+05:30').toISOString(),
+          notes: editForm.notes || null,
+          start_round: parseInt(editForm.start_round),
+          end_round: parseInt(editForm.end_round)
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update captain window');
+      }
+
+      showAlert({
+        type: 'success',
+        title: 'Window Updated',
+        message: 'Captain selection window updated successfully'
+      });
+
+      setShowEditModal(false);
+      setEditingWindow(null);
+      loadWindows();
+    } catch (error: any) {
+      showAlert({
+        type: 'error',
+        title: 'Update Failed',
+        message: error.message || 'Failed to update captain window'
+      });
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -331,13 +474,13 @@ export default function CaptainWindowsPage() {
                       <div>
                         <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">Opens At</p>
                         <p className="text-xs font-bold text-slate-700 font-mono">
-                          {new Date(window.opens_at).toLocaleString()}
+                          {formatToIST(window.opens_at)}
                         </p>
                       </div>
                       <div>
                         <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">Closes At</p>
                         <p className="text-xs font-bold text-slate-700 font-mono">
-                          {new Date(window.closes_at).toLocaleString()}
+                          {formatToIST(window.closes_at)}
                         </p>
                       </div>
                     </div>
@@ -366,10 +509,28 @@ export default function CaptainWindowsPage() {
                         {window.notes}
                       </p>
                     )}
+
+                    <div className="mt-4">
+                      <button
+                        onClick={() => toggleExpandWindow(window.window_id)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-[10px] font-black text-amber-700 uppercase tracking-wider transition-colors cursor-pointer"
+                      >
+                        {expandedWindowId === window.window_id ? 'Hide Selections ▲' : 'View Selections ▼'}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Actions */}
                   <div className="flex lg:flex-col gap-2">
+                    <button
+                      onClick={() => startEditWindow(window)}
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all cursor-pointer"
+                      title="Edit Window"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      Edit
+                    </button>
+
                     {window.window_status === 'pending' && (
                       <button
                         onClick={() => handleUpdateStatus(window.window_id, 'open')}
@@ -427,14 +588,57 @@ export default function CaptainWindowsPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Team Selections Expanded View */}
+                {expandedWindowId === window.window_id && (
+                  <div className="mt-6 border-t border-slate-100 pt-4 space-y-4">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                      Team Selections ({window.teams_with_captain_set} / {window.total_teams} Set)
+                    </h4>
+                    {loadingSelections[window.window_id] ? (
+                      <div className="py-6 text-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500 mx-auto" />
+                      </div>
+                    ) : (windowSelections[window.window_id] || []).length === 0 ? (
+                      <p className="text-xs text-slate-500 italic">No selections recorded yet.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {(windowSelections[window.window_id] || []).map((sel: any) => (
+                          <div 
+                            key={sel.team_id}
+                            className={`p-3 rounded-xl border flex items-center justify-between gap-3 ${
+                              sel.has_set 
+                                ? 'bg-slate-50 border-slate-200' 
+                                : 'bg-rose-50/30 border-rose-100/50'
+                            }`}
+                          >
+                            <div>
+                              <p className="text-xs font-black text-slate-800 uppercase">{sel.team_name}</p>
+                              <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Manager: {sel.owner_name}</p>
+                            </div>
+                            <div className="text-right text-[10px] uppercase font-bold shrink-0">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <Crown className="w-3.5 h-3.5 text-amber-500" />
+                                <span className={sel.has_set ? 'text-slate-800 font-black' : 'text-slate-400'}>{sel.captain_name}</span>
+                              </div>
+                              <div className="flex items-center justify-end gap-1.5 mt-1">
+                                <Star className="w-3.5 h-3.5 text-blue-500" />
+                                <span className={sel.has_set ? 'text-slate-700 font-black' : 'text-slate-400'}>{sel.vice_captain_name}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))
           )}
         </div>
       </div>
 
-      {/* Create Window Modal */}
-      {showCreateModal && (
+      {/* Create Window Modal *      {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 sm:p-8">
@@ -561,6 +765,143 @@ export default function CaptainWindowsPage() {
                     <>
                       <Plus className="w-4 h-4" />
                       Create Window
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Window Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 sm:p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Edit Captain Window</h2>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[10px] text-slate-500 font-extrabold uppercase tracking-wider mb-2">
+                      Round ID *
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.round_id}
+                      onChange={(e) => setEditForm({ ...editForm, round_id: e.target.value })}
+                      placeholder="e.g. round_1"
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-slate-500 font-extrabold uppercase tracking-wider mb-2">
+                      Start Round *
+                    </label>
+                    <input
+                      type="number"
+                      value={editForm.start_round}
+                      onChange={(e) => setEditForm({ ...editForm, start_round: e.target.value })}
+                      placeholder="e.g. 1"
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-slate-500 font-extrabold uppercase tracking-wider mb-2">
+                      End Round *
+                    </label>
+                    <input
+                      type="number"
+                      value={editForm.end_round}
+                      onChange={(e) => setEditForm({ ...editForm, end_round: e.target.value })}
+                      placeholder="e.g. 7"
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-500 font-extrabold uppercase tracking-wider mb-2">
+                    Round Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.round_name}
+                    onChange={(e) => setEditForm({ ...editForm, round_name: e.target.value })}
+                    placeholder="e.g. Round 1"
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] text-slate-500 font-extrabold uppercase tracking-wider mb-2">
+                      Opens At *
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={editForm.opens_at}
+                      onChange={(e) => setEditForm({ ...editForm, opens_at: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-slate-500 font-extrabold uppercase tracking-wider mb-2">
+                      Closes At *
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={editForm.closes_at}
+                      onChange={(e) => setEditForm({ ...editForm, closes_at: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-500 font-extrabold uppercase tracking-wider mb-2">
+                    Notes (Optional)
+                  </label>
+                  <textarea
+                    value={editForm.notes}
+                    onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                    placeholder="Any additional notes..."
+                    rows={3}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEditWindow}
+                  disabled={isSavingEdit}
+                  className="flex-1 px-6 py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSavingEdit ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Pencil className="w-4 h-4" />
+                      Save Changes
                     </>
                   )}
                 </button>

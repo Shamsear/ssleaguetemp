@@ -4,11 +4,28 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { ArrowLeft, Crown, Star, Clock, Lock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Crown, Star, Clock, Lock, CheckCircle, AlertTriangle, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import AlertModal from '@/components/modals/AlertModal';
 import { useModal } from '@/hooks/useModal';
 import AuthGuard from '@/components/auth/AuthGuard';
+
+const formatToIST = (dateStr: string) => {
+  if (!dateStr) return '—';
+  try {
+    return new Date(dateStr).toLocaleString('en-US', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }) + ' IST';
+  } catch (e) {
+    return new Date(dateStr).toLocaleString();
+  }
+};
 
 interface Player {
   real_player_id: string;
@@ -49,6 +66,8 @@ export default function CaptainSelectionPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<string>('');
+  const [hasSetSelections, setHasSetSelections] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const { alertState, showAlert, closeAlert } = useModal();
 
@@ -161,6 +180,7 @@ export default function CaptainSelectionPage() {
       
       setCurrentWindow(windowData.current_window);
       setCurrentSelections(windowData.current_selections);
+      setHasSetSelections(windowData.team_has_set_captain);
       
       // Set initial selections if they exist
       if (windowData.current_selections) {
@@ -236,6 +256,7 @@ export default function CaptainSelectionPage() {
 
       // Reload data to get updated selections
       loadData();
+      setIsEditing(false);
     } catch (error: any) {
       showAlert({
         type: 'error',
@@ -349,7 +370,7 @@ export default function CaptainSelectionPage() {
                 <div className="text-right">
                   <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Deadline</p>
                   <p className="text-sm font-bold text-emerald-700 font-mono">
-                    {new Date(currentWindow.closes_at).toLocaleString()}
+                    {formatToIST(currentWindow.closes_at)}
                   </p>
                 </div>
               </div>
@@ -361,155 +382,219 @@ export default function CaptainSelectionPage() {
               </div>
             </div>
 
-            {/* Captain Selection */}
-            <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <Crown className="w-5 h-5 text-amber-500" />
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Captain (2x Points)</h3>
-              </div>
-              <div className="space-y-2">
-                {squad.length === 0 ? (
-                  <p className="text-sm text-slate-500 font-mono">No players in squad</p>
-                ) : (
-                  squad.map(player => (
-                    <label
-                      key={player.real_player_id}
-                      className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                        selectedCaptain === player.real_player_id
-                          ? 'border-amber-500 bg-amber-50'
-                          : 'border-slate-200 hover:border-slate-300 bg-white'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="captain"
-                        value={player.real_player_id}
-                        checked={selectedCaptain === player.real_player_id}
-                        onChange={(e) => setSelectedCaptain(e.target.value)}
-                        className="w-4 h-4 text-amber-500"
-                      />
-                      {player.photo_url ? (
-                        <img
-                          src={player.photo_url}
-                          alt={player.player_name}
-                          className="w-9 h-9 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
-                        />
-                      ) : (
-                        <div className="w-9 h-9 bg-slate-800 border border-slate-700 text-amber-450 rounded-xl flex items-center justify-center text-[10px] font-black shadow-sm shrink-0">
-                          {(player.player_name || '').charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-slate-900">{player.player_name}</p>
-                        <p className="text-[10px] text-slate-500 font-mono uppercase">
-                          {player.position || 'N/A'} • {player.real_team_name || 'No Team'}
-                        </p>
-                      </div>
-                      {selectedCaptain === player.real_player_id && (
-                        <CheckCircle className="w-5 h-5 text-amber-500" />
-                      )}
-                    </label>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Vice-Captain Selection */}
-            <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <Star className="w-5 h-5 text-blue-500" />
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Vice-Captain (Backup 2x)</h3>
-              </div>
-              <p className="text-xs text-slate-500 font-mono mb-4">
-                Vice-captain gets 2x points only if captain doesn't play
-              </p>
-              <div className="space-y-2">
-                {squad.length === 0 ? (
-                  <p className="text-sm text-slate-500 font-mono">No players in squad</p>
-                ) : (
-                  squad.map(player => (
-                    <label
-                      key={player.real_player_id}
-                      className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                        selectedViceCaptain === player.real_player_id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-slate-200 hover:border-slate-300 bg-white'
-                      } ${
-                        player.real_player_id === selectedCaptain ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="vice_captain"
-                        value={player.real_player_id}
-                        checked={selectedViceCaptain === player.real_player_id}
-                        onChange={(e) => setSelectedViceCaptain(e.target.value)}
-                        disabled={player.real_player_id === selectedCaptain}
-                        className="w-4 h-4 text-blue-500"
-                      />
-                      {player.photo_url ? (
-                        <img
-                          src={player.photo_url}
-                          alt={player.player_name}
-                          className="w-9 h-9 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
-                        />
-                      ) : (
-                        <div className="w-9 h-9 bg-slate-800 border border-slate-700 text-amber-450 rounded-xl flex items-center justify-center text-[10px] font-black shadow-sm shrink-0">
-                          {(player.player_name || '').charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-slate-900">{player.player_name}</p>
-                        <p className="text-[10px] text-slate-500 font-mono uppercase">
-                          {player.position || 'N/A'} • {player.real_team_name || 'No Team'}
-                        </p>
-                      </div>
-                      {selectedViceCaptain === player.real_player_id && (
-                        <CheckCircle className="w-5 h-5 text-blue-500" />
-                      )}
-                      {player.real_player_id === selectedCaptain && (
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">Already Captain</span>
-                      )}
-                    </label>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Info Card */}
-            <div className="console-card bg-blue-50 border border-blue-200/60 rounded-2xl p-6">
-              <div className="flex gap-3">
-                <AlertTriangle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-blue-900 mb-2">Important Information</p>
-                  <ul className="text-[11px] text-blue-700 space-y-1 font-mono">
-                    <li>• You can change your selections anytime before the window closes</li>
-                    <li>• Captain gets 2x points multiplier for the round</li>
-                    <li>• Vice-captain gets 2x points only if captain doesn't play</li>
-                    <li>• Choose wisely based on upcoming fixtures!</li>
-                  </ul>
+            {hasSetSelections && !isEditing ? (
+              /* Summary View */
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-6 h-6 text-emerald-500" />
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 uppercase tracking-wider">Selections Confirmed</h3>
+                    <p className="text-xs text-slate-500 font-mono">Your captain choices for this round are saved.</p>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Save Button */}
-            <button
-              onClick={handleSave}
-              disabled={isSaving || !selectedCaptain || !selectedViceCaptain}
-              className="w-full px-6 py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white rounded-2xl font-bold text-sm uppercase tracking-wider shadow-lg transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-3"
-            >
-              {isSaving ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
-                  Saving Selections...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-5 h-5" />
-                  Save Captain & Vice-Captain
-                </>
-              )}
-            </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Captain Card */}
+                  <div className="p-4 rounded-2xl border-2 border-amber-500 bg-amber-50/10 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center text-white shrink-0 relative">
+                      <Crown className="w-6 h-6" />
+                      <span className="absolute -top-1.5 -right-1.5 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase">2X</span>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-amber-600 font-black uppercase tracking-wider">Captain</p>
+                      <p className="text-sm font-black text-slate-900 mt-0.5">{currentSelections?.captain_player_name || 'Not Set'}</p>
+                    </div>
+                  </div>
+
+                  {/* Vice Captain Card */}
+                  <div className="p-4 rounded-2xl border-2 border-blue-500 bg-blue-50/10 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white shrink-0 relative">
+                      <Star className="w-6 h-6" />
+                      <span className="absolute -top-1.5 -right-1.5 bg-blue-650 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase">Backup</span>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-blue-600 font-black uppercase tracking-wider">Vice-Captain</p>
+                      <p className="text-sm font-black text-slate-900 mt-0.5">{currentSelections?.vice_captain_player_name || 'Not Set'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="w-full px-6 py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold text-sm uppercase tracking-wider shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Edit Selections
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Captain Selection */}
+                <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Crown className="w-5 h-5 text-amber-500" />
+                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Captain (2x Points)</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {squad.length === 0 ? (
+                      <p className="text-sm text-slate-500 font-mono">No players in squad</p>
+                    ) : (
+                      squad.map(player => (
+                        <label
+                          key={player.real_player_id}
+                          className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                            selectedCaptain === player.real_player_id
+                              ? 'border-amber-500 bg-amber-50'
+                              : 'border-slate-200 hover:border-slate-300 bg-white'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="captain"
+                            value={player.real_player_id}
+                            checked={selectedCaptain === player.real_player_id}
+                            onChange={(e) => setSelectedCaptain(e.target.value)}
+                            className="w-4 h-4 text-amber-500"
+                          />
+                          {player.photo_url ? (
+                            <img
+                              src={player.photo_url}
+                              alt={player.player_name}
+                              className="w-9 h-9 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
+                            />
+                          ) : (
+                            <div className="w-9 h-9 bg-slate-800 border border-slate-700 text-amber-450 rounded-xl flex items-center justify-center text-[10px] font-black shadow-sm shrink-0">
+                              {(player.player_name || '').charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-slate-900">{player.player_name}</p>
+                            <p className="text-[10px] text-slate-500 font-mono uppercase">
+                              {player.position || 'N/A'} • {player.real_team_name || 'No Team'}
+                            </p>
+                          </div>
+                          {selectedCaptain === player.real_player_id && (
+                            <CheckCircle className="w-5 h-5 text-amber-500" />
+                          )}
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Vice-Captain Selection */}
+                <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Star className="w-5 h-5 text-blue-500" />
+                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Vice-Captain (Backup 2x)</h3>
+                  </div>
+                  <p className="text-xs text-slate-500 font-mono mb-4">
+                    Vice-captain gets 2x points only if captain doesn't play
+                  </p>
+                  <div className="space-y-2">
+                    {squad.length === 0 ? (
+                      <p className="text-sm text-slate-500 font-mono">No players in squad</p>
+                    ) : (
+                      squad.map(player => (
+                        <label
+                          key={player.real_player_id}
+                          className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                            selectedViceCaptain === player.real_player_id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-slate-200 hover:border-slate-300 bg-white'
+                          } ${
+                            player.real_player_id === selectedCaptain ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="vice_captain"
+                            value={player.real_player_id}
+                            checked={selectedViceCaptain === player.real_player_id}
+                            onChange={(e) => setSelectedViceCaptain(e.target.value)}
+                            disabled={player.real_player_id === selectedCaptain}
+                            className="w-4 h-4 text-blue-500"
+                          />
+                          {player.photo_url ? (
+                            <img
+                              src={player.photo_url}
+                              alt={player.player_name}
+                              className="w-9 h-9 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
+                            />
+                          ) : (
+                            <div className="w-9 h-9 bg-slate-800 border border-slate-700 text-amber-450 rounded-xl flex items-center justify-center text-[10px] font-black shadow-sm shrink-0">
+                              {(player.player_name || '').charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-slate-900">{player.player_name}</p>
+                            <p className="text-[10px] text-slate-500 font-mono uppercase">
+                              {player.position || 'N/A'} • {player.real_team_name || 'No Team'}
+                            </p>
+                          </div>
+                          {selectedViceCaptain === player.real_player_id && (
+                            <CheckCircle className="w-5 h-5 text-blue-500" />
+                          )}
+                          {player.real_player_id === selectedCaptain && (
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">Already Captain</span>
+                          )}
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Info Card */}
+                <div className="console-card bg-blue-50 border border-blue-200/60 rounded-2xl p-6">
+                  <div className="flex gap-3">
+                    <AlertTriangle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold text-blue-900 mb-2">Important Information</p>
+                      <ul className="text-[11px] text-blue-700 space-y-1 font-mono">
+                        <li>• You can change your selections anytime before the window closes</li>
+                        <li>• Captain gets 2x points multiplier for the round</li>
+                        <li>• Vice-captain gets 2x points only if captain doesn't play</li>
+                        <li>• Choose wisely based on upcoming fixtures!</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Save and Cancel Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {hasSetSelections && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedCaptain(currentSelections?.captain_player_id || '');
+                        setSelectedViceCaptain(currentSelections?.vice_captain_player_id || '');
+                        setIsEditing(false);
+                      }}
+                      className="flex-1 px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold text-sm uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 font-mono"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving || !selectedCaptain || !selectedViceCaptain}
+                    className="flex-1 px-6 py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white rounded-2xl font-bold text-sm uppercase tracking-wider shadow-lg transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                  >
+                    {isSaving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+                        Saving Selections...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        Save Captain & Vice-Captain
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

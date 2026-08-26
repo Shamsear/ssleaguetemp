@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFantasyDb } from '@/lib/neon/fantasy-config';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/fantasy/captain-windows/[windowId]
  * Get details of a specific captain window
@@ -43,9 +45,53 @@ export async function GET(
       );
     }
 
+    const leagueId = window[0].league_id;
+
+    // Get all teams in this league
+    const teams = await sql`
+      SELECT team_id, team_name, owner_name 
+      FROM fantasy_teams 
+      WHERE league_id = ${leagueId}
+      ORDER BY team_name ASC
+    `;
+
+    // Get selections in this window
+    const selections = await sql`
+      SELECT 
+        team_id,
+        captain_player_id,
+        vice_captain_player_id,
+        changed_at
+      FROM fantasy_captain_history
+      WHERE league_id = ${leagueId}
+        AND window_id = ${windowId}
+    `;
+
+    // Fetch player names for mapping
+    const players = await sql`
+      SELECT real_player_id, player_name
+      FROM fantasy_players
+      WHERE league_id = ${leagueId}
+    `;
+    const playerMap = new Map(players.map((p: any) => [p.real_player_id, p.player_name]));
+
+    const teamSelections = teams.map((t: any) => {
+      const sel = selections.find((s: any) => s.team_id === t.team_id);
+      return {
+        team_id: t.team_id,
+        team_name: t.team_name,
+        owner_name: t.owner_name,
+        has_set: !!sel,
+        captain_name: sel ? (playerMap.get(sel.captain_player_id) || sel.captain_player_id) : 'Not Set',
+        vice_captain_name: sel ? (playerMap.get(sel.vice_captain_player_id) || sel.vice_captain_player_id) : 'Not Set',
+        changed_at: sel ? sel.changed_at : null
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      window: window[0]
+      window: window[0],
+      selections: teamSelections
     });
   } catch (error: any) {
     console.error('Error fetching captain window:', error);
@@ -73,7 +119,16 @@ export async function PATCH(
   try {
     const { windowId } = await params;
     const body = await request.json();
-    const { window_status, opens_at, closes_at, notes } = body;
+    const {
+      window_status,
+      opens_at,
+      closes_at,
+      notes,
+      round_number,
+      round_name,
+      start_round,
+      end_round
+    } = body;
 
     // Validate status if provided
     if (window_status && !['pending', 'open', 'closed', 'locked'].includes(window_status)) {
@@ -118,6 +173,22 @@ export async function PATCH(
       updates.push('notes = $' + (values.length + 1));
       values.push(notes);
     }
+    if (round_number !== undefined) {
+      updates.push('round_number = $' + (values.length + 1));
+      values.push(round_number ? parseInt(round_number) : null);
+    }
+    if (round_name !== undefined) {
+      updates.push('round_name = $' + (values.length + 1));
+      values.push(round_name);
+    }
+    if (start_round !== undefined) {
+      updates.push('start_round = $' + (values.length + 1));
+      values.push(start_round ? parseInt(start_round) : null);
+    }
+    if (end_round !== undefined) {
+      updates.push('end_round = $' + (values.length + 1));
+      values.push(end_round ? parseInt(end_round) : null);
+    }
 
     // Always update updated_at
     updates.push('updated_at = NOW()');
@@ -129,18 +200,16 @@ export async function PATCH(
       );
     }
 
-    // Update using direct SQL with COALESCE for optional fields
-    const updated = await sql`
+    // Append windowId as the last parameter
+    values.push(windowId);
+    const query = `
       UPDATE fantasy_captain_windows
-      SET 
-        window_status = COALESCE(${window_status}, window_status),
-        opens_at = COALESCE(${opens_at}, opens_at),
-        closes_at = COALESCE(${closes_at}, closes_at),
-        notes = COALESCE(${notes}, notes),
-        updated_at = NOW()
-      WHERE window_id = ${windowId}
+      SET ${updates.join(', ')}
+      WHERE window_id = $${values.length}
       RETURNING *
     `;
+
+    const updated = await sql(query, values);
 
     return NextResponse.json({
       success: true,
