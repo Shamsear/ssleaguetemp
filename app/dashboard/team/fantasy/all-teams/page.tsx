@@ -41,6 +41,7 @@ interface Player {
   purchase_price?: number;
   is_captain?: boolean;
   is_vice_captain?: boolean;
+  photo_url?: string | null;
 }
 
 /* ── Page ──────────────────────────────────────────────────────────────────── */
@@ -579,9 +580,17 @@ function PlayersRoster({ players, isLoading, expandedPlayer, isLoadingPlayer, pl
                 className="w-full flex items-center justify-between p-3 sm:p-4 hover:bg-slate-50/50 transition-all text-slate-800 cursor-pointer gap-2"
               >
                 <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-slate-800 text-amber-400 border border-slate-900 rounded-lg flex items-center justify-center font-black text-[10px] sm:text-xs shrink-0 shadow-sm">
-                    {idx + 1}
-                  </div>
+                  {player.photo_url ? (
+                    <img
+                      src={player.photo_url}
+                      alt={player.player_name}
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-cover border border-slate-200 shadow-sm shrink-0"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-slate-800 text-amber-400 border border-slate-900 rounded-lg flex items-center justify-center font-black text-[10px] sm:text-xs shrink-0 shadow-sm">
+                      {idx + 1}
+                    </div>
+                  )}
                   <div className="text-left min-w-0">
                     <div className="flex items-center gap-1 flex-wrap">
                       <p className="text-xs font-black uppercase truncate">{player.player_name}</p>

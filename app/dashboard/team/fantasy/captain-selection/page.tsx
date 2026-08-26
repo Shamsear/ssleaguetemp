@@ -15,6 +15,7 @@ interface Player {
   player_name: string;
   position: string | null;
   real_team_name: string | null;
+  photo_url?: string | null;
 }
 
 interface CurrentWindow {
@@ -387,6 +388,17 @@ export default function CaptainSelectionPage() {
                         onChange={(e) => setSelectedCaptain(e.target.value)}
                         className="w-4 h-4 text-amber-500"
                       />
+                      {player.photo_url ? (
+                        <img
+                          src={player.photo_url}
+                          alt={player.player_name}
+                          className="w-9 h-9 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 bg-slate-800 border border-slate-700 text-amber-450 rounded-xl flex items-center justify-center text-[10px] font-black shadow-sm shrink-0">
+                          {(player.player_name || '').charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div className="flex-1">
                         <p className="text-sm font-bold text-slate-900">{player.player_name}</p>
                         <p className="text-[10px] text-slate-500 font-mono uppercase">
@@ -435,6 +447,17 @@ export default function CaptainSelectionPage() {
                         disabled={player.real_player_id === selectedCaptain}
                         className="w-4 h-4 text-blue-500"
                       />
+                      {player.photo_url ? (
+                        <img
+                          src={player.photo_url}
+                          alt={player.player_name}
+                          className="w-9 h-9 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 bg-slate-800 border border-slate-700 text-amber-450 rounded-xl flex items-center justify-center text-[10px] font-black shadow-sm shrink-0">
+                          {(player.player_name || '').charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div className="flex-1">
                         <p className="text-sm font-bold text-slate-900">{player.player_name}</p>
                         <p className="text-[10px] text-slate-500 font-mono uppercase">
