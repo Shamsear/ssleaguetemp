@@ -299,19 +299,22 @@ export default function TeamDraftPage() {
     if (!slot || !draftSettings?.category_settings) return [];
 
     const listId = slot.list_id;
-    const listPlayerIds = draftSettings.category_settings.lists[listId] || [];
+    const listIds = draftSettings.category_settings.lists?.[listId] || [];
 
-    if (slot.name.toLowerCase().includes('team') || slot.list_id.includes('team')) {
-      // Real Teams pool
-      return realTeams.filter(t => 
+    if (slot.name.toLowerCase().includes('team') || slot.list_id?.includes('team')) {
+      // Real Teams pool — filter by list if it has entries, otherwise show all
+      const base = listIds.length > 0
+        ? realTeams.filter(t => listIds.includes(t.team_uid))
+        : realTeams;
+      return base.filter(t =>
         t.team_name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     } else {
-      // Players pool
+      // Players pool — always filter by list
       return availablePlayers
-        .filter(p => listPlayerIds.includes(p.real_player_id))
-        .filter(p => 
-          p.player_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        .filter(p => listIds.includes(p.real_player_id))
+        .filter(p =>
+          p.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           p.real_team_name.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }

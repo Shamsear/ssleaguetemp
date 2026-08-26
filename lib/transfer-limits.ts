@@ -8,7 +8,7 @@
  * Requirements: 1.1, 1.2, 1.3, 1.4
  */
 
-import { adminDb } from './firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import admin from 'firebase-admin';
 
 // Maximum number of transfer operations allowed per team per season

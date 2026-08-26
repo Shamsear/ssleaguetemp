@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/neon/admin-db-wrapper';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { adminAuth } from '@/lib/firebase/admin';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { FieldValue } from 'firebase-admin/firestore';
 

@@ -227,6 +227,12 @@ export default function TeamDetailPage() {
       orange: 'bg-orange-50 text-orange-700 border border-orange-200/40',
       purple: 'bg-purple-50 text-purple-700 border border-purple-200/40',
       yellow: 'bg-yellow-50 text-yellow-700 border border-yellow-200/40',
+      // Category tiers
+      a: 'bg-amber-50 text-amber-700 border border-amber-200/40',
+      b: 'bg-emerald-50 text-emerald-700 border border-emerald-200/40',
+      c: 'bg-sky-50 text-sky-700 border border-sky-200/40',
+      d: 'bg-violet-50 text-violet-700 border border-violet-200/40',
+      e: 'bg-slate-50 text-slate-700 border border-slate-200/40',
     };
     return colors[pos] || 'bg-slate-50 text-slate-700 border border-slate-200/40';
   };

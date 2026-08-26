@@ -1,4 +1,4 @@
-import { adminDb } from './admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { TeamData } from '@/types/team';
 import { FootballPlayerData } from '@/types/footballPlayer';
 

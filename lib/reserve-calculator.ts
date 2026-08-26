@@ -8,7 +8,7 @@
  */
 
 import { neon } from '@neondatabase/serverless';
-import { adminDb } from './firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { getAuctionSettings } from './auction-settings';
 
 const sql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);

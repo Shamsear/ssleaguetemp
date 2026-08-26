@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless';
-import { adminDb } from './firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { decryptBidData } from './encryption';
 import { createTiebreaker } from './tiebreaker';
 import { getTournamentDb } from './neon/tournament-config';

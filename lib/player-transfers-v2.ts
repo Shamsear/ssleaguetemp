@@ -13,7 +13,7 @@
 
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { getAuctionDb } from '@/lib/neon/auction-config';
-import { adminDb } from './firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import admin from 'firebase-admin';
 import { 
   calculateTransferDetails,

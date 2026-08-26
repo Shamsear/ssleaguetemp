@@ -1,4 +1,4 @@
-import { adminDb } from './firebase/admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 /**
  * Batch fetch team names from Firebase

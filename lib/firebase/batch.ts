@@ -1,4 +1,4 @@
-import { adminDb } from './admin';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 /**
  * Batch fetch documents from a Firebase collection

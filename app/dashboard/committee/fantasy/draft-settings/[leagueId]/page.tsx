@@ -144,10 +144,14 @@ export default function DraftSettingsPage() {
   const [isPopulating, setIsPopulating] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'slots' | 'lists'>('general');
   const [playerTab, setPlayerTab] = useState<string>('RED');
-  
+  const [teamSearch, setTeamSearch] = useState('');
+
   // Players Pool
   const [players, setPlayers] = useState<Player[]>([]);
-  
+  // Registered football clubs (for Real Team Slot)
+  const [registeredTeams, setRegisteredTeams] = useState<Array<{ team_id: string; team_name: string; team_uid?: string }>>([]);
+
+
   const [settings, setSettings] = useState<DraftSettings>({
     budget_per_team: 500,
     min_squad_size: 5,
@@ -249,6 +253,14 @@ export default function DraftSettingsPage() {
             setPlayerTab(availableCategories[0]);
           }
         }
+      }
+
+      // 3. Fetch registered teams for Real Team Slot
+      const seasonId = leagueId.replace('SSPSLFLS', 'SSPSLS');
+      const teamsResponse = await fetchWithTokenRefresh(`/api/teams/registered?season_id=${seasonId}`);
+      if (teamsResponse.ok) {
+        const teamsData = await teamsResponse.json();
+        setRegisteredTeams(teamsData.teams || []);
       }
 
     } catch (error) {
@@ -880,8 +892,23 @@ export default function DraftSettingsPage() {
                   {cat} ({players.filter(p => (p.category || '').toUpperCase() === cat).length})
                 </button>
               ))}
+              {/* Real Team Slot tab */}
+              <button
+                type="button"
+                onClick={() => setPlayerTab('REAL_TEAM')}
+                className={`px-3 py-1.5 text-[10px] font-black rounded-full border uppercase tracking-wider transition-all cursor-pointer ${
+                  playerTab === 'REAL_TEAM'
+                    ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm'
+                    : 'bg-slate-100 text-slate-600 border-slate-200/60 hover:bg-slate-200'
+                }`}
+              >
+                Real Team Slot ({(settings.category_settings.lists['real_team_list'] || []).length})
+              </button>
             </div>
 
+            {/* Player list panels (hidden when Real Team tab active) */}
+            {playerTab !== 'REAL_TEAM' && (
+            <>
             {/* Dynamic: side-by-side for categories with 2+ lists */}
             {getListsForCategory(playerTab).length >= 2 ? (
               <div className="space-y-4">
@@ -1015,6 +1042,73 @@ export default function DraftSettingsPage() {
                   </div>
                 )}
               </div>
+              </div>
+            )}
+            </>
+            )}
+
+            {/* Real Team Slot Panel */}
+            {playerTab === 'REAL_TEAM' && (
+              <div className="space-y-4">
+                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
+                  Select which real teams fantasy managers can bid on for the Real Team Slot ({(settings.category_settings.lists['real_team_list'] || []).length} selected)
+                </div>
+
+                {/* Search */}
+                <input
+                  type="text"
+                  placeholder="Search teams..."
+                  value={teamSearch}
+                  onChange={e => setTeamSearch(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+                />
+
+                {/* Teams list */}
+                <div className="max-h-[500px] overflow-y-auto border rounded-xl divide-y divide-slate-100">
+                  {registeredTeams
+                    .filter(t => t.team_name.toLowerCase().includes(teamSearch.toLowerCase()))
+                    .map(team => {
+                      const teamId = team.team_uid || team.team_id;
+                      const currentList: string[] = settings.category_settings.lists['real_team_list'] || [];
+                      const isSelected = currentList.includes(teamId);
+                      return (
+                        <div key={teamId} className={`p-4 flex items-center justify-between gap-4 ${isSelected ? 'bg-indigo-50/40' : 'bg-white'}`}>
+                          <div>
+                            <h4 className="font-black text-slate-800 text-xs uppercase">{team.team_name}</h4>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{teamId}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updatedList = isSelected
+                                ? currentList.filter(id => id !== teamId)
+                                : [...currentList, teamId];
+                              setSettings({
+                                ...settings,
+                                category_settings: {
+                                  ...settings.category_settings,
+                                  lists: {
+                                    ...settings.category_settings.lists,
+                                    real_team_list: updatedList
+                                  }
+                                }
+                              });
+                            }}
+                            className={`px-3 py-1.5 text-[10px] font-black rounded-lg border uppercase tracking-wider transition-all cursor-pointer ${
+                              isSelected
+                                ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                                : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                            }`}
+                          >
+                            {isSelected ? '✕ Remove' : '+ Add'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  {registeredTeams.filter(t => t.team_name.toLowerCase().includes(teamSearch.toLowerCase())).length === 0 && (
+                    <div className="p-8 text-center text-slate-300 text-xs font-bold uppercase">No teams found</div>
+                  )}
+                </div>
               </div>
             )}
           </div>

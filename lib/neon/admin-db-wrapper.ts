@@ -15,6 +15,9 @@
 import { adminDb as firebaseAdminDb } from '@/lib/firebase/admin';
 import { getMainDb, isMainDbAvailable } from './main-config';
 
+// Firebase is ONLY used for auth passthrough (adminAuth).
+// All Firestore collection reads/writes go through Neon.
+
 const NEON_COLLECTIONS = new Set([
   // Phase 1 (already migrated)
   'seasons', 'teams', 'team_seasons',
@@ -537,14 +540,9 @@ function wrapDocRef(ref: any, collection: string): any {
       if (prop === 'get') {
         return async () => {
           if (isMainDbAvailable()) {
-            try {
-              return await neonDocGet(collection, target.id);
-            } catch (e: any) {
-              console.warn(`⚠️ Neon doc.get(${collection}/${target.id}) failed, falling back to Firebase:`, e.message);
-              return await originalGet();
-            }
+            return await neonDocGet(collection, target.id);
           }
-          return await originalGet();
+          throw new Error(`Neon DB not available for doc.get(${collection}/${target.id})`);
         };
       }
       
@@ -588,22 +586,12 @@ function wrapQuery(queryRef: any, collection: string, filters: Array<{ field: st
       if (prop === 'get') {
         return async () => {
           if (isMainDbAvailable() && filters.length > 0) {
-            try {
-              return await neonWhereGet(collection, filters);
-            } catch (e: any) {
-              console.warn(`⚠️ Neon query.get(${collection}) failed, falling back to Firebase:`, e.message);
-              return await originalGet();
-            }
+            return await neonWhereGet(collection, filters);
           }
           if (isMainDbAvailable() && filters.length === 0) {
-            try {
-              return await neonCollectionGet(collection);
-            } catch (e: any) {
-              console.warn(`⚠️ Neon collection.get(${collection}) failed, falling back to Firebase:`, e.message);
-              return await originalGet();
-            }
+            return await neonCollectionGet(collection);
           }
-          return await originalGet();
+          throw new Error(`Neon DB not available for query.get(${collection})`);
         };
       }
       
@@ -650,14 +638,9 @@ function wrapCollectionRef(ref: any, collection: string): any {
       if (prop === 'get') {
         return async () => {
           if (isMainDbAvailable()) {
-            try {
-              return await neonCollectionGet(collection);
-            } catch (e: any) {
-              console.warn(`⚠️ Neon collection.get(${collection}) failed, falling back to Firebase:`, e.message);
-              return await target.get();
-            }
+            return await neonCollectionGet(collection);
           }
-          return await target.get();
+          throw new Error(`Neon DB not available for collection.get(${collection})`);
         };
       }
       if (prop === 'where') {
