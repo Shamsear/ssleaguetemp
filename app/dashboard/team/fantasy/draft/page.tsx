@@ -168,7 +168,11 @@ export default function TeamDraftPage() {
       let teamsList: RealTeam[] = [];
       if (teamsRes.ok) {
         const teamsData = await teamsRes.json();
-        teamsList = teamsData.teams || [];
+        teamsList = (teamsData.teams || []).map((t: any) => ({
+          team_uid: t.team_uid || t.team_id,
+          team_name: t.team_name,
+          logo_url: t.team_logo || t.logo_url
+        }));
         setRealTeams(teamsList);
       }
 
