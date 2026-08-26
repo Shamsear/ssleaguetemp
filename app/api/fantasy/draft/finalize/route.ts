@@ -99,16 +99,7 @@ export async function POST(request: NextRequest) {
         FROM fantasy_teams WHERE league_id = ${league_id} AND is_enabled = true
       `;
 
-      // Find teams that submitted bids in this slot (via fantasy_draft_bids)
-      const teamsWithBids = await fantasySql`
-        SELECT DISTINCT team_id FROM fantasy_draft_bids
-        WHERE league_id = ${league_id} AND slot_index = ${Number(slot_index)}
-      `;
-      const bidTeamIds = new Set<string>(teamsWithBids.map((b: any) => b.team_id));
 
-      if (bidTeamIds.size === 0) {
-        return NextResponse.json({ success: true, message: 'No teams placed bids in this slot. Skipping random assignment.' });
-      }
 
       if (!isCompleted) {
         let previewData: any;
@@ -128,10 +119,10 @@ export async function POST(request: NextRequest) {
         const winningBids = previewData.results_by_slot?.[0]?.winning_bids || [];
         const teamsWithWin = new Set<string>(winningBids.map((w: any) => w.team_id));
 
-        // Filter: Only teams that placed bids AND don't have a win in this preview
-        const remainingTeams = teams.filter((t: any) => !teamsWithWin.has(t.team_id) && bidTeamIds.has(t.team_id));
+        // Filter: Only teams that don't have a win in this preview
+        const remainingTeams = teams.filter((t: any) => !teamsWithWin.has(t.team_id));
         if (remainingTeams.length === 0) {
-          return NextResponse.json({ success: true, message: 'All teams that placed bids already have targets in this preview.', preview: previewData });
+          return NextResponse.json({ success: true, message: 'All teams already assigned targets in this preview.', preview: previewData });
         }
 
         // Determine which targets are already taken (either in squads or in preview winning_bids)
@@ -295,9 +286,9 @@ export async function POST(request: NextRequest) {
           squadPlayers.forEach((sp: any) => teamsWithWin.add(sp.team_id));
         }
 
-        const remainingTeams = teams.filter((t: any) => !teamsWithWin.has(t.team_id) && bidTeamIds.has(t.team_id));
+        const remainingTeams = teams.filter((t: any) => !teamsWithWin.has(t.team_id));
         if (remainingTeams.length === 0) {
-          return NextResponse.json({ success: true, message: 'All teams that placed bids already have targets in this slot.' });
+          return NextResponse.json({ success: true, message: 'All teams already have targets in this slot.' });
         }
 
         // Determine which targets are already taken in DB
