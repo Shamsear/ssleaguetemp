@@ -209,11 +209,12 @@ export async function PATCH(
       RETURNING *
     `;
 
-    const updated = await sql(query, values);
+    const updatedResult = await sql.query(query, values);
+    const updatedRow = updatedResult.rows ? updatedResult.rows[0] : updatedResult[0];
 
     return NextResponse.json({
       success: true,
-      window: updated[0],
+      window: updatedRow,
       message: 'Captain window updated successfully'
     });
   } catch (error: any) {
