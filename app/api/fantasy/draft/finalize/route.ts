@@ -110,10 +110,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, message: 'No teams placed bids in this slot. Skipping random assignment.' });
       }
 
-      if (!isCompleted && hasPreview) {
-        // ─── CASE A: UPDATE SAVED PREVIEW (ROUND STILL RUNNING OR NOT FINALIZED) ───
-        const previewData = typeof previews[0].preview_data === 'string'
-          ? JSON.parse(previews[0].preview_data) : previews[0].preview_data;
+      if (!isCompleted) {
+        let previewData: any;
+        if (hasPreview) {
+          previewData = typeof previews[0].preview_data === 'string'
+            ? JSON.parse(previews[0].preview_data) : previews[0].preview_data;
+        } else {
+          console.log(`Generating fresh preview first for slot ${slot_index}`);
+          const result = await processSlotBidPreview(league_id, Number(slot_index));
+          if (!result.success) {
+            return NextResponse.json({ success: false, error: 'Failed to generate initial preview', details: result.errors?.join(', ') }, { status: 500 });
+          }
+          previewData = result;
+        }
 
         // Determine teams that ALREADY have a winning target in this preview
         const winningBids = previewData.results_by_slot?.[0]?.winning_bids || [];
