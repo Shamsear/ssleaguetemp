@@ -22,6 +22,7 @@ interface Player {
   goals: number;
   clean_sheets: number;
   motm_count: number;
+  photo_url?: string | null;
 }
 
 interface MatchBreakdown {
@@ -260,9 +261,17 @@ export default function FantasyPlayersPage() {
                     className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white hover:from-indigo-50 hover:to-purple-50 transition-all"
                   >
                     <div className="flex items-center gap-4 mb-2 sm:mb-0">
-                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-                        {'<Star className="w-4 h-4 text-amber-400 fill-amber-400" />'.repeat(player.star_rating || 3)}
-                      </div>
+                      {player.photo_url ? (
+                        <img
+                          src={player.photo_url}
+                          alt={player.player_name}
+                          className="w-12 h-12 rounded-full object-cover border border-gray-200 shadow-sm shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold shrink-0">
+                          {(player.player_name || '').charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div className="text-left">
                         <p className="font-bold text-gray-900">{player.player_name}</p>
                         <p className="text-sm text-gray-600">

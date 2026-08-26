@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fantasySql } from '@/lib/neon/fantasy-config';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { getPlayerPhotosMap } from '@/lib/fantasy/photos';
 
 /**
  * GET /api/fantasy/players-performance?league_id=xxx
@@ -107,6 +108,9 @@ export async function GET(request: NextRequest) {
       });
     });
 
+    // Fetch photos mapping
+    const photosMap = await getPlayerPhotosMap();
+
     // Combine player info with fantasy stats - only include active players (with matches played)
     const playersWithStats = allPlayers
       .map((player: any) => {
@@ -132,6 +136,7 @@ export async function GET(request: NextRequest) {
           goals: stats.total_goals,
           clean_sheets: stats.clean_sheets,
           motm_count: stats.motm_count,
+          photo_url: photosMap[player.player_id] || null,
         };
       })
       .filter((player) => player !== null); // Remove null entries
