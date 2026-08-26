@@ -509,12 +509,25 @@ export default function CommitteeAllPlayersPointsPage() {
 
                               {/* Player */}
                               <td className="px-5 py-3.5">
-                                <div className="flex items-center gap-2">
-                                  <div className="font-bold text-sm text-slate-900">{player.player_name}</div>
-                                  {isExpanded
-                                    ? <ChevronUp className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                                    : <ChevronDown className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-                                  }
+                                <div className="flex items-center gap-3">
+                                  {player.photo_url ? (
+                                    <img
+                                      src={player.photo_url}
+                                      alt={player.player_name}
+                                      className="w-8 h-8 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
+                                    />
+                                  ) : (
+                                    <div className="w-8 h-8 bg-slate-800 border border-slate-700 text-amber-450 rounded-xl flex items-center justify-center text-[10px] font-black shadow-sm shrink-0">
+                                      {(player.player_name || '').charAt(0).toUpperCase()}
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-2">
+                                    <div className="font-bold text-sm text-slate-900">{player.player_name}</div>
+                                    {isExpanded
+                                      ? <ChevronUp className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                      : <ChevronDown className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                                    }
+                                  </div>
                                 </div>
                               </td>
 

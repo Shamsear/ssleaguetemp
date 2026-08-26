@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fantasySql } from '@/lib/neon/fantasy-config';
+import { getPlayerPhotosMap } from '@/lib/fantasy/photos';
 
 /**
  * GET /api/fantasy/teams/[teamId]
@@ -62,6 +63,9 @@ export async function GET(
 
     console.log('[Team API] Squad players found:', squadPlayers.length);
 
+    // Fetch player photos map
+    const photosMap = await getPlayerPhotosMap();
+
     // Get match statistics for each player
     const draftedPlayers = await Promise.all(
       squadPlayers.map(async (player: any) => {
@@ -91,6 +95,7 @@ export async function GET(
           average_points: Math.round(averagePoints * 10) / 10,
           is_captain: player.is_captain,
           is_vice_captain: player.is_vice_captain,
+          photo_url: photosMap[player.real_player_id] || null,
         };
       })
     );

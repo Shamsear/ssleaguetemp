@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fantasySql } from '@/lib/neon/fantasy-config';
+import { getPlayerPhotosMap } from '@/lib/fantasy/photos';
 
 /**
  * GET /api/fantasy/players/all-base-points?league_id=xxx&round_id=xxx&page=1&page_size=50
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
       SELECT
         COUNT(*)::int                                      AS total,
         COUNT(*) FILTER (WHERE is_available = true)::int  AS available,
-        COUNT(*) FILTER (WHERE is_available = false)::int AS drafted
+        (SELECT COUNT(*)::int FROM fantasy_squad WHERE league_id = ${leagueId})::int AS drafted
       FROM fantasy_players
       WHERE league_id = ${leagueId}
     `;
@@ -86,6 +87,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Fetch photos
+    const photosMap = await getPlayerPhotosMap();
+
     // Combine data — always prefer fantasy_players fields for name/team/position/category
     const playersWithPoints = players.map((player: any) => {
       const roundData = roundPointsMap[player.real_player_id];
@@ -97,6 +101,7 @@ export async function GET(request: NextRequest) {
         real_team_name: player.real_team_name || roundData?.rp_real_team_name || null,
         category: player.category || null,
         draft_price: Number(player.draft_price || 0),
+        photo_url: photosMap[player.real_player_id] || null,
 
         is_available: player.is_available,
         acquired_by_team_id: player.acquired_by_team_id || null,
