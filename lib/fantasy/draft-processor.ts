@@ -12,6 +12,17 @@
  */
 
 import { fantasySql } from '@/lib/neon/fantasy-config';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
+
+async function getTeamNameFromFirestore(teamUid: string): Promise<string> {
+  try {
+    const doc = await adminDb.collection('team_seasons').doc(teamUid).get();
+    return doc.exists ? (doc.data()?.team_name || teamUid) : teamUid;
+  } catch (error) {
+    console.error(`Error fetching team name for ${teamUid} from Firestore:`, error);
+    return teamUid;
+  }
+}
 
 export interface TierBid {
   bid_id: string;
@@ -934,10 +945,8 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
     const realTeamBids = winningBidsList.filter((b: any) => b.bid_type === 'real_team' && (!activeSlotIdx || activeSlotIdx === 6));
     const realTeamNames = new Map<string, string>();
     for (const bid of realTeamBids) {
-      const realTeams = await fantasySql`
-        SELECT team_name FROM teams WHERE team_uid = ${bid.target_id} LIMIT 1
-      `;
-      realTeamNames.set(bid.target_id, realTeams[0]?.team_name || bid.target_id);
+      const teamName = await getTeamNameFromFirestore(bid.target_id);
+      realTeamNames.set(bid.target_id, teamName);
     }
 
     // Pre-fetch player details for winning player bids
@@ -1189,8 +1198,8 @@ export async function processSlotBidPreview(
     if (teamTargetIds.length > 0) {
       const uniqueTids = [...new Set(teamTargetIds)];
       for (const tid of uniqueTids) {
-        const t = await fantasySql`SELECT team_name FROM teams WHERE team_uid = ${tid} LIMIT 1`;
-        if (t[0]) targetNameMap.set(tid, t[0].team_name);
+        const teamName = await getTeamNameFromFirestore(tid);
+        targetNameMap.set(tid, teamName);
       }
     }
 
@@ -1324,10 +1333,10 @@ export async function applySlotBidResults(
     if (slotIndex === 6) {
       const realTeamWins = resultsBySlot[0]?.winning_bids?.filter((w: any) => w.bid_type === 'real_team') || [];
       for (const w of realTeamWins) {
-        const realTeams = await fantasySql`SELECT team_name FROM teams WHERE team_uid = ${w.target_id} LIMIT 1`;
+        const teamName = await getTeamNameFromFirestore(w.target_id);
         writeQueries.push(fantasySql`
           UPDATE fantasy_teams SET supported_team_id = ${w.target_id},
-          supported_team_name = ${realTeams[0]?.team_name || w.target_id}
+          supported_team_name = ${teamName}
           WHERE team_id = ${w.team_id} AND league_id = ${leagueId}
         `);
       }

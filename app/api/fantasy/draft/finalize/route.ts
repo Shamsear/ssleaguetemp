@@ -5,6 +5,7 @@ import { broadcastFantasyDraftUpdate } from '@/lib/realtime/broadcast';
 import { triggerNews } from '@/lib/news/trigger';
 import { sendNotification } from '@/lib/notifications/send-notification';
 import { fantasySql } from '@/lib/neon/fantasy-config';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 /**
  * POST /api/fantasy/draft/finalize
@@ -144,9 +145,13 @@ export async function POST(request: NextRequest) {
 
         if (Number(slot_index) === 6) {
           const seasonId = league_id.replace('SSPSLFLS', 'SSPSLS');
-          const teamsRes = await fantasySql`
-            SELECT id, team_name FROM teams WHERE season_id = ${seasonId}
-          `;
+          const teamsSnapshot = await adminDb.collection('team_seasons')
+            .where('season_id', '==', seasonId)
+            .get();
+          const teamsRes = teamsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            team_name: doc.data().team_name || 'Unknown Team'
+          }));
           const listIds = slotPlayerIds.length > 0 ? new Set(slotPlayerIds) : null;
           const base = teamsRes.filter((t: any) => !listIds || listIds.has(t.id));
           base.forEach((t: any) => {
@@ -308,9 +313,13 @@ export async function POST(request: NextRequest) {
 
         if (Number(slot_index) === 6) {
           const seasonId = league_id.replace('SSPSLFLS', 'SSPSLS');
-          const teamsRes = await fantasySql`
-            SELECT id, team_name FROM teams WHERE season_id = ${seasonId}
-          `;
+          const teamsSnapshot = await adminDb.collection('team_seasons')
+            .where('season_id', '==', seasonId)
+            .get();
+          const teamsRes = teamsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            team_name: doc.data().team_name || 'Unknown Team'
+          }));
           const listIds = slotPlayerIds.length > 0 ? new Set(slotPlayerIds) : null;
           const base = teamsRes.filter((t: any) => !listIds || listIds.has(t.id));
           base.forEach((t: any) => {
