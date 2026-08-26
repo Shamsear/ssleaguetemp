@@ -40,7 +40,9 @@ export async function GET(request: NextRequest) {
           teams_with_captain_set,
           created_at,
           updated_at,
-          notes
+          notes,
+          start_round,
+          end_round
         FROM fantasy_captain_windows
         WHERE league_id = ${leagueId}
           AND window_status = ${statusFilter}
@@ -61,7 +63,9 @@ export async function GET(request: NextRequest) {
           teams_with_captain_set,
           created_at,
           updated_at,
-          notes
+          notes,
+          start_round,
+          end_round
         FROM fantasy_captain_windows
         WHERE league_id = ${leagueId}
         ORDER BY round_number ASC, created_at DESC
@@ -85,15 +89,6 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/fantasy/captain-windows
  * Create a new captain selection window
- * 
- * Body:
- * - league_id: Required
- * - round_id: Required
- * - round_number: Optional
- * - round_name: Optional
- * - opens_at: Required (ISO timestamp)
- * - closes_at: Required (ISO timestamp)
- * - notes: Optional
  */
 export async function POST(request: NextRequest) {
   try {
@@ -106,13 +101,15 @@ export async function POST(request: NextRequest) {
       opens_at,
       closes_at,
       notes,
-      created_by_user_id
+      created_by_user_id,
+      start_round,
+      end_round
     } = body;
 
     // Validation
-    if (!league_id || !round_id || !opens_at || !closes_at) {
+    if (!league_id || !round_id || !opens_at || !closes_at || start_round === undefined || end_round === undefined) {
       return NextResponse.json(
-        { error: 'league_id, round_id, opens_at, and closes_at are required' },
+        { error: 'league_id, round_id, opens_at, closes_at, start_round, and end_round are required' },
         { status: 400 }
       );
     }
@@ -176,7 +173,9 @@ export async function POST(request: NextRequest) {
         total_teams,
         teams_with_captain_set,
         created_by_user_id,
-        notes
+        notes,
+        start_round,
+        end_round
       ) VALUES (
         ${windowId},
         ${league_id},
@@ -189,7 +188,9 @@ export async function POST(request: NextRequest) {
         ${totalTeams},
         0,
         ${created_by_user_id || null},
-        ${notes || null}
+        ${notes || null},
+        ${start_round},
+        ${end_round}
       )
       RETURNING *
     `;

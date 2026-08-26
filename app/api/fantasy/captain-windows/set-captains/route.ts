@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     // Verify both players are in the team's squad
     const squad = await sql`
       SELECT real_player_id, player_name
-      FROM fantasy_team_players
+      FROM fantasy_squad
       WHERE team_id = ${team_id}
         AND league_id = ${leagueId}
         AND real_player_id IN (${captain_player_id}, ${vice_captain_player_id})
@@ -104,18 +104,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if team already has captain set for this round
+    // Check if team already has captain set for this window
     const hadCaptainBefore = await sql`
       SELECT COUNT(*) as count
-      FROM fantasy_player_points
+      FROM fantasy_captain_history
       WHERE team_id = ${team_id}
         AND league_id = ${leagueId}
-        AND is_captain = true
+        AND window_id = ${window_id}
     `;
 
     const isFirstTime = parseInt(hadCaptainBefore[0]?.count || '0') === 0;
 
-    // Reset all captains for this team (clear previous selections)
+    // Update active captain in squad
+    await sql`
+      UPDATE fantasy_squad
+      SET is_captain = false, is_vice_captain = false
+      WHERE team_id = ${team_id} AND league_id = ${leagueId}
+    `;
+
+    await sql`
+      UPDATE fantasy_squad
+      SET is_captain = true
+      WHERE team_id = ${team_id} AND league_id = ${leagueId} AND real_player_id = ${captain_player_id}
+    `;
+
+    await sql`
+      UPDATE fantasy_squad
+      SET is_vice_captain = true
+      WHERE team_id = ${team_id} AND league_id = ${leagueId} AND real_player_id = ${vice_captain_player_id}
+    `;
+
+    // Update points multiplier in fantasy_player_points only for rounds in this window range
+    const startRound = window[0].start_round || window[0].round_number || 1;
+    const endRound = window[0].end_round || window[0].round_number || 1;
+
     await sql`
       UPDATE fantasy_player_points
       SET 
@@ -124,52 +146,10 @@ export async function POST(request: NextRequest) {
         points_multiplier = 1
       WHERE team_id = ${team_id}
         AND league_id = ${leagueId}
+        AND round_number >= ${startRound}
+        AND round_number <= ${endRound}
     `;
 
-    // Create fantasy_player_points entries if they don't exist
-    // First check if entries exist
-    const existingPoints = await sql`
-      SELECT real_player_id
-      FROM fantasy_player_points
-      WHERE team_id = ${team_id}
-        AND league_id = ${leagueId}
-        AND real_player_id IN (${captain_player_id}, ${vice_captain_player_id})
-    `;
-
-    const existingPlayerIds = existingPoints.map((p: any) => p.real_player_id);
-
-    // Insert missing entries
-    for (const player of squad) {
-      if (!existingPlayerIds.includes(player.real_player_id)) {
-        await sql`
-          INSERT INTO fantasy_player_points (
-            league_id,
-            team_id,
-            real_player_id,
-            player_name,
-            base_points,
-            bonus_points,
-            total_points,
-            points_multiplier,
-            is_captain,
-            is_vice_captain
-          ) VALUES (
-            ${leagueId},
-            ${team_id},
-            ${player.real_player_id},
-            ${player.player_name},
-            0,
-            0,
-            0,
-            1,
-            false,
-            false
-          )
-        `;
-      }
-    }
-
-    // Set new captain (2x multiplier)
     await sql`
       UPDATE fantasy_player_points
       SET 
@@ -178,9 +158,10 @@ export async function POST(request: NextRequest) {
       WHERE team_id = ${team_id}
         AND league_id = ${leagueId}
         AND real_player_id = ${captain_player_id}
+        AND round_number >= ${startRound}
+        AND round_number <= ${endRound}
     `;
 
-    // Set new vice-captain (will get 2x if captain doesn't play)
     await sql`
       UPDATE fantasy_player_points
       SET 
@@ -188,6 +169,8 @@ export async function POST(request: NextRequest) {
       WHERE team_id = ${team_id}
         AND league_id = ${leagueId}
         AND real_player_id = ${vice_captain_player_id}
+        AND round_number >= ${startRound}
+        AND round_number <= ${endRound}
     `;
 
     // Get player names for response

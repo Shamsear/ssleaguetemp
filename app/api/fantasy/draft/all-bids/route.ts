@@ -198,7 +198,7 @@ export async function GET(request: NextRequest) {
       try {
         const { adminDb } = await import('@/lib/neon/admin-db-wrapper');
         for (const tid of uniqueTeamIds) {
-          const doc = await adminDb.collection('teams').doc(tid).get();
+          const doc = await adminDb.collection('team_seasons').doc(tid).get();
           if (doc.exists) realTeamNameMap.set(tid, doc.data()?.team_name || tid);
         }
       } catch {}

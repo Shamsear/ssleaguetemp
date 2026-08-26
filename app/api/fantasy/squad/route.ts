@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fantasySql } from '@/lib/neon/fantasy-config';
+import { getPlayerPhotosMap } from '@/lib/fantasy/photos';
 
 /**
  * GET /api/fantasy/squad?team_id=xxx
@@ -16,6 +17,9 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Fetch player photos map
+    const photosMap = await getPlayerPhotosMap();
 
     // Get squad with all details
     const squad = await fantasySql`
@@ -54,6 +58,7 @@ export async function GET(request: NextRequest) {
         is_vice_captain: p.is_vice_captain || false,
         acquisition_type: p.acquisition_type,
         acquired_at: p.acquired_at,
+        photo_url: photosMap[p.real_player_id] || null,
       })),
     });
   } catch (error) {

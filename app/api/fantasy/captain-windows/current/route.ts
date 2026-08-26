@@ -38,7 +38,9 @@ export async function GET(request: NextRequest) {
         total_teams,
         teams_with_captain_set,
         created_at,
-        updated_at
+        updated_at,
+        start_round,
+        end_round
       FROM fantasy_captain_windows
       WHERE league_id = ${leagueId}
         AND window_status = 'open'
@@ -73,28 +75,55 @@ export async function GET(request: NextRequest) {
     if (teamId) {
       const selections = await sql`
         SELECT 
-          real_player_id,
-          player_name,
-          is_captain,
-          is_vice_captain
-        FROM fantasy_player_points
+          captain_player_id,
+          vice_captain_player_id
+        FROM fantasy_captain_history
         WHERE league_id = ${leagueId}
           AND team_id = ${teamId}
-          AND (is_captain = true OR is_vice_captain = true)
-        ORDER BY is_captain DESC
+          AND window_id = ${currentWindow.window_id}
+        ORDER BY changed_at DESC
+        LIMIT 1
       `;
 
       if (selections.length > 0) {
         teamHasSetCaptain = true;
-        const captain = selections.find((s: any) => s.is_captain);
-        const viceCaptain = selections.find((s: any) => s.is_vice_captain);
+        const capId = selections[0].captain_player_id;
+        const vcId = selections[0].vice_captain_player_id;
+
+        const players = await sql`
+          SELECT real_player_id, player_name
+          FROM fantasy_players
+          WHERE league_id = ${leagueId}
+            AND real_player_id IN (${capId || ''}, ${vcId || ''})
+        `;
+        const capName = players.find((p: any) => p.real_player_id === capId)?.player_name || capId;
+        const vcName = players.find((p: any) => p.real_player_id === vcId)?.player_name || vcId;
 
         currentSelections = {
-          captain_player_id: captain?.real_player_id || null,
-          captain_player_name: captain?.player_name || null,
-          vice_captain_player_id: viceCaptain?.real_player_id || null,
-          vice_captain_player_name: viceCaptain?.player_name || null
+          captain_player_id: capId,
+          captain_player_name: capName,
+          vice_captain_player_id: vcId,
+          vice_captain_player_name: vcName
         };
+      } else {
+        const squadSelections = await sql`
+          SELECT real_player_id, player_name, is_captain, is_vice_captain
+          FROM fantasy_squad
+          WHERE league_id = ${leagueId}
+            AND team_id = ${teamId}
+            AND (is_captain = true OR is_vice_captain = true)
+          ORDER BY is_captain DESC
+        `;
+        if (squadSelections.length > 0) {
+          const captain = squadSelections.find((s: any) => s.is_captain);
+          const viceCaptain = squadSelections.find((s: any) => s.is_vice_captain);
+          currentSelections = {
+            captain_player_id: captain?.real_player_id || null,
+            captain_player_name: captain?.player_name || null,
+            vice_captain_player_id: viceCaptain?.real_player_id || null,
+            vice_captain_player_name: viceCaptain?.player_name || null
+          };
+        }
       }
     }
 

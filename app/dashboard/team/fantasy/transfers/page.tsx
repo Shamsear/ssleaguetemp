@@ -62,6 +62,7 @@ export default function TeamTransfersPage() {
   
   const [selectedOut, setSelectedOut] = useState<Player | null>(null);
   const [selectedIn, setSelectedIn] = useState<Player | null>(null);
+  const [currentSubmission, setCurrentSubmission] = useState<any>(null);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [positionFilter, setPositionFilter] = useState<string>('all');
@@ -172,6 +173,13 @@ export default function TeamTransfersPage() {
         setAvailablePlayers(playersData.available_players || []);
       }
 
+      // Get current pending submission if any
+      const subRes = await fetchWithTokenRefresh(`/api/fantasy/transfers/current-submission?user_id=${user.uid}`);
+      if (subRes.ok) {
+        const subData = await subRes.json();
+        setCurrentSubmission(subData.submission || null);
+      }
+
     } catch (error) {
       console.error('Error loading transfer data:', error);
     } finally {
@@ -186,11 +194,11 @@ export default function TeamTransfersPage() {
   }, [user, loadTransferData]);
 
   const executeTransfer = async () => {
-    if (!selectedOut && !selectedIn) {
+    if (!selectedOut || !selectedIn) {
       showAlert({
         type: 'error',
         title: 'Selection Required',
-        message: 'Please select at least one player to release or sign.'
+        message: 'Please select both a player to release and a player to sign.'
       });
       return;
     }
@@ -207,43 +215,32 @@ export default function TeamTransfersPage() {
     setIsTransferring(true);
 
     try {
-      const response = await fetchWithTokenRefresh('/api/fantasy/transfers/execute', {
+      const response = await fetchWithTokenRefresh('/api/fantasy/transfers/submit-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: user!.uid,
-          player_out_id: selectedOut?.squad_id || null,
-          player_in_id: selectedIn?.real_player_id || null,
+          player_out_id: selectedOut.real_player_id,
+          player_in_id: selectedIn.real_player_id,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        const errorMsg = data.error || 'Transfer failed';
-        const details = data.details ? ` Details: ${data.details}` : '';
-        const message = data.message ? ` ${data.message}` : '';
+        const errorMsg = data.error || 'Submission failed';
         showAlert({
           type: 'error',
-          title: 'Transfer Failed',
-          message: `${errorMsg}${message}${details}`
+          title: 'Submission Failed',
+          message: errorMsg
         });
         return;
       }
 
-      // Build success message
-      let summary = 'Transfer completed successfully. ';
-      if (data.transfer.player_out) {
-        summary += `Released ${data.transfer.player_out.name} (+${data.transfer.player_out.refund} Cr). `;
-      }
-      if (data.transfer.player_in) {
-        summary += `Signed ${data.transfer.player_in.name} (-${data.transfer.player_in.cost} Cr). `;
-      }
-
       showAlert({
         type: 'success',
-        title: 'Transfer Completed',
-        message: `${summary} New Budget: ${data.transfer.new_budget} Cr. Transfers Remaining: ${data.transfer.transfers_remaining}`
+        title: 'Request Submitted',
+        message: data.message
       });
 
       // Reset selections and reload
@@ -252,11 +249,50 @@ export default function TeamTransfersPage() {
       loadTransferData();
 
     } catch (error) {
-      console.error('Transfer error:', error);
+      console.error('Transfer submission error:', error);
       showAlert({
         type: 'error',
         title: 'Error',
-        message: `Failed to execute transfer: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to submit transfer request: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
+  const cancelTransferRequest = async () => {
+    if (!confirm('Are you sure you want to cancel your pending transfer request?')) return;
+    
+    setIsTransferring(true);
+    try {
+      const response = await fetchWithTokenRefresh(`/api/fantasy/transfers/cancel-request?user_id=${user!.uid}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showAlert({
+          type: 'error',
+          title: 'Cancellation Failed',
+          message: data.error || 'Failed to cancel transfer request'
+        });
+        return;
+      }
+
+      showAlert({
+        type: 'success',
+        title: 'Request Cancelled',
+        message: data.message
+      });
+
+      loadTransferData();
+    } catch (error) {
+      console.error('Cancel transfer error:', error);
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: `Failed to cancel transfer request: ${error instanceof Error ? error.message : 'Unknown error'}`
       });
     } finally {
       setIsTransferring(false);
@@ -638,8 +674,51 @@ export default function TeamTransfersPage() {
           </div>
         )}
 
+        {/* Pending Transfer Submission Alert */}
+        {currentSubmission && (
+          <div className="console-card bg-emerald-50 border border-emerald-200/60 p-6 rounded-3xl shadow-sm text-slate-805 space-y-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-6 h-6 text-emerald-600 shrink-0" />
+              <div>
+                <h3 className="text-sm font-black uppercase text-emerald-800 tracking-wider">Pending Transfer Request Submitted</h3>
+                <p className="text-[10px] uppercase font-bold text-emerald-600 mt-0.5">
+                  Your request is queued and will be processed when the transfer window closes.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center bg-white border border-emerald-100 p-4 rounded-2xl">
+              <div>
+                <p className="text-[8px] text-slate-400 font-bold uppercase mb-1">Releasing Player</p>
+                <p className="text-xs font-black uppercase text-slate-900">{currentSubmission.player_out_name}</p>
+                <p className="text-[9px] font-bold text-slate-450 uppercase">{currentSubmission.player_out_position} | {currentSubmission.player_out_real_team}</p>
+                <p className="text-[10px] text-emerald-650 font-black mt-1">+{currentSubmission.player_out_price} Cr (Refund)</p>
+              </div>
+              <div className="flex justify-center text-slate-300">
+                <ArrowLeftRight className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-[8px] text-slate-400 font-bold uppercase mb-1">Requesting Player</p>
+                <p className="text-xs font-black uppercase text-slate-900">{currentSubmission.player_in_name}</p>
+                <p className="text-[9px] font-bold text-slate-450 uppercase">{currentSubmission.player_in_position} | {currentSubmission.player_in_real_team}</p>
+                <p className="text-[10px] text-rose-600 font-black mt-1">-{currentSubmission.player_in_price} Cr (Cost)</p>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={cancelTransferRequest}
+                disabled={isTransferring}
+                className="px-5 py-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              >
+                <XCircle className="w-4 h-4" /> Cancel Transfer Request
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Transfer Summary Widget */}
-        {(selectedOut || selectedIn) && (
+        {!currentSubmission && (selectedOut || selectedIn) && (
           <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
             <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Pending Transfer Transaction</h3>
             
@@ -766,132 +845,160 @@ export default function TeamTransfersPage() {
           </div>
         )}
 
-        {/* Content split grid (My Squad vs Available Pool) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          {/* My Squad Card */}
-          <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
-            <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2 flex items-center justify-between">
-              <span className="flex items-center gap-2"><Users className="w-4.5 h-4.5 text-slate-500" /> My Squad</span>
-              <span className="text-[9px] bg-slate-100 px-2 py-0.5 rounded border border-slate-200">{mySquad.length} Players</span>
-            </h2>
+        {!currentSubmission && (
+          /* Content split grid (My Squad vs Available Pool) */
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            {/* My Squad Card */}
+            <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
+              <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2 flex items-center justify-between">
+                <span className="flex items-center gap-2"><Users className="w-4.5 h-4.5 text-slate-500" /> My Squad</span>
+                <span className="text-[9px] bg-slate-100 px-2 py-0.5 rounded border border-slate-200">{mySquad.length} Players</span>
+              </h2>
 
-            <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-              {mySquad.map((player) => (
-                <button
-                  key={player.squad_id}
-                  onClick={() => setSelectedOut(selectedOut?.squad_id === player.squad_id ? null : player)}
-                  className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between cursor-pointer ${
-                    selectedOut?.squad_id === player.squad_id
-                      ? 'bg-rose-50 border-rose-400 text-rose-950 shadow-sm'
-                      : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200 text-slate-800'
-                  }`}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <p className="text-xs font-black uppercase truncate">{player.player_name}</p>
-                      {player.is_captain && <span className="text-[8px] px-2 py-0.5 bg-amber-500 text-slate-900 rounded-lg font-black uppercase tracking-wider">C</span>}
-                      {player.is_vice_captain && <span className="text-[8px] px-2 py-0.5 bg-slate-800 text-white rounded-lg font-black uppercase tracking-wider">VC</span>}
+              <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                {mySquad.map((player) => (
+                  <button
+                    key={player.squad_id}
+                    onClick={() => setSelectedOut(selectedOut?.squad_id === player.squad_id ? null : player)}
+                    className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between cursor-pointer gap-3 ${
+                      selectedOut?.squad_id === player.squad_id
+                        ? 'bg-rose-50 border-rose-400 text-rose-950 shadow-sm'
+                        : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200 text-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {player.photo_url ? (
+                        <img
+                          src={player.photo_url}
+                          alt={player.player_name}
+                          className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-slate-800 border border-slate-700 text-amber-400 rounded-xl flex items-center justify-center text-[10px] font-black shadow-sm shrink-0">
+                          {(player.player_name || '').charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <p className="text-xs font-black uppercase truncate">{player.player_name}</p>
+                        {player.is_captain && <span className="text-[8px] px-2 py-0.5 bg-amber-500 text-slate-900 rounded-lg font-black uppercase tracking-wider">C</span>}
+                        {player.is_vice_captain && <span className="text-[8px] px-2 py-0.5 bg-slate-800 text-white rounded-lg font-black uppercase tracking-wider">VC</span>}
+                      </div>
+                      <p className={`text-[9px] font-bold uppercase ${selectedOut?.squad_id === player.squad_id ? 'text-rose-700' : 'text-slate-450'}`}>
+                        {player.position || 'Unknown'} | {player.real_team_name || 'Unknown'}
+                      </p>
                     </div>
-                    <p className={`text-[9px] font-bold uppercase ${selectedOut?.squad_id === player.squad_id ? 'text-rose-700' : 'text-slate-450'}`}>
-                      {player.position || 'Unknown'} | {player.real_team_name || 'Unknown'}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs font-black">{player.purchase_price || 0} Cr</p>
-                    <p className={`text-[8px] font-bold uppercase mt-1 ${selectedOut?.squad_id === player.squad_id ? 'text-rose-700' : 'text-slate-400'}`}>
-                      {player.total_points || 0} pts
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Available Players Pool Card */}
-          <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
-            <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2 flex items-center justify-between">
-              <span className="flex items-center gap-2"><TrendingUp className="w-4.5 h-4.5 text-slate-500" /> Available pool</span>
-              <span className="text-[9px] bg-slate-100 px-2 py-0.5 rounded border border-slate-200">{filteredPlayers.length} matches</span>
-            </h2>
-
-            {/* Filters */}
-            <div className="mb-4 space-y-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search available players..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-slate-250 rounded-xl text-xs font-bold uppercase text-slate-850 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  value={positionFilter}
-                  onChange={(e) => setPositionFilter(e.target.value)}
-                  className="px-3 py-2 border border-slate-250 rounded-xl text-[10px] font-bold uppercase text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
-                >
-                  <option value="all">All Positions</option>
-                  {positions.map(pos => (
-                    <option key={pos} value={pos}>{pos}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={teamFilter}
-                  onChange={(e) => setTeamFilter(e.target.value)}
-                  className="px-3 py-2 border border-slate-250 rounded-xl text-[10px] font-bold uppercase text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
-                >
-                  <option value="all">All Teams</option>
-                  {teams.map(team => (
-                    <option key={team} value={team}>{team}</option>
-                  ))}
-                </select>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-xs font-black">{player.purchase_price || 0} Cr</p>
+                      <p className={`text-[8px] font-bold uppercase mt-1 ${selectedOut?.squad_id === player.squad_id ? 'text-rose-700' : 'text-slate-400'}`}>
+                        {player.total_points || 0} pts
+                      </p>
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Available Players list */}
-            <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-              {filteredPlayers.map((player) => (
-                <button
-                  key={player.real_player_id}
-                  onClick={() => setSelectedIn(selectedIn?.real_player_id === player.real_player_id ? null : player)}
-                  className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between cursor-pointer ${
-                    selectedIn?.real_player_id === player.real_player_id
-                      ? 'bg-emerald-50 border-emerald-400 text-emerald-950 shadow-sm'
-                      : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200 text-slate-800'
-                  }`}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <p className="text-xs font-black uppercase truncate">{player.player_name}</p>
-                      <div className="flex gap-0.5 shrink-0">
-                        {Array.from({ length: player.star_rating || 0 }).map((_, i) => (
-                          <Star key={`star-${player.real_player_id}-${i}`} className={`w-3 h-3 ${selectedIn?.real_player_id === player.real_player_id ? 'text-emerald-600 fill-emerald-600' : 'text-amber-500 fill-amber-500'}`} />
-                        ))}
+            {/* Available Players Pool Card */}
+            <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
+              <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2 flex items-center justify-between">
+                <span className="flex items-center gap-2"><TrendingUp className="w-4.5 h-4.5 text-slate-500" /> Available pool</span>
+                <span className="text-[9px] bg-slate-100 px-2 py-0.5 rounded border border-slate-200">{filteredPlayers.length} matches</span>
+              </h2>
+
+              {/* Filters */}
+              <div className="mb-4 space-y-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search available players..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-slate-250 rounded-xl text-xs font-bold uppercase text-slate-850 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={positionFilter}
+                    onChange={(e) => setPositionFilter(e.target.value)}
+                    className="px-3 py-2 border border-slate-250 rounded-xl text-[10px] font-bold uppercase text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  >
+                    <option value="all">All Positions</option>
+                    {positions.map(pos => (
+                      <option key={pos} value={pos}>{pos}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={teamFilter}
+                    onChange={(e) => setTeamFilter(e.target.value)}
+                    className="px-3 py-2 border border-slate-250 rounded-xl text-[10px] font-bold uppercase text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  >
+                    <option value="all">All Teams</option>
+                    {teams.map(team => (
+                      <option key={team} value={team}>{team}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Available Players list */}
+              <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                {filteredPlayers.map((player) => (
+                  <button
+                    key={player.real_player_id}
+                    onClick={() => setSelectedIn(selectedIn?.real_player_id === player.real_player_id ? null : player)}
+                    className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between cursor-pointer gap-3 ${
+                      selectedIn?.real_player_id === player.real_player_id
+                        ? 'bg-emerald-50 border-emerald-400 text-emerald-950 shadow-sm'
+                        : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200 text-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {player.photo_url ? (
+                        <img
+                          src={player.photo_url}
+                          alt={player.player_name}
+                          className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-slate-850 border border-slate-750 text-amber-450 rounded-xl flex items-center justify-center text-[10px] font-black shadow-sm shrink-0">
+                          {(player.player_name || '').charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <p className="text-xs font-black uppercase truncate">{player.player_name}</p>
+                          <div className="flex gap-0.5 shrink-0">
+                            {Array.from({ length: player.star_rating || 0 }).map((_, i) => (
+                              <Star key={`star-${player.real_player_id}-${i}`} className={`w-3 h-3 ${selectedIn?.real_player_id === player.real_player_id ? 'text-emerald-600 fill-emerald-600' : 'text-amber-500 fill-amber-500'}`} />
+                            ))}
+                          </div>
+                        </div>
+                        <p className={`text-[9px] font-bold uppercase ${selectedIn?.real_player_id === player.real_player_id ? 'text-emerald-700' : 'text-slate-450'}`}>
+                          {player.position || 'Unknown'} | {player.real_team_name || player.team || 'Unknown'}
+                        </p>
                       </div>
                     </div>
-                    <p className={`text-[9px] font-bold uppercase ${selectedIn?.real_player_id === player.real_player_id ? 'text-emerald-700' : 'text-slate-450'}`}>
-                      {player.position || 'Unknown'} | {player.real_team_name || player.team || 'Unknown'}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs font-black">{player.current_price || player.draft_price || 0} Cr</p>
-                  </div>
-                </button>
-              ))}
+                    <div className="text-right shrink-0">
+                      <p className="text-xs font-black">{player.current_price || player.draft_price || 0} Cr</p>
+                    </div>
+                  </button>
+                ))}
 
-              {filteredPlayers.length === 0 && (
-                <div className="text-center py-12 text-slate-400 text-xs font-bold uppercase">
-                  <Filter className="w-8 h-8 text-slate-350 mx-auto mb-2" />
-                  <p>No matching available players found</p>
-                </div>
-              )}
+                {filteredPlayers.length === 0 && (
+                  <div className="text-center py-12 text-slate-400 text-xs font-bold uppercase">
+                    <Filter className="w-8 h-8 text-slate-350 mx-auto mb-2" />
+                    <p>No matching available players found</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   

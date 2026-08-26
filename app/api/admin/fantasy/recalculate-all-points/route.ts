@@ -128,23 +128,62 @@ export async function POST(request: NextRequest) {
         const playerTeams = playerTeamsMap.get(playerId) || [];
         
         for (const teamInfo of playerTeams) {
-          let multiplier = 1;
-          let multiplierInt = 100; // Store as integer percentage
-          if (teamInfo.isCaptain) {
-            multiplier = 2;
-            multiplierInt = 200;
-          } else if (teamInfo.isViceCaptain) {
-            multiplier = 1.5;
-            multiplierInt = 150;
-          }
-          
-          const totalPoints = Math.round(basePoints * multiplier);
-
           try {
             const teamInfo_full = await fantasyDb`
               SELECT league_id FROM fantasy_teams WHERE team_id = ${teamInfo.teamId} LIMIT 1
             `;
             const league_id = teamInfo_full[0]?.league_id;
+
+            let isCap = false;
+            let isVc = false;
+
+            if (league_id) {
+              const windows = await fantasyDb`
+                SELECT window_id FROM fantasy_captain_windows
+                WHERE league_id = ${league_id}
+                  AND ${fixture.round_number} >= start_round
+                  AND ${fixture.round_number} <= end_round
+                LIMIT 1
+              `;
+
+              if (windows.length > 0) {
+                const windowId = windows[0].window_id;
+                const selections = await fantasyDb`
+                  SELECT captain_player_id, vice_captain_player_id
+                  FROM fantasy_captain_history
+                  WHERE league_id = ${league_id}
+                    AND team_id = ${teamInfo.teamId}
+                    AND window_id = ${windowId}
+                  ORDER BY changed_at DESC
+                  LIMIT 1
+                `;
+                if (selections.length > 0) {
+                  isCap = selections[0].captain_player_id === playerId;
+                  isVc = selections[0].vice_captain_player_id === playerId;
+                } else {
+                  isCap = teamInfo.isCaptain;
+                  isVc = teamInfo.isViceCaptain;
+                }
+              } else {
+                isCap = teamInfo.isCaptain;
+                isVc = teamInfo.isViceCaptain;
+              }
+            } else {
+              isCap = teamInfo.isCaptain;
+              isVc = teamInfo.isViceCaptain;
+            }
+
+            let multiplier = 1;
+            let multiplierInt = 100; // Store as integer percentage
+            if (isCap) {
+              multiplier = 2;
+              multiplierInt = 200;
+            } else if (isVc) {
+              multiplier = 1.5;
+              multiplierInt = 150;
+            }
+            
+            const totalPoints = Math.round(basePoints * multiplier);
 
             // Check if record already exists to prevent duplicates
             const existing = await fantasyDb`
@@ -161,12 +200,12 @@ export async function POST(request: NextRequest) {
                   team_id, league_id, real_player_id, player_name,
                   fixture_id, round_number, goals_scored, goals_conceded,
                   is_clean_sheet, is_motm, result, total_points,
-                  is_captain, points_multiplier, base_points, calculated_at
+                  is_captain, is_vice_captain, points_multiplier, base_points, calculated_at
                 ) VALUES (
                   ${teamInfo.teamId}, ${league_id}, ${playerId}, ${playerName},
                   ${matchup.fixture_id}, ${fixture.round_number}, ${goalsScored}, ${goalsConceded},
                   ${cleanSheet}, ${isMotm}, ${won ? 'win' : draw ? 'draw' : 'loss'}, ${totalPoints},
-                  ${teamInfo.isCaptain || teamInfo.isViceCaptain}, ${multiplierInt}, ${basePoints}, NOW()
+                  ${isCap}, ${isVc}, ${multiplierInt}, ${basePoints}, NOW()
                 )
               `;
               results.playerPointsInserted++;

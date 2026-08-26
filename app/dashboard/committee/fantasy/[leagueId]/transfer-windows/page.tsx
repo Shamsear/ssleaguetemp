@@ -15,6 +15,8 @@ interface TransferWindow {
   closes_at: string;
   is_active: boolean;
   status: 'upcoming' | 'active' | 'closed';
+  start_round: number | null;
+  end_round: number | null;
 }
 
 export default function TransferWindowsPage() {
@@ -30,6 +32,8 @@ export default function TransferWindowsPage() {
   const [newWindowName, setNewWindowName] = useState('');
   const [newOpensAt, setNewOpensAt] = useState('');
   const [newClosesAt, setNewClosesAt] = useState('');
+  const [newStartRound, setNewStartRound] = useState('');
+  const [newEndRound, setNewEndRound] = useState('');
 
   useEffect(() => {
     if (user && leagueId) {
@@ -52,8 +56,8 @@ export default function TransferWindowsPage() {
   };
 
   const createWindow = async () => {
-    if (!newWindowName || !newOpensAt || !newClosesAt) {
-      alert('Please fill in all fields');
+    if (!newWindowName || !newOpensAt || !newClosesAt || !newStartRound || !newEndRound) {
+      alert('Please fill in all fields including start and end rounds');
       return;
     }
 
@@ -67,6 +71,8 @@ export default function TransferWindowsPage() {
           window_name: newWindowName,
           opens_at: newOpensAt,
           closes_at: newClosesAt,
+          start_round: parseInt(newStartRound),
+          end_round: parseInt(newEndRound)
         }),
       });
 
@@ -79,6 +85,8 @@ export default function TransferWindowsPage() {
       setNewWindowName('');
       setNewOpensAt('');
       setNewClosesAt('');
+      setNewStartRound('');
+      setNewEndRound('');
       loadWindows();
     } catch (error) {
       console.error('Error creating window:', error);
@@ -156,7 +164,7 @@ export default function TransferWindowsPage() {
         {/* Create Form */}
         <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-4">
           <h2 className="text-xs font-black text-slate-850 uppercase tracking-wider">Create New Transfer Window</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">
                 Window Name
@@ -166,6 +174,30 @@ export default function TransferWindowsPage() {
                 value={newWindowName}
                 onChange={(e) => setNewWindowName(e.target.value)}
                 placeholder="e.g., Week 1 Transfers"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">
+                Start Round
+              </label>
+              <input
+                type="number"
+                value={newStartRound}
+                onChange={(e) => setNewStartRound(e.target.value)}
+                placeholder="e.g. 7"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">
+                End Round
+              </label>
+              <input
+                type="number"
+                value={newEndRound}
+                onChange={(e) => setNewEndRound(e.target.value)}
+                placeholder="e.g. 11"
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
               />
             </div>
@@ -226,6 +258,8 @@ export default function TransferWindowsPage() {
                       </span>
                     </div>
                     <div className="text-[10px] font-bold text-slate-450 uppercase flex flex-wrap items-center gap-2">
+                      <span>Rounds: {window.start_round !== null && window.end_round !== null ? `${window.start_round}-${window.end_round}` : 'All'}</span>
+                      <span className="text-slate-300">•</span>
                       <span>Opens: {new Date(window.opens_at).toLocaleString()}</span>
                       <span className="text-slate-300">•</span>
                       <span>Closes: {new Date(window.closes_at).toLocaleString()}</span>

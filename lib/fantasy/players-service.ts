@@ -4,6 +4,7 @@
 import { fantasySql } from '@/lib/neon/fantasy-config';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { LeagueNotFoundError } from './errors';
+import { getPlayerPhotosMap } from '@/lib/fantasy/photos';
 
 export interface AvailablePlayersParams {
   league_id: string;
@@ -67,6 +68,9 @@ export class FantasyPlayersService {
     // Get drafted player IDs
     const draftedPlayerIds = await this.getDraftedPlayerIds(params.league_id);
 
+    // Fetch player photos map
+    const photosMap = await getPlayerPhotosMap();
+
     // Get available players with filtering and pagination
     const players = await this.queryAvailablePlayers({
       seasonId: league.season_id,
@@ -96,6 +100,7 @@ export class FantasyPlayersService {
         draft_price: draftPrice,
         points: 0,
         is_available: true,
+        photo_url: photosMap[player.player_id] || null,
       };
     });
 

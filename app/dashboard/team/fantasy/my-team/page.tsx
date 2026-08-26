@@ -722,9 +722,17 @@ export default function MyFantasyTeamPage() {
                       className="w-full flex flex-col md:flex-row justify-between items-start md:items-center p-5 text-left transition-all gap-4"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-9 h-9 bg-slate-800 border border-slate-700 text-amber-450 rounded-xl flex items-center justify-center text-xs font-black shadow-sm shrink-0">
-                          {index + 1}
-                        </div>
+                        {player.photo_url ? (
+                          <img
+                            src={player.photo_url}
+                            alt={player.player_name}
+                            className="w-9 h-9 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 bg-slate-800 border border-slate-700 text-amber-450 rounded-xl flex items-center justify-center text-xs font-black shadow-sm shrink-0">
+                            {index + 1}
+                          </div>
+                        )}
                         <div>
                           <div className="flex items-center flex-wrap gap-2">
                             <h4 className="font-bold text-slate-900 text-sm uppercase">{player.player_name}</h4>

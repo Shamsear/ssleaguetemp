@@ -29,7 +29,9 @@ export async function GET(
         created_by_user_id,
         created_at,
         updated_at,
-        notes
+        notes,
+        start_round,
+        end_round
       FROM fantasy_captain_windows
       WHERE window_id = ${windowId}
     `;

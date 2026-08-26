@@ -24,6 +24,8 @@ interface CaptainWindow {
   created_at: string;
   updated_at: string;
   notes: string | null;
+  start_round: number | null;
+  end_round: number | null;
 }
 
 export default function CaptainWindowsPage() {
@@ -44,7 +46,9 @@ export default function CaptainWindowsPage() {
     round_name: '',
     opens_at: '',
     closes_at: '',
-    notes: ''
+    notes: '',
+    start_round: '',
+    end_round: ''
   });
 
   const { alertState, showAlert, closeAlert } = useModal();
@@ -75,11 +79,11 @@ export default function CaptainWindowsPage() {
   };
 
   const handleCreateWindow = async () => {
-    if (!createForm.round_id || !createForm.opens_at || !createForm.closes_at) {
+    if (!createForm.round_id || !createForm.opens_at || !createForm.closes_at || !createForm.start_round || !createForm.end_round) {
       showAlert({
         type: 'warning',
         title: 'Missing Fields',
-        message: 'Please fill in round ID, opens at, and closes at fields'
+        message: 'Please fill in round ID, start round, end round, opens at, and closes at fields'
       });
       return;
     }
@@ -97,7 +101,9 @@ export default function CaptainWindowsPage() {
           opens_at: new Date(createForm.opens_at).toISOString(),
           closes_at: new Date(createForm.closes_at).toISOString(),
           notes: createForm.notes || null,
-          created_by_user_id: user?.uid
+          created_by_user_id: user?.uid,
+          start_round: parseInt(createForm.start_round),
+          end_round: parseInt(createForm.end_round)
         })
       });
 
@@ -120,7 +126,9 @@ export default function CaptainWindowsPage() {
         round_name: '',
         opens_at: '',
         closes_at: '',
-        notes: ''
+        notes: '',
+        start_round: '',
+        end_round: ''
       });
       loadWindows();
     } catch (error: any) {
@@ -310,7 +318,7 @@ export default function CaptainWindowsPage() {
                           {window.round_name || `Round ${window.round_number || window.round_id}`}
                         </h3>
                         <p className="text-[10px] text-slate-500 font-mono uppercase tracking-wider mt-0.5">
-                          {window.round_id}
+                          ID: {window.round_id} {window.start_round !== null && window.end_round !== null && ` • Rounds ${window.start_round}-${window.end_round}`}
                         </p>
                       </div>
                       <span className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider ${getStatusColor(window.window_status)}`}>
@@ -441,7 +449,7 @@ export default function CaptainWindowsPage() {
               </div>
 
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-[10px] text-slate-500 font-extrabold uppercase tracking-wider mb-2">
                       Round ID *
@@ -456,13 +464,25 @@ export default function CaptainWindowsPage() {
                   </div>
                   <div>
                     <label className="block text-[10px] text-slate-500 font-extrabold uppercase tracking-wider mb-2">
-                      Round Number
+                      Start Round *
                     </label>
                     <input
                       type="number"
-                      value={createForm.round_number}
-                      onChange={(e) => setCreateForm({ ...createForm, round_number: e.target.value })}
+                      value={createForm.start_round}
+                      onChange={(e) => setCreateForm({ ...createForm, start_round: e.target.value })}
                       placeholder="e.g. 1"
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-slate-500 font-extrabold uppercase tracking-wider mb-2">
+                      End Round *
+                    </label>
+                    <input
+                      type="number"
+                      value={createForm.end_round}
+                      onChange={(e) => setCreateForm({ ...createForm, end_round: e.target.value })}
+                      placeholder="e.g. 7"
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
                     />
                   </div>

@@ -327,17 +327,54 @@ async function processPlayer(params: {
   for (const squad of squads) {
     const fantasy_team_id = squad.team_id;
 
-    // Check if player is captain or vice-captain for this team
-    const captainCheck = await sql`
-      SELECT is_captain, is_vice_captain
-      FROM fantasy_squad
-      WHERE team_id = ${fantasy_team_id}
-        AND real_player_id = ${player_id}
+    // Check if there is a captain window covering this round
+    const windows = await sql`
+      SELECT window_id FROM fantasy_captain_windows
+      WHERE league_id = ${fantasy_league_id}
+        AND ${round_number} >= start_round
+        AND ${round_number} <= end_round
       LIMIT 1
     `;
 
-    const isCaptain = captainCheck.length > 0 && captainCheck[0].is_captain;
-    const isViceCaptain = captainCheck.length > 0 && captainCheck[0].is_vice_captain;
+    let isCaptain = false;
+    let isViceCaptain = false;
+
+    if (windows.length > 0) {
+      const windowId = windows[0].window_id;
+      const selections = await sql`
+        SELECT captain_player_id, vice_captain_player_id
+        FROM fantasy_captain_history
+        WHERE league_id = ${fantasy_league_id}
+          AND team_id = ${fantasy_team_id}
+          AND window_id = ${windowId}
+        ORDER BY changed_at DESC
+        LIMIT 1
+      `;
+      if (selections.length > 0) {
+        isCaptain = selections[0].captain_player_id === player_id;
+        isViceCaptain = selections[0].vice_captain_player_id === player_id;
+      } else {
+        const captainCheck = await sql`
+          SELECT is_captain, is_vice_captain
+          FROM fantasy_squad
+          WHERE team_id = ${fantasy_team_id}
+            AND real_player_id = ${player_id}
+          LIMIT 1
+        `;
+        isCaptain = captainCheck.length > 0 && captainCheck[0].is_captain;
+        isViceCaptain = captainCheck.length > 0 && captainCheck[0].is_vice_captain;
+      }
+    } else {
+      const captainCheck = await sql`
+        SELECT is_captain, is_vice_captain
+        FROM fantasy_squad
+        WHERE team_id = ${fantasy_team_id}
+          AND real_player_id = ${player_id}
+        LIMIT 1
+      `;
+      isCaptain = captainCheck.length > 0 && captainCheck[0].is_captain;
+      isViceCaptain = captainCheck.length > 0 && captainCheck[0].is_vice_captain;
+    }
 
     // Apply multiplier: Captain = 2x, Vice-Captain = 1.5x
     let multiplier = 1;
@@ -369,6 +406,7 @@ async function processPlayer(params: {
         substitution_penalty,
         is_clean_sheet,
         is_captain,
+        is_vice_captain,
         points_multiplier,
         base_points,
         points_breakdown,
@@ -388,7 +426,8 @@ async function processPlayer(params: {
         ${fine_goals},
         ${substitution_penalty},
         ${is_clean_sheet},
-        ${isCaptain || isViceCaptain},
+        ${isCaptain},
+        ${isViceCaptain},
         ${multiplierPercentage},
         ${total_points},
         ${JSON.stringify(points_breakdown)},

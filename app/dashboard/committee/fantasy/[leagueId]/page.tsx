@@ -195,6 +195,18 @@ export default function FantasyLeagueDashboard() {
       color: 'from-cyan-500 to-teal-600',
       badge: 'UPDATED',
     },
+    {
+      title: 'Process Transfers',
+      description: 'Resolve contestant conflicts and finalize weekly swaps',
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" />
+        </svg>
+      ),
+      href: `/dashboard/committee/fantasy/${leagueId}/transfers`,
+      color: 'from-teal-500 to-emerald-600',
+      badge: 'NEW',
+    },
     
     // Team & Scoring
     {
