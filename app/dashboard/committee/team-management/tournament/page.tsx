@@ -1885,22 +1885,34 @@ export function TournamentDashboardPageContent() {
               {/* Teams List */}
               {selectedTournamentForTeams && tournamentTeams.length > 0 && (
                 <>
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-gray-900">
-                      Select Participating Teams ({selectedTeamsForTournament.length} selected)
-                    </h3>
-                    <button
-                      onClick={() => {
-                        if (selectedTeamsForTournament.length === tournamentTeams.length) {
-                          setSelectedTeamsForTournament([]);
-                        } else {
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-bold text-gray-900">
+                        Select Participating Teams ({selectedTeamsForTournament.length} of {tournamentTeams.length} selected)
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
                           setSelectedTeamsForTournament(tournamentTeams.map(t => t.team_id));
-                        }
-                      }}
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      {selectedTeamsForTournament.length === tournamentTeams.length ? 'Deselect All' : 'Select All'}
-                    </button>
+                        }}
+                        disabled={selectedTeamsForTournament.length === tournamentTeams.length}
+                        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                      >
+                        <Users className="w-4 h-4" />
+                        Select All Season Teams
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedTeamsForTournament([]);
+                        }}
+                        disabled={selectedTeamsForTournament.length === 0}
+                        className="px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        Clear Selection
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 max-h-96 overflow-y-auto">
