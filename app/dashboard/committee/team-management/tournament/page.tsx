@@ -1933,10 +1933,21 @@ export function TournamentDashboardPageContent() {
                           }}
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"
                         />
-                        <div className="flex-1">
-                          <span className="text-sm font-medium text-gray-900">{team.team_name}</span>
+                        <div className="flex items-center flex-1 min-w-0">
+                          {team.logo_url ? (
+                            <img
+                              src={team.logo_url}
+                              alt=""
+                              className="w-7 h-7 rounded-full object-cover mr-2.5 flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center mr-2.5 flex-shrink-0">
+                              <span className="text-[10px] font-bold text-slate-600">{team.team_name?.charAt(0)?.toUpperCase()}</span>
+                            </div>
+                          )}
+                          <span className="text-sm font-medium text-gray-900 truncate">{team.team_name}</span>
                           {team.is_participating && (
-                            <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Assigned</span>
+                            <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex-shrink-0">Assigned</span>
                           )}
                         </div>
                       </label>

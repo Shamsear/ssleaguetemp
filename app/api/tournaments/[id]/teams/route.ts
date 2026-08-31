@@ -36,21 +36,26 @@ export async function GET(
       .map(doc => doc.data().team_id)
       .filter(Boolean);
 
-    // Fetch team names from Firebase teams collection
-    const teamNames = new Map<string, string>();
+    // Fetch team details (name + logo) from Firebase teams collection
+    const teamDetails = new Map<string, { name: string; logo_url: string | null }>();
     if (seasonTeamIds.length > 0) {
       const teamDocs = await Promise.all(
         seasonTeamIds.map(async (teamId: string) => {
           try {
             const doc = await adminDb.collection('teams').doc(teamId).get();
             if (doc.exists) {
-              return { teamId, name: doc.data()?.team_name || 'Unknown Team' };
+              const data = doc.data()!;
+              return {
+                teamId,
+                name: data.team_name || 'Unknown Team',
+                logo_url: data.logo_url || data.logoUrl || data.logoURL || null
+              };
             }
           } catch {}
-          return { teamId, name: 'Unknown Team' };
+          return { teamId, name: 'Unknown Team', logo_url: null };
         })
       );
-      teamDocs.forEach(t => teamNames.set(t.teamId, t.name));
+      teamDocs.forEach(t => teamDetails.set(t.teamId, { name: t.name, logo_url: t.logo_url }));
     }
 
     // Get which teams are already assigned to THIS tournament from Neon
@@ -67,7 +72,8 @@ export async function GET(
     const teams = seasonTeamIds
       .map((teamId: string) => ({
         team_id: teamId,
-        team_name: teamNames.get(teamId) || 'Unknown Team',
+        team_name: teamDetails.get(teamId)?.name || 'Unknown Team',
+        logo_url: teamDetails.get(teamId)?.logo_url || null,
         is_participating: assignedSet.has(teamId)
       }))
       .sort((a: any, b: any) => a.team_name.localeCompare(b.team_name));
