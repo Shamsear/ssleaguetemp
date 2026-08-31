@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 // GET - Get teams participating in a tournament
 export async function GET(
@@ -24,17 +25,52 @@ export async function GET(
 
     const seasonId = tournament[0].season_id;
 
-    // Get only teams that are participating in THIS tournament
-    const teams = await sql`
-      SELECT 
-        team_id,
-        team_name,
-        true as is_participating
+    // Fetch all teams registered for this season from Firebase
+    const teamSeasonsSnapshot = await adminDb
+      .collection('team_seasons')
+      .where('season_id', '==', seasonId)
+      .where('status', '==', 'registered')
+      .get();
+
+    const seasonTeamIds = teamSeasonsSnapshot.docs
+      .map(doc => doc.data().team_id)
+      .filter(Boolean);
+
+    // Fetch team names from Firebase teams collection
+    const teamNames = new Map<string, string>();
+    if (seasonTeamIds.length > 0) {
+      const teamDocs = await Promise.all(
+        seasonTeamIds.map(async (teamId: string) => {
+          try {
+            const doc = await adminDb.collection('teams').doc(teamId).get();
+            if (doc.exists) {
+              return { teamId, name: doc.data()?.team_name || 'Unknown Team' };
+            }
+          } catch {}
+          return { teamId, name: 'Unknown Team' };
+        })
+      );
+      teamDocs.forEach(t => teamNames.set(t.teamId, t.name));
+    }
+
+    // Get which teams are already assigned to THIS tournament from Neon
+    const assignedTeams = await sql`
+      SELECT DISTINCT team_id
       FROM teamstats
       WHERE season_id = ${seasonId}
         AND tournament_id = ${tournamentId}
-      ORDER BY team_name ASC
     `;
+
+    const assignedSet = new Set(assignedTeams.map((t: any) => t.team_id));
+
+    // Build the combined list: all season teams with participation flag
+    const teams = seasonTeamIds
+      .map((teamId: string) => ({
+        team_id: teamId,
+        team_name: teamNames.get(teamId) || 'Unknown Team',
+        is_participating: assignedSet.has(teamId)
+      }))
+      .sort((a: any, b: any) => a.team_name.localeCompare(b.team_name));
 
     return NextResponse.json({
       success: true,
@@ -117,8 +153,24 @@ export async function POST(
 
     // Add new teams to the tournament
     if (teamsToAdd.length > 0) {
+      // Batch-fetch team names from Firebase for all teams being added
+      const teamNameMap = new Map<string, string>();
+      try {
+        const teamDocs = await Promise.all(
+          teamsToAdd.map(async (teamId: string) => {
+            try {
+              const doc = await adminDb.collection('teams').doc(teamId).get();
+              return { teamId, name: doc.data()?.team_name || 'Unknown Team' };
+            } catch {
+              return { teamId, name: 'Unknown Team' };
+            }
+          })
+        );
+        teamDocs.forEach(t => teamNameMap.set(t.teamId, t.name));
+      } catch {}
+
       for (const teamId of teamsToAdd) {
-        // Get team name from existing teamstats or teams table
+        // Also check Neon teamstats as a fallback
         const existingTeam = await sql`
           SELECT team_name 
           FROM teamstats 
@@ -127,7 +179,7 @@ export async function POST(
           LIMIT 1
         `;
 
-        const teamName = existingTeam[0]?.team_name || 'Unknown Team';
+        const teamName = existingTeam[0]?.team_name || teamNameMap.get(teamId) || 'Unknown Team';
 
         // Insert new entry with ID format: teamid_seasonid_tournamentid
         await sql`
