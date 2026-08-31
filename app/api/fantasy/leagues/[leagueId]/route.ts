@@ -119,21 +119,39 @@ export async function GET(
 
         console.log('League created, now creating scoring rules...');
 
-        // Create default scoring rules for the new league
+        // Create default scoring rules for the new league (aligned with S16 point system)
         const defaultRules = [
-          { rule_type: 'goals_scored', rule_name: 'Goal Scored', points_value: 5, description: 'Points for scoring a goal' },
-          { rule_type: 'goals_conceded', rule_name: 'Goal Conceded', points_value: -1, description: 'Points deducted for conceding a goal' },
-          { rule_type: 'win', rule_name: 'Match Win', points_value: 3, description: 'Points for winning a match' },
-          { rule_type: 'draw', rule_name: 'Match Draw', points_value: 1, description: 'Points for drawing a match' },
-          { rule_type: 'loss', rule_name: 'Match Loss', points_value: 0, description: 'Points for losing a match' },
-          { rule_type: 'clean_sheet', rule_name: 'Clean Sheet', points_value: 4, description: 'Bonus for not conceding any goals' },
-          { rule_type: 'motm', rule_name: 'Man of the Match', points_value: 5, description: 'Bonus for being Man of the Match' },
-          { rule_type: 'fine_goals', rule_name: 'Fine Goal', points_value: -2, description: 'Penalty for fine goals' },
-          { rule_type: 'substitution_penalty', rule_name: 'Substitution', points_value: -1, description: 'Penalty for substitutions' },
+          // Player Rules
+          { rule_type: 'match_played', rule_name: 'Match Played', points_value: 1, applies_to: 'player', description: 'Points for playing a match' },
+          { rule_type: 'goals_scored', rule_name: 'Goal Scored', points_value: 2, applies_to: 'player', description: 'Points for scoring a goal' },
+          { rule_type: 'hat_trick', rule_name: '3 or more goals', points_value: 5, applies_to: 'player', description: 'Bonus for scoring 3 or more goals' },
+          { rule_type: 'clean_sheet', rule_name: 'Clean Sheet (CS)', points_value: 6, applies_to: 'player', description: 'Bonus for not conceding any goals' },
+          { rule_type: 'substitution_penalty', rule_name: 'Substitution', points_value: -2, applies_to: 'player', description: 'Penalty for substitutions' },
+          { rule_type: 'yellow_card', rule_name: 'Yellow Card', points_value: -3, applies_to: 'player', description: 'Penalty for a yellow card' },
+          { rule_type: 'red_card', rule_name: 'Red Card', points_value: -5, applies_to: 'player', description: 'Penalty for a red card' },
+          { rule_type: 'concedes_4_plus_goals', rule_name: 'Concede 4 or more goals', points_value: -3, applies_to: 'player', description: 'Penalty for conceding 4 or more goals' },
+          { rule_type: 'motm', rule_name: 'Player of the Day (PotD)', points_value: 5, applies_to: 'player', description: 'Bonus for Player of the Day' },
+          { rule_type: 'player_of_the_week', rule_name: 'Player of the Week (PotW)', points_value: 10, applies_to: 'player', description: 'Bonus for Player of the Week' },
+          { rule_type: 'fine_goals', rule_name: 'Fine Goal', points_value: -2, applies_to: 'player', description: 'Penalty for fine goals' },
+          // Win, Draw, Loss placeholders for UI, though calculated via categories
+          { rule_type: 'win', rule_name: 'Win (Category-based)', points_value: 3, applies_to: 'player', description: 'Match win points (actual values calculated dynamically based on player categories)' },
+          { rule_type: 'draw', rule_name: 'Draw (Category-based)', points_value: 1, applies_to: 'player', description: 'Match draw points (actual values calculated dynamically based on player categories)' },
+          { rule_type: 'loss', rule_name: 'Loss (Category-based)', points_value: 0, applies_to: 'player', description: 'Match loss points (actual values calculated dynamically based on player categories)' },
+
+          // Team Rules
+          { rule_type: 'win', rule_name: 'Match Win', points_value: 5, applies_to: 'team', description: 'Points for team winning a match' },
+          { rule_type: 'draw', rule_name: 'Match Draw', points_value: 3, applies_to: 'team', description: 'Points for team drawing a match' },
+          { rule_type: 'loss', rule_name: 'Match Loss', points_value: -1, applies_to: 'team', description: 'Penalty for team losing a match' },
+          { rule_type: 'scored_6_plus_goals', rule_name: 'More than 6 goals scored', points_value: 8, applies_to: 'team', description: 'Bonus for team scoring more than 6 goals' },
+          { rule_type: 'clean_sheet', rule_name: 'Team Clean Sheet (CS)', points_value: 12, applies_to: 'team', description: 'Bonus for team clean sheet' },
+          { rule_type: 'concedes_15_plus_goals', rule_name: 'Concede more than 15 goals', points_value: -5, applies_to: 'team', description: 'Penalty for team conceding more than 15 goals' },
+          { rule_type: 'team_of_the_week', rule_name: 'Team of the Week (TOW)', points_value: 10, applies_to: 'team', description: 'Bonus for Team of the Week' },
+          { rule_type: 'team_of_the_day', rule_name: 'Team of the Day (TOD)', points_value: 5, applies_to: 'team', description: 'Bonus for Team of the Day' }
         ];
 
         for (const rule of defaultRules) {
-          const ruleId = `${newLeagueId}-${rule.rule_type}`;
+          // Generate unique rule ID using applies_to to prevent collision
+          const ruleId = `${newLeagueId}-${rule.applies_to}-${rule.rule_type}`;
           try {
             await sql`
               INSERT INTO fantasy_scoring_rules (
@@ -143,6 +161,7 @@ export async function GET(
                 rule_name,
                 points_value,
                 description,
+                applies_to,
                 is_active
               ) VALUES (
                 ${ruleId},
@@ -151,8 +170,13 @@ export async function GET(
                 ${rule.rule_name},
                 ${rule.points_value},
                 ${rule.description},
+                ${rule.applies_to},
                 true
               )
+              ON CONFLICT (rule_id) DO UPDATE SET
+                points_value = EXCLUDED.points_value,
+                description = EXCLUDED.description,
+                rule_name = EXCLUDED.rule_name
             `;
           } catch (ruleError) {
             console.error('Error creating scoring rule:', rule.rule_type, ruleError);

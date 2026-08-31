@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFantasyDb } from '@/lib/neon/fantasy-config';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 /**
  * POST /api/admin/fantasy/recalculate-all-points
@@ -12,6 +13,27 @@ export async function POST(request: NextRequest) {
     const tournamentDb = getTournamentDb();
 
     console.log('🎮 Starting Complete Fantasy Points Recalculation...');
+
+    // Load Firestore categories for category-based win/draw/loss points
+    // (same system used in main tournament - overrides flat win/draw/loss from scoring rules)
+    const categoriesMap = new Map<string, any>();
+    const realPlayersMap = new Map<string, any>();
+    try {
+      const categoriesSnapshot = await adminDb.collection('categories').get();
+      categoriesSnapshot.docs.forEach((doc: any) => {
+        const data = doc.data();
+        categoriesMap.set(doc.id.toLowerCase(), data);
+        if (data.name) categoriesMap.set(data.name.toLowerCase(), data);
+      });
+
+      const realPlayersSnapshot = await adminDb.collection('realplayers').get();
+      realPlayersSnapshot.docs.forEach((doc: any) => {
+        const data = doc.data();
+        if (data.player_id) realPlayersMap.set(String(data.player_id), data);
+      });
+    } catch (err) {
+      console.warn('Could not load category data from Firestore, using flat scoring rules for result points:', err);
+    }
 
     const results = {
       playerPointsInserted: 0,
@@ -107,20 +129,61 @@ export async function POST(request: NextRequest) {
       // Process both players
       for (const playerSide of ['home', 'away']) {
         const playerId = playerSide === 'home' ? matchup.home_player_id : matchup.away_player_id;
+        const opponentId = playerSide === 'home' ? matchup.away_player_id : matchup.home_player_id;
         const playerName = playerSide === 'home' ? matchup.home_player_name : matchup.away_player_name;
         const goalsScored = playerSide === 'home' ? matchup.home_goals : matchup.away_goals;
         const goalsConceded = playerSide === 'home' ? matchup.away_goals : matchup.home_goals;
         
         const won = goalsScored > goalsConceded;
         const draw = goalsScored === goalsConceded;
+        const lost = goalsScored < goalsConceded;
         const cleanSheet = goalsConceded === 0;
         const isMotm = fixture.motm_player_id === playerId;
+
+        // --- Category-based Win/Draw/Loss points (same system as main tournament) ---
+        const playerFirebase = realPlayersMap.get(String(playerId));
+        const opponentFirebase = realPlayersMap.get(String(opponentId));
+
+        const playerCatKey = (playerFirebase?.category || playerFirebase?.category_name || '').trim().toLowerCase();
+        const opponentCatKey = (opponentFirebase?.category || opponentFirebase?.category_name || '').trim().toLowerCase();
+
+        const playerCatConfig = categoriesMap.get(playerCatKey);
+        const opponentCatConfig = categoriesMap.get(opponentCatKey);
+
+        let resultPoints = 0;
+        const result = won ? 'win' : draw ? 'draw' : 'loss';
+
+        if (playerCatConfig && opponentCatConfig) {
+          const levelDiff = Math.abs(
+            (Number(playerCatConfig.priority) || 1) - (Number(opponentCatConfig.priority) || 1)
+          );
+          if (result === 'win') {
+            if (levelDiff === 0) resultPoints = Number(playerCatConfig.points_same_category) || 0;
+            else if (levelDiff === 1) resultPoints = Number(playerCatConfig.points_one_level_diff) || 0;
+            else if (levelDiff === 2) resultPoints = Number(playerCatConfig.points_two_level_diff) || 0;
+            else resultPoints = Number(playerCatConfig.points_three_level_diff) || 0;
+          } else if (result === 'draw') {
+            if (levelDiff === 0) resultPoints = Number(playerCatConfig.draw_same_category) || 0;
+            else if (levelDiff === 1) resultPoints = Number(playerCatConfig.draw_one_level_diff) || 0;
+            else if (levelDiff === 2) resultPoints = Number(playerCatConfig.draw_two_level_diff) || 0;
+            else resultPoints = Number(playerCatConfig.draw_three_level_diff) || 0;
+          } else {
+            if (levelDiff === 0) resultPoints = Number(playerCatConfig.loss_same_category) || 0;
+            else if (levelDiff === 1) resultPoints = Number(playerCatConfig.loss_one_level_diff) || 0;
+            else if (levelDiff === 2) resultPoints = Number(playerCatConfig.loss_two_level_diff) || 0;
+            else resultPoints = Number(playerCatConfig.loss_three_level_diff) || 0;
+          }
+        } else {
+          // Fallback: use flat scoring rule if category data missing
+          resultPoints = won ? (SCORING_RULES.win || 0) : draw ? (SCORING_RULES.draw || 0) : 0;
+        }
+        // --------------------------------------------------------------------------
 
         const basePoints = 
           (goalsScored || 0) * (SCORING_RULES.goals_scored || 0) +
           (cleanSheet ? (SCORING_RULES.clean_sheet || 0) : 0) +
           (isMotm ? (SCORING_RULES.motm || 0) : 0) +
-          (won ? (SCORING_RULES.win || 0) : draw ? (SCORING_RULES.draw || 0) : 0) +
+          resultPoints +
           (SCORING_RULES.match_played || 0) +
           (goalsScored >= 3 && SCORING_RULES.hat_trick ? SCORING_RULES.hat_trick : 0) +
           (goalsConceded >= 4 && SCORING_RULES.concedes_4_plus_goals ? SCORING_RULES.concedes_4_plus_goals : 0);
@@ -438,31 +501,38 @@ async function awardTeamBonus(params: {
   const draw = goals_scored === goals_conceded;
   const lost = goals_scored < goals_conceded;
   const clean_sheet = goals_conceded === 0;
-  const high_scoring = goals_scored >= 4;
 
   const bonus_breakdown: any = {};
   let total_bonus = 0;
 
-  if (won && teamScoringRules.has('win')) {
-    bonus_breakdown.win = teamScoringRules.get('win')!;
-    total_bonus += bonus_breakdown.win;
-  }
-  if (draw && teamScoringRules.has('draw')) {
-    bonus_breakdown.draw = teamScoringRules.get('draw')!;
-    total_bonus += bonus_breakdown.draw;
-  }
-  if (lost && teamScoringRules.has('loss')) {
-    bonus_breakdown.loss = teamScoringRules.get('loss')!;
-    total_bonus += bonus_breakdown.loss;
-  }
-  if (clean_sheet && teamScoringRules.has('clean_sheet')) {
-    bonus_breakdown.clean_sheet = teamScoringRules.get('clean_sheet')!;
-    total_bonus += bonus_breakdown.clean_sheet;
-  }
-  if (high_scoring && teamScoringRules.has('high_scoring')) {
-    bonus_breakdown.high_scoring = teamScoringRules.get('high_scoring')!;
-    total_bonus += bonus_breakdown.high_scoring;
-  }
+  // Apply S16 team scoring rules dynamically
+  teamScoringRules.forEach((points, ruleType) => {
+    let applies = false;
+    switch (ruleType) {
+      case 'win':
+        applies = won;
+        break;
+      case 'draw':
+        applies = draw;
+        break;
+      case 'loss':
+        applies = lost;
+        break;
+      case 'clean_sheet':
+        applies = clean_sheet;
+        break;
+      case 'scored_6_plus_goals':
+        applies = goals_scored >= 6;
+        break;
+      case 'concedes_15_plus_goals':
+        applies = goals_conceded >= 15;
+        break;
+    }
+    if (applies) {
+      bonus_breakdown[ruleType] = points;
+      total_bonus += points;
+    }
+  });
 
   if (total_bonus === 0) return 0;
 

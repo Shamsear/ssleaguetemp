@@ -51,17 +51,21 @@ export async function POST(request: NextRequest) {
     `;
 
     const teamScoringRules = new Map<string, number>();
-    teamRules.forEach(rule => {
-      teamScoringRules.set(rule.rule_type, rule.points_value);
-    });
-
-    if (teamScoringRules.size === 0) {
-      console.log('⏭️  No team scoring rules found, skipping team bonuses');
-      return NextResponse.json({
-        success: true,
-        message: 'No team scoring rules configured',
-        bonuses_awarded: 0,
+    if (teamRules.length > 0) {
+      teamRules.forEach((rule: any) => {
+        teamScoringRules.set(rule.rule_type, rule.points_value);
       });
+    } else {
+      // Fallback default team scoring rules (aligned with S16 point system)
+      console.log('Using default team scoring rules fallback');
+      teamScoringRules.set('win', 5);
+      teamScoringRules.set('draw', 3);
+      teamScoringRules.set('loss', -1);
+      teamScoringRules.set('scored_6_plus_goals', 8);
+      teamScoringRules.set('clean_sheet', 12);
+      teamScoringRules.set('concedes_15_plus_goals', -5);
+      teamScoringRules.set('team_of_the_week', 10);
+      teamScoringRules.set('team_of_the_day', 5);
     }
 
     // Get fixture data including home/away teams

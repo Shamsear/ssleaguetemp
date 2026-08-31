@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getFantasyDb } from '@/lib/neon/fantasy-config';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 /**
  * POST /api/fantasy/calculate-points
@@ -70,16 +71,21 @@ export async function POST(request: NextRequest) {
         scoringRules.set(rule.rule_type, rule.points_value);
       });
     } else {
-      // Default scoring rules
-      scoringRules.set('goals_scored', 5);
-      scoringRules.set('goals_conceded', -1);
+      // Default scoring rules (aligned with S16 point system)
+      scoringRules.set('match_played', 1);
+      scoringRules.set('goals_scored', 2);
+      scoringRules.set('hat_trick', 5);
+      scoringRules.set('clean_sheet', 6);
+      scoringRules.set('substitution_penalty', -2);
+      scoringRules.set('yellow_card', -3);
+      scoringRules.set('red_card', -5);
+      scoringRules.set('concedes_4_plus_goals', -3);
+      scoringRules.set('motm', 5);
+      scoringRules.set('player_of_the_week', 10);
+      scoringRules.set('fine_goals', -2);
       scoringRules.set('win', 3);
       scoringRules.set('draw', 1);
       scoringRules.set('loss', 0);
-      scoringRules.set('clean_sheet', 4);
-      scoringRules.set('motm', 5);
-      scoringRules.set('fine_goals', -2);
-      scoringRules.set('substitution_penalty', -1);
     }
 
     // Fetch fixture data from Neon (includes MOTM)
@@ -136,6 +142,27 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Load Firestore categories for category-based win/draw/loss points
+    // (same system used in main tournament - overrides flat win/draw/loss from scoring rules)
+    const categoriesMap = new Map<string, any>();
+    const realPlayersMap = new Map<string, any>();
+    try {
+      const categoriesSnapshot = await adminDb.collection('categories').get();
+      categoriesSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        categoriesMap.set(doc.id.toLowerCase(), data);
+        if (data.name) categoriesMap.set(data.name.toLowerCase(), data);
+      });
+
+      const realPlayersSnapshot = await adminDb.collection('realplayers').get();
+      realPlayersSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.player_id) realPlayersMap.set(String(data.player_id), data);
+      });
+    } catch (err) {
+      console.warn('Could not load category data from Firestore, using flat scoring rules for result points:', err);
+    }
+
     // Process each player in the matchups
     const pointsCalculated: any[] = [];
     const teamPointsMap = new Map<string, number>();
@@ -145,6 +172,7 @@ export async function POST(request: NextRequest) {
       await processPlayer({
         player_id: matchup.home_player_id,
         player_name: matchup.home_player_name,
+        opponent_player_id: matchup.away_player_id,
         goals_scored: matchup.home_goals || 0,
         goals_conceded: matchup.away_goals || 0,
         result: matchup.home_goals > matchup.away_goals ? 'win' : 
@@ -156,6 +184,8 @@ export async function POST(request: NextRequest) {
         fixture_id,
         round_number,
         scoringRules,
+        categoriesMap,
+        realPlayersMap,
         sql,
         pointsCalculated,
         teamPointsMap,
@@ -165,6 +195,7 @@ export async function POST(request: NextRequest) {
       await processPlayer({
         player_id: matchup.away_player_id,
         player_name: matchup.away_player_name,
+        opponent_player_id: matchup.home_player_id,
         goals_scored: matchup.away_goals || 0,
         goals_conceded: matchup.home_goals || 0,
         result: matchup.away_goals > matchup.home_goals ? 'win' : 
@@ -176,6 +207,8 @@ export async function POST(request: NextRequest) {
         fixture_id,
         round_number,
         scoringRules,
+        categoriesMap,
+        realPlayersMap,
         sql,
         pointsCalculated,
         teamPointsMap,
@@ -237,6 +270,7 @@ export async function POST(request: NextRequest) {
 async function processPlayer(params: {
   player_id: string;
   player_name: string;
+  opponent_player_id: string;
   goals_scored: number;
   goals_conceded: number;
   result: 'win' | 'draw' | 'loss';
@@ -247,14 +281,17 @@ async function processPlayer(params: {
   fixture_id: string;
   round_number: number;
   scoringRules: Map<string, number>;
+  categoriesMap: Map<string, any>;
+  realPlayersMap: Map<string, any>;
   sql: any;
   pointsCalculated: any[];
   teamPointsMap: Map<string, number>;
 }) {
   const {
-    player_id, player_name, goals_scored, goals_conceded, result,
+    player_id, player_name, opponent_player_id, goals_scored, goals_conceded, result,
     is_motm, fine_goals, substitution_penalty, fantasy_league_id,
-    fixture_id, round_number, scoringRules, sql, pointsCalculated, teamPointsMap
+    fixture_id, round_number, scoringRules, categoriesMap, realPlayersMap,
+    sql, pointsCalculated, teamPointsMap
   } = params;
 
   // Get ALL teams that have drafted this player (all players earn points now)
@@ -286,13 +323,53 @@ async function processPlayer(params: {
     return; // Already calculated
   }
 
+  // --- Category-based Win/Draw/Loss points (same system as main tournament) ---
+  // Look up this player's category and the opponent's category from Firestore
+  const playerFirebase = realPlayersMap.get(String(player_id));
+  const opponentFirebase = realPlayersMap.get(String(opponent_player_id));
+
+  const playerCatKey = (playerFirebase?.category || playerFirebase?.category_name || '').trim().toLowerCase();
+  const opponentCatKey = (opponentFirebase?.category || opponentFirebase?.category_name || '').trim().toLowerCase();
+
+  const playerCatConfig = categoriesMap.get(playerCatKey);
+  const opponentCatConfig = categoriesMap.get(opponentCatKey);
+
+  let resultPoints: number;
+  if (playerCatConfig && opponentCatConfig) {
+    const levelDiff = Math.abs(
+      (Number(playerCatConfig.priority) || 1) - (Number(opponentCatConfig.priority) || 1)
+    );
+    if (result === 'win') {
+      if (levelDiff === 0) resultPoints = Number(playerCatConfig.points_same_category) || 0;
+      else if (levelDiff === 1) resultPoints = Number(playerCatConfig.points_one_level_diff) || 0;
+      else if (levelDiff === 2) resultPoints = Number(playerCatConfig.points_two_level_diff) || 0;
+      else resultPoints = Number(playerCatConfig.points_three_level_diff) || 0;
+    } else if (result === 'draw') {
+      if (levelDiff === 0) resultPoints = Number(playerCatConfig.draw_same_category) || 0;
+      else if (levelDiff === 1) resultPoints = Number(playerCatConfig.draw_one_level_diff) || 0;
+      else if (levelDiff === 2) resultPoints = Number(playerCatConfig.draw_two_level_diff) || 0;
+      else resultPoints = Number(playerCatConfig.draw_three_level_diff) || 0;
+    } else {
+      if (levelDiff === 0) resultPoints = Number(playerCatConfig.loss_same_category) || 0;
+      else if (levelDiff === 1) resultPoints = Number(playerCatConfig.loss_one_level_diff) || 0;
+      else if (levelDiff === 2) resultPoints = Number(playerCatConfig.loss_two_level_diff) || 0;
+      else resultPoints = Number(playerCatConfig.loss_three_level_diff) || 0;
+    }
+    console.log(`📊 [Category Result] ${player_name} (${playerCatKey}) vs (${opponentCatKey}) [${result}] → ${resultPoints} pts`);
+  } else {
+    // Fallback: use flat scoring rule if category data missing
+    resultPoints = scoringRules.get(result) || 0;
+    console.warn(`⚠️ [Flat Result Fallback] ${player_name}: no category data found (playerCat="${playerCatKey}", opponentCat="${opponentCatKey}"), using scoringRules: ${resultPoints} pts`);
+  }
+  // --------------------------------------------------------------------------
+
   // Calculate points breakdown (same for all teams)
   const is_clean_sheet = goals_conceded === 0;
 
   const points_breakdown: any = {
     goals: goals_scored * (scoringRules.get('goals_scored') || 0),
     conceded: goals_conceded * (scoringRules.get('goals_conceded') || 0),
-    result: scoringRules.get(result) || 0,
+    result: resultPoints,  // ← Category-based, not flat scoring rule
     motm: is_motm ? (scoringRules.get('motm') || 0) : 0,
     fines: fine_goals * (scoringRules.get('fine_goals') || 0),
     clean_sheet: is_clean_sheet ? (scoringRules.get('clean_sheet') || 0) : 0,
