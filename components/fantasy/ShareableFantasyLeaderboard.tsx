@@ -36,6 +36,9 @@ export default function ShareableFantasyLeaderboard({
         quality: 1,
         pixelRatio: 2,
         backgroundColor: '#ffffff',
+        cacheBust: false,
+        skipFontFace: true,
+        imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
       });
 
       const link = document.createElement('a');
@@ -60,6 +63,9 @@ export default function ShareableFantasyLeaderboard({
         quality: 1,
         pixelRatio: 2,
         backgroundColor: '#ffffff',
+        cacheBust: false,
+        skipFontFace: true,
+        imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
       });
 
       const response = await fetch(dataUrl);
@@ -231,7 +237,7 @@ export default function ShareableFantasyLeaderboard({
                             </div>
                           )}
                           <span className={`font-bold uppercase text-lg ${isTop3 ? 'text-gray-900' : 'text-gray-800'}`}>
-                            {team.team_name}
+                            {team.team_name?.toUpperCase()}
                           </span>
                         </div>
                       </td>

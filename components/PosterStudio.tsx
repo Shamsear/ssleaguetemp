@@ -585,6 +585,9 @@ export default function PosterStudio({
         quality: 1,
         pixelRatio: 2,
         backgroundColor: theme.bg[0],
+        cacheBust: false,
+        skipFontFace: true,
+        imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
       });
 
       const blob = await (await fetch(dataUrl)).blob();
@@ -617,6 +620,9 @@ export default function PosterStudio({
         quality: 1,
         pixelRatio: 2,
         backgroundColor: theme.bg[0],
+        cacheBust: false,
+        skipFontFace: true,
+        imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
       });
 
       const blob = await (await fetch(dataUrl)).blob();

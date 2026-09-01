@@ -266,7 +266,7 @@ export async function GET(request: NextRequest) {
       const avgRating = totalPlayers > 0 ? totalRating / totalPlayers : 0;
 
       // Try different logo field names
-      const logoUrl = teamInfo?.logo_url || null;
+      const logoUrl = teamInfo?.logo_url || teamInfo?.logoUrl || teamInfo?.logoURL || null;
       
       console.log(`Team ${teamId} logo:`, logoUrl, 'Available fields:', Object.keys(teamInfo || {}));
       

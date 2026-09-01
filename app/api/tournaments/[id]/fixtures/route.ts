@@ -297,7 +297,8 @@ export async function GET(
       try {
         const doc = await adminDb.collection('teams').doc(id).get();
         if (doc.exists) {
-          logosMap[id] = doc.data()?.logo_url || null;
+          const data = doc.data();
+          logosMap[id] = data?.logo_url || data?.logoUrl || data?.logoURL || null;
         }
       } catch (e) {
         console.error(`Error fetching team logo for ${id}:`, e);

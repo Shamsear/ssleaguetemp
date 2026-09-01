@@ -13,7 +13,7 @@ import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import RoundFixturesShareButton from '@/components/RoundFixturesShareButton';
 import TournamentStandings from '@/components/tournament/TournamentStandings';
-import { Activity, AlertTriangle, ArrowLeft, Award, BarChart2, Bot, Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, ClipboardList, Clock, Download, Eye, FileText, HelpCircle, Info, Layers, Lightbulb, Pencil, Play, Plus, RefreshCw, Search, Settings, Share2, Shield, Shuffle, Sparkles, Star, Target, Trash2, Trophy, Users, X, XCircle, Crown, Flame, Swords } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowLeft, Award, BarChart2, Bot, Calendar, Check, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardList, Clock, Download, Eye, FileText, HelpCircle, Info, Layers, Lightbulb, Pencil, Play, Plus, RefreshCw, Search, Settings, Share2, Shield, Shuffle, Sparkles, Star, Target, Trash2, Trophy, Users, X, XCircle, Crown, Flame, Swords } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
 import AuthGuard from '@/components/auth/AuthGuard';
 
@@ -116,6 +116,7 @@ export function TournamentDashboardPageContent() {
   // Fixtures State
   const [selectedTournamentForFixtures, setSelectedTournamentForFixtures] = useState<string>('');
   const [tournamentFixtures, setTournamentFixtures] = useState<any[]>([]);
+  const [isFixturesManagementExpanded, setIsFixturesManagementExpanded] = useState<boolean>(false);
   const [allTeams, setAllTeams] = useState<any[]>([]);
   const [isGeneratingFixtures, setIsGeneratingFixtures] = useState(false);
   const [isDeletingFixtures, setIsDeletingFixtures] = useState(false);
@@ -524,7 +525,11 @@ export function TournamentDashboardPageContent() {
       const res = await fetchWithTokenRefresh(`/api/tournaments/${tournamentId}/fixtures`);
       const data = await res.json();
       if (data.success) {
-        setTournamentFixtures(data.fixtures || []);
+        const loadedFixtures = data.fixtures || [];
+        setTournamentFixtures(loadedFixtures);
+        if (loadedFixtures.length === 0) {
+          setIsFixturesManagementExpanded(true);
+        }
       }
     } catch (error) {
       console.error('Error loading tournament fixtures:', error);
@@ -1934,9 +1939,9 @@ export function TournamentDashboardPageContent() {
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"
                         />
                         <div className="flex items-center flex-1 min-w-0">
-                          {team.logo_url ? (
+                          {(team.logo_url || team.logoUrl || team.logoURL) ? (
                             <img
-                              src={team.logo_url}
+                              src={team.logo_url || team.logoUrl || team.logoURL}
                               alt=""
                               className="w-7 h-7 rounded-full object-cover mr-2.5 flex-shrink-0"
                             />
@@ -1992,9 +1997,33 @@ export function TournamentDashboardPageContent() {
           <div className="space-y-6">
             {/* Tournament Selector & Actions */}
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-                Fixtures Management
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-100">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <Layers className="w-6 h-6 text-blue-600" />
+                    Fixtures Management
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Configure tournament match rules, knockout brackets, and fixture generation settings.
+                  </p>
+                </div>
+
+                {selectedTournamentForFixtures && (
+                  <button
+                    type="button"
+                    onClick={() => setIsFixturesManagementExpanded(!isFixturesManagementExpanded)}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-slate-200/80 shadow-xs cursor-pointer"
+                  >
+                    <Settings className="w-4 h-4 text-slate-500" />
+                    <span>{isFixturesManagementExpanded ? 'Collapse Settings' : 'Expand Settings & Generation'}</span>
+                    {isFixturesManagementExpanded ? (
+                      <ChevronUp className="w-4 h-4 text-slate-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-slate-500" />
+                    )}
+                  </button>
+                )}
+              </div>
 
               <div className="space-y-4">
                 {/* Tournament Selector */}
@@ -2015,6 +2044,10 @@ export function TournamentDashboardPageContent() {
                     ))}
                   </select>
                 </div>
+
+                {/* Collapsible Settings & Generation Section */}
+                {selectedTournamentForFixtures && isFixturesManagementExpanded && (
+                  <div className="pt-4 border-t border-slate-100 space-y-4">
 
                 {/* Fixture Type Selection */}
                 {selectedTournamentForFixtures && (
@@ -2441,7 +2474,9 @@ export function TournamentDashboardPageContent() {
                   </div>
                 )}
               </div>
-            </div>
+            )}
+          </div>
+        </div>
 
             {/* Info Box */}
             {selectedTournamentForFixtures && fixturesForSelectedTournament.length === 0 && (
@@ -2543,17 +2578,31 @@ export function TournamentDashboardPageContent() {
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <div className={`flex-1 text-right ${fixture.result === 'home_win' ? 'font-bold text-green-600' : 'text-gray-900'}`}>
+                        <div className={`flex-1 flex items-center justify-end gap-2 ${fixture.result === 'home_win' ? 'font-bold text-green-600' : 'text-gray-900'}`}>
                           <span className="text-sm">{fixture.home_team_name}</span>
+                          {(fixture.home_team_logo || fixture.home_team_logo_url || fixture.home_team_logoUrl) ? (
+                            <img
+                              src={fixture.home_team_logo || fixture.home_team_logo_url || fixture.home_team_logoUrl}
+                              alt=""
+                              className="w-5 h-5 rounded-full object-cover shrink-0"
+                            />
+                          ) : null}
                           {fixture.home_score !== undefined && (
                             <span className="ml-2 text-lg font-bold">{fixture.home_score}</span>
                           )}
                         </div>
                         <span className="text-xs text-gray-400 mx-3">vs</span>
-                        <div className={`flex-1 text-left ${fixture.result === 'away_win' ? 'font-bold text-green-600' : 'text-gray-900'}`}>
+                        <div className={`flex-1 flex items-center justify-start gap-2 ${fixture.result === 'away_win' ? 'font-bold text-green-600' : 'text-gray-900'}`}>
                           {fixture.away_score !== undefined && (
                             <span className="mr-2 text-lg font-bold">{fixture.away_score}</span>
                           )}
+                          {(fixture.away_team_logo || fixture.away_team_logo_url || fixture.away_team_logoUrl) ? (
+                            <img
+                              src={fixture.away_team_logo || fixture.away_team_logo_url || fixture.away_team_logoUrl}
+                              alt=""
+                              className="w-5 h-5 rounded-full object-cover shrink-0"
+                            />
+                          ) : null}
                           <span className="text-sm">{fixture.away_team_name}</span>
                         </div>
                       </div>

@@ -33,9 +33,12 @@ export default function RoundFixturesShareButton({ roundNumber, fixtures, tourna
     setIsGenerating(true);
     try {
       const dataUrl = await toPng(cardRef.current, {
-        quality: 1,
+        quality: 0.95,
         pixelRatio: 2,
         backgroundColor: '#ffffff',
+        cacheBust: false,
+        skipFontFace: true,
+        imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
       });
 
       // Create download link
@@ -103,7 +106,7 @@ export default function RoundFixturesShareButton({ roundNumber, fixtures, tourna
       </button>
 
       {/* Hidden card for image generation */}
-      <div className="fixed -left-[9999px] -top-[9999px]">
+      <div style={{ position: 'fixed', left: '-9999px', top: '0px', width: '1200px', pointerEvents: 'none' }}>
         <div ref={cardRef}>
           <FixturesSnapshot 
             matches={fixtures.map((f): Match => ({
@@ -112,8 +115,8 @@ export default function RoundFixturesShareButton({ roundNumber, fixtures, tourna
               status: f.status === 'in_progress' ? 'LIVE' : f.status === 'completed' ? 'COMPLETED' : 'SCHEDULED',
               homeScore: f.home_score !== undefined ? f.home_score : null,
               awayScore: f.away_score !== undefined ? f.away_score : null,
-              homeTeam: { team: { name: f.home_team_name, logoUrl: (f as any).home_team_logo || null } },
-              awayTeam: { team: { name: f.away_team_name, logoUrl: (f as any).away_team_logo || null } }
+              homeTeam: { team: { name: f.home_team_name, logoUrl: (f as any).home_team_logo || (f as any).home_team_logo_url || (f as any).home_team_logoUrl || null } },
+              awayTeam: { team: { name: f.away_team_name, logoUrl: (f as any).away_team_logo || (f as any).away_team_logo_url || (f as any).away_team_logoUrl || null } }
             }))}
             tournamentName={tournamentName}
             seasonName="SSPS LEAGUE"

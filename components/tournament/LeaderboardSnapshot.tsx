@@ -149,8 +149,8 @@ export function LeaderboardSnapshot({
                             </div>
                           )}
                         </div>
-                        <span style={{ fontWeight: 800, color: isMe ? '#D4AF37' : '#111111', fontSize: 15 }}>
-                          {row.seasonTeam.team.name}
+                        <span style={{ fontWeight: 800, color: isMe ? '#D4AF37' : '#111111', fontSize: 15, textTransform: 'uppercase' }}>
+                          {row.seasonTeam.team.name?.toUpperCase()}
                           {isMe && <span style={{ marginLeft: '8px', fontSize: '10px', fontWeight: 900, background: 'rgba(232,168,0,0.15)', color: '#E8A800', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>YOU</span>}
                         </span>
                       </div>

@@ -40,9 +40,12 @@ export default function FixtureShareButton({ fixture, matchups }: Props) {
     setIsGenerating(true);
     try {
       const dataUrl = await toPng(cardRef.current, {
-        quality: 1,
+        quality: 0.95,
         pixelRatio: 2,
         backgroundColor: '#ffffff',
+        cacheBust: false,
+        skipFontFace: true,
+        imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
       });
 
       // Create download link
@@ -106,7 +109,7 @@ export default function FixtureShareButton({ fixture, matchups }: Props) {
       </button>
 
       {/* Hidden card for image generation */}
-      <div className="fixed -left-[9999px] -top-[9999px]">
+      <div style={{ position: 'fixed', left: '-9999px', top: '0px', width: '1200px', pointerEvents: 'none' }}>
         <div ref={cardRef}>
           <FixturesSnapshot 
             matches={[{
@@ -115,8 +118,8 @@ export default function FixtureShareButton({ fixture, matchups }: Props) {
               status: fixture.status === 'in_progress' ? 'LIVE' : fixture.status === 'completed' ? 'COMPLETED' : 'SCHEDULED',
               homeScore: fixture.home_score !== undefined ? fixture.home_score : null,
               awayScore: fixture.away_score !== undefined ? fixture.away_score : null,
-              homeTeam: { team: { name: fixture.home_team_name, logoUrl: (fixture as any).home_team_logo || null } },
-              awayTeam: { team: { name: fixture.away_team_name, logoUrl: (fixture as any).away_team_logo || null } }
+              homeTeam: { team: { name: fixture.home_team_name, logoUrl: (fixture as any).home_team_logo || (fixture as any).home_team_logo_url || (fixture as any).home_team_logoUrl || null } },
+              awayTeam: { team: { name: fixture.away_team_name, logoUrl: (fixture as any).away_team_logo || (fixture as any).away_team_logo_url || (fixture as any).away_team_logoUrl || null } }
             }]}
             tournamentName="SSPS LEAGUE"
             seasonName="SSPS LEAGUE"

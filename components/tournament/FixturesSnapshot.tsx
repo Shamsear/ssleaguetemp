@@ -126,8 +126,8 @@ export function FixturesSnapshot({
                 
                 {/* Home Team */}
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '16px', opacity: awayWin ? 0.6 : 1 }}>
-                  <span style={{ color: homeWin ? '#059669' : '#111111', fontSize: '20px', fontWeight: 800 }}>
-                    {match.homeTeam.team.name}
+                  <span style={{ color: homeWin ? '#059669' : '#111111', fontSize: '20px', fontWeight: 800, textTransform: 'uppercase' }}>
+                    {match.homeTeam.team.name?.toUpperCase()}
                   </span>
                   <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', overflow: 'hidden' }}>
                     {match.homeTeam.team.logoUrl ? (
@@ -188,8 +188,8 @@ export function FixturesSnapshot({
                       <SoccerBallIcon className="w-6 h-6 text-slate-500" />
                     )}
                   </div>
-                  <span style={{ color: awayWin ? '#059669' : '#111111', fontSize: '20px', fontWeight: 800 }}>
-                    {match.awayTeam.team.name}
+                  <span style={{ color: awayWin ? '#059669' : '#111111', fontSize: '20px', fontWeight: 800, textTransform: 'uppercase' }}>
+                    {match.awayTeam.team.name?.toUpperCase()}
                   </span>
                 </div>
 

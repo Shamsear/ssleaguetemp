@@ -130,7 +130,7 @@ export default function LeagueStandingsTable({
                     )}
                     
                     <div className="flex-1 min-w-0">
-                      <div className="font-extrabold text-slate-800 truncate uppercase text-sm">{team.team_name}</div>
+                      <div className="font-extrabold text-slate-800 truncate uppercase text-sm">{team.team_name?.toUpperCase()}</div>
                       <div className="flex flex-wrap gap-1.5 mt-1 font-mono">
                         {isCurrentUser && (
                           <span className="text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200/40 px-2 py-0.5 rounded-full uppercase tracking-wider">
@@ -138,8 +138,8 @@ export default function LeagueStandingsTable({
                           </span>
                         )}
                         {isPlayoffSpot && (
-                          <span className="text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-250/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                            <Target className="w-3 h-3 text-rose-500 mr-1" /> Playoff
+                          <span className="inline-flex items-center gap-1 text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-250/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            <Target className="w-3 h-3 text-rose-500 shrink-0" /> Playoff
                           </span>
                         )}
                       </div>
@@ -281,7 +281,7 @@ export default function LeagueStandingsTable({
                           
                           <div className="min-w-0">
                             <div className="text-xs sm:text-sm font-extrabold text-slate-850 truncate uppercase tracking-tight">
-                              {team.team_name}
+                              {team.team_name?.toUpperCase()}
                             </div>
                             <div className="flex flex-wrap items-center gap-1.5 mt-0.5 font-mono">
                               {isCurrentUser && (
@@ -290,8 +290,8 @@ export default function LeagueStandingsTable({
                                 </span>
                               )}
                               {isPlayoffSpot && (
-                                <span className="text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-250/30 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-                                  <Target className="w-3 h-3 text-rose-500 mr-1" /> Playoff
+                                <span className="inline-flex items-center gap-1 text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-250/30 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                                  <Target className="w-3 h-3 text-rose-500 shrink-0" /> Playoff
                                 </span>
                               )}
                             </div>
