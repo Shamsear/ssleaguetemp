@@ -2,18 +2,9 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
-import { 
-  createAdminInvite, 
-  getAllAdminInvites, 
-  deleteAdminInvite,
-  getCommitteeAdminsBySeason 
-} from '@/lib/firebase/invites';
 import { AdminInvite } from '@/types/invite';
-import { Season } from '@/types/season';
-import { collection, query, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
 import { 
   PlusCircle, 
   Link2, 
@@ -37,6 +28,14 @@ import {
 } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
 
+interface SeasonInfo {
+  id: string;
+  name: string;
+  year?: string;
+  isActive?: boolean;
+  status?: string;
+}
+
 interface SeasonAdmin {
   seasonId: string;
   seasonName: string;
@@ -49,7 +48,7 @@ interface SeasonAdmin {
     username: string;
     email: string;
     isActive: boolean;
-    createdAt: Date;
+    createdAt: Date | null;
   }[];
 }
 
@@ -62,7 +61,7 @@ export default function AdminInvites() {
   const [error, setError] = useState<string | null>(null);
   
   // Data state
-  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [seasons, setSeasons] = useState<SeasonInfo[]>([]);
   const [invites, setInvites] = useState<AdminInvite[]>([]);
   const [seasonAdmins, setSeasonAdmins] = useState<SeasonAdmin[]>([]);
   
@@ -76,167 +75,136 @@ export default function AdminInvites() {
   });
   const [isCreating, setIsCreating] = useState(false);
 
-  // Load data
-  const loadData = async () => {
+  // ---------------------------------------------------------------------------
+  // Data loading
+  // ---------------------------------------------------------------------------
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Fetch seasons and invites
-      const [seasonsRes, invitesData] = await Promise.all([
-        fetch('/api/seasons').then(r => r.json()),
-        getAllAdminInvites(),
+
+      // Fetch seasons and invites in parallel
+      const [seasonsRes, invitesRes] = await Promise.all([
+        fetch('/api/seasons').then((r) => r.json()),
+        fetch('/api/invites').then((r) => r.json()),
       ]);
-      
-      const seasonsData = (seasonsRes.data || seasonsRes.seasons || []).map((s: any) => ({
-        id: s.id,
+
+      if (invitesRes.error) {
+        throw new Error(invitesRes.error);
+      }
+
+      const seasonsData: SeasonInfo[] = (
+        seasonsRes.data || seasonsRes.seasons || []
+      ).map((s: any) => ({
+        id: s.id || s.season_id,
         name: s.name || s.id,
-        status: s.status || 'draft',
+        year: s.year,
+        isActive: s.isActive || s.is_active || s.status === 'active',
+        status: s.status,
       }));
+
+      const invitesData: AdminInvite[] = (invitesRes.invites || []).map(
+        (inv: any) => ({
+          ...inv,
+          expiresAt: new Date(inv.expiresAt),
+          createdAt: new Date(inv.createdAt),
+        })
+      );
+
       setSeasons(seasonsData);
       setInvites(invitesData);
-      
-      // Build season admin data
-      const seasonAdminData: SeasonAdmin[] = [];
-      
-      for (const season of seasonsData) {
-        const admins = await getCommitteeAdminsBySeason(season.id);
-        const seasonInvites = invitesData.filter(inv => inv.seasonId === season.id);
-        
-        seasonAdminData.push({
-          seasonId: season.id,
-          seasonName: season.name,
-          seasonYear: season.year,
-          isActive: season.isActive,
-          activeInvites: seasonInvites.filter(inv => inv.isActive && inv.usedCount < inv.maxUses).length,
-          usedInvites: seasonInvites.reduce((sum, inv) => sum + inv.usedCount, 0),
-          admins: admins.map(admin => ({
+
+      // Set default season for form
+      if (seasonsData.length > 0) {
+        const activeSeason = seasonsData.find((s) => s.isActive);
+        setFormData((prev) => ({
+          ...prev,
+          seasonId: prev.seasonId || activeSeason?.id || seasonsData[0].id,
+        }));
+      }
+
+      // Fetch committee admins for each season
+      const seasonAdminData: SeasonAdmin[] = await Promise.all(
+        seasonsData.map(async (season) => {
+          const res = await fetch(
+            `/api/invites/committee-admins?seasonId=${encodeURIComponent(season.id)}`
+          ).then((r) => r.json());
+
+          const admins = (res.admins || []).map((admin: any) => ({
             uid: admin.uid,
             username: admin.username,
             email: admin.email,
             isActive: admin.isActive,
-            createdAt: admin.createdAt,
-          })),
-        });
-      }
-      
+            createdAt: admin.createdAt ? new Date(admin.createdAt) : null,
+          }));
+
+          const seasonInvites = invitesData.filter(
+            (inv) => inv.seasonId === season.id
+          );
+
+          return {
+            seasonId: season.id,
+            seasonName: season.name,
+            seasonYear: season.year || '',
+            isActive: season.isActive || false,
+            activeInvites: seasonInvites.filter(
+              (inv) => inv.isActive && inv.usedCount < inv.maxUses
+            ).length,
+            usedInvites: seasonInvites.reduce(
+              (sum, inv) => sum + inv.usedCount,
+              0
+            ),
+            admins,
+          };
+        })
+      );
+
       setSeasonAdmins(seasonAdminData);
-      
-      // Set default season for form
-      if (seasonsData.length > 0 && !formData.seasonId) {
-        const activeSeason = seasonsData.find(s => s.isActive);
-        setFormData(prev => ({
-          ...prev,
-          seasonId: activeSeason?.id || seasonsData[0].id,
-        }));
-      }
     } catch (err: any) {
       console.error('Error loading data:', err);
       setError(err.message || 'Failed to load data');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const setupRealTimeListeners = () => {
-    let latestInvites: AdminInvite[] = [];
-    
-    // Listen to invites collection
-    const invitesQuery = query(
-      collection(db, 'invites'),
-      orderBy('createdAt', 'desc')
-    );
-    
-    const unsubscribeInvites = onSnapshot(invitesQuery, (snapshot) => {
-      const updatedInvites: AdminInvite[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        updatedInvites.push({
-          id: doc.id,
-          ...data,
-          expiresAt: data.expiresAt instanceof Timestamp ? data.expiresAt.toDate() : new Date(data.expiresAt),
-          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt),
-        } as AdminInvite);
-      });
-      latestInvites = updatedInvites;
-      setInvites(updatedInvites);
-      
-      // Update season admins data when invites change
-      updateSeasonAdminsData(updatedInvites);
-    }, (error) => {
-      console.error('Error listening to invites:', error);
-    });
-    
-    // Listen to users collection for committee admins
-    const usersQuery = query(
-      collection(db, 'users'),
-      orderBy('createdAt', 'desc')
-    );
-    
-    const unsubscribeUsers = onSnapshot(usersQuery, () => {
-      // Reload season admins when users change, using latest invites
-      updateSeasonAdminsData(latestInvites);
-    }, (error) => {
-      console.error('Error listening to users:', error);
-    });
-    
-    return () => {
-      unsubscribeInvites();
-      unsubscribeUsers();
-    };
-  };
-  
-  // Update season admins data
-  const updateSeasonAdminsData = async (currentInvites: AdminInvite[]) => {
-    if (seasons.length === 0) return;
-    
-    const seasonAdminData: SeasonAdmin[] = [];
-    
-    for (const season of seasons) {
-      const admins = await getCommitteeAdminsBySeason(season.id);
-      const seasonInvites = currentInvites.filter(inv => inv.seasonId === season.id);
-      
-      seasonAdminData.push({
-        seasonId: season.id,
-        seasonName: season.name,
-        seasonYear: season.year,
-        isActive: season.isActive,
-        activeInvites: seasonInvites.filter(inv => inv.isActive && inv.usedCount < inv.maxUses).length,
-        usedInvites: seasonInvites.reduce((sum, inv) => sum + inv.usedCount, 0),
-        admins: admins.map(admin => ({
-          uid: admin.uid,
-          username: admin.username,
-          email: admin.email,
-          isActive: admin.isActive,
-          createdAt: admin.createdAt,
-        })),
-      });
-    }
-    
-    setSeasonAdmins(seasonAdminData);
-  };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
+  // ---------------------------------------------------------------------------
+  // Handlers
+  // ---------------------------------------------------------------------------
   const handleCreateInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.seasonId) {
       alert('Please select a season');
       return;
     }
-    
+
     if (!user) return;
-    
+
     try {
       setIsCreating(true);
       setError(null);
-      
-      await createAdminInvite(
-        formData,
-        user.uid,
-        user.username
-      );
-      
-      // Reset form and close form
+
+      const res = await fetch('/api/invites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          createdBy: user.uid,
+          createdByUsername: user.username,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to create invite');
+      }
+
+      // Reset form and close
       setFormData({
         seasonId: formData.seasonId,
         description: '',
@@ -245,7 +213,9 @@ export default function AdminInvites() {
         type: formData.type,
       });
       setShowCreateForm(false);
-      
+
+      // Refresh data
+      await loadData();
       alert('Admin invite created successfully!');
     } catch (err: any) {
       console.error('Error creating invite:', err);
@@ -255,16 +225,31 @@ export default function AdminInvites() {
     }
   };
 
-  const handleDeleteInvite = async (inviteCode: string, description: string, seasonName: string) => {
+  const handleDeleteInvite = async (
+    inviteCode: string,
+    description: string,
+    seasonName: string
+  ) => {
     const confirmed = confirm(
       `Are you sure you want to delete the admin invite "${description}" for ${seasonName}?\n\nThis action cannot be undone. Any unused invitation links will stop working immediately.`
     );
-    
+
     if (!confirmed) return;
-    
+
     try {
       setError(null);
-      await deleteAdminInvite(inviteCode);
+
+      const res = await fetch(`/api/invites/${encodeURIComponent(inviteCode)}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete invite');
+      }
+
+      // Refresh data
+      await loadData();
       alert('Invite deleted successfully!');
     } catch (err: any) {
       console.error('Error deleting invite:', err);
@@ -282,8 +267,9 @@ export default function AdminInvites() {
     }
   };
 
-  const getInviteUrl = (code: string, seasonId: string) => {
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const getInviteUrl = (code: string) => {
+    const baseUrl =
+      typeof window !== 'undefined' ? window.location.origin : '';
     return `${baseUrl}/register?invite=${code}`;
   };
 
@@ -293,23 +279,30 @@ export default function AdminInvites() {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
+  // ---------------------------------------------------------------------------
+  // Loading state
+  // ---------------------------------------------------------------------------
   if (loading || isLoading) {
     return (
       <div className="console-bg min-h-screen flex items-center justify-center relative font-mono text-slate-800">
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
         <div className="text-center relative z-10">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">Syncing Invite Registry...</p>
+          <p className="mt-4 text-sm text-slate-550 uppercase tracking-wider font-extrabold font-mono">
+            Syncing Invite Registry...
+          </p>
         </div>
       </div>
     );
   }
 
-
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
   return (
     <AuthGuard requiredRole="super_admin">
     <div className="space-y-8 animate-fade-in font-mono">
@@ -333,26 +326,35 @@ export default function AdminInvites() {
             </p>
           </div>
         </div>
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono font-bold transition-all border cursor-pointer ${
-            showCreateForm
-              ? 'bg-rose-50 border-rose-250 text-rose-700 hover:bg-rose-100 shadow-sm'
-              : 'bg-slate-800 hover:bg-slate-900 text-white border-slate-950 shadow-sm'
-          }`}
-        >
-          {showCreateForm ? (
-            <>
-              <X className="w-4 h-4" />
-              Cancel Form
-            </>
-          ) : (
-            <>
-              <PlusCircle className="w-4 h-4" />
-              Generate New Link
-            </>
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={loadData}
+            className="p-2.5 rounded-xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-all shadow-sm"
+            title="Refresh"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono font-bold transition-all border cursor-pointer ${
+              showCreateForm
+                ? 'bg-rose-50 border-rose-250 text-rose-700 hover:bg-rose-100 shadow-sm'
+                : 'bg-slate-800 hover:bg-slate-900 text-white border-slate-950 shadow-sm'
+            }`}
+          >
+            {showCreateForm ? (
+              <>
+                <X className="w-4 h-4" />
+                Cancel Form
+              </>
+            ) : (
+              <>
+                <PlusCircle className="w-4 h-4" />
+                Generate New Link
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Error Notification */}
@@ -412,7 +414,7 @@ export default function AdminInvites() {
                 <option value="">Select season...</option>
                 {seasons.map((season) => (
                   <option key={season.id} value={season.id}>
-                    {season.name} ({season.year}) {season.isActive ? '• Active' : ''}
+                    {season.name} {season.year ? `(${season.year})` : ''} {season.isActive ? '• Active' : ''}
                   </option>
                 ))}
               </select>
@@ -534,13 +536,13 @@ export default function AdminInvites() {
                       <input
                         type="text"
                         readOnly
-                        value={getInviteUrl(invite.code, invite.seasonId)}
+                        value={getInviteUrl(invite.code)}
                         onClick={(e) => e.currentTarget.select()}
                         className="flex-1 min-w-0 bg-transparent border-none outline-none font-mono text-[11px] text-slate-650 px-2 py-1 select-all font-bold"
                       />
                       <div className="flex items-center gap-1.5 justify-end">
                         <button
-                          onClick={() => copyToClipboard(getInviteUrl(invite.code, invite.seasonId), invite.id)}
+                          onClick={() => copyToClipboard(getInviteUrl(invite.code), invite.id)}
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-mono text-xs font-semibold transition-all shadow-sm cursor-pointer"
                         >
                           {copiedUrl === invite.id ? (
@@ -556,7 +558,7 @@ export default function AdminInvites() {
                           )}
                         </button>
                         <a
-                          href={getInviteUrl(invite.code, invite.seasonId)}
+                          href={getInviteUrl(invite.code)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-1.5 rounded-xl bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-all shadow-sm"
@@ -611,7 +613,7 @@ export default function AdminInvites() {
                       <div className="flex items-center gap-2.5">
                         <CalendarCheck className="w-4 h-4 text-amber-500" />
                         <span className="text-xs font-bold text-slate-800 font-mono">
-                          {season.seasonName} ({season.seasonYear})
+                          {season.seasonName} {season.seasonYear ? `(${season.seasonYear})` : ''}
                         </span>
                       </div>
                       <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase border ${

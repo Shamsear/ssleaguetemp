@@ -13,7 +13,7 @@ import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import RoundFixturesShareButton from '@/components/RoundFixturesShareButton';
 import TournamentStandings from '@/components/tournament/TournamentStandings';
-import { Activity, AlertTriangle, ArrowLeft, Award, BarChart2, Bot, Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, ClipboardList, Clock, Download, Eye, FileText, HelpCircle, Info, Layers, Lightbulb, Pencil, Play, Plus, RefreshCw, Search, Settings, Share2, Shield, Shuffle, Sparkles, Star, Trash2, Trophy, Users, X, XCircle, Crown, Flame, Swords } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowLeft, Award, BarChart2, Bot, Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, ClipboardList, Clock, Download, Eye, FileText, HelpCircle, Info, Layers, Lightbulb, Pencil, Play, Plus, RefreshCw, Search, Settings, Share2, Shield, Shuffle, Sparkles, Star, Target, Trash2, Trophy, Users, X, XCircle, Crown, Flame, Swords } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
 import AuthGuard from '@/components/auth/AuthGuard';
 
