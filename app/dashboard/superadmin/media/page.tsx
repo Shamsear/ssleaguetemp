@@ -3,12 +3,14 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
+import JSZip from 'jszip';
 import {
   Image as ImageIcon,
   Trash2,
   RefreshCw,
   Search,
   FolderOpen,
+  FolderDown,
   Home,
   Copy,
   Check,
@@ -179,6 +181,255 @@ export default function ImageKitMediaPage() {
   const [clearing, setClearing] = useState<string | null>(null); // entityId being cleared
   const [clearSuccess, setClearSuccess] = useState<string | null>(null);
   const [hoveredImage, setHoveredImage] = useState<string | null>(null); // image url for popover preview
+
+  // ─── Download Logic ──────────────────────────────────────────────────────────
+  const [downloadProgress, setDownloadProgress] = useState<{
+    active: boolean;
+    title: string;
+    current: number;
+    total: number;
+    status: string;
+  }>({
+    active: false,
+    title: '',
+    current: 0,
+    total: 0,
+    status: '',
+  });
+
+  const handleDownloadSingle = async (file: IKFile) => {
+    try {
+      setDownloadProgress({
+        active: true,
+        title: `Downloading ${file.name}`,
+        current: 0,
+        total: 1,
+        status: 'Fetching file content...',
+      });
+
+      let blob: Blob;
+      try {
+        const res = await fetch(file.url);
+        if (!res.ok) throw new Error('CORS/Network error');
+        blob = await res.blob();
+      } catch {
+        const proxyRes = await fetch(`/api/imagekit/download?url=${encodeURIComponent(file.url)}`);
+        blob = await proxyRes.blob();
+      }
+
+      setDownloadProgress(prev => ({ ...prev, current: 1, status: 'Saving file...' }));
+
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (err: any) {
+      alert('Download failed: ' + err.message);
+    } finally {
+      setDownloadProgress({ active: false, title: '', current: 0, total: 0, status: '' });
+    }
+  };
+
+  const handleDownloadSelected = async () => {
+    const selectedFiles = files.filter(f => selected.has(f.fileId));
+    if (selectedFiles.length === 0) return;
+
+    if (selectedFiles.length === 1) {
+      await handleDownloadSingle(selectedFiles[0]);
+      return;
+    }
+
+    try {
+      setDownloadProgress({
+        active: true,
+        title: `Downloading ${selectedFiles.length} Selected Photos`,
+        current: 0,
+        total: selectedFiles.length,
+        status: `Initializing download (0 / ${selectedFiles.length})...`,
+      });
+
+      const zip = new JSZip();
+      const usedNames = new Set<string>();
+
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        setDownloadProgress(prev => ({
+          ...prev,
+          current: i + 1,
+          status: `Downloading ${file.name} (${i + 1} / ${selectedFiles.length})...`,
+        }));
+
+        let blob: Blob;
+        try {
+          const res = await fetch(file.url);
+          if (!res.ok) throw new Error('CORS/Network error');
+          blob = await res.blob();
+        } catch {
+          const proxyRes = await fetch(`/api/imagekit/download?url=${encodeURIComponent(file.url)}`);
+          blob = await proxyRes.blob();
+        }
+
+        let fileName = file.name;
+        if (usedNames.has(fileName)) {
+          const extIndex = fileName.lastIndexOf('.');
+          const baseName = extIndex !== -1 ? fileName.slice(0, extIndex) : fileName;
+          const ext = extIndex !== -1 ? fileName.slice(extIndex) : '';
+          let count = 1;
+          while (usedNames.has(`${baseName} (${count})${ext}`)) {
+            count++;
+          }
+          fileName = `${baseName} (${count})${ext}`;
+        }
+        usedNames.add(fileName);
+
+        zip.file(fileName, blob);
+      }
+
+      setDownloadProgress(prev => ({ ...prev, status: 'Generating ZIP file archive...' }));
+
+      const content = await zip.generateAsync({ type: 'blob' });
+      const folderName = currentPath === '/' ? 'root-media' : currentPath.split('/').filter(Boolean).pop() || 'media';
+      const zipFileName = `${folderName}-selected-photos.zip`;
+
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(content);
+      a.download = zipFileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (err: any) {
+      alert('Failed to download selected photos: ' + err.message);
+    } finally {
+      setDownloadProgress({ active: false, title: '', current: 0, total: 0, status: '' });
+    }
+  };
+
+  const handleDownloadFolder = async (folderPath: string, folderDisplayName?: string) => {
+    const targetName = folderDisplayName || (folderPath === '/' ? 'all-media' : folderPath.split('/').filter(Boolean).pop() || 'folder');
+
+    try {
+      setDownloadProgress({
+        active: true,
+        title: `Downloading Folder: ${targetName}`,
+        current: 0,
+        total: 0,
+        status: 'Scanning folder contents...',
+      });
+
+      const itemsToDownload: { file: IKFile; relativePath: string }[] = [];
+      const visitedPaths = new Set<string>();
+
+      async function scanFolder(path: string) {
+        if (visitedPaths.has(path)) return;
+        visitedPaths.add(path);
+
+        let skipN = 0;
+        let hasMoreN = true;
+
+        while (hasMoreN) {
+          setDownloadProgress(prev => ({
+            ...prev,
+            status: `Listing files in ${path} (found ${itemsToDownload.length} files)...`,
+          }));
+
+          const params = new URLSearchParams({
+            path,
+            limit: '100',
+            skip: String(skipN),
+            type: 'all',
+          });
+          const res = await fetch(`/api/imagekit/files?${params}`);
+          const data = await res.json();
+          if (!data.success) throw new Error(data.error || 'Failed to list folder contents');
+
+          const pageFiles: IKFile[] = data.files || [];
+          const pageFolders: IKFolder[] = data.folders || [];
+
+          for (const f of pageFiles) {
+            let rel = f.filePath;
+            if (folderPath !== '/' && rel.startsWith(folderPath)) {
+              rel = rel.slice(folderPath.length);
+            }
+            if (rel.startsWith('/')) rel = rel.slice(1);
+            itemsToDownload.push({ file: f, relativePath: rel || f.name });
+          }
+
+          if (pageFiles.length < 100) {
+            hasMoreN = false;
+          } else {
+            skipN += 100;
+          }
+
+          if (skipN === 100 && pageFolders.length > 0) {
+            for (const sub of pageFolders) {
+              if (sub.folderPath && sub.folderPath !== path) {
+                await scanFolder(sub.folderPath);
+              }
+            }
+          }
+        }
+      }
+
+      await scanFolder(folderPath);
+
+      if (itemsToDownload.length === 0) {
+        alert('This folder is empty.');
+        return;
+      }
+
+      setDownloadProgress({
+        active: true,
+        title: `Downloading Folder: ${targetName}`,
+        current: 0,
+        total: itemsToDownload.length,
+        status: `Starting download of ${itemsToDownload.length} files...`,
+      });
+
+      const zip = new JSZip();
+      for (let i = 0; i < itemsToDownload.length; i++) {
+        const item = itemsToDownload[i];
+        setDownloadProgress(prev => ({
+          ...prev,
+          current: i + 1,
+          status: `Fetching file ${i + 1} of ${itemsToDownload.length}: ${item.relativePath}`,
+        }));
+
+        let blob: Blob;
+        try {
+          const res = await fetch(item.file.url);
+          if (!res.ok) throw new Error('CORS/Network error');
+          blob = await res.blob();
+        } catch {
+          const proxyRes = await fetch(`/api/imagekit/download?url=${encodeURIComponent(item.file.url)}`);
+          blob = await proxyRes.blob();
+        }
+
+        zip.file(item.relativePath, blob);
+      }
+
+      setDownloadProgress(prev => ({
+        ...prev,
+        status: 'Compressing into ZIP file...',
+      }));
+
+      const zipContent = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(zipContent);
+      a.download = `${targetName}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (err: any) {
+      alert('Folder download failed: ' + err.message);
+    } finally {
+      setDownloadProgress({ active: false, title: '', current: 0, total: 0, status: '' });
+    }
+  };
 
   // ─── Auth guard ─────────────────────────────────────────────────────────────
 
@@ -446,13 +697,24 @@ export default function ImageKitMediaPage() {
             Browse, manage and assign images to teams, managers, owners and players
           </p>
         </div>
-        <button
-          onClick={() => fetchFiles(currentPath, search, 0, true)}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-medium text-slate-700 transition-all"
-        >
-          <RefreshCw className={`w-4 h-4 ${fetching ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleDownloadFolder(currentPath)}
+            disabled={downloadProgress.active}
+            className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
+            title="Download full current folder as a ZIP file"
+          >
+            <FolderDown className="w-4 h-4" />
+            Download Full Folder
+          </button>
+          <button
+            onClick={() => fetchFiles(currentPath, search, 0, true)}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-medium text-slate-700 transition-all"
+          >
+            <RefreshCw className={`w-4 h-4 ${fetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Toolbar */}
@@ -526,13 +788,24 @@ export default function ImageKitMediaPage() {
               )}
             </div>
             {selected.size > 0 && (
-              <button
-                onClick={() => setDeleteTarget(selectedArr)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-semibold transition-all"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Delete {selected.size} file{selected.size > 1 ? 's' : ''}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDownloadSelected}
+                  disabled={downloadProgress.active}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-semibold transition-all disabled:opacity-50"
+                  title="Download selected photos"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download Selected ({selected.size})
+                </button>
+                <button
+                  onClick={() => setDeleteTarget(selectedArr)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-semibold transition-all"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete {selected.size} file{selected.size > 1 ? 's' : ''}
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -550,14 +823,26 @@ export default function ImageKitMediaPage() {
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Folders</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                 {folders.map(folder => (
-                  <button
+                  <div
                     key={folder.folderId || folder.folderPath}
-                    onClick={() => navigateTo(folder.folderPath)}
-                    className="flex flex-col items-center gap-2 p-3 bg-white border border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/50 transition-all group"
+                    className="flex items-center justify-between gap-1 p-2.5 bg-white border border-slate-200 rounded-xl hover:border-amber-400 hover:bg-amber-50/50 transition-all group"
                   >
-                    <FolderOpen className="w-8 h-8 text-amber-400 group-hover:text-amber-500" />
-                    <span className="text-xs font-medium text-slate-600 truncate w-full text-center">{folder.name}</span>
-                  </button>
+                    <button
+                      onClick={() => navigateTo(folder.folderPath)}
+                      className="flex items-center gap-2 min-w-0 flex-1 text-left"
+                    >
+                      <FolderOpen className="w-6 h-6 text-amber-400 group-hover:text-amber-500 flex-shrink-0" />
+                      <span className="text-xs font-medium text-slate-700 truncate">{folder.name}</span>
+                    </button>
+                    <button
+                      onClick={() => handleDownloadFolder(folder.folderPath, folder.name)}
+                      disabled={downloadProgress.active}
+                      className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-100/60 rounded-lg transition-all flex-shrink-0"
+                      title={`Download folder "${folder.name}" as ZIP`}
+                    >
+                      <FolderDown className="w-4 h-4" />
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -611,16 +896,19 @@ export default function ImageKitMediaPage() {
                         )}
 
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
-                          <button onClick={e => { e.stopPropagation(); setPreviewFile(file); }} className="p-1.5 bg-white/90 rounded-lg" title="Preview">
+                          <button onClick={e => { e.stopPropagation(); setPreviewFile(file); }} className="p-1.5 bg-white/90 rounded-lg hover:bg-white" title="Preview">
                             <Eye className="w-3.5 h-3.5 text-slate-700" />
                           </button>
-                          <button onClick={e => { e.stopPropagation(); copyToClipboard(file.url, file.fileId); }} className="p-1.5 bg-white/90 rounded-lg" title="Copy URL">
+                          <button onClick={e => { e.stopPropagation(); handleDownloadSingle(file); }} className="p-1.5 bg-white/90 rounded-lg hover:bg-white" title="Download file">
+                            <Download className="w-3.5 h-3.5 text-amber-600" />
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); copyToClipboard(file.url, file.fileId); }} className="p-1.5 bg-white/90 rounded-lg hover:bg-white" title="Copy URL">
                             {copied === file.fileId ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5 text-slate-700" />}
                           </button>
-                          <button onClick={e => { e.stopPropagation(); openLinkPanel(file); }} className="p-1.5 bg-white/90 rounded-lg" title="Assign to...">
+                          <button onClick={e => { e.stopPropagation(); openLinkPanel(file); }} className="p-1.5 bg-white/90 rounded-lg hover:bg-white" title="Assign to...">
                             <Link2 className="w-3.5 h-3.5 text-blue-600" />
                           </button>
-                          <button onClick={e => { e.stopPropagation(); setDeleteTarget([file.fileId]); }} className="p-1.5 bg-white/90 rounded-lg" title="Delete">
+                          <button onClick={e => { e.stopPropagation(); setDeleteTarget([file.fileId]); }} className="p-1.5 bg-white/90 rounded-lg hover:bg-white" title="Delete">
                             <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                           </button>
                         </div>
@@ -684,6 +972,9 @@ export default function ImageKitMediaPage() {
                         </td>
                         <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                           <div className="flex items-center justify-center gap-1">
+                            <button onClick={() => handleDownloadSingle(file)} className="p-1.5 hover:bg-amber-50 rounded-lg" title="Download file">
+                              <Download className="w-3.5 h-3.5 text-amber-600" />
+                            </button>
                             <button onClick={() => copyToClipboard(file.url, file.fileId)} className="p-1.5 hover:bg-slate-100 rounded-lg" title="Copy URL">
                               {copied === file.fileId ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
                             </button>
@@ -747,11 +1038,17 @@ export default function ImageKitMediaPage() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => handleDownloadSingle(detailFile)}
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-semibold shadow-sm transition-all">
+                    <Download className="w-3.5 h-3.5" /> Download File
+                  </button>
                   <button onClick={() => { setEditFile(detailFile); setEditName(detailFile.name); setEditTags((detailFile.tags || []).join(', ')); }}
                     className="flex items-center justify-center gap-1 px-2 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-semibold text-slate-700">
                     <Edit2 className="w-3.5 h-3.5" /> Edit
                   </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
                   <a href={detailFile.url} target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-center gap-1 px-2 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-semibold text-slate-700">
                     <ExternalLink className="w-3.5 h-3.5" /> Open
@@ -1030,6 +1327,38 @@ export default function ImageKitMediaPage() {
           </div>
         </div>
       )}
+      {/* ── Download Progress Modal ─────────────────────────────────────────────── */}
+      {downloadProgress.active && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4 font-mono">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-amber-100 rounded-xl flex-shrink-0">
+                <Loader2 className="w-6 h-6 text-amber-600 animate-spin" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-extrabold text-slate-900 text-sm truncate">{downloadProgress.title}</h3>
+                <p className="text-xs text-slate-500 truncate mt-0.5">{downloadProgress.status}</p>
+              </div>
+            </div>
+
+            {downloadProgress.total > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-extrabold text-slate-600">
+                  <span>Progress</span>
+                  <span>{downloadProgress.current} / {downloadProgress.total}</span>
+                </div>
+                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-200"
+                    style={{ width: `${Math.round((downloadProgress.current / downloadProgress.total) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── Hover image popover ───────────────────────────────────────────── */}
       {hoveredImage && (
         <div className="fixed right-[340px] top-1/2 -translate-y-1/2 z-50 pointer-events-none">
