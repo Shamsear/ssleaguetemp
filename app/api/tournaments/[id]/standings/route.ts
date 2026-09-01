@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 export async function GET(
   request: NextRequest,
@@ -278,26 +279,27 @@ async function calculateLeagueStandings(fixtures: any[], sql: any, tournamentId:
   const teamIds = Object.keys(teamStats);
   if (teamIds.length > 0) {
     try {
-      const { db } = await import('@/lib/firebase/config');
-      
-      
-      const teamsRef = adminDb.collection('teams');
-      const teamsSnapshot = await teamsRef.get();
-      
-      teamsSnapshot.forEach((doc) => {
-        const teamData = doc.data();
-        const teamId = doc.id;
-        
-        if (teamStats[teamId]) {
-          teamStats[teamId].team_logo = teamData.logo_url || teamData.team_logo || teamData.logoUrl || null;
-          teamStats[teamId].logo_position_x_circle = teamData.logo_position_x_circle ?? undefined;
-          teamStats[teamId].logo_position_y_circle = teamData.logo_position_y_circle ?? undefined;
-          teamStats[teamId].logo_scale_circle = teamData.logo_scale_circle ?? undefined;
-          teamStats[teamId].logo_position_x_square = teamData.logo_position_x_square ?? undefined;
-          teamStats[teamId].logo_position_y_square = teamData.logo_position_y_square ?? undefined;
-          teamStats[teamId].logo_scale_square = teamData.logo_scale_square ?? undefined;
+      await Promise.all(teamIds.map(async (teamId) => {
+        try {
+          const doc = await adminDb.collection('teams').doc(teamId).get();
+          if (doc.exists) {
+            const teamData = doc.data()!;
+            const logo = teamData.logo_url || teamData.team_logo || teamData.logoUrl || teamData.logoURL || null;
+            teamStats[teamId].team_logo = logo;
+            teamStats[teamId].logo_url = logo;
+            teamStats[teamId].logoUrl = logo;
+            teamStats[teamId].logoURL = logo;
+            teamStats[teamId].logo_position_x_circle = teamData.logo_position_x_circle ?? undefined;
+            teamStats[teamId].logo_position_y_circle = teamData.logo_position_y_circle ?? undefined;
+            teamStats[teamId].logo_scale_circle = teamData.logo_scale_circle ?? undefined;
+            teamStats[teamId].logo_position_x_square = teamData.logo_position_x_square ?? undefined;
+            teamStats[teamId].logo_position_y_square = teamData.logo_position_y_square ?? undefined;
+            teamStats[teamId].logo_scale_square = teamData.logo_scale_square ?? undefined;
+          }
+        } catch (e) {
+          console.error(`Error fetching logo for team ${teamId}:`, e);
         }
-      });
+      }));
     } catch (error) {
       console.error('Error fetching team logos:', error);
     }
@@ -437,29 +439,31 @@ async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, 
 
   if (allTeamIds.size > 0) {
     try {
-      const { db } = await import('@/lib/firebase/config');
-      
-      
-      const teamsRef = adminDb.collection('teams');
-      const teamsSnapshot = await teamsRef.get();
-      
-      teamsSnapshot.forEach((doc) => {
-        const teamData = doc.data();
-        const teamId = doc.id;
-        
-        // Update team logo and positioning in all groups where this team appears
-        Object.values(groups).forEach((group: any) => {
-          if (group[teamId]) {
-            group[teamId].team_logo = teamData.logo_url || teamData.team_logo || teamData.logoUrl || null;
-            group[teamId].logo_position_x_circle = teamData.logo_position_x_circle ?? undefined;
-            group[teamId].logo_position_y_circle = teamData.logo_position_y_circle ?? undefined;
-            group[teamId].logo_scale_circle = teamData.logo_scale_circle ?? undefined;
-            group[teamId].logo_position_x_square = teamData.logo_position_x_square ?? undefined;
-            group[teamId].logo_position_y_square = teamData.logo_position_y_square ?? undefined;
-            group[teamId].logo_scale_square = teamData.logo_scale_square ?? undefined;
+      await Promise.all(Array.from(allTeamIds).map(async (teamId) => {
+        try {
+          const doc = await adminDb.collection('teams').doc(teamId).get();
+          if (doc.exists) {
+            const teamData = doc.data()!;
+            const logo = teamData.logo_url || teamData.team_logo || teamData.logoUrl || teamData.logoURL || null;
+            Object.values(groups).forEach((group: any) => {
+              if (group[teamId]) {
+                group[teamId].team_logo = logo;
+                group[teamId].logo_url = logo;
+                group[teamId].logoUrl = logo;
+                group[teamId].logoURL = logo;
+                group[teamId].logo_position_x_circle = teamData.logo_position_x_circle ?? undefined;
+                group[teamId].logo_position_y_circle = teamData.logo_position_y_circle ?? undefined;
+                group[teamId].logo_scale_circle = teamData.logo_scale_circle ?? undefined;
+                group[teamId].logo_position_x_square = teamData.logo_position_x_square ?? undefined;
+                group[teamId].logo_position_y_square = teamData.logo_position_y_square ?? undefined;
+                group[teamId].logo_scale_square = teamData.logo_scale_square ?? undefined;
+              }
+            });
           }
-        });
-      });
+        } catch (e) {
+          console.error(`Error fetching group team logo for ${teamId}:`, e);
+        }
+      }));
     } catch (error) {
       console.error('Error fetching team logos for group stage:', error);
     }

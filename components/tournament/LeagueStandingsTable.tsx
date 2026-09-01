@@ -112,9 +112,9 @@ export default function LeagueStandingsTable({
                       {index > 2 && `#${index + 1}`}
                     </div>
                     
-                    {team.team_logo ? (
+                    {(team.team_logo || (team as any).logo_url || (team as any).logoUrl || (team as any).logoURL) ? (
                       <img 
-                        src={team.team_logo} 
+                        src={team.team_logo || (team as any).logo_url || (team as any).logoUrl || (team as any).logoURL} 
                         alt={`${team.team_name} logo`}
                         className="w-10 h-10 rounded-full object-cover border border-slate-200"
                         style={{
@@ -262,9 +262,9 @@ export default function LeagueStandingsTable({
                       <td className="px-3 sm:px-6 py-3.5 text-left">
                         <div className="flex items-center gap-2 sm:gap-3">
                           {/* Team Logo */}
-                          {team.team_logo ? (
+                          {(team.team_logo || (team as any).logo_url || (team as any).logoUrl || (team as any).logoURL) ? (
                             <img 
-                              src={team.team_logo} 
+                              src={team.team_logo || (team as any).logo_url || (team as any).logoUrl || (team as any).logoURL} 
                               alt={`${team.team_name} logo`}
                               className="w-8 h-8 rounded-full object-cover border border-slate-200 flex-shrink-0"
                               style={{

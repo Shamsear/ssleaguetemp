@@ -148,9 +148,9 @@ export default function GroupStageStandings({ groupStandings, currentUserId }: G
                     <td className="px-6 py-3.5 text-left">
                       <div className="flex items-center gap-3">
                         {/* Team Logo */}
-                        {team.team_logo ? (
+                        {(team.team_logo || (team as any).logo_url || (team as any).logoUrl || (team as any).logoURL) ? (
                           <img 
-                            src={team.team_logo} 
+                            src={team.team_logo || (team as any).logo_url || (team as any).logoUrl || (team as any).logoURL} 
                             alt={`${team.team_name} logo`}
                             className="w-8 h-8 rounded-full object-cover border border-slate-200 flex-shrink-0"
                             style={{
