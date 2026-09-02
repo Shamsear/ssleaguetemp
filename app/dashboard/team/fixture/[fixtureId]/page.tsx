@@ -17,6 +17,17 @@ import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import LineupDeadlineMonitor from '@/components/LineupDeadlineMonitor';
 import BlindLineupSubmission from '@/components/BlindLineupSubmission';
 import AuthGuard from '@/components/auth/AuthGuard';
+import SearchablePlayerSelect from '@/components/SearchablePlayerSelect';
+
+const getCategoryPriority = (category?: string): number => {
+  if (!category) return 99;
+  const cat = category.toLowerCase().trim();
+  if (cat.includes('icon') || cat.includes('legend') || cat.includes('tier 1') || cat.includes('marquee')) return 1;
+  if (cat.includes('tier 2') || cat.includes('classic') || cat.includes('gold')) return 2;
+  if (cat.includes('tier 3') || cat.includes('silver')) return 3;
+  if (cat.includes('uncapped') || cat.includes('local') || cat.includes('base') || cat.includes('realplayer')) return 4;
+  return 10;
+};
 
 interface Matchup {
   home_player_id: string;

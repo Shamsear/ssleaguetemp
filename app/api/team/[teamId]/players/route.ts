@@ -69,30 +69,50 @@ export async function GET(
       `;
     }
 
-    // Fetch full realplayer details from Firebase if any exist
+    // Fetch full realplayer details from Neon SQL and Firebase
     let enrichedRealPlayers: any[] = [];
     if (playerSeasons.length > 0) {
       const playerIds = playerSeasons.map(ps => String(ps.player_id));
-      const playerDocs = await adminDb.collection('realplayers')
-        .where('player_id', 'in', playerIds)
-        .get();
       
-      // Create a map of player details by player_id (as string)
-      const playerDetailsMap = new Map();
-      playerDocs.docs.forEach(doc => {
-        const data = doc.data();
-        playerDetailsMap.set(String(data.player_id), data);
-      });
+      const neonPhotosMap = new Map();
+      try {
+        const photoRows = await sql`
+          SELECT player_id, photo_url
+          FROM realplayers
+          WHERE player_id = ANY(${playerIds})
+        `;
+        photoRows.forEach((r: any) => {
+          if (r.player_id && r.photo_url) {
+            neonPhotosMap.set(String(r.player_id), r.photo_url);
+          }
+        });
+      } catch (e) {
+        console.error('Error fetching realplayer photos from Neon:', e);
+      }
 
-      // Combine player_seasons data with Firebase player details
+      let playerDetailsMap = new Map();
+      try {
+        const playerDocs = await adminDb.collection('realplayers')
+          .where('player_id', 'in', playerIds)
+          .get();
+        playerDocs.docs.forEach(doc => {
+          const data = doc.data();
+          playerDetailsMap.set(String(data.player_id), data);
+        });
+      } catch (fbErr) {
+        console.error('Error fetching realplayer docs from Firebase:', fbErr);
+      }
+
+      // Combine player_seasons data with Neon & Firebase player details
       enrichedRealPlayers = playerSeasons.map(ps => {
         const details = playerDetailsMap.get(String(ps.player_id)) || {};
+        const neonPhoto = neonPhotosMap.get(String(ps.player_id));
         return {
           id: ps.player_id,
           player_id: ps.player_id,
           name: ps.player_name,
           type: 'realplayer',
-          photo_url: details.photoUrl || details.photo_url || null,
+          photo_url: neonPhoto || details.photoUrl || details.photo_url || null,
           photo_position_x_circle: details.photo_position_x_circle ?? null,
           photo_position_y_circle: details.photo_position_y_circle ?? null,
           photo_scale_circle: details.photo_scale_circle ?? null,

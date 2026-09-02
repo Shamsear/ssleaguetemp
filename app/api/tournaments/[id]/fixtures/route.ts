@@ -285,30 +285,41 @@ export async function GET(
       ORDER BY round_number ASC, match_number ASC
     `;
 
-    // Fetch team logos from Firebase
-    const teamIds = new Set<string>();
-    fixtures.forEach(f => {
-      if (f.home_team_id && f.home_team_id !== 'TBD' && f.home_team_id !== 'bye') teamIds.add(f.home_team_id);
-      if (f.away_team_id && f.away_team_id !== 'TBD' && f.away_team_id !== 'bye') teamIds.add(f.away_team_id);
-    });
-
+    // Fetch team logos from Neon SQL database
     const logosMap: Record<string, string | null> = {};
-    await Promise.all(Array.from(teamIds).map(async (id) => {
+    if (fixtures.length > 0) {
       try {
-        const doc = await adminDb.collection('teams').doc(id).get();
-        if (doc.exists) {
-          const data = doc.data();
-          logosMap[id] = data?.logo_url || data?.logoUrl || data?.logoURL || null;
-        }
+        const seasonId = fixtures[0].season_id;
+        const tsRows = await sql`
+          SELECT team_id, team_name, team_logo, logo_url
+          FROM team_seasons
+          WHERE season_id = ${seasonId}
+        `;
+        const tRows = await sql`
+          SELECT id, name, logo_url
+          FROM teams
+        `;
+
+        tsRows.forEach((r: any) => {
+          const logo = r.team_logo || r.logo_url || null;
+          if (r.team_id) logosMap[r.team_id] = logo;
+          if (r.team_name) logosMap[r.team_name.toLowerCase()] = logo;
+        });
+
+        tRows.forEach((r: any) => {
+          const logo = r.logo_url || null;
+          if (r.id && !logosMap[r.id]) logosMap[r.id] = logo;
+          if (r.name && !logosMap[r.name.toLowerCase()]) logosMap[r.name.toLowerCase()] = logo;
+        });
       } catch (e) {
-        console.error(`Error fetching team logo for ${id}:`, e);
+        console.error('Error fetching team logos from Neon:', e);
       }
-    }));
+    }
 
     const fixturesWithLogos = fixtures.map(f => ({
       ...f,
-      home_team_logo: logosMap[f.home_team_id] || null,
-      away_team_logo: logosMap[f.away_team_id] || null,
+      home_team_logo: logosMap[f.home_team_id] || (f.home_team_name ? logosMap[f.home_team_name.toLowerCase()] : null) || null,
+      away_team_logo: logosMap[f.away_team_id] || (f.away_team_name ? logosMap[f.away_team_name.toLowerCase()] : null) || null,
     }));
 
     return NextResponse.json({ success: true, fixtures: fixturesWithLogos });

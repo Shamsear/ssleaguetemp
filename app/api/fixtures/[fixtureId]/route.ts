@@ -39,7 +39,7 @@ export async function GET(
 
     const fixture = fixtures[0];
 
-    // Helper to get team logo from Neon team_seasons/teams or Firebase with full fallbacks
+    // Helper to get team logo strictly from Neon SQL database (team_seasons and teams tables)
     const getTeamLogo = async (teamId: string, seasonId: string, teamName: string) => {
       if (!teamId || teamId === 'TBD' || teamId === 'bye') return null;
       try {
@@ -48,7 +48,7 @@ export async function GET(
           const tsRes = await sql`
             SELECT team_logo, logo_url
             FROM team_seasons
-            WHERE (team_id = ${teamId} OR team_name = ${teamName || ''})
+            WHERE (team_id = ${teamId} OR LOWER(team_name) = ${teamName ? teamName.toLowerCase() : ''})
               AND season_id = ${seasonId}
             LIMIT 1
           `;
@@ -60,53 +60,27 @@ export async function GET(
 
         // 2. Check Neon teams table directly
         const tRes = await sql`
-          SELECT logo_url FROM teams
-          WHERE id = ${teamId} OR name = ${teamName || ''}
+          SELECT logo_url, team_logo FROM teams
+          WHERE id = ${teamId} OR LOWER(name) = ${teamName ? teamName.toLowerCase() : ''}
           LIMIT 1
         `;
-        if (tRes.length > 0 && tRes[0].logo_url) {
-          return tRes[0].logo_url;
+        if (tRes.length > 0) {
+          if (tRes[0].logo_url) return tRes[0].logo_url;
+          if (tRes[0].team_logo) return tRes[0].team_logo;
         }
 
-        // 3. Fallback to Firebase teams collection by Doc ID
-        const doc = await adminDb.collection('teams').doc(teamId).get();
-        if (doc.exists) {
-          const d = doc.data();
-          const logo = d?.logo_url || d?.logoUrl || d?.logoURL || d?.team_logo;
-          if (logo) return logo;
-        }
-
-        // 4. Fallback to Firebase teams collection query by name
-        if (teamName) {
-          const q = await adminDb.collection('teams').where('name', '==', teamName).limit(1).get();
-          if (!q.empty) {
-            const d = q.docs[0].data();
-            const logo = d?.logo_url || d?.logoUrl || d?.logoURL || d?.team_logo;
-            if (logo) return logo;
-          }
-
-          const q2 = await adminDb.collection('teams').where('team_name', '==', teamName).limit(1).get();
-          if (!q2.empty) {
-            const d = q2.docs[0].data();
-            const logo = d?.logo_url || d?.logoUrl || d?.logoURL || d?.team_logo;
-            if (logo) return logo;
-          }
-        }
-
-        // 5. Fallback to Firebase team_seasons collection
-        if (seasonId && teamId) {
-          const tsQuery = await adminDb.collection('team_seasons')
-            .where('season_id', '==', seasonId)
-            .where('team_id', '==', teamId)
-            .limit(1).get();
-          if (!tsQuery.empty) {
-            const d = tsQuery.docs[0].data();
-            const logo = d?.team_logo || d?.logo_url || d?.logoUrl;
-            if (logo) return logo;
-          }
+        // 3. Fallback: check any season in team_seasons for this teamId/teamName
+        const tsAny = await sql`
+          SELECT team_logo, logo_url FROM team_seasons
+          WHERE team_id = ${teamId} OR LOWER(team_name) = ${teamName ? teamName.toLowerCase() : ''}
+          LIMIT 1
+        `;
+        if (tsAny.length > 0) {
+          if (tsAny[0].team_logo) return tsAny[0].team_logo;
+          if (tsAny[0].logo_url) return tsAny[0].logo_url;
         }
       } catch (err) {
-        console.error('Error getting logo for team', teamId, err);
+        console.error('Error getting logo from Neon for team', teamId, err);
       }
       return null;
     };
