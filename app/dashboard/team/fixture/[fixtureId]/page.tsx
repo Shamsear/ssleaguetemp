@@ -2663,10 +2663,41 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           </div>
                         )}
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-center">
                           {/* Home Player Goals */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-2">{matchup.home_player_name}</label>
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Home className="w-3 h-3 text-blue-600" />
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{fixture.home_team_name}</span>
+                            </div>
+                            {(() => {
+                              const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
+                              const homeCategory = matchup.home_category || homeMatch?.category;
+                              return (
+                                <div className="flex items-center gap-3 p-2.5 bg-blue-50/60 border border-blue-200/80 rounded-xl mb-2">
+                                  <PlayerPhoto
+                                    photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
+                                    playerName={matchup.home_player_name}
+                                    size={38}
+                                    shape="circle"
+                                    posXCircle={homeMatch?.photo_position_x_circle}
+                                    posYCircle={homeMatch?.photo_position_y_circle}
+                                    scaleCircle={homeMatch?.photo_scale_circle}
+                                    className="border border-blue-300 flex-shrink-0"
+                                  />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
+                                      {matchup.home_player_name}
+                                    </span>
+                                    {homeCategory && (
+                                      <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
+                                        {homeCategory}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                             <input
                               type="number"
                               min="0"
@@ -2681,17 +2712,48 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               className="w-full px-4 py-2.5 text-center text-base font-mono font-bold border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none transition-all"
                               placeholder="0"
                             />
-                            <p className="text-xs text-gray-500 mt-1 text-center">Goals</p>
+                            <p className="text-xs text-gray-500 mt-1 text-center font-bold">Goals</p>
                           </div>
 
                           {/* VS */}
                           <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-400">VS</div>
+                            <div className="bg-slate-800 text-white rounded-full px-3 py-1 text-xs font-black shadow-sm">VS</div>
                           </div>
 
                           {/* Away Player Goals */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-2">{matchup.away_player_name}</label>
+                            <div className="flex items-center justify-end gap-2 mb-1.5">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{fixture.away_team_name}</span>
+                              <Plane className="w-3 h-3 text-slate-500" />
+                            </div>
+                            {(() => {
+                              const awayMatch = awaySquadById.get(matchup.away_player_id) || awaySquadByName.get(matchup.away_player_name?.toLowerCase());
+                              const awayCategory = matchup.away_category || awayMatch?.category;
+                              return (
+                                <div className="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xl mb-2 flex-row-reverse sm:flex-row">
+                                  <PlayerPhoto
+                                    photoUrl={awayMatch?.photo_url || matchup.away_photo_url}
+                                    playerName={matchup.away_player_name}
+                                    size={38}
+                                    shape="circle"
+                                    posXCircle={awayMatch?.photo_position_x_circle}
+                                    posYCircle={awayMatch?.photo_position_y_circle}
+                                    scaleCircle={awayMatch?.photo_scale_circle}
+                                    className="border border-slate-300 flex-shrink-0"
+                                  />
+                                  <div className="flex flex-col min-w-0 text-right sm:text-left">
+                                    <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
+                                      {matchup.away_player_name}
+                                    </span>
+                                    {awayCategory && (
+                                      <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-end sm:self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
+                                        {awayCategory}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                             <input
                               type="number"
                               min="0"
@@ -2706,7 +2768,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               className="w-full px-4 py-2.5 text-center text-base font-mono font-bold border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none transition-all"
                               placeholder="0"
                             />
-                            <p className="text-xs text-gray-500 mt-1 text-center">Goals</p>
+                            <p className="text-xs text-gray-500 mt-1 text-center font-bold">Goals</p>
                           </div>
                         </div>
                       </div>
