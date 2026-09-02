@@ -59,39 +59,52 @@ export default function TeamMatchesPage() {
 
   useEffect(() => {
     const fetchMatches = async () => {
-      if (!user || user.role !== 'team') return;
+      if (!user) return;
 
       try {
         setIsLoading(true);
 
-        console.log('Fetching team registration...');
-        // Get team's registered season(s) from Neon via API
+        console.log('Fetching team registration for user:', user.uid);
+        // Get team's registered season(s) from Neon/Firebase via API
         const teamSeasonsRes = await fetch(`/api/team-seasons?user_id=${user.uid}`);
         const teamSeasonsJson = await teamSeasonsRes.json();
-        const allTeamSeasons = (teamSeasonsJson.data || teamSeasonsJson.teamSeasons || [])
-          .filter((ts: any) => ts.status === 'registered')
+        let allTeamSeasons = (teamSeasonsJson.data || teamSeasonsJson.teamSeasons || (teamSeasonsJson.team_season ? [teamSeasonsJson.team_season] : []))
+          .filter((ts: any) => !ts.status || ts.status === 'registered' || ts.status === 'approved')
           .sort((a: any, b: any) => (b.joined_at || '').localeCompare(a.joined_at || ''));
 
         if (allTeamSeasons.length === 0) {
-          console.log('No registered season found for team');
+          console.log('No registered season found in team_seasons for user, attempting fallback season lookup...');
+          try {
+            const seasonsRes = await fetch('/api/seasons');
+            const seasonsJson = await seasonsRes.json();
+            const seasonsList = seasonsJson.data || seasonsJson.seasons || [];
+            const activeSeason = seasonsList.find((s: any) => s.status === 'ongoing' || s.status === 'active') || seasonsList[0];
+            if (activeSeason) {
+              allTeamSeasons = [{ season_id: activeSeason.id, team_id: (user as any).team_id || user.uid, status: 'registered' }];
+            }
+          } catch (fallbackErr) {
+            console.error('Failed fallback season lookup:', fallbackErr);
+          }
+        }
+
+        if (allTeamSeasons.length === 0) {
+          console.log('No registered season or active season found');
           setIsLoading(false);
           return;
         }
 
         // Find the current/ongoing season the team is registered for
         let currentSeasonId: string | null = null;
-        let teamId: string | null = null;
+        let resolvedTeamId: string | null = null;
 
         console.log('Checking registered seasons status...');
-        // Check each registered season and find one that's not completed
         for (const teamSeasonData of allTeamSeasons) {
           const seasonId = teamSeasonData.season_id;
 
-          // Store team_id from the first registration
-          if (!teamId) {
-            teamId = teamSeasonData.team_id;
-            setTeamId(teamId);
-            console.log('Team ID:', teamId);
+          if (!resolvedTeamId) {
+            resolvedTeamId = teamSeasonData.team_id || (user as any).team_id || user.uid;
+            setTeamId(resolvedTeamId);
+            console.log('Team ID:', resolvedTeamId);
           }
 
           // Get season details via API
@@ -133,18 +146,24 @@ export default function TeamMatchesPage() {
         }
 
         // Fetch fixtures from Neon database
-        console.log('<Search className="w-4 h-4 text-slate-500" /> Fetching fixtures from Neon for season:', currentSeasonId, 'team:', teamId);
+        console.log('<Search className="w-4 h-4 text-slate-500" /> Fetching fixtures from Neon for season:', currentSeasonId, 'team:', resolvedTeamId);
 
-        const fixturesResponse = await fetchWithTokenRefresh(`/api/fixtures/team?team_id=${teamId}&season_id=${currentSeasonId}`);
+        let fixturesList: any[] = [];
+        const fixturesResponse = await fetchWithTokenRefresh(`/api/fixtures/team?team_id=${resolvedTeamId}&season_id=${currentSeasonId}`);
 
-        if (!fixturesResponse.ok) {
-          const errorData = await fixturesResponse.json().catch(() => ({ error: 'Unknown error' }));
-          console.error('Failed to fetch fixtures from Neon:', fixturesResponse.status, errorData);
-          setIsLoading(false);
-          return;
+        if (fixturesResponse.ok) {
+          const fJson = await fixturesResponse.json();
+          fixturesList = fJson.fixtures || [];
         }
 
-        const { fixtures: fixturesList } = await fixturesResponse.json();
+        // Fallback: try fetching all fixtures for team without season filter if empty
+        if (fixturesList.length === 0) {
+          const fallbackFixturesRes = await fetchWithTokenRefresh(`/api/fixtures/team?team_id=${resolvedTeamId}`);
+          if (fallbackFixturesRes.ok) {
+            const fbJson = await fallbackFixturesRes.json();
+            fixturesList = fbJson.fixtures || [];
+          }
+        }
         console.log('<BarChart2 className="w-4 h-4 text-slate-500" /> Found fixtures from Neon:', fixturesList.length);
 
         const allMatches: Match[] = [];
