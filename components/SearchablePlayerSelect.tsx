@@ -89,7 +89,9 @@ export default function SearchablePlayerSelect({
         if (buttonRef.current) {
           const rect = buttonRef.current.getBoundingClientRect();
           const spaceBelow = window.innerHeight - rect.bottom;
-          const openUpward = spaceBelow < 260 && rect.top > 260;
+          const spaceAbove = rect.top;
+          // Only open upward if space below is less than 150px AND space above is greater
+          const openUpward = spaceBelow < 150 && spaceAbove > spaceBelow;
 
           if (openUpward) {
             setDropdownPosition({
