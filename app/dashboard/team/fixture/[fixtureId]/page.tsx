@@ -1770,14 +1770,45 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
           {/* Create Matchups (Manual Mode) */}
           {(!matchupMode || matchupMode === 'manual') && canCreateMatchups && matchups.length === 0 && (
             <div className="space-y-3 sm:space-y-4">
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
-                <div className="flex items-start gap-2 sm:gap-3">
-                  <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <p className="text-xs sm:text-sm text-blue-800">
-                    <strong className="font-semibold">Create Matchups:</strong> Pair each home player with an away player to set up the match
-                  </p>
+              {/* Quick Actions Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl font-mono text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const assignedAway: Record<number, string> = {};
+                    const availableAway = [...awayStartingXI];
+                    homeStartingXI.forEach((homeP, idx) => {
+                      const homeCat = (homeP.category || '').toUpperCase();
+                      let matchIdx = availableAway.findIndex(aP => (aP.category || '').toUpperCase() === homeCat);
+                      if (matchIdx === -1) matchIdx = 0;
+                      if (availableAway[matchIdx]) {
+                        assignedAway[idx] = availableAway[matchIdx].player_id;
+                        availableAway.splice(matchIdx, 1);
+                      }
+                    });
+                    setSelectedAwayPlayers(assignedAway);
+                  }}
+                  className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-[10px] uppercase tracking-wider rounded-xl shadow-xs transition-all"
+                >
+                  ⚡ Auto-Pair by Category
+                </button>
+
+                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                  <span className="hidden sm:inline">Set All:</span>
+                  {[6, 8, 10].map(dur => (
+                    <button
+                      key={dur}
+                      type="button"
+                      onClick={() => {
+                        const newDurations: Record<number, number> = {};
+                        homeStartingXI.forEach((_, idx) => { newDurations[idx] = dur; });
+                        setMatchDurations(newDurations);
+                      }}
+                      className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-extrabold shadow-3xs transition-all"
+                    >
+                      {dur}m
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -1947,17 +1978,49 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               {canEditMatchups && isEditMode ? (
                 // Edit Mode
                 <>
-                  <div className="console-card bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 mb-3 shadow-sm font-mono relative overflow-hidden">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 bg-slate-800 text-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-800 font-bold uppercase tracking-wider">📝 Edit Mode Active</p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Change away player assignments and match durations</p>
-                      </div>
+                  {/* Quick Actions Toolbar */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl mb-3 font-mono text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const availableAway = [...awayStartingXI];
+                        const updatedMatchups = matchups.map(m => {
+                          const homeMatch = homeSquadById.get(m.home_player_id) || homeSquadByName.get(m.home_player_name?.toLowerCase());
+                          const homeCat = (m.home_category || homeMatch?.category || '').toUpperCase();
+                          let matchIdx = availableAway.findIndex(aP => (aP.category || '').toUpperCase() === homeCat);
+                          if (matchIdx === -1) matchIdx = 0;
+                          let selectedAway = availableAway[matchIdx];
+                          if (selectedAway) {
+                            availableAway.splice(matchIdx, 1);
+                            return {
+                              ...m,
+                              away_player_id: selectedAway.player_id,
+                              away_player_name: selectedAway.player_name,
+                            };
+                          }
+                          return m;
+                        });
+                        setMatchups(updatedMatchups);
+                      }}
+                      className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-[10px] uppercase tracking-wider rounded-xl shadow-xs transition-all"
+                    >
+                      ⚡ Auto-Pair by Category
+                    </button>
+
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                      <span className="hidden sm:inline">Set All:</span>
+                      {[6, 8, 10].map(dur => (
+                        <button
+                          key={dur}
+                          type="button"
+                          onClick={() => {
+                            setMatchups(matchups.map(m => ({ ...m, match_duration: dur })));
+                          }}
+                          className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-extrabold shadow-3xs transition-all"
+                        >
+                          {dur}m
+                        </button>
+                      ))}
                     </div>
                   </div>
 
