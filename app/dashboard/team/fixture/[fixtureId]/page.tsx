@@ -1892,6 +1892,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               setMatchups(newMatchups);
                             }}
                             placeholder="Search & select away player..."
+                          />
                         </div>
                       </div>
 
