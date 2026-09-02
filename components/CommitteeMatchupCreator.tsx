@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { AlertTriangle, Pencil, Swords } from 'lucide-react';
+import PlayerPhoto from '@/components/PlayerPhoto';
 
 interface Player {
     id: string;
@@ -10,6 +11,10 @@ interface Player {
     player_name: string;
     position?: number;
     category?: string;
+    photo_url?: string;
+    photo_position_x_circle?: number;
+    photo_position_y_circle?: number;
+    photo_scale_circle?: number;
     isStarting?: boolean;
     isSubstitute?: boolean;
 }
@@ -623,25 +628,62 @@ export default function CommitteeMatchupCreator({
                 <div className="mb-6">
                     <h3 className="font-bold text-xs uppercase tracking-wider text-slate-550 mb-3">Created Matchups ({selectedMatchups.length})</h3>
                     <div className="space-y-3">
-                        {selectedMatchups.map((matchup) => (
-                            <div key={matchup.position} className="bg-slate-50/70 border border-slate-200/60 rounded-2xl p-4 hover:bg-slate-50 transition-all">
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <div className="flex items-center gap-4 flex-1 w-full">
-                                        <span className="text-sm font-black font-mono text-slate-400 bg-white px-2 py-1 rounded-lg border shadow-3xs">#{matchup.position}</span>
-                                        <div className="flex-1 grid grid-cols-3 gap-2 items-center text-xs">
-                                            <div className="text-right">
-                                                <p className="font-bold text-slate-850 truncate">{matchup.home_player_name}</p>
-                                                <p className="text-[9px] font-mono text-slate-450 uppercase tracking-wider mt-0.5">{homeTeamName}</p>
-                                            </div>
-                                            <div className="text-center font-bold text-slate-400">
-                                                VS
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="font-bold text-slate-850 truncate">{matchup.away_player_name}</p>
-                                                <p className="text-[9px] font-mono text-slate-450 uppercase tracking-wider mt-0.5">{awayTeamName}</p>
+                        {selectedMatchups.map((matchup) => {
+                            const hp = homeLineup.players.find(p => p.player_id === matchup.home_player_id);
+                            const ap = awayLineup.players.find(p => p.player_id === matchup.away_player_id);
+
+                            return (
+                                <div key={matchup.position} className="bg-slate-50/70 border border-slate-200/60 rounded-2xl p-4 hover:bg-slate-50 transition-all font-mono">
+                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                        <div className="flex items-center gap-3 flex-1 w-full">
+                                            <span className="text-sm font-black text-slate-400 bg-white px-2 py-1 rounded-lg border shadow-3xs">#{matchup.position}</span>
+                                            <div className="flex-1 grid grid-cols-[1fr_auto_1fr] gap-2 items-center text-xs">
+                                                {/* Home Player */}
+                                                <div className="flex items-center gap-2 text-right justify-end min-w-0">
+                                                    <div className="min-w-0 flex flex-col items-end">
+                                                        <p className="font-extrabold text-slate-900 truncate">{matchup.home_player_name}</p>
+                                                        {hp?.category && (
+                                                          <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 mt-0.5">{hp.category}</span>
+                                                        )}
+                                                    </div>
+                                                    <PlayerPhoto
+                                                        photoUrl={hp?.photo_url}
+                                                        playerName={matchup.home_player_name}
+                                                        size={32}
+                                                        shape="circle"
+                                                        posXCircle={hp?.photo_position_x_circle}
+                                                        posYCircle={hp?.photo_position_y_circle}
+                                                        scaleCircle={hp?.photo_scale_circle}
+                                                        className="border border-blue-300 flex-shrink-0"
+                                                    />
+                                                </div>
+                                                
+                                                {/* VS */}
+                                                <div className="px-2 py-0.5 bg-slate-800 text-amber-400 text-[10px] font-black rounded-full shadow-sm text-center">
+                                                    VS
+                                                </div>
+                                                
+                                                {/* Away Player */}
+                                                <div className="flex items-center gap-2 text-left justify-start min-w-0">
+                                                    <PlayerPhoto
+                                                        photoUrl={ap?.photo_url}
+                                                        playerName={matchup.away_player_name}
+                                                        size={32}
+                                                        shape="circle"
+                                                        posXCircle={ap?.photo_position_x_circle}
+                                                        posYCircle={ap?.photo_position_y_circle}
+                                                        scaleCircle={ap?.photo_scale_circle}
+                                                        className="border border-slate-300 flex-shrink-0"
+                                                    />
+                                                    <div className="min-w-0 flex flex-col items-start">
+                                                        <p className="font-extrabold text-slate-900 truncate">{matchup.away_player_name}</p>
+                                                        {ap?.category && (
+                                                          <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 mt-0.5">{ap.category}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
                                     <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-end sm:justify-start pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                                         <select
@@ -664,8 +706,9 @@ export default function CommitteeMatchupCreator({
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                              </div>
+                            );
+                          })}
                     </div>
                 </div>
             )}
