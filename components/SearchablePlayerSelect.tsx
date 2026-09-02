@@ -75,29 +75,49 @@ export default function SearchablePlayerSelect({
   const listRef = useRef<HTMLUListElement>(null);
   const searchInputId = useId();
 
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [dropdownPosition, setDropdownPosition] = useState<{ top?: number; bottom?: number; left: number; width: number }>({ left: 0, width: 0 });
 
   // Update dropdown position when opened or scrolled/resized
   useEffect(() => {
     if (isOpen && buttonRef.current) {
-      const updatePosition = () => {
+      const updatePosition = (e?: Event) => {
+        // Ignore scroll events originating inside the dropdown panel itself
+        if (e && dropdownRef.current && dropdownRef.current.contains(e.target as Node)) {
+          return;
+        }
+
         if (buttonRef.current) {
           const rect = buttonRef.current.getBoundingClientRect();
           const spaceBelow = window.innerHeight - rect.bottom;
           const openUpward = spaceBelow < 260 && rect.top > 260;
-          setDropdownPosition({
-            top: openUpward ? Math.max(10, rect.top - 268) : rect.bottom + 6,
-            left: Math.max(10, rect.left),
-            width: Math.min(rect.width, window.innerWidth - 20),
-          });
+
+          if (openUpward) {
+            setDropdownPosition({
+              bottom: Math.max(10, window.innerHeight - rect.top + 6),
+              left: Math.max(10, rect.left),
+              width: Math.min(rect.width, window.innerWidth - 20),
+            });
+          } else {
+            setDropdownPosition({
+              top: rect.bottom + 6,
+              left: Math.max(10, rect.left),
+              width: Math.min(rect.width, window.innerWidth - 20),
+            });
+          }
         }
       };
+
       updatePosition();
+
+      const handleScroll = (e: Event) => {
+        updatePosition(e);
+      };
+
       window.addEventListener('resize', updatePosition);
-      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('scroll', handleScroll, true);
       return () => {
         window.removeEventListener('resize', updatePosition);
-        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('scroll', handleScroll, true);
       };
     }
   }, [isOpen]);
@@ -271,7 +291,8 @@ export default function SearchablePlayerSelect({
             ref={dropdownRef}
             className="fixed z-[9999] bg-white border border-slate-200/90 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-mono animate-in fade-in zoom-in-95 duration-150"
             style={{
-              top: `${dropdownPosition.top}px`,
+              top: dropdownPosition.top !== undefined ? `${dropdownPosition.top}px` : undefined,
+              bottom: dropdownPosition.bottom !== undefined ? `${dropdownPosition.bottom}px` : undefined,
               left: `${dropdownPosition.left}px`,
               width: `${dropdownPosition.width}px`,
               maxHeight: '260px',
