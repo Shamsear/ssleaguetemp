@@ -164,7 +164,18 @@ export async function GET(request: NextRequest) {
       `;
     }
 
-    // Get substitutions for the lineups
+    const getCategoryPriority = (category?: string): number => {
+      if (!category) return 99;
+      const cat = category.toLowerCase().trim();
+      if (cat === 'tier 1' || cat.includes('icon') || cat.includes('marquee') || cat.includes('legend') || cat === 'tier 0' || cat === 't1') return 1;
+      if (cat === 'tier 2' || cat.includes('classic') || cat.includes('gold') || cat === 't2') return 2;
+      if (cat === 'tier 3' || cat.includes('silver') || cat === 't3') return 3;
+      if (cat === 'tier 4' || cat.includes('bronze') || cat === 't4') return 4;
+      if (cat.includes('uncapped') || cat.includes('realplayer') || cat.includes('base') || cat.includes('local')) return 5;
+      return 10;
+    };
+
+    // Get substitutions and sort starting_xi by category priority for the lineups
     if (lineups.length > 0) {
       const lineupIds = lineups.map((l: any) => l.id);
       const substitutions = await sql`
@@ -174,11 +185,22 @@ export async function GET(request: NextRequest) {
         ORDER BY made_at ASC
       `;
 
-      // Attach substitutions to each lineup
-      lineups = lineups.map((l: any) => ({
-        ...l,
-        substitutions: substitutions.filter((s: any) => s.lineup_id === l.id),
-      }));
+      // Attach substitutions and sort starting_xi by category priority
+      lineups = lineups.map((l: any) => {
+        let startingXi = Array.isArray(l.starting_xi) ? [...l.starting_xi] : [];
+        startingXi.sort((a: any, b: any) => {
+          const pA = getCategoryPriority(a.category);
+          const pB = getCategoryPriority(b.category);
+          if (pA !== pB) return pA - pB;
+          return (a.player_name || a.name || '').localeCompare(b.player_name || b.name || '');
+        });
+
+        return {
+          ...l,
+          starting_xi: startingXi,
+          substitutions: substitutions.filter((s: any) => s.lineup_id === l.id),
+        };
+      });
     }
 
     // If requesting specific team and no lineup found, return null

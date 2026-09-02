@@ -135,6 +135,24 @@ export async function GET(
           assists: ps.assists || 0,
         };
       });
+
+      const getCategoryPriority = (category?: string): number => {
+        if (!category) return 99;
+        const cat = category.toLowerCase().trim();
+        if (cat === 'tier 1' || cat.includes('icon') || cat.includes('marquee') || cat.includes('legend') || cat === 'tier 0' || cat === 't1') return 1;
+        if (cat === 'tier 2' || cat.includes('classic') || cat.includes('gold') || cat === 't2') return 2;
+        if (cat === 'tier 3' || cat.includes('silver') || cat === 't3') return 3;
+        if (cat === 'tier 4' || cat.includes('bronze') || cat === 't4') return 4;
+        if (cat.includes('uncapped') || cat.includes('realplayer') || cat.includes('base') || cat.includes('local')) return 5;
+        return 10;
+      };
+
+      enrichedRealPlayers.sort((a, b) => {
+        const pA = getCategoryPriority(a.category);
+        const pB = getCategoryPriority(b.category);
+        if (pA !== pB) return pA - pB;
+        return (a.name || a.player_name || '').localeCompare(b.name || b.player_name || '');
+      });
     }
 
     // 2. Fetch FOOTBALLPLAYERS (auction players) from team_players

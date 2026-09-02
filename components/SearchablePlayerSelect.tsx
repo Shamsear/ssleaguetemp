@@ -18,6 +18,17 @@ interface SearchablePlayerSelectProps {
   disabled?: boolean;
 }
 
+const getCategoryPriority = (category?: string): number => {
+  if (!category) return 99;
+  const cat = category.toLowerCase().trim();
+  if (cat === 'tier 1' || cat.includes('icon') || cat.includes('marquee') || cat.includes('legend') || cat === 'tier 0' || cat === 't1') return 1;
+  if (cat === 'tier 2' || cat.includes('classic') || cat.includes('gold') || cat === 't2') return 2;
+  if (cat === 'tier 3' || cat.includes('silver') || cat === 't3') return 3;
+  if (cat === 'tier 4' || cat.includes('bronze') || cat === 't4') return 4;
+  if (cat.includes('uncapped') || cat.includes('realplayer') || cat.includes('base') || cat.includes('local')) return 5;
+  return 10;
+};
+
 export default function SearchablePlayerSelect({
   players,
   value,
@@ -36,15 +47,22 @@ export default function SearchablePlayerSelect({
 
   const selectedPlayer = players.find(p => p.player_id === value);
 
-  // Filter players based on search query (by name or category)
-  const filteredPlayers = players.filter(p => {
-    if (!searchTerm.trim()) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      (p.player_name && p.player_name.toLowerCase().includes(term)) ||
-      (p.category && p.category.toLowerCase().includes(term))
-    );
-  });
+  // Filter & sort players based on category priority & search query
+  const filteredPlayers = players
+    .filter(p => {
+      if (!searchTerm.trim()) return true;
+      const term = searchTerm.toLowerCase();
+      return (
+        (p.player_name && p.player_name.toLowerCase().includes(term)) ||
+        (p.category && p.category.toLowerCase().includes(term))
+      );
+    })
+    .sort((a, b) => {
+      const pA = getCategoryPriority(a.category);
+      const pB = getCategoryPriority(b.category);
+      if (pA !== pB) return pA - pB;
+      return (a.player_name || '').localeCompare(b.player_name || '');
+    });
 
   // Close when clicking outside
   useEffect(() => {

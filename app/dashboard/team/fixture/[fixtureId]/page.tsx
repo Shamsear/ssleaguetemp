@@ -662,8 +662,20 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             }
           }
 
-          // Sort Home players by Category Priority (Icon / Tier 1 -> Tier 2 -> Tier 3 -> Uncapped / Realplayer)
-          homeStarting.sort((a: any, b: any) => getCategoryPriority(a.category) - getCategoryPriority(b.category));
+          // Sort Home & Away players by Category Priority (Tier 1 -> Tier 2 -> Tier 3 -> Tier 4 -> Uncapped)
+          homeStarting.sort((a: any, b: any) => {
+            const pA = getCategoryPriority(a.category);
+            const pB = getCategoryPriority(b.category);
+            if (pA !== pB) return pA - pB;
+            return (a.player_name || a.name || '').localeCompare(b.player_name || b.name || '');
+          });
+
+          awayStarting.sort((a: any, b: any) => {
+            const pA = getCategoryPriority(a.category);
+            const pB = getCategoryPriority(b.category);
+            if (pA !== pB) return pA - pB;
+            return (a.player_name || a.name || '').localeCompare(b.player_name || b.name || '');
+          });
 
           setHomeStartingXI(homeStarting);
           setHomePlayers(homeStarting);
