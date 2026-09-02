@@ -1141,18 +1141,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
       {/* Decorative eSports glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
       <div className="max-w-7xl mx-auto relative z-10 space-y-6">
-        {/* Lineup Deadline Monitor - Only show for manual mode */}
-        {matchupMode !== 'blind_lineup' && roundDeadlines && roundDeadlines.scheduled_date && roundDeadlines.round_start_time && (
-          <div className="mb-6">
-            <LineupDeadlineMonitor
-              seasonId={fixture.season_id}
-              roundNumber={fixture.round_number}
-              leg={fixture.leg}
-              scheduledDate={roundDeadlines.scheduled_date}
-              awayDeadlineTime={roundDeadlines.round_start_time}
-            />
-          </div>
-        )}
+
 
         {/* Header */}
         <div className="mb-4 sm:mb-6">
@@ -1301,7 +1290,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           <span><Calendar className="w-4 h-4 text-slate-500" /> Match Date: {roundDeadlines.scheduled_date}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span>⏰ Lineup Deadline: {lineupDeadline.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST</span>
+                          <span>⏰ Match Time: {lineupDeadline.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST</span>
                         </div>
                       </div>
                     )}
