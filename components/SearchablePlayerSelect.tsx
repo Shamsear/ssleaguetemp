@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useId } from 'react';
+import React, { useState, useRef, useEffect, useId, useMemo } from 'react';
 import { Search, ChevronDown, Check, User } from 'lucide-react';
 import PlayerPhoto from '@/components/PlayerPhoto';
 
