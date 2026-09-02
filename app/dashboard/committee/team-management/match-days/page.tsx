@@ -35,7 +35,9 @@ import {
   AlertTriangle,
   Info,
   HelpCircle,
-  ChevronRight
+  ChevronRight,
+  Sparkles,
+  XCircle
 } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
 
@@ -52,6 +54,21 @@ export default function MatchDayManagementPage() {
   const [selectedTournamentId, setSelectedTournamentId] = useState<string>('');
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Bulk Schedule & Push Dates state
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [bulkActiveTab, setBulkActiveTab] = useState<'batch' | 'push'>('batch');
+  const [bulkStartDate, setBulkStartDate] = useState(getISTToday());
+  const [bulkIntervalDays, setBulkIntervalDays] = useState(1);
+  const [bulkRoundDates, setBulkRoundDates] = useState<{ [key: string]: string }>({});
+
+  // Push state
+  const [pushFromRoundNumber, setPushFromRoundNumber] = useState(4);
+  const [pushFromLeg, setPushFromLeg] = useState<'first' | 'second'>('first');
+  const [pushMode, setPushMode] = useState<'offset' | 'new_date'>('offset');
+  const [pushOffsetDays, setPushOffsetDays] = useState(1);
+  const [pushNewDateValue, setPushNewDateValue] = useState('');
+  const [isSavingBulk, setIsSavingBulk] = useState(false);
 
   // Modal system
   const {
@@ -512,6 +529,155 @@ export default function MatchDayManagementPage() {
       setActioningId(null);
     }
   };
+
+  const openBulkSchedule = (tab: 'batch' | 'push' = 'batch', startRound?: number, leg?: 'first' | 'second') => {
+    const initialDates: { [key: string]: string } = {};
+    filteredRounds.forEach(r => {
+      const key = `${r.round_number}_${r.leg}`;
+      if (r.scheduled_date) {
+        initialDates[key] = (r.scheduled_date || '').split('T')[0];
+      }
+    });
+    setBulkRoundDates(initialDates);
+
+    if (startRound !== undefined) {
+      setPushFromRoundNumber(startRound);
+    }
+    if (leg !== undefined) {
+      setPushFromLeg(leg);
+    }
+
+    setBulkActiveTab(tab);
+    setIsBulkModalOpen(true);
+  };
+
+  const handleGenerateSequence = (startDateStr: string, interval: number) => {
+    if (!startDateStr) return;
+    const newDates: { [key: string]: string } = {};
+
+    let curDate = new Date(startDateStr);
+    filteredRounds.forEach((round, idx) => {
+      const key = `${round.round_number}_${round.leg}`;
+      if (idx === 0) {
+        newDates[key] = startDateStr;
+      } else {
+        curDate.setDate(curDate.getDate() + interval);
+        const yyyy = curDate.getFullYear();
+        const mm = String(curDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(curDate.getDate()).padStart(2, '0');
+        newDates[key] = `${yyyy}-${mm}-${dd}`;
+      }
+    });
+
+    setBulkRoundDates(newDates);
+  };
+
+  const calculatePushedDates = () => {
+    const result: { [key: string]: { oldDate: string; newDate: string; isPushed: boolean } } = {};
+
+    let offsetDaysToAdd = pushOffsetDays;
+    if (pushMode === 'new_date' && pushNewDateValue) {
+      const targetRound = filteredRounds.find(r => r.round_number === pushFromRoundNumber && r.leg === pushFromLeg);
+      if (targetRound && targetRound.scheduled_date) {
+        const oldTime = new Date(targetRound.scheduled_date.split('T')[0]).getTime();
+        const newTime = new Date(pushNewDateValue).getTime();
+        offsetDaysToAdd = Math.round((newTime - oldTime) / (1000 * 60 * 60 * 24));
+      }
+    }
+
+    filteredRounds.forEach((round) => {
+      const key = `${round.round_number}_${round.leg}`;
+      const oldDateStr = (round.scheduled_date || '').split('T')[0];
+
+      const isPushed = round.round_number > pushFromRoundNumber ||
+        (round.round_number === pushFromRoundNumber && (round.leg === pushFromLeg || pushFromLeg === 'first'));
+
+      if (isPushed && oldDateStr) {
+        const d = new Date(oldDateStr);
+        d.setDate(d.getDate() + offsetDaysToAdd);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const newDateStr = `${yyyy}-${mm}-${dd}`;
+        result[key] = { oldDate: oldDateStr, newDate: newDateStr, isPushed: true };
+      } else {
+        result[key] = { oldDate: oldDateStr, newDate: oldDateStr, isPushed: false };
+      }
+    });
+
+    return result;
+  };
+
+  const handleSaveBulkDates = async (datesToSave: { [key: string]: string }) => {
+    if (!activeSeasonId) return;
+
+    setIsSavingBulk(true);
+    try {
+      const payload = Object.entries(datesToSave)
+        .map(([key, dateStr]) => {
+          const [rNumStr, rLeg] = key.split('_');
+          const rNum = parseInt(rNumStr);
+          const round = filteredRounds.find(r => r.round_number === rNum && r.leg === rLeg);
+          if (!round || !dateStr) return null;
+
+          return {
+            tournament_id: round.tournament_id,
+            season_id: activeSeasonId,
+            round_number: rNum,
+            leg: rLeg,
+            scheduled_date: dateStr,
+            home_fixture_deadline_time: round.home_fixture_deadline_time || '17:00',
+            away_fixture_deadline_time: round.away_fixture_deadline_time || '17:00',
+            result_entry_deadline_day_offset: round.result_entry_deadline_day_offset || 2,
+            result_entry_deadline_time: round.result_entry_deadline_time || '00:30',
+            status: round.status || 'pending'
+          };
+        })
+        .filter(Boolean);
+
+      if (payload.length === 0) {
+        showAlert({
+          type: 'warning',
+          title: 'No Dates Selected',
+          message: 'Please set scheduled dates before saving.'
+        });
+        setIsSavingBulk(false);
+        return;
+      }
+
+      const res = await fetchWithTokenRefresh('/api/round-deadlines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round_deadlines: payload })
+      });
+
+      if (res.ok) {
+        await loadRounds();
+        setIsBulkModalOpen(false);
+        showAlert({
+          type: 'success',
+          title: 'Dates Saved',
+          message: `Successfully scheduled ${payload.length} round(s)!`
+        });
+      } else {
+        const err = await res.json();
+        showAlert({
+          type: 'error',
+          title: 'Save Failed',
+          message: err.error || 'Failed to save scheduled dates'
+        });
+      }
+    } catch (error: any) {
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to save dates: ' + error.message
+      });
+    } finally {
+      setIsSavingBulk(false);
+    }
+  };
+
   if (loading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -641,8 +807,25 @@ export default function MatchDayManagementPage() {
 
         {/* Match Rounds Table / Mobile Cards */}
         <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
-          <div className="border-b border-slate-100 pb-4 mb-6 flex items-center justify-between">
-            <h2 className="text-base font-extrabold text-slate-900 tracking-tight uppercase">Match Rounds</h2>
+          <div className="border-b border-slate-100 pb-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-extrabold text-slate-900 tracking-tight uppercase">Match Rounds</h2>
+              <p className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mt-0.5">Configure schedule dates, phases, and deadlines</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => openBulkSchedule('batch')}
+                className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Calendar className="w-3.5 h-3.5" /> Schedule All Rounds
+              </button>
+              <button
+                onClick={() => openBulkSchedule('push', 4)}
+                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Clock className="w-3.5 h-3.5" /> Push Dates (R4+)
+              </button>
+            </div>
           </div>
           <div className="p-0">
             {filteredRounds.length > 0 ? (
@@ -967,6 +1150,16 @@ export default function MatchDayManagementPage() {
                                   <Edit2 className="w-3 h-3" />
                                   <span>Edit</span>
                                 </Link>
+
+                                {/* Push Dates From Here Button */}
+                                <button
+                                  onClick={() => openBulkSchedule('push', round.round_number, round.leg)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 text-[10px] font-bold uppercase rounded-md transition-all shadow-sm cursor-pointer"
+                                  title={`Push dates starting from Round ${round.round_number}`}
+                                >
+                                  <Clock className="w-3 h-3 text-amber-600" />
+                                  <span>Push R{round.round_number}+</span>
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -1383,6 +1576,297 @@ export default function MatchDayManagementPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Bulk Schedule & Push Dates Modal ─────────────────────────────────── */}
+      {isBulkModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="bg-slate-900 text-white p-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-amber-500/20 border border-amber-500/30 rounded-2xl">
+                  <Calendar className="w-6 h-6 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-lg tracking-tight">Bulk Round Scheduler</h3>
+                  <p className="text-xs text-slate-400 font-mono">Set all round dates at once or push schedule from any round</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsBulkModalOpen(false)}
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-xl text-slate-300 hover:text-white transition-all cursor-pointer"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 gap-2">
+              <button
+                onClick={() => setBulkActiveTab('batch')}
+                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-xl transition-all border-t border-x cursor-pointer ${
+                  bulkActiveTab === 'batch'
+                    ? 'bg-white border-slate-200 text-amber-600 shadow-sm'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                1. Schedule All Rounds At Once
+              </button>
+              <button
+                onClick={() => setBulkActiveTab('push')}
+                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-xl transition-all border-t border-x cursor-pointer ${
+                  bulkActiveTab === 'push'
+                    ? 'bg-white border-slate-200 text-blue-600 shadow-sm'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                2. Push Dates (From Round {pushFromRoundNumber}+)
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1">
+              {/* TAB 1: BATCH SCHEDULE ALL */}
+              {bulkActiveTab === 'batch' && (
+                <div className="space-y-6">
+                  {/* Sequence Generator Controls */}
+                  <div className="bg-amber-50/60 border border-amber-200/80 rounded-2xl p-4 space-y-4">
+                    <div className="flex items-center gap-2 text-amber-800 font-extrabold text-xs uppercase tracking-wider">
+                      <Sparkles className="w-4 h-4 text-amber-600" />
+                      Auto Sequence Generator
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Start Date (Round 1)</label>
+                        <input
+                          type="date"
+                          value={bulkStartDate}
+                          onChange={(e) => setBulkStartDate(e.target.value)}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Interval Between Rounds</label>
+                        <select
+                          value={bulkIntervalDays}
+                          onChange={(e) => setBulkIntervalDays(parseInt(e.target.value))}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                        >
+                          <option value={1}>Every 1 Day (Daily)</option>
+                          <option value={2}>Every 2 Days</option>
+                          <option value={3}>Every 3 Days</option>
+                          <option value={4}>Every 4 Days</option>
+                          <option value={7}>Every 7 Days (Weekly)</option>
+                        </select>
+                      </div>
+                      <div className="flex items-end">
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateSequence(bulkStartDate, bulkIntervalDays)}
+                          className="w-full px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <Calendar className="w-3.5 h-3.5" /> Auto-Fill Dates
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Individual Rounds Date Inputs */}
+                  <div>
+                    <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-3 flex items-center justify-between">
+                      <span>Round Scheduled Dates ({filteredRounds.length} Rounds)</span>
+                      <span className="text-[10px] text-slate-400 font-normal">Edit individual dates below before saving</span>
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
+                      {filteredRounds.map((round) => {
+                        const key = `${round.round_number}_${round.leg}`;
+                        const curValue = bulkRoundDates[key] || '';
+                        return (
+                          <div key={key} className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+                            <div>
+                              <span className="text-xs font-bold text-slate-800">Round {round.round_number}</span>
+                              <span className="text-[10px] text-slate-400 ml-1.5 font-semibold">({round.leg === 'first' ? '1st Leg' : '2nd Leg'})</span>
+                            </div>
+                            <input
+                              type="date"
+                              value={curValue}
+                              onChange={(e) => setBulkRoundDates(prev => ({ ...prev, [key]: e.target.value }))}
+                              className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: CASCADE PUSH DATES */}
+              {bulkActiveTab === 'push' && (
+                <div className="space-y-6">
+                  {/* Push Config Form */}
+                  <div className="bg-blue-50/60 border border-blue-200/80 rounded-2xl p-4 space-y-4">
+                    <div className="flex items-center gap-2 text-blue-800 font-extrabold text-xs uppercase tracking-wider">
+                      <Clock className="w-4 h-4 text-blue-600" />
+                      Cascade Date Shifter
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Start Pushing From</label>
+                        <select
+                          value={`${pushFromRoundNumber}_${pushFromLeg}`}
+                          onChange={(e) => {
+                            const [r, l] = e.target.value.split('_');
+                            setPushFromRoundNumber(parseInt(r));
+                            setPushFromLeg(l as any);
+                          }}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        >
+                          {filteredRounds.map(r => (
+                            <option key={`${r.round_number}_${r.leg}`} value={`${r.round_number}_${r.leg}`}>
+                              Round {r.round_number} ({r.leg === 'first' ? '1st Leg' : '2nd Leg'})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Shift Mode</label>
+                        <select
+                          value={pushMode}
+                          onChange={(e) => setPushMode(e.target.value as any)}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        >
+                          <option value="offset">Shift By Days (+ / - Days)</option>
+                          <option value="new_date">Set New Date For Round {pushFromRoundNumber}</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        {pushMode === 'offset' ? (
+                          <>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Push Days Offset</label>
+                            <select
+                              value={pushOffsetDays}
+                              onChange={(e) => setPushOffsetDays(parseInt(e.target.value))}
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            >
+                              <option value={1}>+1 Day</option>
+                              <option value={2}>+2 Days</option>
+                              <option value={3}>+3 Days</option>
+                              <option value={4}>+4 Days</option>
+                              <option value={7}>+7 Days (1 Week)</option>
+                              <option value={-1}>-1 Day (Earlier)</option>
+                              <option value={-2}>-2 Days (Earlier)</option>
+                            </select>
+                          </>
+                        ) : (
+                          <>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">New Date for R{pushFromRoundNumber}</label>
+                            <input
+                              type="date"
+                              value={pushNewDateValue}
+                              onChange={(e) => setPushNewDateValue(e.target.value)}
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            />
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pushed Dates Live Preview */}
+                  <div>
+                    <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-3 flex items-center justify-between">
+                      <span>Schedule Change Preview</span>
+                      <span className="text-[10px] text-blue-600 font-bold">Rounds {pushFromRoundNumber} to end will shift automatically</span>
+                    </h4>
+
+                    {(() => {
+                      const pushedMap = calculatePushedDates();
+                      return (
+                        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                          {filteredRounds.map((round) => {
+                            const key = `${round.round_number}_${round.leg}`;
+                            const info = pushedMap[key] || { oldDate: '', newDate: '', isPushed: false };
+
+                            return (
+                              <div
+                                key={key}
+                                className={`flex items-center justify-between p-3 rounded-xl border text-xs font-mono transition-all ${
+                                  info.isPushed
+                                    ? 'bg-blue-50/70 border-blue-200 text-blue-900 font-bold'
+                                    : 'bg-slate-50 border-slate-200 text-slate-400 opacity-60'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="font-extrabold">Round {round.round_number} ({round.leg === 'first' ? '1st' : '2nd'})</span>
+                                  {info.isPushed && (
+                                    <span className="px-2 py-0.5 text-[9px] bg-blue-600 text-white font-extrabold rounded uppercase">Pushed</span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span>{info.oldDate || 'Not scheduled'}</span>
+                                  {info.isPushed && (
+                                    <>
+                                      <ChevronRight className="w-3.5 h-3.5 text-blue-500" />
+                                      <span className="text-blue-700 font-extrabold underline">{info.newDate}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-between items-center">
+              <button
+                type="button"
+                onClick={() => setIsBulkModalOpen(false)}
+                className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              {bulkActiveTab === 'batch' ? (
+                <button
+                  type="button"
+                  onClick={() => handleSaveBulkDates(bulkRoundDates)}
+                  disabled={isSavingBulk}
+                  className="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-extrabold flex items-center gap-2 shadow-md disabled:opacity-50 cursor-pointer"
+                >
+                  {isSavingBulk ? 'Saving...' : 'Save All Scheduled Dates'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const pushedMap = calculatePushedDates();
+                    const datesToSave: { [key: string]: string } = {};
+                    Object.entries(pushedMap).forEach(([k, v]) => {
+                      if (v.newDate) datesToSave[k] = v.newDate;
+                    });
+                    handleSaveBulkDates(datesToSave);
+                  }}
+                  disabled={isSavingBulk}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold flex items-center gap-2 shadow-md disabled:opacity-50 cursor-pointer"
+                >
+                  {isSavingBulk ? 'Saving...' : `Apply & Save Push from Round ${pushFromRoundNumber}`}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal Components */}
       <AlertModal
