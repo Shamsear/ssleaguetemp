@@ -1288,10 +1288,77 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading fixture...</p>
+      <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Back button skeleton */}
+          <div className="h-8 w-28 bg-slate-800/20 rounded-xl animate-pulse"></div>
+
+          {/* Header Scoreboard Skeleton */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm animate-pulse space-y-6">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-slate-200 rounded-2xl"></div>
+                <div className="space-y-2">
+                  <div className="h-3 w-20 bg-slate-200 rounded"></div>
+                  <div className="h-6 w-40 bg-slate-200 rounded"></div>
+                </div>
+              </div>
+              <div className="h-7 w-32 bg-slate-200 rounded-xl"></div>
+            </div>
+
+            {/* Teams VS Skeleton */}
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 sm:gap-6 items-center">
+              <div className="h-20 bg-slate-100 rounded-2xl border border-slate-200/60 p-4 flex items-center gap-3">
+                <div className="w-12 h-12 bg-slate-200 rounded-xl"></div>
+                <div className="space-y-2 flex-1">
+                  <div className="h-2 w-16 bg-slate-200 rounded"></div>
+                  <div className="h-5 w-32 bg-slate-200 rounded"></div>
+                </div>
+              </div>
+
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-slate-200 rounded-full mx-auto"></div>
+
+              <div className="h-20 bg-slate-100 rounded-2xl border border-slate-200/60 p-4 flex items-center gap-3">
+                <div className="w-12 h-12 bg-slate-200 rounded-xl"></div>
+                <div className="space-y-2 flex-1">
+                  <div className="h-2 w-16 bg-slate-200 rounded"></div>
+                  <div className="h-5 w-32 bg-slate-200 rounded"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Matchups Section Skeleton */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm animate-pulse space-y-4">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="w-10 h-10 bg-slate-200 rounded-xl"></div>
+              <div className="space-y-2">
+                <div className="h-4 w-36 bg-slate-200 rounded"></div>
+                <div className="h-2 w-24 bg-slate-200 rounded"></div>
+              </div>
+            </div>
+
+            {/* 5 Match Cards Skeleton */}
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-16 sm:h-20 bg-slate-50 border border-slate-200/60 rounded-xl p-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-10 h-10 bg-slate-200 rounded-full flex-shrink-0"></div>
+                  <div className="space-y-1.5 min-w-0 flex-1">
+                    <div className="h-4 w-28 bg-slate-200 rounded"></div>
+                    <div className="h-3 w-16 bg-slate-200 rounded"></div>
+                  </div>
+                </div>
+                <div className="h-6 w-10 bg-slate-200 rounded-full flex-shrink-0"></div>
+                <div className="flex items-center gap-3 min-w-0 flex-1 flex-row-reverse">
+                  <div className="w-10 h-10 bg-slate-200 rounded-full flex-shrink-0"></div>
+                  <div className="space-y-1.5 min-w-0 flex-1 text-right">
+                    <div className="h-4 w-28 bg-slate-200 rounded ml-auto"></div>
+                    <div className="h-3 w-16 bg-slate-200 rounded ml-auto"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -2210,16 +2277,45 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                   })()}
 
                   {/* Man of the Match Display */}
-                  {fixture.motm_player_name && (
-                    <div className="console-card bg-white border border-amber-300 rounded-2xl p-4 font-mono shadow-sm bg-gradient-to-r from-amber-500/5 to-amber-500/10">
-                      <div className="flex items-center justify-center gap-3">
-                        <div>
-                          <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider text-center"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500 inline" /> Man of the Match</div>
-                          <div className="text-base font-bold text-slate-800 uppercase tracking-wide text-center mt-0.5">{fixture.motm_player_name}</div>
+                  {fixture.motm_player_name && (() => {
+                    const motmId = fixture.motm_player_id;
+                    const motmMatch = matchups.find(m => m.home_player_id === motmId || m.away_player_id === motmId);
+                    const isHomeMotm = motmMatch?.home_player_id === motmId;
+                    const squadMap = isHomeMotm ? homeSquadById : awaySquadById;
+                    const squadByName = isHomeMotm ? homeSquadByName : awaySquadByName;
+                    const playerMatch = squadMap.get(motmId || '') || squadByName.get(fixture.motm_player_name?.toLowerCase() || '');
+                    const category = playerMatch?.category;
+
+                    return (
+                      <div className="console-card bg-white border border-amber-300 rounded-2xl p-4 font-mono shadow-sm bg-gradient-to-r from-amber-500/5 to-amber-500/10">
+                        <div className="flex items-center justify-center gap-4">
+                          <PlayerPhoto
+                            photoUrl={playerMatch?.photo_url}
+                            playerName={fixture.motm_player_name}
+                            size={48}
+                            shape="circle"
+                            posXCircle={playerMatch?.photo_position_x_circle}
+                            posYCircle={playerMatch?.photo_position_y_circle}
+                            scaleCircle={playerMatch?.photo_scale_circle}
+                            className="border-2 border-amber-400 flex-shrink-0 shadow-md"
+                          />
+                          <div className="text-left">
+                            <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider flex items-center gap-1">
+                              <Trophy className="w-4 h-4 text-amber-500 fill-amber-500 inline" /> Man of the Match
+                            </div>
+                            <div className="text-base font-bold text-slate-800 uppercase tracking-wide mt-0.5">
+                              {fixture.motm_player_name}
+                            </div>
+                            {category && (
+                              <span className={`inline-block text-[9px] uppercase tracking-wider px-2 py-0.5 rounded border mt-1 ${getCategoryBadgeClass(category)}`}>
+                                {category}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   <div className="space-y-3">
                     {matchups.map((matchup, idx) => {
@@ -3039,105 +3135,130 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       </button>
                     </div>
 
-                    <select
-                      value={motmPlayerId || ''}
-                      onChange={(e) => setMotmPlayerId(e.target.value || null)}
-                      className="w-full px-3 py-2.5 text-xs font-mono font-bold uppercase tracking-wider border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none transition-all cursor-pointer"
-                    >
-                      <option value="">-- Select Player --</option>
-                      <optgroup label={`Home Team (${fixture.home_team_name})`}>
-                        {(() => {
-                          // For round robin, combine stats for each unique player
-                          const isRoundRobin = fixture.knockout_format === 'round_robin';
-                          
-                          if (isRoundRobin) {
-                            // Group by player_id and sum their stats
-                            const playerStats = new Map<string, { name: string; goals: number; conceded: number }>();
-                            
-                            matchups.forEach((m, idx) => {
-                              const playerId = m.home_player_id;
-                              const goals = matchResults[idx]?.home_goals ?? 0;
-                              const conceded = matchResults[idx]?.away_goals ?? 0;
-                              
-                              if (playerStats.has(playerId)) {
-                                const existing = playerStats.get(playerId)!;
-                                existing.goals += goals;
-                                existing.conceded += conceded;
-                              } else {
-                                playerStats.set(playerId, {
-                                  name: m.home_player_name,
-                                  goals,
-                                  conceded
-                                });
-                              }
-                            });
-                            
-                            return Array.from(playerStats.entries()).map(([playerId, stats]) => (
-                              <option key={`home-${playerId}`} value={playerId}>
-                                {stats.name} ({stats.goals}G, {stats.conceded}C)
-                              </option>
-                            ));
-                          } else {
-                            // Regular matchup - show each matchup separately
-                            return matchups.map((m, idx) => {
-                              const goals = matchResults[idx]?.home_goals ?? 0;
-                              const conceded = matchResults[idx]?.away_goals ?? 0;
-                              return (
-                                <option key={`home-${idx}-${m.home_player_id}`} value={m.home_player_id}>
-                                  {m.home_player_name} ({goals}G, {conceded}C)
-                                </option>
-                              );
-                            });
-                          }
-                        })()}
-                      </optgroup>
-                      <optgroup label={`Away Team (${fixture.away_team_name})`}>
-                        {(() => {
-                          // For round robin, combine stats for each unique player
-                          const isRoundRobin = fixture.knockout_format === 'round_robin';
-                          
-                          if (isRoundRobin) {
-                            // Group by player_id and sum their stats
-                            const playerStats = new Map<string, { name: string; goals: number; conceded: number }>();
-                            
-                            matchups.forEach((m, idx) => {
-                              const playerId = m.away_player_id;
-                              const goals = matchResults[idx]?.away_goals ?? 0;
-                              const conceded = matchResults[idx]?.home_goals ?? 0;
-                              
-                              if (playerStats.has(playerId)) {
-                                const existing = playerStats.get(playerId)!;
-                                existing.goals += goals;
-                                existing.conceded += conceded;
-                              } else {
-                                playerStats.set(playerId, {
-                                  name: m.away_player_name,
-                                  goals,
-                                  conceded
-                                });
-                              }
-                            });
-                            
-                            return Array.from(playerStats.entries()).map(([playerId, stats]) => (
-                              <option key={`away-${playerId}`} value={playerId}>
-                                {stats.name} ({stats.goals}G, {stats.conceded}C)
-                              </option>
-                            ));
-                          } else {
-                            // Regular matchup - show each matchup separately
-                            return matchups.map((m, idx) => {
-                              const goals = matchResults[idx]?.away_goals ?? 0;
-                              const conceded = matchResults[idx]?.home_goals ?? 0;
-                              return (
-                                <option key={`away-${idx}-${m.away_player_id}`} value={m.away_player_id}>
-                                  {m.away_player_name} ({goals}G, {conceded}C)
-                                </option>
-                              );
-                            });
-                          }
-                        })()}
-                      </optgroup>
-                    </select>
+                    {/* Visual Man of the Match Selector Cards */}
+                    <div className="space-y-3 font-mono">
+                      {/* Home Team MOTM Options */}
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                          {fixture.home_team_name} Players
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {matchups.map((m, idx) => {
+                            const isSelected = motmPlayerId === m.home_player_id;
+                            const goals = matchResults[idx]?.home_goals ?? 0;
+                            const conceded = matchResults[idx]?.away_goals ?? 0;
+                            const homeMatch = homeSquadById.get(m.home_player_id) || homeSquadByName.get(m.home_player_name?.toLowerCase());
+                            const category = m.home_category || homeMatch?.category;
+
+                            return (
+                              <div
+                                key={`motm-home-${idx}-${m.home_player_id}`}
+                                onClick={() => setMotmPlayerId(isSelected ? null : m.home_player_id)}
+                                className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
+                                  isSelected
+                                    ? 'bg-amber-50 border-amber-400 shadow-sm'
+                                    : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <PlayerPhoto
+                                    photoUrl={homeMatch?.photo_url || m.home_photo_url}
+                                    playerName={m.home_player_name}
+                                    size={36}
+                                    shape="circle"
+                                    posXCircle={homeMatch?.photo_position_x_circle}
+                                    posYCircle={homeMatch?.photo_position_y_circle}
+                                    scaleCircle={homeMatch?.photo_scale_circle}
+                                    className="border border-slate-300 flex-shrink-0"
+                                  />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="font-extrabold text-xs text-slate-900 truncate">
+                                      {m.home_player_name}
+                                    </span>
+                                    {category && (
+                                      <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(category)}`}>
+                                        {category}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
+                                    {goals}G {conceded}C
+                                  </span>
+                                  {isSelected && (
+                                    <span className="text-amber-600 font-bold text-[10px] uppercase bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded">
+                                      ⭐ MOTM
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Away Team MOTM Options */}
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 mt-3">
+                          {fixture.away_team_name} Players
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {matchups.map((m, idx) => {
+                            const isSelected = motmPlayerId === m.away_player_id;
+                            const goals = matchResults[idx]?.away_goals ?? 0;
+                            const conceded = matchResults[idx]?.home_goals ?? 0;
+                            const awayMatch = awaySquadById.get(m.away_player_id) || awaySquadByName.get(m.away_player_name?.toLowerCase());
+                            const category = m.away_category || awayMatch?.category;
+
+                            return (
+                              <div
+                                key={`motm-away-${idx}-${m.away_player_id}`}
+                                onClick={() => setMotmPlayerId(isSelected ? null : m.away_player_id)}
+                                className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
+                                  isSelected
+                                    ? 'bg-amber-50 border-amber-400 shadow-sm'
+                                    : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <PlayerPhoto
+                                    photoUrl={awayMatch?.photo_url || m.away_photo_url}
+                                    playerName={m.away_player_name}
+                                    size={36}
+                                    shape="circle"
+                                    posXCircle={awayMatch?.photo_position_x_circle}
+                                    posYCircle={awayMatch?.photo_position_y_circle}
+                                    scaleCircle={awayMatch?.photo_scale_circle}
+                                    className="border border-slate-300 flex-shrink-0"
+                                  />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="font-extrabold text-xs text-slate-900 truncate">
+                                      {m.away_player_name}
+                                    </span>
+                                    {category && (
+                                      <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(category)}`}>
+                                        {category}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
+                                    {goals}G {conceded}C
+                                  </span>
+                                  {isSelected && (
+                                    <span className="text-amber-600 font-bold text-[10px] uppercase bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded">
+                                      ⭐ MOTM
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
 
                     {motmPlayerId && (() => {
                       const isRoundRobin = fixture.knockout_format === 'round_robin';
@@ -3883,21 +4004,38 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 const isHome = subSide === 'home';
                 const currentPlayerId = isHome ? matchup.home_player_id : matchup.away_player_id;
                 const currentPlayerName = isHome ? matchup.home_player_name : matchup.away_player_name;
-                const playersList = isHome ? homePlayers : awayPlayers;
-                const currentPlayer = playersList.find(p => p.player_id === currentPlayerId);
-                const currentCategory = currentPlayer?.category || 'classic';
+                const squadMap = isHome ? homeSquadById : awaySquadById;
+                const squadByName = isHome ? homeSquadByName : awaySquadByName;
+                const playerMatch = squadMap.get(currentPlayerId) || squadByName.get(currentPlayerName?.toLowerCase());
+                const currentCategory = playerMatch?.category;
 
                 return (
                   <div className="space-y-3 font-mono text-xs">
-                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400 uppercase tracking-wider text-[10px]">Current Player:</span>
-                        <span className="font-extrabold text-slate-800 uppercase">{currentPlayerName}</span>
+                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <PlayerPhoto
+                          photoUrl={playerMatch?.photo_url}
+                          playerName={currentPlayerName}
+                          size={40}
+                          shape="circle"
+                          posXCircle={playerMatch?.photo_position_x_circle}
+                          posYCircle={playerMatch?.photo_position_y_circle}
+                          scaleCircle={playerMatch?.photo_scale_circle}
+                          className="border border-slate-300 flex-shrink-0"
+                        />
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-slate-400 uppercase tracking-wider text-[9px] font-bold">Subbing Out</span>
+                          <span className="font-extrabold text-slate-900 truncate text-sm">{currentPlayerName}</span>
+                          {currentCategory && (
+                            <span className={`inline-block text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(currentCategory)}`}>
+                              {currentCategory}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex justify-between mt-1">
-                        <span className="text-slate-400 uppercase tracking-wider text-[10px]">Category:</span>
-                        <span className="font-extrabold text-indigo-600 uppercase bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded">{currentCategory}</span>
-                      </div>
+                      <span className="px-2 py-1 bg-red-50 text-red-700 border border-red-200 text-[10px] font-bold rounded-lg uppercase whitespace-nowrap">
+                        OFF 🛑
+                      </span>
                     </div>
                   </div>
                 );
@@ -3908,15 +4046,9 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                 Select Replacement Player
               </label>
-              <select
-                value={subNewPlayerId}
-                onChange={(e) => setSubNewPlayerId(e.target.value)}
-                className="w-full px-3 py-2.5 text-xs font-mono font-bold uppercase tracking-wider border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none transition-all cursor-pointer"
-              >
-                <option value="">-- Choose Player --</option>
+              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                 {(subSide === 'home' ? homePlayers : awayPlayers)
                   .filter(player => {
-                    // Filter out the current player being substituted
                     if (subMatchupIndex === null) return true;
                     const currentMatchup = matchups[subMatchupIndex];
                     const currentPlayerId = subSide === 'home'
@@ -3925,34 +4057,50 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     return player.player_id !== currentPlayerId;
                   })
                   .map((player) => {
-                    // Display category properly
-                    let catDisplay = 'N/A';
-
-                    // Check various category field formats
-                    if (player.category_id?.toUpperCase() === 'LEGEND' || player.category?.toUpperCase() === 'LEGEND') {
-                      catDisplay = 'LEGEND';
-                    } else if (player.category_id?.toUpperCase() === 'CLASSIC' || player.category?.toUpperCase() === 'CLASSIC') {
-                      catDisplay = 'CLASSIC';
-                    } else if (player.category_name?.toLowerCase().includes('legend')) {
-                      catDisplay = 'LEGEND';
-                    } else if (player.category_name?.toLowerCase().includes('classic')) {
-                      catDisplay = 'CLASSIC';
-                    } else if (player.category_name) {
-                      catDisplay = player.category_name.toUpperCase();
-                    } else if (typeof player.category === 'number') {
-                      // Map numeric categories: 1 = Legend, 2 = Classic
-                      catDisplay = player.category === 1 ? 'LEGEND' : player.category === 2 ? 'CLASSIC' : `CAT ${player.category}`;
-                    }
+                    const isSelected = subNewPlayerId === player.player_id;
+                    const squadMap = subSide === 'home' ? homeSquadById : awaySquadById;
+                    const playerMatch = squadMap.get(player.player_id) || player;
+                    const category = playerMatch?.category || player.category || 'realplayer';
 
                     return (
-
-                      <option key={player.player_id} value={player.player_id}>
-                        {player.name || player.player_name} ({catDisplay})
-                      </option>
-
-  );
+                      <div
+                        key={player.player_id}
+                        onClick={() => setSubNewPlayerId(player.player_id)}
+                        className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-amber-50 border-amber-400 shadow-sm'
+                            : 'bg-white border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <PlayerPhoto
+                            photoUrl={playerMatch?.photo_url || player.photo_url}
+                            playerName={player.name || player.player_name}
+                            size={36}
+                            shape="circle"
+                            posXCircle={playerMatch?.photo_position_x_circle}
+                            posYCircle={playerMatch?.photo_position_y_circle}
+                            scaleCircle={playerMatch?.photo_scale_circle}
+                            className="border border-slate-300 flex-shrink-0"
+                          />
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-extrabold text-xs text-slate-900 truncate">
+                              {player.name || player.player_name}
+                            </span>
+                            <span className={`inline-block text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(category)}`}>
+                              {category}
+                            </span>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <span className="text-amber-600 font-bold text-[10px] uppercase bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-lg whitespace-nowrap">
+                            Selected ✓
+                          </span>
+                        )}
+                      </div>
+                    );
                   })}
-              </select>
+              </div>
               {subNewPlayerId && (
                 <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-xl font-mono text-xs">
                   <div className="flex items-center justify-between">
