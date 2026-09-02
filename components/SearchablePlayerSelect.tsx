@@ -2,12 +2,16 @@
 
 import React, { useState, useRef, useEffect, useId } from 'react';
 import { Search, ChevronDown, Check, User } from 'lucide-react';
+import PlayerPhoto from '@/components/PlayerPhoto';
 
 export interface PlayerOption {
   player_id: string;
   player_name: string;
   category?: string;
   photo_url?: string;
+  photo_position_x_circle?: number;
+  photo_position_y_circle?: number;
+  photo_scale_circle?: number;
 }
 
 interface SearchablePlayerSelectProps {
@@ -70,24 +74,37 @@ export default function SearchablePlayerSelect({
   const listRef = useRef<HTMLUListElement>(null);
   const searchInputId = useId();
 
-  const selectedPlayer = players.find(p => p.player_id === value);
+  // Deduplicate input players by player_id
+  const uniquePlayers = useMemo(() => {
+    const map = new Map<string, PlayerOption>();
+    (players || []).forEach(p => {
+      if (p && p.player_id && !map.has(p.player_id)) {
+        map.set(p.player_id, p);
+      }
+    });
+    return Array.from(map.values());
+  }, [players]);
+
+  const selectedPlayer = uniquePlayers.find(p => p.player_id === value);
 
   // Filter & sort players based on category priority & search query
-  const filteredPlayers = players
-    .filter(p => {
-      if (!searchTerm.trim()) return true;
-      const term = searchTerm.toLowerCase();
-      return (
-        (p.player_name && p.player_name.toLowerCase().includes(term)) ||
-        (p.category && p.category.toLowerCase().includes(term))
-      );
-    })
-    .sort((a, b) => {
-      const pA = getCategoryPriority(a.category);
-      const pB = getCategoryPriority(b.category);
-      if (pA !== pB) return pA - pB;
-      return (a.player_name || '').localeCompare(b.player_name || '');
-    });
+  const filteredPlayers = useMemo(() => {
+    return uniquePlayers
+      .filter(p => {
+        if (!searchTerm.trim()) return true;
+        const term = searchTerm.toLowerCase();
+        return (
+          (p.player_name && p.player_name.toLowerCase().includes(term)) ||
+          (p.category && p.category.toLowerCase().includes(term))
+        );
+      })
+      .sort((a, b) => {
+        const pA = getCategoryPriority(a.category);
+        const pB = getCategoryPriority(b.category);
+        if (pA !== pB) return pA - pB;
+        return (a.player_name || '').localeCompare(b.player_name || '');
+      });
+  }, [uniquePlayers, searchTerm]);
 
   // Close when clicking outside
   useEffect(() => {
@@ -111,6 +128,16 @@ export default function SearchablePlayerSelect({
       inputRef.current.focus();
     }
   }, [isOpen]);
+
+  // Auto-scroll highlighted item into view during keyboard navigation
+  useEffect(() => {
+    if (isOpen && listRef.current) {
+      const highlightedEl = listRef.current.children[highlightedIndex] as HTMLElement;
+      if (highlightedEl) {
+        highlightedEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }, [highlightedIndex, isOpen]);
 
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -176,17 +203,16 @@ export default function SearchablePlayerSelect({
         <div className="flex items-center gap-2.5 overflow-hidden flex-1 mr-2">
           {selectedPlayer ? (
             <>
-              {selectedPlayer.photo_url ? (
-                <img
-                  src={selectedPlayer.photo_url}
-                  alt={selectedPlayer.player_name}
-                  className="w-8 h-8 rounded-full object-cover border border-slate-200 flex-shrink-0"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
-                  {selectedPlayer.player_name.charAt(0)}
-                </div>
-              )}
+              <PlayerPhoto
+                photoUrl={selectedPlayer.photo_url}
+                playerName={selectedPlayer.player_name}
+                size={32}
+                shape="circle"
+                posXCircle={selectedPlayer.photo_position_x_circle}
+                posYCircle={selectedPlayer.photo_position_y_circle}
+                scaleCircle={selectedPlayer.photo_scale_circle}
+                className="border border-slate-200 flex-shrink-0"
+              />
               <div className="flex flex-col truncate">
                 <span className="text-xs sm:text-sm font-extrabold text-slate-900 truncate">
                   {selectedPlayer.player_name}
@@ -272,17 +298,16 @@ export default function SearchablePlayerSelect({
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      {player.photo_url ? (
-                        <img
-                          src={player.photo_url}
-                          alt={player.player_name}
-                          className="w-7 h-7 rounded-full object-cover border border-slate-200 flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-7 h-7 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
-                          {player.player_name.charAt(0)}
-                        </div>
-                      )}
+                      <PlayerPhoto
+                        photoUrl={player.photo_url}
+                        playerName={player.player_name}
+                        size={28}
+                        shape="circle"
+                        posXCircle={player.photo_position_x_circle}
+                        posYCircle={player.photo_position_y_circle}
+                        scaleCircle={player.photo_scale_circle}
+                        className="border border-slate-200 flex-shrink-0"
+                      />
                       <div className="flex flex-col min-w-0">
                         <span className="text-xs font-extrabold text-slate-800 truncate">
                           {player.player_name}

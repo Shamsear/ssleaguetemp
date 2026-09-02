@@ -18,6 +18,7 @@ import LineupDeadlineMonitor from '@/components/LineupDeadlineMonitor';
 import BlindLineupSubmission from '@/components/BlindLineupSubmission';
 import AuthGuard from '@/components/auth/AuthGuard';
 import SearchablePlayerSelect from '@/components/SearchablePlayerSelect';
+import PlayerPhoto from '@/components/PlayerPhoto';
 
 const getCategoryPriority = (category?: string): number => {
   if (!category) return 99;
@@ -647,7 +648,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
           }
 
           // Fetch full squad details for Home and Away teams to guarantee player_name, category, and photo_url
-          let homeSquadMap = new Map();
+          let homeSquadById = new Map();
+          let homeSquadByName = new Map();
           if (f.home_team_id) {
             try {
               const hSquadRes = await fetch(`/api/team/${f.home_team_id}/players?seasonId=${f.season_id}`);
@@ -661,10 +663,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     player_id: pid,
                     player_name: pname,
                     category: p.category || 'realplayer',
-                    photo_url: p.photo_url || p.photoUrl || p.photo || null
+                    photo_url: p.photo_url || p.photoUrl || p.photo || null,
+                    photo_position_x_circle: p.photo_position_x_circle ?? null,
+                    photo_position_y_circle: p.photo_position_y_circle ?? null,
+                    photo_scale_circle: p.photo_scale_circle ?? null
                   };
-                  if (pid) homeSquadMap.set(pid, item);
-                  if (pname) homeSquadMap.set(pname.toLowerCase(), item);
+                  if (pid) homeSquadById.set(pid, item);
+                  if (pname) homeSquadByName.set(pname.toLowerCase(), item);
                 });
               }
             } catch (hErr) {
@@ -672,7 +677,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             }
           }
 
-          let awaySquadMap = new Map();
+          let awaySquadById = new Map();
+          let awaySquadByName = new Map();
           if (f.away_team_id) {
             try {
               const aSquadRes = await fetch(`/api/team/${f.away_team_id}/players?seasonId=${f.season_id}`);
@@ -686,10 +692,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     player_id: pid,
                     player_name: pname,
                     category: p.category || 'realplayer',
-                    photo_url: p.photo_url || p.photoUrl || p.photo || null
+                    photo_url: p.photo_url || p.photoUrl || p.photo || null,
+                    photo_position_x_circle: p.photo_position_x_circle ?? null,
+                    photo_position_y_circle: p.photo_position_y_circle ?? null,
+                    photo_scale_circle: p.photo_scale_circle ?? null
                   };
-                  if (pid) awaySquadMap.set(pid, item);
-                  if (pname) awaySquadMap.set(pname.toLowerCase(), item);
+                  if (pid) awaySquadById.set(pid, item);
+                  if (pname) awaySquadByName.set(pname.toLowerCase(), item);
                 });
               }
             } catch (aErr) {
@@ -697,38 +706,54 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             }
           }
 
-          // Normalize homeStarting XI with squad details
+          // Normalize & deduplicate homeStarting XI
+          const homeMap = new Map();
           if (homeStarting.length > 0) {
-            homeStarting = homeStarting.map((item: any) => {
+            homeStarting.forEach((item: any) => {
               const pid = typeof item === 'string' ? item : String(item.player_id || item.id || '');
               const pname = typeof item === 'object' ? (item.player_name || item.name) : null;
-              const squadMatch = homeSquadMap.get(pid) || (pname ? homeSquadMap.get(pname.toLowerCase()) : null);
-              return {
+              const squadMatch = homeSquadById.get(pid) || (pname ? homeSquadByName.get(pname.toLowerCase()) : null);
+              const normalized = {
                 player_id: pid || squadMatch?.player_id || '',
                 player_name: pname || squadMatch?.player_name || 'Unknown Player',
                 category: (typeof item === 'object' && item.category) || squadMatch?.category || 'realplayer',
-                photo_url: (typeof item === 'object' && item.photo_url) || squadMatch?.photo_url || null
+                photo_url: (typeof item === 'object' && item.photo_url) || squadMatch?.photo_url || null,
+                photo_position_x_circle: (typeof item === 'object' && item.photo_position_x_circle != null) ? item.photo_position_x_circle : (squadMatch?.photo_position_x_circle ?? null),
+                photo_position_y_circle: (typeof item === 'object' && item.photo_position_y_circle != null) ? item.photo_position_y_circle : (squadMatch?.photo_position_y_circle ?? null),
+                photo_scale_circle: (typeof item === 'object' && item.photo_scale_circle != null) ? item.photo_scale_circle : (squadMatch?.photo_scale_circle ?? null)
               };
+              if (normalized.player_id && !homeMap.has(normalized.player_id)) {
+                homeMap.set(normalized.player_id, normalized);
+              }
             });
+            homeStarting = Array.from(homeMap.values());
           } else {
-            homeStarting = Array.from(homeSquadMap.values());
+            homeStarting = Array.from(homeSquadById.values());
           }
 
-          // Normalize awayStarting XI with squad details
+          // Normalize & deduplicate awayStarting XI
+          const awayMap = new Map();
           if (awayStarting.length > 0) {
-            awayStarting = awayStarting.map((item: any) => {
+            awayStarting.forEach((item: any) => {
               const pid = typeof item === 'string' ? item : String(item.player_id || item.id || '');
               const pname = typeof item === 'object' ? (item.player_name || item.name) : null;
-              const squadMatch = awaySquadMap.get(pid) || (pname ? awaySquadMap.get(pname.toLowerCase()) : null);
-              return {
+              const squadMatch = awaySquadById.get(pid) || (pname ? awaySquadByName.get(pname.toLowerCase()) : null);
+              const normalized = {
                 player_id: pid || squadMatch?.player_id || '',
                 player_name: pname || squadMatch?.player_name || 'Unknown Player',
                 category: (typeof item === 'object' && item.category) || squadMatch?.category || 'realplayer',
-                photo_url: (typeof item === 'object' && item.photo_url) || squadMatch?.photo_url || null
+                photo_url: (typeof item === 'object' && item.photo_url) || squadMatch?.photo_url || null,
+                photo_position_x_circle: (typeof item === 'object' && item.photo_position_x_circle != null) ? item.photo_position_x_circle : (squadMatch?.photo_position_x_circle ?? null),
+                photo_position_y_circle: (typeof item === 'object' && item.photo_position_y_circle != null) ? item.photo_position_y_circle : (squadMatch?.photo_position_y_circle ?? null),
+                photo_scale_circle: (typeof item === 'object' && item.photo_scale_circle != null) ? item.photo_scale_circle : (squadMatch?.photo_scale_circle ?? null)
               };
+              if (normalized.player_id && !awayMap.has(normalized.player_id)) {
+                awayMap.set(normalized.player_id, normalized);
+              }
             });
+            awayStarting = Array.from(awayMap.values());
           } else {
-            awayStarting = Array.from(awaySquadMap.values());
+            awayStarting = Array.from(awaySquadById.values());
           }
 
           // Sort Home & Away players by Category Priority (Tier 1 -> Tier 2 -> Tier 3 -> Tier 4 -> Uncapped)
@@ -1538,17 +1563,16 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           <span>Home Player</span>
                         </label>
                         <div className="flex items-center gap-3 p-3 bg-blue-50/70 border border-blue-200 rounded-xl">
-                          {homePlayer.photo_url ? (
-                            <img
-                              src={homePlayer.photo_url}
-                              alt={homePlayer.player_name || homePlayer.name || 'Player'}
-                              className="w-10 h-10 rounded-full object-cover border border-blue-300 flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
-                              {(homePlayer.player_name || homePlayer.name || '?').charAt(0).toUpperCase()}
-                            </div>
-                          )}
+                          <PlayerPhoto
+                            photoUrl={homePlayer.photo_url}
+                            playerName={homePlayer.player_name || homePlayer.name || 'Player'}
+                            size={40}
+                            shape="circle"
+                            posXCircle={homePlayer.photo_position_x_circle}
+                            posYCircle={homePlayer.photo_position_y_circle}
+                            scaleCircle={homePlayer.photo_scale_circle}
+                            className="border border-blue-300 flex-shrink-0"
+                          />
                           <div className="flex flex-col truncate">
                             <span className="font-extrabold text-sm text-slate-900 truncate">
                               {homePlayer.player_name || homePlayer.name || 'Unknown Player'}
