@@ -619,9 +619,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 const hSquadJson = await hSquadRes.json();
                 const squad = hSquadJson.realplayers || hSquadJson.data || [];
                 homeStarting = squad.map((p: any) => ({
-                  player_id: p.player_id || p.id,
+                  player_id: String(p.player_id || p.id),
                   player_name: p.name || p.player_name,
-                  category: p.category || 'realplayer'
+                  category: p.category || 'realplayer',
+                  photo_url: p.photo_url || p.photoUrl || p.photo || null
                 }));
               }
             } catch (hErr) {
@@ -637,15 +638,19 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 const aSquadJson = await aSquadRes.json();
                 const squad = aSquadJson.realplayers || aSquadJson.data || [];
                 awayStarting = squad.map((p: any) => ({
-                  player_id: p.player_id || p.id,
+                  player_id: String(p.player_id || p.id),
                   player_name: p.name || p.player_name,
-                  category: p.category || 'realplayer'
+                  category: p.category || 'realplayer',
+                  photo_url: p.photo_url || p.photoUrl || p.photo || null
                 }));
               }
             } catch (aErr) {
               console.error('Error fetching away squad players:', aErr);
             }
           }
+
+          // Sort Home players by Category Priority (Icon / Tier 1 -> Tier 2 -> Tier 3 -> Uncapped / Realplayer)
+          homeStarting.sort((a: any, b: any) => getCategoryPriority(a.category) - getCategoryPriority(b.category));
 
           setHomeStartingXI(homeStarting);
           setHomePlayers(homeStarting);
