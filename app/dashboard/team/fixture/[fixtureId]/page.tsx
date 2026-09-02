@@ -823,6 +823,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
     setIsHomeTeam(isHome);
     setCanCreateMatchups((isHome || isAway || isAdmin) && matchups.length === 0);
+
+    const hasResultsEntered = matchups.some(m => m.home_goals !== null && m.away_goals !== null);
+    const canEdit = (isHome || isAway || isAdmin) && matchups.length > 0 && !hasResultsEntered && phase !== 'closed';
+    setCanEditMatchups(canEdit);
   }, [fixture, user, matchups, phase]);
 
   useEffect(() => {
@@ -1740,14 +1744,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 {/* WhatsApp Share Button */}
                 <button
                   onClick={handleWhatsAppShare}
-                  className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
+                  className="relative overflow-hidden w-full inline-flex items-center justify-center px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 group-hover:animate-shimmer"></div>
-                  <div className="relative flex items-center gap-3">
-                    <svg className="w-6 h-6 group-hover:rotate-12 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
                     </svg>
-                    <span className="text-base sm:text-lg">Share</span>
+                    <span>Share via WhatsApp</span>
                   </div>
                 </button>
 
@@ -1769,14 +1772,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       });
                     });
                   }}
-                  className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
+                  className="relative overflow-hidden w-full inline-flex items-center justify-center px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 group-hover:animate-shimmer"></div>
-                  <div className="relative flex items-center gap-3">
-                    <svg className="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
-                    <span className="text-base sm:text-lg">Copy</span>
+                    <span>Copy Match Details</span>
                   </div>
                 </button>
               </div>
@@ -1785,14 +1787,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               {canEditMatchups && !isEditMode && (
                 <button
                   onClick={() => setIsEditMode(true)}
-                  className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all"
+                  className="relative overflow-hidden w-full inline-flex items-center justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 group-hover:animate-shimmer"></div>
-                  <div className="relative flex items-center gap-3">
-                    <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    <span className="text-base sm:text-lg">Edit Matchups</span>
+                    <span>Edit Matchups</span>
                   </div>
                 </button>
               )}
@@ -1815,58 +1816,85 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                   </div>
 
                   {matchups.map((matchup, idx) => (
-                    <div key={idx} className="group relative p-5 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-2xl space-y-4 hover:shadow-xl hover:border-indigo-300 transition-all">
-                      <div className="absolute top-3 right-3">
+                    <div key={idx} className="group relative p-5 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-2xl space-y-4 hover:shadow-xl hover:border-indigo-300 transition-all font-mono">
+                      <div className="flex items-center justify-between mb-2">
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                            <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-                          </svg>
                           Match #{matchup.position}
                         </span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                         {/* Home Player */}
                         <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Home Player</label>
-                          <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
-                            <div className="font-medium text-gray-900">{matchup.home_player_name}</div>
-                          </div>
+                          <label className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                            <Home className="w-3 h-3 text-blue-600" />
+                            <span>Home Player</span>
+                          </label>
+                          {(() => {
+                            const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
+                            const homeCategory = matchup.home_category || homeMatch?.category;
+                            return (
+                              <div className="flex items-center gap-3 p-3 bg-blue-50/70 border border-blue-200 rounded-xl">
+                                <PlayerPhoto
+                                  photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
+                                  playerName={matchup.home_player_name}
+                                  size={40}
+                                  shape="circle"
+                                  posXCircle={homeMatch?.photo_position_x_circle}
+                                  posYCircle={homeMatch?.photo_position_y_circle}
+                                  scaleCircle={homeMatch?.photo_scale_circle}
+                                  className="border border-blue-300 flex-shrink-0"
+                                />
+                                <div className="flex flex-col truncate">
+                                  <span className="font-extrabold text-sm text-slate-900 truncate">
+                                    {matchup.home_player_name}
+                                  </span>
+                                  {homeCategory && (
+                                    <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
+                                      {homeCategory}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         {/* VS */}
                         <div className="flex justify-center">
-                          <div className="bg-gray-300 rounded-full px-3 py-1 text-xs font-medium text-gray-700">vs</div>
+                          <div className="bg-slate-800 text-white rounded-full px-3 py-1 text-xs font-black shadow-sm">VS</div>
                         </div>
 
                         {/* Away Player Dropdown */}
                         <div className="md:col-span-2">
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Away Player</label>
-                          <select
-                            value={matchup.away_player_id}
-                            onChange={(e) => {
+                          <label className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                            <Plane className="w-3 h-3 text-slate-600" />
+                            <span>Away Player</span>
+                          </label>
+                          <SearchablePlayerSelect
+                            players={awayStartingXI
+                              .filter(p => !matchups.some((m, mIdx) => mIdx !== idx && m.away_player_id === p.player_id))
+                              .map(p => ({
+                                player_id: p.player_id,
+                                player_name: p.player_name,
+                                category: p.category,
+                                photo_url: p.photo_url,
+                                photo_position_x_circle: p.photo_position_x_circle,
+                                photo_position_y_circle: p.photo_position_y_circle,
+                                photo_scale_circle: p.photo_scale_circle,
+                              }))
+                            }
+                            value={matchup.away_player_id || ''}
+                            onChange={(val) => {
                               const newMatchups = [...matchups];
-                              const selectedPlayer = awayPlayers.find(p => p.player_id === e.target.value);
-                              newMatchups[idx].away_player_id = e.target.value;
+                              const selectedPlayer = awayStartingXI.find(p => p.player_id === val);
+                              newMatchups[idx].away_player_id = val;
                               newMatchups[idx].away_player_name = selectedPlayer?.player_name || '';
                               setMatchups(newMatchups);
                             }}
-                            className="w-full p-3 bg-white border border-gray-300 rounded-lg font-medium text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          >
-                            <option value="">Select Away Player</option>
-                            {awayPlayers
-                              .filter(player => {
-                                const isCurrentlySelectedInThisMatchup = matchup.away_player_id === player.player_id;
-                                const isSelectedInAnotherMatchup = matchups.some((m, mIdx) => mIdx !== idx && m.away_player_id === player.player_id);
-                                return isCurrentlySelectedInThisMatchup || !isSelectedInAnotherMatchup;
-                              })
-                              .map(player => (
-                                <option key={player.player_id} value={player.player_id}>
-                                  {player.player_name}
-                                </option>
-                              ))}
-                          </select>
+                            placeholder="Search & select away player..."
+                          />
                         </div>
+                      </div>
                       </div>
 
                       {/* Match Duration */}
