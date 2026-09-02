@@ -1,6 +1,5 @@
-'use client';
-
 import React, { useState, useRef, useEffect, useId, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, ChevronDown, Check, User } from 'lucide-react';
 import PlayerPhoto from '@/components/PlayerPhoto';
 
@@ -70,9 +69,38 @@ export default function SearchablePlayerSelect({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const searchInputId = useId();
+
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+
+  // Update dropdown position when opened or scrolled/resized
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const updatePosition = () => {
+        if (buttonRef.current) {
+          const rect = buttonRef.current.getBoundingClientRect();
+          const spaceBelow = window.innerHeight - rect.bottom;
+          const openUpward = spaceBelow < 260 && rect.top > 260;
+          setDropdownPosition({
+            top: openUpward ? Math.max(10, rect.top - 268) : rect.bottom + 6,
+            left: Math.max(10, rect.left),
+            width: Math.min(rect.width, window.innerWidth - 20),
+          });
+        }
+      };
+      updatePosition();
+      window.addEventListener('resize', updatePosition);
+      window.addEventListener('scroll', updatePosition, true);
+      return () => {
+        window.removeEventListener('resize', updatePosition);
+        window.removeEventListener('scroll', updatePosition, true);
+      };
+    }
+  }, [isOpen]);
 
   // Deduplicate input players by player_id
   const uniquePlayers = useMemo(() => {
@@ -109,7 +137,10 @@ export default function SearchablePlayerSelect({
   // Close when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current && !containerRef.current.contains(event.target as Node) &&
+        dropdownRef.current && !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -169,25 +200,11 @@ export default function SearchablePlayerSelect({
     }
   };
 
-  const getCategoryBadgeClass = (category?: string) => {
-    if (!category) return 'bg-slate-100 text-slate-700 border-slate-200';
-    const cat = category.toLowerCase();
-    if (cat.includes('icon') || cat.includes('legend') || cat.includes('tier 1') || cat.includes('marquee')) {
-      return 'bg-amber-100 text-amber-800 border-amber-300 font-extrabold';
-    }
-    if (cat.includes('tier 2') || cat.includes('classic') || cat.includes('gold')) {
-      return 'bg-blue-100 text-blue-800 border-blue-300 font-bold';
-    }
-    if (cat.includes('tier 3') || cat.includes('silver')) {
-      return 'bg-slate-200 text-slate-800 border-slate-300 font-semibold';
-    }
-    return 'bg-slate-100 text-slate-700 border-slate-200';
-  };
-
   return (
     <div ref={containerRef} className="relative w-full font-mono">
       {/* Dropdown Trigger Button */}
       <button
+        ref={buttonRef}
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
@@ -242,95 +259,112 @@ export default function SearchablePlayerSelect({
         />
       </button>
 
-      {/* Popover Dropdown Panel */}
-      {isOpen && (
-        <div className="absolute z-50 left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-72 animate-in fade-in zoom-in-95 duration-150">
-          {/* Search Header */}
-          <div className="p-2 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
-            <Search className="w-4 h-4 text-slate-400 ml-1.5 flex-shrink-0" />
-            <input
-              id={searchInputId}
-              ref={inputRef}
-              type="text"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Search name or category..."
-              className="w-full bg-transparent text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none py-1.5"
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm('')}
-                className="text-slate-400 hover:text-slate-600 text-xs px-1.5 font-bold"
-              >
-                Clear
-              </button>
-            )}
-          </div>
+      {/* Portal Dropdown Panel */}
+      {isOpen && typeof window !== 'undefined' && createPortal(
+        <>
+          {/* Backdrop overlay */}
+          <div
+            className="fixed inset-0 z-[9998] bg-transparent"
+            onClick={() => setIsOpen(false)}
+          />
+          <div
+            ref={dropdownRef}
+            className="fixed z-[9999] bg-white border border-slate-200/90 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-mono animate-in fade-in zoom-in-95 duration-150"
+            style={{
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`,
+              width: `${dropdownPosition.width}px`,
+              maxHeight: '260px',
+            }}
+          >
+            {/* Search Header */}
+            <div className="p-2 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+              <Search className="w-4 h-4 text-slate-400 ml-1.5 flex-shrink-0" />
+              <input
+                id={searchInputId}
+                ref={inputRef}
+                type="text"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Search name or category..."
+                className="w-full bg-transparent text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none py-1.5"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="text-slate-400 hover:text-slate-600 text-xs px-1.5 font-bold"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
 
-          {/* Options List */}
-          <ul ref={listRef} className="overflow-y-auto p-1.5 space-y-1 max-h-56">
-            {filteredPlayers.length === 0 ? (
-              <li className="p-4 text-center text-xs font-semibold text-slate-400">
-                No matching players found
-              </li>
-            ) : (
-              filteredPlayers.map((player, idx) => {
-                const isSelected = player.player_id === value;
-                const isHighlighted = idx === highlightedIndex;
+            {/* Options List */}
+            <ul ref={listRef} className="overflow-y-auto p-1.5 space-y-1 max-h-56">
+              {filteredPlayers.length === 0 ? (
+                <li className="p-4 text-center text-xs font-semibold text-slate-400">
+                  No matching players found
+                </li>
+              ) : (
+                filteredPlayers.map((player, idx) => {
+                  const isSelected = player.player_id === value;
+                  const isHighlighted = idx === highlightedIndex;
 
-                return (
-                  <li
-                    key={player.player_id}
-                    onClick={() => {
-                      onChange(player.player_id);
-                      setIsOpen(false);
-                      setSearchTerm('');
-                    }}
-                    onMouseEnter={() => setHighlightedIndex(idx)}
-                    className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-colors ${
-                      isSelected
-                        ? 'bg-blue-50 border border-blue-200 text-blue-900'
-                        : isHighlighted
-                        ? 'bg-slate-100 text-slate-900'
-                        : 'hover:bg-slate-50 text-slate-800'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <PlayerPhoto
-                        photoUrl={player.photo_url}
-                        playerName={player.player_name}
-                        size={28}
-                        shape="circle"
-                        posXCircle={player.photo_position_x_circle}
-                        posYCircle={player.photo_position_y_circle}
-                        scaleCircle={player.photo_scale_circle}
-                        className="border border-slate-200 flex-shrink-0"
-                      />
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-xs font-extrabold text-slate-800 truncate">
-                          {player.player_name}
-                        </span>
-                        {player.category && (
-                          <span
-                            className={`inline-block self-start text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded border ${getCategoryBadgeClass(
-                              player.category
-                            )}`}
-                          >
-                            {player.category}
+                  return (
+                    <li
+                      key={player.player_id}
+                      onClick={() => {
+                        onChange(player.player_id);
+                        setIsOpen(false);
+                        setSearchTerm('');
+                      }}
+                      onMouseEnter={() => setHighlightedIndex(idx)}
+                      className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-colors ${
+                        isSelected
+                          ? 'bg-blue-50 border border-blue-200 text-blue-900'
+                          : isHighlighted
+                          ? 'bg-slate-100 text-slate-900'
+                          : 'hover:bg-slate-50 text-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <PlayerPhoto
+                          photoUrl={player.photo_url}
+                          playerName={player.player_name}
+                          size={28}
+                          shape="circle"
+                          posXCircle={player.photo_position_x_circle}
+                          posYCircle={player.photo_position_y_circle}
+                          scaleCircle={player.photo_scale_circle}
+                          className="border border-slate-200 flex-shrink-0"
+                        />
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-extrabold text-slate-800 truncate">
+                            {player.player_name}
                           </span>
-                        )}
+                          {player.category && (
+                            <span
+                              className={`inline-block self-start text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded border ${getCategoryBadgeClass(
+                                player.category
+                              )}`}
+                            >
+                              {player.category}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
 
-                    {isSelected && <Check className="w-4 h-4 text-blue-600 flex-shrink-0 ml-2" />}
-                  </li>
-                );
-              })
-            )}
-          </ul>
-        </div>
+                      {isSelected && <Check className="w-4 h-4 text-blue-600 flex-shrink-0 ml-2" />}
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </div>
+        </>,
+        document.body
       )}
     </div>
   );
