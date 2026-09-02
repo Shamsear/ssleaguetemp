@@ -22,11 +22,33 @@ import SearchablePlayerSelect from '@/components/SearchablePlayerSelect';
 const getCategoryPriority = (category?: string): number => {
   if (!category) return 99;
   const cat = category.toLowerCase().trim();
+  if (cat.includes('red') || cat === 'r') return 1;
+  if (cat.includes('black') || cat === 'bk' || cat === 'blk') return 2;
+  if (cat.includes('blue') || cat === 'b') return 3;
+  if (cat.includes('white') || cat === 'w') return 4;
   if (cat.includes('icon') || cat.includes('legend') || cat.includes('tier 1') || cat.includes('marquee')) return 1;
   if (cat.includes('tier 2') || cat.includes('classic') || cat.includes('gold')) return 2;
   if (cat.includes('tier 3') || cat.includes('silver')) return 3;
-  if (cat.includes('uncapped') || cat.includes('local') || cat.includes('base') || cat.includes('realplayer')) return 4;
+  if (cat.includes('uncapped') || cat.includes('local') || cat.includes('base') || cat.includes('realplayer')) return 5;
   return 10;
+};
+
+const getCategoryBadgeClass = (category?: string) => {
+  if (!category) return 'bg-slate-100 text-slate-700 border-slate-200';
+  const cat = category.toLowerCase().trim();
+  if (cat.includes('red') || cat === 'r') {
+    return 'bg-red-100 text-red-800 border-red-300 font-extrabold';
+  }
+  if (cat.includes('black') || cat === 'bk' || cat === 'blk') {
+    return 'bg-slate-900 text-white border-slate-700 font-extrabold';
+  }
+  if (cat.includes('blue') || cat === 'b') {
+    return 'bg-blue-100 text-blue-800 border-blue-200 font-bold';
+  }
+  if (cat.includes('white') || cat === 'w') {
+    return 'bg-slate-100 text-slate-700 border-slate-300 font-semibold';
+  }
+  return 'bg-blue-100 text-blue-800 border-blue-200';
 };
 
 interface Matchup {
@@ -1502,7 +1524,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
                       <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Match #{idx + 1}</span>
                       {homePlayer.category && (
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${getCategoryBadgeClass(homePlayer.category)}`}>
                           {homePlayer.category}
                         </span>
                       )}
@@ -1532,7 +1554,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               {homePlayer.player_name || homePlayer.name || 'Unknown Player'}
                             </span>
                             {homePlayer.category && (
-                              <span className="inline-block text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200 self-start mt-0.5">
+                              <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homePlayer.category)}`}>
                                 {homePlayer.category}
                               </span>
                             )}

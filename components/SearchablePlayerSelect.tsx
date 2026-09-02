@@ -21,12 +21,37 @@ interface SearchablePlayerSelectProps {
 const getCategoryPriority = (category?: string): number => {
   if (!category) return 99;
   const cat = category.toLowerCase().trim();
+  if (cat.includes('red') || cat === 'r') return 1;
+  if (cat.includes('black') || cat === 'bk' || cat === 'blk') return 2;
+  if (cat.includes('blue') || cat === 'b') return 3;
+  if (cat.includes('white') || cat === 'w') return 4;
   if (cat === 'tier 1' || cat.includes('icon') || cat.includes('marquee') || cat.includes('legend') || cat === 'tier 0' || cat === 't1') return 1;
   if (cat === 'tier 2' || cat.includes('classic') || cat.includes('gold') || cat === 't2') return 2;
   if (cat === 'tier 3' || cat.includes('silver') || cat === 't3') return 3;
   if (cat === 'tier 4' || cat.includes('bronze') || cat === 't4') return 4;
   if (cat.includes('uncapped') || cat.includes('realplayer') || cat.includes('base') || cat.includes('local')) return 5;
   return 10;
+};
+
+const getCategoryBadgeClass = (category?: string) => {
+  if (!category) return 'bg-slate-100 text-slate-700 border-slate-200';
+  const cat = category.toLowerCase().trim();
+  if (cat.includes('red') || cat === 'r') {
+    return 'bg-red-100 text-red-800 border-red-300 font-extrabold';
+  }
+  if (cat.includes('black') || cat === 'bk' || cat === 'blk') {
+    return 'bg-slate-900 text-white border-slate-700 font-extrabold';
+  }
+  if (cat.includes('blue') || cat === 'b') {
+    return 'bg-blue-100 text-blue-800 border-blue-300 font-bold';
+  }
+  if (cat.includes('white') || cat === 'w') {
+    return 'bg-slate-100 text-slate-700 border-slate-300 font-semibold';
+  }
+  if (cat.includes('icon') || cat.includes('legend') || cat.includes('tier 1') || cat.includes('marquee')) {
+    return 'bg-amber-100 text-amber-800 border-amber-300 font-extrabold';
+  }
+  return 'bg-slate-100 text-slate-700 border-slate-200';
 };
 
 export default function SearchablePlayerSelect({
