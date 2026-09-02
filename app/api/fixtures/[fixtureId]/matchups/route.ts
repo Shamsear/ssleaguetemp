@@ -795,7 +795,9 @@ export async function PATCH(
     // Update team stats in teamstats table
     try {
       console.log('📊 Updating team stats...');
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const host = request.headers.get('host');
+      const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
 
       // Get fixture details for team stats update
       const fixtureDetails = await sql`
@@ -839,7 +841,9 @@ export async function PATCH(
     // Calculate fantasy points (including passive team bonuses)
     try {
       console.log('🎮 Triggering fantasy points calculation...');
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const host = request.headers.get('host');
+      const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
       const fantasyResponse = await fetch(`${baseUrl}/api/fantasy/calculate-points`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

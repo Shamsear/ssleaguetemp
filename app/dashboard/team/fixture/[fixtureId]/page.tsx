@@ -141,7 +141,11 @@ export default function FixturePage() {
   const [homePlayers, setHomePlayers] = useState<any[]>([]);
   const [awayPlayers, setAwayPlayers] = useState<any[]>([]);
   const [homeStartingXI, setHomeStartingXI] = useState<any[]>([]);
-  const [awayStartingXI, setAwayStartingXI] = useState<any[]>([]);
+  // Squad maps state for photo and category lookups
+  const [homeSquadById, setHomeSquadById] = useState<Map<string, any>>(new Map());
+  const [homeSquadByName, setHomeSquadByName] = useState<Map<string, any>>(new Map());
+  const [awaySquadById, setAwaySquadById] = useState<Map<string, any>>(new Map());
+  const [awaySquadByName, setAwaySquadByName] = useState<Map<string, any>>(new Map());
 
   // Matchup state
   const [matchups, setMatchups] = useState<Matchup[]>([]);
@@ -705,6 +709,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               console.error('Error fetching away squad players:', aErr);
             }
           }
+
+          setHomeSquadById(homeSquadById);
+          setHomeSquadByName(homeSquadByName);
+          setAwaySquadById(awaySquadById);
+          setAwaySquadByName(awaySquadByName);
 
           // Normalize & deduplicate homeStarting XI
           const homeMap = new Map();

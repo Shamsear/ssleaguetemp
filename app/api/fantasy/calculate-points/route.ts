@@ -88,8 +88,12 @@ export async function POST(request: NextRequest) {
       scoringRules.set('loss', 0);
     }
 
+    const host = request.headers.get('host');
+    const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
+
     // Fetch fixture data from Neon (includes MOTM)
-    const fixtureResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/fixtures/${fixture_id}`);
+    const fixtureResponse = await fetch(`${baseUrl}/api/fixtures/${fixture_id}`);
     if (!fixtureResponse.ok) {
       return NextResponse.json(
         { error: 'Fixture not found' },
@@ -124,7 +128,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch matchup results from Neon
-    const matchupsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/fixtures/${fixture_id}/matchups`);
+    const matchupsResponse = await fetch(`${baseUrl}/api/fixtures/${fixture_id}/matchups`);
     if (!matchupsResponse.ok) {
       return NextResponse.json(
         { error: 'Matchups not found' },
