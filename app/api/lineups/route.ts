@@ -27,6 +27,98 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Auto-create default team lineups in database if missing
+    try {
+      const fixtureRes = await sql`
+        SELECT id, season_id, round_number, tournament_id, home_team_id, away_team_id
+        FROM fixtures
+        WHERE id = ${fixtureId}
+        LIMIT 1
+      `;
+      if (fixtureRes.length > 0) {
+        const fix = fixtureRes[0];
+        const teamsToEnsure = [fix.home_team_id, fix.away_team_id].filter(
+          id => id && id !== 'TBD' && id !== 'bye'
+        );
+
+        for (const tid of teamsToEnsure) {
+          const existing = await sql`
+            SELECT id FROM lineups
+            WHERE fixture_id = ${fixtureId} AND team_id = ${tid}
+            LIMIT 1
+          `;
+          if (existing.length === 0) {
+            const seasonNum = parseInt((fix.season_id || '').replace(/\D/g, '')) || 0;
+            const isModern = seasonNum === 16 || seasonNum === 17 || seasonNum === 18;
+
+            let players = [];
+            if (isModern) {
+              players = await sql`
+                SELECT player_id, player_name, category
+                FROM player_seasons
+                WHERE team_id = ${tid} AND season_id = ${fix.season_id} AND registration_status = 'active'
+                ORDER BY player_name ASC
+              `;
+            } else {
+              players = await sql`
+                SELECT player_id, player_name, category
+                FROM realplayerstats
+                WHERE team_id = ${tid} AND season_id = ${fix.season_id}
+                ORDER BY player_name ASC
+              `;
+            }
+
+            const startingXi = players.map(p => ({
+              player_id: String(p.player_id),
+              player_name: p.player_name,
+              category: p.category || 'realplayer'
+            }));
+
+            const lineupId = generateLineupId(fixtureId, tid);
+
+            await sql`
+              INSERT INTO lineups (
+                id,
+                fixture_id,
+                team_id,
+                round_number,
+                season_id,
+                tournament_id,
+                starting_xi,
+                substitutes,
+                classic_player_count,
+                is_valid,
+                validation_errors,
+                submitted_by,
+                submitted_at,
+                created_at,
+                updated_at
+              ) VALUES (
+                ${lineupId},
+                ${fixtureId},
+                ${tid},
+                ${fix.round_number},
+                ${fix.season_id},
+                ${fix.tournament_id},
+                ${JSON.stringify(startingXi)},
+                '[]'::jsonb,
+                0,
+                true,
+                '[]'::jsonb,
+                'system_auto',
+                NOW(),
+                NOW(),
+                NOW()
+              )
+              ON CONFLICT (id) DO NOTHING
+            `;
+          }
+        }
+      }
+    } catch (autoErr) {
+      console.error('Error auto-creating default lineups:', autoErr);
+    }
+
     let lineups;
 
     if (teamId) {
