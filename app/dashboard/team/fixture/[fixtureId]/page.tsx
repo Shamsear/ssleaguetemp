@@ -1424,51 +1424,70 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 </div>
               </div>
 
-              <div className="space-y-2 sm:space-y-3">
+              <div className="space-y-3 sm:space-y-4">
                 {homeStartingXI.map((homePlayer, idx) => (
-                  <div key={idx} className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold text-gray-500">Match #{idx + 1}</span>
+                  <div key={idx} className="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all font-mono">
+                    <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Match #{idx + 1}</span>
+                      {homePlayer.category && (
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                          {homePlayer.category}
+                        </span>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-center">
-                      {/* Home Player */}
+                      {/* Home Player Card */}
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1.5">Home Player</label>
-                        <div className="flex items-center gap-2 p-2.5 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                            {homePlayer.player_name?.charAt(0) || '?'}
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">🏠 Home Player</label>
+                        <div className="flex items-center gap-3 p-3 bg-blue-50/70 border border-blue-200 rounded-xl">
+                          {homePlayer.photo_url ? (
+                            <img
+                              src={homePlayer.photo_url}
+                              alt={homePlayer.player_name}
+                              className="w-10 h-10 rounded-full object-cover border border-blue-300 flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+                              {homePlayer.player_name?.charAt(0) || '?'}
+                            </div>
+                          )}
+                          <div className="flex flex-col truncate">
+                            <span className="font-extrabold text-sm text-slate-900 truncate">{homePlayer.player_name}</span>
+                            {homePlayer.category && (
+                              <span className="inline-block text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200 self-start mt-0.5">
+                                {homePlayer.category}
+                              </span>
+                            )}
                           </div>
-                          <div className="font-medium text-sm sm:text-base text-gray-900 truncate">{homePlayer.player_name}</div>
                         </div>
                       </div>
 
                       {/* VS Badge */}
                       <div className="hidden sm:flex justify-center">
-                        <div className="bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-full px-3 py-1 text-xs font-bold shadow-md">VS</div>
+                        <div className="bg-slate-800 text-white rounded-full px-3 py-1 text-xs font-extrabold shadow-sm">VS</div>
                       </div>
                       <div className="sm:hidden text-center">
-                        <div className="inline-block bg-gray-200 text-gray-700 rounded-full px-4 py-1 text-xs font-bold">VS</div>
+                        <div className="inline-block bg-slate-200 text-slate-700 rounded-full px-4 py-1 text-xs font-bold">VS</div>
                       </div>
 
-                      {/* Away Player */}
+                      {/* Away Player Custom Searchable Select */}
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1.5">Away Player</label>
-                        <select
-                          value={selectedAwayPlayers[idx] || ''}
-                          onChange={(e) => setSelectedAwayPlayers({ ...selectedAwayPlayers, [idx]: e.target.value })}
-                          className="w-full px-3 py-2.5 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
-                          required
-                        >
-                          <option value="">Select player...</option>
-                          {awayStartingXI
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">✈️ Away Player</label>
+                        <SearchablePlayerSelect
+                          players={awayStartingXI
                             .filter(p => !Object.values(selectedAwayPlayers).includes(p.player_id) || selectedAwayPlayers[idx] === p.player_id)
-                            .map(player => (
-                              <option key={player.player_id} value={player.player_id}>
-                                {player.player_name}
-                              </option>
-                            ))}
-                        </select>
+                            .map(p => ({
+                              player_id: p.player_id,
+                              player_name: p.player_name,
+                              category: p.category,
+                              photo_url: p.photo_url
+                            }))
+                          }
+                          value={selectedAwayPlayers[idx] || ''}
+                          onChange={(val) => setSelectedAwayPlayers({ ...selectedAwayPlayers, [idx]: val })}
+                          placeholder="Search & select away player..."
+                        />
                       </div>
                     </div>
 
