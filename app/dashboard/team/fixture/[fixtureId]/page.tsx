@@ -542,9 +542,17 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         }
 
         // Set team ID & home/away team status
-        const currentTeamId = (user as any).team_id || user.uid || '';
+        const currentTeamId = (user as any)?.team_id || (user as any)?.teamId || (user as any)?.team || user?.uid || '';
+        const currentTeamName = (user as any)?.team_name || (user as any)?.teamName || (user as any)?.displayName || '';
+        const userRole = (user as any)?.role || '';
+        const isAdmin = userRole === 'committee_admin' || userRole === 'superadmin' || userRole === 'admin';
+
+        const isHome = f.home_team_id === currentTeamId ||
+          (currentTeamName && f.home_team_name && currentTeamName.toLowerCase() === f.home_team_name.toLowerCase()) ||
+          isAdmin;
+
         setTeamId(currentTeamId);
-        setIsHomeTeam(f.home_team_id === currentTeamId);
+        setIsHomeTeam(isHome);
 
         if (f.scoring_system) {
           setScoringSystem(f.scoring_system);
@@ -670,7 +678,25 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     // Don't poll when in edit mode or result mode to avoid overwriting user changes
     if (isEditMode || isResultMode) return;
 
-    const pollStatus = async () => {
+  // Auto-calculate canCreateMatchups state dynamically
+  useEffect(() => {
+    if (!fixture || !user) return;
+    const currentTeamId = (user as any)?.team_id || (user as any)?.teamId || (user as any)?.team || user?.uid || '';
+    const currentTeamName = (user as any)?.team_name || (user as any)?.teamName || (user as any)?.displayName || '';
+    const userRole = (user as any)?.role || '';
+    const isAdmin = userRole === 'committee_admin' || userRole === 'superadmin' || userRole === 'admin';
+
+    const isHome = fixture.home_team_id === currentTeamId ||
+      (currentTeamName && fixture.home_team_name && currentTeamName.toLowerCase() === fixture.home_team_name.toLowerCase()) ||
+      isAdmin;
+    const isAway = fixture.away_team_id === currentTeamId ||
+      (currentTeamName && fixture.away_team_name && currentTeamName.toLowerCase() === fixture.away_team_name.toLowerCase());
+
+    setIsHomeTeam(isHome);
+    setCanCreateMatchups((isHome || isAway || isAdmin) && matchups.length === 0);
+  }, [fixture, user, matchups, phase]);
+
+  const pollStatus = async () => {
       try {
         const [homeLineupResponse, awayLineupResponse, matchupsResponse] = await Promise.all([
           fetch(`/api/lineups?fixture_id=${fixtureId}&team_id=${fixture.home_team_id}`),
@@ -1369,7 +1395,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
           )}
 
           {/* Create Matchups (Manual Mode) */}
-          {matchupMode === 'manual' && canCreateMatchups && matchups.length === 0 && (
+          {(!matchupMode || matchupMode === 'manual') && canCreateMatchups && matchups.length === 0 && (
             <div className="space-y-3 sm:space-y-4">
               <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
                 <div className="flex items-start gap-2 sm:gap-3">
