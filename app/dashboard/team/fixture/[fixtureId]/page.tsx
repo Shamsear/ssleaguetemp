@@ -486,6 +486,116 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     window.open(whatsappUrl, '_blank');
   };
 
+  // Initial fixture loading effect
+  useEffect(() => {
+    if (!fixtureId || !user) return;
+
+    const loadFixtureData = async () => {
+      try {
+        setIsLoading(true);
+        console.log('Fetching fixture details for ID:', fixtureId);
+
+        // Fetch fixture data
+        const fixtureResponse = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}`);
+        if (!fixtureResponse.ok) {
+          console.error('Failed to fetch fixture:', fixtureResponse.status);
+          setIsLoading(false);
+          return;
+        }
+
+        const fixtureDataJson = await fixtureResponse.json();
+        const f = fixtureDataJson.fixture;
+        if (!f) {
+          console.error('Fixture data empty');
+          setIsLoading(false);
+          return;
+        }
+
+        setFixture(f);
+
+        // Set team ID & home/away team status
+        const currentTeamId = (user as any).team_id || user.uid || '';
+        setTeamId(currentTeamId);
+        setIsHomeTeam(f.home_team_id === currentTeamId);
+
+        if (f.scoring_system) {
+          setScoringSystem(f.scoring_system);
+        }
+        if (f.matchup_mode) {
+          setMatchupMode(f.matchup_mode);
+        }
+
+        // Fetch round deadlines
+        try {
+          const deadlinesRes = await fetchWithTokenRefresh(
+            `/api/round-deadlines?tournament_id=${f.tournament_id || ''}&round_number=${f.round_number}&leg=${f.leg || 'first'}`
+          );
+          if (deadlinesRes.ok) {
+            const deadlinesJson = await deadlinesRes.json();
+            if (deadlinesJson.roundDeadline) {
+              setRoundDeadlines(deadlinesJson.roundDeadline);
+            }
+          }
+        } catch (deadlineErr) {
+          console.error('Error fetching round deadlines:', deadlineErr);
+        }
+
+        // Fetch lineups & matchups in parallel
+        try {
+          const [homeLineupRes, awayLineupRes, matchupsRes] = await Promise.all([
+            fetch(`/api/lineups?fixture_id=${fixtureId}&team_id=${f.home_team_id}`),
+            fetch(`/api/lineups?fixture_id=${fixtureId}&team_id=${f.away_team_id}`),
+            fetch(`/api/fixtures/${fixtureId}/matchups`)
+          ]);
+
+          if (homeLineupRes.ok) {
+            const hData = await homeLineupRes.json();
+            if (hData.success && hData.lineups) {
+              const startingXI = hData.lineups.starting_xi || [];
+              setHomeStartingXI(startingXI);
+              setHomePlayers(startingXI);
+              setHomeLineupSubmitted(startingXI.length > 0);
+            }
+          }
+
+          if (awayLineupRes.ok) {
+            const aData = await awayLineupRes.json();
+            if (aData.success && aData.lineups) {
+              const startingXI = aData.lineups.starting_xi || [];
+              setAwayStartingXI(startingXI);
+              setAwayPlayers(startingXI);
+              setAwayLineupSubmitted(startingXI.length > 0);
+            }
+          }
+
+          if (matchupsRes.ok) {
+            const mData = await matchupsRes.json();
+            if (mData.matchups && mData.matchups.length > 0) {
+              setMatchups(mData.matchups);
+              const resultsInit: { [key: number]: { home_goals: number, away_goals: number } } = {};
+              mData.matchups.forEach((m: Matchup) => {
+                resultsInit[m.position] = {
+                  home_goals: m.home_goals ?? 0,
+                  away_goals: m.away_goals ?? 0
+                };
+              });
+              setMatchResults(resultsInit);
+            }
+          }
+        } catch (dataErr) {
+          console.error('Error fetching lineups and matchups:', dataErr);
+        }
+
+      } catch (error) {
+        console.error('Error loading fixture:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFixtureData();
+  }, [fixtureId, user]);
+
   useEffect(() => {
     if (!fixtureId || !fixture) return;
 
