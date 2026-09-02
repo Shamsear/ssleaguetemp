@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Handshake, Info, Pencil, Save, Search, Star, Trophy, XCircle, AlertTriangle, Plane, RotateCcw } from 'lucide-react';
+import { BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Handshake, Home, Info, Pencil, Save, Search, Star, Trophy, XCircle, AlertTriangle, Plane, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -527,26 +527,39 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         // Fallback logo resolution if fixture API returned null logos
         if (!f.home_team_logo || !f.away_team_logo) {
           try {
-            const allTeamsRes = await fetch('/api/teams/all-teams');
+            const [allTeamsRes, regTeamsRes] = await Promise.all([
+              fetch('/api/teams/all-teams'),
+              fetch(`/api/teams/registered?season_id=${f.season_id}`)
+            ]);
+
+            let teamsList: any[] = [];
             if (allTeamsRes.ok) {
-              const allTeamsJson = await allTeamsRes.json();
-              const teamsList = allTeamsJson.data || allTeamsJson.teams || [];
-
-              const homeMatch = teamsList.find((t: any) =>
-                t.id === f.home_team_id || t.name === f.home_team_name || t.team_name === f.home_team_name
-              );
-              const awayMatch = teamsList.find((t: any) =>
-                t.id === f.away_team_id || t.name === f.away_team_name || t.team_name === f.away_team_name
-              );
-
-              if (homeMatch && !f.home_team_logo) {
-                f.home_team_logo = homeMatch.logo_url || homeMatch.logoUrl || homeMatch.team_logo || homeMatch.logoURL || null;
-              }
-              if (awayMatch && !f.away_team_logo) {
-                f.away_team_logo = awayMatch.logo_url || awayMatch.logoUrl || awayMatch.team_logo || awayMatch.logoURL || null;
-              }
-              setFixture({ ...f });
+              const j = await allTeamsRes.json();
+              teamsList = teamsList.concat(j.data || j.teams || []);
             }
+            if (regTeamsRes.ok) {
+              const j = await regTeamsRes.json();
+              teamsList = teamsList.concat(j.teams || []);
+            }
+
+            const homeMatch = teamsList.find((t: any) =>
+              t.team_id === f.home_team_id || t.id === f.home_team_id ||
+              (t.team_name && f.home_team_name && t.team_name.toLowerCase() === f.home_team_name.toLowerCase()) ||
+              (t.name && f.home_team_name && t.name.toLowerCase() === f.home_team_name.toLowerCase())
+            );
+            const awayMatch = teamsList.find((t: any) =>
+              t.team_id === f.away_team_id || t.id === f.away_team_id ||
+              (t.team_name && f.away_team_name && t.team_name.toLowerCase() === f.away_team_name.toLowerCase()) ||
+              (t.name && f.away_team_name && t.name.toLowerCase() === f.away_team_name.toLowerCase())
+            );
+
+            if (homeMatch && !f.home_team_logo) {
+              f.home_team_logo = homeMatch.team_logo || homeMatch.logo_url || homeMatch.logoUrl || homeMatch.logoURL || null;
+            }
+            if (awayMatch && !f.away_team_logo) {
+              f.away_team_logo = awayMatch.team_logo || awayMatch.logo_url || awayMatch.logoUrl || awayMatch.logoURL || null;
+            }
+            setFixture({ ...f });
           } catch (logoErr) {
             console.error('Error resolving fallback team logos:', logoErr);
           }
@@ -1304,7 +1317,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     {fixture.home_team_logo ? (
                       <img src={fixture.home_team_logo} alt={fixture.home_team_name} className="w-full h-full object-contain p-1" />
                     ) : (
-                      <span className="text-xl">🏠</span>
+                      <Home className="w-6 h-6 text-slate-400" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1330,7 +1343,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     {fixture.away_team_logo ? (
                       <img src={fixture.away_team_logo} alt={fixture.away_team_name} className="w-full h-full object-contain p-1" />
                     ) : (
-                      <span className="text-xl">✈️</span>
+                      <Plane className="w-6 h-6 text-slate-400" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1439,7 +1452,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-center">
                       {/* Home Player Card */}
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">🏠 Home Player</label>
+                        <label className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                          <Home className="w-3 h-3 text-blue-600" />
+                          <span>Home Player</span>
+                        </label>
                         <div className="flex items-center gap-3 p-3 bg-blue-50/70 border border-blue-200 rounded-xl">
                           {homePlayer.photo_url ? (
                             <img
@@ -1473,7 +1489,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                       {/* Away Player Custom Searchable Select */}
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">✈️ Away Player</label>
+                        <label className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                          <Plane className="w-3 h-3 text-slate-600" />
+                          <span>Away Player</span>
+                        </label>
                         <SearchablePlayerSelect
                           players={awayStartingXI
                             .filter(p => !Object.values(selectedAwayPlayers).includes(p.player_id) || selectedAwayPlayers[idx] === p.player_id)
@@ -2007,7 +2026,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                     </svg>
                                   )}
-                                  <p className="text-xs font-medium text-gray-600">🏠 <span className="hidden sm:inline">{fixture.home_team_name}</span><span className="sm:hidden">Home</span></p>
+                                  <p className="flex items-center justify-center gap-1 text-xs font-medium text-gray-600"><Home className="w-3 h-3 text-blue-600" /> <span className="hidden sm:inline">{fixture.home_team_name}</span><span className="sm:hidden">Home</span></p>
                                 </div>
                                 <p className={`font-bold mb-1 sm:mb-2 text-xs sm:text-sm ${homePOTD ? 'text-yellow-900 sm:text-base' : 'text-gray-900'
                                   }`}>{matchup.home_player_name}</p>
@@ -2698,7 +2717,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       className="w-full px-3 py-2.5 text-xs font-mono font-bold uppercase tracking-wider border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none transition-all cursor-pointer"
                     >
                       <option value="">-- Select Player --</option>
-                      <optgroup label="🏠 Home Team ({fixture.home_team_name})">
+                      <optgroup label={`Home Team (${fixture.home_team_name})`}>
                         {(() => {
                           // For round robin, combine stats for each unique player
                           const isRoundRobin = fixture.knockout_format === 'round_robin';

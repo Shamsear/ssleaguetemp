@@ -1,45 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 export async function GET(request: NextRequest) {
   try {
     const sql = getTournamentDb();
     
-    // Fetch all teams from Neon teams & team_seasons tables
     let neonTeams: any[] = [];
     try {
-      neonTeams = await sql`
-        SELECT id, name, logo_url
-        FROM teams
-      `;
-    } catch (e) {
-      console.error('Error fetching Neon teams:', e);
-    }
+      neonTeams = await sql`SELECT id, name FROM teams`;
+    } catch (e) {}
 
-    let neonTeamSeasons: any[] = [];
+    let fbTeams: any[] = [];
     try {
-      neonTeamSeasons = await sql`
-        SELECT team_id as id, team_name as name, team_logo as logo_url
-        FROM team_seasons
-      `;
-    } catch (e) {
-      console.error('Error fetching Neon team_seasons:', e);
-    }
+      const fbTeamsSnap = await adminDb.collection('teams').get();
+      fbTeamsSnap.docs.forEach(doc => {
+        const d = doc.data();
+        fbTeams.push({
+          id: doc.id,
+          name: d.name || d.team_name || '',
+          logo_url: d.logo_url || d.logoUrl || d.logoURL || d.team_logo || null
+        });
+      });
+    } catch (e) {}
+
+    let fbTS: any[] = [];
+    try {
+      const fbTSSnap = await adminDb.collection('team_seasons').get();
+      fbTSSnap.docs.forEach(doc => {
+        const d = doc.data();
+        fbTS.push({
+          id: d.team_id || doc.id,
+          name: d.team_name || d.name || '',
+          logo_url: d.team_logo || d.logo_url || d.logoUrl || null
+        });
+      });
+    } catch (e) {}
 
     const teamsMap = new Map();
 
-    neonTeams.forEach((t: any) => {
-      if (t.id) teamsMap.set(t.id, t);
-      if (t.name) teamsMap.set(t.name.toLowerCase(), t);
+    fbTeams.forEach((t: any) => {
+      if (t.id && t.logo_url) teamsMap.set(t.id, t);
+      if (t.name && t.logo_url) teamsMap.set(t.name.toLowerCase(), t);
     });
 
-    neonTeamSeasons.forEach((ts: any) => {
-      if (ts.id && !teamsMap.has(ts.id)) {
-        teamsMap.set(ts.id, ts);
-      }
-      if (ts.name && !teamsMap.has(ts.name.toLowerCase())) {
-        teamsMap.set(ts.name.toLowerCase(), ts);
-      }
+    fbTS.forEach((t: any) => {
+      if (t.id && t.logo_url && !teamsMap.has(t.id)) teamsMap.set(t.id, t);
+      if (t.name && t.logo_url && !teamsMap.has(t.name.toLowerCase())) teamsMap.set(t.name.toLowerCase(), t);
+    });
+
+    neonTeams.forEach((t: any) => {
+      if (t.id && !teamsMap.has(t.id)) teamsMap.set(t.id, t);
+      if (t.name && !teamsMap.has(t.name.toLowerCase())) teamsMap.set(t.name.toLowerCase(), t);
     });
 
     const data = Array.from(new Set(Array.from(teamsMap.values())));

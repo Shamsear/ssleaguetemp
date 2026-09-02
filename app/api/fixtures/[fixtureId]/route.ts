@@ -39,7 +39,7 @@ export async function GET(
 
     const fixture = fixtures[0];
 
-    // Helper to get team logo strictly from Neon SQL database (team_seasons and teams tables)
+    // Helper to get team logo with multi-tier fallbacks across Neon and Firebase
     const getTeamLogo = async (teamId: string, seasonId: string, teamName: string) => {
       if (!teamId || teamId === 'TBD' || teamId === 'bye') return null;
       try {
@@ -69,7 +69,53 @@ export async function GET(
           if (tRes[0].team_logo) return tRes[0].team_logo;
         }
 
-        // 3. Fallback: check any season in team_seasons for this teamId/teamName
+        // 3. Fallback: check Firebase team_seasons collection
+        if (seasonId) {
+          try {
+            const fbTs = await adminDb.collection('team_seasons')
+              .where('season_id', '==', seasonId)
+              .get();
+            for (const doc of fbTs.docs) {
+              const d = doc.data();
+              if (doc.id === teamId || d.team_id === teamId || (teamName && d.team_name && d.team_name.toLowerCase() === teamName.toLowerCase())) {
+                const logo = d.team_logo || d.logo_url || d.logoUrl;
+                if (logo) return logo;
+              }
+            }
+          } catch (e) {
+            console.error('Firebase team_seasons logo lookup error:', e);
+          }
+        }
+
+        // 4. Fallback: check Firebase teams collection
+        try {
+          const fbTeams = await adminDb.collection('teams').get();
+          for (const doc of fbTeams.docs) {
+            const d = doc.data();
+            if (doc.id === teamId || (teamName && ((d.name && d.name.toLowerCase() === teamName.toLowerCase()) || (d.team_name && d.team_name.toLowerCase() === teamName.toLowerCase())))) {
+              const logo = d.logo_url || d.logoUrl || d.logoURL || d.team_logo;
+              if (logo) return logo;
+            }
+          }
+        } catch (e) {
+          console.error('Firebase teams logo lookup error:', e);
+        }
+
+        // 5. Fallback: check Firebase users collection
+        try {
+          const fbUsers = await adminDb.collection('users').get();
+          for (const doc of fbUsers.docs) {
+            const d = doc.data();
+            if (d.team_id === teamId || (teamName && d.team_name && d.team_name.toLowerCase() === teamName.toLowerCase())) {
+              const logo = d.logoUrl || d.photoUrl || d.logo_url || d.team_logo;
+              if (logo) return logo;
+            }
+          }
+        } catch (e) {
+          console.error('Firebase users logo lookup error:', e);
+        }
+
+        // 6. Check any season in Neon team_seasons
         const tsAny = await sql`
           SELECT team_logo, logo_url FROM team_seasons
           WHERE team_id = ${teamId} OR LOWER(team_name) = ${teamName ? teamName.toLowerCase() : ''}
@@ -80,7 +126,7 @@ export async function GET(
           if (tsAny[0].logo_url) return tsAny[0].logo_url;
         }
       } catch (err) {
-        console.error('Error getting logo from Neon for team', teamId, err);
+        console.error('Error getting logo for team', teamId, err);
       }
       return null;
     };
