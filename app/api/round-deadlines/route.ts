@@ -11,6 +11,42 @@ export async function GET(request: NextRequest) {
     const roundNumber = searchParams.get('round_number');
     const leg = searchParams.get('leg');
 
+    // Helper to auto-start matchdays at 6:00 AM IST on their scheduled date
+    const autoStartMatchDays = async (deadlines: any[]) => {
+      if (!deadlines || deadlines.length === 0) return deadlines;
+      const now = new Date();
+
+      for (const d of deadlines) {
+        if (!d.scheduled_date) continue;
+        let dateStr = d.scheduled_date;
+        if (typeof dateStr === 'string' && dateStr.includes('T')) {
+          dateStr = dateStr.split('T')[0];
+        }
+
+        // 6:00 AM IST start time on the scheduled date
+        const startSixAmIST = new Date(`${dateStr}T06:00:00+05:30`);
+
+        if (now >= startSixAmIST) {
+          const curStatus = d.status || 'pending';
+          if (curStatus === 'pending' || curStatus === 'draft' || curStatus === 'inactive' || !d.status) {
+            try {
+              await sql`
+                UPDATE round_deadlines
+                SET status = 'active', is_active = true, updated_at = NOW()
+                WHERE id = ${d.id}
+              `;
+              d.status = 'active';
+              d.is_active = true;
+              console.log(`🚀 Auto-started matchday R${d.round_number} (${d.leg}) at 6:00 AM IST for date ${dateStr}`);
+            } catch (err) {
+              console.error(`Error auto-starting matchday ${d.id}:`, err);
+            }
+          }
+        }
+      }
+      return deadlines;
+    };
+
     if (tournamentId && roundNumber && leg) {
       // Get specific round deadline by tournament_id, round_number, and leg
       const roundDeadlines = await sql`
@@ -20,9 +56,10 @@ export async function GET(request: NextRequest) {
           AND leg = ${leg}
         LIMIT 1
       `;
+      const processed = await autoStartMatchDays(roundDeadlines);
       return NextResponse.json({
         success: true,
-        roundDeadline: roundDeadlines[0] || null
+        roundDeadline: processed[0] || null
       });
     }
 
@@ -33,7 +70,8 @@ export async function GET(request: NextRequest) {
         WHERE tournament_id = ${tournamentId}
         ORDER BY round_number ASC, leg ASC
       `;
-      return NextResponse.json({ success: true, roundDeadlines });
+      const processed = await autoStartMatchDays(roundDeadlines);
+      return NextResponse.json({ success: true, roundDeadlines: processed });
     }
 
     if (seasonId && roundNumber && leg) {
@@ -45,9 +83,10 @@ export async function GET(request: NextRequest) {
           AND leg = ${leg}
         LIMIT 1
       `;
+      const processed = await autoStartMatchDays(roundDeadlines);
       return NextResponse.json({
         success: true,
-        roundDeadline: roundDeadlines[0] || null
+        roundDeadline: processed[0] || null
       });
     }
 

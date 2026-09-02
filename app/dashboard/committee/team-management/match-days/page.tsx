@@ -196,9 +196,21 @@ export default function MatchDayManagementPage() {
                       round.away_fixture_deadline_time = deadline.away_fixture_deadline_time;
                       round.result_entry_deadline_day_offset = deadline.result_entry_deadline_day_offset;
                       round.result_entry_deadline_time = deadline.result_entry_deadline_time;
-                      round.status = deadline.status || 'pending';
-                      // Set is_active based on status
-                      round.is_active = deadline.status === 'active';
+                      const now = new Date();
+                      let isPastSixAm = false;
+                      if (deadline.scheduled_date) {
+                        let dStr = deadline.scheduled_date;
+                        if (typeof dStr === 'string' && dStr.includes('T')) dStr = dStr.split('T')[0];
+                        const sixAm = new Date(`${dStr}T06:00:00+05:30`);
+                        if (now >= sixAm) isPastSixAm = true;
+                      }
+
+                      round.status = (deadline.status === 'completed' || deadline.status === 'closed')
+                        ? deadline.status
+                        : (isPastSixAm || deadline.status === 'active')
+                          ? 'active'
+                          : (deadline.status || 'pending');
+                      round.is_active = round.status === 'active';
                     }
                   }
                 }
@@ -820,10 +832,10 @@ export default function MatchDayManagementPage() {
                 <Calendar className="w-3.5 h-3.5" /> Schedule All Rounds
               </button>
               <button
-                onClick={() => openBulkSchedule('push', 4)}
+                onClick={() => openBulkSchedule('push', 1)}
                 className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                <Clock className="w-3.5 h-3.5" /> Push Dates (R4+)
+                <Clock className="w-3.5 h-3.5" /> Push Dates (Shift Schedule)
               </button>
             </div>
           </div>
@@ -1579,10 +1591,10 @@ export default function MatchDayManagementPage() {
 
       {/* ── Bulk Schedule & Push Dates Modal ─────────────────────────────────── */}
       {isBulkModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[99999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[85vh] my-auto relative">
             {/* Modal Header */}
-            <div className="bg-slate-900 text-white p-6 flex items-center justify-between">
+            <div className="bg-slate-900 text-white p-5 sm:p-6 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-amber-500/20 border border-amber-500/30 rounded-2xl">
                   <Calendar className="w-6 h-6 text-amber-400" />
@@ -1601,20 +1613,20 @@ export default function MatchDayManagementPage() {
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 gap-2">
+            <div className="flex border-b border-slate-200 bg-slate-50 px-4 sm:px-6 pt-3 gap-2 flex-shrink-0 overflow-x-auto">
               <button
                 onClick={() => setBulkActiveTab('batch')}
-                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-xl transition-all border-t border-x cursor-pointer ${
+                className={`px-3.5 sm:px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-xl transition-all border-t border-x cursor-pointer whitespace-nowrap ${
                   bulkActiveTab === 'batch'
                     ? 'bg-white border-slate-200 text-amber-600 shadow-sm'
                     : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
               >
-                1. Schedule All Rounds At Once
+                1. Schedule All Rounds
               </button>
               <button
                 onClick={() => setBulkActiveTab('push')}
-                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-xl transition-all border-t border-x cursor-pointer ${
+                className={`px-3.5 sm:px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-xl transition-all border-t border-x cursor-pointer whitespace-nowrap ${
                   bulkActiveTab === 'push'
                     ? 'bg-white border-slate-200 text-blue-600 shadow-sm'
                     : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -1625,7 +1637,7 @@ export default function MatchDayManagementPage() {
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 overflow-y-auto space-y-6 flex-1">
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 max-h-[60vh]">
               {/* TAB 1: BATCH SCHEDULE ALL */}
               {bulkActiveTab === 'batch' && (
                 <div className="space-y-6">
