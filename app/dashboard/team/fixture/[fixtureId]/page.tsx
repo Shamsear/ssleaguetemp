@@ -141,6 +141,7 @@ export default function FixturePage() {
   const [homePlayers, setHomePlayers] = useState<any[]>([]);
   const [awayPlayers, setAwayPlayers] = useState<any[]>([]);
   const [homeStartingXI, setHomeStartingXI] = useState<any[]>([]);
+  const [awayStartingXI, setAwayStartingXI] = useState<any[]>([]);
   // Squad maps state for photo and category lookups
   const [homeSquadById, setHomeSquadById] = useState<Map<string, any>>(new Map());
   const [homeSquadByName, setHomeSquadByName] = useState<Map<string, any>>(new Map());
@@ -1393,8 +1394,96 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
       <div className="max-w-7xl mx-auto relative z-10 space-y-6">
 
 
-        {/* Header */}
-        <div className="mb-4 sm:mb-6">
+        {/* Mobile Header (< sm) */}
+        <div className="sm:hidden mb-4 space-y-3 font-mono">
+          <div className="flex items-center justify-between">
+            <Link
+              href="/dashboard/team/matches"
+              className="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all"
+            >
+              {"<-"} Back
+            </Link>
+
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+              phaseInfo.color === 'yellow' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+              phaseInfo.color === 'blue' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+              phaseInfo.color === 'purple' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+              phaseInfo.color === 'green' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+              'bg-slate-50 text-slate-700 border-slate-200'
+            }`}>
+              <span className="w-1.5 h-1.5 bg-current rounded-full animate-pulse"></span>
+              {phaseInfo.label}
+            </span>
+          </div>
+
+          {/* Compact Mobile Scoreboard Card */}
+          <div className="console-card bg-slate-900 text-white border border-slate-800 rounded-2xl p-3.5 shadow-md">
+            {/* Meta Row */}
+            <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 pb-2 border-b border-slate-800">
+              <span className="text-amber-400">
+                {fixture.knockout_round ? fixture.knockout_round.replace('_', ' ').toUpperCase() : `ROUND ${fixture.round_number}`}
+              </span>
+              <div className="flex items-center gap-2">
+                <span>{fixture.leg === 'first' ? '1st' : '2nd'} Leg</span>
+                <span>•</span>
+                <span>Match #{fixture.match_number}</span>
+              </div>
+            </div>
+
+            {/* Teams VS Grid */}
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              {/* Home Team */}
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 bg-slate-800 border border-slate-700 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0">
+                  {fixture.home_team_logo ? (
+                    <img src={fixture.home_team_logo} alt={fixture.home_team_name} className="w-full h-full object-contain p-0.5" />
+                  ) : (
+                    <Home className="w-4 h-4 text-slate-400" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block leading-none mb-0.5">HOME</span>
+                  <span className="text-xs font-black uppercase text-white truncate block">{fixture.home_team_name}</span>
+                </div>
+              </div>
+
+              {/* VS Badge */}
+              <div className="px-2 py-0.5 bg-slate-800 border border-slate-700 text-amber-400 text-[10px] font-black rounded-full">
+                VS
+              </div>
+
+              {/* Away Team */}
+              <div className="flex items-center gap-2 min-w-0 flex-row-reverse text-right">
+                <div className="w-8 h-8 bg-slate-800 border border-slate-700 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0">
+                  {fixture.away_team_logo ? (
+                    <img src={fixture.away_team_logo} alt={fixture.away_team_name} className="w-full h-full object-contain p-0.5" />
+                  ) : (
+                    <Plane className="w-4 h-4 text-slate-400" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block leading-none mb-0.5">AWAY</span>
+                  <span className="text-xs font-black uppercase text-white truncate block">{fixture.away_team_name}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Deadline Summary */}
+            {(() => {
+              const deadlineInfo = getSectionDeadlineInfo();
+              if (!deadlineInfo) return null;
+              return (
+                <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+                  <span className="text-slate-400 font-medium truncate">{deadlineInfo.label}:</span>
+                  <span className="font-extrabold text-amber-300 ml-1 whitespace-nowrap">{deadlineInfo.formattedDate}</span>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* Header - Desktop (hidden sm:block) */}
+        <div className="hidden sm:block mb-4 sm:mb-6">
           <Link
             href="/dashboard/team/matches"
             className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all mb-4"
@@ -1529,7 +1618,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               if (!deadlineInfo) return null;
 
               return (
-                <div className={`console-card rounded-2xl p-4 sm:p-5 font-mono mb-6 relative overflow-hidden border shadow-sm ${
+                <div className={`hidden sm:block console-card rounded-2xl p-4 sm:p-5 font-mono mb-6 relative overflow-hidden border shadow-sm ${
                   deadlineInfo.type === 'home_fixture'
                     ? 'bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent border-blue-200'
                     : 'bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border-emerald-200'
@@ -2663,113 +2752,72 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           </div>
                         )}
 
-                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-center">
-                          {/* Home Player Goals */}
-                          <div>
-                            <div className="flex items-center gap-2 mb-1.5">
-                              <Home className="w-3 h-3 text-blue-600" />
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{fixture.home_team_name}</span>
-                            </div>
-                            {(() => {
-                              const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
-                              const homeCategory = matchup.home_category || homeMatch?.category;
-                              return (
-                                <div className="flex items-center gap-3 p-2.5 bg-blue-50/60 border border-blue-200/80 rounded-xl mb-2">
-                                  <PlayerPhoto
-                                    photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
-                                    playerName={matchup.home_player_name}
-                                    size={38}
-                                    shape="circle"
-                                    posXCircle={homeMatch?.photo_position_x_circle}
-                                    posYCircle={homeMatch?.photo_position_y_circle}
-                                    scaleCircle={homeMatch?.photo_scale_circle}
-                                    className="border border-blue-300 flex-shrink-0"
-                                  />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
-                                      {matchup.home_player_name}
+                        <div className="grid grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4 items-center">
+                          {/* Home Player */}
+                          {(() => {
+                            const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
+                            const homeCategory = matchup.home_category || homeMatch?.category;
+                            return (
+                              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 bg-blue-50/60 border border-blue-200/80 rounded-xl min-w-0">
+                                <PlayerPhoto
+                                  photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
+                                  playerName={matchup.home_player_name}
+                                  size={36}
+                                  shape="circle"
+                                  posXCircle={homeMatch?.photo_position_x_circle}
+                                  posYCircle={homeMatch?.photo_position_y_circle}
+                                  scaleCircle={homeMatch?.photo_scale_circle}
+                                  className="border border-blue-300 flex-shrink-0"
+                                />
+                                <div className="flex flex-col min-w-0">
+                                  <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
+                                    {matchup.home_player_name}
+                                  </span>
+                                  {homeCategory && (
+                                    <span className={`inline-block text-[8px] sm:text-[9px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
+                                      {homeCategory}
                                     </span>
-                                    {homeCategory && (
-                                      <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
-                                        {homeCategory}
-                                      </span>
-                                    )}
-                                  </div>
+                                  )}
                                 </div>
-                              );
-                            })()}
-                            <input
-                              type="number"
-                              min="0"
-                              value={matchResults[idx]?.home_goals ?? 0}
-                              onChange={(e) => setMatchResults({
-                                ...matchResults,
-                                [idx]: {
-                                  ...matchResults[idx],
-                                  home_goals: parseInt(e.target.value) || 0
-                                }
-                              })}
-                              className="w-full px-4 py-2.5 text-center text-base font-mono font-bold border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none transition-all"
-                              placeholder="0"
-                            />
-                            <p className="text-xs text-gray-500 mt-1 text-center font-bold">Goals</p>
+                              </div>
+                            );
+                          })()}
+
+                          {/* VS Badge */}
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="bg-slate-800 text-white rounded-full px-2.5 py-0.5 text-[10px] font-black shadow-sm">VS</span>
+                            <span className="text-[9px] font-bold text-slate-400 font-mono">({matchup.match_duration || 6}m)</span>
                           </div>
 
-                          {/* VS */}
-                          <div className="text-center">
-                            <div className="bg-slate-800 text-white rounded-full px-3 py-1 text-xs font-black shadow-sm">VS</div>
-                          </div>
-
-                          {/* Away Player Goals */}
-                          <div>
-                            <div className="flex items-center justify-end gap-2 mb-1.5">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{fixture.away_team_name}</span>
-                              <Plane className="w-3 h-3 text-slate-500" />
-                            </div>
-                            {(() => {
-                              const awayMatch = awaySquadById.get(matchup.away_player_id) || awaySquadByName.get(matchup.away_player_name?.toLowerCase());
-                              const awayCategory = matchup.away_category || awayMatch?.category;
-                              return (
-                                <div className="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xl mb-2 flex-row-reverse sm:flex-row">
-                                  <PlayerPhoto
-                                    photoUrl={awayMatch?.photo_url || matchup.away_photo_url}
-                                    playerName={matchup.away_player_name}
-                                    size={38}
-                                    shape="circle"
-                                    posXCircle={awayMatch?.photo_position_x_circle}
-                                    posYCircle={awayMatch?.photo_position_y_circle}
-                                    scaleCircle={awayMatch?.photo_scale_circle}
-                                    className="border border-slate-300 flex-shrink-0"
-                                  />
-                                  <div className="flex flex-col min-w-0 text-right sm:text-left">
-                                    <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
-                                      {matchup.away_player_name}
+                          {/* Away Player */}
+                          {(() => {
+                            const awayMatch = awaySquadById.get(matchup.away_player_id) || awaySquadByName.get(matchup.away_player_name?.toLowerCase());
+                            const awayCategory = matchup.away_category || awayMatch?.category;
+                            return (
+                              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 bg-slate-50 border border-slate-200 rounded-xl min-w-0 flex-row-reverse sm:flex-row text-right sm:text-left">
+                                <PlayerPhoto
+                                  photoUrl={awayMatch?.photo_url || matchup.away_photo_url}
+                                  playerName={matchup.away_player_name}
+                                  size={36}
+                                  shape="circle"
+                                  posXCircle={awayMatch?.photo_position_x_circle}
+                                  posYCircle={awayMatch?.photo_position_y_circle}
+                                  scaleCircle={awayMatch?.photo_scale_circle}
+                                  className="border border-slate-300 flex-shrink-0"
+                                />
+                                <div className="flex flex-col min-w-0">
+                                  <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
+                                    {matchup.away_player_name}
+                                  </span>
+                                  {awayCategory && (
+                                    <span className={`inline-block text-[8px] sm:text-[9px] uppercase tracking-wider px-1 py-0.2 rounded border self-end sm:self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
+                                      {awayCategory}
                                     </span>
-                                    {awayCategory && (
-                                      <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-end sm:self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
-                                        {awayCategory}
-                                      </span>
-                                    )}
-                                  </div>
+                                  )}
                                 </div>
-                              );
-                            })()}
-                            <input
-                              type="number"
-                              min="0"
-                              value={matchResults[idx]?.away_goals ?? 0}
-                              onChange={(e) => setMatchResults({
-                                ...matchResults,
-                                [idx]: {
-                                  ...matchResults[idx],
-                                  away_goals: parseInt(e.target.value) || 0
-                                }
-                              })}
-                              className="w-full px-4 py-2.5 text-center text-base font-mono font-bold border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none transition-all"
-                              placeholder="0"
-                            />
-                            <p className="text-xs text-gray-500 mt-1 text-center font-bold">Goals</p>
-                          </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     ))}
