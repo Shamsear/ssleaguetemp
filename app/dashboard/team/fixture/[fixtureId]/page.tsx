@@ -672,12 +672,6 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     loadFixtureData();
   }, [fixtureId, user]);
 
-  useEffect(() => {
-    if (!fixtureId || !fixture) return;
-
-    // Don't poll when in edit mode or result mode to avoid overwriting user changes
-    if (isEditMode || isResultMode) return;
-
   // Auto-calculate canCreateMatchups state dynamically
   useEffect(() => {
     if (!fixture || !user) return;
@@ -696,7 +690,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     setCanCreateMatchups((isHome || isAway || isAdmin) && matchups.length === 0);
   }, [fixture, user, matchups, phase]);
 
-  const pollStatus = async () => {
+  useEffect(() => {
+    if (!fixtureId || !fixture) return;
+
+    // Don't poll when in edit mode or result mode to avoid overwriting user changes
+    if (isEditMode || isResultMode) return;
+
+    const pollStatus = async () => {
       try {
         const [homeLineupResponse, awayLineupResponse, matchupsResponse] = await Promise.all([
           fetch(`/api/lineups?fixture_id=${fixtureId}&team_id=${fixture.home_team_id}`),
