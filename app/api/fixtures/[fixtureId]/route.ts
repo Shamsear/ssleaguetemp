@@ -39,21 +39,49 @@ export async function GET(
 
     const fixture = fixtures[0];
 
-    // Fetch team logos
-    let home_team_logo = null;
-    let away_team_logo = null;
-    
-    const homePromise = (fixture.home_team_id && fixture.home_team_id !== 'TBD' && fixture.home_team_id !== 'bye')
-      ? adminDb.collection('teams').doc(fixture.home_team_id).get().then(doc => doc.exists ? doc.data()?.logo_url || null : null).catch(() => null)
-      : Promise.resolve(null);
+    // Helper to get team logo from Neon team_seasons/teams or Firebase
+    const getTeamLogo = async (teamId: string, seasonId: string) => {
+      if (!teamId || teamId === 'TBD' || teamId === 'bye') return null;
+      try {
+        // 1. Check Neon team_seasons table first
+        if (seasonId) {
+          const tsRes = await sql`
+            SELECT ts.team_logo, t.logo_url
+            FROM team_seasons ts
+            LEFT JOIN teams t ON ts.team_id = t.id AND ts.season_id = t.season_id
+            WHERE ts.team_id = ${teamId} AND ts.season_id = ${seasonId}
+            LIMIT 1
+          `;
+          if (tsRes.length > 0) {
+            if (tsRes[0].team_logo) return tsRes[0].team_logo;
+            if (tsRes[0].logo_url) return tsRes[0].logo_url;
+          }
+        }
 
-    const awayPromise = (fixture.away_team_id && fixture.away_team_id !== 'TBD' && fixture.away_team_id !== 'bye')
-      ? adminDb.collection('teams').doc(fixture.away_team_id).get().then(doc => doc.exists ? doc.data()?.logo_url || null : null).catch(() => null)
-      : Promise.resolve(null);
+        // 2. Check Neon teams table directly
+        const tRes = await sql`
+          SELECT logo_url FROM teams WHERE id = ${teamId} LIMIT 1
+        `;
+        if (tRes.length > 0 && tRes[0].logo_url) {
+          return tRes[0].logo_url;
+        }
 
-    const [home_logo_result, away_logo_result] = await Promise.all([homePromise, awayPromise]);
-    home_team_logo = home_logo_result;
-    away_team_logo = away_logo_result;
+        // 3. Fallback to Firebase teams collection
+        const doc = await adminDb.collection('teams').doc(teamId).get();
+        if (doc.exists) {
+          const d = doc.data();
+          return d?.logo_url || d?.logoUrl || d?.team_logo || null;
+        }
+      } catch (err) {
+        console.error('Error getting logo for team', teamId, err);
+      }
+      return null;
+    };
+
+    const [home_team_logo, away_team_logo] = await Promise.all([
+      getTeamLogo(fixture.home_team_id, fixture.season_id),
+      getTeamLogo(fixture.away_team_id, fixture.season_id)
+    ]);
 
     const fixtureWithLogos = {
       ...fixture,

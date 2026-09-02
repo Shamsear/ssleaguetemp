@@ -548,25 +548,65 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             fetch(`/api/fixtures/${fixtureId}/matchups`)
           ]);
 
+          let homeStarting: any[] = [];
           if (homeLineupRes.ok) {
             const hData = await homeLineupRes.json();
-            if (hData.success && hData.lineups) {
-              const startingXI = hData.lineups.starting_xi || [];
-              setHomeStartingXI(startingXI);
-              setHomePlayers(startingXI);
-              setHomeLineupSubmitted(startingXI.length > 0);
+            if (hData.success && hData.lineups && hData.lineups.starting_xi?.length > 0) {
+              homeStarting = hData.lineups.starting_xi;
             }
           }
 
+          let awayStarting: any[] = [];
           if (awayLineupRes.ok) {
             const aData = await awayLineupRes.json();
-            if (aData.success && aData.lineups) {
-              const startingXI = aData.lineups.starting_xi || [];
-              setAwayStartingXI(startingXI);
-              setAwayPlayers(startingXI);
-              setAwayLineupSubmitted(startingXI.length > 0);
+            if (aData.success && aData.lineups && aData.lineups.starting_xi?.length > 0) {
+              awayStarting = aData.lineups.starting_xi;
             }
           }
+
+          // If no manual starting XI exists for home team, auto-populate team's real players
+          if (homeStarting.length === 0 && f.home_team_id) {
+            try {
+              const hSquadRes = await fetch(`/api/team/${f.home_team_id}/players?seasonId=${f.season_id}`);
+              if (hSquadRes.ok) {
+                const hSquadJson = await hSquadRes.json();
+                const squad = hSquadJson.realplayers || hSquadJson.data || [];
+                homeStarting = squad.map((p: any) => ({
+                  player_id: p.player_id || p.id,
+                  player_name: p.name || p.player_name,
+                  category: p.category || 'realplayer'
+                }));
+              }
+            } catch (hErr) {
+              console.error('Error fetching home squad players:', hErr);
+            }
+          }
+
+          // If no manual starting XI exists for away team, auto-populate team's real players
+          if (awayStarting.length === 0 && f.away_team_id) {
+            try {
+              const aSquadRes = await fetch(`/api/team/${f.away_team_id}/players?seasonId=${f.season_id}`);
+              if (aSquadRes.ok) {
+                const aSquadJson = await aSquadRes.json();
+                const squad = aSquadJson.realplayers || aSquadJson.data || [];
+                awayStarting = squad.map((p: any) => ({
+                  player_id: p.player_id || p.id,
+                  player_name: p.name || p.player_name,
+                  category: p.category || 'realplayer'
+                }));
+              }
+            } catch (aErr) {
+              console.error('Error fetching away squad players:', aErr);
+            }
+          }
+
+          setHomeStartingXI(homeStarting);
+          setHomePlayers(homeStarting);
+          setHomeLineupSubmitted(true);
+
+          setAwayStartingXI(awayStarting);
+          setAwayPlayers(awayStarting);
+          setAwayLineupSubmitted(true);
 
           if (matchupsRes.ok) {
             const mData = await matchupsRes.json();
@@ -613,13 +653,21 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         if (homeLineupResponse.ok) {
           const homeLineupData = await homeLineupResponse.json();
           const hasHomeLineup = homeLineupData.success && homeLineupData.lineups && homeLineupData.lineups.starting_xi && homeLineupData.lineups.starting_xi.length > 0;
-          setHomeLineupSubmitted(hasHomeLineup);
+          if (hasHomeLineup) {
+            setHomeLineupSubmitted(true);
+          } else {
+            setHomeLineupSubmitted(true);
+          }
         }
 
         if (awayLineupResponse.ok) {
           const awayLineupData = await awayLineupResponse.json();
           const hasAwayLineup = awayLineupData.success && awayLineupData.lineups && awayLineupData.lineups.starting_xi && awayLineupData.lineups.starting_xi.length > 0;
-          setAwayLineupSubmitted(hasAwayLineup);
+          if (hasAwayLineup) {
+            setAwayLineupSubmitted(true);
+          } else {
+            setAwayLineupSubmitted(true);
+          }
         }
 
         // Poll matchups - auto-update when created
@@ -657,18 +705,60 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
   }, [fixtureId, fixture, matchups, isEditMode, isResultMode]);
 
   const handleCreateMatchups = async () => {
-    // Validate lineups are submitted
-    if (homeStartingXI.length === 0 || awayStartingXI.length === 0) {
+    let hXI = [...homeStartingXI];
+    let aXI = [...awayStartingXI];
+
+    if ((hXI.length === 0 || aXI.length === 0) && fixture) {
+      if (hXI.length === 0 && fixture.home_team_id) {
+        try {
+          const hRes = await fetch(`/api/team/${fixture.home_team_id}/players?seasonId=${fixture.season_id}`);
+          if (hRes.ok) {
+            const hJson = await hRes.json();
+            const squad = hJson.realplayers || hJson.data || [];
+            hXI = squad.map((p: any) => ({
+              player_id: p.player_id || p.id,
+              player_name: p.name || p.player_name,
+              category: p.category || 'realplayer'
+            }));
+            setHomeStartingXI(hXI);
+            setHomePlayers(hXI);
+          }
+        } catch (e) {
+          console.error('Error auto-loading home team players:', e);
+        }
+      }
+
+      if (aXI.length === 0 && fixture.away_team_id) {
+        try {
+          const aRes = await fetch(`/api/team/${fixture.away_team_id}/players?seasonId=${fixture.season_id}`);
+          if (aRes.ok) {
+            const aJson = await aRes.json();
+            const squad = aJson.realplayers || aJson.data || [];
+            aXI = squad.map((p: any) => ({
+              player_id: p.player_id || p.id,
+              player_name: p.name || p.player_name,
+              category: p.category || 'realplayer'
+            }));
+            setAwayStartingXI(aXI);
+            setAwayPlayers(aXI);
+          }
+        } catch (e) {
+          console.error('Error auto-loading away team players:', e);
+        }
+      }
+    }
+
+    if (hXI.length === 0 || aXI.length === 0) {
       showAlert({
         type: 'error',
-        title: 'Lineups Required',
-        message: 'Both teams must submit their lineups before creating matchups'
+        title: 'Team Players Required',
+        message: 'Could not load team players for creating matchups. Please check team registration.'
       });
       return;
     }
 
     // Validate all matchups are selected
-    if (Object.keys(selectedAwayPlayers).length !== homeStartingXI.length) {
+    if (Object.keys(selectedAwayPlayers).length !== hXI.length) {
       showAlert({
         type: 'warning',
         title: 'Incomplete Selection',
@@ -684,11 +774,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     setIsSaving(true);
     try {
       // Create matchups from starting XI
-      const matchupsToSave: Matchup[] = homeStartingXI.map((homePlayer, idx) => ({
+      const matchupsToSave: Matchup[] = hXI.map((homePlayer, idx) => ({
         home_player_id: homePlayer.player_id,
         home_player_name: homePlayer.player_name,
         away_player_id: selectedAwayPlayers[idx],
-        away_player_name: awayStartingXI.find(p => p.player_id === selectedAwayPlayers[idx])?.player_name || '',
+        away_player_name: aXI.find(p => p.player_id === selectedAwayPlayers[idx])?.player_name || '',
         position: idx + 1,
         match_duration: matchDurations[idx] || 6, // Use individual match duration (default 6)
       }));
@@ -1151,10 +1241,14 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               {/* Home Team */}
               <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center shadow-sm">
-                    🏠
+                  <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden flex items-center justify-center shadow-sm flex-shrink-0">
+                    {fixture.home_team_logo ? (
+                      <img src={fixture.home_team_logo} alt={fixture.home_team_name} className="w-full h-full object-contain p-1" />
+                    ) : (
+                      <span className="text-xl">🏠</span>
+                    )}
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Home Team</div>
                     <div className="text-lg sm:text-xl font-bold text-slate-800 uppercase tracking-wide truncate">
                       {fixture.home_team_name}
@@ -1173,10 +1267,14 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               {/* Away Team */}
               <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center shadow-sm">
-                    ✈️
+                  <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden flex items-center justify-center shadow-sm flex-shrink-0">
+                    {fixture.away_team_logo ? (
+                      <img src={fixture.away_team_logo} alt={fixture.away_team_name} className="w-full h-full object-contain p-1" />
+                    ) : (
+                      <span className="text-xl">✈️</span>
+                    )}
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Away Team</div>
                     <div className="text-lg sm:text-xl font-bold text-slate-800 uppercase tracking-wide truncate">
                       {fixture.away_team_name}
