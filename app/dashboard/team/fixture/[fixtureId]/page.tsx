@@ -1324,6 +1324,54 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
   const phaseInfo = getPhaseInfo();
 
+  const getSectionDeadlineInfo = () => {
+    if (!roundDeadlines) return null;
+    const now = new Date();
+
+    let scheduledDateStr = roundDeadlines.scheduled_date;
+    if (scheduledDateStr) {
+      const scheduledDate = new Date(scheduledDateStr);
+      const istDate = new Date(scheduledDate.getTime() + (5.5 * 60 * 60 * 1000));
+      scheduledDateStr = istDate.toISOString().split('T')[0];
+    } else {
+      const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+      scheduledDateStr = istNow.toISOString().split('T')[0];
+    }
+
+    const homeTime = roundDeadlines.home_fixture_deadline_time || '17:00';
+    const resultTime = roundDeadlines.result_entry_deadline_time || '00:30';
+
+    const homeDeadline = new Date(`${scheduledDateStr}T${homeTime}:00+05:30`);
+
+    const resultDate = new Date(scheduledDateStr);
+    resultDate.setDate(resultDate.getDate() + (roundDeadlines.result_entry_deadline_day_offset || 2));
+    const resultDateStr = resultDate.toISOString().split('T')[0];
+    const resultDeadline = new Date(`${resultDateStr}T${resultTime}:00+05:30`);
+
+    const isHomeFixtureSet = matchups.length > 0;
+    const isPastHomeDeadline = now >= homeDeadline;
+
+    if (!isHomeFixtureSet && !isPastHomeDeadline) {
+      return {
+        type: 'home_fixture',
+        label: 'Home Fixture Deadline',
+        deadline: homeDeadline,
+        formattedDate: `${scheduledDateStr} at ${homeTime} IST`,
+        description: 'Home team must create player matchups before this deadline'
+      };
+    } else {
+      return {
+        type: 'result_entry',
+        label: 'Final Result Entry Deadline',
+        deadline: resultDeadline,
+        formattedDate: `${resultDateStr} at ${resultTime} IST`,
+        description: isHomeFixtureSet
+          ? 'Home matchups submitted! Enter match results before final deadline.'
+          : 'Home deadline passed. Enter match results before final deadline.'
+      };
+    }
+  };
+
   return (
     <AuthGuard requiredRole="team">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
@@ -1462,31 +1510,48 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               </div>
             </div>
 
-            {/* Phase Info & Deadlines - Only show for manual mode */}
-            {matchupMode !== 'blind_lineup' && (
-              <div className="console-card bg-slate-50 border border-slate-200/60 rounded-2xl p-5 font-mono relative overflow-hidden">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-amber-50 text-amber-600 border border-amber-200 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-slate-800 font-bold uppercase tracking-wider mb-2">{phaseInfo.description}</p>
-                    {roundDeadlines && lineupDeadline && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] text-slate-500 uppercase tracking-wider font-bold">
-                        <div className="flex items-center gap-2">
-                          <span><Calendar className="w-4 h-4 text-slate-500" /> Match Date: {roundDeadlines.scheduled_date}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span>⏰ Match Time: {lineupDeadline.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST</span>
-                        </div>
+            {/* Phase Info & Section Deadlines Banner */}
+            {(() => {
+              const deadlineInfo = getSectionDeadlineInfo();
+              if (!deadlineInfo) return null;
+
+              return (
+                <div className={`console-card rounded-2xl p-4 sm:p-5 font-mono mb-6 relative overflow-hidden border shadow-sm ${
+                  deadlineInfo.type === 'home_fixture'
+                    ? 'bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent border-blue-200'
+                    : 'bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border-emerald-200'
+                }`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
+                        deadlineInfo.type === 'home_fixture'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-emerald-600 text-white'
+                      }`}>
+                        <Clock className="w-5 h-5 animate-pulse" />
                       </div>
-                    )}
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                            deadlineInfo.type === 'home_fixture'
+                              ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                              : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                          }`}>
+                            {deadlineInfo.label}
+                          </span>
+                        </div>
+                        <h3 className="text-sm sm:text-base font-bold text-slate-800 uppercase tracking-wide">
+                          ⏰ {deadlineInfo.formattedDate}
+                        </h3>
+                        <p className="text-xs text-slate-500 font-semibold mt-1">
+                          {deadlineInfo.description}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
 
           </div>
@@ -1607,7 +1672,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               player_id: p.player_id,
                               player_name: p.player_name,
                               category: p.category,
-                              photo_url: p.photo_url
+                              photo_url: p.photo_url,
+                              photo_position_x_circle: p.photo_position_x_circle,
+                              photo_position_y_circle: p.photo_position_y_circle,
+                              photo_scale_circle: p.photo_scale_circle,
                             }))
                           }
                           value={selectedAwayPlayers[idx] || ''}
@@ -1772,35 +1840,25 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         </div>
 
                         {/* Away Player Dropdown */}
-                        <div>
+                        <div className="md:col-span-2">
                           <label className="block text-xs font-medium text-gray-600 mb-1">Away Player</label>
                           <select
-                            value={matchup.away_player_id || ''}
+                            value={matchup.away_player_id}
                             onChange={(e) => {
                               const newMatchups = [...matchups];
-                              if (e.target.value === '') {
-                                // Deselect player
-                                newMatchups[idx].away_player_id = '';
-                                newMatchups[idx].away_player_name = '';
-                              } else {
-                                const selectedPlayer = awayStartingXI.find(p => p.player_id === e.target.value);
-                                newMatchups[idx].away_player_id = e.target.value;
-                                newMatchups[idx].away_player_name = selectedPlayer?.player_name || '';
-                              }
+                              const selectedPlayer = awayPlayers.find(p => p.player_id === e.target.value);
+                              newMatchups[idx].away_player_id = e.target.value;
+                              newMatchups[idx].away_player_name = selectedPlayer?.player_name || '';
                               setMatchups(newMatchups);
                             }}
-                            className="w-full px-3 py-2 text-xs font-mono font-bold uppercase tracking-wider border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50 focus:bg-white outline-none transition-all cursor-pointer"
+                            className="w-full p-3 bg-white border border-gray-300 rounded-lg font-medium text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           >
-                            <option value="">-- Select Player --</option>
-                            {awayStartingXI
+                            <option value="">Select Away Player</option>
+                            {awayPlayers
                               .filter(player => {
-                                // Show this player if:
-                                // 1. Not selected in any other matchup, OR
-                                // 2. Selected in THIS matchup (current idx)
-                                const isSelectedElsewhere = matchups.some((m, i) =>
-                                  i !== idx && m.away_player_id === player.player_id
-                                );
-                                return !isSelectedElsewhere;
+                                const isCurrentlySelectedInThisMatchup = matchup.away_player_id === player.player_id;
+                                const isSelectedInAnotherMatchup = matchups.some((m, mIdx) => mIdx !== idx && m.away_player_id === player.player_id);
+                                return isCurrentlySelectedInThisMatchup || !isSelectedInAnotherMatchup;
                               })
                               .map(player => (
                                 <option key={player.player_id} value={player.player_id}>
@@ -1808,11 +1866,6 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 </option>
                               ))}
                           </select>
-                        </div>
-
-                        {/* Position */}
-                        <div className="text-center">
-                          <span className="text-xs text-gray-500">Match #{matchup.position}</span>
                         </div>
                       </div>
 
@@ -1951,76 +2004,66 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         }
                       });
                       
-                      // Add fine/violation penalties to total (these affect final result)
-                      homeTotalScore = homePoints + homePenaltyGoals;
-                      awayTotalScore = awayPoints + awayPenaltyGoals;
+                      homeTotalScore = homePoints;
+                      awayTotalScore = awayPoints;
                     } else {
-                      // Goal-based scoring: sum of all goals
-                      homeTotalScore = homePlayerGoals + awaySubPenalties + homePenaltyGoals;
-                      awayTotalScore = awayPlayerGoals + homeSubPenalties + awayPenaltyGoals;
+                      // Goal-based scoring (default): Sum of goals + opponent's sub penalties + fines
+                      const homeFinePenalties = (fixture?.home_fine_goals || 0);
+                      const awayFinePenalties = (fixture?.away_fine_goals || 0);
+
+                      homeTotalScore = homePlayerGoals + awaySubPenalties + homeFinePenalties;
+                      awayTotalScore = awayPlayerGoals + homeSubPenalties + awayFinePenalties;
                     }
 
-                    const winner = homeTotalScore > awayTotalScore ? 'home' : awayTotalScore > homeTotalScore ? 'away' : 'draw';
+                    const homeWonFixture = homeTotalScore > awayTotalScore;
+                    const awayWonFixture = awayTotalScore > homeTotalScore;
+                    const isDrawFixture = homeTotalScore === awayTotalScore;
+
+                    const homeFineGoals = (fixture?.home_fine_goals || 0);
+                    const awayPenaltyGoals = (fixture?.away_fine_goals || 0);
 
                     return (
-                      <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-6 shadow-sm font-mono">
-                        <h3 className="text-center text-sm font-semibold text-gray-600 mb-4">
-                          Match Result {tournamentSystem === 'wins' && '(Points)'}
-                        </h3>
-                        <div className="grid grid-cols-3 gap-4 items-center mb-4">
-                          {/* Home Total */}
-                          <div className={`text-center p-4 rounded-2xl border transition-all ${winner === 'home' ? 'bg-emerald-50/30 border-emerald-500 text-emerald-800 font-bold scale-105' : 'bg-slate-50 border-slate-200 text-slate-700'
+                      <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm font-mono relative overflow-hidden">
+                        <div className="text-center text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-4">
+                          🏆 {tournamentSystem === 'wins' ? 'Points Summary (Win-Based System)' : 'Final Score Summary (Goal-Based System)'}
+                        </div>
+                        <div className="flex items-center justify-center gap-6 sm:gap-12">
+                          {/* Home Score */}
+                          <div className="text-center">
+                            <div className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">
+                              {fixture.home_team_name}
+                            </div>
+                            <div className={`text-4xl sm:text-5xl font-black ${
+                              homeWonFixture ? 'text-emerald-600' : isDrawFixture ? 'text-amber-600' : 'text-slate-400'
                             }`}>
-                            <div className="text-xs sm:text-sm font-medium mb-1">{fixture.home_team_name}</div>
-                            <div className="text-3xl sm:text-4xl font-bold">{homeTotalScore}</div>
-                            {winner === 'home' && <div className="text-xs mt-1 font-semibold"><Check className="w-4 h-4 text-emerald-500" /> WINNER</div>}
-                            {/* Breakdown */}
-                            {tournamentSystem === 'wins' ? (
-                              // Show W-D-L for win-based system
-                              <div className="text-xs mt-2 opacity-90">
-                                {matchups.filter(m => m.home_goals !== null && m.away_goals !== null && (m.home_goals ?? 0) > (m.away_goals ?? 0)).length}W-
-                                {matchups.filter(m => m.home_goals !== null && m.away_goals !== null && (m.home_goals ?? 0) === (m.away_goals ?? 0)).length}D-
-                                {matchups.filter(m => m.home_goals !== null && m.away_goals !== null && (m.home_goals ?? 0) < (m.away_goals ?? 0)).length}L
-                              </div>
-                            ) : (
-                              // Show goal breakdown for goal-based system
-                              (awaySubPenalties > 0 || homePenaltyGoals > 0) && (
+                              {homeTotalScore}
+                            </div>
+                            {tournamentSystem === 'goals' && (
+                              (awaySubPenalties > 0 || homeFineGoals > 0) && (
                                 <div className="text-xs mt-2 opacity-90">
                                   ({homePlayerGoals}
                                   {awaySubPenalties > 0 && ` +${awaySubPenalties}s`}
-                                  {homePenaltyGoals > 0 && ` +${homePenaltyGoals}f`})
+                                  {homeFineGoals > 0 && ` +${homeFineGoals}f`})
                                 </div>
                               )
                             )}
                           </div>
 
-                          {/* VS or Draw */}
-                          <div className="text-center">
-                            {winner === 'draw' ? (
-                              <div className="bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full font-bold text-sm shadow-lg">
-                                DRAW
-                              </div>
-                            ) : (
-                              <div className="text-2xl font-bold text-gray-400">-</div>
-                            )}
+                          <div className="text-2xl font-black text-slate-300 font-sans">
+                            -
                           </div>
 
-                          {/* Away Total */}
-                          <div className={`text-center p-4 rounded-2xl border transition-all ${winner === 'away' ? 'bg-emerald-50/30 border-emerald-500 text-emerald-800 font-bold scale-105' : 'bg-slate-50 border-slate-200 text-slate-700'
+                          {/* Away Score */}
+                          <div className="text-center">
+                            <div className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">
+                              {fixture.away_team_name}
+                            </div>
+                            <div className={`text-4xl sm:text-5xl font-black ${
+                              awayWonFixture ? 'text-emerald-600' : isDrawFixture ? 'text-amber-600' : 'text-slate-400'
                             }`}>
-                            <div className="text-xs sm:text-sm font-medium mb-1">{fixture.away_team_name}</div>
-                            <div className="text-3xl sm:text-4xl font-bold">{awayTotalScore}</div>
-                            {winner === 'away' && <div className="text-xs mt-1 font-semibold"><Check className="w-4 h-4 text-emerald-500" /> WINNER</div>}
-                            {/* Breakdown */}
-                            {tournamentSystem === 'wins' ? (
-                              // Show W-D-L for win-based system
-                              <div className="text-xs mt-2 opacity-90">
-                                {matchups.filter(m => m.home_goals !== null && m.away_goals !== null && (m.away_goals ?? 0) > (m.home_goals ?? 0)).length}W-
-                                {matchups.filter(m => m.home_goals !== null && m.away_goals !== null && (m.home_goals ?? 0) === (m.away_goals ?? 0)).length}D-
-                                {matchups.filter(m => m.home_goals !== null && m.away_goals !== null && (m.away_goals ?? 0) < (m.home_goals ?? 0)).length}L
-                              </div>
-                            ) : (
-                              // Show goal breakdown for goal-based system
+                              {awayTotalScore}
+                            </div>
+                            {tournamentSystem === 'goals' && (
                               (homeSubPenalties > 0 || awayPenaltyGoals > 0) && (
                                 <div className="text-xs mt-2 opacity-90">
                                   ({awayPlayerGoals}
@@ -2032,7 +2075,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           </div>
                         </div>
                         {/* Legend - only show for goal-based system */}
-                        {tournamentSystem === 'goals' && (homeSubPenalties > 0 || awaySubPenalties > 0 || homePenaltyGoals > 0 || awayPenaltyGoals > 0) && (
+                        {tournamentSystem === 'goals' && (homeSubPenalties > 0 || awaySubPenalties > 0 || homeFineGoals > 0 || awayPenaltyGoals > 0) && (
                           <div className="text-center text-xs text-gray-600 pt-2 border-t border-gray-300">
                             s = sub penalty, f = fine
                           </div>
@@ -2046,7 +2089,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     <div className="console-card bg-white border border-amber-300 rounded-2xl p-4 font-mono shadow-sm bg-gradient-to-r from-amber-500/5 to-amber-500/10">
                       <div className="flex items-center justify-center gap-3">
                         <div>
-                          <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider text-center"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Man of the Match</div>
+                          <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider text-center"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500 inline" /> Man of the Match</div>
                           <div className="text-base font-bold text-slate-800 uppercase tracking-wide text-center mt-0.5">{fixture.motm_player_name}</div>
                         </div>
                       </div>
@@ -2062,6 +2105,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       const isPOTD = fixture.motm_player_id && (fixture.motm_player_id === matchup.home_player_id || fixture.motm_player_id === matchup.away_player_id);
                       const homePOTD = fixture.motm_player_id === matchup.home_player_id;
                       const awayPOTD = fixture.motm_player_id === matchup.away_player_id;
+
+                      const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
+                      const awayMatch = awaySquadById.get(matchup.away_player_id) || awaySquadByName.get(matchup.away_player_name?.toLowerCase());
+
+                      const homeCategory = matchup.home_category || homeMatch?.category;
+                      const awayCategory = matchup.away_category || awayMatch?.category;
 
                       return (
                         <div key={idx} className={`console-card bg-white border rounded-2xl p-4 transition-all font-mono hover:border-amber-400/40 duration-200 ${isPOTD ? 'border-amber-300 shadow-sm bg-gradient-to-r from-amber-500/5 to-amber-500/10' : 'border-slate-200/60 shadow-sm'
@@ -2120,37 +2169,50 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           {/* Main Matchup Display */}
                           <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-center">
                             {/* Home Player */}
-                            <div className={`p-2.5 sm:p-3 rounded-xl border transition-all ${homePOTD ? 'bg-amber-50/60 border-amber-300' :
+                            <div className={`p-3 rounded-xl border transition-all ${homePOTD ? 'bg-amber-50/60 border-amber-300' :
                               homeWon ? 'bg-emerald-50/30 border-emerald-200' :
                                 isDraw ? 'bg-slate-50 border-slate-200' :
                                   awayWon ? 'bg-red-50/20 border-red-200' :
                                     'bg-slate-50 border-slate-200'
                               }`}>
-                              <div className="text-center">
-                                <div className="flex items-center justify-center gap-1 mb-1">
-                                  {homePOTD && (
-                                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                    </svg>
-                                  )}
-                                  <p className="flex items-center justify-center gap-1 text-xs font-medium text-gray-600"><Home className="w-3 h-3 text-blue-600" /> <span className="hidden sm:inline">{fixture.home_team_name}</span><span className="sm:hidden">Home</span></p>
-                                </div>
-                                <p className={`font-bold mb-1 sm:mb-2 text-xs sm:text-sm ${homePOTD ? 'text-yellow-900 sm:text-base' : 'text-gray-900'
-                                  }`}>{matchup.home_player_name}</p>
-                                {hasResult && (
-                                  <div className="space-y-1">
-                                    <div className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold text-xs sm:text-sm ${homeWon ? 'bg-green-500 text-white' :
-                                      isDraw ? 'bg-gray-400 text-white' :
-                                        'bg-red-100 text-red-700'
-                                      }`}>
-                                      {homeWon ? '<Check className="w-4 h-4 text-emerald-500" />' : isDraw ? '◆' : '✗'}
-                                      <span className="ml-0.5">{matchup.home_goals}<span className="hidden sm:inline"> goal{matchup.home_goals !== 1 ? 's' : ''}</span></span>
-                                    </div>
-                                    <p className="text-xs text-gray-600">
-                                      {homeWon ? '🎉 Won' : isDraw ? '<Handshake className="w-4 h-4 text-emerald-500" /> Draw' : '<XCircle className="w-4 h-4 text-rose-500" /> Lost'}
-                                    </p>
+                              <div className="flex items-center gap-3">
+                                <PlayerPhoto
+                                  photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
+                                  playerName={matchup.home_player_name}
+                                  size={40}
+                                  shape="circle"
+                                  posXCircle={homeMatch?.photo_position_x_circle}
+                                  posYCircle={homeMatch?.photo_position_y_circle}
+                                  scaleCircle={homeMatch?.photo_scale_circle}
+                                  className="border border-blue-300 flex-shrink-0"
+                                />
+                                <div className="flex flex-col min-w-0 text-left">
+                                  <div className="flex items-center gap-1">
+                                    {homePOTD && (
+                                      <svg className="w-3 h-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                      </svg>
+                                    )}
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{fixture.home_team_name}</span>
                                   </div>
-                                )}
+                                  <span className={`font-extrabold text-sm text-slate-900 truncate ${homePOTD ? 'text-amber-900' : ''}`}>
+                                    {matchup.home_player_name}
+                                  </span>
+                                  {homeCategory && (
+                                    <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
+                                      {homeCategory}
+                                    </span>
+                                  )}
+                                  {hasResult && (
+                                    <div className="mt-1.5">
+                                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-xs ${
+                                        homeWon ? 'bg-emerald-500 text-white' : isDraw ? 'bg-slate-400 text-white' : 'bg-red-100 text-red-700'
+                                      }`}>
+                                        {homeWon ? '🎉 Won' : isDraw ? '◆ Draw' : '✗ Lost'} ({matchup.home_goals} goals)
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
 
@@ -2173,42 +2235,55 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   )}
                                 </>
                               ) : (
-                                <div className="bg-gray-200 text-gray-600 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium">VS</div>
+                                <div className="bg-slate-800 text-white rounded-full px-3.5 py-1 text-xs font-black shadow-sm">VS</div>
                               )}
                             </div>
 
                             {/* Away Player */}
-                            <div className={`p-2.5 sm:p-3 rounded-xl border transition-all ${awayPOTD ? 'bg-amber-50/60 border-amber-300' :
+                            <div className={`p-3 rounded-xl border transition-all ${awayPOTD ? 'bg-amber-50/60 border-amber-300' :
                               awayWon ? 'bg-emerald-50/30 border-emerald-200' :
                                 isDraw ? 'bg-slate-50 border-slate-200' :
                                   homeWon ? 'bg-red-50/20 border-red-200' :
                                     'bg-slate-50 border-slate-200'
                               }`}>
-                              <div className="text-center">
-                                <div className="flex items-center justify-center gap-1 mb-1">
-                                  {awayPOTD && (
-                                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                    </svg>
-                                  )}
-                                  <p className="text-xs font-medium text-gray-600"><Plane className="w-3 h-3 inline text-slate-400 mr-1" /> <span className="hidden sm:inline">{fixture.away_team_name}</span><span className="sm:hidden">Away</span></p>
-                                </div>
-                                <p className={`font-bold mb-1 sm:mb-2 text-xs sm:text-sm ${awayPOTD ? 'text-yellow-900 sm:text-base' : 'text-gray-900'
-                                  }`}>{matchup.away_player_name}</p>
-                                {hasResult && (
-                                  <div className="space-y-1">
-                                    <div className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold text-xs sm:text-sm ${awayWon ? 'bg-green-500 text-white' :
-                                      isDraw ? 'bg-gray-400 text-white' :
-                                        'bg-red-100 text-red-700'
-                                      }`}>
-                                      {awayWon ? '<Check className="w-4 h-4 text-emerald-500" />' : isDraw ? '◆' : '✗'}
-                                      <span className="ml-0.5">{matchup.away_goals}<span className="hidden sm:inline"> goal{matchup.away_goals !== 1 ? 's' : ''}</span></span>
-                                    </div>
-                                    <p className="text-xs text-gray-600">
-                                      {awayWon ? '🎉 Won' : isDraw ? '<Handshake className="w-4 h-4 text-emerald-500" /> Draw' : '<XCircle className="w-4 h-4 text-rose-500" /> Lost'}
-                                    </p>
+                              <div className="flex items-center gap-3 flex-row-reverse sm:flex-row">
+                                <PlayerPhoto
+                                  photoUrl={awayMatch?.photo_url || matchup.away_photo_url}
+                                  playerName={matchup.away_player_name}
+                                  size={40}
+                                  shape="circle"
+                                  posXCircle={awayMatch?.photo_position_x_circle}
+                                  posYCircle={awayMatch?.photo_position_y_circle}
+                                  scaleCircle={awayMatch?.photo_scale_circle}
+                                  className="border border-slate-300 flex-shrink-0"
+                                />
+                                <div className="flex flex-col min-w-0 text-right sm:text-left">
+                                  <div className="flex items-center justify-end sm:justify-start gap-1">
+                                    {awayPOTD && (
+                                      <svg className="w-3 h-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                      </svg>
+                                    )}
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{fixture.away_team_name}</span>
                                   </div>
-                                )}
+                                  <span className={`font-extrabold text-sm text-slate-900 truncate ${awayPOTD ? 'text-amber-900' : ''}`}>
+                                    {matchup.away_player_name}
+                                  </span>
+                                  {awayCategory && (
+                                    <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-end sm:self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
+                                      {awayCategory}
+                                    </span>
+                                  )}
+                                  {hasResult && (
+                                    <div className="mt-1.5">
+                                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-xs ${
+                                        awayWon ? 'bg-emerald-500 text-white' : isDraw ? 'bg-slate-400 text-white' : 'bg-red-100 text-red-700'
+                                      }`}>
+                                        {awayWon ? '🎉 Won' : isDraw ? '◆ Draw' : '✗ Lost'} ({matchup.away_goals} goals)
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
