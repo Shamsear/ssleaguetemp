@@ -1783,40 +1783,53 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
               <div className="space-y-3 sm:space-y-4">
                 {homeStartingXI.map((homePlayer, idx) => (
-                  <div key={idx} className="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all font-mono">
-                    <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
-                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Match #{idx + 1}</span>
-                      {homePlayer.category && (
-                        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${getCategoryBadgeClass(homePlayer.category)}`}>
-                          {homePlayer.category}
-                        </span>
-                      )}
+                  <div key={idx} className="console-card bg-white border border-slate-200/60 rounded-2xl p-3.5 shadow-sm transition-all font-mono hover:border-amber-400/40">
+                    {/* Header with Match # and Duration */}
+                    <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-slate-100">
+                      <span className="inline-flex items-center px-2.5 py-0.5 bg-slate-800 text-white text-[10px] font-bold rounded-md">
+                        Match #{idx + 1}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <select
+                          value={matchDurations[idx] || 6}
+                          onChange={(e) => setMatchDurations({ ...matchDurations, [idx]: Number(e.target.value) })}
+                          className="px-2 py-0.5 text-[10px] font-bold border border-slate-300 rounded-md bg-slate-50 focus:ring-1 focus:ring-emerald-500"
+                        >
+                          <option value={6}>6 min</option>
+                          <option value={7}>7 min</option>
+                          <option value={8}>8 min</option>
+                          <option value={9}>9 min</option>
+                          <option value={10}>10 min</option>
+                          <option value={11}>11 min</option>
+                          <option value={12}>12 min</option>
+                        </select>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-center">
+                    {/* Players Grid */}
+                    <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
                       {/* Home Player Card */}
-                      <div>
-                        <label className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                          <Home className="w-3 h-3 text-blue-600" />
-                          <span>Home Player</span>
-                        </label>
-                        <div className="flex items-center gap-3 p-3 bg-blue-50/70 border border-blue-200 rounded-xl">
+                      <div className="p-2 rounded-xl bg-blue-50/60 border border-blue-200/80 min-w-0">
+                        <div className="flex items-center gap-2">
                           <PlayerPhoto
                             photoUrl={homePlayer.photo_url}
                             playerName={homePlayer.player_name || homePlayer.name || 'Player'}
-                            size={40}
+                            size={32}
                             shape="circle"
                             posXCircle={homePlayer.photo_position_x_circle}
                             posYCircle={homePlayer.photo_position_y_circle}
                             scaleCircle={homePlayer.photo_scale_circle}
                             className="border border-blue-300 flex-shrink-0"
                           />
-                          <div className="flex flex-col truncate">
-                            <span className="font-extrabold text-sm text-slate-900 truncate">
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-black text-xs text-slate-900 truncate">
                               {homePlayer.player_name || homePlayer.name || 'Unknown Player'}
                             </span>
                             {homePlayer.category && (
-                              <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homePlayer.category)}`}>
+                              <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homePlayer.category)}`}>
                                 {homePlayer.category}
                               </span>
                             )}
@@ -1825,19 +1838,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       </div>
 
                       {/* VS Badge */}
-                      <div className="hidden sm:flex justify-center">
-                        <div className="bg-slate-800 text-white rounded-full px-3 py-1 text-xs font-extrabold shadow-sm">VS</div>
-                      </div>
-                      <div className="sm:hidden text-center">
-                        <div className="inline-block bg-slate-200 text-slate-700 rounded-full px-4 py-1 text-xs font-bold">VS</div>
+                      <div className="px-2 py-0.5 bg-slate-800 text-amber-400 text-[10px] font-black rounded-full shadow-sm text-center">
+                        VS
                       </div>
 
                       {/* Away Player Custom Searchable Select */}
-                      <div>
-                        <label className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                          <Plane className="w-3 h-3 text-slate-600" />
-                          <span>Away Player</span>
-                        </label>
+                      <div className="min-w-0">
                         <SearchablePlayerSelect
                           players={awayStartingXI
                             .filter(p => !Object.values(selectedAwayPlayers).includes(p.player_id) || selectedAwayPlayers[idx] === p.player_id)
@@ -1853,32 +1859,9 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           }
                           value={selectedAwayPlayers[idx] || ''}
                           onChange={(val) => setSelectedAwayPlayers({ ...selectedAwayPlayers, [idx]: val })}
-                          placeholder="Search & select away player..."
+                          placeholder="Select away player..."
                         />
                       </div>
-                    </div>
-
-                    {/* Match Duration for this matchup */}
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-2">
-                        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        eFootball Match Duration
-                      </label>
-                      <select
-                        value={matchDurations[idx] || 6}
-                        onChange={(e) => setMatchDurations({ ...matchDurations, [idx]: Number(e.target.value) })}
-                        className="w-full px-3 py-2 text-sm border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
-                      >
-                        <option value={6}>6 minutes (3 min per half)</option>
-                        <option value={7}>7 minutes (3.5 min per half)</option>
-                        <option value={8}>8 minutes (4 min per half)</option>
-                        <option value={9}>9 minutes (4.5 min per half)</option>
-                        <option value={10}>10 minutes (5 min per half)</option>
-                        <option value={11}>11 minutes (5.5 min per half)</option>
-                        <option value={12}>12 minutes (6 min per half)</option>
-                      </select>
                     </div>
                   </div>
                 ))}
@@ -1908,19 +1891,17 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
           {matchups.length > 0 && (
             <div className="space-y-4">
 
-              {/* Share Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Share & Action Buttons Bar */}
+              <div className="flex flex-wrap items-center gap-2">
                 {/* WhatsApp Share Button */}
                 <button
                   onClick={handleWhatsAppShare}
-                  className="relative overflow-hidden w-full inline-flex items-center justify-center px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
+                  className="flex-1 min-w-[120px] inline-flex items-center justify-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
                 >
-                  <div className="flex items-center gap-3">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                    </svg>
-                    <span>Share via WhatsApp</span>
-                  </div>
+                  <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                  </svg>
+                  <span>WhatsApp</span>
                 </button>
 
                 {/* Copy to Clipboard Button */}
@@ -1941,104 +1922,117 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       });
                     });
                   }}
-                  className="relative overflow-hidden w-full inline-flex items-center justify-center px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
+                  className="flex-1 min-w-[120px] inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
                 >
-                  <div className="flex items-center gap-3">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    <span>Copy Match Details</span>
-                  </div>
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span>Copy</span>
                 </button>
-              </div>
 
-              {/* Edit Button */}
-              {canEditMatchups && !isEditMode && (
-                <button
-                  onClick={() => setIsEditMode(true)}
-                  className="relative overflow-hidden w-full inline-flex items-center justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all"
-                >
-                  <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {/* Edit Button */}
+                {canEditMatchups && !isEditMode && (
+                  <button
+                    onClick={() => setIsEditMode(true)}
+                    className="flex-1 min-w-[120px] inline-flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all"
+                  >
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    <span>Edit Matchups</span>
-                  </div>
-                </button>
-              )}
+                    <span>Edit</span>
+                  </button>
+                )}
+              </div>
 
               {canEditMatchups && isEditMode ? (
                 // Edit Mode
                 <>
-                  <div className="console-card bg-slate-50 border border-slate-200/60 rounded-2xl p-5 mb-4 shadow-sm font-mono relative overflow-hidden">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="console-card bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 mb-3 shadow-sm font-mono relative overflow-hidden">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 bg-slate-800 text-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-800 font-bold uppercase tracking-wider mb-1">📝 Edit Mode Active</p>
+                        <p className="text-xs text-slate-800 font-bold uppercase tracking-wider">📝 Edit Mode Active</p>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Change away player assignments and match durations</p>
                       </div>
                     </div>
                   </div>
 
                   {matchups.map((matchup, idx) => (
-                    <div key={idx} className="group relative p-5 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-2xl space-y-4 hover:shadow-xl hover:border-indigo-300 transition-all font-mono">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">
+                    <div key={idx} className="console-card bg-white border border-slate-200/60 rounded-2xl p-3.5 shadow-sm transition-all font-mono hover:border-amber-400/40">
+                      {/* Header with Match # and Duration */}
+                      <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-slate-100">
+                        <span className="inline-flex items-center px-2.5 py-0.5 bg-slate-800 text-white text-[10px] font-bold rounded-md">
                           Match #{matchup.position}
                         </span>
+                        <div className="flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <select
+                            value={matchup.match_duration ?? 6}
+                            onChange={(e) => {
+                              const newMatchups = [...matchups];
+                              newMatchups[idx].match_duration = Number(e.target.value);
+                              setMatchups(newMatchups);
+                            }}
+                            className="px-2 py-0.5 text-[10px] font-bold border border-slate-300 rounded-md bg-slate-50 focus:ring-1 focus:ring-emerald-500"
+                          >
+                            <option value={6}>6 min</option>
+                            <option value={7}>7 min</option>
+                            <option value={8}>8 min</option>
+                            <option value={9}>9 min</option>
+                            <option value={10}>10 min</option>
+                            <option value={11}>11 min</option>
+                            <option value={12}>12 min</option>
+                          </select>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+
+                      {/* Players Grid */}
+                      <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
                         {/* Home Player */}
-                        <div>
-                          <label className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                            <Home className="w-3 h-3 text-blue-600" />
-                            <span>Home Player</span>
-                          </label>
-                          {(() => {
-                            const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
-                            const homeCategory = matchup.home_category || homeMatch?.category;
-                            return (
-                              <div className="flex items-center gap-3 p-3 bg-blue-50/70 border border-blue-200 rounded-xl">
+                        {(() => {
+                          const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
+                          const homeCategory = matchup.home_category || homeMatch?.category;
+                          return (
+                            <div className="p-2 rounded-xl bg-blue-50/60 border border-blue-200/80 min-w-0">
+                              <div className="flex items-center gap-2">
                                 <PlayerPhoto
                                   photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
                                   playerName={matchup.home_player_name}
-                                  size={40}
+                                  size={32}
                                   shape="circle"
                                   posXCircle={homeMatch?.photo_position_x_circle}
                                   posYCircle={homeMatch?.photo_position_y_circle}
                                   scaleCircle={homeMatch?.photo_scale_circle}
                                   className="border border-blue-300 flex-shrink-0"
                                 />
-                                <div className="flex flex-col truncate">
-                                  <span className="font-extrabold text-sm text-slate-900 truncate">
+                                <div className="flex flex-col min-w-0">
+                                  <span className="font-black text-xs text-slate-900 truncate">
                                     {matchup.home_player_name}
                                   </span>
                                   {homeCategory && (
-                                    <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
+                                    <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
                                       {homeCategory}
                                     </span>
                                   )}
                                 </div>
                               </div>
-                            );
-                          })()}
-                        </div>
+                            </div>
+                          );
+                        })()}
 
                         {/* VS */}
-                        <div className="flex justify-center">
-                          <div className="bg-slate-800 text-white rounded-full px-3 py-1 text-xs font-black shadow-sm">VS</div>
+                        <div className="px-2 py-0.5 bg-slate-800 text-amber-400 text-[10px] font-black rounded-full shadow-sm text-center">
+                          VS
                         </div>
 
-                        {/* Away Player Dropdown */}
-                        <div className="md:col-span-2">
-                          <label className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                            <Plane className="w-3 h-3 text-slate-600" />
-                            <span>Away Player</span>
-                          </label>
+                        {/* Away Player Select */}
+                        <div className="min-w-0">
                           <SearchablePlayerSelect
                             players={awayStartingXI
                               .filter(p => !matchups.some((m, mIdx) => mIdx !== idx && m.away_player_id === p.player_id))
@@ -2060,36 +2054,9 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               newMatchups[idx].away_player_name = selectedPlayer?.player_name || '';
                               setMatchups(newMatchups);
                             }}
-                            placeholder="Search & select away player..."
+                            placeholder="Select away player..."
                           />
                         </div>
-                      </div>
-
-                      {/* Match Duration */}
-                      <div className="pt-3 border-t border-gray-200">
-                        <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-2">
-                          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          eFootball Match Duration
-                        </label>
-                        <select
-                          value={matchup.match_duration ?? 6}
-                          onChange={(e) => {
-                            const newMatchups = [...matchups];
-                            newMatchups[idx].match_duration = Number(e.target.value);
-                            setMatchups(newMatchups);
-                          }}
-                          className="w-full px-3 py-2 text-sm border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
-                        >
-                          <option value={6}>6 minutes (3 min per half)</option>
-                          <option value={7}>7 minutes (3.5 min per half)</option>
-                          <option value={8}>8 minutes (4 min per half)</option>
-                          <option value={9}>9 minutes (4.5 min per half)</option>
-                          <option value={10}>10 minutes (5 min per half)</option>
-                          <option value={11}>11 minutes (5.5 min per half)</option>
-                          <option value={12}>12 minutes (6 min per half)</option>
-                        </select>
                       </div>
                     </div>
                   ))}
