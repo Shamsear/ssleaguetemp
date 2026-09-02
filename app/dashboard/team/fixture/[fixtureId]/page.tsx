@@ -513,6 +513,34 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
         setFixture(f);
 
+        // Fallback logo resolution if fixture API returned null logos
+        if (!f.home_team_logo || !f.away_team_logo) {
+          try {
+            const allTeamsRes = await fetch('/api/teams/all-teams');
+            if (allTeamsRes.ok) {
+              const allTeamsJson = await allTeamsRes.json();
+              const teamsList = allTeamsJson.data || allTeamsJson.teams || [];
+
+              const homeMatch = teamsList.find((t: any) =>
+                t.id === f.home_team_id || t.name === f.home_team_name || t.team_name === f.home_team_name
+              );
+              const awayMatch = teamsList.find((t: any) =>
+                t.id === f.away_team_id || t.name === f.away_team_name || t.team_name === f.away_team_name
+              );
+
+              if (homeMatch && !f.home_team_logo) {
+                f.home_team_logo = homeMatch.logo_url || homeMatch.logoUrl || homeMatch.team_logo || homeMatch.logoURL || null;
+              }
+              if (awayMatch && !f.away_team_logo) {
+                f.away_team_logo = awayMatch.logo_url || awayMatch.logoUrl || awayMatch.team_logo || awayMatch.logoURL || null;
+              }
+              setFixture({ ...f });
+            }
+          } catch (logoErr) {
+            console.error('Error resolving fallback team logos:', logoErr);
+          }
+        }
+
         // Set team ID & home/away team status
         const currentTeamId = (user as any).team_id || user.uid || '';
         setTeamId(currentTeamId);
