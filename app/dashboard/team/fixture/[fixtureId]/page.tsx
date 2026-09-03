@@ -281,24 +281,28 @@ export default function FixturePage() {
       const resultDeadline = new Date(`${resultDateStr}T${resultTime}:00+05:30`);
 
       // Calculate phase based on round status and deadlines
+      const rNum = fixture?.round_number || 0;
+      const rStatus = (roundDeadlines.status || '').toLowerCase();
+
       let currentPhase: typeof phase = 'closed';
 
-      if (roundDeadlines.status === 'completed' || roundDeadlines.status === 'finalized') {
+      if (rStatus === 'completed' || rStatus === 'finalized' || rStatus === 'closed') {
         currentPhase = 'closed';
-      } else if (roundDeadlines.status === 'result_entry' || fixture?.round_number === 1) {
+      } else if (rStatus === 'result_entry') {
         currentPhase = 'result_entry';
-      } else if (roundDeadlines.status === 'home_fixture' || fixture?.round_number === 2) {
+      } else if (rStatus === 'home_fixture') {
         currentPhase = 'home_fixture';
-      } else if (roundDeadlines.status === 'fixture_entry') {
+      } else if (rStatus === 'fixture_entry') {
         currentPhase = 'fixture_entry';
-      } else if (roundDeadlines.status === 'closed') {
-        currentPhase = 'closed';
-      } else if (roundDeadlines.status === 'in_progress' || roundDeadlines.status === 'started' || roundDeadlines.status === 'active' || roundDeadlines.status === 'pending' || roundDeadlines.status === 'scheduled') {
-        if (fixture?.round_number === 1) {
-          currentPhase = 'result_entry';
-        } else if (fixture?.round_number === 2) {
-          currentPhase = 'home_fixture';
-        } else if (now < homeDeadline) {
+      } else if (rNum === 1) {
+        // Active Round 1 -> Result Entry
+        currentPhase = 'result_entry';
+      } else if (rNum === 2) {
+        // Active Round 2 -> Home Fixture Setup
+        currentPhase = 'home_fixture';
+      } else if (rStatus === 'in_progress' || rStatus === 'started' || rStatus === 'active') {
+        // Evaluate deadlines only if round status is explicitly active
+        if (now < homeDeadline) {
           currentPhase = 'home_fixture';     // Home team creates matchups
         } else if (now < awayDeadline) {
           currentPhase = 'fixture_entry';    // Away team reviews, both can finalize
@@ -308,13 +312,8 @@ export default function FixturePage() {
           currentPhase = 'closed';           // Read-only
         }
       } else {
-        if (fixture?.round_number === 1) {
-          currentPhase = 'result_entry';
-        } else if (fixture?.round_number === 2) {
-          currentPhase = 'home_fixture';
-        } else {
-          currentPhase = 'draft';
-        }
+        // Pending or scheduled future rounds (Round 3+) stay in draft mode
+        currentPhase = 'draft';
       }
 
       if (currentPhase !== phase) {
