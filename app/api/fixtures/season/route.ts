@@ -34,8 +34,18 @@ export async function GET(request: NextRequest) {
         f.*,
         f.home_score,
         f.away_score,
-        COALESCE(f.status, 'scheduled') as status
+        CASE 
+          WHEN LOWER(COALESCE(f.status, '')) IN ('completed', 'finalized') THEN 'completed'
+          WHEN LOWER(COALESCE(f.status, '')) IN ('live', 'active', 'in_progress', 'home_fixture', 'fixture_entry', 'result_entry') 
+               OR COALESCE(m_count.matchup_count, 0) > 0 THEN 'live'
+          ELSE 'scheduled'
+        END as status
       FROM fixtures f
+      LEFT JOIN (
+        SELECT fixture_id, COUNT(*) as matchup_count
+        FROM matchups
+        GROUP BY fixture_id
+      ) m_count ON f.id = m_count.fixture_id
       WHERE (f.tournament_id = ${tournamentId} OR f.season_id = ${seasonId})
       ORDER BY f.round_number ASC, f.match_number ASC
     `;

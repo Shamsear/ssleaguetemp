@@ -100,7 +100,7 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
   };
 
   const isFixtureLive = (f: Fixture) => {
-    return f.status === 'in_progress' || f.status === 'live' || f.status === 'active';
+    return f.status === 'in_progress' || f.status === 'live' || f.status === 'active' || f.status === 'home_fixture' || f.status === 'fixture_entry' || f.status === 'result_entry';
   };
 
   const getFilteredFixtures = () => {
@@ -140,7 +140,12 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
       return <span className="px-2 py-0.5 text-[8px] font-mono font-bold rounded bg-emerald-50 border border-emerald-200 text-emerald-700 uppercase tracking-wide">Completed</span>;
     }
     if (isFixtureLive(fixture)) {
-      return <span className="px-2 py-0.5 text-[8px] font-mono font-bold rounded bg-red-50 border border-red-200 text-red-600 animate-pulse uppercase tracking-wide">Live</span>;
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[8px] font-mono font-bold rounded bg-rose-50 border border-rose-200 text-rose-600 uppercase tracking-wide">
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+          Live
+        </span>
+      );
     }
     return <span className="px-2 py-0.5 text-[8px] font-mono font-bold rounded bg-blue-50 border border-blue-200 text-blue-700 uppercase tracking-wide">Upcoming</span>;
   };
