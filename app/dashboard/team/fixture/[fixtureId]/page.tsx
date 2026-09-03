@@ -845,10 +845,31 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
     setIsHomeTeam(isHome);
     setIsAdmin(isAdmin);
-    setCanCreateMatchups((isHome || isAway || isAdmin) && matchups.length === 0);
 
-    const canEdit = (isHome || isAway || isAdmin) && matchups.length > 0 && phase !== 'closed' && phase !== 'result_entry';
-    setCanEditMatchups(canEdit);
+    // Matchup creation and editing require active fixture phase (home_fixture or fixture_entry)
+    const isPhaseActiveForCreate = phase === 'home_fixture' || phase === 'fixture_entry';
+    let allowedToCreate = false;
+    if (isAdmin) {
+      allowedToCreate = isPhaseActiveForCreate;
+    } else if (phase === 'home_fixture') {
+      allowedToCreate = isHome; // Only Home team in Home Fixture phase
+    } else if (phase === 'fixture_entry') {
+      allowedToCreate = isHome || isAway; // Both teams in Fixture Entry phase
+    }
+
+    setCanCreateMatchups(allowedToCreate && matchups.length === 0);
+
+    const isPhaseActiveForEdit = phase === 'home_fixture' || phase === 'fixture_entry';
+    let allowedToEdit = false;
+    if (isAdmin) {
+      allowedToEdit = isPhaseActiveForEdit;
+    } else if (phase === 'home_fixture') {
+      allowedToEdit = isHome;
+    } else if (phase === 'fixture_entry') {
+      allowedToEdit = isHome || isAway;
+    }
+
+    setCanEditMatchups(allowedToEdit && matchups.length > 0);
   }, [fixture, user, matchups, phase]);
 
   useEffect(() => {
