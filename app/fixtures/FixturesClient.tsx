@@ -43,7 +43,7 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [seasonName, setSeasonName] = useState('');
-  const [filter, setFilter] = useState<'all' | 'upcoming' | 'live' | 'results'>('upcoming');
+  const [filter, setFilter] = useState<'all' | 'upcoming' | 'live' | 'results'>('all');
 
   useEffect(() => {
     fetchFixtures();
@@ -95,22 +95,30 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
     }
   };
 
+  const isFixtureCompleted = (f: Fixture) => {
+    return f.status === 'completed' || (f.home_score !== null && f.home_score !== undefined && f.away_score !== null && f.away_score !== undefined);
+  };
+
+  const isFixtureLive = (f: Fixture) => {
+    return f.status === 'in_progress' || f.status === 'live';
+  };
+
   const getFilteredFixtures = () => {
     let list = [...fixtures];
     if (filter === 'upcoming') {
-      list = list.filter(f => f.status === 'scheduled' || f.status === 'pending');
+      list = list.filter(f => !isFixtureCompleted(f) && !isFixtureLive(f));
       list.sort((a, b) => {
         if (a.round_number !== b.round_number) return a.round_number - b.round_number;
         return a.match_number - b.match_number;
       });
     } else if (filter === 'live') {
-      list = list.filter(f => f.status === 'in_progress' || f.status === 'live');
+      list = list.filter(f => isFixtureLive(f));
       list.sort((a, b) => {
         if (a.round_number !== b.round_number) return a.round_number - b.round_number;
         return a.match_number - b.match_number;
       });
     } else if (filter === 'results') {
-      list = list.filter(f => f.status === 'completed');
+      list = list.filter(f => isFixtureCompleted(f));
       // Show latest results first
       list.sort((a, b) => {
         if (b.round_number !== a.round_number) return b.round_number - a.round_number;
@@ -127,19 +135,14 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
 
   const filteredFixtures = getFilteredFixtures();
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <span className="px-2 py-0.5 text-[8px] font-mono font-bold rounded bg-emerald-50 border border-emerald-200 text-emerald-700 uppercase tracking-wide">Completed</span>;
-      case 'in_progress':
-      case 'live':
-        return <span className="px-2 py-0.5 text-[8px] font-mono font-bold rounded bg-red-50 border border-red-250 text-red-605 animate-pulse uppercase tracking-wide">Live</span>;
-      case 'scheduled':
-      case 'pending':
-        return <span className="px-2 py-0.5 text-[8px] font-mono font-bold rounded bg-blue-50 border border-blue-200 text-blue-700 uppercase tracking-wide">Upcoming</span>;
-      default:
-        return <span className="px-2 py-0.5 text-[8px] font-mono font-bold rounded bg-slate-50 border border-slate-200 text-slate-500 uppercase tracking-wide">{status}</span>;
+  const getStatusBadge = (fixture: Fixture) => {
+    if (isFixtureCompleted(fixture)) {
+      return <span className="px-2 py-0.5 text-[8px] font-mono font-bold rounded bg-emerald-50 border border-emerald-200 text-emerald-700 uppercase tracking-wide">Completed</span>;
     }
+    if (isFixtureLive(fixture)) {
+      return <span className="px-2 py-0.5 text-[8px] font-mono font-bold rounded bg-red-50 border border-red-200 text-red-600 animate-pulse uppercase tracking-wide">Live</span>;
+    }
+    return <span className="px-2 py-0.5 text-[8px] font-mono font-bold rounded bg-blue-50 border border-blue-200 text-blue-700 uppercase tracking-wide">Upcoming</span>;
   };
 
   return (
@@ -175,7 +178,8 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
             <button
               onClick={() => {
                 setFilter('upcoming');
-                router.push('/fixtures?tab=upcoming');
+                const basePath = isTeamView ? '/dashboard/team/fixtures' : '/fixtures';
+                router.push(`${basePath}?tab=upcoming`);
               }}
               className={`px-4 py-2.5 rounded-xl font-mono font-bold text-xs transition-all cursor-pointer ${
                 filter === 'upcoming'
@@ -188,7 +192,8 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
             <button
               onClick={() => {
                 setFilter('live');
-                router.push('/fixtures?tab=live');
+                const basePath = isTeamView ? '/dashboard/team/fixtures' : '/fixtures';
+                router.push(`${basePath}?tab=live`);
               }}
               className={`px-4 py-2.5 rounded-xl font-mono font-bold text-xs transition-all cursor-pointer ${
                 filter === 'live'
@@ -201,7 +206,8 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
             <button
               onClick={() => {
                 setFilter('results');
-                router.push('/fixtures?tab=results');
+                const basePath = isTeamView ? '/dashboard/team/fixtures' : '/fixtures';
+                router.push(`${basePath}?tab=results`);
               }}
               className={`px-4 py-2.5 rounded-xl font-mono font-bold text-xs transition-all cursor-pointer ${
                 filter === 'results'
@@ -214,7 +220,8 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
             <button
               onClick={() => {
                 setFilter('all');
-                router.push('/fixtures?tab=all');
+                const basePath = isTeamView ? '/dashboard/team/fixtures' : '/fixtures';
+                router.push(`${basePath}?tab=all`);
               }}
               className={`px-4 py-2.5 rounded-xl font-mono font-bold text-xs transition-all cursor-pointer ${
                 filter === 'all'
@@ -259,7 +266,7 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {roundFixtures.map((fixture) => {
-                    const winner = fixture.status === 'completed'
+                    const winner = fixture.status === 'completed' || (fixture.home_score !== null && fixture.away_score !== null)
                       ? (fixture.home_score ?? 0) > (fixture.away_score ?? 0)
                         ? 'home'
                         : (fixture.away_score ?? 0) > (fixture.home_score ?? 0)
@@ -287,13 +294,13 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
                               
                               {/* Score / VS Box */}
                               <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-xs select-none">
-                                {fixture.status === 'completed' ? (
+                                {fixture.status === 'completed' || (fixture.home_score !== null && fixture.away_score !== null) ? (
                                   <span className={`px-1 ${winner === 'home' ? 'text-amber-600 font-black' : 'text-slate-800'}`}>
                                     {fixture.home_score ?? 0}
                                   </span>
                                 ) : null}
                                 <span className="text-slate-400 text-[10px]">VS</span>
-                                {fixture.status === 'completed' ? (
+                                {fixture.status === 'completed' || (fixture.home_score !== null && fixture.away_score !== null) ? (
                                   <span className={`px-1 ${winner === 'away' ? 'text-amber-600 font-black' : 'text-slate-800'}`}>
                                     {fixture.away_score ?? 0}
                                   </span>
@@ -312,7 +319,7 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
                             
                             {/* Status tag */}
                             <div className="flex flex-col items-end gap-1.5 select-none pl-3 border-l border-slate-100">
-                              {getStatusBadge(fixture.status)}
+                              {getStatusBadge(fixture)}
                               {fixture.scheduled_date && (
                                 <span className="text-[9px] text-slate-400 font-mono">
                                   {new Date(fixture.scheduled_date).toLocaleDateString()}

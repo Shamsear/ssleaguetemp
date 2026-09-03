@@ -2950,17 +2950,17 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           </div>
                         )}
 
-                        <div className="grid grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4 items-center">
+                        <div className="grid grid-cols-[1fr_auto_auto_auto_1fr] gap-1.5 sm:gap-3 items-center">
                           {/* Home Player */}
                           {(() => {
                             const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
                             const homeCategory = matchup.home_category || homeMatch?.category;
                             return (
-                              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 bg-blue-50/60 border border-blue-200/80 rounded-xl min-w-0">
+                              <div className="flex items-center gap-2 p-2 bg-blue-50/60 border border-blue-200/80 rounded-xl min-w-0">
                                 <PlayerPhoto
                                   photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
                                   playerName={matchup.home_player_name}
-                                  size={36}
+                                  size={32}
                                   shape="circle"
                                   posXCircle={homeMatch?.photo_position_x_circle}
                                   posYCircle={homeMatch?.photo_position_y_circle}
@@ -2968,11 +2968,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   className="border border-blue-300 flex-shrink-0"
                                 />
                                 <div className="flex flex-col min-w-0">
-                                  <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
+                                  <span className="font-extrabold text-xs text-slate-900 truncate">
                                     {matchup.home_player_name}
                                   </span>
                                   {homeCategory && (
-                                    <span className={`inline-block text-[8px] sm:text-[9px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
+                                    <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
                                       {homeCategory}
                                     </span>
                                   )}
@@ -2981,10 +2981,54 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             );
                           })()}
 
+                          {/* Home Goals Input */}
+                          <div className="flex flex-col items-center">
+                            <input
+                              type="number"
+                              min="0"
+                              max="99"
+                              value={matchResults[idx]?.home_goals ?? ''}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setMatchResults(prev => ({
+                                  ...prev,
+                                  [idx]: {
+                                    home_goals: isNaN(val) ? 0 : val,
+                                    away_goals: prev[idx]?.away_goals ?? 0
+                                  }
+                                }));
+                              }}
+                              className="w-11 sm:w-14 h-10 text-center font-black text-base sm:text-lg text-emerald-700 bg-white border-2 border-emerald-300 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none shadow-sm font-mono"
+                              placeholder="0"
+                            />
+                          </div>
+
                           {/* VS Badge */}
-                          <div className="flex flex-col items-center gap-0.5">
-                            <span className="bg-slate-800 text-white rounded-full px-2.5 py-0.5 text-[10px] font-black shadow-sm">VS</span>
-                            <span className="text-[9px] font-bold text-slate-400 font-mono">({matchup.match_duration || 6}m)</span>
+                          <div className="flex flex-col items-center gap-0.5 px-0.5">
+                            <span className="bg-slate-800 text-amber-400 text-[9px] font-black rounded-full px-2 py-0.5 shadow-sm">VS</span>
+                            <span className="text-[8px] font-bold text-slate-400 font-mono">({matchup.match_duration || 6}m)</span>
+                          </div>
+
+                          {/* Away Goals Input */}
+                          <div className="flex flex-col items-center">
+                            <input
+                              type="number"
+                              min="0"
+                              max="99"
+                              value={matchResults[idx]?.away_goals ?? ''}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setMatchResults(prev => ({
+                                  ...prev,
+                                  [idx]: {
+                                    home_goals: prev[idx]?.home_goals ?? 0,
+                                    away_goals: isNaN(val) ? 0 : val
+                                  }
+                                }));
+                              }}
+                              className="w-11 sm:w-14 h-10 text-center font-black text-base sm:text-lg text-emerald-700 bg-white border-2 border-emerald-300 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none shadow-sm font-mono"
+                              placeholder="0"
+                            />
                           </div>
 
                           {/* Away Player */}
@@ -2992,11 +3036,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             const awayMatch = awaySquadById.get(matchup.away_player_id) || awaySquadByName.get(matchup.away_player_name?.toLowerCase());
                             const awayCategory = matchup.away_category || awayMatch?.category;
                             return (
-                              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 bg-slate-50 border border-slate-200 rounded-xl min-w-0 flex-row-reverse sm:flex-row text-right sm:text-left">
+                              <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl min-w-0">
                                 <PlayerPhoto
                                   photoUrl={awayMatch?.photo_url || matchup.away_photo_url}
                                   playerName={matchup.away_player_name}
-                                  size={36}
+                                  size={32}
                                   shape="circle"
                                   posXCircle={awayMatch?.photo_position_x_circle}
                                   posYCircle={awayMatch?.photo_position_y_circle}
@@ -3004,11 +3048,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   className="border border-slate-300 flex-shrink-0"
                                 />
                                 <div className="flex flex-col min-w-0">
-                                  <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
+                                  <span className="font-extrabold text-xs text-slate-900 truncate">
                                     {matchup.away_player_name}
                                   </span>
                                   {awayCategory && (
-                                    <span className={`inline-block text-[8px] sm:text-[9px] uppercase tracking-wider px-1 py-0.2 rounded border self-end sm:self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
+                                    <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
                                       {awayCategory}
                                     </span>
                                   )}
