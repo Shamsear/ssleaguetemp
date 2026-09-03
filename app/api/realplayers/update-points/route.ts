@@ -198,9 +198,9 @@ export async function POST(request: NextRequest) {
 
             console.log(`📊 Category Points: ${home_player_id} (${homeCat}) vs ${away_player_id} (${awayCat}) [${homeResultStr}] -> Home: +${homePointsChange}, Away: +${awayPointsChange}`);
           } else {
-            console.warn(`⚠️ Missing category config for ${homeCat} or ${awayCat}, falling back to goal-difference`);
-            homePointsChange = Math.max(-5, Math.min(5, homeGD));
-            awayPointsChange = Math.max(-5, Math.min(5, awayGD));
+            console.warn(`⚠️ Missing category config for ${homeCat} or ${awayCat}, falling back to standard category outcome points (8/4/1)`);
+            homePointsChange = homeGD > 0 ? 8 : (homeGD === 0 ? 4 : 1);
+            awayPointsChange = awayGD > 0 ? 8 : (awayGD === 0 ? 4 : 1);
           }
         } else {
           homePointsChange = Math.max(-5, Math.min(5, homeGD));

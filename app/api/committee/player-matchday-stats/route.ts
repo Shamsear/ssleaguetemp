@@ -193,43 +193,47 @@ export async function GET(request: NextRequest) {
         }
       });
 
+      const getCategoryConfig = (catStr: string) => {
+        const c = (catStr || '').trim().toLowerCase();
+        if (categoriesMap.has(c)) return categoriesMap.get(c);
+        if (c.includes('red') || c.includes('legend') || c === 'r') return categoriesMap.get('red') || categoriesMap.get('cat_red') || { priority: 1, points_same_category: 8, points_one_level_diff: 7, points_two_level_diff: 6, points_three_level_diff: 5, draw_same_category: 4, draw_one_level_diff: 3, draw_two_level_diff: 3, draw_three_level_diff: 2, loss_same_category: 1, loss_one_level_diff: 1, loss_two_level_diff: 1, loss_three_level_diff: 0 };
+        if (c.includes('blue') || c.includes('pro') || c === 'b') return categoriesMap.get('blue') || categoriesMap.get('cat_blue') || { priority: 2, points_same_category: 8, points_one_level_diff: 7, points_two_level_diff: 6, points_three_level_diff: 5, draw_same_category: 4, draw_one_level_diff: 3, draw_two_level_diff: 3, draw_three_level_diff: 2, loss_same_category: 1, loss_one_level_diff: 1, loss_two_level_diff: 1, loss_three_level_diff: 0 };
+        if (c.includes('black') || c.includes('elite')) return categoriesMap.get('black') || categoriesMap.get('cat_black') || { priority: 3, points_same_category: 8, points_one_level_diff: 7, points_two_level_diff: 6, points_three_level_diff: 5, draw_same_category: 4, draw_one_level_diff: 3, draw_two_level_diff: 3, draw_three_level_diff: 2, loss_same_category: 1, loss_one_level_diff: 1, loss_two_level_diff: 1, loss_three_level_diff: 0 };
+        if (c.includes('white') || c.includes('amateur') || c === 'w') return categoriesMap.get('white') || categoriesMap.get('cat_white') || { priority: 4, points_same_category: 8, points_one_level_diff: 7, points_two_level_diff: 6, points_three_level_diff: 5, draw_same_category: 4, draw_one_level_diff: 3, draw_two_level_diff: 3, draw_three_level_diff: 2, loss_same_category: 1, loss_one_level_diff: 1, loss_two_level_diff: 1, loss_three_level_diff: 0 };
+        return { priority: 1, points_same_category: 8, points_one_level_diff: 7, points_two_level_diff: 6, points_three_level_diff: 5, draw_same_category: 4, draw_one_level_diff: 3, draw_two_level_diff: 3, draw_three_level_diff: 2, loss_same_category: 1, loss_one_level_diff: 1, loss_two_level_diff: 1, loss_three_level_diff: 0 };
+      };
+
       matchdayStats = rawMatchdayStats.map((match: any) => {
-        const homeCat = (match.home_category || '').trim().toLowerCase();
-        const awayCat = (match.away_category || '').trim().toLowerCase();
-        const homeCatConfig = categoriesMap.get(homeCat);
-        const awayCatConfig = categoriesMap.get(awayCat);
+        const homeCatConfig = getCategoryConfig(match.home_category);
+        const awayCatConfig = getCategoryConfig(match.away_category);
 
         let points = 0;
         const gd = match.goals_scored - match.goals_conceded;
         const res = gd > 0 ? 'win' : (gd === 0 ? 'draw' : 'loss');
 
-        if (homeCatConfig && awayCatConfig) {
-          const levelDiff = Math.abs((Number(homeCatConfig.priority) || 1) - (Number(awayCatConfig.priority) || 1));
-          const playerCatConfig = match.player_side === 'home' ? homeCatConfig : awayCatConfig;
+        const levelDiff = Math.abs((Number(homeCatConfig.priority) || 1) - (Number(awayCatConfig.priority) || 1));
+        const playerCatConfig = match.player_side === 'home' ? homeCatConfig : awayCatConfig;
 
-          const getPoints = (cfg: any, diff: number, outcome: string) => {
-            if (outcome === 'win') {
-              if (diff === 0) return Number(cfg.points_same_category) || 0;
-              if (diff === 1) return Number(cfg.points_one_level_diff) || 0;
-              if (diff === 2) return Number(cfg.points_two_level_diff) || 0;
-              return Number(cfg.points_three_level_diff) || 0;
-            } else if (outcome === 'draw') {
-              if (diff === 0) return Number(cfg.draw_same_category) || 0;
-              if (diff === 1) return Number(cfg.draw_one_level_diff) || 0;
-              if (diff === 2) return Number(cfg.draw_two_level_diff) || 0;
-              return Number(cfg.draw_three_level_diff) || 0;
-            } else {
-              if (diff === 0) return Number(cfg.loss_same_category) || 0;
-              if (diff === 1) return Number(cfg.loss_one_level_diff) || 0;
-              if (diff === 2) return Number(cfg.loss_two_level_diff) || 0;
-              return Number(cfg.loss_three_level_diff) || 0;
-            }
-          };
+        const getPoints = (cfg: any, diff: number, outcome: string) => {
+          if (outcome === 'win') {
+            if (diff === 0) return Number(cfg.points_same_category) || 8;
+            if (diff === 1) return Number(cfg.points_one_level_diff) || 7;
+            if (diff === 2) return Number(cfg.points_two_level_diff) || 6;
+            return Number(cfg.points_three_level_diff) || 5;
+          } else if (outcome === 'draw') {
+            if (diff === 0) return Number(cfg.draw_same_category) || 4;
+            if (diff === 1) return Number(cfg.draw_one_level_diff) || 3;
+            if (diff === 2) return Number(cfg.draw_two_level_diff) || 3;
+            return Number(cfg.draw_three_level_diff) || 2;
+          } else {
+            if (diff === 0) return Number(cfg.loss_same_category) || 1;
+            if (diff === 1) return Number(cfg.loss_one_level_diff) || 1;
+            if (diff === 2) return Number(cfg.loss_two_level_diff) || 1;
+            return Number(cfg.loss_three_level_diff) || 0;
+          }
+        };
 
-          points = getPoints(playerCatConfig, levelDiff, res);
-        } else {
-          points = Math.max(-5, Math.min(5, gd));
-        }
+        points = getPoints(playerCatConfig, levelDiff, res);
 
         return {
           ...match,
