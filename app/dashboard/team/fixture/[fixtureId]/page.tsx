@@ -1876,9 +1876,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       {/* Away Player Custom Searchable Select */}
                       <div className="min-w-0">
                         <SearchablePlayerSelect
-                          players={awayStartingXI
-                            .filter(p => !Object.values(selectedAwayPlayers).includes(p.player_id) || selectedAwayPlayers[idx] === p.player_id)
-                            .map(p => ({
+                          players={awayStartingXI.map(p => {
+                            const assignedIdxStr = Object.entries(selectedAwayPlayers).find(([mIdx, pId]) => Number(mIdx) !== idx && pId === p.player_id)?.[0];
+                            const assigned_label = assignedIdxStr !== undefined ? `Match #${Number(assignedIdxStr) + 1}` : undefined;
+                            return {
                               player_id: p.player_id,
                               player_name: p.player_name,
                               category: p.category,
@@ -1886,10 +1887,24 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               photo_position_x_circle: p.photo_position_x_circle,
                               photo_position_y_circle: p.photo_position_y_circle,
                               photo_scale_circle: p.photo_scale_circle,
-                            }))
-                          }
+                              assigned_label,
+                            };
+                          })}
                           value={selectedAwayPlayers[idx] || ''}
-                          onChange={(val) => setSelectedAwayPlayers({ ...selectedAwayPlayers, [idx]: val })}
+                          onChange={(val) => {
+                            const newSelectedAway = { ...selectedAwayPlayers };
+                            if (val) {
+                              // If player was assigned to another matchup, set that matchup to unassigned (null)
+                              const otherEntry = Object.entries(newSelectedAway).find(([mIdxStr, pId]) => Number(mIdxStr) !== idx && pId === val);
+                              if (otherEntry) {
+                                delete newSelectedAway[Number(otherEntry[0])];
+                              }
+                              newSelectedAway[idx] = val;
+                            } else {
+                              delete newSelectedAway[idx];
+                            }
+                            setSelectedAwayPlayers(newSelectedAway);
+                          }}
                           placeholder="Select away player..."
                         />
                       </div>
@@ -2097,9 +2112,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         {/* Away Player Select */}
                         <div className="min-w-0">
                           <SearchablePlayerSelect
-                            players={awayStartingXI
-                              .filter(p => !matchups.some((m, mIdx) => mIdx !== idx && m.away_player_id === p.player_id))
-                              .map(p => ({
+                            players={awayStartingXI.map(p => {
+                              const assignedMatch = matchups.find((m, mIdx) => mIdx !== idx && m.away_player_id === p.player_id);
+                              const assigned_label = assignedMatch ? `Match #${assignedMatch.position}` : undefined;
+                              return {
                                 player_id: p.player_id,
                                 player_name: p.player_name,
                                 category: p.category,
@@ -2107,14 +2123,26 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 photo_position_x_circle: p.photo_position_x_circle,
                                 photo_position_y_circle: p.photo_position_y_circle,
                                 photo_scale_circle: p.photo_scale_circle,
-                              }))
-                            }
+                                assigned_label,
+                              };
+                            })}
                             value={matchup.away_player_id || ''}
                             onChange={(val) => {
                               const newMatchups = [...matchups];
-                              const selectedPlayer = awayStartingXI.find(p => p.player_id === val);
-                              newMatchups[idx].away_player_id = val;
-                              newMatchups[idx].away_player_name = selectedPlayer?.player_name || '';
+                              if (val) {
+                                // If player was assigned to another matchup, set that matchup to unassigned (null)
+                                const otherIdx = newMatchups.findIndex((m, mIdx) => mIdx !== idx && m.away_player_id === val);
+                                if (otherIdx !== -1) {
+                                  newMatchups[otherIdx].away_player_id = '';
+                                  newMatchups[otherIdx].away_player_name = '';
+                                }
+                                const selectedPlayer = awayStartingXI.find(p => p.player_id === val);
+                                newMatchups[idx].away_player_id = val;
+                                newMatchups[idx].away_player_name = selectedPlayer?.player_name || '';
+                              } else {
+                                newMatchups[idx].away_player_id = '';
+                                newMatchups[idx].away_player_name = '';
+                              }
                               setMatchups(newMatchups);
                             }}
                             placeholder="Select away player..."

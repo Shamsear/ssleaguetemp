@@ -11,6 +11,7 @@ export interface PlayerOption {
   photo_position_x_circle?: number;
   photo_position_y_circle?: number;
   photo_scale_circle?: number;
+  assigned_label?: string;
 }
 
 interface SearchablePlayerSelectProps {
@@ -19,6 +20,7 @@ interface SearchablePlayerSelectProps {
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  allowClear?: boolean;
 }
 
 const getCategoryPriority = (category?: string): number => {
@@ -63,6 +65,7 @@ export default function SearchablePlayerSelect({
   onChange,
   placeholder = 'Select player...',
   disabled = false,
+  allowClear = true,
 }: SearchablePlayerSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -326,6 +329,23 @@ export default function SearchablePlayerSelect({
 
             {/* Options List */}
             <ul ref={listRef} className="overflow-y-auto p-1.5 space-y-1 max-h-56">
+              {/* Clear / Unassign Option */}
+              {allowClear && value && (
+                <li
+                  onClick={() => {
+                    onChange('');
+                    setIsOpen(false);
+                    setSearchTerm('');
+                  }}
+                  className="flex items-center justify-between p-2 rounded-xl cursor-pointer text-rose-700 bg-rose-50/80 hover:bg-rose-100 border border-dashed border-rose-200/90 transition-colors mb-1 shadow-2xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-rose-200 text-rose-800 flex items-center justify-center text-[10px] font-black">✕</span>
+                    <span className="text-xs font-black uppercase tracking-wider">Unassign / Clear Selection</span>
+                  </div>
+                </li>
+              )}
+
               {filteredPlayers.length === 0 ? (
                 <li className="p-4 text-center text-xs font-semibold text-slate-400">
                   No matching players found
@@ -352,7 +372,7 @@ export default function SearchablePlayerSelect({
                           : 'hover:bg-slate-50 text-slate-800'
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <PlayerPhoto
                           photoUrl={player.photo_url}
                           playerName={player.player_name}
@@ -367,15 +387,22 @@ export default function SearchablePlayerSelect({
                           <span className="text-xs font-extrabold text-slate-800 truncate">
                             {player.player_name}
                           </span>
-                          {player.category && (
-                            <span
-                              className={`inline-block self-start text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded border ${getCategoryBadgeClass(
-                                player.category
-                              )}`}
-                            >
-                              {player.category}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1 mt-0.5">
+                            {player.category && (
+                              <span
+                                className={`inline-block text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded border ${getCategoryBadgeClass(
+                                  player.category
+                                )}`}
+                              >
+                                {player.category}
+                              </span>
+                            )}
+                            {player.assigned_label && (
+                              <span className="text-[8px] font-black text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded uppercase">
+                                In {player.assigned_label}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 

@@ -31,7 +31,11 @@ interface Season {
   status: string;
 }
 
-function FixturesContent() {
+interface FixturesClientProps {
+  isTeamView?: boolean;
+}
+
+function FixturesContent({ isTeamView = false }: FixturesClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tabParam = searchParams.get('tab') || searchParams.get('filter');
@@ -55,26 +59,23 @@ function FixturesContent() {
     try {
       setIsLoading(true);
 
-      // Get active season
-      const seasonsRef = (await (await fetch('/api/seasons')).json()).data;
-      const seasonsQuery = query(
-        seasonsRef,
-        where('isActive', '==', true),
-        orderBy('created_at', 'desc'),
-        limit(1)
-      );
-      const seasonsSnapshot = await getDocs(seasonsQuery);
+      // Get current season from Neon /api/seasons/current
+      const seasonRes = await fetch('/api/seasons/current');
+      let seasonId = '';
+      let sName = '';
 
-      if (seasonsSnapshot.empty) {
-        console.log('No active season found');
-        setIsLoading(false);
-        return;
+      if (seasonRes.ok) {
+        const seasonData = await seasonRes.json();
+        seasonId = seasonData.season?.season_id || seasonData.season?.id || '';
+        sName = seasonData.season?.name || (seasonId ? seasonId.replace('SSPSLS', 'Season ') : '');
       }
 
-      const seasonDoc = seasonsSnapshot.docs[0];
-      const seasonData = seasonDoc.data();
-      const seasonId = seasonDoc.id;
-      setSeasonName(seasonData.name || seasonData.short_name || 'Current Season');
+      if (!seasonId) {
+        seasonId = 'SSPSLS18';
+        sName = 'Season 18';
+      }
+
+      setSeasonName(sName);
 
       // Fetch fixtures from Neon API
       const response = await fetch(`/api/fixtures/season?season_id=${seasonId}`);
@@ -84,7 +85,8 @@ function FixturesContent() {
         return;
       }
 
-      const { fixtures: fixturesList } = await response.json();
+      const data = await response.json();
+      const fixturesList = data.fixtures || data.data || [];
       setFixtures(fixturesList);
     } catch (error) {
       console.error('Error fetching fixtures:', error);
@@ -150,10 +152,10 @@ function FixturesContent() {
         
         {/* Navigation back */}
         <Link
-          href="/"
+          href={isTeamView ? "/dashboard/team" : "/"}
           className="inline-flex items-center text-xs font-mono font-bold text-slate-500 hover:text-amber-600 transition-colors"
         >
-          {"<-"} BACK_TO_HOME
+          {isTeamView ? "<- BACK_TO_DASHBOARD" : "<- BACK_TO_HOME"}
         </Link>
 
         {/* Header Title Panel */}
@@ -268,7 +270,7 @@ function FixturesContent() {
                     return (
                       <Link
                         key={fixture.id}
-                        href={`/fixtures/${fixture.id}`}
+                        href={`/dashboard/team/fixture/${fixture.id}`}
                         className="block group"
                       >
                         <div className="console-card rounded-xl p-4 hover:border-amber-400/40 transition-all duration-250 bg-white border border-slate-200/60 shadow-sm flex flex-col justify-between">
@@ -340,7 +342,7 @@ function FixturesContent() {
   );
 }
 
-export default function PublicFixturesPage() {
+export default function FixturesClient({ isTeamView = false }: FixturesClientProps) {
   return (
     <Suspense fallback={
       <div className="min-h-screen console-bg flex items-center justify-center">
@@ -350,7 +352,7 @@ export default function PublicFixturesPage() {
         </div>
       </div>
     }>
-      <FixturesContent />
+      <FixturesContent isTeamView={isTeamView} />
     </Suspense>
   );
 }
