@@ -196,50 +196,31 @@ export async function GET(request: NextRequest) {
       const getCategoryConfig = (catStr: string) => {
         const c = (catStr || '').trim().toLowerCase();
         if (categoriesMap.has(c)) return categoriesMap.get(c);
-        if (c.includes('red') || c.includes('legend') || c === 'r') return categoriesMap.get('red') || categoriesMap.get('cat_red') || { priority: 1, points_same_category: 8, points_one_level_diff: 7, points_two_level_diff: 6, points_three_level_diff: 5, draw_same_category: 4, draw_one_level_diff: 3, draw_two_level_diff: 3, draw_three_level_diff: 2, loss_same_category: 1, loss_one_level_diff: 1, loss_two_level_diff: 1, loss_three_level_diff: 0 };
-        if (c.includes('blue') || c.includes('pro') || c === 'b') return categoriesMap.get('blue') || categoriesMap.get('cat_blue') || { priority: 2, points_same_category: 8, points_one_level_diff: 7, points_two_level_diff: 6, points_three_level_diff: 5, draw_same_category: 4, draw_one_level_diff: 3, draw_two_level_diff: 3, draw_three_level_diff: 2, loss_same_category: 1, loss_one_level_diff: 1, loss_two_level_diff: 1, loss_three_level_diff: 0 };
-        if (c.includes('black') || c.includes('elite')) return categoriesMap.get('black') || categoriesMap.get('cat_black') || { priority: 3, points_same_category: 8, points_one_level_diff: 7, points_two_level_diff: 6, points_three_level_diff: 5, draw_same_category: 4, draw_one_level_diff: 3, draw_two_level_diff: 3, draw_three_level_diff: 2, loss_same_category: 1, loss_one_level_diff: 1, loss_two_level_diff: 1, loss_three_level_diff: 0 };
-        if (c.includes('white') || c.includes('amateur') || c === 'w') return categoriesMap.get('white') || categoriesMap.get('cat_white') || { priority: 4, points_same_category: 8, points_one_level_diff: 7, points_two_level_diff: 6, points_three_level_diff: 5, draw_same_category: 4, draw_one_level_diff: 3, draw_two_level_diff: 3, draw_three_level_diff: 2, loss_same_category: 1, loss_one_level_diff: 1, loss_two_level_diff: 1, loss_three_level_diff: 0 };
-        return { priority: 1, points_same_category: 8, points_one_level_diff: 7, points_two_level_diff: 6, points_three_level_diff: 5, draw_same_category: 4, draw_one_level_diff: 3, draw_two_level_diff: 3, draw_three_level_diff: 2, loss_same_category: 1, loss_one_level_diff: 1, loss_two_level_diff: 1, loss_three_level_diff: 0 };
+        if (c.includes('red') || c.includes('legend') || c === 'r') return categoriesMap.get('red') || categoriesMap.get('cat_red') || { priority: 1, name: 'Red' };
+        if (c.includes('black') || c.includes('elite')) return categoriesMap.get('black') || categoriesMap.get('cat_black') || { priority: 2, name: 'Black' };
+        if (c.includes('blue') || c.includes('pro') || c === 'b') return categoriesMap.get('blue') || categoriesMap.get('cat_blue') || { priority: 3, name: 'Blue' };
+        if (c.includes('white') || c.includes('amateur') || c === 'w') return categoriesMap.get('white') || categoriesMap.get('cat_white') || { priority: 4, name: 'White' };
+        return { priority: 1, name: 'Red' };
       };
 
       const getPointsForCategoryMatch = (playerCatConfig: any, oppCatConfig: any, outcome: string) => {
         const pPrio = Number(playerCatConfig?.priority) || 1;
         const oPrio = Number(oppCatConfig?.priority) || 1;
 
-        let fieldSuffix = 'same_category';
-
-        if (pPrio === 1) { // Priority 1 (Red)
-          if (oPrio === 1) fieldSuffix = 'same_category';
-          else if (oPrio === 2) fieldSuffix = 'one_level_diff';
-          else if (oPrio === 3) fieldSuffix = 'two_level_diff';
-          else fieldSuffix = 'three_level_diff';
-        } else if (pPrio === 2) { // Priority 2 (Blue)
-          if (oPrio === 1) fieldSuffix = 'one_level_diff';
-          else if (oPrio === 2) fieldSuffix = 'same_category';
-          else if (oPrio === 3) fieldSuffix = 'two_level_diff';
-          else fieldSuffix = 'three_level_diff';
-        } else if (pPrio === 3) { // Priority 3 (Black)
-          if (oPrio === 1) fieldSuffix = 'two_level_diff';
-          else if (oPrio === 2) fieldSuffix = 'one_level_diff';
-          else if (oPrio === 3) fieldSuffix = 'same_category';
-          else fieldSuffix = 'three_level_diff';
-        } else { // Priority 4 (White)
-          if (oPrio === 1) fieldSuffix = 'three_level_diff';
-          else if (oPrio === 2) fieldSuffix = 'two_level_diff';
-          else if (oPrio === 3) fieldSuffix = 'one_level_diff';
-          else fieldSuffix = 'same_category';
+        if (oPrio <= pPrio) {
+          if (outcome === 'win') return 8;
+          if (outcome === 'draw') return 4;
+          return -3;
         }
 
-        const prefix = outcome === 'win' ? 'points_' : (outcome === 'draw' ? 'draw_' : 'loss_');
-        const fieldKey = `${prefix}${fieldSuffix}`;
-
-        const val = playerCatConfig ? playerCatConfig[fieldKey] : undefined;
-        if (val !== undefined && val !== null) return Number(val);
-
-        if (outcome === 'win') return 8;
-        if (outcome === 'draw') return 4;
-        return 1;
+        const D = oPrio - pPrio;
+        if (outcome === 'win') {
+          return Math.max(5, 8 - D);
+        } else if (outcome === 'draw') {
+          return Math.max(1, 4 - D);
+        } else {
+          return -3 - D;
+        }
       };
 
       matchdayStats = rawMatchdayStats.map((match: any) => {

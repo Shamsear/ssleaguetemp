@@ -173,39 +173,20 @@ export async function POST(request: NextRequest) {
               const pPrio = Number(playerCatConfig?.priority) || 1;
               const oPrio = Number(oppCatConfig?.priority) || 1;
 
-              let fieldSuffix = 'same_category';
-
-              if (pPrio === 1) {
-                if (oPrio === 1) fieldSuffix = 'same_category';
-                else if (oPrio === 2) fieldSuffix = 'one_level_diff';
-                else if (oPrio === 3) fieldSuffix = 'two_level_diff';
-                else fieldSuffix = 'three_level_diff';
-              } else if (pPrio === 2) {
-                if (oPrio === 1) fieldSuffix = 'one_level_diff';
-                else if (oPrio === 2) fieldSuffix = 'same_category';
-                else if (oPrio === 3) fieldSuffix = 'two_level_diff';
-                else fieldSuffix = 'three_level_diff';
-              } else if (pPrio === 3) {
-                if (oPrio === 1) fieldSuffix = 'two_level_diff';
-                else if (oPrio === 2) fieldSuffix = 'one_level_diff';
-                else if (oPrio === 3) fieldSuffix = 'same_category';
-                else fieldSuffix = 'three_level_diff';
-              } else {
-                if (oPrio === 1) fieldSuffix = 'three_level_diff';
-                else if (oPrio === 2) fieldSuffix = 'two_level_diff';
-                else if (oPrio === 3) fieldSuffix = 'one_level_diff';
-                else fieldSuffix = 'same_category';
+              if (oPrio <= pPrio) {
+                if (outcome === 'win') return 8;
+                if (outcome === 'draw') return 4;
+                return -3;
               }
 
-              const prefix = outcome === 'win' ? 'points_' : (outcome === 'draw' ? 'draw_' : 'loss_');
-              const fieldKey = `${prefix}${fieldSuffix}`;
-
-              const val = playerCatConfig ? playerCatConfig[fieldKey] : undefined;
-              if (val !== undefined && val !== null) return Number(val);
-
-              if (outcome === 'win') return 8;
-              if (outcome === 'draw') return 4;
-              return 1;
+              const D = oPrio - pPrio;
+              if (outcome === 'win') {
+                return Math.max(5, 8 - D);
+              } else if (outcome === 'draw') {
+                return Math.max(1, 4 - D);
+              } else {
+                return -3 - D;
+              }
             };
 
             const homeResultStr = homeGD > 0 ? 'win' : (homeGD === 0 ? 'draw' : 'loss');

@@ -111,7 +111,7 @@ function CategoriesPageContent() {
       }
     };
 
-    if (user && user.role === 'committee_admin') {
+    if (user) {
       fetchCategories();
     }
   }, [user]);

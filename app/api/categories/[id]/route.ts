@@ -1,46 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { getMainDb, isMainDbAvailable } from '@/lib/neon/main-config';
 
-/**
- * GET /api/categories/[id]
- * Get a single category by ID
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const categoryDoc = await adminDb.collection('categories').doc(id).get();
     
-    if (!categoryDoc.exists) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Category not found',
-        },
-        { status: 404 }
-      );
+    if (isMainDbAvailable()) {
+      const sql = getMainDb();
+      const rows = await sql`SELECT * FROM categories WHERE id = ${id} OR name ILIKE ${id}`;
+      if (rows && rows.length > 0) {
+        return NextResponse.json({ success: true, data: rows[0] });
+      }
     }
-    
-    const category = {
-      id: categoryDoc.id,
-      ...categoryDoc.data(),
-    };
-    
-    return NextResponse.json({
-      success: true,
-      data: category,
-    });
+
+    const categoryDoc = await adminDb.collection('categories').doc(id).get();
+    if (categoryDoc.exists) {
+      return NextResponse.json({
+        success: true,
+        data: { id: categoryDoc.id, ...categoryDoc.data() },
+      });
+    }
+
+    return NextResponse.json({ success: false, error: 'Category not found' }, { status: 404 });
   } catch (error: any) {
     console.error('Error fetching category:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error.message || 'Failed to fetch category',
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 

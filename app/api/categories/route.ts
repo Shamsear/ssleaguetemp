@@ -11,8 +11,8 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'Neon not configured' }, { status: 500 });
     }
     const sql = getMainDb();
-    const result = await sql`SELECT * FROM categories ORDER BY sort_order ASC, name ASC`;
-    return NextResponse.json({ success: true, data: result });
+    const result = await sql`SELECT * FROM categories ORDER BY priority ASC, name ASC`;
+    return NextResponse.json({ success: true, data: Array.isArray(result) ? result : [] });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
