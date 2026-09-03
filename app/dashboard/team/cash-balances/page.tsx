@@ -355,7 +355,6 @@ export default function TeamCashBalances() {
                     const currentPlan = team.season_plans?.[selectedSeasonId] || team.payment_type || 'seasonal';
                     
                      // Chronological season-wise calculation and filtering out future seasons
-                      const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
                       let seasonsToProcess = [...(team.seasons_played || [])];
                       if (selectedSeasonId && selectedSeasonId !== 'all') {
                         seasonsToProcess = seasonsToProcess.filter(sid => getSeasonNum(sid) <= getSeasonNum(selectedSeasonId));

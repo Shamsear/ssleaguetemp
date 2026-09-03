@@ -33,6 +33,7 @@ interface Player {
   average_points: number;
   is_captain?: boolean;
   is_vice_captain?: boolean;
+  photo_url?: string;
 }
 
 interface PlayerMatchStats {

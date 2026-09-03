@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { verifyAuth } from '@/lib/auth-helper';
-import { 
-  getCachedUserTeamId, 
-  getCachedActiveSeason, 
-  getCachedTeamSeason,
-  CACHE_DURATIONS 
-} from '@/lib/firebase/smart-cache';
-import { getCached, setCached } from '@/lib/firebase/cache';
+import { getTournamentDb } from '@/lib/neon/tournament-config';
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,18 +13,13 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = auth.userId!;
+    const sql = getTournamentDb();
 
-    // 1. Multi-tier Team ID resolution (token -> smart cache -> Neon -> Firestore team_seasons -> Firestore users)
+    // 1. Resolve Team ID directly from Neon PostgreSQL (teams & team_seasons tables)
     let teamId: string | null = (auth as any).teamId || (auth as any).user?.team_id || (auth as any).user?.teamId || null;
 
     if (!teamId) {
-      teamId = await getCachedUserTeamId(userId);
-    }
-
-    if (!teamId) {
-      // Tier 3: Query Neon PostgreSQL teams table
       try {
-        const sql = getTournamentDb();
         const neonTeams = await sql`
           SELECT id FROM teams WHERE firebase_uid = ${userId} OR id = ${userId} LIMIT 1
         `;
@@ -39,48 +27,37 @@ export async function GET(request: NextRequest) {
           teamId = neonTeams[0].id;
         }
       } catch (err) {
-        console.warn('Neon team lookup error:', err);
+        console.warn('Neon teams lookup warning:', err);
       }
     }
 
     if (!teamId) {
-      // Tier 4: Query Firestore team_seasons collection by user_id
       try {
-        const tsSnap = await adminDb.collection('team_seasons')
-          .where('user_id', '==', userId)
-          .limit(1)
-          .get();
-
-        if (!tsSnap.empty) {
-          const tsData = tsSnap.docs[0].data();
-          teamId = tsData.team_id || tsSnap.docs[0].id.split('_')[0] || null;
+        const neonTS = await sql`
+          SELECT team_id FROM team_seasons WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 1
+        `;
+        if (neonTS.length > 0) {
+          teamId = neonTS[0].team_id;
         }
       } catch (err) {
-        console.warn('Firebase team_seasons lookup error:', err);
+        console.warn('Neon team_seasons user lookup warning:', err);
       }
     }
 
-    if (!teamId) {
-      // Tier 5: Query Firestore users collection
-      try {
-        const userDoc = await adminDb.collection('users').doc(userId).get();
-        if (userDoc.exists) {
-          const uData = userDoc.data();
-          teamId = uData?.team_id || uData?.teamId || uData?.team || null;
-        }
-      } catch (err) {
-        console.warn('Firebase user doc lookup error:', err);
-      }
-    }
-
-    // 2. Season ID resolution
+    // 2. Resolve Season ID directly from query params or active season in Neon PostgreSQL
     const { searchParams } = new URL(request.url);
     let seasonId = searchParams.get('season_id');
 
     if (!seasonId) {
-      const activeSeason = await getCachedActiveSeason();
-      if (activeSeason) {
-        seasonId = activeSeason.id;
+      try {
+        const activeSeasons = await sql`
+          SELECT id FROM seasons WHERE is_active = true OR status = 'active' ORDER BY season_number DESC LIMIT 1
+        `;
+        if (activeSeasons.length > 0) {
+          seasonId = activeSeasons[0].id;
+        }
+      } catch (err) {
+        console.warn('Neon active season lookup warning:', err);
       }
     }
 
@@ -88,69 +65,42 @@ export async function GET(request: NextRequest) {
       seasonId = 'SSPSLS18';
     }
 
-    // 3. Multi-tier Team Season data resolution
+    // 3. Fetch Team Season Data directly from Neon PostgreSQL
     let teamSeasonData: any = null;
-    let actualDocId = teamId ? `${teamId}_${seasonId}` : null;
-
-    if (actualDocId) {
+    if (teamId) {
       try {
-        const tsDoc = await adminDb.collection('team_seasons').doc(actualDocId).get();
-        if (tsDoc.exists) {
-          teamSeasonData = tsDoc.data();
-        }
-      } catch (err) {
-        console.warn('Direct team_seasons lookup error:', err);
-      }
-    }
-
-    if (!teamSeasonData && teamId) {
-      try {
-        const tsResult = await getCachedTeamSeason(userId, seasonId);
-        if (tsResult) {
-          teamSeasonData = tsResult.data;
-          actualDocId = tsResult.id;
-        }
-      } catch (err) {
-        console.warn('getCachedTeamSeason lookup error:', err);
-      }
-    }
-
-    if (!teamSeasonData && userId) {
-      try {
-        const tsSnap = await adminDb.collection('team_seasons')
-          .where('user_id', '==', userId)
-          .where('season_id', '==', seasonId)
-          .limit(1)
-          .get();
-        if (!tsSnap.empty) {
-          teamSeasonData = tsSnap.docs[0].data();
-          actualDocId = tsSnap.docs[0].id;
-          if (!teamId) {
-            teamId = teamSeasonData.team_id;
-          }
-        }
-      } catch (err) {
-        console.warn('Query team_seasons lookup error:', err);
-      }
-    }
-
-    // Also check Neon team_seasons table if teamSeasonData is missing
-    if (!teamSeasonData && teamId) {
-      try {
-        const sql = getTournamentDb();
-        const neonTeamSeasons = await sql`
+        const tsRows = await sql`
           SELECT * FROM team_seasons WHERE (team_id = ${teamId} OR user_id = ${userId}) AND season_id = ${seasonId} LIMIT 1
         `;
-        if (neonTeamSeasons.length > 0) {
-          teamSeasonData = neonTeamSeasons[0];
+        if (tsRows.length > 0) {
+          teamSeasonData = tsRows[0];
         }
       } catch (err) {
-        console.warn('Neon team_seasons lookup error:', err);
+        console.warn('Neon team_seasons lookup warning:', err);
       }
     }
 
+    // 4. Fetch Transactions directly from Neon PostgreSQL transactions table
+    let allTransactions: any[] = [];
+    if (teamId) {
+      try {
+        const txRows = await sql`
+          SELECT * FROM transactions
+          WHERE (team_id = ${teamId} OR (raw_data->>'team_id') = ${teamId})
+            AND (season_id = ${seasonId} OR (raw_data->>'season_id') = ${seasonId})
+          ORDER BY created_at DESC
+          LIMIT 500
+        `;
+        allTransactions = txRows;
+      } catch (err) {
+        console.warn('Neon transactions table lookup warning:', err);
+        allTransactions = [];
+      }
+    }
+
+    // If no team ID resolved yet, return graceful empty structure
     if (!teamId) {
-      console.warn(`No team ID found for user ${userId}, returning empty transaction structure.`);
+      console.warn(`No team ID resolved for user ${userId} in Neon PostgreSQL.`);
       return NextResponse.json({
         success: true,
         season_id: seasonId,
@@ -160,46 +110,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log(`Team season data for team ${teamId}, season ${seasonId}:`, {
-      football_budget: teamSeasonData?.football_budget,
-      football_starting_balance: teamSeasonData?.football_starting_balance,
-      real_player_budget: teamSeasonData?.real_player_budget,
-      real_player_starting_balance: teamSeasonData?.real_player_starting_balance,
-    });
-
     // Determine currency system
     const currencySystem = teamSeasonData?.currency_system || 'single';
     const isDualCurrency = currencySystem === 'dual';
-
-    // Fetch transactions with fallback queries
-    const transactionsCacheKey = `${teamId}_${seasonId}`;
-    let allTransactions = getCached<any[]>('transactions', transactionsCacheKey, CACHE_DURATIONS.TRANSACTIONS);
-    
-    if (!allTransactions) {
-      console.log(`❌ [Cache MISS] transactions for team ${teamId}, season ${seasonId}`);
-      try {
-        const transactionsSnapshot = await adminDb
-          .collection('transactions')
-          .where('team_id', '==', teamId)
-          .where('season_id', '==', seasonId)
-          .orderBy('created_at', 'desc')
-          .limit(500)
-          .get();
-        
-        console.log(`Found ${transactionsSnapshot.size} transactions from Firebase`);
-        allTransactions = transactionsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-      } catch (txErr) {
-        console.warn('Firestore query error on transactions:', txErr);
-        allTransactions = [];
-      }
-      
-      setCached('transactions', transactionsCacheKey, allTransactions);
-    } else {
-      console.log(`✅ [Cache HIT] transactions for team ${teamId} (${allTransactions.length} transactions)`);
-    }
 
     // Separate transactions by currency type
     let footballTransactions: any[] = [];
@@ -207,24 +120,23 @@ export async function GET(request: NextRequest) {
 
     allTransactions.forEach(transaction => {
       const data = transaction;
-      
+      const rawData = typeof data.raw_data === 'string' ? JSON.parse(data.raw_data) : (data.raw_data || {});
+
       const formattedTransaction = {
-        id: transaction.id,
-        date: data.created_at?.toDate?.()?.toISOString() || new Date().toISOString(),
-        type: data.transaction_type || 'unknown',
-        amount: data.amount || 0,
+        id: data.id,
+        date: data.created_at?.toISOString?.() || data.created_at || new Date().toISOString(),
+        type: data.transaction_type || data.type || 'unknown',
+        amount: Number(data.amount || 0),
         reason: data.reason || data.description || 'Transaction',
-        balance_after: data.balance_after || 0,
-        metadata: data.metadata || {}
+        balance_after: Number(data.balance_after || 0),
+        metadata: rawData
       };
 
-      // Categorize by currency type or transaction type
-      // Also check description/reason for SSCoin/real player keywords
-      const reasonLower = (data.reason || data.description || '').toLowerCase();
+      const reasonLower = (formattedTransaction.reason).toLowerCase();
       const isRealPlayerTransaction = 
         data.currency_type === 'real_player' || 
-        data.transaction_type === 'real_player_fee' ||
-        data.transaction_type === 'real_player' ||
+        formattedTransaction.type === 'real_player_fee' ||
+        formattedTransaction.type === 'real_player' ||
         reasonLower.includes('real player') ||
         reasonLower.includes('sscoin') ||
         reasonLower.includes('ss coin') ||
@@ -237,16 +149,14 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Sort transactions by created_at DESC, then by balance_after ASC for same timestamps
+    // Sort transactions chronologically
     const sortTransactions = (transactions: any[]) => {
       return transactions.sort((a, b) => {
-        // First sort by date (newest first)
         const dateA = new Date(a.date).getTime();
         const dateB = new Date(b.date).getTime();
         if (dateB !== dateA) {
           return dateB - dateA;
         }
-        // If same timestamp, sort by balance (ascending = chronological order)
         return a.balance_after - b.balance_after;
       });
     };
@@ -254,38 +164,36 @@ export async function GET(request: NextRequest) {
     footballTransactions = sortTransactions(footballTransactions);
     realPlayerTransactions = sortTransactions(realPlayerTransactions);
 
-    // Build response based on currency system
     if (isDualCurrency) {
       return NextResponse.json({
         success: true,
         season_id: seasonId,
         currency_system: 'dual',
         football: {
-          current_balance: teamSeasonData?.football_budget || 0,
-          starting_balance: teamSeasonData?.football_starting_balance || 0,
-          total_spent: teamSeasonData?.football_spent || 0,
-          total_earned: teamSeasonData?.football_earned || 0,
+          current_balance: Number(teamSeasonData?.football_budget || 0),
+          starting_balance: Number(teamSeasonData?.football_starting_balance || 0),
+          total_spent: Number(teamSeasonData?.football_spent || 0),
+          total_earned: Number(teamSeasonData?.football_earned || 0),
           transactions: footballTransactions,
         },
         real_player: {
-          current_balance: teamSeasonData?.real_player_budget || 0,
-          starting_balance: teamSeasonData?.real_player_starting_balance || 0,
-          total_spent: teamSeasonData?.real_player_spent || 0,
-          total_earned: teamSeasonData?.real_player_earned || 0,
+          current_balance: Number(teamSeasonData?.real_player_budget || 0),
+          starting_balance: Number(teamSeasonData?.real_player_starting_balance || 0),
+          total_spent: Number(teamSeasonData?.real_player_spent || 0),
+          total_earned: Number(teamSeasonData?.real_player_earned || 0),
           transactions: realPlayerTransactions,
         },
       });
     } else {
-      // Single currency system - put all transactions in football budget
       return NextResponse.json({
         success: true,
         season_id: seasonId,
         currency_system: 'single',
         football: {
-          current_balance: teamSeasonData?.budget || 0,
-          starting_balance: teamSeasonData?.initial_budget || teamSeasonData?.budget_initial || 0,
-          total_spent: teamSeasonData?.total_spent || 0,
-          total_earned: teamSeasonData?.total_earned || 0,
+          current_balance: Number(teamSeasonData?.budget || teamSeasonData?.football_budget || 0),
+          starting_balance: Number(teamSeasonData?.initial_budget || teamSeasonData?.budget_initial || teamSeasonData?.football_starting_balance || 0),
+          total_spent: Number(teamSeasonData?.total_spent || teamSeasonData?.football_spent || 0),
+          total_earned: Number(teamSeasonData?.total_earned || teamSeasonData?.football_earned || 0),
           transactions: [...footballTransactions, ...realPlayerTransactions],
         },
         real_player: {
@@ -299,21 +207,11 @@ export async function GET(request: NextRequest) {
     }
 
   } catch (error: any) {
-    console.error('❌ Error fetching transactions:', error);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('Error details:', {
-      name: error.name,
-      code: error.code,
-      details: error.details
-    });
-    
+    console.error('❌ Error fetching team transactions from Neon:', error);
     return NextResponse.json({
       success: false,
-      error: 'Failed to fetch transactions',
+      error: 'Failed to fetch transactions from Neon main database',
       message: error.message || 'Unknown error',
-      details: error.code || error.name || 'No additional details',
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }, { status: 500 });
   }
 }
