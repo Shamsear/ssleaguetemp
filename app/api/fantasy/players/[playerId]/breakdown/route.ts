@@ -32,122 +32,103 @@ export async function GET(
     // Get fantasy league to get season_id
     const leagues = await fantasySql`
       SELECT * FROM fantasy_leagues
-      WHERE league_id = ${league_id}
+      WHERE league_id = ${league_id} OR league_id = 'SSPSLFLS18'
       LIMIT 1
     `;
 
-    if (leagues.length === 0) {
-      return NextResponse.json(
-        { error: 'Fantasy league not found' },
-        { status: 404 }
-      );
-    }
-
-    const leagueData = leagues[0];
     const tournamentSql = getTournamentDb();
 
-    const seasonNum = parseInt(leagueData.season_id.replace(/\D/g, '')) || 0;
-    const isModern = seasonNum >= 16;
+    // Get all completed matchups for this player in SSPSLS18
+    const matchups = await tournamentSql`
+      SELECT 
+        m.fixture_id,
+        m.home_player_id,
+        m.home_player_name,
+        m.away_player_id,
+        m.away_player_name,
+        m.home_goals,
+        m.away_goals,
+        m.home_category,
+        m.away_category,
+        f.motm_player_id,
+        f.round_number,
+        f.home_team_name,
+        f.away_team_name
+      FROM matchups m
+      JOIN fixtures f ON m.fixture_id = f.id
+      WHERE (m.home_player_id = ${playerId} OR m.away_player_id = ${playerId})
+        AND (f.season_id = 'SSPSLS18' OR f.season_id LIKE 'SSPSLS18%')
+        AND f.status = 'completed'
+        AND m.home_goals IS NOT NULL
+        AND m.away_goals IS NOT NULL
+      ORDER BY f.round_number ASC
+    `;
 
-    // Get player info from correct table (used for opponent lookup — non-fatal if not found)
-    let players;
-    try {
-      if (isModern) {
-        players = await tournamentSql`
-          SELECT * FROM player_seasons
-          WHERE player_id = ${playerId}
-            AND season_id = ${leagueData.season_id}
-          LIMIT 1
-        `;
-      } else {
-        players = await tournamentSql`
-          SELECT * FROM realplayerstats
-          WHERE player_id = ${playerId}
-            AND season_id = ${leagueData.season_id}
-          LIMIT 1
-        `;
-      }
-    } catch {
-      players = [];
-    }
-
-    const playerData = players?.[0] || null;
-    const playerTeamId = playerData?.team_id || null;
-
-    // Get all fantasy points for this player (deduplicated by fixture)
-    // Use base_points instead of total_points to exclude multipliers
+    // Fetch fantasy_player_points for stored breakdowns / base points
     const playerPoints = await fantasySql`
       SELECT 
-        fixture_id,
         round_number,
         goals_scored,
         goals_conceded,
         result,
         is_motm,
-        fine_goals,
-        substitution_penalty,
         is_clean_sheet,
         base_points,
-        points_breakdown,
-        MIN(calculated_at) as calculated_at
+        points_breakdown
       FROM fantasy_player_points
-      WHERE league_id = ${league_id}
+      WHERE (league_id = ${league_id} OR league_id = 'SSPSLFLS18')
         AND real_player_id = ${playerId}
-      GROUP BY 
-        fixture_id, round_number, goals_scored, goals_conceded, 
-        result, is_motm, fine_goals, substitution_penalty,
-        is_clean_sheet, base_points, points_breakdown
-      ORDER BY round_number ASC
     `;
 
-    // Fetch fixture details to get opponent information
-    const fixtureIds = playerPoints.map((p: any) => p.fixture_id).filter(Boolean);
-    const fixturesMap = new Map();
-    
-    if (fixtureIds.length > 0) {
-      try {
-        const fixtures = await tournamentSql`
-          SELECT * FROM fixtures
-          WHERE fixture_id = ANY(${fixtureIds})
-        `;
-        fixtures.forEach((fixture: any) => {
-          fixturesMap.set(fixture.fixture_id, fixture);
-        });
-      } catch (fixtureError) {
-        console.error('Error fetching fixtures:', fixtureError);
-      }
-    }
+    const fppMap = new Map();
+    playerPoints.forEach((p: any) => {
+      fppMap.set(p.round_number, p);
+    });
 
-    const matchHistory = playerPoints.map((data: any) => {
-      const fixture = fixturesMap.get(data.fixture_id);
+    const getPointsForOpponentCategory = (oppCat: string, outcome: string) => {
+      const cat = (oppCat || '').toLowerCase();
+      if (cat.includes('red') || cat === 'r') return outcome === 'win' ? 8 : (outcome === 'draw' ? 4 : -3);
+      if (cat.includes('black')) return outcome === 'win' ? 7 : (outcome === 'draw' ? 3 : -4);
+      if (cat.includes('blue') || cat === 'b') return outcome === 'win' ? 6 : (outcome === 'draw' ? 2 : -5);
+      if (cat.includes('white') || cat === 'w') return outcome === 'win' ? 5 : (outcome === 'draw' ? 1 : -6);
+      return outcome === 'win' ? 8 : (outcome === 'draw' ? 4 : -3);
+    };
+
+    const matchHistory = matchups.map((m: any) => {
+      const isHome = m.home_player_id === playerId;
+      const goalsScored = Number(isHome ? m.home_goals : m.away_goals) || 0;
+      const goalsConceded = Number(isHome ? m.away_goals : m.home_goals) || 0;
+      const oppName = isHome ? (m.away_player_name || m.away_team_name) : (m.home_player_name || m.home_team_name);
+      const oppCat = (isHome ? m.away_category : m.home_category) || 'Red';
       
-      let opponent = '—';
-      if (fixture && playerTeamId) {
-        if (fixture.home_team_id === playerTeamId) {
-          opponent = fixture.away_team_name || 'Away Team';
-        } else if (fixture.away_team_id === playerTeamId) {
-          opponent = fixture.home_team_name || 'Home Team';
-        }
-      }
+      const gd = goalsScored - goalsConceded;
+      const res = gd > 0 ? 'win' : (gd === 0 ? 'draw' : 'loss');
+      const isCleanSheet = goalsConceded === 0;
+      const isMotm = m.motm_player_id === playerId;
 
-      let pointsBreakdown = data.points_breakdown;
+      const fppData = fppMap.get(m.round_number);
+      const calculatedPts = getPointsForOpponentCategory(oppCat, res);
+      const basePts = fppData?.base_points !== undefined ? Number(fppData.base_points) : calculatedPts;
+
+      let pointsBreakdown = fppData?.points_breakdown || {};
       if (typeof pointsBreakdown === 'string') {
         try { pointsBreakdown = JSON.parse(pointsBreakdown); } catch { pointsBreakdown = {}; }
       }
-      
+
       return {
-        fixture_id: data.fixture_id,
-        round_number: data.round_number,
-        opponent,
-        goals_scored: data.goals_scored || 0,
-        goals_conceded: data.goals_conceded || 0,
-        result: data.result,
-        is_motm: data.is_motm || false,
-        is_clean_sheet: data.is_clean_sheet || false,
-        fine_goals: data.fine_goals || 0,
-        substitution_penalty: data.substitution_penalty || 0,
-        points_breakdown: pointsBreakdown || {},
-        base_points: data.base_points || 0,
+        fixture_id: m.fixture_id,
+        round_number: m.round_number,
+        opponent: oppName,
+        opponent_category: oppCat.toUpperCase(),
+        goals_scored: goalsScored,
+        goals_conceded: goalsConceded,
+        result: res,
+        is_motm: isMotm,
+        is_clean_sheet: isCleanSheet,
+        fine_goals: 0,
+        substitution_penalty: 0,
+        points_breakdown: pointsBreakdown,
+        base_points: basePts,
       };
     });
 
