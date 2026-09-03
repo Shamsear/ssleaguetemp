@@ -115,6 +115,27 @@ export async function GET(
         try { pointsBreakdown = JSON.parse(pointsBreakdown); } catch { pointsBreakdown = {}; }
       }
 
+      // If points_breakdown is empty, dynamically construct full itemized breakdown
+      if (!pointsBreakdown || Object.keys(pointsBreakdown).length === 0) {
+        pointsBreakdown = {};
+        const catKey = (oppCat || 'RED').toLowerCase();
+        pointsBreakdown[`${res}_vs_${catKey}`] = calculatedPts;
+
+        if (goalsScored > 0) {
+          pointsBreakdown[`goals_scored_(${goalsScored})`] = goalsScored * 5;
+          if (goalsScored >= 3) pointsBreakdown['hat_trick_bonus'] = 5;
+        }
+        if (isCleanSheet) {
+          pointsBreakdown['clean_sheet_bonus'] = 4;
+        }
+        if (isMotm) {
+          pointsBreakdown['motm_award'] = 5;
+        }
+        if (goalsConceded >= 4) {
+          pointsBreakdown['concedes_4_plus_goals'] = -3;
+        }
+      }
+
       return {
         fixture_id: m.fixture_id,
         round_number: m.round_number,

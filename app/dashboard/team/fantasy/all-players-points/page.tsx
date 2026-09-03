@@ -867,18 +867,19 @@ export default function AllPlayersPointsPage() {
                                             {m.fine_goals > 0 && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-red-50 text-red-600 font-bold text-[10px] border border-red-200"><AlertTriangle className="w-3 h-3" /> Fine ×{m.fine_goals}</span>}
                                             {m.substitution_penalty !== 0 && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-orange-50 text-orange-600 font-bold text-[10px] border border-orange-200"><RotateCw className="w-3 h-3" /> Sub</span>}
                                           </div>
-                                          {m.points_breakdown && Object.keys(m.points_breakdown).length > 0 && (
-                                            <div className="border-t border-slate-100 pt-1.5 space-y-0.5">
-                                              {Object.entries(m.points_breakdown).map(([key, val]) => (
-                                                <div key={key} className="flex justify-between text-[10px]">
-                                                  <span className="text-slate-400 font-mono capitalize">{key.replace(/_/g, ' ')}</span>
-                                                  <span className={`font-black ${Number(val) > 0 ? 'text-emerald-600' : Number(val) < 0 ? 'text-red-500' : 'text-slate-400'}`}>
-                                                    {Number(val) > 0 ? '+' : ''}{val}
-                                                  </span>
-                                                </div>
-                                              ))}
-                                            </div>
-                                          )}
+                                           {m.points_breakdown && Object.keys(m.points_breakdown).length > 0 && (
+                                             <div className="border-t border-slate-100 pt-2 mt-2 space-y-1">
+                                               <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Itemized Breakdown</span>
+                                               {Object.entries(m.points_breakdown).map(([key, val]) => (
+                                                 <div key={key} className="flex justify-between items-center text-[10px] bg-slate-50/60 px-2 py-1 rounded">
+                                                   <span className="text-slate-600 font-mono capitalize font-bold">{key.replace(/_/g, ' ')}</span>
+                                                   <span className={`font-mono font-black ${Number(val) > 0 ? 'text-emerald-600' : Number(val) < 0 ? 'text-rose-600' : 'text-slate-500'}`}>
+                                                     {Number(val) > 0 ? '+' : ''}{val} Pts
+                                                   </span>
+                                                 </div>
+                                               ))}
+                                             </div>
+                                           )}
                                         </div>
                                       ))}
                                     </div>
