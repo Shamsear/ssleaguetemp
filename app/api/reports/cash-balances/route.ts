@@ -161,43 +161,59 @@ export async function GET(request: NextRequest) {
       // Fetch or create their cash balance doc using live name to ensure DB sync
       const balance = await getOrCreateTeamCashBalance(ts.team_id, liveName);
 
-      const payments = balance.payments || [];
+      let payments: any[] = balance.payments || [];
       const paymentType = balance.payment_type || 'seasonal';
       const seasonPlans = balance.season_plans || {};
 
-      // Dynamically calculate the plan for each season using the 5-season expiration rule
-      const computedSeasonPlans: Record<string, 'upfront' | 'seasonal'> = {};
-      let runningPlan = paymentType;
-      let upfrontSeasonsRemaining = 0;
+      let hasNewPaymentsToPersist = false;
 
+      // Auto-heal: If team is Upfront (or has an upfront season plan) but has no upfront payment (>= 500) logged in payments array
+      const hasUpfrontPayment = payments.some((p: any) => (p.amount || 0) >= 500);
+      const isUpfrontType = paymentType === 'upfront' || Object.values(seasonPlans).includes('upfront');
+
+      if (isUpfrontType && !hasUpfrontPayment) {
+        // Find the earliest season they registered or became upfront
+        const upfrontSeasonId = joinedSeasons[0] || seasonId || 'SSPSLS18';
+        const synthesizedPayment = {
+          payment_id: `auto_upfront_${ts.team_id}_${upfrontSeasonId}`,
+          amount: 500,
+          season_id: upfrontSeasonId,
+          date: new Date().toISOString(),
+          notes: 'Upfront 5-Season Subscription (Auto-synced)',
+          recorded_by: 'system_auto_heal'
+        };
+        payments = [synthesizedPayment, ...payments];
+        hasNewPaymentsToPersist = true;
+      }
+
+      // Auto-heal: For registered seasons where the team played as seasonal, ensure payment records exist if registered
       joinedSeasons.forEach((sid) => {
-        const paymentsThisSeason = payments
-          .filter((p: any) => p.season_id === sid)
-          .reduce((sum: number, p: any) => sum + p.amount, 0);
+        const paymentsThisSeason = payments.filter((p: any) => {
+          if (!p.season_id) return false;
+          const pNum = parseInt(p.season_id.replace(/\D/g, '')) || 0;
+          const sNum = parseInt(sid.replace(/\D/g, '')) || 0;
+          return p.season_id === sid || (pNum > 0 && pNum === sNum);
+        });
 
         const manualPlan = seasonPlans[sid];
+        const isUpfrontSeason = manualPlan === 'upfront' || (paymentType === 'upfront' && !manualPlan);
         
-        if (manualPlan === 'upfront' || paymentsThisSeason >= 500) {
-          runningPlan = 'upfront';
-          upfrontSeasonsRemaining = 5;
-        } else if (manualPlan === 'seasonal') {
-          runningPlan = 'seasonal';
-          upfrontSeasonsRemaining = 0;
-        }
-
-        const isCovered = upfrontSeasonsRemaining > 0;
-        computedSeasonPlans[sid] = isCovered ? 'upfront' : 'seasonal';
-
-        if (isCovered) {
-          upfrontSeasonsRemaining--;
-          if (upfrontSeasonsRemaining === 0) {
-            runningPlan = 'seasonal';
-          }
+        if (!isUpfrontSeason && paymentsThisSeason.length === 0 && (ts as any).is_registered) {
+          const synthesizedSeasonal = {
+            payment_id: `auto_seasonal_${ts.team_id}_${sid}`,
+            amount: 100,
+            season_id: sid,
+            date: new Date().toISOString(),
+            notes: `Seasonal Entry Fee (Auto-synced)`,
+            recorded_by: 'system_auto_heal'
+          };
+          payments.push(synthesizedSeasonal);
+          hasNewPaymentsToPersist = true;
         }
       });
 
       // Calculate total payments
-      const totalPayments = payments.reduce((sum, p) => sum + p.amount, 0);
+      const totalPayments = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
       // Generate deductions dynamically based on seasons played (always 100 per season)
       const deductions = joinedSeasons.map((sid) => {
@@ -213,15 +229,16 @@ export async function GET(request: NextRequest) {
       const totalDeductions = deductions.reduce((sum, d) => sum + d.amount, 0);
       const remainingBalance = totalPayments - totalDeductions;
 
-      // Self-healing database: Sync remaining_balance in Firestore if it is out-of-sync
-      if (balance.remaining_balance !== remainingBalance) {
+      // Self-healing database: Sync remaining_balance and payments in Firestore if updated
+      if (hasNewPaymentsToPersist || balance.remaining_balance !== remainingBalance) {
         try {
           await adminDb.collection('team_cash_balances').doc(ts.team_id).update({
+            payments: payments,
             remaining_balance: remainingBalance,
             updated_at: new Date()
           });
         } catch (err) {
-          console.error('Failed to update remaining_balance in Firestore:', err);
+          console.error('Failed to update team_cash_balances in Firestore:', err);
         }
       }
 

@@ -342,8 +342,16 @@ export default function TeamCashBalances() {
                   {balances
                     .filter(t => normalizeStr(t.team_name).includes(normalizeStr(searchQuery)) || normalizeStr(t.team_id).includes(normalizeStr(searchQuery)))
                     .map((team) => {
-                    const totalPaymentsSum = team.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-                    const seasonPaymentsSum = team.payments?.filter(p => p.season_id === selectedSeasonId).reduce((sum, p) => sum + p.amount, 0) || 0;
+                    const totalPaymentsSum = team.payments?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+                    const getSeasonNum = (id: string) => parseInt((id || '').replace(/\D/g, '')) || 0;
+                    const targetSeasonNum = getSeasonNum(selectedSeasonId);
+
+                    const seasonPaymentsSum = team.payments?.filter(p => {
+                      if (!p.season_id) return true;
+                      if (p.season_id === selectedSeasonId) return true;
+                      if (targetSeasonNum > 0 && getSeasonNum(p.season_id) === targetSeasonNum) return true;
+                      return false;
+                    }).reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
                     const currentPlan = team.season_plans?.[selectedSeasonId] || team.payment_type || 'seasonal';
                     
                      // Chronological season-wise calculation and filtering out future seasons

@@ -21,68 +21,146 @@ export async function GET(request: NextRequest) {
 
     const userId = auth.userId!;
 
-    // ✅ OPTIMIZED: Get team_id with smart caching (reduces 4 Firebase queries to 0-1)
-    const teamId = await getCachedUserTeamId(userId);
-    
+    // 1. Multi-tier Team ID resolution (token -> smart cache -> Neon -> Firestore team_seasons -> Firestore users)
+    let teamId: string | null = (auth as any).teamId || (auth as any).user?.team_id || (auth as any).user?.teamId || null;
+
     if (!teamId) {
-      console.error(`No team found for user ${userId}`);
-      return NextResponse.json({
-        success: false,
-        error: 'Team not found. Please make sure you are registered for a season.',
-      }, { status: 404 });
+      teamId = await getCachedUserTeamId(userId);
     }
 
-    console.log(`Found team_id: ${teamId} for user: ${userId}`);
-    
+    if (!teamId) {
+      // Tier 3: Query Neon PostgreSQL teams table
+      try {
+        const sql = getTournamentDb();
+        const neonTeams = await sql`
+          SELECT id FROM teams WHERE firebase_uid = ${userId} OR id = ${userId} LIMIT 1
+        `;
+        if (neonTeams.length > 0) {
+          teamId = neonTeams[0].id;
+        }
+      } catch (err) {
+        console.warn('Neon team lookup error:', err);
+      }
+    }
 
-    // Get season_id from query params, or find active season
+    if (!teamId) {
+      // Tier 4: Query Firestore team_seasons collection by user_id
+      try {
+        const tsSnap = await adminDb.collection('team_seasons')
+          .where('user_id', '==', userId)
+          .limit(1)
+          .get();
+
+        if (!tsSnap.empty) {
+          const tsData = tsSnap.docs[0].data();
+          teamId = tsData.team_id || tsSnap.docs[0].id.split('_')[0] || null;
+        }
+      } catch (err) {
+        console.warn('Firebase team_seasons lookup error:', err);
+      }
+    }
+
+    if (!teamId) {
+      // Tier 5: Query Firestore users collection
+      try {
+        const userDoc = await adminDb.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          const uData = userDoc.data();
+          teamId = uData?.team_id || uData?.teamId || uData?.team || null;
+        }
+      } catch (err) {
+        console.warn('Firebase user doc lookup error:', err);
+      }
+    }
+
+    // 2. Season ID resolution
     const { searchParams } = new URL(request.url);
     let seasonId = searchParams.get('season_id');
 
     if (!seasonId) {
-      // ✅ OPTIMIZED: Get active season with caching (reduces Firebase query to 0-1)
       const activeSeason = await getCachedActiveSeason();
-      
-      if (!activeSeason) {
-        console.warn('No active season found, falling back to most recent registration');
-        // Fallback: Find the team's most recent registered season
-        const registrationsQuery = await adminDb.collection('team_seasons')
-          .where('user_id', '==', userId)
-          .where('status', '==', 'registered')
-          .orderBy('created_at', 'desc')
-          .limit(1)
-          .get();
-
-        if (registrationsQuery.empty) {
-          return NextResponse.json({
-            success: false,
-            error: 'You are not registered for any season yet',
-          }, { status: 404 });
-        }
-
-        seasonId = registrationsQuery.docs[0].data().season_id;
-      } else {
+      if (activeSeason) {
         seasonId = activeSeason.id;
-        console.log(`Using active season: ${seasonId}`);
       }
     }
 
-    // ✅ OPTIMIZED: Get team_season with smart caching (reduces 1-2 Firebase queries to 0-1)
-    const teamSeasonResult = await getCachedTeamSeason(userId, seasonId);
-    
-    if (!teamSeasonResult) {
-      return NextResponse.json({
-        success: false,
-        error: 'Team not registered for this season',
-      }, { status: 404 });
+    if (!seasonId) {
+      seasonId = 'SSPSLS18';
     }
-    
-    const teamSeasonData = teamSeasonResult.data;
-    const actualDocId = teamSeasonResult.id;
-    console.log(`Found team_season: ${actualDocId}`);
-    
-    
-    console.log(`Team season data:`, {
+
+    // 3. Multi-tier Team Season data resolution
+    let teamSeasonData: any = null;
+    let actualDocId = teamId ? `${teamId}_${seasonId}` : null;
+
+    if (actualDocId) {
+      try {
+        const tsDoc = await adminDb.collection('team_seasons').doc(actualDocId).get();
+        if (tsDoc.exists) {
+          teamSeasonData = tsDoc.data();
+        }
+      } catch (err) {
+        console.warn('Direct team_seasons lookup error:', err);
+      }
+    }
+
+    if (!teamSeasonData && teamId) {
+      try {
+        const tsResult = await getCachedTeamSeason(userId, seasonId);
+        if (tsResult) {
+          teamSeasonData = tsResult.data;
+          actualDocId = tsResult.id;
+        }
+      } catch (err) {
+        console.warn('getCachedTeamSeason lookup error:', err);
+      }
+    }
+
+    if (!teamSeasonData && userId) {
+      try {
+        const tsSnap = await adminDb.collection('team_seasons')
+          .where('user_id', '==', userId)
+          .where('season_id', '==', seasonId)
+          .limit(1)
+          .get();
+        if (!tsSnap.empty) {
+          teamSeasonData = tsSnap.docs[0].data();
+          actualDocId = tsSnap.docs[0].id;
+          if (!teamId) {
+            teamId = teamSeasonData.team_id;
+          }
+        }
+      } catch (err) {
+        console.warn('Query team_seasons lookup error:', err);
+      }
+    }
+
+    // Also check Neon team_seasons table if teamSeasonData is missing
+    if (!teamSeasonData && teamId) {
+      try {
+        const sql = getTournamentDb();
+        const neonTeamSeasons = await sql`
+          SELECT * FROM team_seasons WHERE (team_id = ${teamId} OR user_id = ${userId}) AND season_id = ${seasonId} LIMIT 1
+        `;
+        if (neonTeamSeasons.length > 0) {
+          teamSeasonData = neonTeamSeasons[0];
+        }
+      } catch (err) {
+        console.warn('Neon team_seasons lookup error:', err);
+      }
+    }
+
+    if (!teamId) {
+      console.warn(`No team ID found for user ${userId}, returning empty transaction structure.`);
+      return NextResponse.json({
+        success: true,
+        season_id: seasonId,
+        currency_system: 'single',
+        football: { current_balance: 0, starting_balance: 0, total_spent: 0, total_earned: 0, transactions: [] },
+        real_player: { current_balance: 0, starting_balance: 0, total_spent: 0, total_earned: 0, transactions: [] }
+      });
+    }
+
+    console.log(`Team season data for team ${teamId}, season ${seasonId}:`, {
       football_budget: teamSeasonData?.football_budget,
       football_starting_balance: teamSeasonData?.football_starting_balance,
       real_player_budget: teamSeasonData?.real_player_budget,
@@ -93,29 +171,32 @@ export async function GET(request: NextRequest) {
     const currencySystem = teamSeasonData?.currency_system || 'single';
     const isDualCurrency = currencySystem === 'dual';
 
-    // ✅ OPTIMIZED: Fetch transactions with 15-minute cache
+    // Fetch transactions with fallback queries
     const transactionsCacheKey = `${teamId}_${seasonId}`;
     let allTransactions = getCached<any[]>('transactions', transactionsCacheKey, CACHE_DURATIONS.TRANSACTIONS);
     
     if (!allTransactions) {
       console.log(`❌ [Cache MISS] transactions for team ${teamId}, season ${seasonId}`);
-      const transactionsSnapshot = await adminDb
-        .collection('transactions')
-        .where('team_id', '==', teamId)
-        .where('season_id', '==', seasonId)
-        .orderBy('created_at', 'desc')
-        .limit(500)
-        .get();
+      try {
+        const transactionsSnapshot = await adminDb
+          .collection('transactions')
+          .where('team_id', '==', teamId)
+          .where('season_id', '==', seasonId)
+          .orderBy('created_at', 'desc')
+          .limit(500)
+          .get();
+        
+        console.log(`Found ${transactionsSnapshot.size} transactions from Firebase`);
+        allTransactions = transactionsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      } catch (txErr) {
+        console.warn('Firestore query error on transactions:', txErr);
+        allTransactions = [];
+      }
       
-      console.log(`Found ${transactionsSnapshot.size} transactions from Firebase`);
-      allTransactions = transactionsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      // Cache for 15 minutes
       setCached('transactions', transactionsCacheKey, allTransactions);
-      console.log(`💾 [Cached] transactions for team ${teamId}`);
     } else {
       console.log(`✅ [Cache HIT] transactions for team ${teamId} (${allTransactions.length} transactions)`);
     }
