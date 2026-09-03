@@ -834,8 +834,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     setIsHomeTeam(isHome);
     setCanCreateMatchups((isHome || isAway || isAdmin) && matchups.length === 0);
 
-    const hasResultsEntered = matchups.some(m => m.home_goals !== null && m.away_goals !== null);
-    const canEdit = (isHome || isAway || isAdmin) && matchups.length > 0 && !hasResultsEntered && phase !== 'closed';
+    const canEdit = (isHome || isAway || isAdmin) && matchups.length > 0 && phase !== 'closed';
     setCanEditMatchups(canEdit);
   }, [fixture, user, matchups, phase]);
 
@@ -2052,7 +2051,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 )}
               </div>
 
-              {canEditMatchups && isEditMode ? (
+              {isEditMode ? (
                 // Edit Mode
                 <>
                   {/* Quick Actions Toolbar */}
