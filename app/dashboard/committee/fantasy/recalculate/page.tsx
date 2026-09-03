@@ -3,7 +3,7 @@ import { Users, Trophy, Activity, BarChart2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -23,7 +23,7 @@ export default function FantasyRecalculatePage() {
     }
 
     setIsRecalculating(true);
-    setProgress('Starting recalculation...');
+    setProgress('Starting fantasy points recalculation...');
     setLogs([]);
     setError(null);
     setSuccess(false);
@@ -40,8 +40,7 @@ export default function FantasyRecalculatePage() {
       }
 
       const data = await response.json();
-      
-      setProgress('Recalculation completed successfully!');
+      setProgress('Fantasy points recalculation completed successfully!');
       setLogs(data.logs || []);
       setSuccess(true);
     } catch (err) {
@@ -66,246 +65,106 @@ export default function FantasyRecalculatePage() {
 
   return (
     <AuthGuard requiredRole="committee_admin">
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Header */}
-      <div className="mb-6">
-        <Link href="/dashboard/committee/fantasy" className="text-blue-600 hover:underline mb-2 inline-block">
-          &larr; Back to Fantasy Dashboard
-        </Link>
-        <h1 className="text-3xl font-bold text-gray-900">Recalculate Fantasy Points</h1>
-        <p className="text-gray-600 mt-1">Recalculate all fantasy points, bonuses, and rankings</p>
-      </div>
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* Header */}
+        <div className="mb-6">
+          <Link href="/dashboard/committee/fantasy" className="text-blue-600 hover:underline mb-2 inline-block">
+            &larr; Back to Fantasy Dashboard
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900">Recalculate Fantasy Points</h1>
+          <p className="text-gray-600 mt-1">Recalculate fantasy points, multipliers, bonuses, and rankings</p>
+        </div>
 
-      {/* Warning Card */}
-      <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6 mb-6">
-        <div className="flex items-start gap-3">
-          <svg className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <div>
-            <h3 className="font-bold text-yellow-900 mb-2">Important Information</h3>
-            <ul className="text-sm text-yellow-800 space-y-1">
-              <li>• This will recalculate ALL fantasy points from scratch</li>
-              <li>• Player points will be recalculated with captain/VC multipliers</li>
-              <li>• Passive team bonuses will be recalculated from fixture results</li>
-              <li>• Admin bonuses will be included in totals</li>
-              <li>• Team rankings will be updated</li>
-              <li>• This process may take 1-2 minutes</li>
-            </ul>
+        {/* Warning Card */}
+        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6 mb-6">
+          <div className="flex items-start gap-3">
+            <svg className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <h3 className="font-bold text-yellow-900 mb-2">Fantasy Points Recalculation</h3>
+              <ul className="text-sm text-yellow-800 space-y-1">
+                <li>• Recalculates match performance fantasy points for drafted players</li>
+                <li>• Applies captain (2x) and vice-captain (1.5x) multipliers</li>
+                <li>• Recalculates team passive outcome bonuses</li>
+                <li>• Updates fantasy leaderboards and team ranks</li>
+              </ul>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* What Gets Recalculated */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">What Gets Recalculated</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /></span>
-              <h3 className="font-semibold text-gray-900">Player Points</h3>
-            </div>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Match performance points</li>
-              <li>• Captain multipliers (2x)</li>
-              <li>• Vice-Captain multipliers (1.5x)</li>
-              <li>• Admin player bonuses</li>
-            </ul>
-          </div>
-
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></span>
-              <h3 className="font-semibold text-gray-900">Team Bonuses</h3>
-            </div>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Win/draw/loss bonuses</li>
-              <li>• Clean sheet bonuses</li>
-              <li>• High scoring bonuses</li>
-              <li>• Admin team bonuses</li>
-            </ul>
-          </div>
-
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl"><Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /></span>
-              <h3 className="font-semibold text-gray-900">Squad Totals</h3>
-            </div>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Individual player totals</li>
-              <li>• Including admin bonuses</li>
-            </ul>
-          </div>
-
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /></span>
-              <h3 className="font-semibold text-gray-900">Team Rankings</h3>
-            </div>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Total points updated</li>
-              <li>• Rankings recalculated</li>
-              <li>• Leaderboard refreshed</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-  const startRealPlayerRecalculation = async () => {
-    if (!confirm('Are you sure you want to recalculate real player stats? This will:\n\n1. Recalculate matches played, wins, draws, losses\n2. Recalculate goals scored, goals conceded, clean sheets, MOTM awards\n3. Recalculate category-based points for Season 18+')) {
-      return;
-    }
-
-    setIsRecalculating(true);
-    setProgress('Starting real player stats recalculation...');
-    setLogs([]);
-    setError(null);
-    setSuccess(false);
-
-    try {
-      const response = await fetchWithTokenRefresh('/api/admin/recalculate-all-player-stats', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Real player stats recalculation failed');
-      }
-
-      const data = await response.json();
-      setProgress(`Real player stats recalculation completed! ${data.playersUpdated || 0} players updated across ${data.fixturesProcessed || 0} fixtures.`);
-      setLogs([
-        `Fixtures Processed: ${data.fixturesProcessed || 0}`,
-        `Matchups Processed: ${data.matchupsProcessed || 0}`,
-        `Players Updated: ${data.playersUpdated || 0}`,
-      ]);
-      setSuccess(true);
-    } catch (err) {
-      console.error('Real player stats recalculation error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to recalculate player stats');
-      setProgress('Real player stats recalculation failed');
-    } finally {
-      setIsRecalculating(false);
-    }
-  };
-
-  return (
-    <AuthGuard requiredRole="committee_admin">
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Action Buttons */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6 space-y-4">
-        <button
-          onClick={startRecalculation}
-          disabled={isRecalculating}
-          className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all ${
-            isRecalculating
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl'
-          }`}
-        >
-          {isRecalculating ? (
-            <span className="flex items-center justify-center gap-3">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-              Recalculating Fantasy Points...
-            </span>
-          ) : (
-            'Recalculate Fantasy Points'
-          )}
-        </button>
-
-        <button
-          onClick={startRealPlayerRecalculation}
-          disabled={isRecalculating}
-          className={`w-full py-3.5 px-6 rounded-xl font-bold text-base transition-all ${
-            isRecalculating
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md hover:shadow-lg'
-          }`}
-        >
-          {isRecalculating ? (
-            <span className="flex items-center justify-center gap-3">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              Recalculating Real Player Stats...
-            </span>
-          ) : (
-            'Recalculate Real Player Stats (Matches Played, W/D/L, Goals, Points)'
-          )}
-        </button>
-      </div>
-
-      {/* Progress */}
-      {progress && (
-        <div className={`rounded-xl p-4 mb-6 ${
-          success ? 'bg-green-50 border-2 border-green-300' :
-          error ? 'bg-red-50 border-2 border-red-300' :
-          'bg-blue-50 border-2 border-blue-300'
-        }`}>
-          <div className="flex items-center gap-3">
-            {success ? (
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            ) : error ? (
-              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+        {/* Action Button */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+          <button
+            onClick={startRecalculation}
+            disabled={isRecalculating}
+            className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all ${
+              isRecalculating
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl'
+            }`}
+          >
+            {isRecalculating ? (
+              <span className="flex items-center justify-center gap-3">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                Recalculating Fantasy Points...
+              </span>
             ) : (
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              'Start Fantasy Points Recalculation'
             )}
-            <p className={`font-semibold ${
-              success ? 'text-green-900' :
-              error ? 'text-red-900' :
-              'text-blue-900'
-            }`}>
-              {progress}
-            </p>
-          </div>
+          </button>
         </div>
-      )}
 
-      {/* Error */}
-      {error && (
-        <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 mb-6">
-          <p className="text-red-900 font-semibold mb-2">Error:</p>
-          <p className="text-red-800 text-sm">{error}</p>
-        </div>
-      )}
-
-      {/* Logs */}
-      {logs.length > 0 && (
-        <div className="bg-gray-900 rounded-xl p-4 mb-6">
-          <h3 className="text-white font-bold mb-3">Recalculation Log</h3>
-          <div className="space-y-1 max-h-96 overflow-y-auto font-mono text-xs">
-            {logs.map((log, idx) => (
-              <div key={idx} className="text-green-400">{log}</div>
-            ))}
+        {/* Progress */}
+        {progress && (
+          <div className={`rounded-xl p-4 mb-6 ${
+            success ? 'bg-green-50 border-2 border-green-300' :
+            error ? 'bg-red-50 border-2 border-red-300' :
+            'bg-blue-50 border-2 border-blue-300'
+          }`}>
+            <div className="flex items-center gap-3">
+              {success ? (
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : error ? (
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              )}
+              <p className={`font-semibold ${
+                success ? 'text-green-900' :
+                error ? 'text-red-900' :
+                'text-blue-900'
+              }`}>
+                {progress}
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Success Actions */}
-      {success && (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-          <h3 className="font-bold text-gray-900 mb-4">Next Steps</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Link
-              href="/dashboard/committee/fantasy"
-              className="px-4 py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-center"
-            >
-              View Fantasy Dashboard
-            </Link>
-            <Link
-              href="/dashboard/committee/fantasy/teams/SSPSLFLS16"
-              className="px-4 py-3 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-medium text-center"
-            >
-              View Teams & Leaderboard
-            </Link>
+        {/* Error */}
+        {error && (
+          <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 mb-6">
+            <p className="text-red-900 font-semibold mb-2">Error:</p>
+            <p className="text-red-800 text-sm">{error}</p>
           </div>
-        </div>
-      )}
-    </div>
-  
+        )}
+
+        {/* Logs */}
+        {logs.length > 0 && (
+          <div className="bg-gray-900 rounded-xl p-4 mb-6">
+            <h3 className="text-white font-bold mb-3">Recalculation Log</h3>
+            <div className="space-y-1 max-h-96 overflow-y-auto font-mono text-xs">
+              {logs.map((log, idx) => (
+                <div key={idx} className="text-green-400">{log}</div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </AuthGuard>
   );
 }
