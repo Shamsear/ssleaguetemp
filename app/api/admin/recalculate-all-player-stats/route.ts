@@ -187,28 +187,46 @@ export async function POST(request: NextRequest) {
         const oppCat = (oppData?.category || 'red').toLowerCase();
         const oppCatConfig = categoriesMap.get(oppCat) || categoriesMap.get('red');
 
-        let matchPoints = 0;
-        if (playerCatConfig && oppCatConfig) {
-          const levelDiff = Math.abs((Number(playerCatConfig.priority) || 1) - (Number(oppCatConfig.priority) || 1));
-          if (res === 'win') {
-            if (levelDiff === 0) matchPoints = Number(playerCatConfig.points_same_category) || 8;
-            else if (levelDiff === 1) matchPoints = Number(playerCatConfig.points_one_level_diff) || 7;
-            else if (levelDiff === 2) matchPoints = Number(playerCatConfig.points_two_level_diff) || 6;
-            else matchPoints = Number(playerCatConfig.points_three_level_diff) || 5;
-          } else if (res === 'draw') {
-            if (levelDiff === 0) matchPoints = Number(playerCatConfig.draw_same_category) || 4;
-            else if (levelDiff === 1) matchPoints = Number(playerCatConfig.draw_one_level_diff) || 3;
-            else if (levelDiff === 2) matchPoints = Number(playerCatConfig.draw_two_level_diff) || 3;
-            else matchPoints = Number(playerCatConfig.draw_three_level_diff) || 2;
+        const getPointsForCategoryMatch = (pCfg: any, oCfg: any, outcome: string) => {
+          const pPrio = Number(pCfg?.priority) || 1;
+          const oPrio = Number(oCfg?.priority) || 1;
+
+          let fieldSuffix = 'same_category';
+
+          if (pPrio === 1) {
+            if (oPrio === 1) fieldSuffix = 'same_category';
+            else if (oPrio === 2) fieldSuffix = 'one_level_diff';
+            else if (oPrio === 3) fieldSuffix = 'two_level_diff';
+            else fieldSuffix = 'three_level_diff';
+          } else if (pPrio === 2) {
+            if (oPrio === 1) fieldSuffix = 'one_level_diff';
+            else if (oPrio === 2) fieldSuffix = 'same_category';
+            else if (oPrio === 3) fieldSuffix = 'two_level_diff';
+            else fieldSuffix = 'three_level_diff';
+          } else if (pPrio === 3) {
+            if (oPrio === 1) fieldSuffix = 'two_level_diff';
+            else if (oPrio === 2) fieldSuffix = 'one_level_diff';
+            else if (oPrio === 3) fieldSuffix = 'same_category';
+            else fieldSuffix = 'three_level_diff';
           } else {
-            if (levelDiff === 0) matchPoints = Number(playerCatConfig.loss_same_category) || 1;
-            else if (levelDiff === 1) matchPoints = Number(playerCatConfig.loss_one_level_diff) || 1;
-            else if (levelDiff === 2) matchPoints = Number(playerCatConfig.loss_two_level_diff) || 1;
-            else matchPoints = Number(playerCatConfig.loss_three_level_diff) || 0;
+            if (oPrio === 1) fieldSuffix = 'three_level_diff';
+            else if (oPrio === 2) fieldSuffix = 'two_level_diff';
+            else if (oPrio === 3) fieldSuffix = 'one_level_diff';
+            else fieldSuffix = 'same_category';
           }
-        } else {
-          matchPoints = res === 'win' ? 8 : res === 'draw' ? 4 : 1;
-        }
+
+          const prefix = outcome === 'win' ? 'points_' : (outcome === 'draw' ? 'draw_' : 'loss_');
+          const fieldKey = `${prefix}${fieldSuffix}`;
+
+          const val = pCfg ? pCfg[fieldKey] : undefined;
+          if (val !== undefined && val !== null) return Number(val);
+
+          if (outcome === 'win') return 8;
+          if (outcome === 'draw') return 4;
+          return 1;
+        };
+
+        const matchPoints = getPointsForCategoryMatch(playerCatConfig, oppCatConfig, res);
 
         totalPoints += matchPoints;
       }

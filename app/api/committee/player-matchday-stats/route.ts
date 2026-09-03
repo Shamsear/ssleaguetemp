@@ -203,37 +203,56 @@ export async function GET(request: NextRequest) {
         return { priority: 1, points_same_category: 8, points_one_level_diff: 7, points_two_level_diff: 6, points_three_level_diff: 5, draw_same_category: 4, draw_one_level_diff: 3, draw_two_level_diff: 3, draw_three_level_diff: 2, loss_same_category: 1, loss_one_level_diff: 1, loss_two_level_diff: 1, loss_three_level_diff: 0 };
       };
 
+      const getPointsForCategoryMatch = (playerCatConfig: any, oppCatConfig: any, outcome: string) => {
+        const pPrio = Number(playerCatConfig?.priority) || 1;
+        const oPrio = Number(oppCatConfig?.priority) || 1;
+
+        let fieldSuffix = 'same_category';
+
+        if (pPrio === 1) { // Priority 1 (Red)
+          if (oPrio === 1) fieldSuffix = 'same_category';
+          else if (oPrio === 2) fieldSuffix = 'one_level_diff';
+          else if (oPrio === 3) fieldSuffix = 'two_level_diff';
+          else fieldSuffix = 'three_level_diff';
+        } else if (pPrio === 2) { // Priority 2 (Blue)
+          if (oPrio === 1) fieldSuffix = 'one_level_diff';
+          else if (oPrio === 2) fieldSuffix = 'same_category';
+          else if (oPrio === 3) fieldSuffix = 'two_level_diff';
+          else fieldSuffix = 'three_level_diff';
+        } else if (pPrio === 3) { // Priority 3 (Black)
+          if (oPrio === 1) fieldSuffix = 'two_level_diff';
+          else if (oPrio === 2) fieldSuffix = 'one_level_diff';
+          else if (oPrio === 3) fieldSuffix = 'same_category';
+          else fieldSuffix = 'three_level_diff';
+        } else { // Priority 4 (White)
+          if (oPrio === 1) fieldSuffix = 'three_level_diff';
+          else if (oPrio === 2) fieldSuffix = 'two_level_diff';
+          else if (oPrio === 3) fieldSuffix = 'one_level_diff';
+          else fieldSuffix = 'same_category';
+        }
+
+        const prefix = outcome === 'win' ? 'points_' : (outcome === 'draw' ? 'draw_' : 'loss_');
+        const fieldKey = `${prefix}${fieldSuffix}`;
+
+        const val = playerCatConfig ? playerCatConfig[fieldKey] : undefined;
+        if (val !== undefined && val !== null) return Number(val);
+
+        if (outcome === 'win') return 8;
+        if (outcome === 'draw') return 4;
+        return 1;
+      };
+
       matchdayStats = rawMatchdayStats.map((match: any) => {
         const homeCatConfig = getCategoryConfig(match.home_category);
         const awayCatConfig = getCategoryConfig(match.away_category);
 
-        let points = 0;
         const gd = match.goals_scored - match.goals_conceded;
         const res = gd > 0 ? 'win' : (gd === 0 ? 'draw' : 'loss');
 
-        const levelDiff = Math.abs((Number(homeCatConfig.priority) || 1) - (Number(awayCatConfig.priority) || 1));
         const playerCatConfig = match.player_side === 'home' ? homeCatConfig : awayCatConfig;
+        const oppCatConfig = match.player_side === 'home' ? awayCatConfig : homeCatConfig;
 
-        const getPoints = (cfg: any, diff: number, outcome: string) => {
-          if (outcome === 'win') {
-            if (diff === 0) return Number(cfg.points_same_category) || 8;
-            if (diff === 1) return Number(cfg.points_one_level_diff) || 7;
-            if (diff === 2) return Number(cfg.points_two_level_diff) || 6;
-            return Number(cfg.points_three_level_diff) || 5;
-          } else if (outcome === 'draw') {
-            if (diff === 0) return Number(cfg.draw_same_category) || 4;
-            if (diff === 1) return Number(cfg.draw_one_level_diff) || 3;
-            if (diff === 2) return Number(cfg.draw_two_level_diff) || 3;
-            return Number(cfg.draw_three_level_diff) || 2;
-          } else {
-            if (diff === 0) return Number(cfg.loss_same_category) || 1;
-            if (diff === 1) return Number(cfg.loss_one_level_diff) || 1;
-            if (diff === 2) return Number(cfg.loss_two_level_diff) || 1;
-            return Number(cfg.loss_three_level_diff) || 0;
-          }
-        };
-
-        points = getPoints(playerCatConfig, levelDiff, res);
+        const points = getPointsForCategoryMatch(playerCatConfig, oppCatConfig, res);
 
         return {
           ...match,
