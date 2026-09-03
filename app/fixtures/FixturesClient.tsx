@@ -18,6 +18,7 @@ interface Fixture {
   home_score?: number;
   away_score?: number;
   status: string;
+  round_status?: string;
   scheduled_date?: string;
   leg: string;
   season_id: string;
@@ -148,11 +149,19 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
   };
 
   const isFixtureCompleted = (f: Fixture) => {
-    return f.status === 'completed' || f.status === 'finalized';
+    const s = (f.status || '').toLowerCase();
+    const rs = (f.round_status || '').toLowerCase();
+    return s === 'completed' || s === 'finalized' || rs === 'completed' || rs === 'finalized';
   };
 
   const isFixtureLive = (f: Fixture) => {
-    return f.status === 'in_progress' || f.status === 'live' || f.status === 'active' || f.status === 'home_fixture' || f.status === 'fixture_entry' || f.status === 'result_entry';
+    if (isFixtureCompleted(f)) return false;
+    const s = (f.status || '').toLowerCase();
+    const rs = (f.round_status || '').toLowerCase();
+    return (
+      s === 'in_progress' || s === 'live' || s === 'active' || s === 'home_fixture' || s === 'fixture_entry' || s === 'result_entry' ||
+      rs === 'in_progress' || rs === 'live' || rs === 'active' || rs === 'home_fixture' || rs === 'fixture_entry' || rs === 'result_entry' || rs === 'started'
+    );
   };
 
   const getFilteredFixtures = () => {

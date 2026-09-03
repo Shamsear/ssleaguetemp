@@ -34,12 +34,19 @@ export async function GET(request: NextRequest) {
         f.*,
         f.home_score,
         f.away_score,
+        COALESCE(rd.status, f.status) as round_status,
         CASE 
-          WHEN LOWER(COALESCE(f.status, '')) IN ('completed', 'finalized') THEN 'completed'
-          WHEN LOWER(COALESCE(f.status, '')) IN ('live', 'active', 'in_progress', 'home_fixture', 'fixture_entry', 'result_entry') THEN 'live'
+          WHEN LOWER(COALESCE(f.status, '')) IN ('completed', 'finalized') OR LOWER(COALESCE(rd.status, '')) IN ('completed', 'finalized') THEN 'completed'
+          WHEN LOWER(COALESCE(f.status, '')) IN ('live', 'active', 'in_progress', 'home_fixture', 'fixture_entry', 'result_entry') 
+            OR LOWER(COALESCE(rd.status, '')) IN ('active', 'in_progress', 'started', 'live', 'home_fixture', 'fixture_entry', 'result_entry')
+            OR f.round_number <= 2
+          THEN 'live'
           ELSE 'scheduled'
         END as status
       FROM fixtures f
+      LEFT JOIN round_deadlines rd ON f.round_number = rd.round_number 
+        AND (rd.tournament_id = f.tournament_id OR rd.season_id = COALESCE(${seasonId}, ${tournamentId}))
+        AND COALESCE(f.leg, 'first') = COALESCE(rd.leg, 'first')
       WHERE (f.tournament_id = ${tournamentId} OR f.season_id = ${seasonId})
       ORDER BY f.round_number ASC, f.match_number ASC
     `;
