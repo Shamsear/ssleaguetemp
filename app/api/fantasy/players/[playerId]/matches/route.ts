@@ -47,11 +47,13 @@ export async function GET(
           LIMIT 1
         `;
 
-    const isCaptain = squadInfo[0]?.is_captain || false;
-    const isViceCaptain = squadInfo[0]?.is_vice_captain || false;
-    const playerTeamId = squadInfo[0]?.team_id || null;
+    // Get fantasy league season_id to scope match logs to the correct season
+    const leagues = await fantasyDb`
+      SELECT season_id FROM fantasy_leagues WHERE league_id = ${leagueId} LIMIT 1
+    `;
+    const seasonId = leagues[0]?.season_id || 'SSPSLS18';
 
-    // Get all completed matchups for this player
+    // Get all completed matchups for this player in the active season
     const matchups = await tournamentDb`
       SELECT 
         m.fixture_id,
@@ -70,6 +72,7 @@ export async function GET(
       FROM matchups m
       JOIN fixtures f ON m.fixture_id = f.id
       WHERE (m.home_player_id = ${playerId} OR m.away_player_id = ${playerId})
+        AND f.season_id = ${seasonId}
         AND f.status = 'completed'
         AND m.home_goals IS NOT NULL
         AND m.away_goals IS NOT NULL
