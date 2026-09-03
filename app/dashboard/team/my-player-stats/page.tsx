@@ -91,10 +91,13 @@ export default function MyPlayerStatsPage() {
                     
                     setSeasons(filteredSeasons);
                     
-                    // Set default season to SSPSLS16 or first available
-                    const defaultSeason = filteredSeasons.find((s: Season) => s.id === 'SSPSLS16') || filteredSeasons[0];
-                    if (defaultSeason) {
-                        setSelectedSeason(defaultSeason.id);
+                    // Set default season to active season, or newest available season
+                    const activeSeason = allSeasons.find((s: any) => s.status === 'active' || s.is_active === true) 
+                        || filteredSeasons[filteredSeasons.length - 1] 
+                        || filteredSeasons[0];
+
+                    if (activeSeason) {
+                        setSelectedSeason(activeSeason.id);
                     }
                 }
             } catch (error) {

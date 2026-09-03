@@ -213,29 +213,39 @@ export async function POST(request: NextRequest) {
         totalPoints += matchPoints;
       }
 
-      // Upsert realplayerstats table
-      await tournamentDb`
-        INSERT INTO realplayerstats (
-          id, player_id, player_name, season_id, team, team_id, category,
-          points, matches_played, goals_scored, goals_conceded, wins, draws, losses, clean_sheets, motm_awards, processed_fixtures, updated_at
-        ) VALUES (
-          ${pData.statsId}, ${pData.playerId}, ${pData.playerName}, ${pData.seasonId}, ${pData.team}, ${pData.teamId}, ${pData.category},
-          ${totalPoints}, ${matchesPlayed}, ${goalsScored}, ${goalsConceded}, ${wins}, ${draws}, ${losses}, ${cleanSheets}, ${motmAwards}, ${JSON.stringify(pData.processedFixtures)}::jsonb, NOW()
-        )
-        ON CONFLICT (id) DO UPDATE SET
-          player_name = EXCLUDED.player_name,
-          points = EXCLUDED.points,
-          matches_played = EXCLUDED.matches_played,
-          goals_scored = EXCLUDED.goals_scored,
-          goals_conceded = EXCLUDED.goals_conceded,
-          wins = EXCLUDED.wins,
-          draws = EXCLUDED.draws,
-          losses = EXCLUDED.losses,
-          clean_sheets = EXCLUDED.clean_sheets,
-          motm_awards = EXCLUDED.motm_awards,
-          processed_fixtures = EXCLUDED.processed_fixtures,
-          updated_at = NOW()
+      // Check if player row exists
+      const existingRow = await tournamentDb`
+        SELECT id FROM realplayerstats WHERE player_id = ${pData.playerId} AND season_id = ${pData.seasonId}
       `;
+
+      if (existingRow.length > 0) {
+        await tournamentDb`
+          UPDATE realplayerstats SET
+            player_name = ${pData.playerName},
+            points = ${totalPoints},
+            matches_played = ${matchesPlayed},
+            goals_scored = ${goalsScored},
+            goals_conceded = ${goalsConceded},
+            wins = ${wins},
+            draws = ${draws},
+            losses = ${losses},
+            clean_sheets = ${cleanSheets},
+            motm_awards = ${motmAwards},
+            processed_fixtures = ${JSON.stringify(pData.processedFixtures)}::jsonb,
+            updated_at = NOW()
+          WHERE player_id = ${pData.playerId} AND season_id = ${pData.seasonId}
+        `;
+      } else {
+        await tournamentDb`
+          INSERT INTO realplayerstats (
+            id, player_id, player_name, season_id, team, team_id, category,
+            points, matches_played, goals_scored, goals_conceded, wins, draws, losses, clean_sheets, motm_awards, processed_fixtures, updated_at
+          ) VALUES (
+            ${pData.statsId}, ${pData.playerId}, ${pData.playerName}, ${pData.seasonId}, ${pData.team}, ${pData.teamId}, ${pData.category},
+            ${totalPoints}, ${matchesPlayed}, ${goalsScored}, ${goalsConceded}, ${wins}, ${draws}, ${losses}, ${cleanSheets}, ${motmAwards}, ${JSON.stringify(pData.processedFixtures)}::jsonb, NOW()
+          )
+        `;
+      }
 
       updatedCount++;
     }
