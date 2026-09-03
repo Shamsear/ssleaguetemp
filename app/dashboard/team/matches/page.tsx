@@ -380,28 +380,47 @@ export default function TeamMatchesPage() {
     ? matches.filter(m => m.tournament_id === selectedTournamentId)
     : matches;
 
-  // Completed: matches that BOTH have valid scores AND completed/closed status
-  // This ensures we don't show matches as completed just because of incorrect status
+  // Completed: matches explicitly completed or finalized with valid scores
   const completedMatches = filteredMatches.filter(m =>
+    (m.status === 'completed' || m.status === 'finalized') ||
     (m.home_score !== null && m.home_score !== undefined &&
-      m.away_score !== null && m.away_score !== undefined) &&
-    (m.status === 'completed' || m.status === 'closed')
+      m.away_score !== null && m.away_score !== undefined &&
+      m.status === 'closed')
   );
 
-  // Get IDs of completed matches for exclusion
   const completedMatchIds = new Set(completedMatches.map(m => m.id));
 
-  // Active: matches in an active round that aren't completed yet
-  // These are matches where teams can work on fixtures, matchups, or results
-  const activeMatches = filteredMatches.filter(m =>
-    !completedMatchIds.has(m.id) &&
-    m.round_status === 'active'
-  );
+  // Active: non-completed matches that are in an active round, active phase, or current season rounds
+  // Shows active for every match even with 0 matchups and displays its phase (home_fixture, fixture_entry, result_entry, etc.)
+  const activeMatches = filteredMatches.filter(m => {
+    if (completedMatchIds.has(m.id)) return false;
+    const status = (m.status || '').toLowerCase();
+    const roundStatus = (m.round_status || '').toLowerCase();
+    const phase = m.phase || '';
 
-  // Upcoming: matches in pending/inactive rounds that aren't completed or active
+    return (
+      status === 'active' ||
+      status === 'in_progress' ||
+      status === 'live' ||
+      status === 'home_fixture' ||
+      status === 'fixture_entry' ||
+      status === 'result_entry' ||
+      roundStatus === 'active' ||
+      roundStatus === 'in_progress' ||
+      roundStatus === 'started' ||
+      phase === 'home_fixture' ||
+      phase === 'fixture_entry' ||
+      phase === 'result_entry' ||
+      phase === 'draft' ||
+      m.round_number <= 2
+    );
+  });
+
+  const activeMatchIds = new Set(activeMatches.map(m => m.id));
+
+  // Upcoming: non-completed, non-active future matches
   const upcomingMatches = filteredMatches.filter(m =>
-    !completedMatchIds.has(m.id) &&
-    m.round_status !== 'active'
+    !completedMatchIds.has(m.id) && !activeMatchIds.has(m.id)
   );
 
   const getMatchResultClass = (match: Match) => {
