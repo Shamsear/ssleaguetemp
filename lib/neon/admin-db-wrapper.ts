@@ -275,6 +275,25 @@ function mapPlayerSeasonStatsRow(row: any): Record<string, any> {
   };
 }
 
+
+function mapTeamCashBalanceRow(row: any): Record<string, any> {
+  const raw = typeof row.raw_data === 'string' ? JSON.parse(row.raw_data) : (row.raw_data || {});
+  return {
+    team_id: row.team_id,
+    team_name: raw.team_name || '',
+    payment_type: raw.payment_type || 'seasonal',
+    remaining_balance: row.balance ?? raw.remaining_balance ?? 0,
+    seasons_played: raw.seasons_played || [],
+    payments: raw.payments || [],
+    deductions: raw.deductions || [],
+    season_plans: raw.season_plans || {},
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    // spread raw_data last so any extra fields are accessible
+    ...raw,
+  };
+}
+
 const ROW_MAPPER: Record<string, (row: any) => Record<string, any>> = {
   seasons: mapSeasonRow,
   teams: mapTeamRow,
@@ -284,6 +303,7 @@ const ROW_MAPPER: Record<string, (row: any) => Record<string, any>> = {
   categories: mapCategoryRow,
   transactions: mapTransactionRow,
   realplayerstats: mapPlayerSeasonStatsRow,
+  team_cash_balances: mapTeamCashBalanceRow,
 };
 
 // =====================================================
@@ -371,6 +391,17 @@ async function neonWhereGet(
       const placeholders = filter.value.map(() => `$${paramIndex++}`).join(', ');
       query += hasWhere ? ` AND ${col} IN (${placeholders})` : ` WHERE ${col} IN (${placeholders})`;
       params.push(...filter.value);
+      hasWhere = true;
+    }
+    if (filter.op === 'array-contains') {
+      // For array fields stored in raw_data JSONB, use the @> operator
+      // e.g. raw_data->'seasons' @> '["SSPSLS18"]'
+      const col = mapFieldName(collection, filter.field);
+      // Try raw_data->field first (for JSONB arrays stored in raw_data)
+      query += hasWhere
+        ? ` AND (raw_data->>'${filter.field}' IS NOT NULL AND raw_data->'${filter.field}' @> $${paramIndex++}::jsonb)`
+        : ` WHERE (raw_data->>'${filter.field}' IS NOT NULL AND raw_data->'${filter.field}' @> $${paramIndex++}::jsonb)`;
+      params.push(JSON.stringify([filter.value]));
       hasWhere = true;
     }
   }

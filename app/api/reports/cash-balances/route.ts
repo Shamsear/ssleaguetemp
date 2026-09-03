@@ -7,7 +7,7 @@ import {
   updatePaymentType,
   recordCashPayment,
 } from '@/lib/cash-balance-utils';
-import { FieldValue } from 'firebase-admin/firestore';
+
 
 /**
  * GET /api/reports/cash-balances
@@ -253,7 +253,7 @@ export async function GET(request: NextRequest) {
         logo_position_y_square: teamData?.logo_position_y_square,
         logo_scale_square: teamData?.logo_scale_square,
         payment_type: paymentType,
-        season_plans: computedSeasonPlans,
+        season_plans: seasonPlans,
         remaining_balance: remainingBalance,
         seasons_played: joinedSeasons,
         payments,
@@ -867,10 +867,11 @@ export async function POST(request: NextRequest) {
 
       const updatedPayments = payments.filter((p: any) => p.payment_id !== paymentId);
       const amountToSubtract = paymentToDelete.amount;
+      const newRemainingBalance = updatedPayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
 
       await docRef.update({
         payments: updatedPayments,
-        remaining_balance: FieldValue.increment(-amountToSubtract),
+        remaining_balance: newRemainingBalance,
         updated_at: new Date(),
       });
 

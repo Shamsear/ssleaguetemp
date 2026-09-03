@@ -1,5 +1,4 @@
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
-import { FieldValue } from 'firebase-admin/firestore';
 
 export interface CashPayment {
   payment_id: string;
@@ -25,38 +24,53 @@ export interface TeamCashBalance {
   seasons_played: string[];
   payments: CashPayment[];
   deductions: CashDeduction[];
+  season_plans?: Record<string, string>;
   created_at: any;
   updated_at: any;
 }
 
 /**
- * Gets or initializes the cash balance document for a team
+ * Gets or initializes the cash balance document for a team.
+ * Reads from Neon via the admin-db-wrapper (team_cash_balances table).
+ * On first-access creates an empty record in Neon.
  */
 export async function getOrCreateTeamCashBalance(teamId: string, teamName: string): Promise<TeamCashBalance> {
   const docRef = adminDb.collection('team_cash_balances').doc(teamId);
   const docSnap = await docRef.get();
 
   if (docSnap.exists) {
-    const data = docSnap.data() as Omit<TeamCashBalance, 'team_id'>;
+    const data = docSnap.data();
     return {
       team_id: teamId,
-      ...data,
+      team_name: data?.team_name || teamName,
+      payment_type: data?.payment_type || 'seasonal',
+      remaining_balance: data?.remaining_balance ?? 0,
+      seasons_played: data?.seasons_played || [],
+      payments: data?.payments || [],
+      deductions: data?.deductions || [],
+      season_plans: data?.season_plans || {},
+      created_at: data?.created_at,
+      updated_at: data?.updated_at,
     } as TeamCashBalance;
   }
 
   // Initialize new document if not present
   const newBalance: Omit<TeamCashBalance, 'team_id'> = {
     team_name: teamName,
-    payment_type: 'seasonal', // default to seasonal
+    payment_type: 'seasonal',
     remaining_balance: 0,
     seasons_played: [],
     payments: [],
     deductions: [],
+    season_plans: {},
     created_at: new Date(),
     updated_at: new Date(),
   };
 
-  await docRef.set(newBalance);
+  await docRef.set({
+    team_id: teamId,
+    ...newBalance,
+  });
 
   return {
     team_id: teamId,
@@ -68,9 +82,17 @@ export async function getOrCreateTeamCashBalance(teamId: string, teamName: strin
  * Updates subscription type for a team
  */
 export async function updatePaymentType(teamId: string, paymentType: 'upfront' | 'seasonal'): Promise<void> {
+  const balance = await getOrCreateTeamCashBalance(teamId, teamId);
   const docRef = adminDb.collection('team_cash_balances').doc(teamId);
   await docRef.update({
+    team_id: teamId,
+    team_name: balance.team_name,
     payment_type: paymentType,
+    remaining_balance: balance.remaining_balance,
+    seasons_played: balance.seasons_played,
+    payments: balance.payments,
+    deductions: balance.deductions,
+    season_plans: balance.season_plans || {},
     updated_at: new Date(),
   });
 }
@@ -87,9 +109,8 @@ export async function recordCashPayment(
   recordedBy: string
 ): Promise<void> {
   // Ensure the document exists first
-  await getOrCreateTeamCashBalance(teamId, teamName);
+  const balance = await getOrCreateTeamCashBalance(teamId, teamName);
 
-  const docRef = adminDb.collection('team_cash_balances').doc(teamId);
   const payment: CashPayment = {
     payment_id: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
     amount,
@@ -99,9 +120,19 @@ export async function recordCashPayment(
     recorded_by: recordedBy,
   };
 
+  const updatedPayments = [...(balance.payments || []), payment];
+  const newBalance = (balance.remaining_balance || 0) + amount;
+
+  const docRef = adminDb.collection('team_cash_balances').doc(teamId);
   await docRef.update({
-    remaining_balance: FieldValue.increment(amount),
-    payments: FieldValue.arrayUnion(payment),
+    team_id: teamId,
+    team_name: teamName,
+    payment_type: balance.payment_type,
+    remaining_balance: newBalance,
+    seasons_played: balance.seasons_played || [],
+    payments: updatedPayments,
+    deductions: balance.deductions || [],
+    season_plans: balance.season_plans || {},
     updated_at: new Date(),
   });
 }
@@ -124,7 +155,6 @@ export async function recordCashDeduction(
     return;
   }
 
-  const docRef = adminDb.collection('team_cash_balances').doc(teamId);
   const deduction: CashDeduction = {
     deduction_id: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
     amount,
@@ -132,17 +162,24 @@ export async function recordCashDeduction(
     date: new Date(),
   };
 
-  const updateData: any = {
-    remaining_balance: FieldValue.increment(-amount),
-    deductions: FieldValue.arrayUnion(deduction),
+  const updatedDeductions = [...(balance.deductions || []), deduction];
+  const updatedSeasonsPlayed = balance.seasons_played?.includes(seasonId)
+    ? balance.seasons_played
+    : [...(balance.seasons_played || []), seasonId];
+  const newBalance = (balance.remaining_balance || 0) - amount;
+
+  const docRef = adminDb.collection('team_cash_balances').doc(teamId);
+  await docRef.update({
+    team_id: teamId,
+    team_name: teamName,
+    payment_type: balance.payment_type,
+    remaining_balance: newBalance,
+    seasons_played: updatedSeasonsPlayed,
+    payments: balance.payments || [],
+    deductions: updatedDeductions,
+    season_plans: balance.season_plans || {},
     updated_at: new Date(),
-  };
+  });
 
-  // Add to seasons_played if not already in the array
-  if (!balance.seasons_played?.includes(seasonId)) {
-    updateData.seasons_played = FieldValue.arrayUnion(seasonId);
-  }
-
-  await docRef.update(updateData);
   console.log(`✅ Cash deduction of ${amount} recorded for team ${teamName} (Season: ${seasonId})`);
 }
