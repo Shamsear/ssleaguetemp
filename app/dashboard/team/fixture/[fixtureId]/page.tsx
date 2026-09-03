@@ -130,6 +130,7 @@ export default function FixturePage() {
   const [fixture, setFixture] = useState<Fixture | null>(null);
   const [teamId, setTeamId] = useState<string>('');
   const [isHomeTeam, setIsHomeTeam] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [roundDeadlines, setRoundDeadlines] = useState<RoundDeadlines | null>(null);
   const [phase, setPhase] = useState<'draft' | 'home_fixture' | 'fixture_entry' | 'result_entry' | 'closed'>('closed');
   const [matchupMode, setMatchupMode] = useState<string>('manual');
@@ -832,6 +833,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
       (currentTeamName && fixture.away_team_name && currentTeamName.toLowerCase() === fixture.away_team_name.toLowerCase());
 
     setIsHomeTeam(isHome);
+    setIsAdmin(isAdmin);
     setCanCreateMatchups((isHome || isAway || isAdmin) && matchups.length === 0);
 
     const canEdit = (isHome || isAway || isAdmin) && matchups.length > 0 && phase !== 'closed' && phase !== 'result_entry';
