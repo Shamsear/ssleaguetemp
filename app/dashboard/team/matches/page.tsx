@@ -390,19 +390,24 @@ export default function TeamMatchesPage() {
     ? matches.filter(m => m.tournament_id === selectedTournamentId)
     : matches;
 
-  // Completed: matches explicitly marked completed/finalized, or with closed phase & valid scores
+  // Completed: matches explicitly marked status === 'completed' or 'finalized'
   const completedMatches = filteredMatches.filter(m =>
-    (m.status === 'completed' || m.status === 'finalized') ||
-    (m.home_score !== null && m.home_score !== undefined &&
-      m.away_score !== null && m.away_score !== undefined &&
-      m.status === 'closed')
+    m.status === 'completed' || m.status === 'finalized'
   );
 
   const completedMatchIds = new Set(completedMatches.map(m => m.id));
 
-  // Active: non-completed matches where the round status is active/in_progress or phase is home_fixture, fixture_entry, result_entry
+  // Closed: matches where phase === 'closed' or status === 'closed' that are not completed yet
+  const closedMatches = filteredMatches.filter(m =>
+    !completedMatchIds.has(m.id) &&
+    (m.phase === 'closed' || m.status === 'closed' || m.round_status === 'closed')
+  );
+
+  const closedMatchIds = new Set(closedMatches.map(m => m.id));
+
+  // Active: non-completed, non-closed matches where the round status is active/in_progress or phase is home_fixture, fixture_entry, result_entry
   const activeMatches = filteredMatches.filter(m => {
-    if (completedMatchIds.has(m.id)) return false;
+    if (completedMatchIds.has(m.id) || closedMatchIds.has(m.id)) return false;
     const rStatus = (m.round_status || '').toLowerCase();
     const phase = m.phase || '';
 
@@ -414,9 +419,9 @@ export default function TeamMatchesPage() {
 
   const activeMatchIds = new Set(activeMatches.map(m => m.id));
 
-  // Upcoming: non-completed, non-active matches (rounds that are pending / scheduled / draft)
+  // Upcoming: non-completed, non-closed, non-active matches (rounds that are pending / scheduled / draft)
   const upcomingMatches = filteredMatches.filter(m =>
-    !completedMatchIds.has(m.id) && !activeMatchIds.has(m.id)
+    !completedMatchIds.has(m.id) && !closedMatchIds.has(m.id) && !activeMatchIds.has(m.id)
   );
 
   const getMatchResultClass = (match: Match) => {
@@ -538,6 +543,19 @@ export default function TeamMatchesPage() {
                 <div className="p-3 bg-blue-50 text-blue-600 border border-blue-200 rounded-2xl">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Closed */}
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm flex items-center justify-between font-mono">
+                <div>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Closed Matches</p>
+                  <p className="text-2xl font-bold text-slate-800 mt-1">{closedMatches.length}</p>
+                </div>
+                <div className="p-3 bg-purple-50 text-purple-600 border border-purple-200 rounded-2xl">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
               </div>
@@ -718,6 +736,66 @@ export default function TeamMatchesPage() {
                               </div>
                             </div>
                           ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Closed Matches */}
+                {closedMatches.length > 0 && (
+                  <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm">
+                    <div className="px-6 py-4 bg-purple-50/20 border-b border-slate-100 flex items-center justify-between">
+                      <div>
+                        <h2 className="text-sm font-mono font-bold text-purple-900 uppercase tracking-wider">Closed Matches</h2>
+                        <p className="text-[10px] font-mono font-bold text-purple-600 uppercase tracking-wider mt-0.5">Matches with passed deadlines awaiting admin review</p>
+                      </div>
+                      <span className="px-2.5 py-0.5 text-[9px] font-mono font-bold rounded uppercase border bg-purple-50 text-purple-700 border-purple-200/60">
+                        Closed
+                      </span>
+                    </div>
+                    <div className="p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {closedMatches.map(match => (
+                          <div key={match.id} className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 hover:border-purple-400/40 transition-all duration-200 font-mono">
+                            <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Round {match.round_number} • Match {match.match_number}</span>
+                              <span className="px-2.5 py-0.5 text-[9px] font-bold rounded uppercase border bg-purple-50 text-purple-700 border-purple-200/60">
+                                Closed
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center mb-4">
+                              <div className="text-center flex-1 min-w-0">
+                                <p className={`text-xs font-bold truncate uppercase ${match.home_team_id === teamId ? 'text-amber-600 font-extrabold' : 'text-slate-700'}`}>
+                                  {match.home_team_name}
+                                </p>
+                                {match.home_score !== undefined && match.home_score !== null && (
+                                  <p className="text-lg font-bold text-slate-800 mt-1">{match.home_score}</p>
+                                )}
+                              </div>
+                              <div className="px-3 text-slate-400 text-[10px] font-bold">VS</div>
+                              <div className="text-center flex-1 min-w-0">
+                                <p className={`text-xs font-bold truncate uppercase ${match.away_team_id === teamId ? 'text-amber-600 font-extrabold' : 'text-slate-700'}`}>
+                                  {match.away_team_name}
+                                </p>
+                                {match.away_score !== undefined && match.away_score !== null && (
+                                  <p className="text-lg font-bold text-slate-800 mt-1">{match.away_score}</p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="mt-4">
+                              <Link
+                                href={`/dashboard/team/fixture/${match.id}`}
+                                className="w-full inline-flex items-center justify-center px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
+                              >
+                                <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View Closed Match
+                              </Link>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
