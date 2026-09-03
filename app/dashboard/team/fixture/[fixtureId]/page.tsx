@@ -1364,8 +1364,30 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     );
   }
 
-  if (!user || !fixture) {
-    return null;
+  if (!fixture) {
+    return (
+      <div className="console-bg min-h-screen pt-12 pb-12 px-4 flex items-center justify-center font-mono">
+        <div className="max-w-md w-full bg-white border border-slate-200/80 rounded-3xl p-8 text-center shadow-lg space-y-5">
+          <div className="w-14 h-14 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-center mx-auto text-amber-600 shadow-xs">
+            <Shield className="w-7 h-7" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-xl font-extrabold text-slate-900">Fixture Not Found</h2>
+            <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
+              Match <span className="text-amber-600 font-bold font-mono">{fixtureId}</span> is not found in the schedule.
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col gap-2">
+            <Link
+              href="/dashboard/team/fixtures"
+              className="w-full inline-flex items-center justify-center px-4 py-3 bg-slate-900 hover:bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all"
+            >
+              {"<-"} View Season Fixtures
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const getPhaseInfo = () => {

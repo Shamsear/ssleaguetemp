@@ -19,7 +19,7 @@ export async function GET(
     }
 
     // Fetch the fixture from Neon with tournament scoring type
-    const fixtures = await sql`
+    let fixtures = await sql`
       SELECT 
         f.*,
         ts.scoring_type
@@ -29,6 +29,44 @@ export async function GET(
       WHERE f.id = ${fixtureId}
       LIMIT 1
     `;
+
+    // Fallback 1: Try case-insensitive or trimmed ID match
+    if (fixtures.length === 0) {
+      fixtures = await sql`
+        SELECT 
+          f.*,
+          ts.scoring_type
+        FROM fixtures f
+        LEFT JOIN tournaments t ON f.tournament_id = t.id
+        LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+        WHERE LOWER(f.id) = ${fixtureId.toLowerCase()}
+        LIMIT 1
+      `;
+    }
+
+    // Fallback 2: Parse patterns like SSPSLS18L_leg1_r1_m1 or SSPSLS18_r1_m1
+    if (fixtures.length === 0) {
+      const matchPattern = fixtureId.match(/^([A-Za-z0-9]+)_(?:leg(\d+)_)?r(\d+)_m(\d+)$/i);
+      if (matchPattern) {
+        const [, rawSeason, legNumStr, roundNumStr, matchNumStr] = matchPattern;
+        const cleanSeason = rawSeason.replace(/L$/i, '');
+        const roundNum = parseInt(roundNumStr);
+        const matchNum = parseInt(matchNumStr);
+
+        fixtures = await sql`
+          SELECT 
+            f.*,
+            ts.scoring_type
+          FROM fixtures f
+          LEFT JOIN tournaments t ON f.tournament_id = t.id
+          LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+          WHERE (f.season_id = ${cleanSeason} OR f.season_id = ${rawSeason} OR f.tournament_id LIKE ${cleanSeason + '%'})
+            AND f.round_number = ${roundNum}
+            AND f.match_number = ${matchNum}
+          LIMIT 1
+        `;
+      }
+    }
 
     if (fixtures.length === 0) {
       return NextResponse.json(
