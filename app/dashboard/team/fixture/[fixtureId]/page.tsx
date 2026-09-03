@@ -2971,7 +2971,122 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           </div>
                         )}
 
-                        <div className="grid grid-cols-[1fr_auto_auto_auto_1fr] gap-1.5 sm:gap-3 items-center">
+                        {/* Mobile & Small Screens Layout (Stacked for full name visibility) */}
+                        <div className="flex flex-col gap-2.5 sm:hidden font-mono">
+                          {/* Players Row */}
+                          <div className="grid grid-cols-2 gap-2 items-center">
+                            {/* Home Player */}
+                            {(() => {
+                              const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
+                              const homeCategory = matchup.home_category || homeMatch?.category;
+                              return (
+                                <div className="flex items-center gap-2 p-2 bg-blue-50/70 border border-blue-200 rounded-xl min-w-0">
+                                  <PlayerPhoto
+                                    photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
+                                    playerName={matchup.home_player_name}
+                                    size={32}
+                                    shape="circle"
+                                    posXCircle={homeMatch?.photo_position_x_circle}
+                                    posYCircle={homeMatch?.photo_position_y_circle}
+                                    scaleCircle={homeMatch?.photo_scale_circle}
+                                    className="border border-blue-300 flex-shrink-0"
+                                  />
+                                  <div className="flex flex-col min-w-0 overflow-hidden">
+                                    <span className="font-extrabold text-xs text-slate-900 leading-snug break-words">
+                                      {matchup.home_player_name}
+                                    </span>
+                                    {homeCategory && (
+                                      <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
+                                        {homeCategory}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            {/* Away Player */}
+                            {(() => {
+                              const awayMatch = awaySquadById.get(matchup.away_player_id) || awaySquadByName.get(matchup.away_player_name?.toLowerCase());
+                              const awayCategory = matchup.away_category || awayMatch?.category;
+                              return (
+                                <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl min-w-0">
+                                  <PlayerPhoto
+                                    photoUrl={awayMatch?.photo_url || matchup.away_photo_url}
+                                    playerName={matchup.away_player_name}
+                                    size={32}
+                                    shape="circle"
+                                    posXCircle={awayMatch?.photo_position_x_circle}
+                                    posYCircle={awayMatch?.photo_position_y_circle}
+                                    scaleCircle={awayMatch?.photo_scale_circle}
+                                    className="border border-slate-300 flex-shrink-0"
+                                  />
+                                  <div className="flex flex-col min-w-0 overflow-hidden">
+                                    <span className="font-extrabold text-xs text-slate-900 leading-snug break-words">
+                                      {matchup.away_player_name}
+                                    </span>
+                                    {awayCategory && (
+                                      <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
+                                        {awayCategory}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Score Input Row */}
+                          <div className="flex items-center justify-between gap-2 bg-slate-100/80 border border-slate-200/80 rounded-xl px-3 py-2">
+                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Home</span>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                min="0"
+                                max="99"
+                                value={matchResults[idx]?.home_goals ?? ''}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value);
+                                  setMatchResults(prev => ({
+                                    ...prev,
+                                    [idx]: {
+                                      home_goals: isNaN(val) ? 0 : val,
+                                      away_goals: prev[idx]?.away_goals ?? 0
+                                    }
+                                  }));
+                                }}
+                                className="w-14 h-10 text-center font-black text-lg text-emerald-700 bg-white border-2 border-emerald-300 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none shadow-sm font-mono"
+                                placeholder="0"
+                              />
+                              <div className="flex flex-col items-center gap-0.5 px-1">
+                                <span className="bg-slate-800 text-amber-400 text-[10px] font-black rounded-full px-2.5 py-0.5 shadow-sm">VS</span>
+                                <span className="text-[8px] font-bold text-slate-400 font-mono">({matchup.match_duration || 6}m)</span>
+                              </div>
+                              <input
+                                type="number"
+                                min="0"
+                                max="99"
+                                value={matchResults[idx]?.away_goals ?? ''}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value);
+                                  setMatchResults(prev => ({
+                                    ...prev,
+                                    [idx]: {
+                                      home_goals: prev[idx]?.home_goals ?? 0,
+                                      away_goals: isNaN(val) ? 0 : val
+                                    }
+                                  }));
+                                }}
+                                className="w-14 h-10 text-center font-black text-lg text-emerald-700 bg-white border-2 border-emerald-300 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none shadow-sm font-mono"
+                                placeholder="0"
+                              />
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Away</span>
+                          </div>
+                        </div>
+
+                        {/* Desktop Layout (>= sm screens) */}
+                        <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto_1fr] gap-3 items-center font-mono">
                           {/* Home Player */}
                           {(() => {
                             const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
@@ -3019,7 +3134,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   }
                                 }));
                               }}
-                              className="w-11 sm:w-14 h-10 text-center font-black text-base sm:text-lg text-emerald-700 bg-white border-2 border-emerald-300 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none shadow-sm font-mono"
+                              className="w-14 h-10 text-center font-black text-lg text-emerald-700 bg-white border-2 border-emerald-300 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none shadow-sm font-mono"
                               placeholder="0"
                             />
                           </div>
@@ -3047,7 +3162,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   }
                                 }));
                               }}
-                              className="w-11 sm:w-14 h-10 text-center font-black text-base sm:text-lg text-emerald-700 bg-white border-2 border-emerald-300 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none shadow-sm font-mono"
+                              className="w-14 h-10 text-center font-black text-lg text-emerald-700 bg-white border-2 border-emerald-300 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none shadow-sm font-mono"
                               placeholder="0"
                             />
                           </div>
