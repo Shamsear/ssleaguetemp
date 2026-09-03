@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { neon } from '@neondatabase/serverless';
+import { getFantasyDb } from '@/lib/neon/fantasy-config';
+import { getTournamentDb } from '@/lib/neon/tournament-config';
 
 export async function GET(
   request: NextRequest,
@@ -8,24 +9,11 @@ export async function GET(
   try {
     const { playerId } = await params;
     const searchParams = request.nextUrl.searchParams;
-    const leagueId = searchParams.get('league_id');
-    const teamId = searchParams.get('team_id'); // Optional: if provided, use specific team
+    const leagueId = searchParams.get('league_id') || 'SSPSLFLS18';
+    const teamId = searchParams.get('team_id');
 
-    console.log('🔍 [Player Matches] Request:', {
-      playerId,
-      leagueId,
-      teamId: teamId || 'not provided'
-    });
-
-    if (!leagueId) {
-      return NextResponse.json(
-        { error: 'league_id is required' },
-        { status: 400 }
-      );
-    }
-
-    const tournamentDb = neon(process.env.NEON_TOURNAMENT_DB_URL!);
-    const fantasyDb = neon(process.env.FANTASY_DATABASE_URL!);
+    const fantasyDb = getFantasyDb();
+    const tournamentDb = getTournamentDb();
 
     // Get player's fantasy squad info (captain/VC status) if drafted
     const squadInfo = teamId 
@@ -35,7 +23,7 @@ export async function GET(
           JOIN fantasy_teams ft ON fs.team_id = ft.team_id
           WHERE fs.real_player_id = ${playerId}
           AND fs.team_id = ${teamId}
-          AND ft.league_id = ${leagueId}
+          AND (ft.league_id = ${leagueId} OR ft.league_id = 'SSPSLFLS18')
           LIMIT 1
         `
       : await fantasyDb`
@@ -43,13 +31,17 @@ export async function GET(
           FROM fantasy_squad fs
           JOIN fantasy_teams ft ON fs.team_id = ft.team_id
           WHERE fs.real_player_id = ${playerId}
-          AND ft.league_id = ${leagueId}
+          AND (ft.league_id = ${leagueId} OR ft.league_id = 'SSPSLFLS18')
           LIMIT 1
         `;
 
+    const isCaptain = squadInfo[0]?.is_captain || false;
+    const isViceCaptain = squadInfo[0]?.is_vice_captain || false;
+    const playerTeamId = squadInfo[0]?.team_id || teamId;
+
     // Get fantasy league season_id to scope match logs to the correct season
     const leagues = await fantasyDb`
-      SELECT season_id FROM fantasy_leagues WHERE league_id = ${leagueId} LIMIT 1
+      SELECT season_id FROM fantasy_leagues WHERE league_id = ${leagueId} OR league_id = 'SSPSLFLS18' LIMIT 1
     `;
     const seasonId = leagues[0]?.season_id || 'SSPSLS18';
 
@@ -72,21 +64,20 @@ export async function GET(
       FROM matchups m
       JOIN fixtures f ON m.fixture_id = f.id
       WHERE (m.home_player_id = ${playerId} OR m.away_player_id = ${playerId})
-        AND f.season_id = ${seasonId}
+        AND (f.season_id = ${seasonId} OR f.season_id LIKE 'SSPSLS18%')
         AND f.status = 'completed'
         AND m.home_goals IS NOT NULL
         AND m.away_goals IS NOT NULL
       ORDER BY f.round_number
     `;
 
-    // Get fantasy_player_points records for this player to get actual multipliers
+    // Get fantasy_player_points records for this player
     let playerPointsMap = new Map();
     
     const playerPoints = playerTeamId
       ? await fantasyDb`
           SELECT 
-            fixture_id,
-            points_multiplier,
+            round_number,
             base_points,
             total_points
           FROM fantasy_player_points
@@ -95,20 +86,17 @@ export async function GET(
         `
       : await fantasyDb`
           SELECT 
-            fixture_id,
-            points_multiplier,
+            round_number,
             base_points,
             total_points
           FROM fantasy_player_points
-          WHERE team_id IS NULL
-            AND real_player_id = ${playerId}
+          WHERE real_player_id = ${playerId}
         `;
       
     playerPoints.forEach((p: any) => {
-      playerPointsMap.set(p.fixture_id, {
-        points_multiplier: p.points_multiplier,
-        base_points: p.base_points,
-        total_points: p.total_points
+      playerPointsMap.set(p.round_number, {
+        base_points: Number(p.base_points) || 0,
+        total_points: Number(p.total_points) || 0
       });
     });
 
@@ -117,11 +105,15 @@ export async function GET(
       const isHome = m.home_player_id === playerId;
       const goalsScored = isHome ? m.home_goals : m.away_goals;
       const goalsConceded = isHome ? m.away_goals : m.home_goals;
-      const opponentName = isHome ? m.away_team_name : m.home_team_name;
+      const opponentName = isHome ? m.away_player_name || m.away_team_name : m.home_player_name || m.home_team_name;
       const cleanSheet = goalsConceded === 0;
       const motm = m.motm_player_id === playerId;
       
-      const pointsData = playerPointsMap.get(m.fixture_id);
+      const pointsData = playerPointsMap.get(m.round_number);
+
+      const mult = isCaptain ? 2.0 : (isViceCaptain ? 1.5 : 1.0);
+      const basePts = pointsData?.base_points || pointsData?.total_points || 0;
+      const calcTotalPts = Math.round(basePts * mult);
 
       return {
         round_number: m.round_number,
@@ -132,9 +124,9 @@ export async function GET(
         motm: motm,
         is_captain: isCaptain,
         is_vice_captain: isViceCaptain,
-        points_multiplier: pointsData?.points_multiplier || 100,
-        base_points: pointsData?.base_points || 0,
-        total_points: pointsData?.total_points || 0,
+        points_multiplier: mult * 100,
+        base_points: basePts,
+        total_points: calcTotalPts,
       };
     });
 
