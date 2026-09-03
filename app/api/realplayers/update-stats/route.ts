@@ -159,13 +159,17 @@ async function updatePlayerStats(data: {
     `;
   }
 
-  if (existing.length === 0) {
-    console.warn(`Player ${player_name} (${player_id}) not found in database for season ${season_id}`);
-    console.warn('Skipping stats update - player may not be registered for this season');
-    return;
-  }
-
-  const current = existing[0];
+  const current = existing[0] || {
+    matches_played: 0,
+    goals_scored: 0,
+    goals_conceded: 0,
+    wins: 0,
+    draws: 0,
+    losses: 0,
+    clean_sheets: 0,
+    motm_awards: 0,
+    processed_fixtures: []
+  };
 
   // Check if this fixture has already been processed for this player
   let processedFixtures = [];
@@ -208,20 +212,36 @@ async function updatePlayerStats(data: {
     `;
   } else {
     await sql`
-      UPDATE realplayerstats
-      SET
-        matches_played = ${(current.matches_played || 0) + 1},
-        goals_scored = ${(current.goals_scored || 0) + goals_scored},
-        goals_conceded = ${(current.goals_conceded || 0) + goals_conceded},
-        assists = ${current.assists || 0},
-        wins = ${(current.wins || 0) + (won ? 1 : 0)},
-        draws = ${(current.draws || 0) + (draw ? 1 : 0)},
-        losses = ${(current.losses || 0) + (lost ? 1 : 0)},
-        clean_sheets = ${(current.clean_sheets || 0) + (clean_sheet ? 1 : 0)},
-        motm_awards = ${(current.motm_awards || 0) + (motm ? 1 : 0)},
-        processed_fixtures = ${JSON.stringify(updatedProcessedFixtures)}::jsonb,
+      INSERT INTO realplayerstats (
+        id, player_id, player_name, season_id,
+        matches_played, goals_scored, goals_conceded,
+        wins, draws, losses, clean_sheets, motm_awards,
+        processed_fixtures, updated_at
+      ) VALUES (
+        ${statsId}, ${player_id}, ${player_name}, ${season_id},
+        ${(current.matches_played || 0) + 1},
+        ${(current.goals_scored || 0) + goals_scored},
+        ${(current.goals_conceded || 0) + goals_conceded},
+        ${(current.wins || 0) + (won ? 1 : 0)},
+        ${(current.draws || 0) + (draw ? 1 : 0)},
+        ${(current.losses || 0) + (lost ? 1 : 0)},
+        ${(current.clean_sheets || 0) + (clean_sheet ? 1 : 0)},
+        ${(current.motm_awards || 0) + (motm ? 1 : 0)},
+        ${JSON.stringify(updatedProcessedFixtures)}::jsonb,
+        NOW()
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        player_name = EXCLUDED.player_name,
+        matches_played = EXCLUDED.matches_played,
+        goals_scored = EXCLUDED.goals_scored,
+        goals_conceded = EXCLUDED.goals_conceded,
+        wins = EXCLUDED.wins,
+        draws = EXCLUDED.draws,
+        losses = EXCLUDED.losses,
+        clean_sheets = EXCLUDED.clean_sheets,
+        motm_awards = EXCLUDED.motm_awards,
+        processed_fixtures = EXCLUDED.processed_fixtures,
         updated_at = NOW()
-      WHERE id = ${statsId}
     `;
   }
 

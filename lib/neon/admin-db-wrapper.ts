@@ -31,7 +31,7 @@ const NEON_COLLECTIONS = new Set([
 // Map Firebase collection names to Neon table names
 const COLLECTION_TO_TABLE: Record<string, string> = {
   realplayer: 'realplayers',
-  realplayerstats: 'player_season_stats',
+  realplayerstats: 'realplayerstats',
 };
 
 function neonTable(collection: string): string {

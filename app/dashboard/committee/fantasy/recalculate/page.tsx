@@ -151,8 +151,50 @@ export default function FantasyRecalculatePage() {
         </div>
       </div>
 
-      {/* Action Button */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+  const startRealPlayerRecalculation = async () => {
+    if (!confirm('Are you sure you want to recalculate real player stats? This will:\n\n1. Recalculate matches played, wins, draws, losses\n2. Recalculate goals scored, goals conceded, clean sheets, MOTM awards\n3. Recalculate category-based points for Season 18+')) {
+      return;
+    }
+
+    setIsRecalculating(true);
+    setProgress('Starting real player stats recalculation...');
+    setLogs([]);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      const response = await fetchWithTokenRefresh('/api/admin/recalculate-all-player-stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Real player stats recalculation failed');
+      }
+
+      const data = await response.json();
+      setProgress(`Real player stats recalculation completed! ${data.playersUpdated || 0} players updated across ${data.fixturesProcessed || 0} fixtures.`);
+      setLogs([
+        `Fixtures Processed: ${data.fixturesProcessed || 0}`,
+        `Matchups Processed: ${data.matchupsProcessed || 0}`,
+        `Players Updated: ${data.playersUpdated || 0}`,
+      ]);
+      setSuccess(true);
+    } catch (err) {
+      console.error('Real player stats recalculation error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to recalculate player stats');
+      setProgress('Real player stats recalculation failed');
+    } finally {
+      setIsRecalculating(false);
+    }
+  };
+
+  return (
+    <AuthGuard requiredRole="committee_admin">
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {/* Action Buttons */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6 space-y-4">
         <button
           onClick={startRecalculation}
           disabled={isRecalculating}
@@ -165,10 +207,29 @@ export default function FantasyRecalculatePage() {
           {isRecalculating ? (
             <span className="flex items-center justify-center gap-3">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-              Recalculating...
+              Recalculating Fantasy Points...
             </span>
           ) : (
-            'Start Recalculation'
+            'Recalculate Fantasy Points'
+          )}
+        </button>
+
+        <button
+          onClick={startRealPlayerRecalculation}
+          disabled={isRecalculating}
+          className={`w-full py-3.5 px-6 rounded-xl font-bold text-base transition-all ${
+            isRecalculating
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md hover:shadow-lg'
+          }`}
+        >
+          {isRecalculating ? (
+            <span className="flex items-center justify-center gap-3">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              Recalculating Real Player Stats...
+            </span>
+          ) : (
+            'Recalculate Real Player Stats (Matches Played, W/D/L, Goals, Points)'
           )}
         </button>
       </div>

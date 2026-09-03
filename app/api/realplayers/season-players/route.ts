@@ -54,35 +54,74 @@ export async function GET(request: NextRequest) {
         WHERE season_id = ${seasonId}
         ORDER BY player_name
       `;
-    } else {
-      // S18+ — read from realplayerstats
-      players = await sql`
-        SELECT
-          id,
-          player_id,
-          player_name,
-          season_id,
-          team,
-          team_id,
-          category,
-          NULL::int  AS star_rating,
-          base_price,
-          price,
-          points,
-          matches_played,
-          goals_scored,
-          goals_conceded,
-          (goals_scored - goals_conceded) AS goal_difference,
-          wins,
-          draws,
-          losses,
-          clean_sheets,
-          assists,
-          motm_awards
-        FROM realplayerstats
-        WHERE season_id = ${seasonId}
-        ORDER BY player_name
-      `;
+      // S18+ — read from realplayerstats, fallback to adminDb if empty
+      try {
+        players = await sql`
+          SELECT
+            id,
+            player_id,
+            player_name,
+            season_id,
+            team,
+            team_id,
+            category,
+            NULL::int  AS star_rating,
+            base_price,
+            price,
+            points,
+            matches_played,
+            goals_scored,
+            goals_conceded,
+            (goals_scored - goals_conceded) AS goal_difference,
+            wins,
+            draws,
+            losses,
+            clean_sheets,
+            assists,
+            motm_awards
+          FROM realplayerstats
+          WHERE season_id = ${seasonId}
+          ORDER BY player_name
+        `;
+      } catch (dbErr) {
+        console.warn('[season-players] Neon query error, falling back to adminDb:', dbErr);
+        players = [];
+      }
+
+      if (!players || players.length === 0) {
+        try {
+          const { adminDb } = await import('@/lib/neon/admin-db-wrapper');
+          const snapshot = await adminDb.collection('realplayers').get();
+          players = snapshot.docs.map((doc: any) => {
+            const d = doc.data();
+            return {
+              id: doc.id,
+              player_id: String(d.player_id || d.id || doc.id),
+              player_name: d.name || d.player_name || 'Unknown Player',
+              season_id: seasonId,
+              team: d.team || d.team_name || 'Free Agent',
+              team_id: d.team_id || '',
+              category: d.category || d.category_name || 'Red',
+              base_price: d.base_price || 0,
+              price: d.price || 0,
+              points: d.points || 0,
+              matches_played: d.matches_played || 0,
+              goals_scored: d.goals_scored || 0,
+              goals_conceded: d.goals_conceded || 0,
+              goal_difference: (d.goals_scored || 0) - (d.goals_conceded || 0),
+              wins: d.wins || 0,
+              draws: d.draws || 0,
+              losses: d.losses || 0,
+              clean_sheets: d.clean_sheets || 0,
+              assists: d.assists || 0,
+              motm_awards: d.motm_awards || 0,
+            };
+          });
+        } catch (adminDbErr) {
+          console.error('[season-players] adminDb fallback error:', adminDbErr);
+          players = [];
+        }
+      }
     }
 
     return NextResponse.json({ success: true, data: players, season_id: seasonId, isModern });

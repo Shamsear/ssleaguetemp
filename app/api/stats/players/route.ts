@@ -650,39 +650,76 @@ export async function GET(request: NextRequest) {
           `;
         }
       } else {
-        // Historical season: Query realplayerstats table
-        let query = `
-          SELECT 
-            id, player_id, player_name, season_id, tournament_id,
-            team, team_id, category,
-            matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
-            clean_sheets, motm_awards, points,
-            used_smart_assist,
-            NULL as base_points
-          FROM realplayerstats 
-          WHERE tournament_id = $1
-        `;
-        const params = [tournamentId];
-        
-        if (category) {
-          query += ` AND category = $${params.length + 1}`;
-          params.push(category);
-        }
-        
-        // Add sorting
-        const validSortFields = ['points', 'goals_scored', 'assists', 'motm_awards', 'matches_played'];
-        const sortField = validSortFields.includes(sortBy) ? sortBy : 'points';
-        query += ` ORDER BY ${sortField} DESC, player_name ASC LIMIT $${params.length + 1}`;
-        params.push(limit.toString());
-        
-        const { Pool } = await import('@neondatabase/serverless');
-        const pool = new Pool({ connectionString: process.env.NEON_TOURNAMENT_DB_URL });
-        
+        // Season 18+ or Historical season: Query realplayerstats table
+        const seasonIdClean = tournamentId.includes('-')
+          ? tournamentId.split('-')[0]
+          : tournamentId.replace(/[A-Z]+$/, '');
+
         try {
-          const result = await pool.query(query, params);
-          stats = result.rows;
-        } finally {
-          await pool.end();
+          if (category) {
+            stats = await sql`
+              SELECT 
+                id, player_id, player_name, season_id, tournament_id,
+                team, team_id, category,
+                matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
+                clean_sheets, motm_awards, points,
+                base_price
+              FROM realplayerstats 
+              WHERE (season_id = ${seasonIdClean} OR season_id = ${tournamentId} OR tournament_id = ${tournamentId})
+                AND category = ${category}
+              ORDER BY points DESC, goals_scored DESC, player_name ASC
+              LIMIT ${limit}
+            `;
+          } else {
+            stats = await sql`
+              SELECT 
+                id, player_id, player_name, season_id, tournament_id,
+                team, team_id, category,
+                matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
+                clean_sheets, motm_awards, points,
+                base_price
+              FROM realplayerstats 
+              WHERE (season_id = ${seasonIdClean} OR season_id = ${tournamentId} OR tournament_id = ${tournamentId})
+              ORDER BY points DESC, goals_scored DESC, player_name ASC
+              LIMIT ${limit}
+            `;
+          }
+        } catch (e) {
+          console.warn('[Player Stats API] Neon realplayerstats query error:', e);
+          stats = [];
+        }
+
+        if (!stats || stats.length === 0) {
+          try {
+            const { adminDb } = await import('@/lib/neon/admin-db-wrapper');
+            const snapshot = await adminDb.collection('realplayers').get();
+            stats = snapshot.docs.map((doc: any) => {
+              const d = doc.data();
+              return {
+                id: doc.id,
+                player_id: String(d.player_id || d.id || doc.id),
+                player_name: d.name || d.player_name || 'Unknown Player',
+                season_id: seasonIdClean,
+                team: d.team || d.team_name || 'Free Agent',
+                team_id: d.team_id || '',
+                category: d.category || d.category_name || 'Red',
+                base_price: d.base_price || 0,
+                points: d.points || 0,
+                matches_played: d.matches_played || 0,
+                goals_scored: d.goals_scored || 0,
+                goals_conceded: d.goals_conceded || 0,
+                wins: d.wins || 0,
+                draws: d.draws || 0,
+                losses: d.losses || 0,
+                clean_sheets: d.clean_sheets || 0,
+                assists: d.assists || 0,
+                motm_awards: d.motm_awards || 0,
+              };
+            });
+          } catch (err) {
+            console.error('[Player Stats API] adminDb fallback error:', err);
+            stats = [];
+          }
         }
       }
     }
