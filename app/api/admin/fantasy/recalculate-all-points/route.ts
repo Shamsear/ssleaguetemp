@@ -140,43 +140,9 @@ export async function POST(request: NextRequest) {
         const cleanSheet = goalsConceded === 0;
         const isMotm = fixture.motm_player_id === playerId;
 
-        // --- Category-based Win/Draw/Loss points (same system as main tournament) ---
-        const playerFirebase = realPlayersMap.get(String(playerId));
-        const opponentFirebase = realPlayersMap.get(String(opponentId));
-
-        const playerCatKey = (playerFirebase?.category || playerFirebase?.category_name || '').trim().toLowerCase();
-        const opponentCatKey = (opponentFirebase?.category || opponentFirebase?.category_name || '').trim().toLowerCase();
-
-        const playerCatConfig = categoriesMap.get(playerCatKey);
-        const opponentCatConfig = categoriesMap.get(opponentCatKey);
-
-        let resultPoints = 0;
+        // --- Fantasy League Result Points (Flat Win=3, Draw=1, Loss=0 per official point system) ---
         const result = won ? 'win' : draw ? 'draw' : 'loss';
-
-        if (playerCatConfig && opponentCatConfig) {
-          const levelDiff = Math.abs(
-            (Number(playerCatConfig.priority) || 1) - (Number(opponentCatConfig.priority) || 1)
-          );
-          if (result === 'win') {
-            if (levelDiff === 0) resultPoints = Number(playerCatConfig.points_same_category) || 0;
-            else if (levelDiff === 1) resultPoints = Number(playerCatConfig.points_one_level_diff) || 0;
-            else if (levelDiff === 2) resultPoints = Number(playerCatConfig.points_two_level_diff) || 0;
-            else resultPoints = Number(playerCatConfig.points_three_level_diff) || 0;
-          } else if (result === 'draw') {
-            if (levelDiff === 0) resultPoints = Number(playerCatConfig.draw_same_category) || 0;
-            else if (levelDiff === 1) resultPoints = Number(playerCatConfig.draw_one_level_diff) || 0;
-            else if (levelDiff === 2) resultPoints = Number(playerCatConfig.draw_two_level_diff) || 0;
-            else resultPoints = Number(playerCatConfig.draw_three_level_diff) || 0;
-          } else {
-            if (levelDiff === 0) resultPoints = Number(playerCatConfig.loss_same_category) || 0;
-            else if (levelDiff === 1) resultPoints = Number(playerCatConfig.loss_one_level_diff) || 0;
-            else if (levelDiff === 2) resultPoints = Number(playerCatConfig.loss_two_level_diff) || 0;
-            else resultPoints = Number(playerCatConfig.loss_three_level_diff) || 0;
-          }
-        } else {
-          // Fallback: use flat scoring rule if category data missing
-          resultPoints = won ? (SCORING_RULES.win || 0) : draw ? (SCORING_RULES.draw || 0) : 0;
-        }
+        const resultPoints = won ? (SCORING_RULES.win ?? 3) : draw ? (SCORING_RULES.draw ?? 1) : 0;
         // --------------------------------------------------------------------------
 
         const basePoints = 

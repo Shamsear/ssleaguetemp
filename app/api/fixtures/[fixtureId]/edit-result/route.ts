@@ -276,6 +276,16 @@ async function distributeMatchRewards(params: {
   }
 }
 
+function getBaseUrl(request: NextRequest): string {
+  const host = request.headers.get('host');
+  const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+  if (host) return `${protocol}://${host}`;
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+  if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return 'http://localhost:3000';
+}
+
 /**
  * PATCH - Edit fixture results (with stat reversion)
  * Reverts old stats and applies new stats
@@ -285,6 +295,7 @@ export async function PATCH(
   { params }: { params: Promise<{ fixtureId: string }> }
 ) {
   try {
+    const baseUrl = getBaseUrl(request);
     const sql = getTournamentDb();
     const { fixtureId } = await params;
     const body = await request.json();
@@ -326,7 +337,7 @@ export async function PATCH(
 
     // Step 1: Revert old stats
     console.log('Reverting old stats...');
-    const revertStatsRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/realplayers/revert-fixture-stats`, {
+    const revertStatsRes = await fetch(`${baseUrl}/api/realplayers/revert-fixture-stats`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -349,7 +360,7 @@ export async function PATCH(
 
     // Step 2: Revert old points
     console.log('Reverting old points...');
-    const revertPointsRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/realplayers/revert-fixture-points`, {
+    const revertPointsRes = await fetch(`${baseUrl}/api/realplayers/revert-fixture-points`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -503,7 +514,7 @@ export async function PATCH(
 
     // Step 6: Apply new stats
     console.log('Applying new stats...');
-    const applyStatsRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/realplayers/update-stats`, {
+    const applyStatsRes = await fetch(`${baseUrl}/api/realplayers/update-stats`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -520,7 +531,7 @@ export async function PATCH(
 
     // Step 7: Apply new points (skip salary deduction since it was already done on initial submit)
     console.log('Applying new points...');
-    const applyPointsRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/realplayers/update-points`, {
+    const applyPointsRes = await fetch(`${baseUrl}/api/realplayers/update-points`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -538,7 +549,7 @@ export async function PATCH(
     // Step 7.1: Adjust salaries for player swaps
     console.log('Adjusting salaries for player swaps...');
     try {
-      const salaryAdjustRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/realplayers/adjust-salaries-for-edit`, {
+      const salaryAdjustRes = await fetch(`${baseUrl}/api/realplayers/adjust-salaries-for-edit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -563,7 +574,7 @@ export async function PATCH(
     // Step 7.5: Update team stats with new results
     console.log('Updating team stats...');
     try {
-      const teamStatsRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/teamstats/update-stats`, {
+      const teamStatsRes = await fetch(`${baseUrl}/api/teamstats/update-stats`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -611,7 +622,7 @@ export async function PATCH(
     // Step 7.6: Revert old fantasy points
     console.log('Reverting old fantasy points...');
     try {
-      const revertFantasyRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/fantasy/revert-fixture-points`, {
+      const revertFantasyRes = await fetch(`${baseUrl}/api/fantasy/revert-fixture-points`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -626,7 +637,7 @@ export async function PATCH(
 
         // Step 7.7: Recalculate fantasy points with new results
         console.log('Recalculating fantasy points...');
-        const recalcFantasyRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/fantasy/calculate-points`, {
+        const recalcFantasyRes = await fetch(`${baseUrl}/api/fantasy/calculate-points`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

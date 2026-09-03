@@ -327,44 +327,9 @@ async function processPlayer(params: {
     return; // Already calculated
   }
 
-  // --- Category-based Win/Draw/Loss points (same system as main tournament) ---
-  // Look up this player's category and the opponent's category from Firestore
-  const playerFirebase = realPlayersMap.get(String(player_id));
-  const opponentFirebase = realPlayersMap.get(String(opponent_player_id));
-
-  const playerCatKey = (playerFirebase?.category || playerFirebase?.category_name || '').trim().toLowerCase();
-  const opponentCatKey = (opponentFirebase?.category || opponentFirebase?.category_name || '').trim().toLowerCase();
-
-  const playerCatConfig = categoriesMap.get(playerCatKey);
-  const opponentCatConfig = categoriesMap.get(opponentCatKey);
-
-  let resultPoints: number;
-  if (playerCatConfig && opponentCatConfig) {
-    const levelDiff = Math.abs(
-      (Number(playerCatConfig.priority) || 1) - (Number(opponentCatConfig.priority) || 1)
-    );
-    if (result === 'win') {
-      if (levelDiff === 0) resultPoints = Number(playerCatConfig.points_same_category) || 0;
-      else if (levelDiff === 1) resultPoints = Number(playerCatConfig.points_one_level_diff) || 0;
-      else if (levelDiff === 2) resultPoints = Number(playerCatConfig.points_two_level_diff) || 0;
-      else resultPoints = Number(playerCatConfig.points_three_level_diff) || 0;
-    } else if (result === 'draw') {
-      if (levelDiff === 0) resultPoints = Number(playerCatConfig.draw_same_category) || 0;
-      else if (levelDiff === 1) resultPoints = Number(playerCatConfig.draw_one_level_diff) || 0;
-      else if (levelDiff === 2) resultPoints = Number(playerCatConfig.draw_two_level_diff) || 0;
-      else resultPoints = Number(playerCatConfig.draw_three_level_diff) || 0;
-    } else {
-      if (levelDiff === 0) resultPoints = Number(playerCatConfig.loss_same_category) || 0;
-      else if (levelDiff === 1) resultPoints = Number(playerCatConfig.loss_one_level_diff) || 0;
-      else if (levelDiff === 2) resultPoints = Number(playerCatConfig.loss_two_level_diff) || 0;
-      else resultPoints = Number(playerCatConfig.loss_three_level_diff) || 0;
-    }
-    console.log(`📊 [Category Result] ${player_name} (${playerCatKey}) vs (${opponentCatKey}) [${result}] → ${resultPoints} pts`);
-  } else {
-    // Fallback: use flat scoring rule if category data missing
-    resultPoints = scoringRules.get(result) || 0;
-    console.warn(`⚠️ [Flat Result Fallback] ${player_name}: no category data found (playerCat="${playerCatKey}", opponentCat="${opponentCatKey}"), using scoringRules: ${resultPoints} pts`);
-  }
+  // --- Fantasy League Result Points (Flat Win=3, Draw=1, Loss=0 per official point system) ---
+  const resultPoints: number = scoringRules.get(result) ?? (result === 'win' ? 3 : result === 'draw' ? 1 : 0);
+  console.log(`📊 [Fantasy Result] ${player_name} [${result}] → ${resultPoints} pts`);
   // --------------------------------------------------------------------------
 
   // Calculate points breakdown (same for all teams)

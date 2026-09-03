@@ -21,6 +21,8 @@ import {
   Shield,
   AlertTriangle,
   RotateCw,
+  LayoutGrid,
+  Table,
 } from 'lucide-react';
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -98,6 +100,7 @@ export default function AllPlayersPointsPage() {
   const [sortBy, setSortBy] = useState<'cumulative' | 'round' | 'name' | 'acquired'>('cumulative');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'drafted'>('all');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [totalAvailable, setTotalAvailable] = useState(0);
   const [totalDrafted, setTotalDrafted] = useState(0);
   const [totalAll, setTotalAll] = useState(0);
@@ -489,15 +492,173 @@ export default function AllPlayersPointsPage() {
               </button>
             </div>
           </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Display Mode</span>
+            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs font-bold transition-all ${
+                  viewMode === 'cards'
+                    ? 'bg-slate-900 text-amber-400 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" /> Cards View
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs font-bold transition-all ${
+                  viewMode === 'table'
+                    ? 'bg-slate-900 text-amber-400 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <Table className="w-3.5 h-3.5" /> Table View
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Players Table */}
+        {/* Players Display */}
         {playersLoading ? (
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-12 shadow-sm text-center">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto mb-3"></div>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Loading players...</p>
           </div>
+        ) : viewMode === 'cards' ? (
+          /* Cards Grid View */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredPlayers.map((player) => {
+              const isExpanded = expandedPlayer === player.real_player_id;
+              const isLoadingBreakdown = breakdownLoading === player.real_player_id;
+              const matches = breakdownCache[player.real_player_id] || [];
+
+              return (
+                <div
+                  key={player.real_player_id}
+                  className="console-card bg-white border border-slate-200/70 rounded-3xl p-5 shadow-sm hover:border-amber-400/80 transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-3">
+                        {player.photo_url ? (
+                          <img
+                            src={player.photo_url}
+                            alt={player.player_name}
+                            className="w-12 h-12 rounded-2xl object-cover border border-slate-200 shadow-sm shrink-0"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-slate-900 border border-slate-700 text-amber-400 rounded-2xl flex items-center justify-center text-base font-black shadow-sm shrink-0">
+                            {(player.player_name || '').charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <h3 className="font-extrabold text-base text-slate-900 leading-snug">{player.player_name}</h3>
+                          <p className="text-xs text-slate-500 font-medium">{player.real_team_name || 'No Club'}</p>
+                        </div>
+                      </div>
+                      {player.category && (
+                        <span className="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-slate-900 text-amber-400 border border-slate-800 shrink-0">
+                          {getPlayerListLabel(player.real_player_id, player.category)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Status & Total Points Banner */}
+                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 mb-3 flex items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-0.5">Status</span>
+                        {player.is_available ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-100/80 text-emerald-800 border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3" /> Free Agent
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-indigo-100/80 text-indigo-800 border border-indigo-200 truncate max-w-[140px]">
+                            <Users className="w-3 h-3 shrink-0" /> {player.acquired_by_team_name || 'Drafted'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-0.5">Total Points</span>
+                        <span className="text-2xl font-black text-amber-600 leading-none">{player.cumulative_base_points} <span className="text-xs font-bold text-slate-400">pts</span></span>
+                      </div>
+                    </div>
+
+                    {/* Quick Stats Badges */}
+                    {player.round_stats && (
+                      <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+                        {player.round_stats.goals > 0 && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200"><SoccerBallIcon className="w-3 h-3" /> {player.round_stats.goals} Goal{player.round_stats.goals > 1 ? 's' : ''}</span>}
+                        {player.round_stats.motm && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 font-bold text-[10px] border border-amber-200"><Star className="w-3 h-3 fill-amber-400" /> MOTM</span>}
+                        {player.round_stats.clean_sheet && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-bold text-[10px] border border-slate-200"><Shield className="w-3 h-3" /> Clean Sheet</span>}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Toggle Breakdown Button */}
+                  <div>
+                    <button
+                      onClick={() => toggleExpand(player.real_player_id)}
+                      className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-amber-400 rounded-2xl font-mono text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-sm"
+                    >
+                      {isExpanded ? (
+                        <>Hide Point Breakdown <ChevronUp className="w-4 h-4" /></>
+                      ) : (
+                        <>View Full Breakdown <ChevronDown className="w-4 h-4" /></>
+                      )}
+                    </button>
+
+                    {/* Detailed Match Breakdown inside Card */}
+                    {isExpanded && (
+                      <div className="mt-3 pt-3 border-t border-slate-200/80 space-y-2">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                          Match History Breakdown ({matches.length} Match{matches.length !== 1 ? 'es' : ''})
+                        </h4>
+                        {isLoadingBreakdown ? (
+                          <div className="flex items-center gap-2 text-xs text-slate-400 font-mono py-3 justify-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-500" />
+                            Loading match history...
+                          </div>
+                        ) : matches.length === 0 ? (
+                          <p className="text-xs text-slate-400 font-bold text-center py-3 bg-slate-50 rounded-2xl border border-slate-100">
+                            No match breakdown recorded yet
+                          </p>
+                        ) : (
+                          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                            {matches.map((m) => (
+                              <div key={m.fixture_id} className="bg-slate-50 border border-slate-200/70 rounded-2xl p-3 space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Round {m.round_number} vs {m.opponent}</span>
+                                  <span className="text-xs font-extrabold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">+{m.base_points} pts</span>
+                                </div>
+                                <div className="text-[11px] text-slate-500 font-medium">
+                                  Result: {m.goals_scored} - {m.goals_conceded} ({m.result.toUpperCase()})
+                                </div>
+                                <div className="flex flex-wrap gap-1 pt-0.5">
+                                  <span className="px-2 py-0.5 bg-white border border-slate-200 rounded-md text-[10px] font-bold text-slate-600">Played: +1</span>
+                                  {m.goals_scored > 0 && <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-200 rounded-md text-[10px] font-bold text-emerald-700">Goals ({m.goals_scored}): +{m.goals_scored * 2}</span>}
+                                  {m.result === 'win' && <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-200 rounded-md text-[10px] font-bold text-emerald-700">Win: +3</span>}
+                                  {m.result === 'draw' && <span className="px-2 py-0.5 bg-amber-50 border border-amber-200 rounded-md text-[10px] font-bold text-amber-700">Draw: +1</span>}
+                                  {m.is_motm && <span className="px-2 py-0.5 bg-amber-100 border border-amber-300 rounded-md text-[10px] font-bold text-amber-800">MOTM: +5</span>}
+                                  {m.is_clean_sheet && <span className="px-2 py-0.5 bg-blue-50 border border-blue-200 rounded-md text-[10px] font-bold text-blue-700">Clean Sheet: +6</span>}
+                                  {m.goals_scored >= 3 && <span className="px-2 py-0.5 bg-purple-50 border border-purple-200 rounded-md text-[10px] font-bold text-purple-700">Hat-Trick: +5</span>}
+                                  {m.substitution_penalty !== 0 && <span className="px-2 py-0.5 bg-rose-50 border border-rose-200 rounded-md text-[10px] font-bold text-rose-700">Sub Penalty: {m.substitution_penalty}</span>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
+          /* Table View */
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">

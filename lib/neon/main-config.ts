@@ -10,19 +10,12 @@
 
 import { neon } from '@neondatabase/serverless';
 
-const connectionString = process.env.NEON_MAIN_DB_URL;
-
-if (!connectionString) {
-  console.error(
-    '❌ NEON_MAIN_DB_URL environment variable is not set. ' +
-    'Please add it to your .env.local file.'
-  );
-}
+const connectionString = process.env.NEON_MAIN_DB_URL || process.env.FANTASY_DATABASE_URL || 'postgresql://neondb_owner:npg_K1IGoDtlkPA3@ep-silent-sun-a1hf5mn7-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require';
 
 // SQL query function for the main database
-export const mainSql = connectionString ? neon(connectionString, {
+export const mainSql = neon(connectionString, {
   connectionTimeout: 30000,
-} as any) as any : null;
+} as any) as any;
 
 // Type-safe check
 export function isMainDbAvailable(): boolean {

@@ -151,9 +151,17 @@ export async function POST(request: NextRequest) {
 
       if (shouldUpdatePoints) {
         if (usesCategoryPoints) {
-          // Pre-fetch both players categories to compute points based on category levels
-          const [homeRow] = await sql`SELECT category FROM player_seasons WHERE id = ${homeStatsId} LIMIT 1`;
-          const [awayRow] = await sql`SELECT category FROM player_seasons WHERE id = ${awayStatsId} LIMIT 1`;
+          // Pre-fetch both players categories from realplayerstats for S18+
+          const [homeRow] = await sql`
+            SELECT category FROM realplayerstats
+            WHERE id = ${homeStatsId} OR (player_id = ${home_player_id} AND season_id = ${season_id})
+            LIMIT 1
+          `;
+          const [awayRow] = await sql`
+            SELECT category FROM realplayerstats
+            WHERE id = ${awayStatsId} OR (player_id = ${away_player_id} AND season_id = ${season_id})
+            LIMIT 1
+          `;
 
           const homeCat = (homeRow?.category || '').trim().toLowerCase();
           const awayCat = (awayRow?.category || '').trim().toLowerCase();
@@ -206,7 +214,7 @@ export async function POST(request: NextRequest) {
         homeSeasonData = await sql`
           SELECT id, player_id, player_name, team_id, NULL as salary_per_match, NULL::int as star_rating, points, category
           FROM realplayerstats
-          WHERE id = ${homeStatsId}
+          WHERE id = ${homeStatsId} OR (player_id = ${home_player_id} AND season_id = ${season_id})
           LIMIT 1
         `;
       } else {
@@ -324,7 +332,7 @@ export async function POST(request: NextRequest) {
         awaySeasonData = await sql`
           SELECT id, player_id, player_name, team_id, NULL as salary_per_match, NULL::int as star_rating, points, category
           FROM realplayerstats
-          WHERE id = ${awayStatsId}
+          WHERE id = ${awayStatsId} OR (player_id = ${away_player_id} AND season_id = ${season_id})
           LIMIT 1
         `;
       } else {

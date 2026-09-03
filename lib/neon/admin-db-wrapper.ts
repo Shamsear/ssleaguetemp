@@ -178,6 +178,7 @@ function mapTeamSeasonRow(row: any): Record<string, any> {
 function mapRealPlayerRow(row: any): Record<string, any> {
   const stats = typeof row.stats === 'string' ? JSON.parse(row.stats) : (row.stats || {});
   return {
+    ...row,
     player_id: row.player_id || row.id,
     name: row.name,
     display_name: row.display_name,
@@ -186,6 +187,8 @@ function mapRealPlayerRow(row: any): Record<string, any> {
     team: row.team,
     team_id: row.team_id,
     season_id: row.season_id,
+    category: row.category || row.category_name || row.category_id,
+    category_name: row.category_name || row.category,
     category_id: row.category_id,
     role: row.role || 'player',
     is_registered: row.is_registered,
@@ -208,10 +211,24 @@ function mapRealPlayerRow(row: any): Record<string, any> {
 
 function mapCategoryRow(row: any): Record<string, any> {
   return {
+    ...row,
     name: row.name,
     description: row.description,
     color: row.color,
     icon: row.icon,
+    priority: row.priority ?? 1,
+    points_same_category: row.points_same_category,
+    points_one_level_diff: row.points_one_level_diff,
+    points_two_level_diff: row.points_two_level_diff,
+    points_three_level_diff: row.points_three_level_diff,
+    draw_same_category: row.draw_same_category,
+    draw_one_level_diff: row.draw_one_level_diff,
+    draw_two_level_diff: row.draw_two_level_diff,
+    draw_three_level_diff: row.draw_three_level_diff,
+    loss_same_category: row.loss_same_category,
+    loss_one_level_diff: row.loss_one_level_diff,
+    loss_two_level_diff: row.loss_two_level_diff,
+    loss_three_level_diff: row.loss_three_level_diff,
     min_players: row.min_players,
     max_players: row.max_players,
     min_salary: row.min_salary,
