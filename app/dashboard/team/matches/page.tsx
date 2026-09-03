@@ -309,14 +309,53 @@ export default function TeamMatchesPage() {
 
           fixtures.forEach(({ fixtureDoc, fixture }) => {
             const matchDate = fixture.scheduled_date?.toDate?.() || fixture.scheduled_date;
-            const phaseInfo = calculateMatchPhase(roundData, matchDate);
+
+            // Priority 1: Respect explicit fixture.status and roundData.status fields
+            const fStatus = (fixture.status || '').toLowerCase();
+            const rStatus = (roundData.status || '').toLowerCase();
+
+            let phase: 'home_fixture' | 'fixture_entry' | 'result_entry' | 'closed' | 'draft' = 'draft';
+            let phase_label = 'Upcoming';
+            let home_deadline: Date | undefined;
+            let away_deadline: Date | undefined;
+            let result_deadline: Date | undefined;
+
+            if (fStatus === 'completed' || fStatus === 'finalized' || rStatus === 'completed' || rStatus === 'finalized') {
+              phase = 'closed';
+              phase_label = 'Closed';
+            } else if (fStatus === 'home_fixture' || rStatus === 'home_fixture') {
+              phase = 'home_fixture';
+              phase_label = 'Home Fixture Setup';
+            } else if (fStatus === 'fixture_entry' || rStatus === 'fixture_entry') {
+              phase = 'fixture_entry';
+              phase_label = 'Fixture Entry';
+            } else if (fStatus === 'result_entry' || rStatus === 'result_entry') {
+              phase = 'result_entry';
+              phase_label = 'Result Entry';
+            } else if (fStatus === 'closed' || rStatus === 'closed') {
+              phase = 'closed';
+              phase_label = 'Closed';
+            } else {
+              // Fallback to deadline calculations if status is active or pending
+              const phaseInfo = calculateMatchPhase(roundData, matchDate);
+              if (rStatus === 'active' || rStatus === 'in_progress' || rStatus === 'started' || fStatus === 'active' || fStatus === 'in_progress' || fStatus === 'live') {
+                phase = phaseInfo.phase === 'draft' ? 'home_fixture' : phaseInfo.phase;
+                phase_label = phaseInfo.phase_label === 'Upcoming' ? 'Home Fixture Setup' : phaseInfo.phase_label;
+              } else {
+                phase = phaseInfo.phase;
+                phase_label = phaseInfo.phase_label;
+              }
+              home_deadline = phaseInfo.home_deadline;
+              away_deadline = phaseInfo.away_deadline;
+              result_deadline = phaseInfo.result_deadline;
+            }
 
             console.log('✅ Found match for current team:', {
               home: fixture.home_team_name,
               away: fixture.away_team_name,
               match_status: fixture.status,
               round_status: roundData.status,
-              phase: phaseInfo.phase_label,
+              phase: phase_label,
               round: fixture.round_number
             });
 
@@ -338,11 +377,11 @@ export default function TeamMatchesPage() {
               winner_id: fixture.result === 'home_win' ? fixture.home_team_id : fixture.result === 'away_win' ? fixture.away_team_id : undefined,
               round_status: roundData.status,
               leg: fixture.leg || 'first',
-              phase: phaseInfo.phase,
-              phase_label: phaseInfo.phase_label,
-              home_deadline: phaseInfo.home_deadline,
-              away_deadline: phaseInfo.away_deadline,
-              result_deadline: phaseInfo.result_deadline,
+              phase: phase,
+              phase_label: phase_label,
+              home_deadline: home_deadline,
+              away_deadline: away_deadline,
+              result_deadline: result_deadline,
               tournament_id: fixture.tournament_id,
               tournament_name: tournament?.tournament_name,
             });
@@ -390,36 +429,40 @@ export default function TeamMatchesPage() {
     ? matches.filter(m => m.tournament_id === selectedTournamentId)
     : matches;
 
-  // Completed: matches explicitly marked status === 'completed' or 'finalized'
+  // Completed: matches explicitly marked status === 'completed' or 'finalized' with recorded scores
   const completedMatches = filteredMatches.filter(m =>
-    m.status === 'completed' || m.status === 'finalized'
+    (m.status === 'completed' || m.status === 'finalized') &&
+    m.home_score !== null && m.home_score !== undefined &&
+    m.away_score !== null && m.away_score !== undefined
   );
 
   const completedMatchIds = new Set(completedMatches.map(m => m.id));
 
-  // Closed: matches where phase === 'closed' or status === 'closed' that are not completed yet
+  // Closed: matches where phase === 'closed' or status === 'closed' (or completed without scores)
   const closedMatches = filteredMatches.filter(m =>
     !completedMatchIds.has(m.id) &&
-    (m.phase === 'closed' || m.status === 'closed' || m.round_status === 'closed')
+    (m.phase === 'closed' || m.status === 'closed' || m.status === 'completed' || m.status === 'finalized')
   );
 
   const closedMatchIds = new Set(closedMatches.map(m => m.id));
 
-  // Active: non-completed, non-closed matches where the round status is active/in_progress or phase is home_fixture, fixture_entry, result_entry
+  // Active: non-completed, non-closed matches in active phases (home_fixture, fixture_entry, result_entry) or active round status
   const activeMatches = filteredMatches.filter(m => {
     if (completedMatchIds.has(m.id) || closedMatchIds.has(m.id)) return false;
     const rStatus = (m.round_status || '').toLowerCase();
+    const fStatus = (m.status || '').toLowerCase();
     const phase = m.phase || '';
 
-    const isRoundActive = rStatus === 'active' || rStatus === 'in_progress' || rStatus === 'started';
     const isPhaseActive = phase === 'home_fixture' || phase === 'fixture_entry' || phase === 'result_entry';
+    const isStatusActive = fStatus === 'home_fixture' || fStatus === 'fixture_entry' || fStatus === 'result_entry' || fStatus === 'active' || fStatus === 'live' || fStatus === 'in_progress';
+    const isRoundActive = rStatus === 'active' || rStatus === 'in_progress' || rStatus === 'started' || rStatus === 'home_fixture' || rStatus === 'fixture_entry' || rStatus === 'result_entry';
 
-    return isRoundActive || isPhaseActive;
+    return isPhaseActive || isStatusActive || isRoundActive;
   });
 
   const activeMatchIds = new Set(activeMatches.map(m => m.id));
 
-  // Upcoming: non-completed, non-closed, non-active matches (rounds that are pending / scheduled / draft)
+  // Upcoming: non-completed, non-closed, non-active matches (scheduled/pending rounds)
   const upcomingMatches = filteredMatches.filter(m =>
     !completedMatchIds.has(m.id) && !closedMatchIds.has(m.id) && !activeMatchIds.has(m.id)
   );
