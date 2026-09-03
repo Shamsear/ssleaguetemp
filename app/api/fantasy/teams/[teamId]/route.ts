@@ -80,7 +80,11 @@ export async function GET(
         `;
 
         const matchesPlayed = Number(matches[0]?.matches_played || 0);
-        const totalPoints = Number(player.total_points || 0);
+        const rawBasePoints = Number(matches[0]?.total_match_points || 0);
+        const multiplier = player.is_captain ? 2.0 : (player.is_vice_captain ? 1.5 : 1.0);
+        const totalPoints = player.total_points && Number(player.total_points) > 0
+          ? Number(player.total_points)
+          : Math.round(rawBasePoints * multiplier);
         const averagePoints = matchesPlayed > 0 ? totalPoints / matchesPlayed : 0;
 
         return {

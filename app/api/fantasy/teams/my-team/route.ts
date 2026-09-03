@@ -193,7 +193,11 @@ export async function GET(request: NextRequest) {
         `;
 
         const matchesPlayed = Number(playerPoints[0]?.matches_played || 0);
-        const totalPoints = Number(playerPoints[0]?.total_points || player.total_points || 0);
+        const rawBasePoints = Number(playerPoints[0]?.total_points || 0);
+        const multiplier = player.is_captain ? 2.0 : (player.is_vice_captain ? 1.5 : 1.0);
+        const totalPoints = player.total_points && Number(player.total_points) > 0
+          ? Number(player.total_points)
+          : Math.round(rawBasePoints * multiplier);
         const averagePoints = matchesPlayed > 0 ? totalPoints / matchesPlayed : 0;
 
         return {

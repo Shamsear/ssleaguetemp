@@ -80,12 +80,17 @@ export default function TeamPointsBreakdownPage() {
 
                 if (data.success) {
                     // Find the team owned by the current user
-                    const myTeam = data.teams?.find((t: TeamBreakdown) =>
-                        t.team_id === user.team_id
+                    const myTeam = data.teams?.find((t: any) =>
+                        t.owner_uid === user.uid ||
+                        t.team_id === user.team_id ||
+                        t.real_team_id === user.team_id ||
+                        (t.team_id && user.team_id && String(t.team_id).replace(/_SSPSLS\d+/, '').toLowerCase() === String(user.team_id).replace(/_SSPSLS\d+/, '').toLowerCase()) ||
+                        (t.real_team_id && user.team_id && String(t.real_team_id).replace(/_SSPSLS\d+/, '').toLowerCase() === String(user.team_id).replace(/_SSPSLS\d+/, '').toLowerCase())
                     );
 
-                    if (myTeam) {
-                        setTeam(myTeam);
+                    const targetTeam = myTeam || (data.teams && data.teams.length > 0 ? data.teams[0] : null);
+                    if (targetTeam) {
+                        setTeam(targetTeam);
                         setMaxRounds(data.maxRounds || 0);
                     }
                 }

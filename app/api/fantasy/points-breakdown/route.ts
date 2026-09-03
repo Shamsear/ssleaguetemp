@@ -30,6 +30,8 @@ export async function GET(request: NextRequest) {
         const teams = await sql`
       SELECT 
         ft.team_id,
+        ft.real_team_id,
+        ft.owner_uid,
         ft.owner_name,
         ft.team_name,
         ft.passive_points,
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest) {
         ft.supported_team_id,
         ft.supported_team_name
       FROM fantasy_teams ft
-      WHERE ft.league_id = ${league.league_id}
+      WHERE ft.league_id = ${league.league_id} OR ft.league_id = 'SSPSLFLS18'
       ORDER BY ft.total_points DESC, ft.team_name
     `;
 
