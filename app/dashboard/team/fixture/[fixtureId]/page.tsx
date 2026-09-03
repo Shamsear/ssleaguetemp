@@ -2563,7 +2563,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             </div>
 
                             {/* Score Badge */}
-                            <div className="flex flex-col items-center gap-1 sm:gap-2 order-first sm:order-none">
+                            <div className="flex flex-col items-center gap-1 sm:gap-2 my-1 sm:my-0">
                               {hasResult ? (
                                 <>
                                   <div className={`px-3.5 py-1.5 rounded-xl font-bold text-base font-mono shadow-sm border ${isDraw ? 'bg-amber-500 text-white border-amber-600' :

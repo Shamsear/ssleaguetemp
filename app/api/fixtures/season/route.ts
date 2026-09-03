@@ -34,8 +34,6 @@ export async function GET(request: NextRequest) {
         f.*,
         f.home_score,
         f.away_score,
-        COALESCE(ht.logo_url, ht.team_logo, hts.team_logo, hts.logo_url) as home_team_logo,
-        COALESCE(at.logo_url, at.team_logo, ats.team_logo, ats.logo_url) as away_team_logo,
         CASE 
           WHEN LOWER(COALESCE(f.status, '')) IN ('completed', 'finalized') THEN 'completed'
           WHEN LOWER(COALESCE(f.status, '')) IN ('live', 'active', 'in_progress', 'home_fixture', 'fixture_entry', 'result_entry') 
@@ -43,10 +41,6 @@ export async function GET(request: NextRequest) {
           ELSE 'scheduled'
         END as status
       FROM fixtures f
-      LEFT JOIN teams ht ON f.home_team_id = ht.id OR LOWER(ht.name) = LOWER(f.home_team_name)
-      LEFT JOIN teams at ON f.away_team_id = at.id OR LOWER(at.name) = LOWER(f.away_team_name)
-      LEFT JOIN team_seasons hts ON (hts.team_id = f.home_team_id OR LOWER(hts.team_name) = LOWER(f.home_team_name)) AND hts.season_id = ${seasonId}
-      LEFT JOIN team_seasons ats ON (ats.team_id = f.away_team_id OR LOWER(ats.team_name) = LOWER(f.away_team_name)) AND ats.season_id = ${seasonId}
       LEFT JOIN (
         SELECT fixture_id, COUNT(*) as matchup_count
         FROM matchups

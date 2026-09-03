@@ -101,15 +101,44 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
 
       setSeasonName(sName);
 
-      const response = await fetch(`/api/fixtures/season?season_id=${seasonId}`);
-      if (!response.ok) {
+      const [fixturesRes, teamSeasonsRes] = await Promise.all([
+        fetch(`/api/fixtures/season?season_id=${seasonId}`),
+        fetch(`/api/cached/firebase/team-seasons?seasonId=${seasonId}`).catch(() => null)
+      ]);
+
+      if (!fixturesRes.ok) {
         console.error('Failed to fetch fixtures');
         setIsLoading(false);
         return;
       }
 
-      const data = await response.json();
-      const fixturesList = data.fixtures || data.data || [];
+      const data = await fixturesRes.json();
+      let fixturesList: Fixture[] = data.fixtures || data.data || [];
+
+      if (teamSeasonsRes && teamSeasonsRes.ok) {
+        try {
+          const tsData = await teamSeasonsRes.json();
+          const tsList = tsData.teamSeasons || tsData.data || (Array.isArray(tsData) ? tsData : []);
+          const logoMap = new Map<string, string>();
+
+          tsList.forEach((ts: any) => {
+            const logo = ts.team_logo || ts.logo_url || ts.logoUrl;
+            if (logo) {
+              if (ts.team_id) logoMap.set(ts.team_id, logo);
+              if (ts.team_name) logoMap.set(ts.team_name.toLowerCase(), logo);
+            }
+          });
+
+          fixturesList = fixturesList.map(f => ({
+            ...f,
+            home_team_logo: logoMap.get(f.home_team_id) || (f.home_team_name ? logoMap.get(f.home_team_name.toLowerCase()) : undefined),
+            away_team_logo: logoMap.get(f.away_team_id) || (f.away_team_name ? logoMap.get(f.away_team_name.toLowerCase()) : undefined),
+          }));
+        } catch (logoErr) {
+          console.log('Optional logo enrichment error:', logoErr);
+        }
+      }
+
       setFixtures(fixturesList);
     } catch (error) {
       console.error('Error fetching fixtures:', error);
