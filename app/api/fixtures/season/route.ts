@@ -30,9 +30,27 @@ export async function GET(request: NextRequest) {
     }
 
     const fixtures = await sql`
-      SELECT * FROM fixtures
-      WHERE tournament_id = ${tournamentId}
-      ORDER BY round_number ASC, match_number ASC
+      SELECT 
+        f.*,
+        COALESCE(f.home_score, m_agg.calc_home_score) as home_score,
+        COALESCE(f.away_score, m_agg.calc_away_score) as away_score,
+        CASE 
+          WHEN f.status = 'completed' OR m_agg.has_completed_matchups THEN 'completed'
+          WHEN f.status = 'in_progress' OR f.status = 'live' THEN 'live'
+          ELSE f.status
+        END as status
+      FROM fixtures f
+      LEFT JOIN (
+        SELECT 
+          fixture_id,
+          SUM(COALESCE(home_goals, 0) + COALESCE(away_sub_penalty, 0)) as calc_home_score,
+          SUM(COALESCE(away_goals, 0) + COALESCE(home_sub_penalty, 0)) as calc_away_score,
+          BOOL_OR(home_goals IS NOT NULL AND away_goals IS NOT NULL) as has_completed_matchups
+        FROM matchups
+        GROUP BY fixture_id
+      ) m_agg ON f.id = m_agg.fixture_id
+      WHERE (f.tournament_id = ${tournamentId} OR f.season_id = ${seasonId})
+      ORDER BY f.round_number ASC, f.match_number ASC
     `;
 
     return NextResponse.json({ fixtures });
