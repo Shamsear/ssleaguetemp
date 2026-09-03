@@ -182,51 +182,34 @@ export async function POST(request: NextRequest) {
         else if (res === 'draw') draws++;
         else losses++;
 
-        const oppKey = `${match.opponentId}_${pData.seasonId}`;
-        const oppData = playerAccumulators.get(oppKey);
-        const oppCat = (oppData?.category || 'red').toLowerCase();
-        const oppCatConfig = categoriesMap.get(oppCat) || categoriesMap.get('red');
-
-        const getPointsForCategoryMatch = (pCfg: any, oCfg: any, outcome: string) => {
-          const pPrio = Number(pCfg?.priority) || 1;
-          const oPrio = Number(oCfg?.priority) || 1;
-
-          let fieldSuffix = 'same_category';
-
-          if (pPrio === 1) {
-            if (oPrio === 1) fieldSuffix = 'same_category';
-            else if (oPrio === 2) fieldSuffix = 'one_level_diff';
-            else if (oPrio === 3) fieldSuffix = 'two_level_diff';
-            else fieldSuffix = 'three_level_diff';
-          } else if (pPrio === 2) {
-            if (oPrio === 1) fieldSuffix = 'one_level_diff';
-            else if (oPrio === 2) fieldSuffix = 'same_category';
-            else if (oPrio === 3) fieldSuffix = 'two_level_diff';
-            else fieldSuffix = 'three_level_diff';
-          } else if (pPrio === 3) {
-            if (oPrio === 1) fieldSuffix = 'two_level_diff';
-            else if (oPrio === 2) fieldSuffix = 'one_level_diff';
-            else if (oPrio === 3) fieldSuffix = 'same_category';
-            else fieldSuffix = 'three_level_diff';
-          } else {
-            if (oPrio === 1) fieldSuffix = 'three_level_diff';
-            else if (oPrio === 2) fieldSuffix = 'two_level_diff';
-            else if (oPrio === 3) fieldSuffix = 'one_level_diff';
-            else fieldSuffix = 'same_category';
+        const getPointsForOpponentCategory = (oppCategory: string, outcome: string) => {
+          const cat = (oppCategory || '').toLowerCase();
+          if (cat.includes('red') || cat === 'r') {
+            if (outcome === 'win') return 8;
+            if (outcome === 'draw') return 4;
+            return -3;
           }
-
-          const prefix = outcome === 'win' ? 'points_' : (outcome === 'draw' ? 'draw_' : 'loss_');
-          const fieldKey = `${prefix}${fieldSuffix}`;
-
-          const val = pCfg ? pCfg[fieldKey] : undefined;
-          if (val !== undefined && val !== null) return Number(val);
-
+          if (cat.includes('black')) {
+            if (outcome === 'win') return 7;
+            if (outcome === 'draw') return 3;
+            return -4;
+          }
+          if (cat.includes('blue') || cat === 'b') {
+            if (outcome === 'win') return 6;
+            if (outcome === 'draw') return 2;
+            return -5;
+          }
+          if (cat.includes('white') || cat === 'w') {
+            if (outcome === 'win') return 5;
+            if (outcome === 'draw') return 1;
+            return -6;
+          }
           if (outcome === 'win') return 8;
           if (outcome === 'draw') return 4;
-          return 1;
+          return -3;
         };
 
-        const matchPoints = getPointsForCategoryMatch(playerCatConfig, oppCatConfig, res);
+        const matchPoints = getPointsForOpponentCategory(match.opponentCat, res);
 
         totalPoints += matchPoints;
       }

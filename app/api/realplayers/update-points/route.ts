@@ -169,31 +169,38 @@ export async function POST(request: NextRequest) {
           const homeCatConfig = categoriesMap.get(homeCat);
           const awayCatConfig = categoriesMap.get(awayCat);
 
-            const getPointsForCategoryMatch = (playerCatConfig: any, oppCatConfig: any, outcome: string) => {
-              const pPrio = Number(playerCatConfig?.priority) || 1;
-              const oPrio = Number(oppCatConfig?.priority) || 1;
-
-              if (oPrio <= pPrio) {
+            const getPointsForOpponentCategory = (oppCategory: string, outcome: string) => {
+              const cat = (oppCategory || '').toLowerCase();
+              if (cat.includes('red') || cat === 'r') {
                 if (outcome === 'win') return 8;
                 if (outcome === 'draw') return 4;
                 return -3;
               }
-
-              const D = oPrio - pPrio;
-              if (outcome === 'win') {
-                return Math.max(5, 8 - D);
-              } else if (outcome === 'draw') {
-                return Math.max(1, 4 - D);
-              } else {
-                return -3 - D;
+              if (cat.includes('black')) {
+                if (outcome === 'win') return 7;
+                if (outcome === 'draw') return 3;
+                return -4;
               }
+              if (cat.includes('blue') || cat === 'b') {
+                if (outcome === 'win') return 6;
+                if (outcome === 'draw') return 2;
+                return -5;
+              }
+              if (cat.includes('white') || cat === 'w') {
+                if (outcome === 'win') return 5;
+                if (outcome === 'draw') return 1;
+                return -6;
+              }
+              if (outcome === 'win') return 8;
+              if (outcome === 'draw') return 4;
+              return -3;
             };
 
             const homeResultStr = homeGD > 0 ? 'win' : (homeGD === 0 ? 'draw' : 'loss');
             const awayResultStr = awayGD > 0 ? 'win' : (awayGD === 0 ? 'draw' : 'loss');
 
-            homePointsChange = getPointsForCategoryMatch(homeCatConfig, awayCatConfig, homeResultStr);
-            awayPointsChange = getPointsForCategoryMatch(awayCatConfig, homeCatConfig, awayResultStr);
+            homePointsChange = getPointsForOpponentCategory(awayCat, homeResultStr);
+            awayPointsChange = getPointsForOpponentCategory(homeCat, awayResultStr);
 
             console.log(`📊 Category Points: ${home_player_id} (${homeCat}) vs ${away_player_id} (${awayCat}) [${homeResultStr}] -> Home: +${homePointsChange}, Away: +${awayPointsChange}`);
           } else {
