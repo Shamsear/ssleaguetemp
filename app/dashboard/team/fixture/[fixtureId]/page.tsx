@@ -283,13 +283,22 @@ export default function FixturePage() {
       // Calculate phase based on round status and deadlines
       let currentPhase: typeof phase = 'closed';
 
-      // Check round status first
-      if (roundDeadlines.status === 'pending' || roundDeadlines.status === 'scheduled') {
-        // Round hasn't started yet - stay in draft mode
-        currentPhase = 'draft';
-      } else if (roundDeadlines.status === 'in_progress' || roundDeadlines.status === 'started' || roundDeadlines.status === 'active') {
-        // Round is in progress - determine phase by deadlines
-        if (now < homeDeadline) {
+      if (roundDeadlines.status === 'completed' || roundDeadlines.status === 'finalized') {
+        currentPhase = 'closed';
+      } else if (roundDeadlines.status === 'result_entry' || fixture?.round_number === 1) {
+        currentPhase = 'result_entry';
+      } else if (roundDeadlines.status === 'home_fixture' || fixture?.round_number === 2) {
+        currentPhase = 'home_fixture';
+      } else if (roundDeadlines.status === 'fixture_entry') {
+        currentPhase = 'fixture_entry';
+      } else if (roundDeadlines.status === 'closed') {
+        currentPhase = 'closed';
+      } else if (roundDeadlines.status === 'in_progress' || roundDeadlines.status === 'started' || roundDeadlines.status === 'active' || roundDeadlines.status === 'pending' || roundDeadlines.status === 'scheduled') {
+        if (fixture?.round_number === 1) {
+          currentPhase = 'result_entry';
+        } else if (fixture?.round_number === 2) {
+          currentPhase = 'home_fixture';
+        } else if (now < homeDeadline) {
           currentPhase = 'home_fixture';     // Home team creates matchups
         } else if (now < awayDeadline) {
           currentPhase = 'fixture_entry';    // Away team reviews, both can finalize
@@ -298,12 +307,14 @@ export default function FixturePage() {
         } else {
           currentPhase = 'closed';           // Read-only
         }
-      } else if (roundDeadlines.status === 'completed' || roundDeadlines.status === 'finalized') {
-        // Round is completed
-        currentPhase = 'closed';
       } else {
-        // Unknown status - default to closed
-        currentPhase = 'closed';
+        if (fixture?.round_number === 1) {
+          currentPhase = 'result_entry';
+        } else if (fixture?.round_number === 2) {
+          currentPhase = 'home_fixture';
+        } else {
+          currentPhase = 'draft';
+        }
       }
 
       if (currentPhase !== phase) {
