@@ -96,11 +96,11 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
   };
 
   const isFixtureCompleted = (f: Fixture) => {
-    return f.status === 'completed' || (f.home_score !== null && f.home_score !== undefined && f.away_score !== null && f.away_score !== undefined);
+    return f.status === 'completed' || f.status === 'finalized';
   };
 
   const isFixtureLive = (f: Fixture) => {
-    return f.status === 'in_progress' || f.status === 'live';
+    return f.status === 'in_progress' || f.status === 'live' || f.status === 'active';
   };
 
   const getFilteredFixtures = () => {
