@@ -834,40 +834,33 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     const currentTeamId = (user as any)?.team_id || (user as any)?.teamId || (user as any)?.team || user?.uid || '';
     const currentTeamName = (user as any)?.team_name || (user as any)?.teamName || (user as any)?.displayName || '';
     const userRole = (user as any)?.role || '';
-    const isAdmin = userRole === 'committee_admin' || userRole === 'superadmin' || userRole === 'admin';
+    const isUserAdmin = userRole === 'committee_admin' || userRole === 'superadmin' || userRole === 'admin';
 
-    const isHome = fixture.home_team_id === currentTeamId ||
-      (currentTeamName && fixture.home_team_name && currentTeamName.toLowerCase() === fixture.home_team_name.toLowerCase()) ||
-      isAdmin;
-    const isAway = fixture.away_team_id === currentTeamId ||
+    const isStrictHome = fixture.home_team_id === currentTeamId ||
+      (currentTeamName && fixture.home_team_name && currentTeamName.toLowerCase() === fixture.home_team_name.toLowerCase());
+    const isStrictAway = fixture.away_team_id === currentTeamId ||
       (currentTeamName && fixture.away_team_name && currentTeamName.toLowerCase() === fixture.away_team_name.toLowerCase());
 
-    setIsHomeTeam(isHome);
-    setIsAdmin(isAdmin);
+    setIsHomeTeam(isStrictHome || isUserAdmin);
+    setIsAdmin(isUserAdmin);
 
-    // Matchup creation and editing require active fixture phase (home_fixture or fixture_entry)
-    const isPhaseActiveForCreate = phase === 'home_fixture' || phase === 'fixture_entry';
+    // During Home Phase (home_fixture): ONLY Home team (or Admin) can create or edit matchups. Away team is strictly blocked.
+    // During Fixture Entry Phase (fixture_entry): Both Home & Away teams (or Admin) can create or edit matchups.
     let allowedToCreate = false;
-    if (isAdmin) {
-      allowedToCreate = isPhaseActiveForCreate;
+    let allowedToEdit = false;
+
+    if (isUserAdmin) {
+      allowedToCreate = phase === 'home_fixture' || phase === 'fixture_entry';
+      allowedToEdit = phase === 'home_fixture' || phase === 'fixture_entry';
     } else if (phase === 'home_fixture') {
-      allowedToCreate = isHome; // Only Home team in Home Fixture phase
+      allowedToCreate = isStrictHome; // Home team ONLY! Away team blocked.
+      allowedToEdit = isStrictHome;
     } else if (phase === 'fixture_entry') {
-      allowedToCreate = isHome || isAway; // Both teams in Fixture Entry phase
+      allowedToCreate = isStrictHome || isStrictAway;
+      allowedToEdit = isStrictHome || isStrictAway;
     }
 
     setCanCreateMatchups(allowedToCreate && matchups.length === 0);
-
-    const isPhaseActiveForEdit = phase === 'home_fixture' || phase === 'fixture_entry';
-    let allowedToEdit = false;
-    if (isAdmin) {
-      allowedToEdit = isPhaseActiveForEdit;
-    } else if (phase === 'home_fixture') {
-      allowedToEdit = isHome;
-    } else if (phase === 'fixture_entry') {
-      allowedToEdit = isHome || isAway;
-    }
-
     setCanEditMatchups(allowedToEdit && matchups.length > 0);
   }, [fixture, user, matchups, phase]);
 
