@@ -28,13 +28,21 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const seasonId = searchParams.get('season_id');
+    let seasonId = searchParams.get('season_id');
 
     if (!seasonId) {
       return NextResponse.json(
         { success: false, error: 'season_id is required' },
         { status: 400 }
       );
+    }
+
+    // Committee admins may only view their assigned season
+    if (auth.role === 'committee_admin') {
+      const adminSeasonId = auth.claims?.seasonId;
+      if (adminSeasonId && seasonId !== 'all' && seasonId !== adminSeasonId) {
+        seasonId = adminSeasonId;
+      }
     }
 
     let teamSeasons: Array<{ team_id: string; team_name: string; team_logo: string }> = [];
@@ -162,7 +170,8 @@ export async function GET(request: NextRequest) {
       const balance = await getOrCreateTeamCashBalance(ts.team_id, liveName);
 
       let payments: any[] = balance.payments || [];
-      const paymentType = balance.payment_type || 'seasonal';
+      // Prefer cash-balance doc's payment_type, fall back to teams.raw_data.payment_type
+      const paymentType = balance.payment_type || teamData?.payment_type || 'seasonal';
       const seasonPlans = balance.season_plans || {};
 
       let hasNewPaymentsToPersist = false;
@@ -299,6 +308,17 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { action, teamId, teamName, paymentType, amount, seasonId, notes } = body;
+
+    // Committee admins may only act on their own assigned season
+    if (auth.role === 'committee_admin') {
+      const adminSeasonId = auth.claims?.seasonId;
+      if (adminSeasonId && seasonId && seasonId !== adminSeasonId) {
+        return NextResponse.json(
+          { success: false, error: `Committee admins can only manage their assigned season (${adminSeasonId})` },
+          { status: 403 }
+        );
+      }
+    }
 
     if (action === 'bulk_payment') {
       if (!seasonId) {
