@@ -248,7 +248,18 @@ export default function TeamMatchesPage() {
             return { phase: 'result_entry' as const, phase_label: 'Result Entry' };
           }
 
-          const schedDateStr = roundData.scheduled_date || (matchDate ? matchDate.toISOString().split('T')[0] : null);
+          const rawSchedDate = roundData.scheduled_date || matchDate;
+          let schedDateStr: string | null = null;
+          if (rawSchedDate) {
+            if (typeof rawSchedDate === 'string') {
+              schedDateStr = rawSchedDate.split('T')[0];
+            } else if (rawSchedDate instanceof Date) {
+              schedDateStr = rawSchedDate.toISOString().split('T')[0];
+            } else if (typeof rawSchedDate?.toDate === 'function') {
+              schedDateStr = rawSchedDate.toDate().toISOString().split('T')[0];
+            }
+          }
+
           if (!schedDateStr) {
             return { phase: 'draft' as const, phase_label: 'Upcoming' };
           }
