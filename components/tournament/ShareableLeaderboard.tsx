@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { toPng } from 'html-to-image';
 import { LeaderboardSnapshot, StandingRow } from './LeaderboardSnapshot';
+import { generateContainerPng, downloadPng, shareOrDownloadPng } from '@/lib/utils/export-image';
 
 interface GroupTeam {
   team_id: string;
@@ -79,34 +79,17 @@ export default function ShareableLeaderboard({
 
     try {
       setIsGenerating(true);
-      
-      // Ensure preview is visible for rendering
       const wasHidden = !showPreview;
       if (wasHidden) {
         setShowPreview(true);
-        // Wait for DOM to update
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
-      const dataUrl = await toPng(leaderboardRef.current, {
-        quality: 1,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        cacheBust: false,
-        skipFontFace: true,
-        imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
-      });
+      const dataUrl = await generateContainerPng(leaderboardRef.current);
+      if (wasHidden) setShowPreview(false);
 
-      // Hide preview again if it was hidden
-      if (wasHidden) {
-        setShowPreview(false);
-      }
-
-      // Create download link
-      const link = document.createElement('a');
-      link.download = `${tournamentName.replace(/\s+/g, '-')}-leaderboard.png`;
-      link.href = dataUrl;
-      link.click();
+      const filename = `${tournamentName.replace(/\s+/g, '-')}-leaderboard.png`;
+      downloadPng(dataUrl, filename);
     } catch (error) {
       console.error('Error generating image:', error);
       alert('Failed to generate image. Please try again.');
@@ -120,48 +103,20 @@ export default function ShareableLeaderboard({
 
     try {
       setIsGenerating(true);
-      
-      // Ensure preview is visible for rendering
       const wasHidden = !showPreview;
       if (wasHidden) {
         setShowPreview(true);
-        // Wait for DOM to update
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
-      const dataUrl = await toPng(leaderboardRef.current, {
-        quality: 1,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        cacheBust: false,
-        skipFontFace: true,
-        imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
-      });
+      const dataUrl = await generateContainerPng(leaderboardRef.current);
+      if (wasHidden) setShowPreview(false);
 
-      // Hide preview again if it was hidden
-      if (wasHidden) {
-        setShowPreview(false);
-      }
-
-      // Convert data URL to blob
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-      const file = new File([blob], `${tournamentName}-leaderboard.png`, { type: 'image/png' });
-
-      // Check if Web Share API is available
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: `${tournamentName} - Leaderboard`,
-          text: `Check out the current standings for ${tournamentName}!`,
-          files: [file],
-        });
-      } else {
-        // Fallback to download
-        generateImage();
-      }
+      const filename = `${tournamentName.replace(/\s+/g, '-')}-leaderboard.png`;
+      await shareOrDownloadPng(dataUrl, filename, `${tournamentName} - Leaderboard`);
     } catch (error) {
       console.error('Error sharing image:', error);
-      // Fallback to download
+      alert('Failed to share image. Downloading instead...');
       generateImage();
     } finally {
       setIsGenerating(false);

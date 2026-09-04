@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { toPng } from 'html-to-image';
-import { FixturesSnapshot, Match } from './tournament/FixturesSnapshot';
-import { Clock, ClipboardList } from 'lucide-react';
-import { SoccerBallIcon } from '@/components/ui/CustomIcons';
+import { FixturesSnapshot } from './tournament/FixturesSnapshot';
+import { Download, Share2 } from 'lucide-react';
+import { generateContainerPng, downloadPng, shareOrDownloadPng } from '@/lib/utils/export-image';
 
 interface Matchup {
   position: number;
@@ -34,79 +33,77 @@ export default function FixtureShareButton({ fixture, matchups }: Props) {
   const [isGenerating, setIsGenerating] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const generateImage = async () => {
+  const handleDownload = async () => {
     if (!cardRef.current) return;
-
     setIsGenerating(true);
     try {
-      const dataUrl = await toPng(cardRef.current, {
-        quality: 0.95,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        cacheBust: false,
-        skipFontFace: true,
-        imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
-      });
-
-      // Create download link
-      const link = document.createElement('a');
-      link.download = `fixture-R${fixture.round_number}M${fixture.match_number}.png`;
-      link.href = dataUrl;
-      link.click();
+      const dataUrl = await generateContainerPng(cardRef.current);
+      const filename = `fixture-R${fixture.round_number}M${fixture.match_number}.png`;
+      downloadPng(dataUrl, filename);
     } catch (error) {
-      console.error('Error generating image:', error);
-      alert('Failed to generate image');
+      console.error('Error downloading image:', error);
+      alert('Failed to download image');
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return 'TBD';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getStatusBadge = () => {
-    switch (fixture.status) {
-      case 'completed':
-        return <span className="text-green-600 font-bold">✓ COMPLETED</span>;
-      case 'scheduled':
-        return <span className="text-blue-600 font-bold flex items-center gap-1"><Clock className="w-4 h-4" /> SCHEDULED</span>;
-      case 'in_progress':
-        return <span className="text-orange-600 font-bold inline-flex items-center gap-1"><SoccerBallIcon className="w-4 h-4" /> IN PROGRESS</span>;
-      default:
-        return <span className="text-gray-600 font-bold flex items-center gap-1"><ClipboardList className="w-4 h-4" /> {fixture.status.toUpperCase()}</span>;
+  const handleShare = async () => {
+    if (!cardRef.current) return;
+    setIsGenerating(true);
+    try {
+      const dataUrl = await generateContainerPng(cardRef.current);
+      const filename = `fixture-R${fixture.round_number}M${fixture.match_number}.png`;
+      await shareOrDownloadPng(dataUrl, filename, `Round ${fixture.round_number} Match ${fixture.match_number}`);
+    } catch (error) {
+      console.error('Error sharing image:', error);
+      alert('Failed to share image');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
   return (
     <>
-      <button
-        onClick={generateImage}
-        disabled={isGenerating}
-        className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-      >
-        {isGenerating ? (
-          <>
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-            Generating...
-          </>
-        ) : (
-          <>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-            </svg>
-            Share Fixture
-          </>
-        )}
-      </button>
+      <div className="flex items-center gap-2">
+        {/* Download Button */}
+        <button
+          onClick={handleDownload}
+          disabled={isGenerating}
+          className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-amber-400 font-extrabold rounded-xl transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-xs uppercase font-mono border border-slate-900"
+        >
+          {isGenerating ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-400"></div>
+              Generating...
+            </>
+          ) : (
+            <>
+              <Download className="w-4 h-4" />
+              Download Image
+            </>
+          )}
+        </button>
+
+        {/* Share Button */}
+        <button
+          onClick={handleShare}
+          disabled={isGenerating}
+          className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-extrabold rounded-xl transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-xs uppercase font-mono"
+        >
+          {isGenerating ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Generating...
+            </>
+          ) : (
+            <>
+              <Share2 className="w-4 h-4" />
+              Share
+            </>
+          )}
+        </button>
+      </div>
 
       {/* Hidden card for image generation */}
       <div style={{ position: 'fixed', left: '-9999px', top: '0px', width: '1200px', pointerEvents: 'none' }}>

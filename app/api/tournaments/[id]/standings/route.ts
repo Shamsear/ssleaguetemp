@@ -150,7 +150,7 @@ export async function GET(
     } else {
       // League format (or League + Knockout)
       const leagueFixtures = fixtures.filter(f => !f.knockout_round);
-      const standings = await calculateLeagueStandings(leagueFixtures, sql, tournamentId);
+      const standings = await calculateLeagueStandings(leagueFixtures, sql, tournamentId, tournament.season_id);
       
       // Get playoff teams from tournament settings
       const tournamentSettings = await sql`
@@ -183,7 +183,7 @@ export async function GET(
   }
 }
 
-async function calculateLeagueStandings(fixtures: any[], sql: any, tournamentId: string) {
+async function calculateLeagueStandings(fixtures: any[], sql: any, tournamentId: string, seasonId?: string) {
   const teamStats: Record<string, any> = {};
 
   try {
@@ -275,46 +275,76 @@ async function calculateLeagueStandings(fixtures: any[], sql: any, tournamentId:
     }
   });
 
-  // Fetch team logos from Neon SQL database
+  // Fetch team logos from Neon & Firebase databases
   const teamIds = Object.keys(teamStats);
   if (teamIds.length > 0) {
     try {
-      const tsRows = await sql`
-        SELECT team_id, team_name, team_logo, logo_url
-        FROM team_seasons
-        WHERE season_id = ${seasonId}
-      `;
-      const tRows = await sql`
-        SELECT id, name, logo_url
-        FROM teams
-      `;
+      const logoMap = new Map<string, any>();
 
-      const logoMap = new Map<string, string>();
-      tsRows.forEach((r: any) => {
-        const logo = r.team_logo || r.logo_url;
-        if (logo) {
-          if (r.team_id) logoMap.set(r.team_id, logo);
-          if (r.team_name) logoMap.set(r.team_name.toLowerCase(), logo);
-        }
-      });
-      tRows.forEach((r: any) => {
-        const logo = r.logo_url;
-        if (logo) {
-          if (r.id && !logoMap.has(r.id)) logoMap.set(r.id, logo);
-          if (r.name && !logoMap.has(r.name.toLowerCase())) logoMap.set(r.name.toLowerCase(), logo);
-        }
-      });
+      // 1. Fetch from team_seasons if available
+      try {
+        const tsRows = seasonId ? await sql`
+          SELECT team_id, team_name, team_logo, logo_url, logo_position_x_circle, logo_position_y_circle, logo_scale_circle
+          FROM team_seasons
+          WHERE season_id = ${seasonId}
+        ` : await sql`
+          SELECT team_id, team_name, team_logo, logo_url, logo_position_x_circle, logo_position_y_circle, logo_scale_circle
+          FROM team_seasons
+        `;
 
-      teamIds.forEach(teamId => {
+        tsRows.forEach((r: any) => {
+          const logo = r.team_logo || r.logo_url;
+          if (logo) {
+            const info = {
+              logo,
+              logo_position_x_circle: r.logo_position_x_circle,
+              logo_position_y_circle: r.logo_position_y_circle,
+              logo_scale_circle: r.logo_scale_circle,
+            };
+            if (r.team_id) logoMap.set(r.team_id, info);
+            if (r.team_name) logoMap.set(r.team_name.toLowerCase(), info);
+          }
+        });
+      } catch (tsErr) {
+        console.warn('Could not fetch team_seasons in calculateLeagueStandings:', tsErr);
+      }
+
+      // 2. Fetch from Firebase / Neon adminDb
+      await Promise.all(teamIds.map(async (teamId) => {
         const teamName = teamStats[teamId]?.team_name;
-        const logo = logoMap.get(teamId) || (teamName ? logoMap.get(teamName.toLowerCase()) : null) || null;
-        if (logo) {
-          teamStats[teamId].team_logo = logo;
-          teamStats[teamId].logo_url = logo;
-          teamStats[teamId].logoUrl = logo;
-          teamStats[teamId].logoURL = logo;
+        let info = logoMap.get(teamId) || (teamName ? logoMap.get(teamName.toLowerCase()) : null);
+
+        if (!info) {
+          try {
+            const doc = await adminDb.collection('teams').doc(teamId).get();
+            if (doc.exists) {
+              const d = doc.data()!;
+              const logo = d.logo_url || d.team_logo || d.logoUrl || d.logoURL;
+              if (logo) {
+                info = {
+                  logo,
+                  logo_position_x_circle: d.logo_position_x_circle,
+                  logo_position_y_circle: d.logo_position_y_circle,
+                  logo_scale_circle: d.logo_scale_circle,
+                };
+                logoMap.set(teamId, info);
+              }
+            }
+          } catch (fbErr) {
+            // ignore
+          }
         }
-      });
+
+        if (info) {
+          teamStats[teamId].team_logo = info.logo;
+          teamStats[teamId].logo_url = info.logo;
+          teamStats[teamId].logoUrl = info.logo;
+          teamStats[teamId].logoURL = info.logo;
+          if (info.logo_position_x_circle !== undefined) teamStats[teamId].logo_position_x_circle = info.logo_position_x_circle;
+          if (info.logo_position_y_circle !== undefined) teamStats[teamId].logo_position_y_circle = info.logo_position_y_circle;
+          if (info.logo_scale_circle !== undefined) teamStats[teamId].logo_scale_circle = info.logo_scale_circle;
+        }
+      }));
     } catch (e) {
       console.error('Error fetching team logos from Neon for standings:', e);
     }
