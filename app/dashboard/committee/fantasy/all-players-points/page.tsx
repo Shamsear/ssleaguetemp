@@ -929,7 +929,6 @@ export default function CommitteeAllPlayersPointsPage() {
                 </div>
               )}
             </div>
-        </>
 
         {/* Info */}
         <div className="console-card bg-white border border-amber-200/60 rounded-2xl p-4 shadow-sm">

@@ -169,6 +169,7 @@ export async function POST(request: NextRequest) {
           const homeCatConfig = categoriesMap.get(homeCat);
           const awayCatConfig = categoriesMap.get(awayCat);
 
+          if (homeCatConfig && awayCatConfig) {
             const getPointsForOpponentCategory = (oppCategory: string, outcome: string) => {
               const cat = (oppCategory || '').toLowerCase();
               if (cat.includes('red') || cat === 'r') {
