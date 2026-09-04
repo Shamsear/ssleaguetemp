@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { FieldValue } from 'firebase-admin/firestore';
+import { getMainDb, isMainDbAvailable } from '@/lib/neon/main-config';
 
 export async function POST(
   request: NextRequest,
@@ -27,11 +28,27 @@ export async function POST(
     const currentStatus = seasonData.is_player_registration_open || false;
     const newStatus = !currentStatus;
     
-    // Update the status
+    // Update the status in Firestore
     await seasonRef.update({
       is_player_registration_open: newStatus,
+      registrationOpen: newStatus,
       updated_at: FieldValue.serverTimestamp(),
     });
+    
+    // Update Neon Main DB
+    if (isMainDbAvailable()) {
+      try {
+        const sql = getMainDb();
+        await sql`
+          UPDATE seasons
+          SET registration_open = ${newStatus},
+              updated_at = NOW()
+          WHERE id = ${seasonId}
+        `;
+      } catch (neonErr: any) {
+        console.warn('Neon season registration toggle warning:', neonErr.message);
+      }
+    }
     
     return NextResponse.json({
       success: true,

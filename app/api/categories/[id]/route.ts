@@ -1,4 +1,6 @@
+import { NextRequest, NextResponse } from 'next/server';
 import { getMainDb, isMainDbAvailable } from '@/lib/neon/main-config';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 export async function GET(
   request: NextRequest,
@@ -8,10 +10,14 @@ export async function GET(
     const { id } = await params;
     
     if (isMainDbAvailable()) {
-      const sql = getMainDb();
-      const rows = await sql`SELECT * FROM categories WHERE id = ${id} OR name ILIKE ${id}`;
-      if (rows && rows.length > 0) {
-        return NextResponse.json({ success: true, data: rows[0] });
+      try {
+        const sql = getMainDb();
+        const rows = await sql`SELECT * FROM categories WHERE id = ${id} OR name ILIKE ${id}`;
+        if (rows && rows.length > 0) {
+          return NextResponse.json({ success: true, data: rows[0] });
+        }
+      } catch (neonErr: any) {
+        console.warn('Neon category fetch failed:', neonErr.message);
       }
     }
 
@@ -121,6 +127,24 @@ export async function PUT(
     
     await adminDb.collection('categories').doc(id).update(updates);
     
+    if (isMainDbAvailable()) {
+      try {
+        const sql = getMainDb();
+        if (updates.name) await sql`UPDATE categories SET name = ${updates.name}, updated_at = NOW() WHERE id = ${id}`;
+        if (updates.color) await sql`UPDATE categories SET color = ${updates.color}, updated_at = NOW() WHERE id = ${id}`;
+        if (updates.priority !== undefined) await sql`UPDATE categories SET priority = ${updates.priority}, updated_at = NOW() WHERE id = ${id}`;
+        if (updates.base_price !== undefined) await sql`UPDATE categories SET base_price = ${updates.base_price}, updated_at = NOW() WHERE id = ${id}`;
+        if (updates.max_players !== undefined) await sql`UPDATE categories SET max_players = ${updates.max_players}, updated_at = NOW() WHERE id = ${id}`;
+        for (const field of pointFields) {
+          if (updates[field] !== undefined) {
+            await sql`UPDATE categories SET ${sql(field)} = ${updates[field]}, updated_at = NOW() WHERE id = ${id}`;
+          }
+        }
+      } catch (neonErr: any) {
+        console.warn('Neon category update error:', neonErr.message);
+      }
+    }
+
     // Fetch updated category
     const updatedDoc = await adminDb.collection('categories').doc(id).get();
     const updatedCategory = {
@@ -157,6 +181,15 @@ export async function DELETE(
     const { id } = await params;
     await adminDb.collection('categories').doc(id).delete();
     
+    if (isMainDbAvailable()) {
+      try {
+        const sql = getMainDb();
+        await sql`DELETE FROM categories WHERE id = ${id}`;
+      } catch (neonErr: any) {
+        console.warn('Neon category delete error:', neonErr.message);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Category deleted successfully',
