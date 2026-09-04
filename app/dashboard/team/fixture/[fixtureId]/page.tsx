@@ -839,20 +839,26 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     setIsHomeTeam(isStrictHome || isUserAdmin);
     setIsAdmin(isUserAdmin);
 
-    // During Home Phase (home_fixture): ONLY Home team (or Admin) can create or edit matchups. Away team is strictly blocked.
-    // During Fixture Entry Phase (fixture_entry): Both Home & Away teams (or Admin) can create or edit matchups.
+    // Allow Home team (or Admin) to create initial matchups during home_fixture phase, or either team during fixture_entry phase.
+    // ONCE MATCHUPS ARE CREATED (matchups.length > 0), BOTH Home and Away teams (and Admin) can edit the fixture matchups before the result is completed.
+    const isParticipantOrAdmin = isStrictHome || isStrictAway || isUserAdmin;
+    const isFixtureClosed = phase === 'closed' || fixture.status === 'completed' || fixture.status === 'finalized' || fixture.status === 'closed';
+
     let allowedToCreate = false;
     let allowedToEdit = false;
 
     if (isUserAdmin) {
-      allowedToCreate = phase === 'home_fixture' || phase === 'fixture_entry';
-      allowedToEdit = phase === 'home_fixture' || phase === 'fixture_entry';
-    } else if (phase === 'home_fixture') {
-      allowedToCreate = isStrictHome; // Home team ONLY! Away team blocked.
-      allowedToEdit = isStrictHome;
-    } else if (phase === 'fixture_entry') {
-      allowedToCreate = isStrictHome || isStrictAway;
-      allowedToEdit = isStrictHome || isStrictAway;
+      allowedToCreate = (phase === 'home_fixture' || phase === 'fixture_entry') && !isFixtureClosed;
+      allowedToEdit = !isFixtureClosed;
+    } else {
+      if (phase === 'home_fixture') {
+        allowedToCreate = isStrictHome && !isFixtureClosed;
+      } else if (phase === 'fixture_entry') {
+        allowedToCreate = isParticipantOrAdmin && !isFixtureClosed;
+      }
+
+      // After home team (or either team) puts fixture, Away team can also edit fixture matchups before result is updated/completed
+      allowedToEdit = isParticipantOrAdmin && !isFixtureClosed;
     }
 
     setCanCreateMatchups(allowedToCreate && matchups.length === 0);
