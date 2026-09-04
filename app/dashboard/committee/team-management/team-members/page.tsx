@@ -74,12 +74,92 @@ export default function TeamMembersPage() {
   const [showBulkForm, setShowBulkForm] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
 
+  // Player Swap UI states
+  const [showSwapModal, setShowSwapModal] = useState(false);
+  const [swapTeamId, setSwapTeamId] = useState('');
+  const [swapDepartingPlayerId, setSwapDepartingPlayerId] = useState('');
+  const [swapIncomingPlayerId, setSwapIncomingPlayerId] = useState('');
+  const [swapCategoryId, setSwapCategoryId] = useState('');
+  const [swapReason, setSwapReason] = useState('');
+  const [isSwapping, setIsSwapping] = useState(false);
+
   // Modal system
   const {
     alertState,
     showAlert,
     closeAlert,
   } = useModal();
+
+  const openSwapModal = (player?: RealPlayer) => {
+    if (player) {
+      setSwapTeamId(player.team_id || '');
+      setSwapDepartingPlayerId(player.id || player.player_id);
+      setSwapCategoryId(player.category_id || '');
+    } else {
+      setSwapTeamId('');
+      setSwapDepartingPlayerId('');
+      setSwapCategoryId('');
+    }
+    setSwapIncomingPlayerId('');
+    setSwapReason('');
+    setShowSwapModal(true);
+  };
+
+  const handlePlayerSwapSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userSeasonId || !swapTeamId || !swapDepartingPlayerId || !swapIncomingPlayerId) {
+      showAlert({
+        type: 'warning',
+        title: 'Missing Selection',
+        message: 'Please select team, departing player, and replacement player.',
+      });
+      return;
+    }
+
+    setIsSwapping(true);
+    try {
+      const res = await fetchWithTokenRefresh('/api/committee/player-replacement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          season_id: userSeasonId,
+          team_id: swapTeamId,
+          departing_player_id: swapDepartingPlayerId,
+          incoming_player_id: swapIncomingPlayerId,
+          category_id: swapCategoryId || undefined,
+          reason: swapReason || undefined,
+        }),
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setShowSwapModal(false);
+        showAlert({
+          type: 'success',
+          title: 'Player Replaced',
+          message: json.message || 'Player replaced successfully!',
+        });
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        showAlert({
+          type: 'error',
+          title: 'Replacement Failed',
+          message: json.error || 'Failed to replace player',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error replacing player:', error);
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: error.message || 'Failed to process player replacement',
+      });
+    } finally {
+      setIsSwapping(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -559,6 +639,15 @@ export default function TeamMembersPage() {
         
         <div className="flex flex-wrap gap-2">
           <button
+            onClick={() => openSwapModal()}
+            className="px-4 py-2 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors flex items-center text-sm font-medium shadow-sm"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            Mid-Season Swap
+          </button>
+          <button
             onClick={exportToCSV}
             className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors flex items-center text-sm"
           >
@@ -996,13 +1085,25 @@ export default function TeamMembersPage() {
                         <span className="text-gray-400 italic text-sm">Inactive</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm flex items-center gap-3">
                       <Link
                         href={`/dashboard/committee/team-management/team-members/${player.id}/edit`}
                         className="text-[#0066FF] hover:text-[#0052CC] font-medium"
                       >
                         Edit
                       </Link>
+                      {player.team_id && (
+                        <button
+                          type="button"
+                          onClick={() => openSwapModal(player)}
+                          className="text-amber-700 hover:text-amber-800 font-medium text-xs bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-200/80 transition-colors flex items-center"
+                        >
+                          <svg className="w-3 h-3 mr-1 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                          </svg>
+                          Replace
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -1212,6 +1313,152 @@ export default function TeamMembersPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mid-Season Player Swap Modal */}
+      {showSwapModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-amber-500/10 to-orange-500/10 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                Mid-Season Player Swap / Replacement
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowSwapModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handlePlayerSwapSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Select Team</label>
+                <select
+                  value={swapTeamId}
+                  onChange={(e) => {
+                    setSwapTeamId(e.target.value);
+                    setSwapDepartingPlayerId('');
+                  }}
+                  required
+                  className="w-full py-2.5 px-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 text-sm"
+                >
+                  <option value="">Select a team...</option>
+                  {teams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.team_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Departing Player (Leaving Team & Becoming Free Agent)
+                </label>
+                <select
+                  value={swapDepartingPlayerId}
+                  onChange={(e) => {
+                    const pid = e.target.value;
+                    setSwapDepartingPlayerId(pid);
+                    const p = realPlayers.find((player) => player.id === pid || player.player_id === pid);
+                    if (p?.category_id) setSwapCategoryId(p.category_id);
+                  }}
+                  required
+                  disabled={!swapTeamId}
+                  className="w-full py-2.5 px-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">Choose departing player...</option>
+                  {realPlayers
+                    .filter((p) => p.team_id === swapTeamId)
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.player_id})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Incoming Replacement Player (Free Agent / Unassigned)
+                </label>
+                <select
+                  value={swapIncomingPlayerId}
+                  onChange={(e) => setSwapIncomingPlayerId(e.target.value)}
+                  required
+                  className="w-full py-2.5 px-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 text-sm"
+                >
+                  <option value="">Choose replacement player...</option>
+                  {realPlayers
+                    .filter((p) => !p.team_id && p.id !== swapDepartingPlayerId)
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.player_id})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Assign Category</label>
+                <select
+                  value={swapCategoryId}
+                  onChange={(e) => setSwapCategoryId(e.target.value)}
+                  className="w-full py-2.5 px-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 text-sm"
+                >
+                  <option value="">Use Departing Player Category (or choose...)</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Replacement</label>
+                <textarea
+                  value={swapReason}
+                  onChange={(e) => setSwapReason(e.target.value)}
+                  placeholder="e.g. Player left mid-season, replaced by free agent"
+                  rows={2}
+                  className="w-full py-2.5 px-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 text-sm"
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowSwapModal(false)}
+                  className="px-5 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSwapping}
+                  className="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:from-amber-700 hover:to-orange-700 transition-all font-medium text-sm flex items-center disabled:opacity-50"
+                >
+                  {isSwapping ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Processing Swap...
+                    </>
+                  ) : (
+                    'Confirm Player Replacement'
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
