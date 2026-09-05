@@ -3,6 +3,7 @@ firebase-functions/
 
 # Scripts
 scripts/
+!scripts/patch-tailwind.js
 
 # Documentation
 *.md

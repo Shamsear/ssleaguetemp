@@ -92,7 +92,13 @@ export async function POST(request: NextRequest) {
       WHERE fs.league_id = ${fantasy_league_id}
     `;
 
-    // Re-sync fantasy_teams player_points and total_points
+    // Delete passive team bonus points for this fixture
+    await sql`
+      DELETE FROM fantasy_team_bonus_points
+      WHERE fixture_id = ${fixture_id}
+    `;
+
+    // Re-sync fantasy_teams player_points, passive_points, and total_points
     await sql`
       UPDATE fantasy_teams ft
       SET 
@@ -101,11 +107,20 @@ export async function POST(request: NextRequest) {
           FROM fantasy_squad fs
           WHERE fs.team_id = ft.team_id AND fs.league_id = ft.league_id
         ), 0),
+        passive_points = COALESCE((
+          SELECT SUM(total_bonus)
+          FROM fantasy_team_bonus_points ftbp
+          WHERE ftbp.team_id = ft.team_id AND ftbp.league_id = ft.league_id
+        ), 0),
         total_points = COALESCE((
           SELECT SUM(fs.total_points)
           FROM fantasy_squad fs
           WHERE fs.team_id = ft.team_id AND fs.league_id = ft.league_id
-        ), 0) + COALESCE(ft.passive_points, 0),
+        ), 0) + COALESCE((
+          SELECT SUM(total_bonus)
+          FROM fantasy_team_bonus_points ftbp
+          WHERE ftbp.team_id = ft.team_id AND ftbp.league_id = ft.league_id
+        ), 0),
         updated_at = NOW()
       WHERE ft.league_id = ${fantasy_league_id}
     `;

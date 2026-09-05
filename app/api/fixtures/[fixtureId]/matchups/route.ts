@@ -866,9 +866,9 @@ export async function PATCH(
       // Don't fail the entire request if fantasy calculation fails
     }
 
-    // Update real player stats in realplayerstats table
+    // Update real player stats & POTD / MOTM awards in realplayerstats table
     try {
-      console.log('⚽ Updating real player stats...');
+      console.log('⚽ Updating real player stats and POTD awards...');
       const host = request.headers.get('host');
       const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
@@ -879,6 +879,16 @@ export async function PATCH(
           fixture_id: fixtureId,
           season_id: season_id,
           matchups: results
+        })
+      });
+      await fetch(`${baseUrl}/api/realplayers/update-stats`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          season_id: season_id,
+          fixture_id: fixtureId,
+          matchups: results,
+          motm_player_id: motm_player_id
         })
       });
     } catch (rpsError) {

@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-// @ts-ignore
-import * as cheerio from 'cheerio';
 import { tempSql, initializeTempTable } from '@/lib/neon/temp-config';
 
 const USER_AGENTS = [

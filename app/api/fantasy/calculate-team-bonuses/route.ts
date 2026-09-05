@@ -254,7 +254,7 @@ async function awardTeamBonus(params: {
   let total_bonus = 0;
 
   // Apply ALL configured scoring rules dynamically
-  teamScoringRules.forEach((points, ruleType) => {
+  for (const [ruleType, points] of teamScoringRules.entries()) {
     let applies = false;
 
     // Check each rule type
@@ -324,8 +324,30 @@ async function awardTeamBonus(params: {
         applies = won && clean_sheet;
         break;
 
+      // Award-based rules (Team of the Day / Week)
+      case 'team_of_the_day': {
+        const tod = await tournamentSql`
+          SELECT id FROM awards
+          WHERE (award_type = 'TOD' OR award_type = 'Team of the Day')
+            AND team_id = ${real_team_id}
+            AND round_number = ${round_number}
+          LIMIT 1
+        `;
+        applies = tod.length > 0;
+        break;
+      }
+      case 'team_of_the_week': {
+        const tow = await tournamentSql`
+          SELECT id FROM awards
+          WHERE (award_type = 'TOW' OR award_type = 'Team of the Week')
+            AND team_id = ${real_team_id}
+          LIMIT 1
+        `;
+        applies = tow.length > 0;
+        break;
+      }
+
       default:
-        // Unknown rule type - log warning but don't fail
         console.log(`⚠️  Unknown team rule type: ${ruleType}`);
         applies = false;
     }
@@ -334,7 +356,7 @@ async function awardTeamBonus(params: {
       bonus_breakdown[ruleType] = points;
       total_bonus += points;
     }
-  });
+  }
 
   // Log the result even if no bonus (or negative)
   if (total_bonus === 0) {
@@ -342,31 +364,23 @@ async function awardTeamBonus(params: {
     return;
   }
 
-  // Note: We still award negative bonuses (penalties) if configured
   console.log(`🎁 Team ${real_team_id} earned ${total_bonus > 0 ? '+' : ''}${total_bonus} points`);
 
   // Award bonuses to each fantasy team
   for (const fantasyTeam of fantasyTeams) {
-    // Check if bonus already awarded
-    const existing = await fantasySql`
-      SELECT id FROM fantasy_team_bonus_points
+    // Delete previous bonus for this team & fixture if updating
+    await fantasySql`
+      DELETE FROM fantasy_team_bonus_points
       WHERE league_id = ${fantasy_league_id}
         AND team_id = ${fantasyTeam.team_id}
         AND fixture_id = ${fixture_id}
-      LIMIT 1
     `;
-
-    if (existing.length > 0) {
-      console.log(`✓ Bonus already awarded to ${fantasyTeam.team_name} for fixture ${fixture_id}`);
-      continue;
-    }
 
     // Determine which team name to use for the record
     const teamChange = teamChangeMap.get(fantasyTeam.team_id);
     let realTeamName = fantasyTeam.supported_team_name;
 
     if (teamChange && round_number <= TEAM_CHANGE_AFTER_ROUND) {
-      // For rounds 1-13, use the OLD team name
       realTeamName = teamChange.oldTeamName;
     }
 
@@ -395,22 +409,30 @@ async function awardTeamBonus(params: {
       )
     `;
 
-    // Update fantasy team points
+    // Recalculate passive points and total points directly from database records (no accumulators)
     await fantasySql`
-      UPDATE fantasy_teams
+      UPDATE fantasy_teams ft
       SET
-        passive_points = passive_points + ${total_bonus},
-        total_points = total_points + ${total_bonus},
+        passive_points = COALESCE((
+          SELECT SUM(total_bonus) 
+          FROM fantasy_team_bonus_points ftbp 
+          WHERE ftbp.team_id = ft.team_id AND ftbp.league_id = ft.league_id
+        ), 0),
+        total_points = COALESCE((
+          SELECT SUM(fpp.total_points)
+          FROM fantasy_player_points fpp
+          INNER JOIN fantasy_squad fs ON fpp.player_id = fs.real_player_id AND fs.fantasy_team_id = ft.id
+          WHERE fs.league_id = ft.league_id
+        ), 0) + COALESCE((
+          SELECT SUM(total_bonus) 
+          FROM fantasy_team_bonus_points ftbp 
+          WHERE ftbp.team_id = ft.team_id AND ftbp.league_id = ft.league_id
+        ), 0),
         updated_at = NOW()
-      WHERE team_id = ${fantasyTeam.team_id}
+      WHERE ft.team_id = ${fantasyTeam.team_id}
     `;
 
     console.log(`🎁 Awarded ${total_bonus} bonus points to ${fantasyTeam.team_name} (affiliated with ${realTeamName})`);
-    Object.entries(bonus_breakdown).forEach(([key, value]) => {
-      if ((value as number) !== 0) {
-        console.log(`   - ${key}: ${(value as number) > 0 ? '+' : ''}${value} pts`);
-      }
-    });
 
     bonusesAwarded.push({
       fantasy_team_id: fantasyTeam.team_id,

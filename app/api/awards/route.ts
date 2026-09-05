@@ -197,6 +197,18 @@ export async function POST(request: NextRequest) {
       )
     `;
 
+    // If TOD award, recalculate passive team bonus points
+    if (award_type === 'TOD' || award_type === 'Team of the Day') {
+      try {
+        const host = request.headers.get('host');
+        const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
+        await fetch(`${baseUrl}/api/fantasy/recalculate-passive-points`, { method: 'POST' });
+      } catch (err) {
+        console.error('Failed to auto-recalculate passive points for TOD:', err);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Award created successfully',
@@ -229,9 +241,21 @@ export async function DELETE(request: NextRequest) {
 
     const sql = getTournamentDb();
 
+    const existingAward = await sql`SELECT award_type FROM awards WHERE id = ${id} LIMIT 1`;
     await sql`
       DELETE FROM awards WHERE id = ${id}
     `;
+
+    if (existingAward.length > 0 && (existingAward[0].award_type === 'TOD' || existingAward[0].award_type === 'Team of the Day')) {
+      try {
+        const host = request.headers.get('host');
+        const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
+        await fetch(`${baseUrl}/api/fantasy/recalculate-passive-points`, { method: 'POST' });
+      } catch (err) {
+        console.error('Failed to auto-recalculate passive points for deleted TOD:', err);
+      }
+    }
 
     return NextResponse.json({
       success: true,
